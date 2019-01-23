@@ -14,25 +14,25 @@ public class OrderRecordInfo implements java.io.Serializable {
 
 	private static final long serialVersionUID = -105528517457854614L;
 	
-	private Sha256Hash txHash;
+	private Sha256Hash initialBlockHash;
     private Sha256Hash issuingMatcherBlockHash;
 
     public OrderRecordInfo() {
 		super();
 	}
     
-    public OrderRecordInfo(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) {
+    public OrderRecordInfo(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash) {
 		super();
-		this.txHash = txHash;
+		this.initialBlockHash = initialBlockHash;
 		this.issuingMatcherBlockHash = issuingMatcherBlockHash;
 	}
 
-	public Sha256Hash getTxHash() {
-		return txHash;
+	public Sha256Hash getInitialBlockHash() {
+		return initialBlockHash;
 	}
 
-	public void setTxHash(Sha256Hash txHash) {
-		this.txHash = txHash;
+	public void setInitialBlockHash(Sha256Hash initialBlockHash) {
+		this.initialBlockHash = initialBlockHash;
 	}
 
 	public Sha256Hash getIssuingMatcherBlockHash() {

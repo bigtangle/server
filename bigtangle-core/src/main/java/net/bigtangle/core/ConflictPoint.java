@@ -22,10 +22,10 @@ public class ConflictPoint {
     @Nullable
     private Token connectedToken;
     @Nullable
-    private OrderRecordInfo connectedOrder;
+    private OrderReclaimInfo connectedOrder;
 
     private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-            Token connectedToken, OrderRecordInfo connectedOrder) {
+            Token connectedToken, OrderReclaimInfo connectedOrder) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
@@ -46,7 +46,7 @@ public class ConflictPoint {
         return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null);
     }
 
-    public static ConflictPoint fromOrder(OrderRecordInfo connectedOrder) {
+    public static ConflictPoint fromOrder(OrderReclaimInfo connectedOrder) {
         return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder);
     }
     
@@ -71,8 +71,7 @@ public class ConflictPoint {
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
-			return getConnectedOrder().getTxHash().equals(other.getConnectedOrder().getTxHash())
-					&& getConnectedOrder().getIssuingMatcherBlockHash().equals(other.getConnectedOrder().getIssuingMatcherBlockHash());
+			return getConnectedOrder().getOrderBlockHash().equals(other.getConnectedOrder().getOrderBlockHash());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
         }
@@ -88,7 +87,7 @@ public class ConflictPoint {
         case TXOUT:
             return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
-            return Objects.hashCode(getConnectedOrder().getTxHash(), getConnectedOrder().getIssuingMatcherBlockHash());
+            return Objects.hashCode(getConnectedOrder().getOrderBlockHash());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
         }
@@ -114,7 +113,7 @@ public class ConflictPoint {
         return connectedToken;
     }
 
-    public OrderRecordInfo getConnectedOrder() {
+    public OrderReclaimInfo getConnectedOrder() {
         return connectedOrder;
     }
 }

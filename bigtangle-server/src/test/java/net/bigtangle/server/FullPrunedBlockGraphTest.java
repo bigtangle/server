@@ -182,7 +182,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		this.blockGraph.add(block, true);
 		
 		// Ensure the order is added now
-		OrderRecord order = store.getOrder(tx.getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertArrayEquals(order.getBeneficiaryPubKey(), testKey.getPubKey());
 		assertEquals(order.getIssuingMatcherBlockHash(), Sha256Hash.ZERO_HASH);
@@ -193,7 +193,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertEquals(order.getTargetTokenid(), "test");
 		assertEquals(order.getTargetValue(), 2);
 		assertEquals(order.getTtl(), NetworkParameters.INITIAL_ORDER_TTL);
-		assertEquals(order.getTxHash(), tx.getHash());
+		assertEquals(order.getInitialBlockHash(), block1.getHash());
 		assertFalse(order.isConfirmed());
 		assertFalse(order.isSpent());
 	}
@@ -331,7 +331,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		blockGraph.confirm(block1.getHash(), new HashSet<>());
 		
 		// Ensure the order is confirmed now
-		OrderRecord order = store.getOrder(tx.getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
 		assertFalse(order.isSpent());
@@ -410,8 +410,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
 
         // Order should be confirmed and spent now
-        assertTrue(store.getOrderConfirmed(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
-        assertTrue(store.getOrderSpent(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+        assertTrue(store.getOrderConfirmed(block1.getHash(), Sha256Hash.ZERO_HASH));
+        assertTrue(store.getOrderSpent(block1.getHash(), Sha256Hash.ZERO_HASH));
 
         // Since the order matching did not collect the confirmed block, the reclaim works
         Transaction tx = blockGraph.generateReclaimTX(block2);
@@ -476,13 +476,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
 
         // Ensure consumed order record is now spent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
 		assertTrue(order.isSpent());
 		
 		// Ensure remaining orders are confirmed now
-		OrderRecord order2 = store.getOrder(block1.getTransactions().get(0).getHash(), rewardBlock1.getHash());
+		OrderRecord order2 = store.getOrder(block1.getHash(), rewardBlock1.getHash());
 		assertNotNull(order2);
 		assertTrue(order2.isConfirmed());
 		assertFalse(order2.isSpent());
@@ -593,12 +593,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
         
         // Ensure all consumed order records are now spent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
 		assertTrue(order.isSpent());
 		
-		OrderRecord order2 = store.getOrder(block3.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order2 = store.getOrder(block3.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order2);
 		assertTrue(order2.isConfirmed());
 		assertTrue(order2.isSpent());
@@ -770,7 +770,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		blockGraph.unconfirm(block1.getHash(), new HashSet<>());
 		
 		// Ensure the order is confirmed now
-		OrderRecord order = store.getOrder(tx.getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertFalse(order.isConfirmed());
 		assertFalse(order.isSpent());
@@ -852,8 +852,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
 
         // Order should be confirmed and unspent now
-        assertTrue(store.getOrderConfirmed(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
-        assertFalse(store.getOrderSpent(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+        assertTrue(store.getOrderConfirmed(block1.getHash(), Sha256Hash.ZERO_HASH));
+        assertFalse(store.getOrderSpent(block1.getHash(), Sha256Hash.ZERO_HASH));
 
         // The virtual tx is in the db but unconfirmed
         Transaction tx = blockGraph.generateReclaimTX(block2);
@@ -920,13 +920,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
         
         // Ensure consumed order record is now unspent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
 		assertFalse(order.isSpent());
 		
 		// Ensure remaining orders are unconfirmed now
-		OrderRecord order2 = store.getOrder(block1.getTransactions().get(0).getHash(), rewardBlock1.getHash());
+		OrderRecord order2 = store.getOrder(block1.getHash(), rewardBlock1.getHash());
 		assertNotNull(order2);
 		assertFalse(order2.isConfirmed());
 		assertFalse(order2.isSpent());
@@ -1040,12 +1040,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
         
         // Ensure all consumed order records are now unspent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
 		assertFalse(order.isSpent());
 		
-		OrderRecord order2 = store.getOrder(block3.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order2 = store.getOrder(block3.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order2);
 		assertTrue(order2.isConfirmed());
 		assertFalse(order2.isSpent());

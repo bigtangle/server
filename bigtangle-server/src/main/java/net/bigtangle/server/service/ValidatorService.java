@@ -56,7 +56,6 @@ import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.OrderRecordInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -64,7 +63,6 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -421,8 +419,8 @@ public class ValidatorService {
             case REWARDISSUANCE:
                 return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
             case ORDERRECLAIM:
-                OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-                return store.getOrderSpent(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash());
+                OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
+                return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
             default:
                 throw new NotImplementedException();
         }
@@ -443,10 +441,10 @@ public class ValidatorService {
         case REWARDISSUANCE:
             return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
         case ORDERRECLAIM:
-            OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            // To reclaim, not only must the order record be confirmed, but it must be confirmed by the issuing block as well
-            return store.getOrderConfirmed(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash())
-                    && store.getBlockEvaluation(connectedOrder.getIssuingMatcherBlockHash()).isMilestone();
+        	OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
+            // To reclaim, not only must the order record be confirmed unspent, but the non-collecting issuing block must be confirmed too
+            return store.getOrderConfirmed(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH)
+                    && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isMilestone();
         default:
             throw new NotImplementedException();
     }
@@ -885,8 +883,8 @@ public class ValidatorService {
                 return null;
             return store.getBlockWrap(txRewardSpender);
         case ORDERRECLAIM:
-            OrderRecordInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            final Sha256Hash orderSpender = store.getOrderSpender(connectedOrder.getTxHash(), connectedOrder.getIssuingMatcherBlockHash());
+            OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
+            final Sha256Hash orderSpender = store.getOrderSpender(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
             if (orderSpender == null)
                 return null;
             return store.getBlockWrap(orderSpender);  	
@@ -1473,16 +1471,16 @@ public class ValidatorService {
         }
         
         // NotNull checks
-        if (info.getTxHash() == null) {
+        if (info.getInitialBlockHash() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target txhash");
             return SolidityState.getFailState();     
         }
         
         // Ensure the predecessing order exists
-        OrderRecord order = store.getOrder(info.getTxHash(), Sha256Hash.ZERO_HASH); 
+        OrderRecord order = store.getOrder(info.getInitialBlockHash(), Sha256Hash.ZERO_HASH); 
         if (order == null) {
-            return SolidityState.from(new TransactionOutPoint(networkParameters, 0, info.getTxHash()));     
+            return SolidityState.from(info.getInitialBlockHash());     
         }
 
         byte[] pubKey = order.getBeneficiaryPubKey();

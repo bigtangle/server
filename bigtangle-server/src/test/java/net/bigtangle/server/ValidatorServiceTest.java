@@ -3212,7 +3212,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		{
 			// Make an order op
 			Transaction tx = new Transaction(networkParameters);
-			OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getTransactions().get(0).getHash());
+			OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getHash());
 			tx.setData(info.toByteArray());
 			
 			// Legitimate it by signing
@@ -3274,14 +3274,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		{
 			// Make an order op
 			Transaction tx = new Transaction(networkParameters);
-			OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getTransactions().get(0).getHash());
+			OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getHash());
 			tx.setData(info.toByteArray());
 			
 			// Legitimate it by signing
 	        Sha256Hash sighash1 = tx.getHash();
 	        ECKey.ECDSASignature party1Signature = testKey.sign(sighash1, null);
 	        byte[] buf1 = party1Signature.encodeToDER();
-	        buf1[0] = 1;
+	        buf1[0] = 0;
+	        buf1[1] = 0;
+	        buf1[2] = 0;
 	        tx.setDataSignature(buf1);
 	
 	        // Create block with order

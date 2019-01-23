@@ -402,7 +402,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // All consumed order records are now spent by this block
         for (OrderRecord o : matchingResult.getLeft()) {
-            blockStore.updateOrderSpent(o.getTxHash(), o.getIssuingMatcherBlockHash(), true, block.getHash());
+            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true, block.getHash());
         }
 
         // If virtual outputs have not been inserted yet, insert them  
@@ -416,7 +416,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders confirmed
         for (OrderRecord o : matchingResult.getRight())
-            blockStore.updateOrderConfirmed(o.getTxHash(), o.getIssuingMatcherBlockHash(), true);
+            blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
     }
 
     private void confirmOrderReclaim(Block block) throws BlockStoreException {
@@ -428,12 +428,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Cannot happen.
             throw new RuntimeException(e);
         }
-        
-        // Read the referenced order block's tx's hash from db
-        Sha256Hash txHash = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0).getHash(); 
 
         // Set consumed order record to spent and set spender block to this block's hash
-        blockStore.updateOrderSpent(txHash, Sha256Hash.ZERO_HASH, true, block.getHash());
+        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, true, block.getHash());
 
         // Get virtual reclaim tx
         Transaction tx = generateReclaimTX(block);
@@ -447,7 +444,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void confirmOrderOpen(Block block) throws BlockStoreException {
         // Set own output confirmed
-        blockStore.updateOrderConfirmed(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, true);
+        blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, true);
     }
 
     private void confirmReward(Block block) throws BlockStoreException {
@@ -658,8 +655,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void unconfirmOrderOpenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
 
         // Disconnect order record spender
-        if (blockStore.getOrderSpent(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH)) {
-            removeBlockFromMilestone(blockStore.getOrderSpender(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes);
+        if (blockStore.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH)) {
+            removeBlockFromMilestone(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes);
         }
     }
 
@@ -751,7 +748,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // All consumed order records are now unspent by this block
         for (OrderRecord o : matchingResult.getLeft()) {
-            blockStore.updateOrderSpent(o.getTxHash(), o.getIssuingMatcherBlockHash(), false, null);
+            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false, null);
         }
 
         // Set virtual outputs unconfirmed
@@ -759,7 +756,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders unconfirmed
         for (OrderRecord o : matchingResult.getRight())
-            blockStore.updateOrderConfirmed(o.getTxHash(), o.getIssuingMatcherBlockHash(), false);
+            blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false);
     }
 
     private void unconfirmOrderReclaim(Block block) throws BlockStoreException {
@@ -771,12 +768,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Cannot happen.
             throw new RuntimeException(e);
         }
-        
-        // Read the referenced order block's tx's hash from db
-        Sha256Hash txHash = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0).getHash(); 
 
         // Set consumed order record unspent 
-        blockStore.updateOrderSpent(txHash, Sha256Hash.ZERO_HASH, false, null);
+        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, false, null);
 
         // Get virtual reclaim tx
         Transaction tx = generateReclaimTX(block);
@@ -787,7 +781,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
         // Set own output unconfirmed
-        blockStore.updateOrderConfirmed(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, false);
+        blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, false);
     }
 
     private void unconfirmReward(Block block) throws BlockStoreException {
@@ -967,7 +961,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             Coin offer = validatorService.countBurnedToken(block);
             
-            OrderRecord record = new OrderRecord(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, 
+            OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, 
             		offer.getValue(), offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
             		reqInfo.getBeneficiaryPubKey(), NetworkParameters.INITIAL_ORDER_TTL, 0);
             
@@ -1054,9 +1048,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-                final Sha256Hash txHash = b.getBlock().getTransactions().get(0).getHash();
-                newOrders.put(txHash, blockStore.getOrder(txHash, Sha256Hash.ZERO_HASH));
-                untouchedNewOrders.add(blockStore.getOrder(txHash, Sha256Hash.ZERO_HASH));
+                final Sha256Hash blockHash = b.getBlock().getHash();
+                newOrders.put(blockHash, blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                untouchedNewOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1085,13 +1079,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // Process cancel ops
         for (OrderOpInfo c : cancels) {
-            cancelledOrders.add(remainingOrders.get(c.getTxHash()));
-            remainingOrders.remove(c.getTxHash());
+            cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
+            remainingOrders.remove(c.getInitialBlockHash());
         }
         
         // Process refresh ops
         for (OrderOpInfo r : refreshs) {
-            remainingOrders.get(r.getTxHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
+            remainingOrders.get(r.getInitialBlockHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
         }
         
         // Match orders
@@ -1204,13 +1198,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Finally, the orders could be fulfilled now, so we can remove them from the order list
                     // Otherwise, we will make the orders smaller by the executed amounts
                     if (sellableAmount == executedAmount) {
-                        remainingOrders.remove(restingOrder.getTxHash());
+                        remainingOrders.remove(restingOrder.getInitialBlockHash());
                     } else {
                         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount);
                         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount * executedPrice);
                     }
                     if (buyableAmount == executedAmount) {
-                        remainingOrders.remove(incomingOrder.getTxHash());
+                        remainingOrders.remove(incomingOrder.getInitialBlockHash());
                     } else {
                         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount * incomingPrice);
                         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount);
@@ -1241,13 +1235,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Finally, the orders could be fulfilled now, so we can remove them from the order list
                     // Otherwise, we will make the orders smaller by the executed amounts
                     if (sellableAmount == executedAmount) {
-                        remainingOrders.remove(incomingOrder.getTxHash());
+                        remainingOrders.remove(incomingOrder.getInitialBlockHash());
                     } else {
                         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount);
                         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount * incomingPrice);
                     }
                     if (buyableAmount == executedAmount) {
-                        remainingOrders.remove(restingOrder.getTxHash());
+                        remainingOrders.remove(restingOrder.getInitialBlockHash());
                     } else {
                         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount * executedPrice);
                         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount);
@@ -1385,9 +1379,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new RuntimeException(e);
         }
         
-        // Read the order from the referenced block
-        Transaction orderTx = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0); 
-        OrderRecord order = blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH);
+        // Read the order of the referenced block
+        OrderRecord order = blockStore.getOrder(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
         
         // Build transaction returning the spent tokens
         Transaction tx = new Transaction(networkParameters);

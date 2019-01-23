@@ -260,11 +260,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 			tx.setData(info.toByteArray());
 	
 	        // Create block with order reclaim
-			block2 = fusingBlock.createNextBlock(fusingBlock);
+			block2 = fusingBlock.createNextBlock();
 			block2.addTransaction(tx);
 			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
 			block2.solve();
 		}
+		
+		// Should go through
+		assertTrue(this.blockGraph.add(block2, false));
         
         // Try order reclaim 2
 		Block block3 = null;
@@ -274,7 +277,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 			tx.setData(info.toByteArray());
 	
 	        // Create block with order reclaim
-			block3 = fusingBlock.createNextBlock(fusingBlock);
+			block3 = block2.createNextBlock(block2);
 			block3.addTransaction(tx);
 			block3.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
 			block3.solve();

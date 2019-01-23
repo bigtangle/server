@@ -105,8 +105,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n" 
-            + "    txhash varbinary(32) NOT NULL,\n" // transactionhash
-            + "    blockhash varbinary(32) NOT NULL,\n" // ZEROHASH if issued by order blocks, issuing ordermatch blockhash if issued by ordermatch block
+            + "    blockhash varbinary(32) NOT NULL,\n" // initial issuing block hash
+            + "    collectinghash varbinary(32) NOT NULL,\n" // ZEROHASH if confirmed by order blocks, issuing ordermatch blockhash if issued by ordermatch block
             + "    offercoinvalue bigint NOT NULL,\n" // amount of tokens in order (tokens locked in for the order)
             + "    offertokenid varchar(255),\n" // tokenid of the used tokens
             + "    confirmed boolean NOT NULL,\n" // true iff a order block of this order is confirmed
@@ -117,7 +117,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    beneficiarypubkey binary(33),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
             + "    ttl int,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
             + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (txhash, blockhash) USING BTREE \n" + ")\n"; 
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n"; 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n"

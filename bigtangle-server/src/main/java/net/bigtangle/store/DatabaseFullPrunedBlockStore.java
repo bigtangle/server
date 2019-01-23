@@ -219,18 +219,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 
     protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " openorders SET spent = ?, spenderblockhash = ? "
-            + " WHERE txhash = ? AND blockhash = ?";
+            + " WHERE blockhash = ? AND collectinghash = ?";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " openorders SET confirmed = ? "
-            + " WHERE txhash = ? AND blockhash = ?";
-    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
-            + " FROM openorders WHERE blockhash = ?";
-    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE txhash = ? AND blockhash = ?";
-    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE txhash = ? AND blockhash = ?";
-    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE txhash = ? AND blockhash = ?";
-    protected final String SELECT_ORDER_SQL = "SELECT txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
-            + " FROM openorders WHERE txhash = ? AND blockhash = ?";
+            + " WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+            + " FROM openorders WHERE collectinghash = ?";
+    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+            + " FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
-            + "  INTO openorders (txhash, blockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex) "
+            + "  INTO openorders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     
@@ -4873,7 +4873,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
-            preparedStatement.setBytes(1, record.getTxHash().getBytes());
+            preparedStatement.setBytes(1, record.getInitialBlockHash().getBytes());
             preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
             preparedStatement.setLong(3, record.getOfferValue());
             preparedStatement.setString(4, record.getOfferTokenid());
@@ -4900,13 +4900,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException {
+    public void updateOrderConfirmed(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
-            preparedStatement.setBytes(2, txHash.getBytes());
+            preparedStatement.setBytes(2, initialBlockHash.getBytes());
             preparedStatement.setBytes(3, issuingMatcherBlockHash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4923,7 +4923,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public void updateOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash)
+    public void updateOrderSpent(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash)
     		throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -4931,7 +4931,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_SPENT_SQL);
             preparedStatement.setBoolean(1, spent);
             preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
-            preparedStatement.setBytes(3, txHash.getBytes());
+            preparedStatement.setBytes(3, initialBlockHash.getBytes());
             preparedStatement.setBytes(4, issuingMatcherBlockHash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {

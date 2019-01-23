@@ -117,7 +117,7 @@ public class BlockWrap {
 		case BLOCKTYPE_ORDER_RECLAIM:
 			try {
 				OrderReclaimInfo orderInfo = OrderReclaimInfo.parse(this.getBlock().getTransactions().get(0).getData());
-				// TODO blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));                    
+				blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));                    
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();

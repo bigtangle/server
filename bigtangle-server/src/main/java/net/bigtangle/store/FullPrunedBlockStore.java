@@ -234,19 +234,19 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
     
     /* Orders */
-    public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+    public boolean getOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
-	public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+	public boolean getOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
-	public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+	public Sha256Hash getOrderSpender(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
-	public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+	public OrderRecord getOrder(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
 	public void insertOrder(OrderRecord record) throws BlockStoreException;
 
-	public void updateOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException;
+	public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed) throws BlockStoreException;
 
-	public void updateOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash) throws BlockStoreException;
+	public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 	

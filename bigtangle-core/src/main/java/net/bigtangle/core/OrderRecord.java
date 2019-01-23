@@ -9,7 +9,7 @@ public class OrderRecord implements java.io.Serializable {
 
 	private static final long serialVersionUID = -2331665478149550684L;
 	
-    private Sha256Hash txHash;
+    private Sha256Hash initialBlockHash;
     private Sha256Hash issuingMatcherBlockHash;
 	private long offerValue;
     private String offerTokenid;
@@ -22,11 +22,11 @@ public class OrderRecord implements java.io.Serializable {
     private int ttl;
     private int opIndex; 
 
-    public OrderRecord(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
+    public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
 			boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue, String targetTokenid,
 			byte[] beneficiaryPubKey, int ttl, int opIndex) {
 		super();
-		this.txHash = txHash;
+		this.initialBlockHash = initialBlockHash;
 		this.issuingMatcherBlockHash = issuingMatcherBlockHash;
 		this.offerValue = offerValue;
 		this.offerTokenid = offerTokenid;
@@ -40,12 +40,12 @@ public class OrderRecord implements java.io.Serializable {
 		this.opIndex = opIndex;
 	}
 
-	public Sha256Hash getTxHash() {
-		return txHash;
+	public Sha256Hash getInitialBlockHash() {
+		return initialBlockHash;
 	}
 
-	public void setTxHash(Sha256Hash txHash) {
-		this.txHash = txHash;
+	public void setInitialBlockHash(Sha256Hash initialBlockHash) {
+		this.initialBlockHash = initialBlockHash;
 	}
 
 	public Sha256Hash getIssuingMatcherBlockHash() {
