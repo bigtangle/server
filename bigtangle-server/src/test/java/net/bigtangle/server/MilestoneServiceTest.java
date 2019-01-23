@@ -21,6 +21,8 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
@@ -29,6 +31,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -136,9 +139,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
 
@@ -201,6 +204,92 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testUpdateConflictingReclaimMilestoneCandidates() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        blockGraph.add(fusingBlock, false);
+        
+        // Try order reclaim
+		Block block2 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block2 = fusingBlock.createNextBlock(fusingBlock);
+			block2.addTransaction(tx);
+			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block2.solve();
+		}
+        
+        // Try order reclaim 2
+		Block block3 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block3 = fusingBlock.createNextBlock(fusingBlock);
+			block3.addTransaction(tx);
+			block3.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block3.solve();
+		}
+		
+		// Should go through
+		assertTrue(this.blockGraph.add(block3, false));
+		
+		// But only the first shall win
+		milestoneService.update();
+		assertTrue(store.getBlockEvaluation(block2.getHash()).isMilestone());
+		assertFalse(store.getBlockEvaluation(block3.getHash()).isMilestone());
+    }
+
+    @Test
     public void testUpdate() throws Exception {
         store.resetStore();
 
@@ -226,9 +315,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with a conflict
@@ -623,9 +712,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict

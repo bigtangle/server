@@ -146,11 +146,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConnectOrderOpenUTXOs() throws Exception {
         store.resetStore();
 		@SuppressWarnings("deprecation")
-		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		
 		// Set the order
 		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+		OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
 		tx.setData(info.toByteArray());
 		
 		// Give it the legitimation of an order opening tx by finally signing the hash
@@ -159,18 +159,18 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         tx.setDataSignature(buf1);
         
         // Create burning 2 BIG
-		List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+		List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
 		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
 		        0);
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
 		TransactionInput input = tx.addInput(spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 		
-		TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
 		        false);
-		Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
 		input.setScriptSig(inputScript);
 
         // Create block with UTXOs
@@ -184,7 +184,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		// Ensure the order is added now
 		OrderRecord order = store.getOrder(tx.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
-		assertArrayEquals(order.getBeneficiaryPubKey(), genesiskey.getPubKey());
+		assertArrayEquals(order.getBeneficiaryPubKey(), testKey.getPubKey());
 		assertEquals(order.getIssuingMatcherBlockHash(), Sha256Hash.ZERO_HASH);
 		assertEquals(order.getOfferTokenid(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
 		assertEquals(order.getOfferValue(), 2);
@@ -299,26 +299,26 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConfirmOrderOpenUTXOs() throws Exception {
         store.resetStore();
 		@SuppressWarnings("deprecation")
-		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		
 		// Set the order
 		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+		OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
 		tx.setData(info.toByteArray());
         
         // Create burning 2 BIG
-		List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+		List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
 		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
 		        0);
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
 		TransactionInput input = tx.addInput(spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 		
-		TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
 		        false);
-		Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
 		input.setScriptSig(inputScript);
 
         // Create block with UTXOs
@@ -338,221 +338,31 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	}
 
     @Test
-    public void testConfirmOrderMatchUTXOs1() throws Exception {
-        store.resetStore();
-		@SuppressWarnings("deprecation")
-		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		
-		Block block1 = null;
-		{
-			// Make a buy order for "test"s
-			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
-			tx.setData(info.toByteArray());
-	        
-	        // Create burning 2 BIG
-			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-			        0);
-			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
-			TransactionInput input = tx.addInput(spendableOutput);
-			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-			
-			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-			        false);
-			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-			input.setScriptSig(inputScript);
-	
-	        // Create block with order
-			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-			block1.addTransaction(tx);
-			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-			block1.solve();
-			this.blockGraph.add(block1, true);
-		}
-		
-		
-		// Generate blocks until passing first reward interval
-        Block rollingBlock1 = block1;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        
-        // Confirm
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
-
-        // Should be confirmed now
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
-        
-        // Ensure all consumed order records are now spent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertTrue(order.isConfirmed());
-		assertTrue(order.isSpent());
-		
-		// Ensure remaining orders are confirmed now
-		OrderRecord order2 = store.getOrder(block1.getTransactions().get(0).getHash(), rewardBlock1.getHash());
-		assertNotNull(order2);
-		assertTrue(order2.isConfirmed());
-		assertFalse(order2.isSpent());
-	}
-
-    @Test
-    public void testConfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore();
-		@SuppressWarnings("deprecation")
-		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-		// Make a buy order for genesiskey.getPubKey()s
-		Block block1 = null;
-		{
-			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(genesiskey.getPubKey()), genesiskey.getPubKey());
-			tx.setData(info.toByteArray());
-	        
-	        // Create burning 2 BIG
-			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-			        0);
-			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
-			TransactionInput input = tx.addInput(spendableOutput);
-			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-			
-			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-			        false);
-			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-			input.setScriptSig(inputScript);
-	
-	        // Create block with order
-			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-			block1.addTransaction(tx);
-			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-			block1.solve();
-			this.blockGraph.add(block1, true);
-		}
-		
-		// Make the "test" token
-		Block block2 = null;
-		{
-	        TokenInfo tokenInfo = new TokenInfo();
-	        
-	        Coin coinbase = Coin.valueOf(77777L, genesiskey.getPubKey());
-	        long amount = coinbase.getValue();
-	        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(genesiskey.getPubKey()), "Test", "Test", 1, 0,
-	                amount, false, true);
-
-	        tokenInfo.setTokens(tokens);
-	        tokenInfo.getMultiSignAddresses()
-	                .add(new MultiSignAddress(tokens.getTokenid(), "", genesiskey.getPublicKeyAsHex()));
-
-	        // This (saveBlock) calls milestoneUpdate currently
-	        block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, genesiskey, null, null, null);
-	        blockGraph.confirm(block2.getHash(), new HashSet<>());
-		}
-
-		// Make a sell order for genesiskey.getPubKey()s
-		Block block3 = null;
-		{
-			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, genesiskey.getPubKey());
-			tx.setData(info.toByteArray());
-			
-	        // Create burning 2 "test"
-			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey).stream()
-					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(genesiskey.getPubKey()))).collect(Collectors.toList());
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-			        0);
-			Coin amount = Coin.valueOf(2, genesiskey.getPubKey());
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
-			TransactionInput input = tx.addInput(spendableOutput);
-			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-			
-			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-			        false);
-			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-			input.setScriptSig(inputScript);
-	
-	        // Create block with order
-			block3 = block2.createNextBlock(block2);
-			block3.addTransaction(tx);
-			block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-			block3.solve();
-			this.blockGraph.add(block3, true);
-		}
-
-		// Generate blocks until passing first reward interval
-        Block rollingBlock1 = block3;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-        
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        
-        // Confirm
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
-
-        // Should be confirmed now
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
-        
-        // Ensure all consumed order records are now spent
-		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertTrue(order.isConfirmed());
-		assertTrue(order.isSpent());
-		
-		OrderRecord order2 = store.getOrder(block3.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order2);
-		assertTrue(order2.isConfirmed());
-		assertTrue(order2.isSpent());
-
-		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
-        assertTrue(utxo1.isConfirmed());
-        assertFalse(utxo1.isSpent());
-	}
-
-    @Test
     public void testConfirmOrderReclaimUTXOs() throws Exception {
         store.resetStore();
 		@SuppressWarnings("deprecation")
-		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		
 		Block block1 = null;
 		{
 			// Make a buy order for "test"s
 			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
 			tx.setData(info.toByteArray());
 	        
 	        // Create burning 2 BIG
-			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
 			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
 			        0);
 			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
 			TransactionInput input = tx.addInput(spendableOutput);
 			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 			
-			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
 			        false);
-			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
 			input.setScriptSig(inputScript);
 	
 	        // Create block with order
@@ -605,6 +415,196 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Since the order matching did not collect the confirmed block, the reclaim works
         Transaction tx = blockGraph.generateReclaimTX(block2);
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        assertTrue(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+	}
+
+    @Test
+    public void testConfirmOrderMatchUTXOs1() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = block1;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+
+        // Should be confirmed now
+        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+
+        // Ensure consumed order record is now spent
+		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertTrue(order.isSpent());
+		
+		// Ensure remaining orders are confirmed now
+		OrderRecord order2 = store.getOrder(block1.getTransactions().get(0).getHash(), rewardBlock1.getHash());
+		assertNotNull(order2);
+		assertTrue(order2.isConfirmed());
+		assertFalse(order2.isSpent());
+	}
+
+    @Test
+    public void testConfirmOrderMatchUTXOs2() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+		// Make a buy order for testKey.getPubKey()s
+		Block block1 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Make the "test" token
+		Block block2 = null;
+		{
+	        TokenInfo tokenInfo = new TokenInfo();
+	        
+	        Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
+	        long amount = coinbase.getValue();
+	        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
+	                amount, false, true);
+
+	        tokenInfo.setTokens(tokens);
+	        tokenInfo.getMultiSignAddresses()
+	                .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
+
+	        // This (saveBlock) calls milestoneUpdate currently
+	        block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+	        blockGraph.confirm(block2.getHash(), new HashSet<>());
+		}
+
+		// Make a sell order for testKey.getPubKey()s
+		Block block3 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey());
+			tx.setData(info.toByteArray());
+			
+	        // Create burning 2 "test"
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey()))).collect(Collectors.toList());
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, testKey.getPubKey());
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block3 = block2.createNextBlock(block2);
+			block3.addTransaction(tx);
+			block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block3.solve();
+			this.blockGraph.add(block3, true);
+		}
+
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = block3;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+        
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+
+        // Should be confirmed now
+        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        
+        // Ensure all consumed order records are now spent
+		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertTrue(order.isSpent());
+		
+		OrderRecord order2 = store.getOrder(block3.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order2);
+		assertTrue(order2.isConfirmed());
+		assertTrue(order2.isSpent());
+
+		// Ensure virtual UTXOs are now confirmed
+		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -732,6 +732,330 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getTokenConfirmed(block11.getHash().toString()));
         assertFalse(store.getTokenSpent(block11.getHash().toString()));        
     }
+
+    @Test
+    public void testUnconfirmOrderOpenUTXOs() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		// Set the order
+		Transaction tx = new Transaction(networkParameters);
+		OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+		tx.setData(info.toByteArray());
+        
+        // Create burning 2 BIG
+		List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+		        0);
+		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+		TransactionInput input = tx.addInput(spendableOutput);
+		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+		
+		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+		        false);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
+		input.setScriptSig(inputScript);
+
+        // Create block with UTXOs
+		Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+		block1.addTransaction(tx);
+		block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+		block1.solve();
+		this.blockGraph.add(block1, true);
+		
+		blockGraph.confirm(block1.getHash(), new HashSet<>());
+		blockGraph.unconfirm(block1.getHash(), new HashSet<>());
+		
+		// Ensure the order is confirmed now
+		OrderRecord order = store.getOrder(tx.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertFalse(order.isConfirmed());
+		assertFalse(order.isSpent());
+	}
+
+    @Test
+    public void testUnconfirmOrderReclaimUTXOs() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        blockGraph.add(fusingBlock, false);
+        
+        // Try order reclaim
+		Block block2 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block2 = fusingBlock.createNextBlock(fusingBlock);
+			block2.addTransaction(tx);
+			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block2.solve();
+			this.blockGraph.add(block2, false);
+		}
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+        blockGraph.confirm(block2.getHash(), new HashSet<>());
+        
+        // Unconfirm
+        blockGraph.unconfirm(block2.getHash(), new HashSet<>());
+
+        // Reward should be confirmed
+        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+
+        // Order should be confirmed and unspent now
+        assertTrue(store.getOrderConfirmed(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+        assertFalse(store.getOrderSpent(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH));
+
+        // The virtual tx is in the db but unconfirmed
+        Transaction tx = blockGraph.generateReclaimTX(block2);
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+	}
+
+    @Test
+    public void testUnconfirmOrderMatchUTXOs1() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = block1;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+        
+        // Unconfirm
+        blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>());
+        
+        // Should be unconfirmed now
+        assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        
+        // Ensure consumed order record is now unspent
+		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertFalse(order.isSpent());
+		
+		// Ensure remaining orders are unconfirmed now
+		OrderRecord order2 = store.getOrder(block1.getTransactions().get(0).getHash(), rewardBlock1.getHash());
+		assertNotNull(order2);
+		assertFalse(order2.isConfirmed());
+		assertFalse(order2.isSpent());
+	}
+
+    @Test
+    public void testUnconfirmOrderMatchUTXOs2() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+		// Make a buy order for testKey.getPubKey()s
+		Block block1 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Make the "test" token
+		Block block2 = null;
+		{
+	        TokenInfo tokenInfo = new TokenInfo();
+	        
+	        Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
+	        long amount = coinbase.getValue();
+	        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
+	                amount, false, true);
+
+	        tokenInfo.setTokens(tokens);
+	        tokenInfo.getMultiSignAddresses()
+	                .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
+
+	        // This (saveBlock) calls milestoneUpdate currently
+	        block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+	        blockGraph.confirm(block2.getHash(), new HashSet<>());
+		}
+
+		// Make a sell order for testKey.getPubKey()s
+		Block block3 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey());
+			tx.setData(info.toByteArray());
+			
+	        // Create burning 2 "test"
+			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey()))).collect(Collectors.toList());
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, testKey.getPubKey());
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(sig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block3 = block2.createNextBlock(block2);
+			block3.addTransaction(tx);
+			block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block3.solve();
+			this.blockGraph.add(block3, true);
+		}
+
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = block3;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+        
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+        
+        // Unconfirm
+        blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>());
+
+        // Should be unconfirmed now
+        assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        
+        // Ensure all consumed order records are now unspent
+		OrderRecord order = store.getOrder(block1.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertFalse(order.isSpent());
+		
+		OrderRecord order2 = store.getOrder(block3.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order2);
+		assertTrue(order2.isConfirmed());
+		assertFalse(order2.isSpent());
+
+		// Ensure virtual UTXOs are now confirmed
+		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+	}
 
     @Test
     public void testUnconfirmDependentsTransactional() throws Exception {
@@ -869,22 +1193,22 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         // Generate spending block
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
         outputs.removeIf(o -> o.getValue().value == NetworkParameters.testCoin);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
-        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+        tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
         
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig, genesiskey);
+        Script inputScript = ScriptBuilder.createInputScript(sig, testKey);
         input.setScriptSig(inputScript);
         assertNull(transactionService.getUTXO(tx.getOutput(0).getOutPointFor()));
         assertNull(transactionService.getUTXO(tx.getOutput(1).getOutPointFor()));

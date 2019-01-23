@@ -683,8 +683,8 @@ public class ValidatorService {
         // weight. If not unconfirming, prefer milestones first.
         Comparator<ConflictCandidate> byDescendingRating = getConflictComparator(unconfirmLosingMilestones)
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getRating())
-                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
                 .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
+                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
                 .thenComparing((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getBlockHash()).reversed();
 
         Supplier<TreeSet<ConflictCandidate>> conflictTreeSetSupplier = () -> new TreeSet<ConflictCandidate>(
@@ -699,10 +699,10 @@ public class ValidatorService {
                 unconfirmLosingMilestones)
                         .thenComparingLong(
                                 (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
-                        .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
-                                .getCumulativeWeight())
                         .thenComparingLong((TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation()
                                 .getInsertTime())
+                        .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
+                                .getCumulativeWeight())
                         .thenComparing((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
                                 .getBlockHash())
                         .reversed();
@@ -1309,7 +1309,7 @@ public class ValidatorService {
             return SolidityState.getFailState(); 
         }
         
-        // Ensure the predecessing order matching block is of sufficient height, i.e. higher than the order opening
+        // Ensure the predecessing order matching block approves sufficient height, i.e. higher than the order opening
         if (store.getRewardToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getHeight()) {
             if (throwExceptions)
                 throw new InvalidDependencyException("The order matching block does not approve the given reclaim block height yet.");
@@ -1479,7 +1479,7 @@ public class ValidatorService {
             return SolidityState.getFailState();     
         }
         
-        // Ensure the predecessing tx exists
+        // Ensure the predecessing order exists
         OrderRecord order = store.getOrder(info.getTxHash(), Sha256Hash.ZERO_HASH); 
         if (order == null) {
             return SolidityState.from(new TransactionOutPoint(networkParameters, 0, info.getTxHash()));     

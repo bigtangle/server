@@ -101,8 +101,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -112,9 +112,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict
@@ -156,8 +156,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -167,9 +167,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
                 false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict
