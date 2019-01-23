@@ -1285,7 +1285,7 @@ public class ValidatorService {
         // Ensure the predecessing order block exists
         StoredBlock orderBlock = store.get(info.getOrderBlockHash()); 
         if (orderBlock == null) {
-            return SolidityState.from(info.getNonConfirmingMatcherBlockHash());     
+            return SolidityState.from(info.getOrderBlockHash());     
         }
         
         // Ensure it is an order open block

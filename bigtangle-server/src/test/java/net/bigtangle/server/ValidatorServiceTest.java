@@ -31,6 +31,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
@@ -616,6 +618,179 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // After adding the missing dependency, should be added 
         assertNotNull(store.get(block.getHash()));
         assertNotNull(store.get(depBlock.getHash()));
+    }
+
+    @Test
+    public void testUnsolidMissingOrderReclaimOrderMatching() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<Block> premiseBlocks = new ArrayList<>();
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+	        premiseBlocks.add(block1);
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            premiseBlocks.add(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        
+        // Try order reclaim
+		Block block2 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block2.addTransaction(tx);
+			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block2.solve();
+			this.blockGraph.add(block2, false);
+		}
+        
+        // Now reset and readd all but dependency and unsolid block
+        store.resetStore();
+        for (Block b : premiseBlocks) {
+        	blockGraph.add(b, false);
+        }
+        
+        // Add block allowing unsolids
+        transactionService.addConnected(block2.bitcoinSerialize(), true, false);
+        
+        // Should not be added since insolid
+        assertNull(store.get(block2.getHash()));
+
+        // Add missing dependency
+        blockService.saveBlock(rewardBlock1);
+
+        // After adding the missing dependency, should be added 
+        assertNotNull(store.get(block2.getHash()));
+        assertNotNull(store.get(rewardBlock1.getHash()));
+    }
+
+    @Test
+    public void testUnsolidMissingOrderReclaimOrder() throws Exception {
+        store.resetStore();
+		@SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<Block> premiseBlocks = new ArrayList<>();
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+			this.blockGraph.add(block1, true);
+		}
+		
+		// Generate blocks until passing first reward interval
+        Block rollingBlock1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            premiseBlocks.add(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        premiseBlocks.add(rewardBlock1);
+        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        premiseBlocks.add(fusingBlock);
+        blockGraph.add(fusingBlock, false);
+        
+        // Try order reclaim
+		Block block2 = null;
+		{
+			Transaction tx = new Transaction(networkParameters);
+			OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order reclaim
+			block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block2.addTransaction(tx);
+			block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+			block2.solve();
+			this.blockGraph.add(block2, false);
+		}
+        
+        // Now reset and readd all but dependency and unsolid block
+        store.resetStore();
+        for (Block b : premiseBlocks) {
+        	blockGraph.add(b, false);
+        }
+        
+        // Add block allowing unsolids
+        transactionService.addConnected(block2.bitcoinSerialize(), true, false);
+        
+        // Should not be added since insolid
+        assertNull(store.get(block2.getHash()));
+
+        // Add missing dependency
+        blockService.saveBlock(block1);
+
+        // After adding the missing dependency, should be added 
+        assertNotNull(store.get(block2.getHash()));
+        assertNotNull(store.get(block1.getHash()));
     }
 
     @Test
