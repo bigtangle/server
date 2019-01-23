@@ -1360,9 +1360,55 @@ public class ValidatorService {
         }
         
         // Check that the tx inputs only burn one type of tokens
-        Coin burnedCoins = null;
-        String tokenid = null;
-        long burnValue = 0;
+        Coin burnedCoins = countBurnedToken(block);
+        
+        if (burnedCoins == null || burnedCoins.getValue() == 0) {
+            if (throwExceptions)
+                throw new InvalidOrderException("No tokens were offered.");
+            return SolidityState.getFailState();     
+        }
+        
+        if (burnedCoins.getValue() > Integer.MAX_VALUE) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The order is too large.");
+            return SolidityState.getFailState();     
+        }
+
+        // Check that either the burnt token or the target token is BIG
+		if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+				|| !burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if (throwExceptions)
+                throw new InvalidOrderException("Invalid exchange combination. Ensure BIG is sold or bought.");
+            return SolidityState.getFailState();     
+		}
+        
+        // Check that we have a correct price given in full BIGs
+        if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if (burnedCoins.getValue() % orderInfo.getTargetValue() != 0) {
+                if (throwExceptions)
+                    throw new InvalidOrderException("The given order's price is not integer.");
+                return SolidityState.getFailState();     
+            }
+        } else {
+            if (orderInfo.getTargetValue() % burnedCoins.getValue() != 0) {
+                if (throwExceptions)
+                    throw new InvalidOrderException("The given order's price is not integer.");
+                return SolidityState.getFailState();     
+            }
+        }
+        
+        return SolidityState.getSuccessState();
+    }
+
+    /**
+     * Counts the number tokens that are being burned in this block. If multiple tokens exist in the transaction, throws InvalidOrderException.
+     * 
+     * @param block
+     * @return
+     * @throws BlockStoreException
+     */
+	public Coin countBurnedToken(Block block) throws BlockStoreException {
+		Coin burnedCoins = null;
         for (final Transaction tx : block.getTransactions()) {
             for (int index = 0; index < tx.getInputs().size(); index++) {
                 TransactionInput in = tx.getInputs().get(index);
@@ -1373,67 +1419,28 @@ public class ValidatorService {
                     throw new RuntimeException("Block attempts to spend a not yet existent output!");
                 }
                 
-                if (tokenid == null)
-                    tokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
-                else if (!tokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
-                    if (throwExceptions)
-                        throw new InvalidOrderException("Cannot use multiple different tokens");
-                    return SolidityState.getFailState();     
-                }
+                if (burnedCoins == null)
+                	burnedCoins = Coin.valueOf(0, Utils.HEX.encode(prevOut.getValue().getTokenid()));
                     
-                burnValue += prevOut.getValue().getValue();
+                try {
+                	burnedCoins = burnedCoins.add(prevOut.getValue());
+                } catch (IllegalArgumentException e) {
+                	throw new InvalidOrderException(e.getMessage());
+                }
             }
 
             for (int index = 0; index < tx.getOutputs().size(); index++) {
                 TransactionOutput out = tx.getOutputs().get(index);
                 
-                if (!tokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
-                    if (throwExceptions)
-                        throw new InvalidOrderException("Cannot use multiple different tokens");
-                    return SolidityState.getFailState();     
+                try {
+                	burnedCoins = burnedCoins.subtract(out.getValue());
+                } catch (IllegalArgumentException e) {
+                	throw new InvalidOrderException(e.getMessage());
                 }
-                    
-                burnValue -= out.getValue().getValue();
             }
         }
-        
-        if (tokenid == null || burnValue == 0) {
-            if (throwExceptions)
-                throw new InvalidOrderException("No tokens were offered.");
-            return SolidityState.getFailState();     
-        }
-        
-        if (burnValue > Integer.MAX_VALUE) {
-            if (throwExceptions)
-                throw new InvalidOrderException("The order is too large.");
-            return SolidityState.getFailState();     
-        }
-
-        // Check that either the burnt token or the target token is BIG
-		if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-				|| !tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (throwExceptions)
-                throw new InvalidOrderException("Invalid exchange combination. Ensure BIG is sold or bought.");
-            return SolidityState.getFailState();     
-		}
-        
-        // Check that we have a correct price given in full BIGs
-        if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (burnValue % orderInfo.getTargetValue() != 0) {
-                if (throwExceptions)
-                    throw new InvalidOrderException("The given order's price is not integer.");
-                return SolidityState.getFailState();     
-            }
-        } else {
-            if (orderInfo.getTargetValue() % burnValue != 0) {
-                if (throwExceptions)
-                    throw new InvalidOrderException("The given order's price is not integer.");
-                return SolidityState.getFailState();     
-            }
-        }
-        
-        return SolidityState.getSuccessState();
-    }
+		return burnedCoins;
+	}
 
     private SolidityState checkOrderOpSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         if (block.getTransactions().size() != 1) {

@@ -965,42 +965,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
             
-            String offerTokenid = null;
-            long offerValue = 0;
-            for (final Transaction tx : block.getTransactions()) {
-                for (int index = 0; index < tx.getInputs().size(); index++) {
-                    TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                            in.getOutpoint().getIndex());
-                    if (prevOut == null) {
-                        // Cannot happen due to solidity checks before
-                        throw new RuntimeException("Block attempts to spend a not yet existent output!");
-                    }
-
-                    if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
-                        // Cannot happen due to solidity checks before
-                        throw new RuntimeException("Differing token id!");
-                    }
-                    
-                    offerTokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
-                    offerValue += prevOut.getValue().getValue();
-                }
-                
-                for (int index = 0; index < tx.getOutputs().size(); index++) {
-                    TransactionOutput out = tx.getOutputs().get(index);
-
-                    if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
-                        // Cannot happen due to solidity checks before
-                        throw new RuntimeException("Differing token id!");
-                    }
-                    
-                    offerTokenid = Utils.HEX.encode(out.getValue().getTokenid());
-                    offerValue -= out.getValue().getValue();
-                }
-            }
+            Coin offer = validatorService.countBurnedToken(block);
             
             OrderRecord record = new OrderRecord(block.getTransactions().get(0).getHash(), Sha256Hash.ZERO_HASH, 
-            		offerValue, offerTokenid, false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
+            		offer.getValue(), offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
             		reqInfo.getBeneficiaryPubKey(), NetworkParameters.INITIAL_ORDER_TTL, 0);
             
             blockStore.insertOrder(record);
@@ -1175,8 +1143,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             orderBook.enter(orderId, side, price, size);
             orderId++;
         }
-        
-        // TODO validate token count invariance in tests
         
         // Collect all match events for each order book
         for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
@@ -1419,46 +1385,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new RuntimeException(e);
         }
         
-        // Read the referenced order block
+        // Read the order from the referenced block
         Transaction orderTx = blockStore.get(info.getOrderBlockHash()).getHeader().getTransactions().get(0); 
-        
-        // Find out how much was spent on the order
-        // TODO refactor this, this happens at three different places
-        String offerTokenid = null;
-        long offerValue = 0;
-        for (int index = 0; index < orderTx.getInputs().size(); index++) {
-            TransactionInput in = orderTx.getInputs().get(index);
-            UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                    in.getOutpoint().getIndex());
-            if (prevOut == null) {
-                // Cannot happen due to solidity checks before
-                throw new RuntimeException("Block attempts to spend a not yet existent output!");
-            }
-
-            if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
-                // Cannot happen due to solidity checks before
-                throw new RuntimeException("Differing token id!");
-            }
-            
-            offerTokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
-            offerValue += prevOut.getValue().getValue();
-        }
-        
-        for (int index = 0; index < orderTx.getOutputs().size(); index++) {
-            TransactionOutput out = orderTx.getOutputs().get(index);
-
-            if (offerTokenid != null && !offerTokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
-                // Cannot happen due to solidity checks before
-                throw new RuntimeException("Differing token id!");
-            }
-            
-            offerTokenid = Utils.HEX.encode(out.getValue().getTokenid());
-            offerValue -= out.getValue().getValue();
-        }
+        OrderRecord order = blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH);
         
         // Build transaction returning the spent tokens
         Transaction tx = new Transaction(networkParameters);
-        tx.addOutput(Coin.valueOf(offerValue, Utils.HEX.decode(offerTokenid)), ECKey.fromPublicOnly(blockStore.getOrder(orderTx.getHash(), Sha256Hash.ZERO_HASH).getBeneficiaryPubKey()));
+		tx.addOutput(Coin.valueOf(order.getOfferValue(), order.getOfferTokenid()), ECKey.fromPublicOnly(order.getBeneficiaryPubKey()));
         
         // The input does not really need to be a valid signature, as long
         // as it has the right general form and is slightly different for
