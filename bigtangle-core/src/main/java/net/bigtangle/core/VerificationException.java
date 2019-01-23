@@ -221,4 +221,10 @@ public class VerificationException extends RuntimeException {
             super("Difficulty target is bad");
         }
     }
+    
+    public static class InvalidOrderException extends VerificationException {
+        public InvalidOrderException(String msg) {
+            super(msg);
+        }
+    }
 }

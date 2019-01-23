@@ -13,7 +13,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -50,6 +52,7 @@ import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
+import net.bigtangle.core.VerificationException.InvalidOrderException;
 import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
@@ -2752,6 +2755,256 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             
             fail();
         } catch (InvalidTokenOutputException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityOrderOpenOk() throws Exception {
+        store.resetStore();
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+		}
+        
+        // Should go through
+        try {
+            blockGraph.add(block1, false);
+        } catch (VerificationException e) {
+            fail();
+        }
+    }
+    
+    @Test
+    public void testSolidityOrderOpenNoTransactions() throws Exception {
+        store.resetStore();
+		
+		Block block1 = null;
+		{
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+		}
+        
+        // Should not go through
+        try {
+            blockGraph.add(block1, false);
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityOrderOpenMultipleTXs() throws Exception {
+        store.resetStore();
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        
+		// Make the "test" token
+		Block tokenBlock = null;
+		{
+	        TokenInfo tokenInfo = new TokenInfo();
+	        
+	        Coin coinbase = Coin.valueOf(77777L, genesiskey.getPubKey());
+	        long amount = coinbase.getValue();
+	        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(genesiskey.getPubKey()), "Test", "Test", 1, 0,
+	                amount, false, true);
+
+	        tokenInfo.setTokens(tokens);
+	        tokenInfo.getMultiSignAddresses()
+	                .add(new MultiSignAddress(tokens.getTokenid(), "", genesiskey.getPublicKeyAsHex()));
+
+	        // This (saveBlock) calls milestoneUpdate currently
+	        tokenBlock = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, genesiskey, null, null, null);
+	        blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+		}
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID))).collect(Collectors.toList());
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			TransactionInput input = tx.addInput(spendableOutput);
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+
+
+			Transaction tx2 = new Transaction(networkParameters);
+	        // Create burning 2 "test"
+			List<UTXO> outputs2 = testTransactionAndGetBalances(false, genesiskey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(genesiskey.getPubKey()))).collect(Collectors.toList());
+			TransactionOutput spendableOutput2 = new FreeStandingTransactionOutput(this.networkParameters, outputs2.get(0),
+			        0);
+			Coin amount2 = Coin.valueOf(2, genesiskey.getPubKey());
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount2, genesiskey));
+			tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput2.getValue().subtract(amount2), genesiskey));
+			TransactionInput input2 = tx2.addInput(spendableOutput2);
+			Sha256Hash sighash2 = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			TransactionSignature tsrecsig2 = new TransactionSignature(genesiskey.sign(sighash2), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript2 = ScriptBuilder.createInputScript(tsrecsig2);
+			input2.setScriptSig(inputScript2);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.addTransaction(tx2);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+		}
+        
+        // Should not go through
+        try {
+            blockGraph.add(block1, false);
+            fail();
+        } catch (IncorrectTransactionCountException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityOrderOpenMultipleTokens() throws Exception {
+        store.resetStore();
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        
+		// Make the "test" token
+		Block tokenBlock = null;
+		{
+	        TokenInfo tokenInfo = new TokenInfo();
+	        
+	        Coin coinbase = Coin.valueOf(77777L, genesiskey.getPubKey());
+	        long amount = coinbase.getValue();
+	        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(genesiskey.getPubKey()), "Test", "Test", 1, 0,
+	                amount, false, true);
+
+	        tokenInfo.setTokens(tokens);
+	        tokenInfo.getMultiSignAddresses()
+	                .add(new MultiSignAddress(tokens.getTokenid(), "", genesiskey.getPublicKeyAsHex()));
+
+	        // This (saveBlock) calls milestoneUpdate currently
+	        tokenBlock = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, genesiskey, null, null, null);
+	        blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+		}
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	        
+	        // Create burning 2 BIG
+			List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID))).collect(Collectors.toList());
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+			        0);
+			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+			
+	        // Create burning 2 "test"
+			List<UTXO> outputs2 = testTransactionAndGetBalances(false, genesiskey).stream()
+					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(genesiskey.getPubKey()))).collect(Collectors.toList());
+			TransactionOutput spendableOutput2 = new FreeStandingTransactionOutput(this.networkParameters, outputs2.get(0),
+			        0);
+			Coin amount2 = Coin.valueOf(2, genesiskey.getPubKey());
+			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount2, genesiskey));
+			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput2.getValue().subtract(amount2), genesiskey));
+
+			TransactionInput input = tx.addInput(spendableOutput);
+			TransactionInput input2 = tx.addInput(spendableOutput2);
+
+			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+			input.setScriptSig(inputScript);
+			Sha256Hash sighash2 = tx.hashForSignature(1, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+			TransactionSignature tsrecsig2 = new TransactionSignature(genesiskey.sign(sighash2), Transaction.SigHash.ALL,
+			        false);
+			Script inputScript2 = ScriptBuilder.createInputScript(tsrecsig2);
+			input2.setScriptSig(inputScript2);
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+		}
+        
+        // Should not go through
+        try {
+            blockGraph.add(block1, false);
+            fail();
+        } catch (InvalidOrderException e) {
+        }
+    }
+    
+    @Test
+    public void testSolidityOrderOpenNoTokensOffered() throws Exception {
+        store.resetStore();
+        @SuppressWarnings("deprecation")
+		ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		
+		Block block1 = null;
+		{
+			// Make a buy order for "test"s
+			Transaction tx = new Transaction(networkParameters);
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", genesiskey.getPubKey());
+			tx.setData(info.toByteArray());
+	
+	        // Create block with order
+			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+			block1.addTransaction(tx);
+			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+			block1.solve();
+		}
+        
+        // Should not go through
+        try {
+            blockGraph.add(block1, false);
+            fail();
+        } catch (InvalidOrderException e) {
         }
     }
 

@@ -74,6 +74,7 @@ import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
+import net.bigtangle.core.VerificationException.InvalidOrderException;
 import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
@@ -1359,6 +1360,7 @@ public class ValidatorService {
         }
         
         // Check that the tx inputs only burn one type of tokens
+        Coin burnedCoins = null;
         String tokenid = null;
         long burnValue = 0;
         for (final Transaction tx : block.getTransactions()) {
@@ -1375,7 +1377,7 @@ public class ValidatorService {
                     tokenid = Utils.HEX.encode(prevOut.getValue().getTokenid());
                 else if (!tokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
                     if (throwExceptions)
-                        throw new VerificationException("Cannot use multiple different tokens");
+                        throw new InvalidOrderException("Cannot use multiple different tokens");
                     return SolidityState.getFailState();     
                 }
                     
@@ -1387,7 +1389,7 @@ public class ValidatorService {
                 
                 if (!tokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
                     if (throwExceptions)
-                        throw new VerificationException("Cannot use multiple different tokens");
+                        throw new InvalidOrderException("Cannot use multiple different tokens");
                     return SolidityState.getFailState();     
                 }
                     
@@ -1395,18 +1397,23 @@ public class ValidatorService {
             }
         }
         
-        if (burnValue > Integer.MAX_VALUE) {
+        if (tokenid == null || burnValue == 0) {
             if (throwExceptions)
-                throw new VerificationException("The order is too large.");
+                throw new InvalidOrderException("No tokens were offered.");
             return SolidityState.getFailState();     
         }
         
+        if (burnValue > Integer.MAX_VALUE) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The order is too large.");
+            return SolidityState.getFailState();     
+        }
 
         // Check that either the burnt token or the target token is BIG
 		if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
 				|| !tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (throwExceptions)
-                throw new VerificationException("Invalid exchange combination. Ensure BIG is sold or bought.");
+                throw new InvalidOrderException("Invalid exchange combination. Ensure BIG is sold or bought.");
             return SolidityState.getFailState();     
 		}
         
@@ -1414,13 +1421,13 @@ public class ValidatorService {
         if (tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (burnValue % orderInfo.getTargetValue() != 0) {
                 if (throwExceptions)
-                    throw new VerificationException("The given order's price is not integer.");
+                    throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();     
             }
         } else {
             if (orderInfo.getTargetValue() % burnValue != 0) {
                 if (throwExceptions)
-                    throw new VerificationException("The given order's price is not integer.");
+                    throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();     
             }
         }
