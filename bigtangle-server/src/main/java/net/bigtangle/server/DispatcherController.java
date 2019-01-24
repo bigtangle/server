@@ -86,8 +86,9 @@ public class DispatcherController {
     @Autowired
     private LogResultService logResultService;
 
-    public void checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
+    public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
         String header = httprequest.getHeader("Authorization");
+        boolean flag = false;
         if (header != null && !header.trim().isEmpty()) {
             String pubkey = header.split("")[0];
             String signHex = header.split("")[1];
@@ -95,8 +96,9 @@ public class DispatcherController {
             ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
             byte[] message = reverseBytes(HEX.decode(contentHex));
             byte[] signOutput = Utils.HEX.decode(signHex);
-            boolean flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+            flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
         }
+        return flag;
 
     }
 
@@ -105,9 +107,18 @@ public class DispatcherController {
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
+
             logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
+            if (!checkAuth(httpServletResponse, httprequest)) {
+                AbstractResponse resp = ErrorResponse.create(100);
+                resp.setMessage("no auth");
+                this.outPrintJSONString(httpServletResponse, resp);
+                return;
+
+            }
+
             switch (reqCmd0000) {
 
             case getTip: {
