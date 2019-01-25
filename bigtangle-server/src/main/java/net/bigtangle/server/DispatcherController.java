@@ -16,6 +16,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,13 +91,36 @@ public class DispatcherController {
         String header = httprequest.getHeader("Authorization");
         boolean flag = false;
         if (header != null && !header.trim().isEmpty()) {
-            String pubkey = header.split("")[0];
-            String signHex = header.split("")[1];
-            String contentHex = header.split("")[2];
-            ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-            byte[] message = reverseBytes(HEX.decode(contentHex));
-            byte[] signOutput = Utils.HEX.decode(signHex);
-            flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+            HttpSession session = httprequest.getSession(true);
+            if (session != null) {
+                if ("key_verified".equals(session.getAttribute("key_verify_flag"))) {
+                    flag = true;
+                } else {
+                    String pubkey = header.split("")[0];
+                    String signHex = header.split("")[1];
+                    String contentHex = header.split("")[2];
+                    ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+                    byte[] message = reverseBytes(HEX.decode(contentHex));
+                    byte[] signOutput = Utils.HEX.decode(signHex);
+                    flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+                    if (flag) {
+                        HttpSession a = httprequest.getSession(true);
+                        if (a != null) {
+                            a.setAttribute("key_verify_flag", "key_verified");
+                        }
+                    }
+                }
+            } else {
+                String pubkey = header.split("")[0];
+                String signHex = header.split("")[1];
+                String contentHex = header.split("")[2];
+                ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+                byte[] message = reverseBytes(HEX.decode(contentHex));
+                byte[] signOutput = Utils.HEX.decode(signHex);
+                flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+
+            }
+
         }
         return flag;
 
@@ -111,12 +135,14 @@ public class DispatcherController {
             logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
-            if (!checkAuth(httpServletResponse, httprequest)) {
-                AbstractResponse resp = ErrorResponse.create(100);
-                resp.setMessage("no auth");
-                this.outPrintJSONString(httpServletResponse, resp);
-                return;
+            if (settingService.getPermissionFlag()) {
+                if (!checkAuth(httpServletResponse, httprequest)) {
+                    AbstractResponse resp = ErrorResponse.create(100);
+                    resp.setMessage("no auth");
+                    this.outPrintJSONString(httpServletResponse, resp);
+                    return;
 
+                }
             }
 
             switch (reqCmd0000) {

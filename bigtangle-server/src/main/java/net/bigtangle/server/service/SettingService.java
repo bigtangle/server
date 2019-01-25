@@ -20,6 +20,11 @@ public class SettingService {
         return SettingResponse.create(value);
     }
 
+    public boolean getPermissionFlag() throws BlockStoreException {
+        boolean value = serverConfiguration.getPermissioned();
+        return value;
+    }
+
     @Autowired
     protected FullPrunedBlockStore store;
 }
