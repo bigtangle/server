@@ -155,8 +155,8 @@ public abstract class AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
         if (spendableOutput.getValue().subtract(amount).getValue() != 0)
-        	tx.addOutput(
-                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), genesiskey));
+            tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount),
+                    genesiskey));
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -354,45 +354,12 @@ public abstract class AbstractIntegrationTest {
         // the token id
         // Hence we first create a normal token with multiple permissioned, then
         // we can issue via multisign
-        {
-            String tokenid = keys.get(0).getPublicKeyAsHex();
 
-            int amount = 678900000;
-            Coin basecoin = Coin.valueOf(amount, tokenid);
-
-            // TokenInfo tokenInfo = new TokenInfo();
-
-            HashMap<String, String> requestParam00 = new HashMap<String, String>();
-            requestParam00.put("tokenid", tokenid);
-            String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam00));
-
-            TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-            long tokenindex_ = tokenIndexResponse.getTokenindex();
-            String prevblockhash = tokenIndexResponse.getBlockhash();
-
-            Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
-            tokenInfo.setTokens(tokens);
-
-            ECKey key1 = keys.get(1);
-            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
-
-            ECKey key2 = keys.get(2);
-            tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
-
-            // TODO this doesn't work because checkMultiSignPre is wrong
-            walletAppKit.wallet().saveToken(tokenInfo, basecoin, keys.get(0), null);
-        }
+        String tokenid =   createFirstMutilsignToken(keys, tokenInfo);
 
         milestoneService.update();
 
-        // Setup transaction and signatures
-        // List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-
-        String tokenid = keys.get(0).getPublicKeyAsHex();
-
-        int amount = 678900000;
+        int amount = 200;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         // TokenInfo tokenInfo = new TokenInfo();
@@ -421,7 +388,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(2).getPubKey(), basecoin, tokenInfo);
         block.solve();
 
         log.debug("block hash : " + block.getHashAsString());
@@ -474,6 +441,38 @@ public abstract class AbstractIntegrationTest {
         }
 
         checkBalance(basecoin, key1);
+    }
+
+    private String createFirstMutilsignToken(List<ECKey> keys, TokenInfo tokenInfo)
+            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
+        String tokenid = keys.get(1).getPublicKeyAsHex();
+
+        int amount = 678900000;
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+
+        // TokenInfo tokenInfo = new TokenInfo();
+
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
+        tokenInfo.setTokens(tokens);
+
+        ECKey key1 = keys.get(1);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
+
+        ECKey key2 = keys.get(2);
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
+
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, keys.get(1), null);
+        return tokenid;
     }
 
 }
