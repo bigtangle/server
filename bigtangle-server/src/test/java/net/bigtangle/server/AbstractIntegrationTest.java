@@ -359,7 +359,7 @@ public abstract class AbstractIntegrationTest {
 
         milestoneService.update();
 
-        int amount = 200;
+        int amount = 2000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         // TokenInfo tokenInfo = new TokenInfo();

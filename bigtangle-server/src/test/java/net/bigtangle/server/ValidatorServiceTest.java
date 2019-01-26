@@ -2332,7 +2332,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
             blockGraph.add(block9, false);
             fail();
-        } catch (InvalidSignatureException e) {
+        } catch (InsufficientSignaturesException e) {
         }
         try {
             blockGraph.add(block10, false);
