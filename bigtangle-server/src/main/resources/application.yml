@@ -12,6 +12,7 @@ server:
     keyStoreType: ${KEYSTORETYPE:PKCS12}
   permissioned: ${PERMISSIONED:false}
   permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
+  
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

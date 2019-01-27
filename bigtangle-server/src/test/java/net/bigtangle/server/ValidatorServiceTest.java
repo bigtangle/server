@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -35,6 +34,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
@@ -52,15 +52,14 @@ import net.bigtangle.core.VerificationException.CoinbaseDisallowedException;
 import net.bigtangle.core.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.VerificationException.IncorrectTransactionCountException;
-import net.bigtangle.core.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.VerificationException.InvalidOrderException;
-import net.bigtangle.core.VerificationException.InvalidSignatureException;
 import net.bigtangle.core.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
+import net.bigtangle.core.VerificationException.MissingSignatureException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
 import net.bigtangle.core.VerificationException.NegativeValueOutput;
 import net.bigtangle.core.VerificationException.NotCoinbaseException;
@@ -2290,12 +2289,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
             blockGraph.add(block1, false);
             fail();
-        } catch (InsufficientSignaturesException e) {
+        } catch (MissingSignatureException e) {
         }
         try {
             blockGraph.add(block2, false);
             fail();
-        } catch (InsufficientSignaturesException e) {
+        } catch (MissingSignatureException e) {
         }
         
         try {
@@ -2332,7 +2331,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
             blockGraph.add(block9, false);
             fail();
-        } catch (InsufficientSignaturesException e) {
+        } catch (VerificationException e) {
         }
         try {
             blockGraph.add(block10, false);

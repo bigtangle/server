@@ -174,6 +174,12 @@ public class VerificationException extends RuntimeException {
         }
     }
 
+    public static class MissingSignatureException extends VerificationException {
+        public MissingSignatureException() {
+            super("Signature missing");
+        }
+    }
+
     public static class InvalidSignatureException extends VerificationException {
         public InvalidSignatureException() {
             super("Some signatures are not valid here");

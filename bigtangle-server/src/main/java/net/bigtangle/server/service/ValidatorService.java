@@ -79,6 +79,7 @@ import net.bigtangle.core.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.VerificationException.MissingDependencyException;
+import net.bigtangle.core.VerificationException.MissingSignatureException;
 import net.bigtangle.core.VerificationException.MissingTransactionDataException;
 import net.bigtangle.core.VerificationException.NotCoinbaseException;
 import net.bigtangle.core.VerificationException.PreviousTokenDisallowsException;
@@ -1759,7 +1760,7 @@ public class ValidatorService {
 
         // Must define enough permissioned addresses
         if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
-            if (throwExceptions)
+            if (throwExceptions) 
                 throw new InvalidTransactionDataException(
                         "Cannot fulfill required sign number from multisign address list");
             return SolidityState.getFailState();
@@ -1816,8 +1817,9 @@ public class ValidatorService {
                 e.printStackTrace();
             }
         } else {
+            permissionedAddresses = currentToken.getMultiSignAddresses();
+
             // First time issuances must sign for the token id
-            permissionedAddresses = new ArrayList<>();
             MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getTokens().getTokenid(), "",
                     currentToken.getTokens().getTokenid());
             permissionedAddresses.add(firstTokenAddress);
@@ -1850,20 +1852,28 @@ public class ValidatorService {
         }
 
         // Ensure all multiSignBys pubkeys are from the permissioned list
-        if (currentToken.getTokens().getTokenindex() != 0) {
-            for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
-                ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
-                if (!permissionedPubKeys.contains(pubKey)) {
-                    if (throwExceptions)
-                        throw new InvalidSignatureException();
-                    return SolidityState.getFailState();
-                }
+        for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
+            ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
+            if (!permissionedPubKeys.contains(pubKey)) {
+                if (throwExceptions)
+                    throw new InvalidSignatureException();
+                return SolidityState.getFailState();
+            }
 
-                // Cannot use same address multiple times
-                permissionedPubKeys.remove(pubKey);
+            // Cannot use same address multiple times
+            permissionedPubKeys.remove(pubKey);
+        }
+
+        // For first issuance, ensure the tokenid pubkey signature exists to prevent others from generating conflicts
+        if (currentToken.getTokens().getTokenindex() == 0) {
+            if (permissionedPubKeys.contains(ByteBuffer.wrap(Utils.HEX.decode(currentToken.getTokens().getTokenid())))) {
+                if (throwExceptions)
+                    throw new MissingSignatureException();
+                return SolidityState.getFailState();
             }
         }
-        // Count successful signature verifications
+        
+        // Verify signatures
         for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
             byte[] data = tx.getHash().getBytes();
@@ -1871,6 +1881,10 @@ public class ValidatorService {
 
             if (ECKey.verify(data, signature, pubKey)) {
                 signatureCount++;
+            } else {
+                if (throwExceptions)
+                    throw new InvalidSignatureException();
+                return SolidityState.getFailState();
             }
         }
 

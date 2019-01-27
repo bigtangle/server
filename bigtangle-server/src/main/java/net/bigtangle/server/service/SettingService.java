@@ -21,7 +21,7 @@ public class SettingService {
     }
 
     public boolean getPermissionFlag() throws BlockStoreException {
-        boolean value = serverConfiguration.getPermissioned();
+        Boolean value = serverConfiguration.getPermissioned();
         return value;
     }
 
