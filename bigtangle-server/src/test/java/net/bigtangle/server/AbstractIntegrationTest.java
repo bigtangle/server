@@ -4,15 +4,20 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -35,12 +40,17 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderReclaimInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -51,6 +61,8 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
@@ -122,6 +134,323 @@ public abstract class AbstractIntegrationTest {
         walletKeys();
     }
 
+    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks) throws JsonProcessingException, Exception, BlockStoreException {
+    	store.resetStore();
+		
+		// Make the "test" token
+		Block block = null;
+        TokenInfo tokenInfo = new TokenInfo();
+        
+        Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
+        long amount = coinbase.getValue();
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
+                amount, false, true);
+
+        tokenInfo.setTokens(tokens);
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
+
+        // TODO This (saveBlock) calls milestoneUpdate currently
+        block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+        addedBlocks.add(block);
+        blockGraph.confirm(block.getHash(), new HashSet<>());
+		return block;
+	}
+
+	protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeAndConfirmReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+	}
+
+	protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks, Block predecessor) throws Exception {
+		Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+        
+        // Confirm and return
+		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+		return block;
+	}
+
+	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+	}
+
+	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
+			Block predecessor) throws Exception {
+		return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor, predecessor);
+	}
+
+	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
+			Block predecessor, Block branchPredecessor) throws Exception {
+		Block block = null;
+		
+        // Make transaction
+		Transaction tx = new Transaction(networkParameters);
+		OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, missingOrderMatching);
+		tx.setData(info.toByteArray());
+
+        // Create block with order reclaim
+		block = predecessor.createNextBlock(branchPredecessor);
+		block.addTransaction(tx);
+		block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+		block.solve();
+		this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+		return block;
+	}
+
+	protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
+	}
+
+	protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
+		Block block = null;
+		
+        // Make transaction
+		Transaction tx = new Transaction(networkParameters);
+		Coin amount = Coin.valueOf(sellAmount, tokenId);
+		List<UTXO> outputs = getBalance(false, fromKey).stream()
+				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
+				.filter(out -> out.getValue().getValue() >= amount.getValue())
+				.collect(Collectors.toList());
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+		        0);
+		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), fromKey));
+		TransactionInput input = tx.addInput(spendableOutput);
+		
+		// Sign
+		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);		
+		TransactionSignature sig = new TransactionSignature(fromKey.sign(sighash), Transaction.SigHash.ALL,
+		        false);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
+		input.setScriptSig(inputScript);
+
+        // Create block with tx
+		block = predecessor.createNextBlock();
+		block.addTransaction(tx);
+		block.solve();
+		this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+        
+        // Confirm and return
+		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+		return block;
+	}
+
+	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
+	}
+
+	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
+		Block block = null;
+		Transaction tx = new Transaction(networkParameters);
+		OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING, beneficiary.getPubKey());
+		tx.setData(info.toByteArray());
+		
+        // Burn tokens to sell
+		Coin amount = Coin.valueOf(sellAmount, tokenId);
+		List<UTXO> outputs = getBalance(false, beneficiary).stream()
+				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
+				.filter(out -> out.getValue().getValue() >= amount.getValue())
+				.collect(Collectors.toList());
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+		        0);
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+		TransactionInput input = tx.addInput(spendableOutput);
+		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+		
+		TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL,
+		        false);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
+		input.setScriptSig(inputScript);
+
+        // Create block with order
+		block = predecessor.createNextBlock();
+		block.addTransaction(tx);
+		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+		block.solve();
+		this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+		return block;
+	}
+
+	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
+	}
+
+	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
+		Block block = null;
+		Transaction tx = new Transaction(networkParameters);
+		OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey());
+		tx.setData(info.toByteArray());
+        
+        // Burn BIG to buy
+		Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+		List<UTXO> outputs = getBalance(false, beneficiary).stream()
+				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
+				.filter(out -> out.getValue().getValue() >= amount.getValue())
+				.collect(Collectors.toList());
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+		        0);
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+		TransactionInput input = tx.addInput(spendableOutput);
+		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+		
+		TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL,
+		        false);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
+		input.setScriptSig(inputScript);
+
+        // Create block with order
+		block = predecessor.createNextBlock();
+		block.addTransaction(tx);
+		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+		block.solve();
+		this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+		return block;
+	}	
+	
+	protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+		return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
+	}
+
+	protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks, Block predecessor) throws Exception {
+		// Make an order op
+		Transaction tx = new Transaction(networkParameters);
+		OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, order.getHash());
+		tx.setData(info.toByteArray());
+		
+		// Legitimate it by signing
+        Sha256Hash sighash1 = tx.getHash();
+        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        tx.setDataSignature(buf1);
+
+        // Create block with order
+        Block block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+        block.solve();
+
+		this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+		return block;
+	}
+
+    protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks) throws Exception {
+		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+    	return makeAndConfirmOrderMatching(addedBlocks, predecessor);
+    }
+
+    protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
+		// Generate blocks until passing first reward interval
+	    Block rollingBlock = predecessor;
+	    for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+	        rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+	        blockGraph.add(rollingBlock, true);
+	        addedBlocks.add(rollingBlock);
+	    }
+	    
+	    // Generate mining reward block
+	    Block rewardBlock = transactionService.createAndAddMiningRewardBlock(store.getMaxConfirmedRewardBlockHash(),
+	            rollingBlock.getHash(), rollingBlock.getHash());
+        addedBlocks.add(rewardBlock);
+	    
+	    // Confirm
+	    blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
+		return rewardBlock;
+	}
+	
+	protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
+		// Asserts that the current token amounts are equal to the given token amounts
+		HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
+		for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
+			assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
+			assertEquals(currTokenAmounts.get(origTokenAmount.getKey()), origTokenAmount.getValue());
+		}
+		for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
+			assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
+			assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
+		}
+	}
+
+	protected void assertHasAvailableToken(ECKey testKey, String tokenId_, Long amount) throws Exception {
+		// Asserts that the given ECKey possesses the given amount of tokens
+		List<UTXO> balance = getBalance(false, testKey);
+		HashMap<String, Long> hashMap = new HashMap<>();
+		for (UTXO o : balance) {
+			String tokenId = Utils.HEX.encode(o.getValue().tokenid);
+			if (!hashMap.containsKey(tokenId))
+				hashMap.put(tokenId, 0L);
+			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().value);
+		}
+		
+		assertEquals(amount, hashMap.get(tokenId_));
+	}
+
+	protected HashMap<String, Long> getCurrentTokenAmounts() throws BlockStoreException {
+		// Adds the token values of open orders and UTXOs to a hashMap
+		HashMap<String, Long> hashMap = new HashMap<>();
+		addCurrentUTXOTokens(hashMap);
+		addCurrentOrderTokens(hashMap);
+		return hashMap;
+	}
+
+	protected void addCurrentOrderTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
+		// Adds the token values of open orders to the hashMap
+		List<OrderRecord> orders = store.getAllAvailableOrdersSorted();
+		for (OrderRecord o : orders) {
+			String tokenId = o.getOfferTokenid();
+			if (!hashMap.containsKey(tokenId))
+				hashMap.put(tokenId, 0L);
+			hashMap.put(tokenId, hashMap.get(tokenId) + o.getOfferValue());
+		}
+	}
+
+	protected void addCurrentUTXOTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
+		// Adds the token values of open UTXOs to the hashMap
+		List<UTXO> utxos = store.getAllAvailableUTXOsSorted();
+		for (UTXO o : utxos) {
+			String tokenId = Utils.HEX.encode(o.getValue().tokenid);
+			if (!hashMap.containsKey(tokenId))
+				hashMap.put(tokenId, 0L);
+			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().value);
+		}
+	}
+
+	protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks) throws BlockStoreException {
+		// Snapshot current state
+		List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
+		List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
+		Map<Block, Boolean> blockConfirmed = new HashMap<>();
+		for (Block b : addedBlocks) {
+			blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isMilestone());
+		}
+		
+		// Redo and assert snapshot equal to new state
+		store.resetStore();
+		for (Block b : addedBlocks) {
+			blockGraph.add(b, false);
+			if (blockConfirmed.get(b))
+				blockGraph.confirm(b.getHash(), new HashSet<>());
+		}
+		List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted();
+		List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
+		assertEquals(allOrdersSorted2.toString(), allOrdersSorted.toString()); // Works for now
+		assertEquals(allUTXOsSorted2.toString(), allUTXOsSorted.toString());
+	}
+
     protected Sha256Hash getRandomSha256Hash() {
         byte[] rawHashBytes = new byte[32];
         new Random().nextBytes(rawHashBytes);
@@ -167,7 +496,7 @@ public abstract class AbstractIntegrationTest {
         return tx;
     }
 
-    public void walletKeys() throws Exception {
+    protected void walletKeys() throws Exception {
         KeyParameter aesKey = null;
         File f = new File("./logs/", "bigtangle");
         if (f.exists())
@@ -177,7 +506,7 @@ public abstract class AbstractIntegrationTest {
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
-    public void wallet1() throws Exception {
+    protected void wallet1() throws Exception {
         KeyParameter aesKey = null;
         // delete first
         File f = new File("./logs/", "bigtangle1");
@@ -189,7 +518,7 @@ public abstract class AbstractIntegrationTest {
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
     }
 
-    public void wallet2() throws Exception {
+    protected void wallet2() throws Exception {
         KeyParameter aesKey = null;
         // delete first
         File f = new File("./logs/", "bigtangle2");
@@ -201,16 +530,16 @@ public abstract class AbstractIntegrationTest {
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
     }
 
-    public List<UTXO> getBalance() throws Exception {
+    protected List<UTXO> getBalance() throws Exception {
         return getBalance(false);
     }
 
     // get balance for the walletKeys
-    public List<UTXO> getBalance(boolean withZero) throws Exception {
+    protected List<UTXO> getBalance(boolean withZero) throws Exception {
         return getBalance(withZero, walletKeys);
     }
 
-    public UTXO getBalance(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
+    protected UTXO getBalance(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> ulist = getBalance(withZero, keys);
 
         for (UTXO u : ulist) {
@@ -223,7 +552,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     // get balance for the walletKeys
-    public List<UTXO> getBalance(boolean withZero, List<ECKey> keys) throws Exception {
+    protected List<UTXO> getBalance(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
 
@@ -248,13 +577,13 @@ public abstract class AbstractIntegrationTest {
         return listUTXO;
     }
 
-    public List<UTXO> getBalance(boolean withZero, ECKey ecKey) throws Exception {
+    protected List<UTXO> getBalance(boolean withZero, ECKey ecKey) throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(ecKey);
         return getBalance(withZero, keys);
     }
 
-    public void testInitWallet() throws Exception {
+    protected void testInitWallet() throws Exception {
 
         // testCreateMultiSig();
         testCreateMarket();
@@ -269,16 +598,16 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    // transfer the coin from public testPub to address in wallet
+    // transfer the coin from protected testPub to address in wallet
     @SuppressWarnings("deprecation")
-    public void testInitTransferWallet() throws Exception {
+    protected void testInitTransferWallet() throws Exception {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333);
         walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
     }
 
-    public void testCreateToken() throws JsonProcessingException, Exception {
+    protected void testCreateToken() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -298,7 +627,7 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
-    public void testCreateMarket() throws JsonProcessingException, Exception {
+    protected void testCreateMarket() throws JsonProcessingException, Exception {
         ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -315,24 +644,24 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
-    public void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
+    protected void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
         checkResponse(resp, 0);
     }
 
-    public void checkResponse(String resp, int code) throws JsonParseException, JsonMappingException, IOException {
+    protected void checkResponse(String resp, int code) throws JsonParseException, JsonMappingException, IOException {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int error = (Integer) result2.get("errorcode");
         assertTrue(error == code);
     }
 
-    public void checkBalance(Coin coin, ECKey ecKey) throws Exception {
+    protected void checkBalance(Coin coin, ECKey ecKey) throws Exception {
         ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(ecKey);
         checkBalance(coin, a);
     }
 
-    public void checkBalance(Coin coin, List<ECKey> a) throws Exception {
+    protected void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         milestoneService.update();
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
@@ -348,14 +677,14 @@ public abstract class AbstractIntegrationTest {
     }
 
     // create a token with multi sign
-    public void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo)
+    protected void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo)
             throws JsonProcessingException, Exception {
         // First issuance cannot be multisign but instead needs the signature of
         // the token id
         // Hence we first create a normal token with multiple permissioned, then
         // we can issue via multisign
 
-        String tokenid =   createFirstMutilsignToken(keys, tokenInfo);
+        String tokenid =   createFirstMultisignToken(keys, tokenInfo);
 
         milestoneService.update();
 
@@ -443,7 +772,7 @@ public abstract class AbstractIntegrationTest {
         checkBalance(basecoin, key1);
     }
 
-    private String createFirstMutilsignToken(List<ECKey> keys, TokenInfo tokenInfo)
+    private String createFirstMultisignToken(List<ECKey> keys, TokenInfo tokenInfo)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = keys.get(1).getPublicKeyAsHex();
 

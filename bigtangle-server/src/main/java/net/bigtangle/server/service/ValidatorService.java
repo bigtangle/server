@@ -410,7 +410,7 @@ public class ValidatorService {
             throws BlockStoreException {
         // Any milestone blocks are always compatible with the current milestone
         if (block.getBlockEvaluation().isMilestone())
-            return true;
+            return true; 
 
         // Get sets of all / all new non-milestone blocks when approving the
         // specified block in combination with the currently included blocks

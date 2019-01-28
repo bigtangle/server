@@ -1076,13 +1076,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // From all orders and ops, begin order matching algorithm:
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
         List<OrderRecord> cancelledOrders = new ArrayList<>();
-        
-        // Process refresh ops
-        for (OrderOpInfo r : refreshs) {
-            remainingOrders.get(r.getInitialBlockHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
-        }
 
-        // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders
+        // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders or use BigInteger
         // Add old orders first, then new ones sorted by their hash xor deterministic randomness (somewhat FIFO)
         int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
@@ -1253,6 +1248,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 continue;
             } 
             order.setIssuingMatcherBlockHash(block.getHash());
+        }
+        
+        // Process refresh ops
+        for (OrderOpInfo r : refreshs) {
+        	if (remainingOrders.containsKey(r.getInitialBlockHash())) {
+        		remainingOrders.get(r.getInitialBlockHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
+        	}
         }
         
         // Process cancel ops after matching

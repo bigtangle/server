@@ -98,7 +98,7 @@ public class TipsService {
 		BlockWrap left = entryPoints.get(0);
 		BlockWrap right = entryPoints.get(1);
 		
-		// Unnecessary: left/right are never non-milestone initially
+		//  Unnecessary: left/right are never non-milestone initially
 		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
 		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
         

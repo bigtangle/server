@@ -11,6 +11,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -1313,6 +1315,114 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Should be unconfirmed now
         assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
         assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
+    }
+    
+    @Test
+    public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
+		@SuppressWarnings("deprecation")
+		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = outKey;
+		List<Block> addedBlocks = new ArrayList<>();
+		
+		// Make test token
+		resetAndMakeTestToken(testKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex();
+		
+		// Get current existing token amount
+		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+	
+		// Open sell order for test tokens
+		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+	
+		// Open buy order for test tokens
+		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+	
+		// Execute order matching
+		Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Generate spending block
+		Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, outKey2, testTokenId, 50, addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
+		
+		// Unconfirm order matching
+		blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
+		
+		// Verify the dependent spending block is unconfirmed too
+		assertFalse(store.getBlockEvaluation(utxoSpendingBlock.getHash()).isMilestone());
+		
+		// Verify token amount invariance 
+		assertCurrentTokenAmountEquals(origTokenAmounts);
+	
+		// Verify deterministic overall execution
+		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+    
+    @Test
+    public void testUnconfirmDependentsOrderMatchingDependentReclaim() throws Exception {
+		@SuppressWarnings({ "deprecation", "unused" })
+		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = outKey;
+		List<Block> addedBlocks = new ArrayList<>();
+		
+		// Make test token
+		Block token = resetAndMakeTestToken(testKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex();
+		
+		// Get current existing token amount
+		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+	
+		// Open sell order for test tokens
+		Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+	
+		// Execute order matching
+		Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
+        
+        // Generate reclaim block
+		Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order);
+		
+		// Unconfirm order matching
+		blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
+		
+		// TODO Verify the dependent reclaim block is unconfirmed too
+		assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isMilestone());
+		
+		// Verify token amount invariance 
+		assertCurrentTokenAmountEquals(origTokenAmounts);
+	
+		// Verify deterministic overall execution
+		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+    
+    @Test
+    public void testUnconfirmDependentsOrderReclaimDependent() throws Exception {
+		@SuppressWarnings({ "deprecation", "unused" })
+		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = outKey;
+		List<Block> addedBlocks = new ArrayList<>();
+		
+		// Make test token
+		Block token = resetAndMakeTestToken(testKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex();
+	
+		// Open sell order for test tokens
+		Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 77777, addedBlocks);
+	
+		// Execute order matching
+		Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
+        
+        // Generate reclaim block
+		Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order);
+		
+		// Generate reclaim-dependent transaction
+		Block reclaimSpender = makeAndConfirmTransaction(testKey, testKey, testTokenId, 77776, addedBlocks, rewardBlock);
+		
+		// Unconfirm reclaim
+		blockGraph.unconfirm(reclaimBlock.getHash(), new HashSet<>());
+		
+		// Verify the dependent spender block is unconfirmed too
+		assertFalse(store.getBlockEvaluation(reclaimSpender.getHash()).isMilestone());
+	
+		// Verify deterministic overall execution
+		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
     
 }

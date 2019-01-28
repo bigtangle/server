@@ -7,6 +7,7 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -502,4 +503,55 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
     }
     
+    @Test
+    public void testConflictOrderReclaim() throws Exception {
+		@SuppressWarnings({ "deprecation", "unused" })
+		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey testKey = outKey;
+		List<Block> addedBlocks = new ArrayList<>();
+		
+		// Make test token
+		Block token = resetAndMakeTestToken(testKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex();
+	
+		// Open sell order for test tokens
+		Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+	
+		// Execute order matching
+		Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
+        
+        // Generate reclaim blocks
+		Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
+		Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
+		
+		// Assert that we approve only one of these at a time
+        boolean hit1 = false;
+        boolean hit2 = false;
+        for (int i = 0; i < 150; i++) {
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
+            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
+            if (hit1 && hit2)
+                break;
+        }
+        assertTrue(hit1);
+        assertTrue(hit2);
+        
+        // After confirming one of them into the milestone, only that one block is now available
+        blockGraph.confirm(b1.getHash(), new HashSet<>());
+
+        for (int i = 0; i < 20; i++) {
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
+        }
+
+        try {
+            tipsService.getValidatedBlockPair(b2);
+            fail();
+        } catch (VerificationException e) {
+            // Expected
+        }
+    }
 }

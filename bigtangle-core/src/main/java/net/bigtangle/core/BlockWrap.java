@@ -49,6 +49,11 @@ public class BlockWrap {
             return false;
         return getBlock().equals(((BlockWrap) o).getBlock());
     }
+    
+    @Override
+    public String toString() {
+    	return block.toString();
+    }
 
     @Override
     public int hashCode() {
