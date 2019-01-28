@@ -1039,12 +1039,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Randomization
         byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
         
-        // Find all new Cancels, Refreshs and Orders in almost random order from collected
+        // Find all new Cancels, Refreshs and Orders in randomized order from collected
         List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
         Set<OrderRecord> untouchedNewOrders = new HashSet<>();
-        
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
@@ -1068,20 +1067,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         // Add the old leftover orders from the db to get all open orders
-        HashMap<Sha256Hash, OrderRecord> oldOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
-        @SuppressWarnings("unchecked")
-        HashMap<Sha256Hash, OrderRecord> remainingOrders = (HashMap<Sha256Hash, OrderRecord>) oldOrders.clone();
+        HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
+        Map<Sha256Hash, OrderRecord> oldOrders = new TreeMap<>(Comparator
+                .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
+        oldOrders.putAll(remainingOrders);
         remainingOrders.putAll(newOrders);
         
         // From all orders and ops, begin order matching algorithm:
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
         List<OrderRecord> cancelledOrders = new ArrayList<>();
-        
-        // Process cancel ops
-        for (OrderOpInfo c : cancels) {
-            cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
-            remainingOrders.remove(c.getInitialBlockHash());
-        }
         
         // Process refresh ops
         for (OrderOpInfo r : refreshs) {
@@ -1090,9 +1084,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // Match orders
 
-        // Add old ones first, then new ones sorted by their hash xor deterministic randomness (some kind of FIFO)
-        // Build old order books from db
         // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders
+        // Add old orders first, then new ones sorted by their hash xor deterministic randomness (somewhat FIFO)
         int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
         for (OrderRecord o : oldOrders.values()) {
@@ -1262,6 +1255,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 continue;
             } 
             order.setIssuingMatcherBlockHash(block.getHash());
+        }
+        
+        // Process cancel ops after matching
+        for (OrderOpInfo c : cancels) {
+        	if (remainingOrders.containsKey(c.getInitialBlockHash())) {
+                cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
+                remainingOrders.remove(c.getInitialBlockHash());
+        	}
         }
         
         // Add to proceeds all cancelled orders going back to the beneficiary
