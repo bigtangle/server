@@ -1081,8 +1081,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (OrderOpInfo r : refreshs) {
             remainingOrders.get(r.getInitialBlockHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
         }
-        
-        // Match orders
 
         // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders
         // Add old orders first, then new ones sorted by their hash xor deterministic randomness (somewhat FIFO)
@@ -1343,6 +1341,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // If in relevant reward height interval and a relevant block, collect it
             if (currentHeight <= toHeight) {
+            	if (currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP
+                		|| currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN)
                 relevantBlocks.add(currentBlock);
             }
 

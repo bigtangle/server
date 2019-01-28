@@ -451,5 +451,14 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
 
+    /* For tests */
+	public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException;
+
+	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
+
+	public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;
+
+	public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
+
 
 }

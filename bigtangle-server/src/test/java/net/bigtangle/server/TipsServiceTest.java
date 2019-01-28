@@ -102,7 +102,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
         ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+        List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -157,7 +157,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
         ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+        List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);

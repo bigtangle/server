@@ -174,7 +174,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
        walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, genesiskey);
 
-        for (UTXO utxo : testTransactionAndGetBalances(false, genesiskey)) {
+        for (UTXO utxo : getBalance(false, genesiskey)) {
             log.info("UTXO : " + utxo); 
                 assertTrue(utxo.getValue().value == 999999993666667l);
             
@@ -213,7 +213,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 log.info("UTXO : " + transactionOutput);
             }
 
-            for (UTXO output : this.testTransactionAndGetBalances(true, outKey)) {
+            for (UTXO output : this.getBalance(true, outKey)) {
                 log.info("UTXO : " + output);
             }
         }
@@ -288,9 +288,9 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);
-        List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
+        List<UTXO> utxos = getBalance(false, keys);
         UTXO yourutxo = utxos.get(0);
-        List<UTXO> ulist = testTransactionAndGetBalances();
+        List<UTXO> ulist = getBalance();
         UTXO myutxo = null;
         for (UTXO u : ulist) {
             if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
@@ -349,7 +349,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         testCreateMultiSigToken(keys, tokenInfo);
         UTXO multitemp = null;
         UTXO systemcoin = null;
-        List<UTXO> utxos = testTransactionAndGetBalances(false, keys);
+        List<UTXO> utxos = getBalance(false, keys);
         for (UTXO utxo : utxos) {
             if (multitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 multitemp = utxo;
@@ -360,7 +360,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         UTXO yourutxo = utxos.get(0);
-        List<UTXO> ulist = testTransactionAndGetBalances();
+        List<UTXO> ulist = getBalance();
         UTXO mymultitemp = null;
         UTXO mysystemcoin = null;
         for (UTXO utxo : ulist) {
@@ -425,10 +425,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         exchangeTokenComplete(req.tx);
 
-        for (UTXO utxo : testTransactionAndGetBalances(false, keys)) {
+        for (UTXO utxo : getBalance(false, keys)) {
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
-        for (UTXO utxo : testTransactionAndGetBalances()) {
+        for (UTXO utxo : getBalance()) {
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
@@ -440,7 +440,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         exchangeTokenComplete(req.tx);
         UTXO multitemp1 = null;
         UTXO systemcoin1 = null;
-        for (UTXO utxo : testTransactionAndGetBalances(false, keys)) {
+        for (UTXO utxo : getBalance(false, keys)) {
             if (multitemp1 == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 multitemp1 = utxo;
             }
@@ -451,7 +451,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
         UTXO mymultitemp1 = null;
         UTXO mysystemcoin1 = null;
-        for (UTXO utxo : testTransactionAndGetBalances()) {
+        for (UTXO utxo : getBalance()) {
             if (mymultitemp1 == null && Arrays.equals(utxo.getTokenidBuf(), multitemp.getTokenidBuf())) {
                 mymultitemp1 = utxo;
             }
@@ -487,7 +487,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         log.info("resp block, hex : " + Utils.HEX.encode(data));
         // get other tokenid from wallet
         UTXO utxo = null;
-        List<UTXO> ulist = testTransactionAndGetBalances();
+        List<UTXO> ulist = getBalance();
         for (UTXO u : ulist) {
             if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
@@ -517,7 +517,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         log.info("resp block, hex : " + Utils.HEX.encode(data));
         // get other tokenid from wallet
         UTXO utxo = null;
-        List<UTXO> ulist = testTransactionAndGetBalances();
+        List<UTXO> ulist = getBalance();
         for (UTXO u : ulist) {
             if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 if (u.isMultiSig()) {
@@ -790,7 +790,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
-        testTransactionAndGetBalances();
+        getBalance();
 
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer()
                 .makeTransaction(request.tx.bitcoinSerialize());

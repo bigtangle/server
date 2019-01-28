@@ -85,7 +85,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     
     public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception { 
 
-        List<UTXO> ulist = testTransactionAndGetBalances(false, wallet1Keys_part);
+        List<UTXO> ulist = getBalance(false, wallet1Keys_part);
 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
         Script multisigScript1 = multisigOutput.getScriptPubKey();

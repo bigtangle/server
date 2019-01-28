@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
@@ -62,9 +61,6 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
-
-    @Autowired
-    TaskExecutor taskExecutor;
 
     public ByteBuffer askTransaction() throws Exception {
         Block rollingBlock = askTransactionBlock();

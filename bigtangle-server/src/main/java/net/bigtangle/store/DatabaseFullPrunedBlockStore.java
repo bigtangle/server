@@ -342,7 +342,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash, nexttxreward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_TX_REWARD_NEXT_TX_REWARD_SQL = "SELECT nexttxreward FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
-    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, MAX(nexttxreward) FROM txreward WHERE confirmed = 1";
+    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash FROM txreward WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM txreward WHERE confirmed=1)";
     protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_ELIGIBLE_SQL = "SELECT eligibility " + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_SPENT_SQL = "SELECT spent " + "FROM txreward WHERE blockhash = ?";
@@ -380,6 +380,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_SUBTANGLE_PERMISSION_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE pubkey=?";
 
     protected final String SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE 1=1 ";
+    
+    // Tests
+    protected final String SELECT_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex "
+    		+ "FROM openorders ORDER BY blockhash, collectinghash";
+    protected final String SELECT_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
+    		+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
+    		+ "FROM outputs ORDER BY hash, outputindex";
+    protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex "
+    		+ "FROM openorders WHERE confirmed=1 AND spent=0 ORDER BY blockhash, collectinghash";
+    protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
+    		+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
+    		+ "FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -4942,6 +4956,174 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_ORDERS_SORTED_SQL);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
+                		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
+                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));      
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<UTXO> getAllUTXOsSorted() throws BlockStoreException {
+        List<UTXO> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_UTXOS_SORTED_SQL);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                // Parse it.
+                Coin coinvalue = Coin.valueOf(resultSet.getLong(1), resultSet.getString(7));
+                byte[] scriptBytes = resultSet.getBytes(2);
+                boolean coinbase = resultSet.getBoolean(3);
+                String address = resultSet.getString(4);
+                Sha256Hash blockhash = resultSet.getBytes(6) != null ? Sha256Hash.wrap(resultSet.getBytes(6)) : null;
+
+                String fromaddress = resultSet.getString(8);
+                String memo = resultSet.getString(9);
+                boolean spent = resultSet.getBoolean(10);
+                boolean confirmed = resultSet.getBoolean(11);
+                boolean spendPending = resultSet.getBoolean(12);
+                String tokenid = resultSet.getString("tokenid");
+                byte[] hash = resultSet.getBytes("hash");
+                long index = resultSet.getLong("outputindex");
+                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
+                        fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                result.add(txout);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_AVAILABLE_ORDERS_SORTED_SQL);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
+                		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
+                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));      
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
+        List<UTXO> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                // Parse it.
+                Coin coinvalue = Coin.valueOf(resultSet.getLong(1), resultSet.getString(7));
+                byte[] scriptBytes = resultSet.getBytes(2);
+                boolean coinbase = resultSet.getBoolean(3);
+                String address = resultSet.getString(4);
+                Sha256Hash blockhash = resultSet.getBytes(6) != null ? Sha256Hash.wrap(resultSet.getBytes(6)) : null;
+
+                String fromaddress = resultSet.getString(8);
+                String memo = resultSet.getString(9);
+                boolean spent = resultSet.getBoolean(10);
+                boolean confirmed = resultSet.getBoolean(11);
+                boolean spendPending = resultSet.getBoolean(12);
+                String tokenid = resultSet.getString("tokenid");
+                byte[] hash = resultSet.getBytes("hash");
+                long index = resultSet.getLong("outputindex");
+                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
+                        fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                result.add(txout);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }

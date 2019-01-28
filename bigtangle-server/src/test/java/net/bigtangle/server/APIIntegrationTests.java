@@ -108,7 +108,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
     public void testBlockDamage() throws Exception {
         ECKey outKey = new ECKey();
         ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(NetworkParameters.testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -285,7 +285,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         ecKeys.add(signKeys.get(1));
         ecKeys.add(signKeys.get(2));
 
-        UTXO output = testTransactionAndGetBalances(amount.getTokenHex(), false, ecKeys);
+        UTXO output = getBalance(amount.getTokenHex(), false, ecKeys);
         log.debug(output.toString());
         // filter 
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);

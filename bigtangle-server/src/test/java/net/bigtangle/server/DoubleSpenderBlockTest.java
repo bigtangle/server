@@ -100,7 +100,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         
         ECKey outKey = new ECKey();
         Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
@@ -165,7 +165,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         
         ECKey outKey = new ECKey();
         Coin coinbase = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);

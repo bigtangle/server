@@ -148,7 +148,7 @@ public abstract class AbstractIntegrationTest {
     protected Transaction createTestGenesisTransaction() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -201,17 +201,17 @@ public abstract class AbstractIntegrationTest {
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
     }
 
-    public List<UTXO> testTransactionAndGetBalances() throws Exception {
-        return testTransactionAndGetBalances(false);
+    public List<UTXO> getBalance() throws Exception {
+        return getBalance(false);
     }
 
     // get balance for the walletKeys
-    public List<UTXO> testTransactionAndGetBalances(boolean withZero) throws Exception {
-        return testTransactionAndGetBalances(withZero, walletKeys);
+    public List<UTXO> getBalance(boolean withZero) throws Exception {
+        return getBalance(withZero, walletKeys);
     }
 
-    public UTXO testTransactionAndGetBalances(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
-        List<UTXO> ulist = testTransactionAndGetBalances(withZero, keys);
+    public UTXO getBalance(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
+        List<UTXO> ulist = getBalance(withZero, keys);
 
         for (UTXO u : ulist) {
             if (tokenid.equals(u.getTokenId())) {
@@ -223,7 +223,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     // get balance for the walletKeys
-    public List<UTXO> testTransactionAndGetBalances(boolean withZero, List<ECKey> keys) throws Exception {
+    public List<UTXO> getBalance(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();
 
@@ -248,10 +248,10 @@ public abstract class AbstractIntegrationTest {
         return listUTXO;
     }
 
-    public List<UTXO> testTransactionAndGetBalances(boolean withZero, ECKey ecKey) throws Exception {
+    public List<UTXO> getBalance(boolean withZero, ECKey ecKey) throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(ecKey);
-        return testTransactionAndGetBalances(withZero, keys);
+        return getBalance(withZero, keys);
     }
 
     public void testInitWallet() throws Exception {
@@ -261,7 +261,7 @@ public abstract class AbstractIntegrationTest {
         testInitTransferWallet();
         milestoneService.update();
         // testInitTransferWalletPayToTestPub();
-        List<UTXO> ux = testTransactionAndGetBalances();
+        List<UTXO> ux = getBalance();
         // assertTrue(!ux.isEmpty());
         for (UTXO u : ux) {
             log.debug(u.toString());
@@ -334,7 +334,7 @@ public abstract class AbstractIntegrationTest {
 
     public void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         milestoneService.update();
-        List<UTXO> ulist = testTransactionAndGetBalances(false, a);
+        List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
             if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue() == u.getValue().getValue()) {

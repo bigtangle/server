@@ -40,6 +40,22 @@ public class OrderRecord implements java.io.Serializable {
 		this.opIndex = opIndex;
 	}
 
+    @Override
+    public String toString() {
+        return "Order \n[initialBlockHash=" + initialBlockHash 
+        		+ ", \nissuingMatcherBlockHash=" + issuingMatcherBlockHash
+                + ", \nofferValue=" + offerValue 
+                + ", \nofferTokenid=" + offerTokenid 
+                + ", \nconfirmed=" + confirmed
+                + ", \nspent=" + spent
+                + ", \nspenderBlockHash=" + spenderBlockHash
+                + ", \ntargetValue=" + targetValue
+                + ", \ntargetTokenid=" + targetTokenid
+                + ", \nbeneficiaryPubKey=" + Utils.HEX.encode(beneficiaryPubKey)
+                + ", \nttl=" + ttl
+                + ", \nopIndex=" + opIndex + "]\n";
+    }
+
 	public Sha256Hash getInitialBlockHash() {
 		return initialBlockHash;
 	}

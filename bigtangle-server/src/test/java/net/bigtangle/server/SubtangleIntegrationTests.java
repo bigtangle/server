@@ -94,7 +94,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
                 Utils.HEX.decode(NetworkParameters.testPub));
 
         UTXO findOutput = null;
-        for (UTXO output : testTransactionAndGetBalances(false, genesiskey)) {
+        for (UTXO output : getBalance(false, genesiskey)) {
             if (Arrays.equals(NetworkParameters.BIGTANGLE_TOKENID, output.getValue().getTokenid())) {
                 findOutput = output;
             }
@@ -129,7 +129,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     
     public Coin getBalanceCoin(ECKey ecKey, byte[] tokenid) throws Exception {
         Coin coinbase = Coin.valueOf(0, tokenid);
-        for (UTXO output : testTransactionAndGetBalances(false, ecKey)) {
+        for (UTXO output : getBalance(false, ecKey)) {
             if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
                 coinbase = coinbase.add(output.getValue());
             }

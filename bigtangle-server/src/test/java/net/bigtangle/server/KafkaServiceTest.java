@@ -48,7 +48,7 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
     protected BlockStreamHandler blockStreamHandler;
     
     @Test
-    public void getBalance() throws Exception {
+    public void testGetBalance() throws Exception {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
@@ -135,7 +135,7 @@ public class KafkaServiceTest extends AbstractIntegrationTest {
         walletAppKit.wallet().completeTx(request);
         rollingBlock.solve();
         kafkaMessageProducer.sendMessage(rollingBlock.bitcoinSerialize());
-        testTransactionAndGetBalances();
+        getBalance();
     }
 
     @Test

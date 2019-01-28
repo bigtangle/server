@@ -129,7 +129,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -217,7 +217,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 			tx.setData(info.toByteArray());
 	        
 	        // Create burning 2 BIG
-			List<UTXO> outputs = testTransactionAndGetBalances(false, testKey);
+			List<UTXO> outputs = getBalance(false, testKey);
 			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
 			        0);
 			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -308,7 +308,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -705,7 +705,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // first
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<UTXO> outputs = testTransactionAndGetBalances(false, genesiskey);
+        List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
