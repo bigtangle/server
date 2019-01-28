@@ -168,7 +168,7 @@ public abstract class NetworkParameters {
 
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
-    public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 1;
+    public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
     public static final int REWARD_HEIGHT_INTERVAL = 10; 
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
     public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
