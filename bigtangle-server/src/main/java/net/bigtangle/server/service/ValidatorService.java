@@ -410,7 +410,7 @@ public class ValidatorService {
             throws BlockStoreException {
         // Any milestone blocks are always compatible with the current milestone
         if (block.getBlockEvaluation().isMilestone())
-            return true; 
+            return true;
 
         // Get sets of all / all new non-milestone blocks when approving the
         // specified block in combination with the currently included blocks
@@ -1671,65 +1671,9 @@ public class ValidatorService {
                 throw new MalformedTransactionDataException();
             return SolidityState.getFailState();
         }
-        if (currentToken.getTokens() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("getTokens is null");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getMultiSignAddresses() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("getMultiSignAddresses is null");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getTokenid() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("getTokenid is null");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getPrevblockhash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("getPrevblockhash is null");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Not allowed");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too many token issuances");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too many tokens issued");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getDescription() != null
-                && currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long description");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getTokenname() != null
-                && currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long name");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getUrl() != null
-                && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long url");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getTokens().getSignnumber() < 0) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid sign number");
-            return SolidityState.getFailState();
-        }
 
+        if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
+            return SolidityState.getFailState();
         // Check field correctness: amount
         if (currentToken.getTokens().getAmount() != block.getTransactions().get(0).getOutputSum()) {
             if (throwExceptions)
@@ -1760,7 +1704,7 @@ public class ValidatorService {
 
         // Must define enough permissioned addresses
         if (currentToken.getTokens().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
-            if (throwExceptions) 
+            if (throwExceptions)
                 throw new InvalidTransactionDataException(
                         "Cannot fulfill required sign number from multisign address list");
             return SolidityState.getFailState();
@@ -1864,15 +1808,17 @@ public class ValidatorService {
             permissionedPubKeys.remove(pubKey);
         }
 
-        // For first issuance, ensure the tokenid pubkey signature exists to prevent others from generating conflicts
+        // For first issuance, ensure the tokenid pubkey signature exists to
+        // prevent others from generating conflicts
         if (currentToken.getTokens().getTokenindex() == 0) {
-            if (permissionedPubKeys.contains(ByteBuffer.wrap(Utils.HEX.decode(currentToken.getTokens().getTokenid())))) {
+            if (permissionedPubKeys
+                    .contains(ByteBuffer.wrap(Utils.HEX.decode(currentToken.getTokens().getTokenid())))) {
                 if (throwExceptions)
                     throw new MissingSignatureException();
                 return SolidityState.getFailState();
             }
         }
-        
+
         // Verify signatures
         for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
             byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
@@ -1896,5 +1842,68 @@ public class ValidatorService {
         if (throwExceptions)
             throw new InsufficientSignaturesException();
         return SolidityState.getFailState();
+    }
+
+    private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
+        if (currentToken.getTokens() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("getTokens is null");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getMultiSignAddresses() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("getMultiSignAddresses is null");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getTokenid() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("getTokenid is null");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getPrevblockhash() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("getPrevblockhash is null");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Not allowed");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too many token issuances");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too many tokens issued");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getDescription() != null
+                && currentToken.getTokens().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long description");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getTokenname() != null
+                && currentToken.getTokens().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long name");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getUrl() != null
+                && currentToken.getTokens().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long url");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getTokens().getSignnumber() < 0) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid sign number");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
     }
 }
