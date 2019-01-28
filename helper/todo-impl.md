@@ -314,20 +314,24 @@ add possible to attach address at payment to KYC
  ** exchange may define required trusted center for
  
 ## meta token with a list of token
-To revoke given token, user can create a list of token for valid. Only the last version of this token is valid.
+To revoke given token, user can create a  token for external trusted token.
 Example:
  Central bank create euro 2011, euro 2018
- meta token is euro with list of valid token: 
+ meta token is euro with external URL
+Call this URL will return of list of latest valid tokens: 
  euro version1= euro 2011, euro 2018
  euro version2 =  euro 2018
  This enable to full control of the valid token. Indirect the delete of token and in case of lost of key and control and user can create a new meta token.
  
- Alternative define the negative token? meta token not euro 2011
- 
-## setup a list of token as same token (this is too complicated)
-** user config in setting to load the same token list from a URL (token issuer) 
+This is an external dependency and will be not a part of BigTangle validation process.
+
+## setup a list of token as same token 
+** user load the same token list from a URL (token issuer) 
 ** mark the same token in display and mark the revoked token in color for help 
-**  watched one token will accept all same token.
+** watched one token will accept all same token.
+** wallet pay meta token -> load latest list of token -> select a token from list and pay this token
+** order match pro token, not meta token, otherwise the order match on chain will dependent on external resource.
+ 
 
 ## multi level airdrop  5 level -> done
 ## email add to airdrop -> done
@@ -383,6 +387,10 @@ https://github.com/xmrig/xmrig
 
 ## mainnet start bigtangle and permissioned subtangle inasset exchange with KYC
 
+## mainnet start with permissioned bigtangle and exchange with KYC
+## start a permissioned subtangle for data blocks, with three cluster
+
+## after permissioned phase, split mainnet in mainet and an exchange KYC subtangle
 
 ## central bank solution and demos
 
