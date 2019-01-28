@@ -390,3 +390,4 @@ https://github.com/xmrig/xmrig
 
 ## archtecture of bigtangle and subtangle
 
+## javaFx to Mobile ? https://gluonhq.com/products/mobile/javafxports/
