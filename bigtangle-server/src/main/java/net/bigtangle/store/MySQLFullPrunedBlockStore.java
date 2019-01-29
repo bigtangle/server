@@ -103,6 +103,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    hash varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
     
+    private static final String CREATE_CONFIRMATION_DEPENDENCY_TABLE = "CREATE TABLE confirmationdependency (\n"
+            + "    blockhash binary(32) NOT NULL,\n"
+            + "    dependencyblockhash binary(32) NOT NULL,\n"
+            + "    CONSTRAINT headers_pk PRIMARY KEY (blockhash, dependencyblockhash) USING BTREE \n" + ")";    
     
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n" 
             + "    blockhash varbinary(32) NOT NULL,\n" // initial issuing block hash
@@ -253,6 +257,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ORDERS_TABLE);
+        sqlStatements.add(CREATE_CONFIRMATION_DEPENDENCY_TABLE);
         return sqlStatements;
     }
 

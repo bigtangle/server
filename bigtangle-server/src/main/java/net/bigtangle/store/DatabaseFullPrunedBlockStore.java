@@ -99,6 +99,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
     public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission"; 
     public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS openorders";
+    public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -174,6 +175,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE inserttime <= ?";
     protected final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
     protected final String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash) VALUES (?)";
+
+    protected final String INSERT_DEPENDENTS_SQL = getInsert() + " INTO confirmationdependency (blockhash, dependencyblockhash) VALUES (?, ?)";
+    protected final String SELECT_DEPENDENTS_SQL = "SELECT blockhash FROM confirmationdependency WHERE dependencyblockhash = ?" + afterSelect();
 
     protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained"
@@ -575,7 +579,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_LOGRESULT_TABLE);
         sqlStatements.add(DROP_BATCHBLOCK_TABLE);
         sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
-        sqlStatements.add(DROP_ORDERS_TABLE);        
+        sqlStatements.add(DROP_ORDERS_TABLE);   
+        sqlStatements.add(DROP_CONFIRMATION_DEPENDENCY_TABLE);     
         return sqlStatements;
     }
 
@@ -5111,6 +5116,63 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return result;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void insertDependents(Sha256Hash blockHash, Sha256Hash dependencyBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(INSERT_DEPENDENTS_SQL);
+            s.setBytes(1, blockHash.getBytes());
+            s.setBytes(2, dependencyBlockHash.getBytes());
+            s.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException {
+        List<Sha256Hash> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_DEPENDENTS_SQL);
+            s.setBytes(1, blockHash.getBytes());
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                result.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return result;
+        } catch (SQLException e) {
+        	if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                throw new BlockStoreException(e);
+        	return new ArrayList<>();
         } catch (ProtocolException e) {
             // Corrupted database.
             throw new BlockStoreException(e);

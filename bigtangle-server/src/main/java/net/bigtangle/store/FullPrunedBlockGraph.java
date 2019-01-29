@@ -440,6 +440,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // Set virtual outputs confirmed
         confirmTransaction(tx, block.getHash());
+        
+        // Insert dependencies
+        blockStore.insertDependents(block.getHash(), info.getOrderBlockHash());
+        blockStore.insertDependents(block.getHash(), info.getNonConfirmingMatcherBlockHash());
     }
 
     private void confirmOrderOpen(Block block) throws BlockStoreException {
@@ -563,6 +567,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
             removeBlockFromMilestone(approver, traversedBlockHashes);
+        }
+        
+        // Unconfirm all dependents
+        for (Sha256Hash dependent : blockStore.getDependents(block.getHash())) {
+            removeBlockFromMilestone(dependent, traversedBlockHashes);
         }
         
         // Disconnect all transaction output dependents

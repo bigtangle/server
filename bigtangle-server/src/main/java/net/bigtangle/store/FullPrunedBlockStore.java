@@ -303,6 +303,20 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
 
+    /* For tests */
+	public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException;
+
+	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
+
+	public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;
+
+	public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
+
+	/* Dependencies */
+	public void insertDependents(Sha256Hash blockHash, Sha256Hash dependencyBlockHash) throws BlockStoreException;
+	
+	public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException;
+
     /* Wallet / Informational */
     public List<Token> getTokensList() throws BlockStoreException;
 
@@ -450,15 +464,4 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
     Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
-
-    /* For tests */
-	public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException;
-
-	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
-
-	public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;
-
-	public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
-
-
 }
