@@ -1382,11 +1382,17 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		// Unconfirm order matching
 		blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
 		
-		// TODO Verify the dependent reclaim block is unconfirmed too
+		// Verify the dependent reclaim block is unconfirmed too
 		assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isMilestone());
 		
 		// Verify token amount invariance 
 		assertCurrentTokenAmountEquals(origTokenAmounts);
+		
+		// Repeat
+		blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
+		blockGraph.confirm(reclaimBlock.getHash(), new HashSet<>());
+		blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
+		assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isMilestone());
 	
 		// Verify deterministic overall execution
 		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);

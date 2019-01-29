@@ -313,6 +313,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
 
 	/* Dependencies */
+	public void removeDependents(Sha256Hash blockHash) throws BlockStoreException;
+
 	public void insertDependents(Sha256Hash blockHash, Sha256Hash dependencyBlockHash) throws BlockStoreException;
 	
 	public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException;

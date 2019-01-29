@@ -277,12 +277,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void addBlockToMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException { 
+    	// If already confirmed, return
+        if (traversedBlockHashes.contains(blockHash))
+            return;
+        
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
         
         // If already confirmed, return
-        if (blockEvaluation.isMilestone() || traversedBlockHashes.contains(blockHash))
+        if (blockEvaluation.isMilestone())
             return;
 
         // Set milestone true and update latestMilestoneUpdateTime
@@ -542,12 +546,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void removeBlockFromMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+    	// If already confirmed, return
+        if (traversedBlockHashes.contains(blockHash))
+            return;
+        
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
 
         // If already unconfirmed, return
-        if (!blockEvaluation.isMilestone() || traversedBlockHashes.contains(blockHash))
+        if (!blockEvaluation.isMilestone())
             return;
         
         // Unconfirm all dependents
@@ -555,6 +563,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
          
         // Then unconfirm the block itself
         unconfirmBlock(block);
+        
+        // Then clear own dependencies since no longer confirmed
+        blockStore.removeDependents(block.getHash());
 
         // Set milestone false and update latestMilestoneUpdateTime
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);

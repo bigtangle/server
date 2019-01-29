@@ -178,6 +178,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_DEPENDENTS_SQL = getInsert() + " INTO confirmationdependency (blockhash, dependencyblockhash) VALUES (?, ?)";
     protected final String SELECT_DEPENDENTS_SQL = "SELECT blockhash FROM confirmationdependency WHERE dependencyblockhash = ?" + afterSelect();
+    protected final String REMOVE_DEPENDENCIES_SQL = "DELETE FROM confirmationdependency WHERE blockhash = ?" + afterSelect();
 
     protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained"
@@ -5144,6 +5145,28 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(2, dependencyBlockHash.getBytes());
             s.executeUpdate();
         } catch (SQLException e) {
+        	if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void removeDependents(Sha256Hash blockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(REMOVE_DEPENDENCIES_SQL);
+            s.setBytes(1, blockHash.getBytes());
+            s.executeUpdate();
+        } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
             if (s != null) {
@@ -5170,9 +5193,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             return result;
         } catch (SQLException e) {
-        	if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-        	return new ArrayList<>();
+            throw new BlockStoreException(e);
         } catch (ProtocolException e) {
             // Corrupted database.
             throw new BlockStoreException(e);
