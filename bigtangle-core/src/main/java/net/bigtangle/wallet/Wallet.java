@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -68,6 +69,7 @@ import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
@@ -75,6 +77,7 @@ import net.bigtangle.core.InsufficientMoneyException;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
@@ -108,6 +111,7 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
+import net.bigtangle.wallet.Wallet.BalanceType;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
@@ -2680,56 +2684,59 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return false;
     }
 
-//    /**
-//     * Returns the spendable candidates from the {@link UTXOProvider} based on
-//     * keys that the wallet contains.
-//     * 
-//     * @return The list of candidates.
-//     */
-//    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(
-//            boolean excludeImmatureCoinbases) {
-//        checkState(lock.isHeldByCurrentThread());
-//        checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-//        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-//        try {
-//            long chainHeight = 0;
-//            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
-//                boolean coinbase = output.isCoinbase();
-//                long depth = chainHeight - output.getHeight() + 1; // the
-//                                                                   // current
-//                                                                   // depth of
-//                                                                   // the output
-//                                                                   // (1 = same
-//                                                                   // as head).
-//                // Do not try and spend coinbases that were mined too recently,
-//                // the protocol forbids it.
-//                if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
-//                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
-//                }
-//            }
-//        } catch (UTXOProviderException e) {
-//            throw new RuntimeException("UTXO provider error", e);
-//        }
-//        // We need to handle the pending transactions that we know about.
-//        for (Transaction tx : pending.values()) {
-//            // Remove the spent outputs.
-//            for (TransactionInput input : tx.getInputs()) {
-//                if (input.getConnectedOutput().isMine(this)) {
-//                    candidates.remove(input.getConnectedOutput());
-//                }
-//            }
-//            // Add change outputs. Do not try and spend coinbases that were
-//            // mined too recently, the protocol forbids it.
-//            if (!excludeImmatureCoinbases) {
-//                for (TransactionOutput output : tx.getOutputs()) {
-//                    if (output.isAvailableForSpending() && output.isMine(this)) {
-//                        candidates.add(output);
-//                    }
-//                }
-//            }
-//        }
-//        return candidates;
-//    }
+    // /**
+    // * Returns the spendable candidates from the {@link UTXOProvider} based on
+    // * keys that the wallet contains.
+    // *
+    // * @return The list of candidates.
+    // */
+    // protected LinkedList<TransactionOutput>
+    // calculateAllSpendCandidatesFromUTXOProvider(
+    // boolean excludeImmatureCoinbases) {
+    // checkState(lock.isHeldByCurrentThread());
+    // checkNotNull(vUTXOProvider, "No UTXO provider has been set");
+    // LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+    // try {
+    // long chainHeight = 0;
+    // for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+    // boolean coinbase = output.isCoinbase();
+    // long depth = chainHeight - output.getHeight() + 1; // the
+    // // current
+    // // depth of
+    // // the output
+    // // (1 = same
+    // // as head).
+    // // Do not try and spend coinbases that were mined too recently,
+    // // the protocol forbids it.
+    // if (!excludeImmatureCoinbases || !coinbase || depth >=
+    // params.getSpendableCoinbaseDepth()) {
+    // candidates.add(new FreeStandingTransactionOutput(params, output,
+    // chainHeight));
+    // }
+    // }
+    // } catch (UTXOProviderException e) {
+    // throw new RuntimeException("UTXO provider error", e);
+    // }
+    // // We need to handle the pending transactions that we know about.
+    // for (Transaction tx : pending.values()) {
+    // // Remove the spent outputs.
+    // for (TransactionInput input : tx.getInputs()) {
+    // if (input.getConnectedOutput().isMine(this)) {
+    // candidates.remove(input.getConnectedOutput());
+    // }
+    // }
+    // // Add change outputs. Do not try and spend coinbases that were
+    // // mined too recently, the protocol forbids it.
+    // if (!excludeImmatureCoinbases) {
+    // for (TransactionOutput output : tx.getOutputs()) {
+    // if (output.isAvailableForSpending() && output.isMine(this)) {
+    // candidates.add(output);
+    // }
+    // }
+    // }
+    // }
+    // return candidates;
+    // }
 
     /**
      * Get all the {@link UTXO}'s from the {@link UTXOProvider} based on keys
@@ -3616,12 +3623,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
         if (giveMoneyResult.isEmpty()) {
             return;
-        }  
+        }
         Coin coinbase = Coin.ZERO;
         Transaction multispent = new Transaction(params);
 
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue() , NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
             Address address = Address.fromBase58(params, entry.getKey());
             multispent.addOutput(amount, address);
             coinbase = coinbase.add(amount);
@@ -3672,4 +3679,72 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         }
         return listUTXO;
     }
+
+    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            Block predecessor) throws Exception {
+        Block block = null;
+        Transaction tx = new Transaction(params);
+        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey());
+        tx.setData(info.toByteArray());
+
+        // Burn BIG to buy
+        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+        List<UTXO> outputs = getTransactionAndGetBalances(beneficiary).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
+                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+
+        // Create block with order
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+
+        return block;
+    }
+
+    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            Block predecessor) throws Exception {
+        Block block = null;
+        Transaction tx = new Transaction(params);
+        OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                beneficiary.getPubKey());
+        tx.setData(info.toByteArray());
+
+        // Burn tokens to sell
+        Coin amount = Coin.valueOf(sellAmount, tokenId);
+        List<UTXO> outputs = getTransactionAndGetBalances(beneficiary).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+
+        // Create block with order
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+        return block;
+    }
+
 }

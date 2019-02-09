@@ -79,6 +79,11 @@ public class TransactionService {
         return r1.createNextBlock(r2);
     }
 
+    public Block createAndAddMiningRewardBlock() throws Exception {
+        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+        return createAndAddMiningRewardBlock(prevRewardHash );
+    }
+
     public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         return createAndAddMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
