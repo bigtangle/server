@@ -152,7 +152,7 @@ public class Main extends Application {
 
     public static String getText(String s) {
         ResourceBundle rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.getDefault());
-        if ("en".equalsIgnoreCase(lang) || "de".equalsIgnoreCase(lang)) {
+        if (!"zh".equalsIgnoreCase(lang) ) {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message_en", Locale.ENGLISH);
         } else {
             rb = ResourceBundle.getBundle("net.bigtangle.ui.wallet.message", Locale.CHINESE);
@@ -359,7 +359,7 @@ public class Main extends Application {
         String resourceFile = "net.bigtangle.ui.wallet.message";
         lang = language;
         Locale locale = Locale.CHINESE;
-        if ("en".equals(lang) || "de".equals(lang)) {
+        if (!"zh".equals(lang)) {
             resourceFile += "_en";
             locale = Locale.ENGLISH;
         }
