@@ -62,7 +62,7 @@ public class OkHttp3Util {
     @SuppressWarnings("unchecked")
     public static byte[] post(String url, String s) throws Exception {
         logger.debug("url : " + url);
-        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -85,7 +85,7 @@ public class OkHttp3Util {
     }
 
     public static String postString(String url, String s) throws Exception {
-        OkHttpClient client = getOkHttpClientSafe(pubkey, signHex, contentHex);
+        OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
@@ -126,14 +126,14 @@ public class OkHttp3Util {
         return client;
 
     }
-
+/*
     private static OkHttpClient getOkHttpClientSafe(String pubkey, String signHex, String contentHex) {
         OkHttpClient client = new OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
                 .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES)
                 .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex)).build();
         return client;
     }
-
+*/
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {
 
