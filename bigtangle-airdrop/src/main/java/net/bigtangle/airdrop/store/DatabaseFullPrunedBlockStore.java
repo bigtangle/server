@@ -66,8 +66,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String VERSION_SETTING = "version";
 
-   
-
     // Tables exist SQL.
     protected String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM wechatreward WHERE 1 = 2";
 
@@ -214,6 +212,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public HashMap<String, Integer> queryFromOrder() throws BlockStoreException {
+        HashMap<String, Integer> map = new HashMap<>();
+        String sql = "select pubkey,amount, d.status d_status " + "from vm_deposit d "
+                + "join Account a on d.userid=a.id "
+                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
+                    map.put(resultSet.getString("pubkey"), resultSet.getBigDecimal("amount").intValue());
+                }
+
+            }
+            return map;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
+    }
+
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
         String sql = "select id, wechatId, wechatInviterId, createTime, status,pubkey  from wechatinvite where status = 0";
         List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
@@ -286,7 +319,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
         this.allConnections = new LinkedList<Connection>();
-    //    create();
+        // create();
     }
 
     public void create() throws BlockStoreException {
@@ -356,7 +389,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected List<String> getDropTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-    
+
         return sqlStatements;
     }
 

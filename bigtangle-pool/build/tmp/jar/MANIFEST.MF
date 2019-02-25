@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+GroupId: net.bigtangle
+ArtifactId: bigtangle-pool
+Version: 0.3.3
+
