@@ -212,6 +212,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public HashMap<Long, String> queryDepositKeyFromOrderKey() throws BlockStoreException {
+        HashMap<Long, String> map = new HashMap<>();
+        String sql = "select d.userid d_id,d.useraccount d_ua, d.status d_status,pubkey " + "from vm_deposit d "
+                + "join Account a on d.userid=a.id "
+                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
+                    map.put(resultSet.getLong("d_id"),
+                            resultSet.getString("d_ua") + "-" + resultSet.getString("pubkey"));
+                }
+
+            }
+            return map;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
     public HashMap<String, Integer> queryFromOrder() throws BlockStoreException {
         HashMap<String, Integer> map = new HashMap<>();
         String sql = "select pubkey,amount, d.status d_status " + "from vm_deposit d "
@@ -245,6 +280,31 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
 
+    }
+
+    public void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException {
+        String sql = "update vm_deposit set status = ? where userid = ? and useraccount=?";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            s.setString(1, status);
+            s.setLong(2, id);
+            s.setString(3, useraccount);
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {

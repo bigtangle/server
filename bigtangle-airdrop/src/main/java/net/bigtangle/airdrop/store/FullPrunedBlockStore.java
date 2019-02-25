@@ -5,7 +5,6 @@
 
 package net.bigtangle.airdrop.store;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -92,11 +91,14 @@ public interface FullPrunedBlockStore {
     HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
 
     HashMap<String, Integer> queryFromOrder() throws BlockStoreException;
+    HashMap<Long, String> queryDepositKeyFromOrderKey() throws BlockStoreException;
 
     Map<String, HashMap<String, String>> queryByUWechatInvitePubKeyInviterIdMap(Collection<String> keySet)
             throws BlockStoreException;
 
     void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
+
+    void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException;
 
     void updateWechatInviteStatusByWechatId(String wechatId, int status) throws BlockStoreException;
 
