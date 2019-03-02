@@ -22,8 +22,11 @@ public class WechatInviteService {
         try {
             this.store.clearWechatInviteStatusZero();
             LOGGER.info("clear wechat invite status success");
+            // clear order data
+            this.store.resetDepositPaid();
+            LOGGER.info(" reset deposit  status success");
         } catch (BlockStoreException e) {
-            LOGGER.error("clear wechat invite status error", e);
+            LOGGER.error(" reset status error", e);
         }
     }
 

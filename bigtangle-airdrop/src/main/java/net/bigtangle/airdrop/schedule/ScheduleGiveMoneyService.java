@@ -82,7 +82,8 @@ public class ScheduleGiveMoneyService {
                 for (String invitedPubkey : invitedSet) {
                     giveMoneyResult.put(invitedPubkey, wechatReward);
                 }
-                if (giveMoneyResult.isEmpty()) {
+                //no data for process
+                if (giveMoneyResult.isEmpty() ) {
                     return;
                 }
 
@@ -106,6 +107,7 @@ public class ScheduleGiveMoneyService {
 
                         }
                     }
+                    // only update, if money is given for order
                     HashMap<Long, String> map = this.store.queryDepositKeyFromOrderKey();
                     for (String string : orderMap.keySet()) {
                         for (Map.Entry<Long, String> entry : map.entrySet()) {

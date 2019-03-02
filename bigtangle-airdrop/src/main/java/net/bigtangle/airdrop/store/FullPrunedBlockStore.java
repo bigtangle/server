@@ -103,4 +103,5 @@ public interface FullPrunedBlockStore {
     void updateWechatInviteStatusByWechatId(String wechatId, int status) throws BlockStoreException;
 
     void clearWechatInviteStatusZero() throws BlockStoreException;
+    void resetDepositPaid() throws BlockStoreException;
 }

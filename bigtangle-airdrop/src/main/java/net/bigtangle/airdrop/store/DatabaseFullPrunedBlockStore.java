@@ -310,6 +310,28 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+
+    public void resetDepositPaid() throws BlockStoreException {
+        String sql = "update vm_deposit set status = 'RESET' ";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);  
+            s.executeUpdate();
+            s.close();
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
         String sql = "select id, wechatId, wechatInviterId, createTime, status,pubkey  from wechatinvite where status = 0";
         List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
