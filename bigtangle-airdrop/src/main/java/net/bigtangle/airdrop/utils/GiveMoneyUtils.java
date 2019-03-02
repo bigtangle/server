@@ -103,6 +103,8 @@ public class GiveMoneyUtils {
         UTXO findOutput = null;
         for (UTXO output : getTransactionAndGetBalances(genesiskey)) {
             if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
+            	if(findOutput==null) findOutput=output;
+            	if(findOutput!=null&& output.getValue().isGreaterThan( findOutput.getValue()))
                 findOutput = output;
             }
         }
