@@ -78,7 +78,7 @@ public class ScheduleGiveMoneyService {
                 HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
                 wechatToplevel(dataMap, wechatInviteResult, giveMoneyResult);
                 wechatRecursive(wechatInviteResult, giveMoneyResult);
-                sendFromOrder(giveMoneyResult);
+                HashMap<String, Integer> orderMap = sendFromOrder(giveMoneyResult);
                 for (String invitedPubkey : invitedSet) {
                     giveMoneyResult.put(invitedPubkey, wechatReward);
                 }
@@ -106,6 +106,31 @@ public class ScheduleGiveMoneyService {
 
                         }
                     }
+                    HashMap<Long, String> map = this.store.queryDepositKeyFromOrderKey();
+                    for (String string : orderMap.keySet()) {
+                        for (Map.Entry<Long, String> entry : map.entrySet()) {
+                            Long userid = entry.getKey();
+                            String useraccount = entry.getValue().split("-")[0];
+                            String pubkey = entry.getValue().split("-")[1];
+                            if (string.equals(pubkey)) {
+                                boolean flag = true;
+                                try {
+                                    Address.fromBase58(MainNetParams.get(), pubkey);
+                                } catch (Exception e) {
+                                    // logger.debug("", e);
+                                    flag = false;
+                                }
+                                if (flag) {
+                                    this.store.updateDepositStatus(userid, useraccount, "PAID");
+                                    logger.info("wechat invite update status, id : " + userid + "," + useraccount
+                                            + ", success");
+                                    break;
+                                }
+                            }
+
+                        }
+                    }
+
                 }
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
@@ -113,13 +138,14 @@ public class ScheduleGiveMoneyService {
         }
     }
 
-    private void sendFromOrder(HashMap<String, Integer> giveMoneyResult) {
+    private HashMap<String, Integer> sendFromOrder(HashMap<String, Integer> giveMoneyResult) {
         try {
             HashMap<String, Integer> map = this.store.queryFromOrder();
             giveMoneyResult.putAll(map);
         } catch (BlockStoreException e) {
             logger.warn("ScheduleGiveMoneyService", e);
         }
+        return giveMoneyResult;
     }
 
     private void wechatToplevel(HashMap<String, List<WechatInvite>> dataMap,
