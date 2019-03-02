@@ -588,14 +588,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If the tables couldn't be cleared and initialised.
      */
     public void resetStore() throws BlockStoreException {
-        maybeConnect();
-        try {
-            // deleteStore();
-            createTables();
-        } catch (SQLException ex) {
-            log.warn("Warning: deleteStore", ex);
-            throw new RuntimeException(ex);
-        }
+//        maybeConnect();
+//        try {
+//            // deleteStore();
+//            createTables();
+//        } catch (SQLException ex) {
+//            log.warn("Warning: deleteStore", ex);
+//            throw new RuntimeException(ex);
+//        }
     }
 
     /**
@@ -604,20 +604,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             If tables couldn't be deleted.
      */
-    public void deleteStore() throws BlockStoreException {
-        maybeConnect();
-        try {
-            for (String sql : getDropTablesSQL()) {
-                Statement s = conn.get().createStatement();
-                try {
-                    log.info("drop table : " + sql);
-                    s.execute(sql);
-                } finally {
-                    s.close();
-                }
-            }
-        } catch (Exception ex) {
-            log.warn("Warning: deleteStore", ex);
-        }
-    }
+//    public void deleteStore() throws BlockStoreException {
+//        maybeConnect();
+//        try {
+//            for (String sql : getDropTablesSQL()) {
+//                Statement s = conn.get().createStatement();
+//                try {
+//                    log.info("drop table : " + sql);
+//                    s.execute(sql);
+//                } finally {
+//                    s.close();
+//                }
+//            }
+//        } catch (Exception ex) {
+//            log.warn("Warning: deleteStore", ex);
+//        }
+//    }
 }
