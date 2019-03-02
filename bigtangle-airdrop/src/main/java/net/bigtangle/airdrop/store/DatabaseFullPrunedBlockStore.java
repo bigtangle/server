@@ -249,7 +249,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     public HashMap<String, Integer> queryFromOrder() throws BlockStoreException {
         HashMap<String, Integer> map = new HashMap<>();
-        String sql = "select pubkey,amount, d.status d_status " + "from vm_deposit d "
+        String sql = "select pubkey,amount, d.status d_status,deposittype,currency " + "from vm_deposit d "
                 + "join Account a on d.userid=a.id "
                 + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
         maybeConnect();
@@ -258,6 +258,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(sql);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
+                if ("bigtangle".equals(resultSet.getString("deposittype"))&&"BIG".equals(resultSet.getString("currency"))) {
+                    continue;
+                }
                 if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
                     map.put(resultSet.getString("pubkey"), resultSet.getBigDecimal("amount").intValue());
                 }
