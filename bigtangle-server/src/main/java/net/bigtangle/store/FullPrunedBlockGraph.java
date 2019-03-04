@@ -983,7 +983,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, 
             		offer.getValue(), offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
-            		reqInfo.getBeneficiaryPubKey(), NetworkParameters.INITIAL_ORDER_TTL, 0);
+            		reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0);
             
             blockStore.insertOrder(record);
         } catch (IOException e) {
@@ -1260,9 +1260,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
         while (it.hasNext()) {
             final Entry<Sha256Hash, OrderRecord> next = it.next();
-            OrderRecord order = next.getValue();
-            order.setTtl(order.getTtl() - 1);
-            if (order.getTtl() <= 0) { 
+            OrderRecord order = next.getValue(); 
+            if (order.isValidToTimeOver()) { 
                 cancelledOrders.add(order);
                 it.remove();
                 continue;
@@ -1270,13 +1269,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             order.setIssuingMatcherBlockHash(block.getHash());
         }
         
-        // Process refresh ops
-        for (OrderOpInfo r : refreshs) {
-        	if (remainingOrders.containsKey(r.getInitialBlockHash())) {
-        		remainingOrders.get(r.getInitialBlockHash()).setTtl(NetworkParameters.INITIAL_ORDER_TTL + 1);
-        	}
-        }
-        
+    
         // Process cancel ops after matching
         for (OrderOpInfo c : cancels) {
         	if (remainingOrders.containsKey(c.getInitialBlockHash())) {

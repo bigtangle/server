@@ -19,12 +19,12 @@ public class OrderRecord implements java.io.Serializable {
     private long targetValue; 
     private String targetTokenid;
     private byte[] beneficiaryPubKey;
-    private int ttl;
+    private Long validToTime;
     private int opIndex; 
 
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
 			boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue, String targetTokenid,
-			byte[] beneficiaryPubKey, int ttl, int opIndex) {
+			byte[] beneficiaryPubKey, Long ttl, int opIndex) {
 		super();
 		this.initialBlockHash = initialBlockHash;
 		this.issuingMatcherBlockHash = issuingMatcherBlockHash;
@@ -36,7 +36,7 @@ public class OrderRecord implements java.io.Serializable {
 		this.targetValue = targetValue;
 		this.targetTokenid = targetTokenid;
 		this.beneficiaryPubKey = beneficiaryPubKey;
-		this.ttl = ttl;
+		this.validToTime = ttl;
 		this.opIndex = opIndex;
 	}
 
@@ -52,10 +52,14 @@ public class OrderRecord implements java.io.Serializable {
                 + ", \ntargetValue=" + targetValue
                 + ", \ntargetTokenid=" + targetTokenid
                 + ", \nbeneficiaryPubKey=" + Utils.HEX.encode(beneficiaryPubKey)
-                + ", \nttl=" + ttl
+                + ", \nttl=" + validToTime
                 + ", \nopIndex=" + opIndex + "]\n";
     }
-
+//check, if the valid to date is over
+  
+    public boolean isValidToTimeOver() {
+       return System.currentTimeMillis() > validToTime;
+    }
 	public Sha256Hash getInitialBlockHash() {
 		return initialBlockHash;
 	}
@@ -136,15 +140,17 @@ public class OrderRecord implements java.io.Serializable {
 		this.beneficiaryPubKey = beneficiaryPubKey;
 	}
 
-	public int getTtl() {
-		return ttl;
-	}
+ 
 
-	public void setTtl(int ttl) {
-		this.ttl = ttl;
-	}
+	public Long getValidToTime() {
+        return validToTime;
+    }
 
-	public int getOpIndex() {
+    public void setValidToTime(Long validToTime) {
+        this.validToTime = validToTime;
+    }
+
+    public int getOpIndex() {
 		return opIndex;
 	}
 

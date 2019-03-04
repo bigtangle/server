@@ -227,15 +227,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE blockhash = ? AND collectinghash = ?";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " openorders SET confirmed = ? "
             + " WHERE blockhash = ? AND collectinghash = ?";
-    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex"
             + " FROM openorders WHERE collectinghash = ?";
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
-    protected final String SELECT_ORDER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex"
+    protected final String SELECT_ORDER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex"
             + " FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
-            + "  INTO openorders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex) "
+            + "  INTO openorders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     
@@ -388,13 +388,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     // Tests
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
-    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex "
+    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex "
     		+ "FROM openorders ORDER BY blockhash, collectinghash";
     protected final String SELECT_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
     		+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
     		+ "FROM outputs ORDER BY hash, outputindex";
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
-    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, ttl, opindex "
+    		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex "
     		+ "FROM openorders WHERE confirmed=1 AND spent=0 ORDER BY blockhash, collectinghash";
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
     		+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
@@ -4843,7 +4843,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (resultSet.next()) {
                 result.put(Sha256Hash.wrap(resultSet.getBytes(1)), new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
                         resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
-                                resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12)));
+                                resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11), resultSet.getInt(12)));
             }
             return result;
         } catch (SQLException ex) {
@@ -4873,7 +4873,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             
             return new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
             		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
-            		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));          
+            		resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11), resultSet.getInt(12));          
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
@@ -4903,7 +4903,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(8, record.getTargetValue());
             preparedStatement.setString(9, record.getTargetTokenid());
             preparedStatement.setBytes(10, record.getBeneficiaryPubKey());
-            preparedStatement.setInt(11, record.getTtl());
+            preparedStatement.setLong(11, record.getValidToTime());
             preparedStatement.setInt(12, record.getOpIndex());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4978,7 +4978,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (resultSet.next()) {
                 OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
                 		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
-                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));      
+                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11), resultSet.getInt(12));      
                 result.add(order);
             }
             return result;
@@ -5062,7 +5062,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (resultSet.next()) {
                 OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 
                 		resultSet.getString(4), resultSet.getBoolean(5), resultSet.getBoolean(6), resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)), resultSet.getLong(8), 
-                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getInt(11), resultSet.getInt(12));      
+                		resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11), resultSet.getInt(12));      
                 result.add(order);
             }
             return result;

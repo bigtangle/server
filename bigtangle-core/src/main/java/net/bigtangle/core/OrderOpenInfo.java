@@ -7,60 +7,76 @@ package net.bigtangle.core;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class OrderOpenInfo implements java.io.Serializable {
 
-	private static final long serialVersionUID = 433387247051352702L;
-	
-	private long targetValue; 
+    private static final long serialVersionUID = 433387247051352702L;
+    private static final Logger logger = LoggerFactory.getLogger(OrderOpenInfo.class);
+    private long targetValue;
     private String targetTokenid;
     private byte[] beneficiaryPubKey;
+    // valid until this date, maximum is set in Network parameter
+    private Long validToTime;
 
     public OrderOpenInfo() {
-		super();
-	}
+        super();
+    }
 
-	public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey) {
-		super();
-		this.targetValue = targetValue;
-		this.targetTokenid = targetTokenid;
-		this.beneficiaryPubKey = beneficiaryPubKey;
-	}
+    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey) {
+        super();
+        this.targetValue = targetValue;
+        this.targetTokenid = targetTokenid;
+        this.beneficiaryPubKey = beneficiaryPubKey;
+        this.validToTime = System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL;
+        
+    }
 
-	public byte[] getBeneficiaryPubKey() {
-		return beneficiaryPubKey;
-	}
+    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey,
+            Long validToTime) {
+        super();
+        this.targetValue = targetValue;
+        this.targetTokenid = targetTokenid;
+        this.beneficiaryPubKey = beneficiaryPubKey;
+        this.validToTime = validToTime;
+    }
 
-	public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
-		this.beneficiaryPubKey = beneficiaryPubKey;
-	}
+    public byte[] getBeneficiaryPubKey() {
+        return beneficiaryPubKey;
+    }
 
-	public long getTargetValue() {
-		return targetValue;
-	}
+    public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
+        this.beneficiaryPubKey = beneficiaryPubKey;
+    }
 
-	public void setTargetValue(long targetValue) {
-		this.targetValue = targetValue;
-	}
+    public long getTargetValue() {
+        return targetValue;
+    }
 
-	public String getTargetTokenid() {
-		return targetTokenid;
-	}
+    public void setTargetValue(long targetValue) {
+        this.targetValue = targetValue;
+    }
 
-	public void setTargetTokenid(String targetTokenid) {
-		this.targetTokenid = targetTokenid;
-	}
+    public String getTargetTokenid() {
+        return targetTokenid;
+    }
 
-	public byte[] toByteArray() {
+    public void setTargetTokenid(String targetTokenid) {
+        this.targetTokenid = targetTokenid;
+    }
+
+    public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
             return jsonStr.getBytes();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Json.jsonmapper error" + this.toString(), e);
+            throw new RuntimeException(e);
         }
-        return new byte[0];
     }
 
     public static OrderOpenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
@@ -68,5 +84,15 @@ public class OrderOpenInfo implements java.io.Serializable {
         OrderOpenInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderOpenInfo.class);
         return tokenInfo;
     }
-    
+
+    public Long getValidToTime() {
+        return validToTime;
+    }
+
+    public void setValidToTime(Long validToTime) {
+        this.validToTime = validToTime;
+    }
+
+ 
+
 }

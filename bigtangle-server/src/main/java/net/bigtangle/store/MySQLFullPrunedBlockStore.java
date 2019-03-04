@@ -15,9 +15,7 @@ import net.bigtangle.core.NetworkParameters;
 /**
  * <p>
  * A full pruned block store using the MySQL database engine. As an added bonus
- * an address index is calculated, so you can use
- * {@link #calculateBalanceForAddress(net.bigtangle.core.Address)} to quickly
- * look up the quantity of bitcoins controlled by that address.
+ * an address index is calculated.
  * </p>
  */
 
@@ -119,7 +117,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    targetcoinvalue bigint,\n" // amount of target tokens wanted
             + "    targettokenid varchar(255),\n" // tokenid of the wanted tokens
             + "    beneficiarypubkey binary(33),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
-            + "    ttl int,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
+            + "    validToTime bigint,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
             + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
             + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n"; 
 
