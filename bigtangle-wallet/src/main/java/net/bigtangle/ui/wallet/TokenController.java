@@ -41,8 +41,8 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
@@ -509,7 +509,6 @@ public class TokenController extends TokenBaseController {
 
     public void saveToken(ActionEvent event) {
         try {
-            
 
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -527,13 +526,13 @@ public class TokenController extends TokenBaseController {
                     stockDescription.getText().trim(), 1, 0, amount, false, true);
             tokens.setUrl(stockUrl.getText().trim());
             tokenInfo.setTokens(tokens);
-            //outKey must be the same key as tokenid
+            // outKey must be the same key as tokenid
             ECKey outKey = null;
-           for( ECKey key: issuedKeys) {
-               if(key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
-                   outKey=key;
-               }
-           }
+            for (ECKey key : issuedKeys) {
+                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
+                    outKey = key;
+                }
+            }
             // add MultiSignAddress item
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -565,24 +564,24 @@ public class TokenController extends TokenBaseController {
     }
 
     public void saveMarket(ActionEvent event) {
-        try { 
+        try {
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
             List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
-    
+
             TokenInfo tokenInfo = new TokenInfo();
 
             Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(),
                     marketName.getText().trim(), marketDescription.getText().trim(), marketurl.getText());
             tokenInfo.setTokens(tokens);
-            
+
             ECKey outKey = null;
-            for( ECKey key: issuedKeys) {
-                if(key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
-                    outKey=key;
+            for (ECKey key : issuedKeys) {
+                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
+                    outKey = key;
                 }
             }
             // add MultiSignAddress item
@@ -903,6 +902,14 @@ public class TokenController extends TokenBaseController {
                 (boolean) map.get("tokenstop"));
         tokens.setUrl(Main.getString(map.get("url")).trim());
         tokenInfo.setTokens(tokens);
+        ECKey outKey = null;
+        for (ECKey key : keys) {
+            if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
+                outKey = key;
+            }
+        }
+        tokenInfo.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
