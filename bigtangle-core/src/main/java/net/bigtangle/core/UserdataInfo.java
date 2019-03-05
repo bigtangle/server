@@ -8,7 +8,7 @@ package net.bigtangle.core;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserdataInfo implements java.io.Serializable {
+public class UserdataInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 1554582498768357964L;
 

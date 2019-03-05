@@ -12,7 +12,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class WatchedInfo implements java.io.Serializable {
+public class WatchedInfo extends DataClass implements java.io.Serializable {
 
     /**
      * 

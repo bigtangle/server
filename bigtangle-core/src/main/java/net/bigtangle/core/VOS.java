@@ -5,7 +5,7 @@
 
 package net.bigtangle.core;
 
-public class VOS implements java.io.Serializable {
+public class VOS  extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 4616548968716699128L;
 

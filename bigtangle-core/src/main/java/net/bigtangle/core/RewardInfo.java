@@ -10,7 +10,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class RewardInfo implements java.io.Serializable {
+public class RewardInfo extends DataClass implements java.io.Serializable {
 
     // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization!
 

@@ -12,7 +12,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class UploadfileInfo implements java.io.Serializable {
+public class UploadfileInfo extends DataClass implements java.io.Serializable {
     /**
      * 
      */

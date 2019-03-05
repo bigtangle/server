@@ -12,7 +12,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class TokenInfo implements java.io.Serializable {
+public class TokenInfo   extends DataClass  implements java.io.Serializable {
 
     // TODO drop string from everywhere, stop using Sha256Hash.wrap, instead use Sha256Hash, stop using jsonserialization!
 

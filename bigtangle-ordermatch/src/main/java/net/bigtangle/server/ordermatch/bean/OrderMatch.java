@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.core;
+package net.bigtangle.server.ordermatch.bean;
 
 public class OrderMatch implements java.io.Serializable {
 
