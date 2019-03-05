@@ -3680,9 +3680,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return listUTXO;
     }
 
-    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            Block predecessor) throws Exception {
-        Block block = null;
+    public Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount
+           ) throws Exception {
+      
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey());
         tx.setData(info.toByteArray());
@@ -3705,7 +3705,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock();
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = params.getDefaultSerializer().makeBlock(data);
+  
+       // block = predecessor.createNextBlock();
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -3714,9 +3718,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            Block predecessor) throws Exception {
-        Block block = null;
+    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount           ) throws Exception {
+      
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey());
@@ -3739,7 +3742,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock();
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = params.getDefaultSerializer().makeBlock(data);
+  
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
