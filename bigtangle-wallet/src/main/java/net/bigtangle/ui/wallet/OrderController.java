@@ -123,6 +123,26 @@ public class OrderController extends ExchangeController {
     public TableColumn<Map<String, Object>, String> amountCol;
     public Set<String> tempAddressSet;
     public ChangeListener<String> myListener;
+    public ChangeListener<String> myListenerA;
+
+    @FXML
+    public ComboBox<String> addressComboBox1;
+    @FXML
+    public ComboBox<String> tokenComboBox1;
+    @FXML
+    public DatePicker validdateToDatePicker1;
+    @FXML
+    public TextField limitTextField1;
+    @FXML
+    public TextField amountTextField1;
+    @FXML
+    public RadioButton buyRadioButton1;
+    @FXML
+    public RadioButton sellRadioButton1;
+    @FXML
+    public ToggleGroup buySellTG1;
+    @FXML
+    public TextField toTimeTF1;
 
     @FXML
     public TabPane tabPane;
@@ -135,6 +155,8 @@ public class OrderController extends ExchangeController {
 
             buyRadioButton.setUserData("buy");
             sellRadioButton.setUserData("sell");
+            buyRadioButton1.setUserData("buy");
+            sellRadioButton1.setUserData("sell");
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
@@ -153,6 +175,17 @@ public class OrderController extends ExchangeController {
                         tempAddressSet = Main.validTokenMap.get(n1.split(":")[1].trim());
                         ObservableList<String> addresses = FXCollections.observableArrayList(tempAddressSet);
                         addressComboBox.setItems(addresses);
+                    }
+
+                }
+
+            };
+            myListenerA = (ov1, o1, n1) -> {
+                if (n1 != null && !n1.isEmpty()) {
+                    if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
+                        tempAddressSet = Main.validTokenMap.get(n1.split(":")[1].trim());
+                        ObservableList<String> addresses = FXCollections.observableArrayList(tempAddressSet);
+                        addressComboBox1.setItems(addresses);
                     }
 
                 }
@@ -190,6 +223,39 @@ public class OrderController extends ExchangeController {
                 addressComboBox.setItems(addresses);
 
             });
+
+            buySellTG1.selectedToggleProperty().addListener((ov, o, n) -> {
+                String temp = n.getUserData().toString();
+                boolean flag = "sell".equalsIgnoreCase(temp);
+                try {
+                    initComboBox(!flag);
+                } catch (Exception e) {
+
+                }
+
+                if (flag) {
+                    tempAddressSet = new HashSet<String>();
+
+                    tokenComboBox1.getSelectionModel().selectedItemProperty().addListener(myListenerA);
+                    if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
+                        tokenComboBox1.getSelectionModel().selectFirst();
+                        String key = tokenComboBox1.getValue().split(":")[1];
+                        if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
+                            tempAddressSet = Main.validTokenMap.get(key);
+                        }
+
+                    }
+
+                } else {
+                    tokenComboBox1.getSelectionModel().selectedItemProperty().removeListener(myListenerA);
+                    tempAddressSet = Main.validAddressSet;
+
+                }
+                ObservableList<String> addresses = FXCollections.observableArrayList(tempAddressSet);
+
+                addressComboBox1.setItems(addresses);
+
+            });
             tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
                 int index = t1.intValue();
                 switch (index) {
@@ -224,6 +290,7 @@ public class OrderController extends ExchangeController {
 
     public void initAddress(String address) {
         addressComboBox.setValue(address);
+        addressComboBox1.setValue(address);
     }
 
     public void refreshSIgnTable(ActionEvent event) {
@@ -384,8 +451,11 @@ public class OrderController extends ExchangeController {
 
         tokenComboBox.setItems(tokenData);
         tokenComboBox.getSelectionModel().selectFirst();
+        tokenComboBox1.setItems(tokenData);
+        tokenComboBox1.getSelectionModel().selectFirst();
         ObservableList<String> addresses = FXCollections.observableArrayList(Main.validAddressSet);
         addressComboBox.setItems(addresses);
+        addressComboBox1.setItems(addresses);
     }
 
     public boolean isSystemCoin(String token) {
@@ -400,6 +470,74 @@ public class OrderController extends ExchangeController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void buyA(ActionEvent event) throws Exception {
+
+        try {
+            buyDoA(event);
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void buyDoA(ActionEvent event) throws Exception {
+
+        log.debug(tokenComboBox1.getValue());
+        String tokenid = tokenComboBox1.getValue().split(":")[1].trim();
+        String typeStr = (String) buySellTG1.getSelectedToggle().getUserData().toString();
+
+        byte[] pubKeyHash = Address.fromBase58(Main.params, addressComboBox1.getValue()).getHash160();
+
+        Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
+                typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        long amount = Coin.parseCoinValue(this.amountTextField1.getText());
+
+        if (coin.getValue() < amount) {
+            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
+            return;
+        }
+
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
+        // String validdateFrom = "";
+        // if (validdateFromDatePicker.getValue() != null) {
+        // validdateFrom = df.format(validdateFromDatePicker.getValue());
+        // }
+        String validdateTo = "";
+        if (validdateToDatePicker1.getValue() != null) {
+            validdateTo = df.format(validdateToDatePicker1.getValue());
+        }
+        String ContextRoot = Main.getContextRoot();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("address", addressComboBox1.getValue());
+        // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
+        requestParam.put("tokenid", tokenid);
+        if (typeStr.equals("sell")) {
+            Set<String> addrSet = Main.validOutputMultiMap.get(tokenid);
+            if (addrSet != null && !addrSet.isEmpty()) {
+                addrSet.remove(addressComboBox1.getValue());
+                requestParam.put("signaddress", Main.validOutputMultiMap.get(tokenid));
+            }
+        }
+        requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
+        long price = Coin.parseCoinValue(this.limitTextField1.getText());
+        requestParam.put("price", price);
+        requestParam.put("amount", amount);
+        requestParam.put("validateto", validdateTo + " " + toTimeTF1.getText());
+        // requestParam.put("validatefrom", validdateFrom + " " +
+        // fromTimeTF.getText());
+        // TODO xiao mi change
+        String market = marketComboBox.getValue();
+        String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
+        requestParam.put("market", temp);
+        if (typeStr.equals("sell")) {
+
+           // Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, amount);
+        } else {
+           // Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, amount);
+        }
+
+        overlayUI.done();
     }
 
     public void buyDo(ActionEvent event) throws Exception {
@@ -420,10 +558,10 @@ public class OrderController extends ExchangeController {
         }
 
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
-        String validdateFrom = "";
-        if (validdateFromDatePicker.getValue() != null) {
-            validdateFrom = df.format(validdateFromDatePicker.getValue());
-        }
+        // String validdateFrom = "";
+        // if (validdateFromDatePicker.getValue() != null) {
+        // validdateFrom = df.format(validdateFromDatePicker.getValue());
+        // }
         String validdateTo = "";
         if (validdateToDatePicker.getValue() != null) {
             validdateTo = df.format(validdateToDatePicker.getValue());
@@ -445,7 +583,8 @@ public class OrderController extends ExchangeController {
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo + " " + toTimeTF.getText());
-        requestParam.put("validatefrom", validdateFrom + " " + fromTimeTF.getText());
+        // requestParam.put("validatefrom", validdateFrom + " " +
+        // fromTimeTF.getText());
         // TODO xiao mi change
         String market = marketComboBox.getValue();
         String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
