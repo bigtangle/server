@@ -754,7 +754,7 @@ public class TokenController extends TokenBaseController {
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
+                    && Long.parseLong(signnumberTF.getText().trim()) < signAddrChoiceBox.getItems().size() +1) {
 
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
@@ -827,7 +827,7 @@ public class TokenController extends TokenBaseController {
         requestParam0.put("address", rowdata.get("address").toString());
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-        log.debug(resp);
+      //  log.debug(resp);
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         MultiSign multiSign000 = null;

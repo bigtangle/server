@@ -504,12 +504,8 @@ public class OrderController extends ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
-
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
-        // String validdateFrom = "";
-        // if (validdateFromDatePicker.getValue() != null) {
-        // validdateFrom = df.format(validdateFromDatePicker.getValue());
-        // }
+
         String validdateTo = "";
         if (validdateToDatePicker1.getValue() != null) {
             validdateTo = df.format(validdateToDatePicker1.getValue());
@@ -532,12 +528,6 @@ public class OrderController extends ExchangeController {
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo + " " + toTimeTF1.getText());
-        // requestParam.put("validatefrom", validdateFrom + " " +
-        // fromTimeTF.getText());
-        // TODO xiao mi change
-        String market = marketComboBox.getValue();
-        String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
-        requestParam.put("market", temp);
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {

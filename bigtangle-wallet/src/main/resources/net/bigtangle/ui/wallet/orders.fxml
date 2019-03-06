@@ -51,6 +51,35 @@
 						</AnchorPane>
 					</content>
 				</Tab>
+				            <Tab closable="false" text="%Order">
+               <content>
+                  <AnchorPane maxHeight="650.0" minHeight="650.0" prefHeight="650.0">
+                     <children>
+                        <DatePicker fx:id="validdateToDatePicker1" editable="true" layoutX="227.0" layoutY="322.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <Label layoutX="24.0" layoutY="215.0" prefHeight="15.0" prefWidth="120.0" text="%Amount" GridPane.rowIndex="3" />
+                        <ComboBox fx:id="addressComboBox1" editable="true" layoutX="227.0" layoutY="43.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
+                        <TextField fx:id="limitTextField1" layoutX="227.0" layoutY="155.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Button cancelButton="true" layoutX="566.0" layoutY="487.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                        <Button defaultButton="true" layoutX="461.0" layoutY="487.0" mnemonicParsing="false" onAction="#buyA" text="%save" GridPane.rowIndex="8" />
+                        <ComboBox fx:id="tokenComboBox1" editable="true" layoutX="227.0" layoutY="99.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label layoutX="24.0" layoutY="159.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
+                        <Label layoutX="24.0" layoutY="103.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
+                        <TextField fx:id="amountTextField1" layoutX="227.0" layoutY="211.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label layoutX="24.0" layoutY="47.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                        <Label layoutX="24.0" layoutY="381.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
+                        <Label layoutX="24.0" layoutY="326.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
+                        <RadioButton fx:id="buyRadioButton1" layoutX="227.0" layoutY="381.0" mnemonicParsing="false" selected="true" text="%BUY">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="buySellTG1" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="sellRadioButton1" layoutX="296.0" layoutY="381.0" mnemonicParsing="false" text="%SELL" toggleGroup="$buySellTG1" />
+                        <TextField fx:id="toTimeTF1" layoutX="488.0" layoutY="322.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
+            
 				<Tab closable="false" text="%OTCMarket">
 					<content>
 						<AnchorPane maxHeight="650.0" minHeight="650.0" prefHeight="650.0">
@@ -137,34 +166,7 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-            <Tab closable="false" text="%Order">
-               <content>
-                  <AnchorPane maxHeight="650.0" minHeight="650.0" prefHeight="650.0">
-                     <children>
-                        <DatePicker fx:id="validdateToDatePicker1" editable="true" layoutX="227.0" layoutY="322.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                        <Label layoutX="24.0" layoutY="215.0" prefHeight="15.0" prefWidth="120.0" text="%Amount" GridPane.rowIndex="3" />
-                        <ComboBox fx:id="addressComboBox1" editable="true" layoutX="227.0" layoutY="43.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
-                        <TextField fx:id="limitTextField1" layoutX="227.0" layoutY="155.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Button cancelButton="true" layoutX="566.0" layoutY="487.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                        <Button defaultButton="true" layoutX="461.0" layoutY="487.0" mnemonicParsing="false" onAction="#buyA" text="%save" GridPane.rowIndex="8" />
-                        <ComboBox fx:id="tokenComboBox1" editable="true" layoutX="227.0" layoutY="99.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Label layoutX="24.0" layoutY="159.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
-                        <Label layoutX="24.0" layoutY="103.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
-                        <TextField fx:id="amountTextField1" layoutX="227.0" layoutY="211.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Label layoutX="24.0" layoutY="47.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-                        <Label layoutX="24.0" layoutY="381.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
-                        <Label layoutX="24.0" layoutY="326.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
-                        <RadioButton fx:id="buyRadioButton1" layoutX="227.0" layoutY="381.0" mnemonicParsing="false" selected="true" text="%BUY">
-                           <toggleGroup>
-                              <ToggleGroup fx:id="buySellTG1" />
-                           </toggleGroup>
-                        </RadioButton>
-                        <RadioButton fx:id="sellRadioButton1" layoutX="296.0" layoutY="381.0" mnemonicParsing="false" text="%SELL" toggleGroup="$buySellTG1" />
-                        <TextField fx:id="toTimeTF1" layoutX="488.0" layoutY="322.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
-                     </children>
-                  </AnchorPane>
-               </content>
-            </Tab>
+
 			</tabs>
 		</TabPane>
 		<HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
