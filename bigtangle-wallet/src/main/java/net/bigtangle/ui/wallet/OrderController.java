@@ -284,7 +284,8 @@ public class OrderController extends ExchangeController {
             // TODO auto initTable is quite slow and disabled now and click
             // search to start initTable initTable(requestParam);
             super.initialize();
-            new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
+            // new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(()
+            // -> checkState(Main.isTime(text))));
             new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
