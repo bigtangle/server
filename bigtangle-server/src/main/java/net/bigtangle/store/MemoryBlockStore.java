@@ -10,11 +10,11 @@ import java.util.Map;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException;
 
 /**
  * Keeps {@link net.bigtangle.core.StoredBlock}s in memory. Used primarily for unit testing.

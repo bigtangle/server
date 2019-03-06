@@ -26,10 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.ProtocolException;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
 
 /**
  * <p>

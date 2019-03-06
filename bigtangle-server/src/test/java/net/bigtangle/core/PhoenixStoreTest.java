@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.PhoenixBlockStore;

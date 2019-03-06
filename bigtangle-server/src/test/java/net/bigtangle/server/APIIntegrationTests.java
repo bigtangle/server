@@ -30,7 +30,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
@@ -48,7 +47,8 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VerificationException.TimeTravelerException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException.TimeTravelerException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;

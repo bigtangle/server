@@ -25,6 +25,8 @@ package net.bigtangle.script;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.*;
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.crypto.TransactionSignature;
 
 import org.slf4j.Logger;

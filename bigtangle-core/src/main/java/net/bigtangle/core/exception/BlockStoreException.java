@@ -17,20 +17,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
 
-@SuppressWarnings("serial")
-public class ProtocolException extends VerificationException {
+package net.bigtangle.core.exception;
 
-    public ProtocolException(String msg) {
-        super(msg);
+/**
+ * Thrown when something goes wrong with storing a block. Examples: out of disk space.
+ */
+public class BlockStoreException extends Exception {
+
+    private static final long serialVersionUID = -2924176331904923534L;
+
+    public BlockStoreException(String message) {
+        super(message);
     }
 
-    public ProtocolException(Exception e) {
-        super(e);
+    public BlockStoreException(Throwable t) {
+        super(t);
     }
 
-    public ProtocolException(String msg, Exception e) {
-        super(msg, e);
+    public BlockStoreException(String message, Throwable t) {
+        super(message, t);
     }
 }

@@ -21,6 +21,8 @@ package net.bigtangle.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's
  * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv

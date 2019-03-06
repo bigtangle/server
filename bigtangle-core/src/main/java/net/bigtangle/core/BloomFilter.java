@@ -23,6 +23,7 @@ package net.bigtangle.core;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptChunk;
 

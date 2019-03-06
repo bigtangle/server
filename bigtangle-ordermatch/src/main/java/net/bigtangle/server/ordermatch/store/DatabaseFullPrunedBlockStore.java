@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.NetworkParameters;
@@ -34,7 +33,8 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProviderException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.server.ordermatch.bean.OrderMatch;
 import net.bigtangle.utils.OrderState;
 

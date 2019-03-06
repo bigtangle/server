@@ -19,11 +19,11 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

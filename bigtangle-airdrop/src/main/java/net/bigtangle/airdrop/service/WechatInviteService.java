@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
-import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.exception.BlockStoreException;
 
 @Service
 public class WechatInviteService {

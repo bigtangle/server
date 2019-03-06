@@ -1,3 +1,5 @@
+package net.bigtangle.core.exception;
+
 /*******************************************************************************
  *  Copyright   2018  Inasset GmbH. 
  *  
@@ -17,16 +19,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
 
 @SuppressWarnings("serial")
-public class ScriptException extends VerificationException {
+public class ProtocolException extends VerificationException {
 
-    public ScriptException(String msg) {
+    public ProtocolException(String msg) {
         super(msg);
     }
 
-    public ScriptException(String msg, Exception e) {
+    public ProtocolException(Exception e) {
+        super(e);
+    }
+
+    public ProtocolException(String msg, Exception e) {
         super(msg, e);
     }
 }

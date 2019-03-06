@@ -23,6 +23,8 @@ package net.bigtangle.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 import static net.bigtangle.core.Utils.*;
 
 import java.io.IOException;

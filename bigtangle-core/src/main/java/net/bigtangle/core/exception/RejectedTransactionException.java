@@ -17,7 +17,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
+package net.bigtangle.core.exception;
+
+import net.bigtangle.core.RejectMessage;
+import net.bigtangle.core.Transaction;
 
 /**
  * This exception is used by the TransactionBroadcast class to indicate that a broadcast

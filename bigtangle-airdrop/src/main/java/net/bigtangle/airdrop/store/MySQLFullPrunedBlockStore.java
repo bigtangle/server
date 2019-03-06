@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.exception.BlockStoreException;
 
 /**
  * <p>

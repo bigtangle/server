@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.StoredBlock;
@@ -27,8 +26,9 @@ import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProviderException;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.core.exception.VerificationException;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,

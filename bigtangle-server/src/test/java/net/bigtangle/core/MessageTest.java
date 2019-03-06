@@ -9,8 +9,8 @@ import org.junit.Test;
 
 import net.bigtangle.core.Message;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.ProtocolException;
 import net.bigtangle.core.VarInt;
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.params.MainNetParams;
 
 public class MessageTest {

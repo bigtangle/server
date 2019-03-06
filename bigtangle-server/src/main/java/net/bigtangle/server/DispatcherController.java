@@ -28,12 +28,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;

@@ -16,6 +16,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import net.bigtangle.core.exception.ScriptException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;

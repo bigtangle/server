@@ -21,6 +21,8 @@ package net.bigtangle.core;
 
 import java.util.List;
 
+import net.bigtangle.core.exception.UTXOProviderException;
+
 /**
  * A UTXOProvider encapsulates functionality for returning unspent transaction outputs,
  * for use by the wallet or other code that crafts spends.

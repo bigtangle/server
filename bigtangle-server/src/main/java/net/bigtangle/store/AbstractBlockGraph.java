@@ -9,10 +9,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Wallet;

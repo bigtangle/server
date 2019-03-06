@@ -30,6 +30,8 @@ import java.io.ObjectOutputStream;
 
 import javax.annotation.Nullable;
 
+import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.core.exception.WrongNetworkException;
 import net.bigtangle.params.Networks;
 import net.bigtangle.script.Script;
 

@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Configuration;
 
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.exception.BlockStoreException;
 
 @Configuration
 public class DBStoreConfiguration {

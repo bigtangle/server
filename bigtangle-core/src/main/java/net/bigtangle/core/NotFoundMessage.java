@@ -22,6 +22,8 @@ package net.bigtangle.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Sent by a peer when a getdata request doesn't find the requested data in the mempool. It has the same format
  * as an inventory message and lists the hashes of the missing items.</p>

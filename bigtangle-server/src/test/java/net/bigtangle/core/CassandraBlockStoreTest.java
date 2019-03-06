@@ -8,6 +8,7 @@ package net.bigtangle.core;
 import org.junit.After;
 import org.junit.Ignore;
 
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.store.CassandraBlockStore;
 import net.bigtangle.store.FullPrunedBlockStore;
 

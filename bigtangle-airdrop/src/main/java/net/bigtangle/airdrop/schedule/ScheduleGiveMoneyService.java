@@ -26,7 +26,7 @@ import net.bigtangle.airdrop.config.ScheduleConfiguration;
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.utils.GiveMoneyUtils;
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BlockStoreException;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.params.MainNetParams;
 
 @Component

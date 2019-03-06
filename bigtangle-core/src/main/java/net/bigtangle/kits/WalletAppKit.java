@@ -42,10 +42,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import net.bigtangle.core.BlockStore;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;

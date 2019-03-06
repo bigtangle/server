@@ -19,6 +19,8 @@
  */
 package net.bigtangle.core;
 
+import net.bigtangle.core.exception.BlockStoreException;
+
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
  * different ways. An in-memory implementation (MemoryBlockStore) exists for unit testing but real apps will want to

@@ -18,15 +18,15 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProviderException;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;

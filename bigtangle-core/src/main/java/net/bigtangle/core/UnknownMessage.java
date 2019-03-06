@@ -20,6 +20,8 @@
  */
 package net.bigtangle.core;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */

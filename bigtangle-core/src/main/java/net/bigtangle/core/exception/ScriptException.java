@@ -1,10 +1,11 @@
+package net.bigtangle.core.exception;
+
 /*******************************************************************************
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
 /*
  * Copyright 2011 Google Inc.
- * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +19,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
 
 @SuppressWarnings("serial")
-public class AddressFormatException extends IllegalArgumentException {
-    public AddressFormatException() {
-        super();
+public class ScriptException extends VerificationException {
+
+    public ScriptException(String msg) {
+        super(msg);
     }
 
-    public AddressFormatException(String message) {
-        super(message);
+    public ScriptException(String msg, Exception e) {
+        super(msg, e);
     }
 }

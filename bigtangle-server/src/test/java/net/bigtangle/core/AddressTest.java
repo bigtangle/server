@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.core.exception.WrongNetworkException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.Networks;
 import net.bigtangle.script.Script;

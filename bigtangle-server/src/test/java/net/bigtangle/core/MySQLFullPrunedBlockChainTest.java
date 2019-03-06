@@ -8,8 +8,8 @@ package net.bigtangle.core;
 import org.junit.After;
 import org.junit.Ignore;
 
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
 

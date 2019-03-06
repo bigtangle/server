@@ -26,6 +26,8 @@ import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * Generic interface for classes which serialize/deserialize messages. Implementing
  * classes should be immutable.

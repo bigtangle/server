@@ -24,6 +24,10 @@ import java.util.Locale;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
+
 /**
  * Wraps a {@link Block} object with extra data that can be derived from the
  * block graph but is slow or inconvenient to calculate. By storing it alongside
