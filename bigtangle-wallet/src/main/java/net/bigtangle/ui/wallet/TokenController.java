@@ -774,7 +774,7 @@ public class TokenController extends TokenBaseController {
             requestParam.put("asmarket", false);
             requestParam.put("tokenstop", tokenstopCheckBox.selectedProperty().get());
             noSignBlock(requestParam);
-            GuiUtils.informationalAlert("", Main.getText("s_c_m"));
+            GuiUtils.informationalAlert("", Main.getText("s_c_m_sign"));
             Main.instance.controller.initTableView();
             checkGuiThread();
             initTableView();

@@ -429,6 +429,13 @@ public abstract class AbstractIntegrationTest {
 		}
 	}
 
+	protected void showOrders() throws BlockStoreException {
+        // Snapshot current state
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
+        for(OrderRecord o:allOrdersSorted) {
+            log.debug(o.toString());
+        }
+	}
 	protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks) throws BlockStoreException {
 		// Snapshot current state
 		List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
