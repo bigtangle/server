@@ -31,6 +31,9 @@ import java.util.List;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
+
 /**
  * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>
  *

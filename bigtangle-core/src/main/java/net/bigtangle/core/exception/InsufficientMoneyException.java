@@ -17,9 +17,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
+package net.bigtangle.core.exception;
 
 import javax.annotation.Nullable;
+
+import net.bigtangle.core.Coin;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

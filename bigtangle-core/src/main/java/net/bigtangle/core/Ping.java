@@ -23,6 +23,8 @@ package net.bigtangle.core;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */

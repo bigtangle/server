@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
+package net.bigtangle.core.exception;
 
 @SuppressWarnings("serial")
 public class VerificationException extends RuntimeException {

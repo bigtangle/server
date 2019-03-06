@@ -4,6 +4,7 @@
  *******************************************************************************/
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +18,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bigtangle.core;
+package net.bigtangle.core.exception;
 
-/**
- * Thrown when a problem occurs in communicating with a peer, and we should
- * retry.
- */
 @SuppressWarnings("serial")
-public class PeerException extends Exception {
-    public PeerException(String msg) {
-        super(msg);
+public class AddressFormatException extends IllegalArgumentException {
+    public AddressFormatException() {
+        super();
     }
 
-    public PeerException(Exception e) {
-        super(e);
-    }
-
-    public PeerException(String msg, Exception e) {
-        super(msg, e);
+    public AddressFormatException(String message) {
+        super(message);
     }
 }

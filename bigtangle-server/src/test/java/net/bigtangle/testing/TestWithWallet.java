@@ -16,7 +16,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.VerificationException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.store.MemoryBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;

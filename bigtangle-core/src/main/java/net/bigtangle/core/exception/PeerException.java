@@ -1,5 +1,8 @@
+package net.bigtangle.core.exception;
 /*******************************************************************************
- *  Copyright   2018  Inasset GmbH. 
+
+ *  Copyrig
+ *  ht   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
 /*
@@ -18,24 +21,22 @@
  * limitations under the License.
  */
 
-package net.bigtangle.core;
 
 /**
- * Thrown when something goes wrong with storing a block. Examples: out of disk space.
+ * Thrown when a problem occurs in communicating with a peer, and we should
+ * retry.
  */
-public class BlockStoreException extends Exception {
-
-    private static final long serialVersionUID = -2924176331904923534L;
-
-    public BlockStoreException(String message) {
-        super(message);
+@SuppressWarnings("serial")
+public class PeerException extends Exception {
+    public PeerException(String msg) {
+        super(msg);
     }
 
-    public BlockStoreException(Throwable t) {
-        super(t);
+    public PeerException(Exception e) {
+        super(e);
     }
 
-    public BlockStoreException(String message, Throwable t) {
-        super(message, t);
+    public PeerException(String msg, Exception e) {
+        super(msg, e);
     }
 }

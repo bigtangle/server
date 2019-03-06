@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
  * 

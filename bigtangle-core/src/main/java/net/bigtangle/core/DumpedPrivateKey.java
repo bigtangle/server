@@ -24,6 +24,9 @@ package net.bigtangle.core;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
+import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.core.exception.WrongNetworkException;
+
 import java.util.Arrays;
 
 import javax.annotation.Nullable;

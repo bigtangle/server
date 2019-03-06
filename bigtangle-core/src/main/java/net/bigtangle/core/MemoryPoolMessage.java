@@ -23,6 +23,8 @@ package net.bigtangle.core;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>The "mempool" message asks a remote peer to announce all transactions in its memory pool, possibly restricted by
  * any Bloom filter set on the connection. The list of transaction hashes comes back in an inv message. Note that

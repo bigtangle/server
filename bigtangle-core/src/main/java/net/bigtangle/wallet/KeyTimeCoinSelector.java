@@ -22,6 +22,7 @@ package net.bigtangle.wallet;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.*;
+import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.script.Script;
 
 import org.slf4j.Logger;

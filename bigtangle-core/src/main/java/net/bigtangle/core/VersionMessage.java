@@ -27,6 +27,8 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>
  * A VersionMessage holds information exchanged during connection setup with

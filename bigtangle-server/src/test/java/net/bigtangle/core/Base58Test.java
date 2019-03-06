@@ -6,8 +6,8 @@
 package net.bigtangle.core;
 
 import junit.framework.TestCase;
-import net.bigtangle.core.AddressFormatException;
 import net.bigtangle.core.Base58;
+import net.bigtangle.core.exception.AddressFormatException;
 
 import org.junit.Test;
 

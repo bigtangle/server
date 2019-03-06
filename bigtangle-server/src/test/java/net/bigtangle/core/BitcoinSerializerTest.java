@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.params.MainNetParams;
 
 public class BitcoinSerializerTest {

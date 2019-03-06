@@ -21,6 +21,8 @@ package net.bigtangle.core;
 
 import java.util.List;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>The "getheaders" command is structurally identical to "getblocks", but has different meaning. On receiving this
  * message a Bitcoin node returns matching blocks up to the limit, but without the bodies. It is useful as an

@@ -15,7 +15,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStoreException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
@@ -29,6 +28,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;

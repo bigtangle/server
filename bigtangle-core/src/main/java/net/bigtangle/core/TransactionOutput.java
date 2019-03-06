@@ -22,6 +22,8 @@ package net.bigtangle.core;
 
 import com.google.common.base.Objects;
 
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.script.*;
 import net.bigtangle.wallet.Wallet;
 

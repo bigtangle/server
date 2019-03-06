@@ -19,6 +19,8 @@
  */
 package net.bigtangle.core;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
  * hashes.</p>

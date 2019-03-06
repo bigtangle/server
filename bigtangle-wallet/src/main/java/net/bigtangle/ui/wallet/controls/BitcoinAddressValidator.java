@@ -21,8 +21,8 @@ package net.bigtangle.ui.wallet.controls;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import net.bigtangle.core.Address;
-import net.bigtangle.core.AddressFormatException;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 
 /**

@@ -25,6 +25,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
  * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.</p>

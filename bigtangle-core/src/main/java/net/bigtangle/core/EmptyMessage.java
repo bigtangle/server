@@ -23,6 +23,8 @@ package net.bigtangle.core;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import net.bigtangle.core.exception.ProtocolException;
+
 /**
  * <p>Parent class for header only messages that don't have a payload.
  * Currently this includes getaddr, verack and special bitcoinj class UnknownMessage.</p>

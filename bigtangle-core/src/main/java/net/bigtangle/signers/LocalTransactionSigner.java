@@ -25,9 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.ScriptException;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
