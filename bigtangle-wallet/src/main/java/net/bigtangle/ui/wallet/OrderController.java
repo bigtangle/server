@@ -16,6 +16,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -35,6 +36,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
@@ -45,6 +47,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -492,7 +495,10 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long amount = Coin.parseCoinValue(this.amountTextField1.getText());
-
+        long price = Coin.parseCoinValue(this.limitTextField1.getText());
+        if (!typeStr.equals("sell")) {
+            amount = amount * price;
+        }
         if (coin.getValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
@@ -508,6 +514,7 @@ public class OrderController extends ExchangeController {
             validdateTo = df.format(validdateToDatePicker1.getValue());
         }
         String ContextRoot = Main.getContextRoot();
+        Main.bitcoin.wallet().setServerURL(ContextRoot);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addressComboBox1.getValue());
         // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
@@ -520,7 +527,7 @@ public class OrderController extends ExchangeController {
             }
         }
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-        long price = Coin.parseCoinValue(this.limitTextField1.getText());
+
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo + " " + toTimeTF1.getText());
@@ -530,11 +537,24 @@ public class OrderController extends ExchangeController {
         String market = marketComboBox.getValue();
         String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();
         requestParam.put("market", temp);
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        ECKey beneficiary = null;
+        for (ECKey ecKey : keys) {
+            if (requestParam.get("address").equals(ecKey.toAddress(Main.params).toString())) {
+                beneficiary = ecKey;
+                break;
+            }
+        }
         if (typeStr.equals("sell")) {
 
-           // Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, amount);
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, amount);
         } else {
-           // Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, amount);
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, amount);
         }
 
         overlayUI.done();
