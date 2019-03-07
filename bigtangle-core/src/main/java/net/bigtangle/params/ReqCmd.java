@@ -17,5 +17,6 @@ public enum ReqCmd {
     launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
 
     getVOSExecuteList, version, submitLogResult, getOutputWithKey, batchBlock, getOutputMultiList, getOutputsHistory, //
-    regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList, getSubtanglePermissionListByPubkeys, updateSubtangle;
+    regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList, getSubtanglePermissionListByPubkeys, updateSubtangle,//
+    getLocalOrder;
 }
