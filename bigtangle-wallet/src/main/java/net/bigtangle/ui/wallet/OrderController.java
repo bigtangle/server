@@ -209,9 +209,11 @@ public class OrderController extends ExchangeController {
                     tokenComboBox.getSelectionModel().selectedItemProperty().addListener(myListener);
                     if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
                         tokenComboBox.getSelectionModel().selectFirst();
-                        String key = tokenComboBox.getValue().split(":")[1];
-                        if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
-                            tempAddressSet = Main.validTokenMap.get(key);
+                        if (tokenComboBox.getValue() != null && !tokenComboBox.getValue().trim().isEmpty()) {
+                            String key = tokenComboBox.getValue().split(":")[1];
+                            if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
+                                tempAddressSet = Main.validTokenMap.get(key);
+                            }
                         }
 
                     }
@@ -242,9 +244,11 @@ public class OrderController extends ExchangeController {
                     tokenComboBox1.getSelectionModel().selectedItemProperty().addListener(myListenerA);
                     if (Main.validTokenMap != null && !Main.validTokenMap.isEmpty()) {
                         tokenComboBox1.getSelectionModel().selectFirst();
-                        String key = tokenComboBox1.getValue().split(":")[1];
-                        if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
-                            tempAddressSet = Main.validTokenMap.get(key);
+                        if (tokenComboBox1.getValue() != null && !tokenComboBox1.getValue().trim().isEmpty()) {
+                            String key = tokenComboBox1.getValue().split(":")[1];
+                            if (Main.validTokenMap.get(key) != null && !Main.validTokenMap.get(key).isEmpty()) {
+                                tempAddressSet = Main.validTokenMap.get(key);
+                            }
                         }
 
                     }
