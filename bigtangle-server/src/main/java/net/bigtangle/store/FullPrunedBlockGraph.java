@@ -1256,7 +1256,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
         
-        // All remaining: TTL decrease by one, remove timeouts, set issuing order blockhash
+        // All remaining:  remove timeouts, set issuing order blockhash
         Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
         while (it.hasNext()) {
             final Entry<Sha256Hash, OrderRecord> next = it.next();
