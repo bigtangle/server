@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.mysql.jdbc.log.Log;
+
 import net.bigtangle.airdrop.config.ServerConfiguration;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -94,9 +96,9 @@ public class GiveMoneyUtils {
                 doublespent.addOutput(amount, address);
                 coinbase = coinbase.add(amount);
             } catch (Exception e) {
-                LOGGER.error("=============");
-                LOGGER.error(""+e);
-                LOGGER.info("error : " + entry.getKey());
+               
+               // LOGGER.info("", e);
+                LOGGER.info(" cannot add this entry to Transaction : " + entry.getKey() + " "+ entry.getValue());
             }
         }
 
@@ -110,7 +112,7 @@ public class GiveMoneyUtils {
         }
         //no double spending and wait
        if( findOutput.isSpendPending() ) return false;
-        
+        LOGGER.debug(findOutput.toString());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
         Coin amount = spendableOutput.getValue().subtract(coinbase);
 

@@ -143,7 +143,9 @@ public class ScheduleGiveMoneyService {
     private HashMap<String, Integer> sendFromOrder(HashMap<String, Integer> giveMoneyResult) {
         try {
             HashMap<String, Integer> map = this.store.queryFromOrder();
+          
             giveMoneyResult.putAll(map);
+         
         } catch (BlockStoreException e) {
             logger.warn("ScheduleGiveMoneyService", e);
         }
@@ -152,12 +154,12 @@ public class ScheduleGiveMoneyService {
 
     private void wechatToplevel(HashMap<String, List<WechatInvite>> dataMap,
             Map<String, HashMap<String, String>> wechatInviteResult, HashMap<String, Integer> giveMoneyResult) {
-        logger.debug("wechatToplevel");
+        logger.debug("wechatToplevel with data size " + dataMap.size());
         for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator
                 .hasNext();) {
             Map.Entry<String, List<WechatInvite>> entry = iterator.next();
             String wechatinviterId = entry.getKey();
-            logger.debug("wechatid:" + wechatinviterId);
+          //  logger.debug("wechatid:" + wechatinviterId);
             String pubkey = wechatInviteResult.get("pubkey").get(wechatinviterId);
             if (!StringUtils.nonEmptyString(pubkey)) {
                 iterator.remove();
@@ -169,7 +171,7 @@ public class ScheduleGiveMoneyService {
                 continue;
             }
             try {
-                Address.fromBase58(MainNetParams.get(), pubkey);
+               // Address.fromBase58(MainNetParams.get(), pubkey);
                 giveMoneyResult.put(pubkey, (count + 1) * wechatReward);
             } catch (Exception e) {
                 // logger.debug("", e);
@@ -184,7 +186,7 @@ public class ScheduleGiveMoneyService {
         for (WechatInvite wechatInvite : wechatInvites) {
             if (wechatInvite.getPubkey() != null && !"".equals(wechatInvite.getPubkey().trim())) {
                 try {
-                    Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
+                 //   Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
                     invitedSet.add(wechatInvite.getPubkey());
                 } catch (Exception e) {
                     // logger.debug("", e);
@@ -213,10 +215,10 @@ public class ScheduleGiveMoneyService {
                     if (pubkey == null || pubkey.trim().isEmpty()) {
                         continue;
                     }
-                    logger.debug("==============");
-                    logger.debug(pubkey);
+                  //  logger.debug("==============");
+                   
                     try {
-                        Address.fromBase58(MainNetParams.get(), pubkey);
+                     //   Address.fromBase58(MainNetParams.get(), pubkey);
                         if (giveMoneyResult.containsKey(pubkey)) {
                             giveMoneyResult.put(pubkey,
                                     giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor);
@@ -224,7 +226,8 @@ public class ScheduleGiveMoneyService {
                             giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor);
                         }
                     } catch (Exception e) {
-                        // logger.debug("", e);
+                    	 logger.debug(pubkey);
+                          logger.debug("", e);
 
                     }
 
@@ -241,7 +244,7 @@ public class ScheduleGiveMoneyService {
                         logger.debug("==============");
                         logger.debug(pubkey);
                         try {
-                            Address.fromBase58(MainNetParams.get(), pubkey);
+                          //  Address.fromBase58(MainNetParams.get(), pubkey);
                             if (giveMoneyResult.containsKey(pubkey)) {
                                 giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
                                         + wechatReward / wechatRewardfactor / wechatRewardfactor);
@@ -264,10 +267,10 @@ public class ScheduleGiveMoneyService {
                             if (pubkey == null || pubkey.trim().isEmpty()) {
                                 continue;
                             }
-                            logger.debug("==============");
-                            logger.debug(pubkey);
+                          //  logger.debug("==============");
+                         //   logger.debug(pubkey);
                             try {
-                                Address.fromBase58(MainNetParams.get(), pubkey);
+                              //  Address.fromBase58(MainNetParams.get(), pubkey);
                                 if (giveMoneyResult.containsKey(pubkey)) {
                                     giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward
                                             / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
@@ -276,7 +279,7 @@ public class ScheduleGiveMoneyService {
                                             / wechatRewardfactor);
                                 }
                             } catch (Exception e) {
-                                // logger.debug("", e);
+                                  	logger.debug(pubkey, e);
 
                             }
 
@@ -291,10 +294,10 @@ public class ScheduleGiveMoneyService {
                                 if (pubkey == null || pubkey.trim().isEmpty()) {
                                     continue;
                                 }
-                                logger.debug("==============");
-                                logger.debug(pubkey);
+                              //  logger.debug("==============");
+                              //  
                                 try {
-                                    Address.fromBase58(MainNetParams.get(), pubkey);
+                                  //  Address.fromBase58(MainNetParams.get(), pubkey);
                                     if (giveMoneyResult.containsKey(pubkey)) {
                                         giveMoneyResult.put(pubkey,
                                                 giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
@@ -304,7 +307,7 @@ public class ScheduleGiveMoneyService {
                                                 / wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
                                     }
                                 } catch (Exception e) {
-                                    // logger.debug("", e);
+                                	logger.debug(pubkey, e);
 
                                 }
 

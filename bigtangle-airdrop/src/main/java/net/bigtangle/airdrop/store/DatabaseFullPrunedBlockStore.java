@@ -26,10 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.params.MainNetParams;
 
 /**
  * <p>
@@ -262,7 +264,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     continue;
                 }
                 if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
-                    map.put(resultSet.getString("pubkey"), resultSet.getBigDecimal("amount").intValue());
+                    try {
+                     String pubkey = resultSet.getString("pubkey");
+                        Address.fromBase58(MainNetParams.get(), pubkey);
+                     map.put(pubkey, resultSet.getBigDecimal("amount").intValue());    
+                    } catch (Exception e) {
+
+                    }
+                   
                 }
 
             }
