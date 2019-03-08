@@ -70,7 +70,7 @@ public class OrderController extends ExchangeController {
     @FXML
     public TextField limitTextField;
     @FXML
-    public TextField amountTextField;
+    public TextField quantityTextField;
 
     @FXML
     public TextField orderid4searchTextField;
@@ -140,7 +140,7 @@ public class OrderController extends ExchangeController {
     @FXML
     public TextField limitTextField1;
     @FXML
-    public TextField amountTextField1;
+    public TextField quantityTextField1;
     @FXML
     public RadioButton buyRadioButton1;
     @FXML
@@ -330,8 +330,19 @@ public class OrderController extends ExchangeController {
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             HashMap<String, Object> map = new HashMap<String, Object>();
-            map.put("amount", orderRecord.getOfferValue());
-            map.put("tokenId", orderRecord.getOfferTokenid());
+
+            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+                map.put("type", Main.getText("BUY"));
+                map.put("amount", orderRecord.getTargetValue());
+                map.put("tokenId", orderRecord.getTargetTokenid());
+                map.put("price", orderRecord.getOfferValue() / orderRecord.getTargetValue());
+            } else {
+                map.put("type", Main.getText("SELL"));
+                map.put("amount", orderRecord.getOfferValue());
+                map.put("tokenId", orderRecord.getOfferTokenid());
+                map.put("price", orderRecord.getTargetValue() / orderRecord.getOfferValue());
+            }
+
             map.put("validateTo", new Date(orderRecord.getValidToTime()));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
@@ -514,10 +525,11 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long amount = Coin.parseCoinValue(this.amountTextField1.getText());
+        long quantity = Coin.parseCoinValue(this.quantityTextField1.getText());
         long price = Coin.parseCoinValue(this.limitTextField1.getText());
+        long amount = quantity;
         if (!typeStr.equals("sell")) {
-            amount = amount * price;
+            amount = quantity * price;
         }
         if (coin.getValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
@@ -545,7 +557,7 @@ public class OrderController extends ExchangeController {
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
 
         requestParam.put("price", price);
-        requestParam.put("amount", amount);
+        requestParam.put("amount", quantity);
         requestParam.put("validateto", validdateTo + " " + toTimeTF1.getText());
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
@@ -562,9 +574,9 @@ public class OrderController extends ExchangeController {
         }
         if (typeStr.equals("sell")) {
 
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, amount);
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, amount);
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity);
         }
 
         overlayUI.done();
@@ -580,8 +592,12 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long amount = Coin.parseCoinValue(this.amountTextField.getText());
-
+        long quantity = Coin.parseCoinValue(this.quantityTextField.getText());
+        long price = Coin.parseCoinValue(this.limitTextField.getText());
+        long amount = quantity;
+        if (!typeStr.equals("sell")) {
+            amount = quantity * price;
+        }
         if (coin.getValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
@@ -609,7 +625,7 @@ public class OrderController extends ExchangeController {
             }
         }
         requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-        long price = Coin.parseCoinValue(this.limitTextField.getText());
+
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo + " " + toTimeTF.getText());
