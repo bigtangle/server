@@ -6,6 +6,7 @@ package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
@@ -335,12 +336,12 @@ public class OrderController extends ExchangeController {
                 map.put("type", Main.getText("BUY"));
                 map.put("amount", orderRecord.getTargetValue());
                 map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("price", orderRecord.getOfferValue() / orderRecord.getTargetValue());
+                map.put("price", Coin.toPlainString (orderRecord.getOfferValue() / orderRecord.getTargetValue()));
             } else {
                 map.put("type", Main.getText("SELL"));
                 map.put("amount", orderRecord.getOfferValue());
                 map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("price", orderRecord.getTargetValue() / orderRecord.getOfferValue());
+                map.put("price",Coin.toPlainString ( orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
 
             map.put("validateTo", new Date(orderRecord.getValidToTime()));
@@ -395,8 +396,8 @@ public class OrderController extends ExchangeController {
         addressCol.setCellValueFactory(new MapValueFactory("address"));
         tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
-        validdatetoCol.setCellValueFactory(new MapValueFactory("validateto"));
-        validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
+    //TODO    validdatetoCol.setCellValueFactory(new MapValueFactory("validateto"));
+     //   validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
         stateCol.setCellValueFactory(new MapValueFactory("state"));
         priceCol.setCellValueFactory(new MapValueFactory("price"));
         amountCol.setCellValueFactory(new MapValueFactory("amount"));
@@ -525,7 +526,7 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long quantity = Coin.parseCoinValue(this.quantityTextField1.getText());
+        long quantity = Long.valueOf(this.quantityTextField1.getText());
         long price = Coin.parseCoinValue(this.limitTextField1.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
@@ -535,30 +536,12 @@ public class OrderController extends ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
-
-        String validdateTo = "";
-        if (validdateToDatePicker1.getValue() != null) {
-            validdateTo = df.format(validdateToDatePicker1.getValue());
-        }
+        //TODO time and null
+       LocalDate to = validdateToDatePicker1.getValue() ;
+        
         String ContextRoot = Main.getContextRoot();
         Main.bitcoin.wallet().setServerURL(ContextRoot);
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("address", addressComboBox1.getValue());
-        // String tokenid = this.tokenComboBox.getValue().split(":")[1].trim();
-        requestParam.put("tokenid", tokenid);
-        if (typeStr.equals("sell")) {
-            Set<String> addrSet = Main.validOutputMultiMap.get(tokenid);
-            if (addrSet != null && !addrSet.isEmpty()) {
-                addrSet.remove(addressComboBox1.getValue());
-                requestParam.put("signaddress", Main.validOutputMultiMap.get(tokenid));
-            }
-        }
-        requestParam.put("type", typeStr.equals("sell") ? 1 : 0);
-
-        requestParam.put("price", price);
-        requestParam.put("amount", quantity);
-        requestParam.put("validateto", validdateTo + " " + toTimeTF1.getText());
+        
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -567,16 +550,15 @@ public class OrderController extends ExchangeController {
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ECKey beneficiary = null;
         for (ECKey ecKey : keys) {
-            if (requestParam.get("address").equals(ecKey.toAddress(Main.params).toString())) {
+            if ( addressComboBox1.getValue().equals(ecKey.toAddress(Main.params).toString())) {
                 beneficiary = ecKey;
                 break;
             }
         }
-        if (typeStr.equals("sell")) {
-
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity);
+        if (typeStr.equals("sell")) { 
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity, to ==null?null:to.toEpochDay());
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity);
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity,to ==null?null:to.toEpochDay());
         }
 
         overlayUI.done();

@@ -3681,10 +3681,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
     }
 
     public Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount
-           ) throws Exception {
+         ,   Long validToTime      ) throws Exception {
       
         Transaction tx = new Transaction(params);
-        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey());
+        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime);
         tx.setData(info.toByteArray());
 
         // Burn BIG to buy
@@ -3718,11 +3718,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount           ) throws Exception {
+    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,    Long validToTime        ) throws Exception {
       
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                beneficiary.getPubKey());
+                beneficiary.getPubKey(),validToTime);
         tx.setData(info.toByteArray());
 
         // Burn tokens to sell

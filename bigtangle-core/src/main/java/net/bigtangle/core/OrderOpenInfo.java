@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class OrderOpenInfo  extends DataClass implements java.io.Serializable {
+public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 433387247051352702L;
     private static final Logger logger = LoggerFactory.getLogger(OrderOpenInfo.class);
@@ -33,16 +33,19 @@ public class OrderOpenInfo  extends DataClass implements java.io.Serializable {
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         this.validToTime = System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL;
-        
+
     }
 
-    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey,
-            Long validToTime) {
+    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTime) {
         super();
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
-        this.validToTime = validToTime;
+        if (validToTime == null) {
+            this.validToTime = System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL;
+        } else {
+            this.validToTime = validToTime;
+        }
     }
 
     public byte[] getBeneficiaryPubKey() {
@@ -92,7 +95,5 @@ public class OrderOpenInfo  extends DataClass implements java.io.Serializable {
     public void setValidToTime(Long validToTime) {
         this.validToTime = validToTime;
     }
-
- 
 
 }

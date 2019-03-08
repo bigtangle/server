@@ -302,6 +302,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return PLAIN_FORMAT.format(this).toString();
     }
 
+    public static String toPlainString(long number) {
+        return PLAIN_FORMAT.format( new Coin(number, NetworkParameters.BIGTANGLE_TOKENID)).toString();
+    }
+
     @Override
     public String toString() {
         return "[" + toPlainString() + " #" + getTokenHex() + "]";

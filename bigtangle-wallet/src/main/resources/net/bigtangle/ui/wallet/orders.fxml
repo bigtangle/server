@@ -21,16 +21,17 @@
 									<columns>
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
 										<TableColumn fx:id="priceCol" prefWidth="85.0" text="%price" />
-										<TableColumn fx:id="amountCol" prefWidth="101.0" text="%Amount" />
+										<TableColumn fx:id="amountCol" prefWidth="101.0" text="%Quantity" />
 
 										<TableColumn fx:id="addressCol" prefWidth="174.0" text="%address" />
 										<TableColumn fx:id="typeCol" prefWidth="62.0" text="%type" />
-
+		
 										<TableColumn fx:id="stateCol" prefWidth="65.0" text="%state" />
-
+										<TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateTo" />
+										
 										<TableColumn fx:id="orderidCol" prefWidth="105.0" text="%orderid" />
-										<TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateFrom" />
-										<TableColumn fx:id="validdatetoCol" prefWidth="94.0" text="%validdateTo" />
+								
+									
 
 									</columns>
 								</TableView>
