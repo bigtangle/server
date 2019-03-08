@@ -64,7 +64,7 @@
                         <ComboBox fx:id="tokenComboBox1" editable="true" layoutX="227.0" layoutY="160.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label layoutX="24.0" layoutY="220.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
                         <Label layoutX="24.0" layoutY="164.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
-                        <TextField fx:id="amountTextField1" layoutX="227.0" layoutY="272.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <TextField fx:id="quantityTextField1" layoutX="227.0" layoutY="272.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <Label layoutX="24.0" layoutY="108.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
                         <Label layoutX="24.0" layoutY="54.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
                         <Label layoutX="24.0" layoutY="326.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
@@ -94,7 +94,7 @@
 								<ComboBox fx:id="tokenComboBox" editable="true" layoutX="227.0" layoutY="157.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 								<Label layoutX="24.0" layoutY="217.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="161.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
-								<TextField fx:id="amountTextField" layoutX="227.0" layoutY="269.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+								<TextField fx:id="quantityTextField" layoutX="227.0" layoutY="269.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 								<ComboBox fx:id="marketComboBox" editable="true" layoutX="227.0" layoutY="378.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 								<Label layoutX="24.0" layoutY="105.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
 								<Label layoutX="24.0" layoutY="56.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
