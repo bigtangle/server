@@ -58,11 +58,9 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
-import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
@@ -214,6 +212,9 @@ public class MainController {
         Main.validTokenSet.clear();
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
+            if (c.isZero()) {
+                continue;
+            }
             String balance = c.toPlainString();
             byte[] tokenid = c.tokenid;
             String address = utxo.getAddress();
@@ -228,7 +229,7 @@ public class MainController {
             if (!utxo.isMultiSig()) {
                 Main.validTokenSet.add(Main.getString(hashNameMap.get(key)) + ":" + key);
             }
-   
+
             if (Main.validTokenMap.get(key) == null) {
                 Set<String> addressList = new HashSet<String>();
                 addressList.add(address);
