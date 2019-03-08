@@ -7,142 +7,137 @@ package net.bigtangle.core;
 
 public class OrderRecord implements java.io.Serializable {
 
-	private static final long serialVersionUID = -2331665478149550684L;
-	
+    private static final long serialVersionUID = -2331665478149550684L;
+
     private Sha256Hash initialBlockHash;
     private Sha256Hash issuingMatcherBlockHash;
-	private long offerValue;
+    private long offerValue;
     private String offerTokenid;
     private boolean confirmed;
     private boolean spent;
     private Sha256Hash spenderBlockHash;
-    private long targetValue; 
+    private long targetValue;
     private String targetTokenid;
     private byte[] beneficiaryPubKey;
     private Long validToTime;
-    private int opIndex; 
+    private int opIndex;
 
-    public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue, String offerTokenid,
-			boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue, String targetTokenid,
-			byte[] beneficiaryPubKey, Long ttl, int opIndex) {
-		super();
-		this.initialBlockHash = initialBlockHash;
-		this.issuingMatcherBlockHash = issuingMatcherBlockHash;
-		this.offerValue = offerValue;
-		this.offerTokenid = offerTokenid;
-		this.confirmed = confirmed;
-		this.spent = spent;
-		this.spenderBlockHash = spenderBlockHash;
-		this.targetValue = targetValue;
-		this.targetTokenid = targetTokenid;
-		this.beneficiaryPubKey = beneficiaryPubKey;
-		this.validToTime = ttl;
-		this.opIndex = opIndex;
-	}
+    public OrderRecord() {
+    }
+
+    public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
+            String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
+            String targetTokenid, byte[] beneficiaryPubKey, Long ttl, int opIndex) {
+        super();
+        this.initialBlockHash = initialBlockHash;
+        this.issuingMatcherBlockHash = issuingMatcherBlockHash;
+        this.offerValue = offerValue;
+        this.offerTokenid = offerTokenid;
+        this.confirmed = confirmed;
+        this.spent = spent;
+        this.spenderBlockHash = spenderBlockHash;
+        this.targetValue = targetValue;
+        this.targetTokenid = targetTokenid;
+        this.beneficiaryPubKey = beneficiaryPubKey;
+        this.validToTime = ttl;
+        this.opIndex = opIndex;
+    }
 
     @Override
     public String toString() {
-        return "Order \n[initialBlockHash=" + initialBlockHash 
-        		+ ", \nissuingMatcherBlockHash=" + issuingMatcherBlockHash
-                + ", \nofferValue=" + offerValue 
-                + ", \nofferTokenid=" + offerTokenid 
-                + ", \nconfirmed=" + confirmed
-                + ", \nspent=" + spent
-                + ", \nspenderBlockHash=" + spenderBlockHash
-                + ", \ntargetValue=" + targetValue
-                + ", \ntargetTokenid=" + targetTokenid
-                + ", \nbeneficiaryPubKey=" + Utils.HEX.encode(beneficiaryPubKey)
-                + ", \nttl=" + validToTime
-                + ", \nopIndex=" + opIndex + "]\n";
+        return "Order \n[initialBlockHash=" + initialBlockHash + ", \nissuingMatcherBlockHash="
+                + issuingMatcherBlockHash + ", \nofferValue=" + offerValue + ", \nofferTokenid=" + offerTokenid
+                + ", \nconfirmed=" + confirmed + ", \nspent=" + spent + ", \nspenderBlockHash=" + spenderBlockHash
+                + ", \ntargetValue=" + targetValue + ", \ntargetTokenid=" + targetTokenid + ", \nbeneficiaryPubKey="
+                + Utils.HEX.encode(beneficiaryPubKey) + ", \nttl=" + validToTime + ", \nopIndex=" + opIndex + "]\n";
     }
-//check, if the valid to date is over
-  
+    // check, if the valid to date is over
+
     public boolean isValidToTimeOver() {
-       return System.currentTimeMillis() > validToTime;
+        return System.currentTimeMillis() > validToTime;
     }
-	public Sha256Hash getInitialBlockHash() {
-		return initialBlockHash;
-	}
 
-	public void setInitialBlockHash(Sha256Hash initialBlockHash) {
-		this.initialBlockHash = initialBlockHash;
-	}
+    public Sha256Hash getInitialBlockHash() {
+        return initialBlockHash;
+    }
 
-	public Sha256Hash getIssuingMatcherBlockHash() {
-		return issuingMatcherBlockHash;
-	}
+    public void setInitialBlockHash(Sha256Hash initialBlockHash) {
+        this.initialBlockHash = initialBlockHash;
+    }
 
-	public void setIssuingMatcherBlockHash(Sha256Hash issuingMatcherBlockHash) {
-		this.issuingMatcherBlockHash = issuingMatcherBlockHash;
-	}
+    public Sha256Hash getIssuingMatcherBlockHash() {
+        return issuingMatcherBlockHash;
+    }
 
-	public long getOfferValue() {
-		return offerValue;
-	}
+    public void setIssuingMatcherBlockHash(Sha256Hash issuingMatcherBlockHash) {
+        this.issuingMatcherBlockHash = issuingMatcherBlockHash;
+    }
 
-	public void setOfferValue(long offerValue) {
-		this.offerValue = offerValue;
-	}
+    public long getOfferValue() {
+        return offerValue;
+    }
 
-	public String getOfferTokenid() {
-		return offerTokenid;
-	}
+    public void setOfferValue(long offerValue) {
+        this.offerValue = offerValue;
+    }
 
-	public void setOfferTokenid(String offerTokenid) {
-		this.offerTokenid = offerTokenid;
-	}
+    public String getOfferTokenid() {
+        return offerTokenid;
+    }
 
-	public boolean isConfirmed() {
-		return confirmed;
-	}
+    public void setOfferTokenid(String offerTokenid) {
+        this.offerTokenid = offerTokenid;
+    }
 
-	public void setConfirmed(boolean confirmed) {
-		this.confirmed = confirmed;
-	}
+    public boolean isConfirmed() {
+        return confirmed;
+    }
 
-	public boolean isSpent() {
-		return spent;
-	}
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
 
-	public void setSpent(boolean spent) {
-		this.spent = spent;
-	}
+    public boolean isSpent() {
+        return spent;
+    }
 
-	public Sha256Hash getSpenderBlockHash() {
-		return spenderBlockHash;
-	}
+    public void setSpent(boolean spent) {
+        this.spent = spent;
+    }
 
-	public void setSpenderBlockHash(Sha256Hash spenderBlockHash) {
-		this.spenderBlockHash = spenderBlockHash;
-	}
+    public Sha256Hash getSpenderBlockHash() {
+        return spenderBlockHash;
+    }
 
-	public long getTargetValue() {
-		return targetValue;
-	}
+    public void setSpenderBlockHash(Sha256Hash spenderBlockHash) {
+        this.spenderBlockHash = spenderBlockHash;
+    }
 
-	public void setTargetValue(long targetValue) {
-		this.targetValue = targetValue;
-	}
+    public long getTargetValue() {
+        return targetValue;
+    }
 
-	public String getTargetTokenid() {
-		return targetTokenid;
-	}
+    public void setTargetValue(long targetValue) {
+        this.targetValue = targetValue;
+    }
 
-	public void setTargetTokenid(String targetTokenid) {
-		this.targetTokenid = targetTokenid;
-	}
+    public String getTargetTokenid() {
+        return targetTokenid;
+    }
 
-	public byte[] getBeneficiaryPubKey() {
-		return beneficiaryPubKey;
-	}
+    public void setTargetTokenid(String targetTokenid) {
+        this.targetTokenid = targetTokenid;
+    }
 
-	public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
-		this.beneficiaryPubKey = beneficiaryPubKey;
-	}
+    public byte[] getBeneficiaryPubKey() {
+        return beneficiaryPubKey;
+    }
 
- 
+    public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
+        this.beneficiaryPubKey = beneficiaryPubKey;
+    }
 
-	public Long getValidToTime() {
+    public Long getValidToTime() {
         return validToTime;
     }
 
@@ -151,14 +146,14 @@ public class OrderRecord implements java.io.Serializable {
     }
 
     public int getOpIndex() {
-		return opIndex;
-	}
+        return opIndex;
+    }
 
-	public void setOpIndex(int opIndex) {
-		this.opIndex = opIndex;
-	}
+    public void setOpIndex(int opIndex) {
+        this.opIndex = opIndex;
+    }
 
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
+    public static long getSerialversionuid() {
+        return serialVersionUID;
+    }
 }

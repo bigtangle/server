@@ -7,6 +7,7 @@ package net.bigtangle.ui.wallet;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UserSettingData;
@@ -47,6 +49,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
@@ -321,7 +324,19 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
+        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getLocalOrder.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        log.debug(response0);
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("amount", orderRecord.getOfferValue());
+            map.put("tokenId", orderRecord.getOfferTokenid());
+            map.put("validateTo", new Date(orderRecord.getValidToTime()));
+            map.put("address",
+                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
+            orderData.add(map);
+        }
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         for (Token tokens : getTokensResponse.getTokens()) {
