@@ -37,7 +37,6 @@ import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -45,9 +44,7 @@ import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.OrderdataResponse;
@@ -505,7 +502,7 @@ public class OrderController extends ExchangeController {
         if (!typeStr.equals("sell")) {
             amount = quantity * price;
         }
-        if (coin.getValue() < amount) {
+        if (coin.getValue() < Coin.parseCoinValue(amount + "")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
@@ -555,7 +552,7 @@ public class OrderController extends ExchangeController {
         if (!typeStr.equals("sell")) {
             amount = quantity * price;
         }
-        if (coin.getValue() < amount) {
+        if (coin.getValue() < Coin.parseCoinValue(amount + "")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
