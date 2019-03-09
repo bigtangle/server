@@ -137,7 +137,7 @@ public class Main extends Application {
 
     public static List<String> userdataList = new ArrayList<String>();
     // TODO as instance variable, not static
-    public static WatchedInfo tokenInfo;
+    private static WatchedInfo watchedtokenInfo;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -510,122 +510,44 @@ public class Main extends Application {
         return addressList;
     }
 
-    public static String transaction2string(Transaction transaction) {
-        StringBuilder s = new StringBuilder();
-        s.append("  ").append(transaction.getHashAsString()).append('\n');
-
-        if (transaction.isTimeLocked()) {
-            s.append("  time locked until ");
-            if (transaction.getLockTime() < Transaction.LOCKTIME_THRESHOLD) {
-                s.append("block ").append(transaction.getLockTime());
-
-            } else {
-                s.append(Utils.dateTimeFormat(transaction.getLockTime() * 1000));
-            }
-            s.append('\n');
+    /*
+     * In test we do not ask user to add token to watched list
+     */
+    public static WatchedInfo getWatched() throws Exception {
+        if (watchedtokenInfo != null) {
+            return watchedtokenInfo;
         }
-
-        if (transaction.isCoinBase()) {
-            String script;
-            String script2;
-            try {
-                script = transaction.getInputs().get(0).getScriptSig().toString();
-                script2 = transaction.getOutputs().get(0).toString();
-            } catch (ScriptException e) {
-                script = "???";
-                script2 = "???";
-            }
-            s.append(Main.getText("coinbase")).append(script).append("   (").append(script2).append(")\n");
-            return s.toString();
+        watchedtokenInfo = new WatchedInfo();
+        for (Token token : getAllTokens().getTokens()) {
+            watchedtokenInfo.getTokenList().add(new Token(token.getTokenid(), token.getTokenname()));
         }
-        if (!transaction.getInputs().isEmpty()) {
-            for (TransactionInput in : transaction.getInputs()) {
-                s.append("     ");
-                s.append(Main.getText("input") + ":   ");
-
-                try {
-                    String scriptSigStr = in.getScriptSig().toString();
-                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : " ");
-                    if (in.getValue() != null)
-                        s.append(" ").append(in.getValue().toString());
-                    s.append("\n          ");
-                    s.append(Main.getText("connectedOutput"));
-                    final TransactionOutPoint outpoint = in.getOutpoint();
-                    s.append(outpoint.toString());
-                    final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
-                    if (connectedOutput != null) {
-                        Script scriptPubKey = connectedOutput.getScriptPubKey();
-                        if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
-                            s.append(" hash160:");
-                            s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
-                        }
-                    }
-                    if (in.hasSequence()) {
-                        s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
-                    }
-                } catch (Exception e) {
-                    s.append("[exception: ").append(e.getMessage()).append("]");
-                }
-                s.append('\n');
-            }
-        } else {
-            s.append("     ");
-            // s.append("INCOMPLETE: No inputs!\n");
-        }
-        for (TransactionOutput out : transaction.getOutputs()) {
-            s.append("     ");
-            s.append("out  ");
-            try {
-                String scriptPubKeyStr = out.getScriptPubKey().toString();
-                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "");
-                s.append("\n ");
-                s.append(out.getValue().toString());
-                if (!out.isAvailableForSpending()) {
-                    s.append(" Spent");
-                }
-                if (out.getSpentBy() != null) {
-                    s.append(" by ");
-                    s.append(out.getSpentBy().getParentTransaction().getHashAsString());
-                }
-            } catch (Exception e) {
-                s.append("[exception: ").append(e.getMessage()).append("]");
-            }
-            s.append('\n');
-        }
-
-        return s.toString();
+        return watchedtokenInfo;
     }
 
-    public static String block2string(Block block) {
-        StringBuilder s = new StringBuilder();
-        s.append(Main.getText("blockhash") + ": ").append(block.getHashAsString()).append('\n');
-        if (block.getTransactions() != null && block.getTransactions().size() > 0) {
-            s.append("   ").append(block.getTransactions().size()).append(" " + Main.getText("transaction") + ":\n");
-            for (Transaction tx : block.getTransactions()) {
-                s.append(transaction2string(tx));
-            }
-        }
-        s.append("   " + Main.getText("version") + ": ").append(block.getVersion());
-        s.append('\n');
-        s.append("   " + Main.getText("previous") + ": ").append(block.getPrevBlockHash()).append("\n");
-        s.append("   " + Main.getText("branch") + ": ").append(block.getPrevBranchBlockHash()).append("\n");
-        s.append("   " + Main.getText("merkle") + ": ").append(block.getMerkleRoot()).append("\n");
-        s.append("   " + Main.getText("time") + ": ").append(block.getTimeSeconds()).append(" (")
-                .append(Utils.dateTimeFormat(block.getTimeSeconds() * 1000)).append(")\n");
-
-        s.append("   " + Main.getText("difficultytarget") + ": ").append(block.getDifficultyTarget()).append("\n");
-        s.append("   " + Main.getText("nonce") + ": ").append(block.getNonce()).append("\n");
-        if (block.getMinerAddress() != null)
-            s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))
-                    .append("\n");
-
-        s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlockType()).append("\n");
-
-        return s.toString();
-
+    public static void  resetWachted() throws Exception {
+    
+        watchedtokenInfo = new WatchedInfo();
+        for (Token token : getAllTokens().getTokens()) {
+            watchedtokenInfo.getTokenList().add(new Token(token.getTokenid(), token.getTokenname()));
+        } 
     }
 
-    public static List<String> initToken4block() throws Exception {
+    public static boolean isTokenInWatched(String tokenid) throws Exception {
+        if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid)) {
+            return true;
+        }
+        if (watchedtokenInfo == null) {
+            getWatched();
+        }
+        watchedtokenInfo = new WatchedInfo();
+        for (Token token : watchedtokenInfo.getTokenList()) {
+            if (token.getTokenid().equals(tokenid))
+                return true;
+        }
+        return false;
+    }
+
+    public static List<String> initToken4blockFromUsersetting() throws Exception {
         WatchedInfo tokenInfo = (WatchedInfo) getUserdata(DataClassName.TOKEN.name(), true);
         if (tokenInfo == null) {
             return null;
@@ -643,6 +565,16 @@ public class Main extends Application {
             }
         }
         return addressList;
+    }
+
+    public static GetTokensResponse getAllTokens() throws Exception {
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(getContextRoot() + ReqCmd.getTokens.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        return Json.jsonmapper().readValue(response, GetTokensResponse.class);
+
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {

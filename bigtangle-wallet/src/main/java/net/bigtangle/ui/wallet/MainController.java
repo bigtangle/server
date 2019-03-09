@@ -67,6 +67,7 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.controls.ClickableBitcoinAddress;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
+import net.bigtangle.ui.wallet.utils.BlockFormat;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.easing.EasingMode;
 import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
@@ -180,7 +181,7 @@ public class MainController {
     }
 
     public void initTable(String addressString) throws Exception {
-        String myPositvleTokens = Main.getString4block(Main.initToken4block());
+
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -209,7 +210,7 @@ public class MainController {
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
         Main.validAddressSet.clear();
-        Main.validTokenSet.clear();
+
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
             if (c.isZero()) {
@@ -246,41 +247,30 @@ public class MainController {
             }
 
             boolean spendPending = utxo.isSpendPending();
-            if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim()) && !myPositvleTokens.trim().isEmpty()) {
-                if (myPositvleTokens.contains(Utils.HEX.encode(tokenid))) {
-                    Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname,
-                            memo, minimumsign, hashHex, hash, outputindex));
-                } else {
-                    subutxos.add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign,
-                            hashHex, hash, outputindex));
-                }
 
-            }
-            if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
+            if (Main.isTokenInWatched(Utils.HEX.encode(tokenid))) {
                 Main.instance.getUtxoData().add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo,
                         minimumsign, hashHex, hash, outputindex));
+            } else {
+                subutxos.add(new UTXOModel(balance, tokenid, address, spendPending, tokenname, memo, minimumsign,
+                        hashHex, hash, outputindex));
+            }
+
         }
         Main.instance.getUtxoData().addAll(subutxos);
 
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
 
         for (Coin coin : getBalancesResponse.getTokens()) {
-            if (!coin.isZero()) {
-
-                if (myPositvleTokens != null && !"".equals(myPositvleTokens.trim())
-                        && !myPositvleTokens.trim().isEmpty()) {
-                    if (myPositvleTokens.contains(Utils.HEX.encode(coin.tokenid))) {
-                        Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.tokenid,
-                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
-
-                    } else {
-                        subcoins.add(new CoinModel(coin.toPlainString(), coin.tokenid,
-                                Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
-                    }
-                }
-                if (myPositvleTokens == null || myPositvleTokens.isEmpty() || "".equals(myPositvleTokens.trim()))
+            if (!coin.isZero()) { 
+                if (Main.isTokenInWatched(Utils.HEX.encode(coin.tokenid))) {
                     Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.tokenid,
                             Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
+
+                } else {
+                    subcoins.add(new CoinModel(coin.toPlainString(), coin.tokenid,
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
+                } 
             }
         }
         Main.instance.getCoinData().addAll(subcoins);
@@ -460,7 +450,7 @@ public class MainController {
         alert.setTitle("");
         alert.setHeaderText(null);
         alert.setResizable(true);
-        String blockinfo = Main.block2string(re);
+        String blockinfo = BlockFormat.block2string(re, Main.params);
         alert.setContentText(blockinfo);
 
         alert.showAndWait();

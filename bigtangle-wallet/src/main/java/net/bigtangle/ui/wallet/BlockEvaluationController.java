@@ -35,6 +35,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.ui.wallet.utils.BlockFormat;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -347,7 +348,7 @@ public class BlockEvaluationController {
         alert.setTitle("");
         alert.setHeaderText(null);
         alert.setResizable(true);
-        String blockinfo = Main.block2string(re);
+        String blockinfo = BlockFormat.block2string(re,  Main.params);
         alert.setContentText(blockinfo);
 
         alert.showAndWait();

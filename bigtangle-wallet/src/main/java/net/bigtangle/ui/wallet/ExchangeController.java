@@ -121,27 +121,6 @@ public class ExchangeController {
         mTransaction = null;
         mOrderid = "";
         // mTokenid = "";
-    }
-
-    private boolean isWatched(String tokenid) {
-        try {
-            WatchedInfo tokenInfo = Main.tokenInfo;
-            if (tokenInfo == null) {
-                return false;
-            }
-            List<Token> tokenList = tokenInfo.getTokenList();
-            if (tokenList == null || tokenList.isEmpty()) {
-                return false;
-            }
-            for (Token token : tokenList) {
-                if (tokenid.equals(token.getTokenid())) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
 
     }
 
@@ -178,7 +157,7 @@ public class ExchangeController {
             // TODO check market in watched list or default
             if (!url.contains("market.bigtangle.net") && !url.contains("test2market.bigtangle.net")
                     && !url.contains("localhost:8089")) {
-                boolean watchedFlag = isWatched(tokenid);
+                boolean watchedFlag = Main.isTokenInWatched(tokenid);
                 if (!watchedFlag) {
                     continue;
                 }

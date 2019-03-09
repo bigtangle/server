@@ -167,14 +167,7 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
-            WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
-            Main.tokenInfo = new WatchedInfo();
-            List<UserSettingData> list = watchedInfo.getUserSettingDatas();
-            for (UserSettingData userSettingData : list) {
-                if (DataClassName.TOKEN.name().equals(userSettingData.getDomain().trim())) {
-                    Main.tokenInfo.getTokenList().add(new Token(userSettingData.getKey(), userSettingData.getValue()));
-                }
-            }
+            Main.resetWachted();
             initMarketComboBox();
             myListener = (ov1, o1, n1) -> {
                 if (n1 != null && !n1.isEmpty()) {
@@ -336,12 +329,12 @@ public class OrderController extends ExchangeController {
                 map.put("type", Main.getText("BUY"));
                 map.put("amount", orderRecord.getTargetValue());
                 map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("price", Coin.toPlainString (orderRecord.getOfferValue() / orderRecord.getTargetValue()));
+                map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
             } else {
                 map.put("type", Main.getText("SELL"));
                 map.put("amount", orderRecord.getOfferValue());
                 map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("price",Coin.toPlainString ( orderRecord.getTargetValue() / orderRecord.getOfferValue()));
+                map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
 
             map.put("validateTo", new Date(orderRecord.getValidToTime()));
@@ -396,8 +389,10 @@ public class OrderController extends ExchangeController {
         addressCol.setCellValueFactory(new MapValueFactory("address"));
         tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
-    //TODO    validdatetoCol.setCellValueFactory(new MapValueFactory("validateto"));
-     //   validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
+        // TODO validdatetoCol.setCellValueFactory(new
+        // MapValueFactory("validateto"));
+        // validdatefromCol.setCellValueFactory(new
+        // MapValueFactory("validatefrom"));
         stateCol.setCellValueFactory(new MapValueFactory("state"));
         priceCol.setCellValueFactory(new MapValueFactory("price"));
         amountCol.setCellValueFactory(new MapValueFactory("amount"));
@@ -449,39 +444,16 @@ public class OrderController extends ExchangeController {
             }
         } else {
 
-            if (Main.tokenInfo != null && Main.tokenInfo.getTokenList() != null) {
-                for (Token p : Main.tokenInfo.getTokenList()) {
-                    if (!isSystemCoin(p.getTokenname() + ":" + p.getTokenid())
-                            && p.getTokenname().endsWith(":" + Main.getText("Token"))) {
-                        if (!tokenData.contains(
-                                p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":" + p.getTokenid())) {
-                            if (Main.getNoMultiTokens().contains(p.getTokenid())) {
-                                tokenData.add(p.getTokenname().substring(0, p.getTokenname().indexOf(":")) + ":"
-                                        + p.getTokenid());
-                            }
-
+            for (Token p : Main.getWatched().getTokenList()) {
+                if (!isSystemCoin(p.getTokenid())) {
+                    if (!tokenData.contains(p.getTokenname() + ":" + p.getTokenid())) {
+                        if (Main.getNoMultiTokens().contains(p.getTokenid())) {
+                            tokenData.add(p.getTokenname() + ":" + p.getTokenid());
                         }
-
-                    }
-                }
-            } else {
-                for (Token tokens : getTokensResponse.getTokens()) {
-                    String tokenHex = tokens.getTokenid();
-                    if (tokens.isMultiserial()) {
-                        continue;
-                    }
-                    if (tokens.getSignnumber() >= 2) {
-                        continue;
-                    }
-                    if (tokens.getTokentype() != TokenType.token.ordinal()) {
-                        continue;
-                    }
-                    String tokenname = tokens.getTokenname();
-                    if (!isSystemCoin(tokenname + ":" + tokenHex)) {
-                        tokenData.add(tokenname + ":" + tokenHex);
                     }
                 }
             }
+
         }
 
         tokenComboBox.setItems(tokenData);
@@ -494,7 +466,8 @@ public class OrderController extends ExchangeController {
     }
 
     public boolean isSystemCoin(String token) {
-        return ("BIG:" + NetworkParameters.BIGTANGLE_TOKENID_STRING).equals(token);
+        return ("BIG:" + NetworkParameters.BIGTANGLE_TOKENID_STRING).equals(token)
+                || (NetworkParameters.BIGTANGLE_TOKENID_STRING).equals(token);
 
     }
 
@@ -536,12 +509,12 @@ public class OrderController extends ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
-        //TODO time and null
-       LocalDate to = validdateToDatePicker1.getValue() ;
-        
+        // TODO time and null
+        LocalDate to = validdateToDatePicker1.getValue();
+
         String ContextRoot = Main.getContextRoot();
         Main.bitcoin.wallet().setServerURL(ContextRoot);
-        
+
         KeyParameter aesKey = null;
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
@@ -550,15 +523,17 @@ public class OrderController extends ExchangeController {
         List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
         ECKey beneficiary = null;
         for (ECKey ecKey : keys) {
-            if ( addressComboBox1.getValue().equals(ecKey.toAddress(Main.params).toString())) {
+            if (addressComboBox1.getValue().equals(ecKey.toAddress(Main.params).toString())) {
                 beneficiary = ecKey;
                 break;
             }
         }
-        if (typeStr.equals("sell")) { 
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity, to ==null?null:to.toEpochDay());
+        if (typeStr.equals("sell")) {
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity,
+                    to == null ? null : to.toEpochDay());
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity,to ==null?null:to.toEpochDay());
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity,
+                    to == null ? null : to.toEpochDay());
         }
 
         overlayUI.done();
