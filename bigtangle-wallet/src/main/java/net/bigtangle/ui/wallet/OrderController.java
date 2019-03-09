@@ -574,7 +574,7 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long quantity = Coin.parseCoinValue(this.quantityTextField.getText());
+        long quantity = Long.valueOf(this.quantityTextField.getText());
         long price = Coin.parseCoinValue(this.limitTextField.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
