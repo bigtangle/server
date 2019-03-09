@@ -343,6 +343,42 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
 
+    @Test
+    public void cancelTwoStep() throws Exception {
+        @SuppressWarnings({ "deprecation", "unused" })
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+        
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+        
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell orders for test tokens
+        Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+    
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify token amount invariance (adding the mining reward)
+        origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING, 
+                origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) 
+                + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+        
+        // Cancel
+        makeAndConfirmCancelOp(sell, testKey, addedBlocks); 
+    
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+      //TODO check result
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
 	@Test
     public void partialCancel() throws Exception {
 		@SuppressWarnings("deprecation")

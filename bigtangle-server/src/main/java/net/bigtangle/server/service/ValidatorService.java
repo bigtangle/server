@@ -324,6 +324,8 @@ public class ValidatorService {
 
     private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
             long currPerTxReward, long totalRewardCount, long difficulty, long prevDifficulty) {
+        // TODO payout percentages via time interval instead of perTxReward
+        
         // The following is used as proxy for current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
                 prevBranchBlock.getBlock().getTimeSeconds());

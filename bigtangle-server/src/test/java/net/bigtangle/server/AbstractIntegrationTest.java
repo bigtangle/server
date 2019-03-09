@@ -377,7 +377,7 @@ public abstract class AbstractIntegrationTest {
 		HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
 		for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
 			assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
-			assertEquals(currTokenAmounts.get(origTokenAmount.getKey()), origTokenAmount.getValue());
+			assertEquals(origTokenAmount.getValue(), currTokenAmounts.get(origTokenAmount.getKey()));
 		}
 		for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
 			assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));

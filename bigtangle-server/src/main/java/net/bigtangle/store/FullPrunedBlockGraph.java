@@ -1063,13 +1063,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-        Set<OrderRecord> untouchedNewOrders = new HashSet<>();
+        Set<OrderRecord> untouchedOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevRewardHash).values());
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
                 final Sha256Hash blockHash = b.getBlock().getHash();
                 newOrders.put(blockHash, blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
-                untouchedNewOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                untouchedOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1263,7 +1263,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             OrderRecord order = next.getValue(); 
             if (order.isTimeouted(block.getTimeSeconds())) { 
                 cancelledOrders.add(order);
-                it.remove();
                 continue;
             } 
             order.setIssuingMatcherBlockHash(block.getHash());
@@ -1274,8 +1273,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (OrderOpInfo c : cancels) {
         	if (remainingOrders.containsKey(c.getInitialBlockHash())) {
                 cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
-                remainingOrders.remove(c.getInitialBlockHash());
         	}
+        }
+        
+        for (OrderRecord c : cancelledOrders) {
+            remainingOrders.remove(c.getInitialBlockHash());
         }
         
         // Add to proceeds all cancelled orders going back to the beneficiary
@@ -1312,8 +1314,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
         
-        // Return MODIFIED new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
-        return Triple.of(untouchedNewOrders, tx, remainingOrders.values());
+        // Return all consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
+        return Triple.of(untouchedOrders, tx, remainingOrders.values());
     }
 
     private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, Sha256Hash prevRewardHash) throws BlockStoreException {

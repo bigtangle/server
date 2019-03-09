@@ -172,6 +172,7 @@ public abstract class NetworkParameters {
     public static final int REWARD_HEIGHT_INTERVAL = 10; 
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
     public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
+
     public static final int TARGET_MAX_TPS = 10;
     public static final long REWARD_OVERRULE_TIME_MS = 3000;
 
