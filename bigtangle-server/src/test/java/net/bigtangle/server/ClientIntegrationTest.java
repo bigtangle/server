@@ -176,7 +176,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         for (UTXO utxo : getBalance(false, genesiskey)) {
             log.info("UTXO : " + utxo); 
-                assertTrue(utxo.getValue().value == 999999993666667l);
+                assertTrue(utxo.getValue().getValue() == 999999993666667l);
             
         }
     }
@@ -299,7 +299,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
         log.debug("outKey : " + myutxo.getAddress());
 
-        Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
+        Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
         req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
 
@@ -380,7 +380,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
         log.debug("outKey : " + myutxo.getAddress());
 
-        Coin amount = Coin.valueOf(10000, yourutxo.getValue().tokenid);
+        Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
 
         SendRequest req = null;
 
@@ -432,7 +432,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
-        amount = Coin.valueOf(1000, myutxo.getValue().tokenid);
+        amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
         req = SendRequest.to(destination, amount);
         walletAppKit.wallet().completeTx(req);
         walletAppKit.wallet().signTransaction(req);
@@ -460,10 +460,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             }
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
-        assertEquals(multitemp.getValue().value - 10000, multitemp1.getValue().value);
-        assertEquals(1000, systemcoin1.getValue().value);
-        assertEquals( 10000, mymultitemp1.getValue().value);
-        assertEquals(mysystemcoin.getValue().value - 1000, mysystemcoin1.getValue().value);
+        assertEquals(multitemp.getValue().getValue() - 10000, multitemp1.getValue().getValue());
+        assertEquals(1000, systemcoin1.getValue().getValue());
+        assertEquals( 10000, mymultitemp1.getValue().getValue());
+        assertEquals(mysystemcoin.getValue().getValue() - 1000, mysystemcoin1.getValue().getValue());
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {

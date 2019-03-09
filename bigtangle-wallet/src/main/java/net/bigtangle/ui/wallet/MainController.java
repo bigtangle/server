@@ -217,7 +217,7 @@ public class MainController {
                 continue;
             }
             String balance = c.toPlainString();
-            byte[] tokenid = c.tokenid;
+            byte[] tokenid = c.getTokenid();
             String address = utxo.getAddress();
             String tokenname = Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)));
             String memo = utxo.getMemo();
@@ -263,13 +263,13 @@ public class MainController {
 
         for (Coin coin : getBalancesResponse.getTokens()) {
             if (!coin.isZero()) { 
-                if (Main.isTokenInWatched(Utils.HEX.encode(coin.tokenid))) {
-                    Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
+                if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
+                    Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
 
                 } else {
-                    subcoins.add(new CoinModel(coin.toPlainString(), coin.tokenid,
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.tokenid)))));
+                    subcoins.add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
+                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
                 } 
             }
         }

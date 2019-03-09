@@ -30,10 +30,11 @@ import com.google.common.primitives.Longs;
 import net.bigtangle.utils.MonetaryFormat;
 
 /**
- * Represents a monetary Coin value. This class is immutable. 
+ * Represents a monetary Coin value. This class is immutable. Only the BIG has 2
+ * digit decimal, all others coins are long number.
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
-    
+
     public Coin() {
     }
 
@@ -43,7 +44,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Number of decimals for one Coin. This constant is useful for quick
      * adapting to other coins because a lot of constants derive from it.
      */
-    public static final int SMALLEST_UNIT_EXPONENT = 3;
+    public static final int SMALLEST_UNIT_EXPONENT = 2;
 
     /**
      * The number of satoshis equal to one bitcoin.
@@ -64,15 +65,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * 0.01 Bitcoins. This unit is not really used much.
      */
     public static final Coin CENT = COIN.divide(100);
-
     /**
-     * 0.001 Bitcoins, also known as 1 mBTC.
-     */
-    public static final Coin MILLICOIN = COIN.divide(1000);
-
-    /**
-     * A satoshi is the smallest unit that can be transferred. 100 million of
-     * them fit into a Bitcoin.
+     * A satoshi is the smallest unit that can be transferred.
      */
     public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
@@ -86,8 +80,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * The number of satoshis of this monetary value.
      */
-    public long value;
-    public byte[] tokenid;
+    private long value;
+    private byte[] tokenid;
 
     private Coin(final long satoshis, final byte[] tokenid) {
         this.value = satoshis;
@@ -97,7 +91,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
     }
-    
+
     public static Coin valueOf(final long satoshis, String tokenid) {
         byte[] buf = Utils.HEX.decode(tokenid);
         return new Coin(satoshis, buf);
@@ -116,6 +110,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return value;
     }
 
+    public void setValue(long value) {
+        this.value = value;
+    }
+
     public String getTokenHex() {
         if (tokenid == null) {
             return "";
@@ -130,28 +128,25 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * <p/>
      * This takes string in a format understood by
      * {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     * "1.23E3", "1234.5E-5".
      *
      * @throws IllegalArgumentException
-     *             if you try to specify fractional satoshis, or a value out of
-     *             range.
+     *             if you try to specify fractional, or a value out of range.
      */
     public static Coin parseCoin(final String str, byte[] tokenid) {
         try {
-            long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
-            return Coin.valueOf(satoshis, tokenid);
+            if (Arrays.equals(tokenid, NetworkParameters.BIGTANGLE_TOKENID)) {
+                long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact()
+                        .longValue();
+                return Coin.valueOf(satoshis, tokenid);
+            } else {
+                return Coin.valueOf(Long.valueOf(str), tokenid);
+            }
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(e); // Repackage exception to
                                                    // honor method contract
         }
     }
 
-    public static long parseCoinValue(final String str) {
-       
-           return  new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
-        
-    }
-    
     public Coin add(final Coin value) {
         if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("!this.tokenid.equals( value.tokenid)");
@@ -240,6 +235,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return signum() == 0;
     }
 
+    public boolean isBIG() {
+        return Arrays.equals(this.tokenid, NetworkParameters.BIGTANGLE_TOKENID);
+
+    }
+
     /**
      * Returns true if the monetary value represented by this instance is
      * greater than that of the given other Coin, otherwise false.
@@ -275,35 +275,27 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(-this.value, this.tokenid);
     }
 
-    /**
-     * Returns the number of satoshis of this monetary value. It's deprecated in
-     * favour of accessing {@link #value} directly.
-     */
-    public long longValue() {
-        return this.value;
-    }
-
-//    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTA.minDecimals(0)
-//            .repeatOptionalDecimals(1, 3).postfixCode();
-
- 
- 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 3)
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 2)
             .noCode();
 
     /**
      * <p>
-     * Returns the value as a plain string denominated in BTA. The result is
-     * unformatted with no trailing zeroes. For instance, a value of 150000
-     * satoshis gives an output string of "0.0015" BTA
+     * Returns the value as a plain string. The result is unformatted with no
+     * trailing zeroes.
      * </p>
      */
     public String toPlainString() {
-        return PLAIN_FORMAT.format(this).toString();
+        if (isBIG()) {
+            return PLAIN_FORMAT.format(this).toString();
+        } else {
+            return String.valueOf(this.value);
+        }
     }
 
-    public static String toPlainString(long number) {
-        return PLAIN_FORMAT.format( new Coin(number, NetworkParameters.BIGTANGLE_TOKENID)).toString();
+    public static String toPlainString(long value) {
+
+        return PLAIN_FORMAT.format(Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID)).toString();
+
     }
 
     @Override

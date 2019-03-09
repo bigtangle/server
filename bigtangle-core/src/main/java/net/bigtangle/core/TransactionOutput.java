@@ -121,7 +121,7 @@ public class TransactionOutput extends ChildMessage {
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
-        length = 8 +this.value.tokenid.length+VarInt.sizeOf(this.value.tokenid.length)+  VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        length = 8 +this.value.getTokenid().length+VarInt.sizeOf(this.value.getTokenid().length)+  VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -184,9 +184,9 @@ public class TransactionOutput extends ChildMessage {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value.value, stream);
-        stream.write(new VarInt(value.tokenid.length).encode()); 
-        stream.write(value.tokenid);
+        Utils.int64ToByteStreamLE(value.getValue(), stream);
+        stream.write(new VarInt(value.getTokenid().length).encode()); 
+        stream.write(value.getTokenid());
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
     }

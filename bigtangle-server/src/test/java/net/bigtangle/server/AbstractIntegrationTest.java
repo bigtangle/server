@@ -390,10 +390,10 @@ public abstract class AbstractIntegrationTest {
 		List<UTXO> balance = getBalance(false, testKey);
 		HashMap<String, Long> hashMap = new HashMap<>();
 		for (UTXO o : balance) {
-			String tokenId = Utils.HEX.encode(o.getValue().tokenid);
+			String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
 			if (!hashMap.containsKey(tokenId))
 				hashMap.put(tokenId, 0L);
-			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().value);
+			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
 		}
 		
 		assertEquals(amount, hashMap.get(tokenId_));
@@ -422,10 +422,10 @@ public abstract class AbstractIntegrationTest {
 		// Adds the token values of open UTXOs to the hashMap
 		List<UTXO> utxos = store.getAllAvailableUTXOsSorted();
 		for (UTXO o : utxos) {
-			String tokenId = Utils.HEX.encode(o.getValue().tokenid);
+			String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
 			if (!hashMap.containsKey(tokenId))
 				hashMap.put(tokenId, 0L);
-			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().value);
+			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
 		}
 	}
 

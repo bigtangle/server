@@ -254,7 +254,7 @@ public class UTXO {
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
-        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.value), bos);
+        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.getValue()), bos);
 
         byte[] scriptBytes = script.getProgram();
         bos.write(0xFF & scriptBytes.length);

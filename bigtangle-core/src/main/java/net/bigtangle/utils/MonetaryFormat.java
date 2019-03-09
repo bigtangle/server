@@ -58,7 +58,7 @@ public final class MonetaryFormat {
     /** Currency code for base Bitcoin. */
     public static final String CODE_BTC = "BIG";
   
-    public static final int MAX_DECIMALS = 3;
+    public static final int MAX_DECIMALS = 2;
 
     private final char negativeSign;
     private final char positiveSign;

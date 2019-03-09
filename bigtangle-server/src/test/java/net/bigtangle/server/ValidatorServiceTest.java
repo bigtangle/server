@@ -791,7 +791,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     false);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
-            tx2.getOutput(0).getValue().value = tx2.getOutput(0).getValue().value + 1;
+            tx2.getOutput(0).getValue().setValue( tx2.getOutput(0).getValue().getValue() + 1) ;
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx2);
             fail();
         } catch (InvalidTransactionException e) {

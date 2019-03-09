@@ -1197,7 +1197,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         @SuppressWarnings("deprecation")
         ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
-        outputs.removeIf(o -> o.getValue().value == NetworkParameters.testCoin);
+        outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.testCoin);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);

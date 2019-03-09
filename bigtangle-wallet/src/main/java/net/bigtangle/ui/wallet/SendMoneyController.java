@@ -958,7 +958,7 @@ public class SendMoneyController {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
-        Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().tokenid);
+        Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().getTokenid());
 
         Address address = Address.fromBase58(networkParameters,
                 !addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
@@ -1005,7 +1005,7 @@ public class SendMoneyController {
         TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
         Transaction transaction = new Transaction(Main.params);
 
-        Coin amount = Coin.parseCoin(amountEdit12.getText(), utxo.getValue().tokenid);
+        Coin amount = Coin.parseCoin(amountEdit12.getText(), utxo.getValue().getTokenid());
 
         List<ECKey> keys = new ArrayList<ECKey>();
         for (String keyString : addressChoiceBox1.getItems()) {

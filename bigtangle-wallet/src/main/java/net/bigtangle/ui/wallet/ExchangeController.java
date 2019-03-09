@@ -460,7 +460,7 @@ public class ExchangeController {
         for (TransactionInput transactionInput : this.mTransaction.getInputs()) {
             TransactionOutput transactionOutput = transactionInput.getConnectedOutput();
             if (transactionOutput.getValue().getTokenHex().equals(amount.getTokenHex())
-                    && transactionOutput.getValue().value == amount.value) {
+                    && transactionOutput.getValue().getValue() == amount.getValue()) {
                 // System.out.println(amount + "," +
                 // transactionOutput.getValue());
                 transaction.addInput(transactionInput);

@@ -32,19 +32,19 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
-        this.validToTime = System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL;
+        this.validToTime = (System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL)/ 1000;
 
     }
 
-    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTime) {
+    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli) {
         super();
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         if (validToTime == null) {
-            this.validToTime = System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL;
+            this.validToTime = ( System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL) / 1000;;
         } else {
-            this.validToTime = validToTime;
+            this.validToTime = validToTimeMilli / 1000;;
         }
     }
 

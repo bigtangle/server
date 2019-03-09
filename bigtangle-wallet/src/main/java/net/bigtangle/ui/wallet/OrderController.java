@@ -471,7 +471,7 @@ public class OrderController extends ExchangeController {
     public void buy(ActionEvent event) throws Exception {
 
         try {
-            buyDo(event);
+            buyOTCDo(event);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
@@ -480,13 +480,13 @@ public class OrderController extends ExchangeController {
     public void buyA(ActionEvent event) throws Exception {
 
         try {
-            buyDoA(event);
+            buyDo(event);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
 
-    public void buyDoA(ActionEvent event) throws Exception {
+    public void buyDo(ActionEvent event) throws Exception {
 
         log.debug(tokenComboBox1.getValue());
         String tokenid = tokenComboBox1.getValue().split(":")[1].trim();
@@ -497,12 +497,12 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField1.getText());
-        long price = Coin.parseCoinValue(this.limitTextField1.getText());
+        Coin price = Coin.parseCoin(this.limitTextField1.getText(),NetworkParameters.BIGTANGLE_TOKENID);
         long amount = quantity;
         if (!typeStr.equals("sell")) {
-            amount = quantity * price;
+            amount = quantity * price.getValue();
         }
-        if (coin.getValue() < Coin.parseCoinValue(amount + "")) {
+        if (coin.getValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
@@ -526,17 +526,17 @@ public class OrderController extends ExchangeController {
             }
         }
         if (typeStr.equals("sell")) {
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price, quantity,
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity,
                     to == null ? null : to.toEpochDay());
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price, quantity,
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity,
                     to == null ? null : to.toEpochDay());
         }
 
         overlayUI.done();
     }
 
-    public void buyDo(ActionEvent event) throws Exception {
+    public void buyOTCDo(ActionEvent event) throws Exception {
 
         log.debug(tokenComboBox.getValue());
         String tokenid = tokenComboBox.getValue().split(":")[1].trim();
@@ -547,12 +547,12 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField.getText());
-        long price = Coin.parseCoinValue(this.limitTextField.getText());
+        Coin price = Coin.parseCoin( this.limitTextField.getText(),NetworkParameters.BIGTANGLE_TOKENID );
         long amount = quantity;
         if (!typeStr.equals("sell")) {
-            amount = quantity * price;
+            amount = quantity * price.getValue();
         }
-        if (coin.getValue() < Coin.parseCoinValue(amount + "")) {
+        if (coin.getValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }

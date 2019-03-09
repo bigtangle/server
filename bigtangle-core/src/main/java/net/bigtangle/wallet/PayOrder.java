@@ -129,7 +129,7 @@ public class PayOrder {
 
                         for (UTXO utxo : utxos) {
                             if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
-                                    && utxo.getValue().value >= Long.parseLong(this.exchange.getFromAmount())) {
+                                    && utxo.getValue().getValue() >= Long.parseLong(this.exchange.getFromAmount())) {
                                 TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(wallet.params,
                                         utxo, 0);
                                 Script multisigScript_ = multisigOutput_.getScriptPubKey();

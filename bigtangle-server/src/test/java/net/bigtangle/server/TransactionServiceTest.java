@@ -140,7 +140,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("0.001", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         walletAppKit.wallet().completeTx(request);
         rollingBlock.addTransaction(request.tx);
