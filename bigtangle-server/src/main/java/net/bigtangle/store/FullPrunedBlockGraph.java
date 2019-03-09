@@ -1261,7 +1261,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         while (it.hasNext()) {
             final Entry<Sha256Hash, OrderRecord> next = it.next();
             OrderRecord order = next.getValue(); 
-            if (order.isValidToTimeOver()) { 
+            if (order.isTimeouted(block.getTimeSeconds())) { 
                 cancelledOrders.add(order);
                 it.remove();
                 continue;

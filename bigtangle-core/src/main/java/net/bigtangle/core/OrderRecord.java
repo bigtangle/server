@@ -53,8 +53,8 @@ public class OrderRecord implements java.io.Serializable {
     }
     // check, if the valid to date is over
 
-    public boolean isValidToTimeOver() {
-        return System.currentTimeMillis() > validToTime;
+    public boolean isTimeouted(long blockTime) {
+        return blockTime > validToTime;
     }
 
     public Sha256Hash getInitialBlockHash() {
