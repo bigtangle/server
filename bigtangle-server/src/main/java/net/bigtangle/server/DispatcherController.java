@@ -149,25 +149,18 @@ public class DispatcherController {
             }
 
             switch (reqCmd0000) {
-
             case getTip: {
                 byte[] data = transactionService.askTransaction().array();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
-                break;
-
             case saveBlock: {
                 blockService.saveBinaryArrayToBlock(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
-
             case batchBlock: {
                 blockService.batchBlock(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
-
             case getOutputs: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -178,7 +171,6 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getOutputsHistory: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -190,33 +182,26 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokensList((String) request.get("name"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getTokensNoMarket: {
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getMarkets: {
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getTokenById: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokenById((String) request.get("tokenid"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -227,14 +212,12 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case searchBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlock(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-
             case getBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -252,8 +235,6 @@ public class DispatcherController {
                     this.outPrintJSONString(httpServletResponse, OkResponse.create());
                 }
             }
-                break;
-
             case getMultiSignWithAddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -261,7 +242,6 @@ public class DispatcherController {
                 AbstractResponse response = this.multiSignService.getMultiSignListWithAddress(address);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getCountSign: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -271,7 +251,6 @@ public class DispatcherController {
                 AbstractResponse response = this.multiSignService.getCountMultiSign(tokenid, tokenindex, sign);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getMultiSignWithTokenid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -281,13 +260,12 @@ public class DispatcherController {
                         (List<String>) request.get("addresses"), isSign == null ? false : isSign);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.multiSign(block, true);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
+
             case getTokenSerials: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -295,8 +273,6 @@ public class DispatcherController {
                         (List<String>) request.get("addresses"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getCalTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -304,14 +280,11 @@ public class DispatcherController {
                 AbstractResponse response = this.multiSignService.getNextTokenSerialIndex(tokenid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case updateTokenInfo: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.tokensService.updateTokenInfo(block);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
-
             case getUserData: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -320,8 +293,6 @@ public class DispatcherController {
                 byte[] buf = this.userDataService.getUserData(dataclassname, pubKey);
                 this.outPointBinaryArray(httpServletResponse, buf);
             }
-                break;
-
             case userDataList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -330,27 +301,21 @@ public class DispatcherController {
                 AbstractResponse response = this.userDataService.getUserDataList(blocktype, pubKeyList);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case launchPayMultiSign: {
                 this.payMultiSignService.launchPayMultiSign(bodyByte);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
-
             case payMultiSign: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.payMultiSignService.payMultiSign(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getPayMultiSignList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignList(keyStrHex000);
                 this.outPrintJSONString(httpServletResponse, response);
-                break;
             }
             case getPayMultiSignAddressList: {
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -359,7 +324,6 @@ public class DispatcherController {
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignAddressList(orderid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case payMultiSignDetails: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -367,8 +331,6 @@ public class DispatcherController {
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignDetails(orderid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getOutputWithKey: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -376,7 +338,6 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getOutputMultiList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -385,8 +346,6 @@ public class DispatcherController {
                 AbstractResponse response = walletService.getOutputsMultiList(hexStr, index);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -394,13 +353,10 @@ public class DispatcherController {
                 AbstractResponse response = vosExecuteService.getVOSExecuteList(vosKey);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case version: {
                 AbstractResponse response = settingService.clientVersion();
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case regSubtangle: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -412,9 +368,7 @@ public class DispatcherController {
                 } else {
                     this.outPrintJSONString(httpServletResponse, ErrorResponse.create(0));
                 }
-
             }
-                break;
             case updateSubtangle: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -422,11 +376,8 @@ public class DispatcherController {
                 String userdataPubkey = (String) request.get("userdataPubkey");
                 String status = (String) request.get("status");
                 subtanglePermissionService.updateSubtanglePermission(pubkey, "", userdataPubkey, status);
-
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
-
             }
-                break;
             case getSubtanglePermissionList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -434,36 +385,32 @@ public class DispatcherController {
                 AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkey);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getAllSubtanglePermissionList: {
-
                 AbstractResponse response = subtanglePermissionService.getAllSubtanglePermissionList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             case getSubtanglePermissionListByPubkeys: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> pubkeys = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkeys);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-
             case submitLogResult: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 logResultService.submitLogResult(request);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
-                break;
-
-            case getLocalOrder: {
+            case getOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = orderdataService.getOrderdataList();
+                String spentStr = (String) request.get("spent");
+                boolean spent = false;
+                if (spentStr != null && spentStr.equals("true"))
+                    spent = true;
+                AbstractResponse response = orderdataService.getOrderdataList(spent);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
             }
         } catch (BlockStoreException e) {
             logger.error("", e);

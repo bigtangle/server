@@ -409,7 +409,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected void addCurrentOrderTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
 		// Adds the token values of open orders to the hashMap
-		List<OrderRecord> orders = store.getAllAvailableOrdersSorted();
+		List<OrderRecord> orders = store.getAllAvailableOrdersSorted(false);
 		for (OrderRecord o : orders) {
 			String tokenId = o.getOfferTokenid();
 			if (!hashMap.containsKey(tokenId))
@@ -431,14 +431,14 @@ public abstract class AbstractIntegrationTest {
 
 	protected void showOrders() throws BlockStoreException {
         // Snapshot current state
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
         for(OrderRecord o:allOrdersSorted) {
             log.debug(o.toString());
         }
 	}
 	protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks) throws BlockStoreException {
 		// Snapshot current state
-		List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
+		List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
 		List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
 		Map<Block, Boolean> blockConfirmed = new HashMap<>();
 		for (Block b : addedBlocks) {
@@ -452,7 +452,7 @@ public abstract class AbstractIntegrationTest {
 			if (blockConfirmed.get(b))
 				blockGraph.confirm(b.getHash(), new HashSet<>());
 		}
-		List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted();
+		List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
 		List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
 		assertEquals(allOrdersSorted2.toString(), allOrdersSorted.toString()); // Works for now
 		assertEquals(allUTXOsSorted2.toString(), allUTXOsSorted.toString());

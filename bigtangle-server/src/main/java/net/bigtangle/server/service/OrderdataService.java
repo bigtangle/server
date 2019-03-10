@@ -17,9 +17,9 @@ public class OrderdataService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public AbstractResponse getOrderdataList() throws BlockStoreException {
+    public AbstractResponse getOrderdataList(boolean spent) throws BlockStoreException {
 
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted();
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent);
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted);
     }
 }

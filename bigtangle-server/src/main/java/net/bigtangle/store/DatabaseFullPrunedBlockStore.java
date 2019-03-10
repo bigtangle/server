@@ -395,7 +395,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     		+ "FROM outputs ORDER BY hash, outputindex";
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
     		+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex "
-    		+ "FROM openorders WHERE confirmed=1 AND spent=0 ORDER BY blockhash, collectinghash";
+    		+ "FROM openorders WHERE confirmed=1 AND spent=? ORDER BY blockhash, collectinghash";
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
     		+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
     		+ "FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
@@ -5052,12 +5052,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
     
     @Override
-    public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException {
+    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(SELECT_AVAILABLE_ORDERS_SORTED_SQL);
+            s.setBoolean( 1, spent);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)), Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), 

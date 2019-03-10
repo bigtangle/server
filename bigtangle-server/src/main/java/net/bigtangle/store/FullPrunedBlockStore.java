@@ -304,7 +304,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
 
     /* For tests */
-	public List<OrderRecord> getAllAvailableOrdersSorted() throws BlockStoreException;
+	public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent ) throws BlockStoreException;
 
 	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
 

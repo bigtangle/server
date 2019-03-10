@@ -6,6 +6,7 @@ package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -19,6 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -305,40 +310,44 @@ public class OrderController extends ExchangeController {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initTable(Map<String, Object> requestParam) throws Exception {
+
+        ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
+
+        String CONTEXT_ROOT = Main.getContextRoot();
+        getOrder(requestParam, orderData, CONTEXT_ROOT);
+
+        getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
+        orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
+        addressCol.setCellValueFactory(new MapValueFactory("address"));
+        tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
+        typeCol.setCellValueFactory(new MapValueFactory("type"));
+        // TODO validdatetoCol.setCellValueFactory(new
+        // MapValueFactory("validateto"));
+        // validdatefromCol.setCellValueFactory(new
+        // MapValueFactory("validatefrom"));
+        stateCol.setCellValueFactory(new MapValueFactory("state"));
+        priceCol.setCellValueFactory(new MapValueFactory("price"));
+        amountCol.setCellValueFactory(new MapValueFactory("amount"));
+
+        orderidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        addressCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        tokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        orderTable.setItems(orderData);
+    }
+
+    private void getOTCOrder(Map<String, Object> requestParam, ObservableList<Map<String, Object>> orderData,
+            String CONTEXT_ROOT)
+            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         if (requestParam.containsKey("state")) {
             String stateStr = (String) requestParam.get("state");
             OrderState orderState = OrderState.valueOf(stateStr);
             requestParam.put("state", orderState.ordinal());
         }
-        ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
-        String CONTEXT_ROOT = Main.getContextRoot();
         String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getLocalOrder.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        log.debug(response0);
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            HashMap<String, Object> map = new HashMap<String, Object>();
 
-            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-                map.put("type", Main.getText("BUY"));
-                map.put("amount", orderRecord.getTargetValue());
-                map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
-            } else {
-                map.put("type", Main.getText("SELL"));
-                map.put("amount", orderRecord.getOfferValue());
-                map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
-            }
-
-            map.put("validateTo", new Date(orderRecord.getValidToTime()));
-            map.put("address",
-                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
-            orderData.add(map);
-        }
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         for (Token tokens : getTokensResponse.getTokens()) {
@@ -382,23 +391,41 @@ public class OrderController extends ExchangeController {
                 orderData.add(map);
             }
         }
-        orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
-        addressCol.setCellValueFactory(new MapValueFactory("address"));
-        tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
-        typeCol.setCellValueFactory(new MapValueFactory("type"));
-        // TODO validdatetoCol.setCellValueFactory(new
-        // MapValueFactory("validateto"));
-        // validdatefromCol.setCellValueFactory(new
-        // MapValueFactory("validatefrom"));
-        stateCol.setCellValueFactory(new MapValueFactory("state"));
-        priceCol.setCellValueFactory(new MapValueFactory("price"));
-        amountCol.setCellValueFactory(new MapValueFactory("amount"));
+    }
 
-        orderidCol.setCellFactory(TextFieldTableCell.forTableColumn());
-        addressCol.setCellFactory(TextFieldTableCell.forTableColumn());
-        tokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
+    private void getOrder(Map<String, Object> requestParam, ObservableList<Map<String, Object>> orderData,
+            String CONTEXT_ROOT)
+            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
+        if (requestParam.containsKey("state")) {
+            String stateStr = (String) requestParam.get("state");
+            requestParam.put("spent", "publish".equals("stateStr") ? "false" : "true");
+        }
 
-        orderTable.setItems(orderData);
+        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrder.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        log.debug(response0);
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+
+            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+                map.put("type", Main.getText("BUY"));
+                map.put("amount", orderRecord.getTargetValue());
+                map.put("tokenId", orderRecord.getTargetTokenid());
+                map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
+            } else {
+                map.put("type", Main.getText("SELL"));
+                map.put("amount", orderRecord.getOfferValue());
+                map.put("tokenId", orderRecord.getOfferTokenid());
+                map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
+            }
+
+            map.put("validateTo", new Date(orderRecord.getValidToTime()));
+            map.put("address",
+                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
+            orderData.add(map);
+        }
     }
 
     public void initMarketComboBox() throws Exception {
@@ -497,7 +524,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField1.getText());
-        Coin price = Coin.parseCoin(this.limitTextField1.getText(),NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = Coin.parseCoin(this.limitTextField1.getText(), NetworkParameters.BIGTANGLE_TOKENID);
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();
@@ -547,7 +574,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField.getText());
-        Coin price = Coin.parseCoin( this.limitTextField.getText(),NetworkParameters.BIGTANGLE_TOKENID );
+        Coin price = Coin.parseCoin(this.limitTextField.getText(), NetworkParameters.BIGTANGLE_TOKENID);
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();
