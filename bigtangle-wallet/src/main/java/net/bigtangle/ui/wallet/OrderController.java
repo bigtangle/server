@@ -7,6 +7,8 @@ package net.bigtangle.ui.wallet;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -321,8 +323,8 @@ public class OrderController extends ExchangeController {
         addressCol.setCellValueFactory(new MapValueFactory("address"));
         tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
-        // TODO validdatetoCol.setCellValueFactory(new
-        // MapValueFactory("validateto"));
+        // TODO
+        validdatetoCol.setCellValueFactory(new MapValueFactory("validateTo"));
         // validdatefromCol.setCellValueFactory(new
         // MapValueFactory("validatefrom"));
         stateCol.setCellValueFactory(new MapValueFactory("state"));
@@ -420,8 +422,8 @@ public class OrderController extends ExchangeController {
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
-
-            map.put("validateTo", new Date(orderRecord.getValidToTime()));
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:SSS");
+            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime())));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
             orderData.add(map);

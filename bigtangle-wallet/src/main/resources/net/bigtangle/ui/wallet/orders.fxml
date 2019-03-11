@@ -27,7 +27,7 @@
 										<TableColumn fx:id="typeCol" prefWidth="62.0" text="%type" />
 		
 										<TableColumn fx:id="stateCol" prefWidth="65.0" text="%state" />
-										<TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateTo" />
+										<TableColumn fx:id="validdatetoCol" prefWidth="118.0" text="%validdateTo" />
 										
 										<TableColumn fx:id="orderidCol" prefWidth="105.0" text="%orderid" />
 								
