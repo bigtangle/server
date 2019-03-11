@@ -40,6 +40,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
@@ -552,7 +553,13 @@ public class TokenController extends TokenBaseController {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
             Main.bitcoin.wallet().saveToken(tokenInfo, basecoin, outKey, aesKey);
+            String amount = stockAmount.getText();
 
+            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid.getValue())
+                    && !amount.matches("^\\+?[1-9][0-9]*$")) {
+                GuiUtils.informationalAlert("", Main.getText("NoNumber"));
+                return;
+            }
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -754,12 +761,17 @@ public class TokenController extends TokenBaseController {
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF.getText().trim()) < signAddrChoiceBox.getItems().size() +1) {
+                    && Long.parseLong(signnumberTF.getText().trim()) < signAddrChoiceBox.getItems().size() + 1) {
 
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
-
+            String amount = stockAmount1.getText();
+            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid1.getValue())
+                    && !amount.matches("^\\+?[1-9][0-9]*$")) {
+                GuiUtils.informationalAlert("", Main.getText("NoNumber"));
+                return;
+            }
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
@@ -827,7 +839,7 @@ public class TokenController extends TokenBaseController {
         requestParam0.put("address", rowdata.get("address").toString());
         String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
-      //  log.debug(resp);
+        // log.debug(resp);
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         MultiSign multiSign000 = null;
