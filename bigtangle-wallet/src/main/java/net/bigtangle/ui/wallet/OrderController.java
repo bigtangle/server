@@ -422,7 +422,7 @@ public class OrderController extends ExchangeController {
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:SSS");
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime())));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
@@ -537,6 +537,15 @@ public class OrderController extends ExchangeController {
         }
         // TODO time and null
         LocalDate to = validdateToDatePicker1.getValue();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String validdateTo = "";
+        Long totime = null;
+        if (to != null) {
+            validdateTo = df.format(to);
+            String validateTime = validdateTo + " " + toTimeTF1.getText();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            totime = dateFormat.parse(validateTime).getTime();
+        }
 
         String ContextRoot = Main.getContextRoot();
         Main.bitcoin.wallet().setServerURL(ContextRoot);
@@ -554,12 +563,11 @@ public class OrderController extends ExchangeController {
                 break;
             }
         }
+
         if (typeStr.equals("sell")) {
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity,
-                    to == null ? null : to.toEpochDay());
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity,
-                    to == null ? null : to.toEpochDay());
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime);
         }
 
         overlayUI.done();
@@ -586,7 +594,7 @@ public class OrderController extends ExchangeController {
             return;
         }
 
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd 00:00:00");
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         // String validdateFrom = "";
         // if (validdateFromDatePicker.getValue() != null) {
         // validdateFrom = df.format(validdateFromDatePicker.getValue());
