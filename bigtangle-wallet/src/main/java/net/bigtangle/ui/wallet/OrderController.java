@@ -398,7 +398,7 @@ public class OrderController extends ExchangeController {
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         if (requestParam.containsKey("state")) {
             String stateStr = (String) requestParam.get("state");
-            requestParam.put("spent", "publish".equals("stateStr") ? "false" : "true");
+            requestParam.put("spent", "publish".equals(stateStr) ? "false" : "true");
         }
 
         String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrder.name(),
