@@ -423,7 +423,7 @@ public class OrderController extends ExchangeController {
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime())));
+            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime()*1000)));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
             orderData.add(map);
