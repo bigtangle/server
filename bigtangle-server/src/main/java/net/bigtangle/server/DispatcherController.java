@@ -449,6 +449,8 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            default:
+                break;
             }
         } catch (BlockStoreException e) {
             logger.error("", e);
