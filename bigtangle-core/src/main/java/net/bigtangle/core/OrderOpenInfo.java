@@ -25,7 +25,6 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private Long validToTime;
     // valid from this date, maximum is set in Network parameter
     private Long validFromTime;
-    private Side side;
 
     // owner public address of the order for query
     private String beneficiaryAddress;
@@ -40,18 +39,16 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
-        if (validToTimeMilli == null) {
-            this.validToTime = (System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL) / 1000;
+        if (validFromTimeMilli == null) {
+            this.validFromTime = System.currentTimeMillis() / 1000;
+        } else {
+            this.validFromTime = validFromTimeMilli / 1000;
+        }
+		if (validToTimeMilli == null) {
+            this.validToTime = validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX;
         } else {
             this.validToTime = validToTimeMilli / 1000;
         }
-        if (validFromTimeMilli == null) {
-            this.validFromTime = (System.currentTimeMillis()) / 1000;
-        } else {
-            
-            this.validFromTime = validFromTimeMilli / 1000;
-        }
-        this.side = side;
         this.beneficiaryAddress = beneficiaryAddress;
     }
 
@@ -109,14 +106,6 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     public void setValidFromTime(Long validFromTime) {
         this.validFromTime = validFromTime;
-    }
-
-    public Side getSide() {
-        return side;
-    }
-
-    public void setSide(Side side) {
-        this.side = side;
     }
 
     public String getBeneficiaryAddress() {

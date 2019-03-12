@@ -1448,6 +1448,19 @@ public class ValidatorService {
             }
         }
 
+        // TODO throw on overflow!
+        if (orderInfo.getValidToTime() > orderInfo.getValidFromTime() + NetworkParameters.ORDER_TIMEOUT_MAX) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The given order's timeout is too long.");
+            return SolidityState.getFailState();
+        }
+        
+        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(params).toBase58().equals(orderInfo.getBeneficiaryAddress())) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The address does not match with the given pubkey.");
+            return SolidityState.getFailState();
+        }
+
         return SolidityState.getSuccessState();
     }
 

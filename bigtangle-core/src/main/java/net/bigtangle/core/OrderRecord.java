@@ -55,7 +55,6 @@ public class OrderRecord implements java.io.Serializable {
         this.validToTime = validToTime;
         this.opIndex = opIndex;
         this.validFromTime = validFromTime;
-        this.validToTime = validFromTime;
         try {
             this.side = Side.valueOf(side);
         } catch (Exception e) {
@@ -73,14 +72,13 @@ public class OrderRecord implements java.io.Serializable {
                 + Utils.HEX.encode(beneficiaryPubKey) + ", \nvalidToTime=" + validToTime + ", \nopIndex=" + opIndex
                 + ", \nside=" + side + ", \nvalidFromTime=" + validFromTime + "]\n";
     }
-    // check, if the valid to date is over
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;
     }
 
-    public boolean isValidTime(long blockTime) {
-        return !isTimeouted(blockTime);
+    public boolean isValidYet(long blockTime) {
+        return blockTime >= validFromTime;
     }
 
     public Sha256Hash getInitialBlockHash() {

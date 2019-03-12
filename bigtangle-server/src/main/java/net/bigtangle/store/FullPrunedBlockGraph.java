@@ -980,10 +980,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
             
             Coin offer = validatorService.countBurnedToken(block);
+            Side side = offer.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? 
+                    Side.BUY : Side.SELL;
             
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, 
             		offer.getValue(), offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
-            		reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0, reqInfo.getValidFromTime(),reqInfo.getSide().name(), reqInfo.getBeneficiaryAddress());
+            		reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0, reqInfo.getValidFromTime(), side.name(), reqInfo.getBeneficiaryAddress());
             
             blockStore.insertOrder(record);
         } catch (IOException e) {
@@ -1063,22 +1065,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-        Set<OrderRecord> untouchedOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevRewardHash).values());
-        List<OrderRecord> cancelledOrders = new ArrayList<>();
+        HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
+        Set<OrderRecord> untouchedOrders = new HashSet<>(remainingOrders.values());
+        Set<OrderRecord> cancelledOrders = new HashSet<>();
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-                //check, the order valid to and from data from block 
                 final Sha256Hash blockHash = b.getBlock().getHash();
-                OrderRecord   orderRecord= blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
-                if(orderRecord.isValidTime(block.getTimeSeconds())) {
-                newOrders.put(blockHash, orderRecord);
-                untouchedOrders.add(orderRecord);
-                }
-                if (orderRecord.isTimeouted(block.getTimeSeconds())) { 
-                    cancelledOrders.add(orderRecord);
-                    continue;
-                } 
+            	newOrders.put(blockHash, blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                untouchedOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1096,18 +1091,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         // Add the old leftover orders from the db to get all open orders
-        HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
         Map<Sha256Hash, OrderRecord> oldOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
         oldOrders.putAll(remainingOrders);
         remainingOrders.putAll(newOrders);
         
         // From all orders and ops, begin order matching algorithm:
-        TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
-    
-
-        // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders or use BigInteger
         // Add old orders first, then new ones sorted by their hash xor deterministic randomness (somewhat FIFO)
+        TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
+        // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders or use BigInteger
+        // Rebuild orderbooks
         int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
         for (OrderRecord o : oldOrders.values()) {
@@ -1119,6 +1112,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     o.getTargetValue() : o.getOfferValue();
             String tokenId = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? 
                     o.getTargetTokenid() : o.getOfferTokenid();
+                    
+            // If the order is not valid yet, it may not be added yet to the order books for matching!
+            if (!o.isValidYet(block.getTimeSeconds()))
+            	continue;
 
             OrderBook orderBook = orderBooks.get(tokenId);
             if (orderBook == null) {
@@ -1131,7 +1128,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             orderId++;
         }
         
-        // Match using new orders
+        // Match new orders
         for (OrderRecord o : newOrders.values()) {
             Side side = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? 
                     Side.BUY : Side.SELL;
@@ -1141,6 +1138,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     o.getTargetValue() : o.getOfferValue();
             String tokenId = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? 
                     o.getTargetTokenid() : o.getOfferTokenid();
+                    
+            // If the order is not valid yet, it may not be added yet to the order books for matching!
+            if (!o.isValidYet(block.getTimeSeconds()))
+            	continue;
 
             OrderBook orderBook = orderBooks.get(tokenId);
             if (orderBook == null) {

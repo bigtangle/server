@@ -35,12 +35,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         showOrders();
+        
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
         showOrders();
+        
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();
+        
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
@@ -375,6 +378,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         // TODO check result
+        
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }

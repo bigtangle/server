@@ -182,8 +182,8 @@ public abstract class NetworkParameters {
     public static final int TOKEN_MAX_DESC_LENGTH = 500;
     public static final int TOKEN_MAX_URL_LENGTH = 100;
 
-    // default valid to time of a order milliseconds of now 8*60*60 Seconds
-	public static final long INITIAL_ORDER_TTL = 8*60*60 *1000;
+    // max time of an order in seconds 
+	public static final long ORDER_TIMEOUT_MAX = 8*60*60;
 
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";

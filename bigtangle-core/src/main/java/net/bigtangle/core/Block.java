@@ -1213,7 +1213,7 @@ public class Block extends Message {
         b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget : branchBlock.difficultyTarget);        
 
         // Don't let timestamp go backwards
-        long currTime = getTimeSeconds();
+        long currTime = System.currentTimeMillis() / 1000;
 		long minTime = Math.max(currTime, branchBlock.getTimeSeconds());
         if (currTime >= minTime)
             b.setTime(currTime + 1);

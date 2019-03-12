@@ -230,13 +230,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " openorders SET confirmed = ? "
             + " WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, "
-            + "spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiarypubkey"
+            + "spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiaryaddress"
             + " FROM openorders WHERE collectinghash = ?";
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, "
-            + "spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiarypubkey"
+            + "spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiaryaddress"
             + " FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
             + "  INTO openorders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
@@ -392,13 +392,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     // Tests
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
-            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiarypubkey "
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiaryaddress "
             + " FROM openorders ORDER BY blockhash, collectinghash";
     protected final String SELECT_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
             + " FROM outputs ORDER BY hash, outputindex";
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
-            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiarypubkey"
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
             + " FROM openorders WHERE confirmed=1 AND spent=? ORDER BY blockhash, collectinghash";
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
