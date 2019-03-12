@@ -6,6 +6,8 @@ package net.bigtangle.server.ordermatch.bean;
 
 import java.util.ArrayList;
 
+import net.bigtangle.core.Side;
+
 class PriceLevel {
 
     private Side side;

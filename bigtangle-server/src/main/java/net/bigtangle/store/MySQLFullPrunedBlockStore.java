@@ -117,8 +117,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    targetcoinvalue bigint,\n" // amount of target tokens wanted
             + "    targettokenid varchar(255),\n" // tokenid of the wanted tokens
             + "    beneficiarypubkey binary(33),\n" // the pubkey that will receive the targettokens on completion or returned tokens on cancels
-            + "    validToTime bigint,\n" // the amount of ordermatch blocks this token is kept open without further refreshments
+            + "    validToTime bigint,\n" // order is valid untill this time
             + "    opindex int,\n" // a number used to track operations on the order, e.g. increasing by one when refreshing
+            + "    validFromTime bigint,\n" // order is valid after this time
+            + "    side varchar(255),\n" //buy or sell
+            + "    beneficiaryaddress varchar(255),\n" //public addressl
             + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n"; 
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"

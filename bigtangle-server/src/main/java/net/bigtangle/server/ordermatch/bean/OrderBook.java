@@ -6,6 +6,7 @@ package net.bigtangle.server.ordermatch.bean;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
+import net.bigtangle.core.Side;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

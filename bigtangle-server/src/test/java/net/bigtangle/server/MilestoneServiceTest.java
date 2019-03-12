@@ -24,6 +24,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -520,7 +521,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		{
 			// Make a buy order for "test"s
 			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey());
+			OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(),null,null,Side.BUY, testKey.toAddress(networkParameters).toBase58());
 			tx.setData(info.toByteArray());
 	        
 	        // Create burning 2 BIG

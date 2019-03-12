@@ -7,6 +7,8 @@ package net.bigtangle.server.ordermatch.bean;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.core.Side;
+
 public class OrderBookEvents implements OrderBookListener {
 
     private List<Event> events;

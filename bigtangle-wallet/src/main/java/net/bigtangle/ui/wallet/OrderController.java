@@ -565,9 +565,9 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime);
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime,null);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime);
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime,null );
         }
 
         overlayUI.done();

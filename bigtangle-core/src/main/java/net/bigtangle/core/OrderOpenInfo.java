@@ -19,24 +19,23 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private static final Logger logger = LoggerFactory.getLogger(OrderOpenInfo.class);
     private long targetValue;
     private String targetTokenid;
+    //public key is needed for verify 
     private byte[] beneficiaryPubKey;
     // valid until this date, maximum is set in Network parameter
     private Long validToTime;
+    // valid from this date, maximum is set in Network parameter
+    private Long validFromTime;
+    private Side side;
 
+    // owner public address of the order for query
+    private String beneficiaryAddress;
+    
     public OrderOpenInfo() {
         super();
     }
 
-    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey) {
-        super();
-        this.targetValue = targetValue;
-        this.targetTokenid = targetTokenid;
-        this.beneficiaryPubKey = beneficiaryPubKey;
-        this.validToTime = (System.currentTimeMillis() + NetworkParameters.INITIAL_ORDER_TTL) / 1000;
-
-    }
-
-    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli) {
+    public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli,
+            Long validFromTimeMilli, Side side,  String beneficiaryAddress) {
         super();
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
@@ -46,6 +45,14 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         } else {
             this.validToTime = validToTimeMilli / 1000;
         }
+        if (validFromTimeMilli == null) {
+            this.validFromTime = (System.currentTimeMillis()) / 1000;
+        } else {
+            
+            this.validFromTime = validFromTimeMilli / 1000;
+        }
+        this.side = side;
+        this.beneficiaryAddress = beneficiaryAddress;
     }
 
     public byte[] getBeneficiaryPubKey() {
@@ -94,6 +101,30 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     public void setValidToTime(Long validToTime) {
         this.validToTime = validToTime;
+    }
+
+    public Long getValidFromTime() {
+        return validFromTime;
+    }
+
+    public void setValidFromTime(Long validFromTime) {
+        this.validFromTime = validFromTime;
+    }
+
+    public Side getSide() {
+        return side;
+    }
+
+    public void setSide(Side side) {
+        this.side = side;
+    }
+
+    public String getBeneficiaryAddress() {
+        return beneficiaryAddress;
+    }
+
+    public void setBeneficiaryAddress(String beneficiaryAddress) {
+        this.beneficiaryAddress = beneficiaryAddress;
     }
 
 }

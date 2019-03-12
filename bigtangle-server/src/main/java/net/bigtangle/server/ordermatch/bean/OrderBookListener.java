@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.bean;
 
+import net.bigtangle.core.Side;
+
 /**
  * The interface for outbound events from an order book.
  */

@@ -8,26 +8,39 @@ package net.bigtangle.core;
 public class OrderRecord implements java.io.Serializable {
 
     private static final long serialVersionUID = -2331665478149550684L;
-
+    // order is in this block
     private Sha256Hash initialBlockHash;
+    // order matching block
     private Sha256Hash issuingMatcherBlockHash;
     private long offerValue;
     private String offerTokenid;
+    // order block is confirmed
     private boolean confirmed;
+    // spent true is matched and closed, false is open.
     private boolean spent;
     private Sha256Hash spenderBlockHash;
     private long targetValue;
     private String targetTokenid;
+    // owner public key of the order
     private byte[] beneficiaryPubKey;
+    // owner public address of the order for query
+    private String beneficiaryAddress;
+
+    // order will be traded until this time
     private Long validToTime;
     private int opIndex;
+    // order will be traded after this time
+    private Long validFromTime;
+    // Side can be calculated as Big Coin as only base trading coin
+    private Side side;
 
     public OrderRecord() {
     }
 
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
-            String targetTokenid, byte[] beneficiaryPubKey, Long ttl, int opIndex) {
+            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, int opIndex, Long validFromTime,
+            String side, String beneficiaryAddress) {
         super();
         this.initialBlockHash = initialBlockHash;
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
@@ -39,8 +52,16 @@ public class OrderRecord implements java.io.Serializable {
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
-        this.validToTime = ttl;
+        this.validToTime = validToTime;
         this.opIndex = opIndex;
+        this.validFromTime = validFromTime;
+        this.validToTime = validFromTime;
+        try {
+            this.side = Side.valueOf(side);
+        } catch (Exception e) {
+            this.side = null;
+        }
+        this.beneficiaryAddress = beneficiaryAddress;
     }
 
     @Override
@@ -49,12 +70,17 @@ public class OrderRecord implements java.io.Serializable {
                 + issuingMatcherBlockHash + ", \nofferValue=" + offerValue + ", \nofferTokenid=" + offerTokenid
                 + ", \nconfirmed=" + confirmed + ", \nspent=" + spent + ", \nspenderBlockHash=" + spenderBlockHash
                 + ", \ntargetValue=" + targetValue + ", \ntargetTokenid=" + targetTokenid + ", \nbeneficiaryPubKey="
-                + Utils.HEX.encode(beneficiaryPubKey) + ", \nttl=" + validToTime + ", \nopIndex=" + opIndex + "]\n";
+                + Utils.HEX.encode(beneficiaryPubKey) + ", \nvalidToTime=" + validToTime + ", \nopIndex=" + opIndex
+                + ", \nside=" + side + ", \nvalidFromTime=" + validFromTime + "]\n";
     }
     // check, if the valid to date is over
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;
+    }
+
+    public boolean isValidTime(long blockTime) {
+        return !isTimeouted(blockTime);
     }
 
     public Sha256Hash getInitialBlockHash() {
@@ -156,4 +182,29 @@ public class OrderRecord implements java.io.Serializable {
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
+
+    public Long getValidFromTime() {
+        return validFromTime;
+    }
+
+    public void setValidFromTime(Long validFromTime) {
+        this.validFromTime = validFromTime;
+    }
+
+    public Side getSide() {
+        return side;
+    }
+
+    public void setSide(Side side) {
+        this.side = side;
+    }
+
+    public String getBeneficiaryAddress() {
+        return beneficiaryAddress;
+    }
+
+    public void setBeneficiaryAddress(String beneficiaryAddress) {
+        this.beneficiaryAddress = beneficiaryAddress;
+    }
+
 }

@@ -81,6 +81,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionBag;
@@ -3680,11 +3681,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return listUTXO;
     }
 
-    public Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount
-         ,   Long validToTime      ) throws Exception {
-      
+    public Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            Long validToTime, Long validFromTime) throws Exception {
+
         Transaction tx = new Transaction(params);
-        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime);
+        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
+                Side.BUY, beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
 
         // Burn BIG to buy
@@ -3708,21 +3710,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
-  
-       // block = predecessor.createNextBlock();
+
+        // block = predecessor.createNextBlock();
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
+
+        // check the valid to time must be at least the block creation time
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
         return block;
     }
 
-    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,    Long validToTime        ) throws Exception {
-      
+    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            Long validToTime, Long validFromTime) throws Exception {
+
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                beneficiary.getPubKey(),validToTime);
+                beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL, beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
 
         // Burn tokens to sell
@@ -3745,7 +3750,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
-  
+
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();

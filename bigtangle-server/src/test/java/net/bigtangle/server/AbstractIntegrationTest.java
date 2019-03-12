@@ -52,6 +52,7 @@ import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -134,13 +135,14 @@ public abstract class AbstractIntegrationTest {
         walletKeys();
     }
 
-    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks) throws JsonProcessingException, Exception, BlockStoreException {
-    	store.resetStore();
-		
-		// Make the "test" token
-		Block block = null;
+    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
+            throws JsonProcessingException, Exception, BlockStoreException {
+        store.resetStore();
+
+        // Make the "test" token
+        Block block = null;
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
@@ -154,183 +156,196 @@ public abstract class AbstractIntegrationTest {
         block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>());
-		return block;
-	}
+        return block;
+    }
 
-	protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeAndConfirmReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-	}
+    protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching,
+            List<Block> addedBlocks) throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+    }
 
-	protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks, Block predecessor) throws Exception {
-		Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-        
+    protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching,
+            List<Block> addedBlocks, Block predecessor) throws Exception {
+        Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+
         // Confirm and return
-		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-		return block;
-	}
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
 
-	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-	}
+    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks)
+            throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
+    }
 
-	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
-			Block predecessor) throws Exception {
-		return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor, predecessor);
-	}
+    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
+            Block predecessor) throws Exception {
+        return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor, predecessor);
+    }
 
-	protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
-			Block predecessor, Block branchPredecessor) throws Exception {
-		Block block = null;
-		
+    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
+            Block predecessor, Block branchPredecessor) throws Exception {
+        Block block = null;
+
         // Make transaction
-		Transaction tx = new Transaction(networkParameters);
-		OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, missingOrderMatching);
-		tx.setData(info.toByteArray());
+        Transaction tx = new Transaction(networkParameters);
+        OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, missingOrderMatching);
+        tx.setData(info.toByteArray());
 
         // Create block with order reclaim
-		block = predecessor.createNextBlock(branchPredecessor);
-		block.addTransaction(tx);
-		block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-		block.solve();
-		this.blockGraph.add(block, true);
+        block = predecessor.createNextBlock(branchPredecessor);
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
+        block.solve();
+        this.blockGraph.add(block, true);
         addedBlocks.add(block);
-		return block;
-	}
+        return block;
+    }
 
-	protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
-	}
+    protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
+            List<Block> addedBlocks) throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
+    }
 
-	protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
-		Block block = null;
-		
+    protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
+            List<Block> addedBlocks, Block predecessor) throws Exception {
+        Block block = null;
+
         // Make transaction
-		Transaction tx = new Transaction(networkParameters);
-		Coin amount = Coin.valueOf(sellAmount, tokenId);
-		List<UTXO> outputs = getBalance(false, fromKey).stream()
-				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-				.filter(out -> out.getValue().getValue() >= amount.getValue())
-				.collect(Collectors.toList());
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-		        0);
-		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
-		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), fromKey));
-		TransactionInput input = tx.addInput(spendableOutput);
-		
-		// Sign
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);		
-		TransactionSignature sig = new TransactionSignature(fromKey.sign(sighash), Transaction.SigHash.ALL,
-		        false);
-		Script inputScript = ScriptBuilder.createInputScript(sig);
-		input.setScriptSig(inputScript);
+        Transaction tx = new Transaction(networkParameters);
+        Coin amount = Coin.valueOf(sellAmount, tokenId);
+        List<UTXO> outputs = getBalance(false, fromKey).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), fromKey));
+        TransactionInput input = tx.addInput(spendableOutput);
+
+        // Sign
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(fromKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
 
         // Create block with tx
-		block = predecessor.createNextBlock();
-		block.addTransaction(tx);
-		block.solve();
-		this.blockGraph.add(block, true);
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.solve();
+        this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        
+
         // Confirm and return
-		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-		return block;
-	}
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
 
-	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
-	}
+    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            List<Block> addedBlocks) throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
+    }
 
-	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
-		Block block = null;
-		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING, beneficiary.getPubKey());
-		tx.setData(info.toByteArray());
-		
+    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            List<Block> addedBlocks, Block predecessor) throws Exception {
+        Block block = null;
+        Transaction tx = new Transaction(networkParameters);
+        OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                beneficiary.getPubKey(), null, null, Side.SELL, beneficiary.toAddress(networkParameters).toBase58());
+        tx.setData(info.toByteArray());
+
         // Burn tokens to sell
-		Coin amount = Coin.valueOf(sellAmount, tokenId);
-		List<UTXO> outputs = getBalance(false, beneficiary).stream()
-				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-				.filter(out -> out.getValue().getValue() >= amount.getValue())
-				.collect(Collectors.toList());
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-		        0);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-		TransactionInput input = tx.addInput(spendableOutput);
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-		
-		TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL,
-		        false);
-		Script inputScript = ScriptBuilder.createInputScript(sig);
-		input.setScriptSig(inputScript);
+        Coin amount = Coin.valueOf(sellAmount, tokenId);
+        List<UTXO> outputs = getBalance(false, beneficiary).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
 
         // Create block with order
-		block = predecessor.createNextBlock();
-		block.addTransaction(tx);
-		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-		block.solve();
-		this.blockGraph.add(block, true);
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        this.blockGraph.add(block, true);
         addedBlocks.add(block);
-		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-		return block;
-	}
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
 
-	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
-	}
+    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            List<Block> addedBlocks) throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
+    }
 
-	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount, List<Block> addedBlocks, Block predecessor) throws Exception {
-		Block block = null;
-		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey());
-		tx.setData(info.toByteArray());
-        
+    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            List<Block> addedBlocks, Block predecessor) throws Exception {
+        Block block = null;
+        Transaction tx = new Transaction(networkParameters);
+        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), null, null, Side.BUY,
+                beneficiary.toAddress(networkParameters).toBase58());
+        tx.setData(info.toByteArray());
+
         // Burn BIG to buy
-		Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
-		List<UTXO> outputs = getBalance(false, beneficiary).stream()
-				.filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-				.filter(out -> out.getValue().getValue() >= amount.getValue())
-				.collect(Collectors.toList());
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-		        0);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-		TransactionInput input = tx.addInput(spendableOutput);
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-		
-		TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL,
-		        false);
-		Script inputScript = ScriptBuilder.createInputScript(sig);
-		input.setScriptSig(inputScript);
+        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+        List<UTXO> outputs = getBalance(false, beneficiary).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
+                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
 
         // Create block with order
-		block = predecessor.createNextBlock();
-		block.addTransaction(tx);
-		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-		block.solve();
-		this.blockGraph.add(block, true);
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        this.blockGraph.add(block, true);
         addedBlocks.add(block);
-		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-		return block;
-	}	
-	
-	protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-		return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
-	}
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
 
-	protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks, Block predecessor) throws Exception {
-		// Make an order op
-		Transaction tx = new Transaction(networkParameters);
-		OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, order.getHash());
-		tx.setData(info.toByteArray());
-		
-		// Legitimate it by signing
+    protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
+            throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
+    }
+
+    protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks,
+            Block predecessor) throws Exception {
+        // Make an order op
+        Transaction tx = new Transaction(networkParameters);
+        OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, order.getHash());
+        tx.setData(info.toByteArray());
+
+        // Legitimate it by signing
         Sha256Hash sighash1 = tx.getHash();
         ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
         byte[] buf1 = party1Signature.encodeToDER();
@@ -342,121 +357,127 @@ public abstract class AbstractIntegrationTest {
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
         block.solve();
 
-		this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true);
         addedBlocks.add(block);
-		this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-		return block;
-	}
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks) throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-    	return makeAndConfirmOrderMatching(addedBlocks, predecessor);
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        return makeAndConfirmOrderMatching(addedBlocks, predecessor);
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
-		// Generate blocks until passing first reward interval
-	    Block rollingBlock = predecessor;
-	    for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-	        rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-	        blockGraph.add(rollingBlock, true);
-	        addedBlocks.add(rollingBlock);
-	    }
-	    
-	    // Generate mining reward block
-	    Block rewardBlock = transactionService.createAndAddMiningRewardBlock(store.getMaxConfirmedRewardBlockHash(),
-	            rollingBlock.getHash(), rollingBlock.getHash());
+        // Generate blocks until passing first reward interval
+        Block rollingBlock = predecessor;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+                + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+            addedBlocks.add(rollingBlock);
+        }
+
+        // Generate mining reward block
+        Block rewardBlock = transactionService.createAndAddMiningRewardBlock(store.getMaxConfirmedRewardBlockHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(rewardBlock);
-	    
-	    // Confirm
-	    blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
-		return rewardBlock;
-	}
-	
-	protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
-		// Asserts that the current token amounts are equal to the given token amounts
-		HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
-		for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
-			assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
-			assertEquals(origTokenAmount.getValue(), currTokenAmounts.get(origTokenAmount.getKey()));
-		}
-		for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
-			assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
-			assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
-		}
-	}
 
-	protected void assertHasAvailableToken(ECKey testKey, String tokenId_, Long amount) throws Exception {
-		// Asserts that the given ECKey possesses the given amount of tokens
-		List<UTXO> balance = getBalance(false, testKey);
-		HashMap<String, Long> hashMap = new HashMap<>();
-		for (UTXO o : balance) {
-			String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
-			if (!hashMap.containsKey(tokenId))
-				hashMap.put(tokenId, 0L);
-			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
-		}
-		
-		assertEquals(amount, hashMap.get(tokenId_));
-	}
+        // Confirm
+        blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
+        return rewardBlock;
+    }
 
-	protected HashMap<String, Long> getCurrentTokenAmounts() throws BlockStoreException {
-		// Adds the token values of open orders and UTXOs to a hashMap
-		HashMap<String, Long> hashMap = new HashMap<>();
-		addCurrentUTXOTokens(hashMap);
-		addCurrentOrderTokens(hashMap);
-		return hashMap;
-	}
+    protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
+        // Asserts that the current token amounts are equal to the given token
+        // amounts
+        HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
+        for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
+            assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
+            assertEquals(origTokenAmount.getValue(), currTokenAmounts.get(origTokenAmount.getKey()));
+        }
+        for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
+            assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
+            assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
+        }
+    }
 
-	protected void addCurrentOrderTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
-		// Adds the token values of open orders to the hashMap
-		List<OrderRecord> orders = store.getAllAvailableOrdersSorted(false);
-		for (OrderRecord o : orders) {
-			String tokenId = o.getOfferTokenid();
-			if (!hashMap.containsKey(tokenId))
-				hashMap.put(tokenId, 0L);
-			hashMap.put(tokenId, hashMap.get(tokenId) + o.getOfferValue());
-		}
-	}
+    protected void assertHasAvailableToken(ECKey testKey, String tokenId_, Long amount) throws Exception {
+        // Asserts that the given ECKey possesses the given amount of tokens
+        List<UTXO> balance = getBalance(false, testKey);
+        HashMap<String, Long> hashMap = new HashMap<>();
+        for (UTXO o : balance) {
+            String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
+            if (!hashMap.containsKey(tokenId))
+                hashMap.put(tokenId, 0L);
+            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
+        }
 
-	protected void addCurrentUTXOTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
-		// Adds the token values of open UTXOs to the hashMap
-		List<UTXO> utxos = store.getAllAvailableUTXOsSorted();
-		for (UTXO o : utxos) {
-			String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
-			if (!hashMap.containsKey(tokenId))
-				hashMap.put(tokenId, 0L);
-			hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
-		}
-	}
+        assertEquals(amount, hashMap.get(tokenId_));
+    }
 
-	protected void showOrders() throws BlockStoreException {
+    protected HashMap<String, Long> getCurrentTokenAmounts() throws BlockStoreException {
+        // Adds the token values of open orders and UTXOs to a hashMap
+        HashMap<String, Long> hashMap = new HashMap<>();
+        addCurrentUTXOTokens(hashMap);
+        addCurrentOrderTokens(hashMap);
+        return hashMap;
+    }
+
+    protected void addCurrentOrderTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
+        // Adds the token values of open orders to the hashMap
+        List<OrderRecord> orders = store.getAllAvailableOrdersSorted(false);
+        for (OrderRecord o : orders) {
+            String tokenId = o.getOfferTokenid();
+            if (!hashMap.containsKey(tokenId))
+                hashMap.put(tokenId, 0L);
+            hashMap.put(tokenId, hashMap.get(tokenId) + o.getOfferValue());
+        }
+    }
+
+    protected void addCurrentUTXOTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
+        // Adds the token values of open UTXOs to the hashMap
+        List<UTXO> utxos = store.getAllAvailableUTXOsSorted();
+        for (UTXO o : utxos) {
+            String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
+            if (!hashMap.containsKey(tokenId))
+                hashMap.put(tokenId, 0L);
+            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
+        }
+    }
+
+    protected void showOrders() throws BlockStoreException {
         // Snapshot current state
         List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
-        for(OrderRecord o:allOrdersSorted) {
+        for (OrderRecord o : allOrdersSorted) {
             log.debug(o.toString());
         }
-	}
-	protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks) throws BlockStoreException {
-		// Snapshot current state
-		List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
-		List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
-		Map<Block, Boolean> blockConfirmed = new HashMap<>();
-		for (Block b : addedBlocks) {
-			blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isMilestone());
-		}
-		
-		// Redo and assert snapshot equal to new state
-		store.resetStore();
-		for (Block b : addedBlocks) {
-			blockGraph.add(b, false);
-			if (blockConfirmed.get(b))
-				blockGraph.confirm(b.getHash(), new HashSet<>());
-		}
-		List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
-		List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
-		assertEquals(allOrdersSorted2.toString(), allOrdersSorted.toString()); // Works for now
-		assertEquals(allUTXOsSorted2.toString(), allUTXOsSorted.toString());
-	}
+    }
+
+    protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks)
+            throws BlockStoreException {
+        // Snapshot current state
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
+        List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
+        Map<Block, Boolean> blockConfirmed = new HashMap<>();
+        for (Block b : addedBlocks) {
+            blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isMilestone());
+        }
+
+        // Redo and assert snapshot equal to new state
+        store.resetStore();
+        for (Block b : addedBlocks) {
+            blockGraph.add(b, false);
+            if (blockConfirmed.get(b))
+                blockGraph.confirm(b.getHash(), new HashSet<>());
+        }
+        List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
+        List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
+        assertEquals(allOrdersSorted2.toString(), allOrdersSorted.toString()); // Works
+                                                                               // for
+                                                                               // now
+        assertEquals(allUTXOsSorted2.toString(), allUTXOsSorted.toString());
+    }
 
     protected Sha256Hash getRandomSha256Hash() {
         byte[] rawHashBytes = new byte[32];
@@ -691,7 +712,7 @@ public abstract class AbstractIntegrationTest {
         // Hence we first create a normal token with multiple permissioned, then
         // we can issue via multisign
 
-        String tokenid =   createFirstMultisignToken(keys, tokenInfo);
+        String tokenid = createFirstMultisignToken(keys, tokenInfo);
 
         milestoneService.update();
 

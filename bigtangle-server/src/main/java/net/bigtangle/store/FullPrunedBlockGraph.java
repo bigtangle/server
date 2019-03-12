@@ -55,6 +55,7 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenInfo;
@@ -73,7 +74,6 @@ import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
-import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.service.RewardEligibility;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -983,12 +983,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, 
             		offer.getValue(), offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(), 
-            		reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0);
+            		reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0, reqInfo.getValidFromTime(),reqInfo.getSide().name(), reqInfo.getBeneficiaryAddress());
             
             blockStore.insertOrder(record);
         } catch (IOException e) {
             // Cannot happen when connecting
-            e.printStackTrace();
+            log.error("connectOrder",e);
             throw new RuntimeException(e);
         }
     }
@@ -1064,12 +1064,21 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
         Set<OrderRecord> untouchedOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevRewardHash).values());
+        List<OrderRecord> cancelledOrders = new ArrayList<>();
         
         for (BlockWrap b : relevantBlocks) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+                //check, the order valid to and from data from block 
                 final Sha256Hash blockHash = b.getBlock().getHash();
-                newOrders.put(blockHash, blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
-                untouchedOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                OrderRecord   orderRecord= blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
+                if(orderRecord.isValidTime(block.getTimeSeconds())) {
+                newOrders.put(blockHash, orderRecord);
+                untouchedOrders.add(orderRecord);
+                }
+                if (orderRecord.isTimeouted(block.getTimeSeconds())) { 
+                    cancelledOrders.add(orderRecord);
+                    continue;
+                } 
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1095,7 +1104,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         
         // From all orders and ops, begin order matching algorithm:
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
-        List<OrderRecord> cancelledOrders = new ArrayList<>();
+    
 
         // TODO this works only for up to Integer.MAX_VALUE orders. For more, need to cancel some old orders or use BigInteger
         // Add old orders first, then new ones sorted by their hash xor deterministic randomness (somewhat FIFO)
