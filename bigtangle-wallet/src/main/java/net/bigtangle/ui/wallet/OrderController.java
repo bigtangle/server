@@ -49,6 +49,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
@@ -122,6 +123,8 @@ public class OrderController extends ExchangeController {
     public TableColumn<Map<String, Object>, String> orderidCol;
     @FXML
     public TableColumn<Map<String, Object>, String> addressCol;
+    @FXML
+    public TableColumn<Map<String, Object>, String> beneficiaryAddressCol;
     @FXML
     public TableColumn<Map<String, Object>, String> tokenidCol;
     @FXML
@@ -324,6 +327,8 @@ public class OrderController extends ExchangeController {
         getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
         orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
         addressCol.setCellValueFactory(new MapValueFactory("address"));
+        // beneficiaryAddressCol.setCellValueFactory(new
+        // MapValueFactory("beneficiaryAddress"));
         tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
         // TODO
@@ -429,6 +434,7 @@ public class OrderController extends ExchangeController {
             map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
+            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
             orderData.add(map);
         }
     }
@@ -507,6 +513,42 @@ public class OrderController extends ExchangeController {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
+    }
+
+    public void cancelMyOrder(ActionEvent event) throws Exception {
+
+        try {
+            cancelOrderDo();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void cancelOrderDo() throws Exception {
+        String ContextRoot = Main.getContextRoot();
+        Main.bitcoin.wallet().setServerURL(ContextRoot);
+        Map<String, Object> rowData = orderTable.getSelectionModel().getSelectedItem();
+        if (rowData == null || rowData.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
+            return;
+        }
+        Sha256Hash hash = Sha256Hash.wrap(rowData.get("initialBlockHashHex").toString());
+        ECKey legitimatingKey = null;
+
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        for (ECKey ecKey : keys) {
+            if (rowData.get("address").equals(ecKey.toAddress(Main.params).toString())) {
+                legitimatingKey = ecKey;
+                Main.bitcoin.wallet().makeAndConfirmCancelOp(hash, legitimatingKey);
+                break;
+            }
+        }
+
     }
 
     public void buyA(ActionEvent event) throws Exception {

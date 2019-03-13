@@ -15,9 +15,9 @@
 						<AnchorPane maxHeight="650.0" maxWidth="980.0" minHeight="650.0" minWidth="980.0" prefHeight="650.0" prefWidth="980.0">
 							<children>
 								<Label layoutX="40.0" layoutY="20.0" text="%orderid" />
-								<TextField fx:id="orderid4searchTextField" layoutX="116.0" layoutY="16.0" prefHeight="23.0" prefWidth="300.0" />
-								<Button defaultButton="true" layoutX="465.0" layoutY="150.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
-								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="195.0" prefHeight="351.0" prefWidth="977.0">
+								<TextField fx:id="orderid4searchTextField" layoutX="163.0" layoutY="16.0" prefHeight="23.0" prefWidth="300.0" />
+								<Button defaultButton="true" layoutX="384.0" layoutY="205.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
+								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="257.0" prefHeight="289.0" prefWidth="977.0">
 									<columns>
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
 										<TableColumn fx:id="priceCol" prefWidth="85.0" text="%price" />
@@ -28,9 +28,9 @@
 		
 										<TableColumn fx:id="stateCol" prefWidth="65.0" text="%state" />
                               <TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateFrom" />
-										<TableColumn fx:id="validdatetoCol" prefWidth="118.0" text="%validdateTo" />
+										<TableColumn fx:id="validdatetoCol" prefWidth="83.0" text="%validdateTo" />
 										
-										<TableColumn fx:id="orderidCol" prefWidth="105.0" text="%orderid" />
+										<TableColumn fx:id="orderidCol" prefWidth="108.0" text="%orderid" />
 								
 									
 
@@ -38,17 +38,20 @@
 								</TableView>
 								<Button cancelButton="true" layoutX="926.0" layoutY="557.0" mnemonicParsing="false" onAction="#closeUI" text="%close" />
 								<Label layoutX="40.0" layoutY="61.0" text="%address" />
-								<TextField fx:id="address4searchTextField" layoutX="116.0" layoutY="57.0" prefHeight="23.0" prefWidth="300.0" />
+								<TextField fx:id="address4searchTextField" layoutX="163.0" layoutY="57.0" prefHeight="23.0" prefWidth="300.0" />
 								<Label layoutX="40.0" layoutY="106.0" text="%state" />
-								<RadioButton fx:id="stateRB1" layoutX="117.0" layoutY="106.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="87.0" selected="true" text="%publish">
+								<RadioButton fx:id="stateRB1" layoutX="164.0" layoutY="106.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="87.0" selected="true" text="%publish">
 									<toggleGroup>
 										<ToggleGroup fx:id="stateTG" />
 									</toggleGroup>
 								</RadioButton>
-								<RadioButton fx:id="stateRB2" layoutX="214.0" layoutY="106.0" mnemonicParsing="false" text="%match" toggleGroup="$stateTG" />
-								<RadioButton fx:id="stateRB3" layoutX="310.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
-                        <TextField fx:id="market4searchTextField" layoutX="116.0" layoutY="150.0" prefHeight="23.0" prefWidth="300.0" />
+								<RadioButton fx:id="stateRB2" layoutX="261.0" layoutY="106.0" mnemonicParsing="false" text="%match" toggleGroup="$stateTG" />
+								<RadioButton fx:id="stateRB3" layoutX="357.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
+                        <TextField fx:id="market4searchTextField" layoutX="163.0" layoutY="150.0" prefHeight="23.0" prefWidth="300.0" />
                         <Label layoutX="40.0" layoutY="154.0" text="%market" />
+                        <CheckBox layoutX="165.0" layoutY="208.0" mnemonicParsing="false" text="%yes" />
+                        <Label layoutX="43.0" layoutY="209.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
+                        <Button layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />
 							</children>
 						</AnchorPane>
 					</content>

@@ -84,7 +84,9 @@ public class OrderRecord implements java.io.Serializable {
     public Sha256Hash getInitialBlockHash() {
         return initialBlockHash;
     }
-
+    public String getInitialBlockHashHex() {
+        return initialBlockHash!=null? Utils.HEX.encode(this.initialBlockHash.getBytes()) : "";
+    }
     public void setInitialBlockHash(Sha256Hash initialBlockHash) {
         this.initialBlockHash = initialBlockHash;
     }

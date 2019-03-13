@@ -70,7 +70,6 @@ import com.google.protobuf.ByteString;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
@@ -78,6 +77,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
@@ -114,6 +114,7 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
+import net.bigtangle.wallet.Wallet.BalanceType;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
@@ -3758,7 +3759,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
     }
-    protected Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey) throws Exception {
+    public Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey) throws Exception {
         // Make an order op
         Transaction tx = new Transaction(params);
         OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, orderblockhash);
