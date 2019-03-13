@@ -70,6 +70,8 @@ public class OrderController extends ExchangeController {
     @FXML
     public TextField fromTimeTF;
     @FXML
+    public TextField fromTimeTF1;
+    @FXML
     public TextField toTimeTF;
 
     @FXML
@@ -110,6 +112,8 @@ public class OrderController extends ExchangeController {
 
     @FXML
     public DatePicker validdateFromDatePicker;
+    @FXML
+    public DatePicker validdateFromDatePicker1;
     @FXML
     public DatePicker validdateToDatePicker;
     @FXML
@@ -289,8 +293,7 @@ public class OrderController extends ExchangeController {
             // TODO auto initTable is quite slow and disabled now and click
             // search to start initTable initTable(requestParam);
             super.initialize();
-            // new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(()
-            // -> checkState(Main.isTime(text))));
+            new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
             new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -325,8 +328,7 @@ public class OrderController extends ExchangeController {
         typeCol.setCellValueFactory(new MapValueFactory("type"));
         // TODO
         validdatetoCol.setCellValueFactory(new MapValueFactory("validateTo"));
-        // validdatefromCol.setCellValueFactory(new
-        // MapValueFactory("validatefrom"));
+        validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
         stateCol.setCellValueFactory(new MapValueFactory("state"));
         priceCol.setCellValueFactory(new MapValueFactory("price"));
         amountCol.setCellValueFactory(new MapValueFactory("amount"));
@@ -423,7 +425,8 @@ public class OrderController extends ExchangeController {
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime()*1000)));
+            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
+            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
             orderData.add(map);
@@ -547,6 +550,16 @@ public class OrderController extends ExchangeController {
             totime = dateFormat.parse(validateTime).getTime();
         }
 
+        LocalDate from = validdateFromDatePicker1.getValue();
+        String validdatefrom = "";
+        Long fromtime = null;
+        if (from != null) {
+            validdatefrom = df.format(from);
+            String validatefromTime = validdatefrom + " " + fromTimeTF1.getText();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            fromtime = dateFormat.parse(validatefromTime).getTime();
+        }
+
         String ContextRoot = Main.getContextRoot();
         Main.bitcoin.wallet().setServerURL(ContextRoot);
 
@@ -565,9 +578,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime,null);
+            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime,
+                    fromtime);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime,null );
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime,
+                    fromtime);
         }
 
         overlayUI.done();
@@ -595,10 +610,10 @@ public class OrderController extends ExchangeController {
         }
 
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        // String validdateFrom = "";
-        // if (validdateFromDatePicker.getValue() != null) {
-        // validdateFrom = df.format(validdateFromDatePicker.getValue());
-        // }
+        String validdateFrom = "";
+        if (validdateFromDatePicker.getValue() != null) {
+            validdateFrom = df.format(validdateFromDatePicker.getValue());
+        }
         String validdateTo = "";
         if (validdateToDatePicker.getValue() != null) {
             validdateTo = df.format(validdateToDatePicker.getValue());
@@ -620,8 +635,7 @@ public class OrderController extends ExchangeController {
         requestParam.put("price", price);
         requestParam.put("amount", amount);
         requestParam.put("validateto", validdateTo + " " + toTimeTF.getText());
-        // requestParam.put("validatefrom", validdateFrom + " " +
-        // fromTimeTF.getText());
+        requestParam.put("validatefrom", validdateFrom + " " + fromTimeTF.getText());
         // TODO xiao mi change
         String market = marketComboBox.getValue();
         String temp = market.contains(":") ? market.substring(market.indexOf(":") + 1).trim() : market.trim();

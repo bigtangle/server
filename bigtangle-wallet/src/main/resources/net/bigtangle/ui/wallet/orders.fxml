@@ -27,6 +27,7 @@
 										<TableColumn fx:id="typeCol" prefWidth="62.0" text="%type" />
 		
 										<TableColumn fx:id="stateCol" prefWidth="65.0" text="%state" />
+                              <TableColumn fx:id="validdatefromCol" prefWidth="118.0" text="%validdateFrom" />
 										<TableColumn fx:id="validdatetoCol" prefWidth="118.0" text="%validdateTo" />
 										
 										<TableColumn fx:id="orderidCol" prefWidth="105.0" text="%orderid" />
@@ -56,7 +57,7 @@
                <content>
                   <AnchorPane maxHeight="650.0" minHeight="650.0" prefHeight="650.0">
                      <children>
-                        <DatePicker fx:id="validdateToDatePicker1" editable="true" layoutX="227.0" layoutY="322.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <DatePicker fx:id="validdateToDatePicker1" editable="true" layoutX="227.0" layoutY="373.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                         <Label layoutX="24.0" layoutY="276.0" prefHeight="15.0" prefWidth="120.0" text="%Amount" GridPane.rowIndex="3" />
                         <ComboBox fx:id="addressComboBox1" editable="true" layoutX="227.0" layoutY="104.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
                         <TextField fx:id="limitTextField1" layoutX="227.0" layoutY="216.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
@@ -68,14 +69,17 @@
                         <TextField fx:id="quantityTextField1" layoutX="227.0" layoutY="272.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <Label layoutX="24.0" layoutY="108.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
                         <Label layoutX="24.0" layoutY="54.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
-                        <Label layoutX="24.0" layoutY="326.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
+                        <Label layoutX="24.0" layoutY="377.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
                         <RadioButton fx:id="buyRadioButton1" layoutX="227.0" layoutY="54.0" mnemonicParsing="false" selected="true" text="%BUY">
                            <toggleGroup>
                               <ToggleGroup fx:id="buySellTG1" />
                            </toggleGroup>
                         </RadioButton>
                         <RadioButton fx:id="sellRadioButton1" layoutX="296.0" layoutY="54.0" mnemonicParsing="false" text="%SELL" toggleGroup="$buySellTG1" />
-                        <TextField fx:id="toTimeTF1" layoutX="488.0" layoutY="322.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                        <TextField fx:id="toTimeTF1" layoutX="488.0" layoutY="373.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                        <TextField fx:id="fromTimeTF1" layoutX="488.0" layoutY="325.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                        <Label layoutX="24.0" layoutY="329.0" prefHeight="15.0" prefWidth="120.0" text="%validdateFrom" />
+                        <DatePicker fx:id="validdateFromDatePicker1" editable="true" layoutX="227.0" layoutY="325.0" prefHeight="23.0" prefWidth="260.0" />
                      </children>
                   </AnchorPane>
                </content>
@@ -85,9 +89,9 @@
 					<content>
 						<AnchorPane maxHeight="650.0" minHeight="650.0" prefHeight="650.0">
 							<children>
-								<DatePicker fx:id="validdateToDatePicker" editable="true" layoutX="227.0" layoutY="322.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+								<DatePicker fx:id="validdateToDatePicker" editable="true" layoutX="227.0" layoutY="368.0" prefHeight="23.0" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 								<Label layoutX="24.0" layoutY="273.0" prefHeight="15.0" prefWidth="120.0" text="%Amount" GridPane.rowIndex="3" />
-								<Label layoutX="24.0" layoutY="382.0" prefHeight="15.0" prefWidth="120.0" text="%market" GridPane.rowIndex="7" />
+								<Label layoutX="24.0" layoutY="428.0" prefHeight="15.0" prefWidth="120.0" text="%market" GridPane.rowIndex="7" />
 								<ComboBox fx:id="addressComboBox" editable="true" layoutX="227.0" layoutY="101.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
 								<TextField fx:id="limitTextField" layoutX="227.0" layoutY="213.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 								<Button cancelButton="true" layoutX="566.0" layoutY="487.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="8" />
@@ -96,17 +100,20 @@
 								<Label layoutX="24.0" layoutY="217.0" prefHeight="15.0" prefWidth="120.0" text="%limit" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="161.0" prefHeight="15.0" prefWidth="120.0" text="%token" textAlignment="CENTER" GridPane.rowIndex="1" />
 								<TextField fx:id="quantityTextField" layoutX="227.0" layoutY="269.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								<ComboBox fx:id="marketComboBox" editable="true" layoutX="227.0" layoutY="378.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+								<ComboBox fx:id="marketComboBox" editable="true" layoutX="227.0" layoutY="424.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 								<Label layoutX="24.0" layoutY="105.0" prefHeight="15.0" prefWidth="120.0" text="%address" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
 								<Label layoutX="24.0" layoutY="56.0" prefHeight="15.0" prefWidth="120.0" text="%buy_or_sell" GridPane.rowIndex="6" />
-								<Label layoutX="24.0" layoutY="326.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
+								<Label layoutX="24.0" layoutY="372.0" prefHeight="15.0" prefWidth="120.0" text="%validdateTo" GridPane.rowIndex="5" />
 								<RadioButton fx:id="buyRadioButton" layoutX="227.0" layoutY="56.0" mnemonicParsing="false" selected="true" text="%BUY">
 									<toggleGroup>
 										<ToggleGroup fx:id="buySellTG" />
 									</toggleGroup>
 								</RadioButton>
 								<RadioButton fx:id="sellRadioButton" layoutX="296.0" layoutY="56.0" mnemonicParsing="false" text="%SELL" toggleGroup="$buySellTG" />
-								<TextField fx:id="toTimeTF" layoutX="488.0" layoutY="322.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+								<TextField fx:id="toTimeTF" layoutX="488.0" layoutY="368.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
+                        <DatePicker fx:id="validdateFromDatePicker" editable="true" layoutX="227.0" layoutY="320.0" prefHeight="23.0" prefWidth="260.0" />
+                        <Label layoutX="24.0" layoutY="324.0" prefHeight="15.0" prefWidth="120.0" text="%validdateFrom" />
+                        <TextField fx:id="fromTimeTF" layoutX="488.0" layoutY="320.0" maxWidth="140.0" minWidth="140.0" prefWidth="140.0" promptText="00:00:00" text="00:00:00" />
 							</children>
 						</AnchorPane>
 					</content>
