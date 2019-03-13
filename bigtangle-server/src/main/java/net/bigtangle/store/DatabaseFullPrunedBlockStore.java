@@ -4921,7 +4921,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(11, record.getValidToTime());
             preparedStatement.setInt(12, record.getOpIndex());
             preparedStatement.setLong(13, record.getValidFromTime());
-            preparedStatement.setString(14, record.getSide()==null? null: record.getSide().name());
+            preparedStatement.setString(14, record.getSide() == null ? null : record.getSide().name());
             preparedStatement.setString(15, record.getBeneficiaryAddress());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -5075,6 +5075,46 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent) throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_AVAILABLE_ORDERS_SORTED_SQL);
+            s.setBoolean(1, spent);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, List<String> addresses)
+            throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;

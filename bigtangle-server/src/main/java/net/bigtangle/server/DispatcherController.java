@@ -445,6 +445,7 @@ public class DispatcherController {
                 boolean spent = false;
                 if (spentStr != null && spentStr.equals("true"))
                     spent = true;
+                List<String> addresses = (List<String>) request.get("addresses");
                 AbstractResponse response = orderdataService.getOrderdataList(spent);
                 this.outPrintJSONString(httpServletResponse, response);
             }

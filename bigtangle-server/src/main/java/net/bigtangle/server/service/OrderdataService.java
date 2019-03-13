@@ -22,4 +22,10 @@ public class OrderdataService {
         List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent);
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted);
     }
+
+    public AbstractResponse getOrderdataList(boolean spent, List<String> addresses) throws BlockStoreException {
+
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent,addresses);
+        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted);
+    }
 }

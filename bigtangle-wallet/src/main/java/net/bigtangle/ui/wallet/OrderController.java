@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.RadioButton;
@@ -67,6 +69,9 @@ import net.bigtangle.utils.OrderState;
 
 public class OrderController extends ExchangeController {
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+
+    @FXML
+    public CheckBox mineCB;
 
     @FXML
     public TextField fromTimeTF;
@@ -178,6 +183,7 @@ public class OrderController extends ExchangeController {
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
             stateRB3.setUserData("finish");
+            mineCB.setSelected(true);
             Main.resetWachted();
             initMarketComboBox();
             myListener = (ov1, o1, n1) -> {
@@ -408,6 +414,20 @@ public class OrderController extends ExchangeController {
         if (requestParam.containsKey("state")) {
             String stateStr = (String) requestParam.get("state");
             requestParam.put("spent", "publish".equals(stateStr) ? "false" : "true");
+        }
+        boolean ifMineOrder = mineCB.isSelected();
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<String> address = new ArrayList<String>();
+        if (ifMineOrder) {
+            for (ECKey ecKey : keys) {
+                address.add(ecKey.toAddress(Main.params).toString());
+            }
+            requestParam.put("addresses", address);
         }
 
         String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrder.name(),

@@ -49,7 +49,7 @@
 								<RadioButton fx:id="stateRB3" layoutX="357.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
                         <TextField fx:id="market4searchTextField" layoutX="163.0" layoutY="150.0" prefHeight="23.0" prefWidth="300.0" />
                         <Label layoutX="40.0" layoutY="154.0" text="%market" />
-                        <CheckBox layoutX="165.0" layoutY="208.0" mnemonicParsing="false" text="%yes" />
+                        <CheckBox fx:id="mineCB" layoutX="165.0" layoutY="208.0" mnemonicParsing="false" selected="true" text="%yes" />
                         <Label layoutX="43.0" layoutY="209.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
                         <Button layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />
 							</children>

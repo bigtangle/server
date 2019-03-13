@@ -305,6 +305,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /* For tests */
 	public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent ) throws BlockStoreException;
+	public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent,List<String> addresses ) throws BlockStoreException;
 
 	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
 
