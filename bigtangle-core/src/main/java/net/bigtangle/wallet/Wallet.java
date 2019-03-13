@@ -70,12 +70,14 @@ import com.google.protobuf.ByteString;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
@@ -3756,5 +3758,27 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
     }
+    protected Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey) throws Exception {
+        // Make an order op
+        Transaction tx = new Transaction(params);
+        OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, orderblockhash);
+        tx.setData(info.toByteArray());
 
+        // Legitimate it by signing
+        Sha256Hash sighash1 = tx.getHash();
+        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        tx.setDataSignature(buf1);
+
+        // Create block with order
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = params.getDefaultSerializer().makeBlock(data);
+
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+        block.solve();
+        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+        return block;
+    }
 }
