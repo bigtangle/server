@@ -442,11 +442,12 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String spentStr = (String) request.get("spent");
+                String address = (String) request.get("address");
                 boolean spent = false;
                 if (spentStr != null && spentStr.equals("true"))
                     spent = true;
                 List<String> addresses = (List<String>) request.get("addresses");
-                AbstractResponse response = orderdataService.getOrderdataList(spent);
+                AbstractResponse response = orderdataService.getOrderdataList(spent, address, addresses);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

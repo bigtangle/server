@@ -400,6 +400,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
             + " FROM openorders WHERE confirmed=1 AND spent=? ORDER BY blockhash, collectinghash";
+
+    protected final String SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders WHERE confirmed=1 AND spent=? ";
+
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
             + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
@@ -5113,14 +5118,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, List<String> addresses)
+    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses)
             throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
+        String sql = SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL;
+        String orderby = " ORDER BY blockhash, collectinghash";
+        if (address != null && !address.trim().isEmpty()) {
+            sql += " AND beneficiaryaddress=? ";
+        }
+        if (addresses != null && !addresses.isEmpty()) {
+            sql += " AND beneficiaryaddress in (";
+            String temp = "";
+            for (String addr : addresses) {
+                temp += ",'" + addr+"'";
+            }
+            sql += temp.substring(1) + ")";
+        }
+        sql += orderby;
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_AVAILABLE_ORDERS_SORTED_SQL);
+            log.debug(sql);
+            s = conn.get().prepareStatement(sql);
             s.setBoolean(1, spent);
+            if (address != null && !address.trim().isEmpty()) {
+                s.setString(2, address);
+            }
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
