@@ -14,10 +14,8 @@
 					<content>
 						<AnchorPane maxHeight="650.0" maxWidth="980.0" minHeight="650.0" minWidth="980.0" prefHeight="650.0" prefWidth="980.0">
 							<children>
-								<Label layoutX="40.0" layoutY="20.0" text="%orderid" />
-								<TextField fx:id="orderid4searchTextField" layoutX="163.0" layoutY="16.0" prefHeight="23.0" prefWidth="300.0" />
-								<Button defaultButton="true" layoutX="384.0" layoutY="205.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
-								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="257.0" prefHeight="289.0" prefWidth="977.0">
+								<Button defaultButton="true" layoutX="384.0" layoutY="143.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
+								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="198.0" prefHeight="348.0" prefWidth="977.0">
 									<columns>
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
 										<TableColumn fx:id="priceCol" prefWidth="85.0" text="%price" />
@@ -47,10 +45,8 @@
 								</RadioButton>
 								<RadioButton fx:id="stateRB2" layoutX="261.0" layoutY="106.0" mnemonicParsing="false" text="%match" toggleGroup="$stateTG" />
 								<RadioButton fx:id="stateRB3" layoutX="357.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
-                        <TextField fx:id="market4searchTextField" layoutX="163.0" layoutY="150.0" prefHeight="23.0" prefWidth="300.0" />
-                        <Label layoutX="40.0" layoutY="154.0" text="%market" />
-                        <CheckBox fx:id="mineCB" layoutX="165.0" layoutY="208.0" mnemonicParsing="false" selected="true" text="%yes" />
-                        <Label layoutX="43.0" layoutY="209.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
+                        <CheckBox fx:id="mineCB" layoutX="165.0" layoutY="146.0" mnemonicParsing="false" selected="true" text="%yes" />
+                        <Label layoutX="43.0" layoutY="147.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
                         <Button layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />
 							</children>
 						</AnchorPane>

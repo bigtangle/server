@@ -719,9 +719,9 @@ public class OrderController extends ExchangeController {
 
     public void search(ActionEvent event) {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("orderid", orderid4searchTextField.getText());
+        // requestParam.put("orderid", orderid4searchTextField.getText());
         requestParam.put("address", address4searchTextField.getText());
-        requestParam.put("market", market4searchTextField.getText());
+        // requestParam.put("market", market4searchTextField.getText());
 
         requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
         try {
