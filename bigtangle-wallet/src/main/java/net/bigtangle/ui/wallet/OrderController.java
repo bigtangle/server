@@ -643,7 +643,7 @@ public class OrderController extends ExchangeController {
             Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime,
                     fromtime);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(beneficiary, tokenid, price.getValue(), quantity, totime,
+            Main.bitcoin.wallet().makeAndConfirmBuyOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity, totime,
                     fromtime);
         }
 

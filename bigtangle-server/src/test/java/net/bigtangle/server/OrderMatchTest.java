@@ -482,7 +482,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
      //   addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000l, 100l, null));
-        addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000l, 100l, System.currentTimeMillis() - 10000,null));
+        addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(null, genesisKey, testTokenId, 1000l, 100l, System.currentTimeMillis() - 10000,null));
      //   addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000l, 100l, System.currentTimeMillis() + 10000));
         
         // Cancel sell

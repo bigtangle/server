@@ -115,6 +115,7 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.bigtangle.wallet.Wallet.BalanceType;
+import net.bigtangle.wallet.Wallet.MissingSigsMode;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
@@ -2631,6 +2632,58 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             lock.unlock();
         }
     }
+    
+    /**
+     * <p>
+     * Given a transaction, attempts to sign it's
+     * inputs. This method expects transaction to have all necessary inputs
+     * connected or they will be ignored.
+     * </p>
+     * <p>
+     * Actual signing is done by pluggable {@link #signers} and it's not
+     * guaranteed that transaction will be complete in the end.
+     * </p>
+     */
+    public void signTransaction(Transaction tx, KeyParameter aesKey) {
+        lock.lock();
+        try {
+            List<TransactionInput> inputs = tx.getInputs();
+            List<TransactionOutput> outputs = tx.getOutputs();
+            checkState(inputs.size() > 0);
+            checkState(outputs.size() > 0);
+
+            KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, aesKey);
+
+            int numInputs = tx.getInputs().size();
+            for (int i = 0; i < numInputs; i++) {
+                TransactionInput txIn = tx.getInput(i);
+                if (txIn.getConnectedOutput() == null) {
+                    // Missing connected output, assuming already signed.
+                    continue;
+                }
+
+                Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
+                RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
+                // checkNotNull(redeemData, "Transaction exists in wallet that
+                // we cannot redeem: %s",
+                // txIn.getOutpoint().getHash());
+                if (redeemData != null)
+                    txIn.setScriptSig(
+                            scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+            }
+
+            TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
+            for (TransactionSigner signer : signers) {
+                if (!signer.signInputs(proposal, maybeDecryptingKeyBag))
+                    log.info("{} returned false for the tx", signer.getClass().getName());
+            }
+
+            // resolve missing sigs if any
+            new MissingSigResolutionSigner(MissingSigsMode.USE_OP_ZERO).signInputs(proposal, maybeDecryptingKeyBag);
+        } finally {
+            lock.unlock();
+        }
+    }
 
     /**
      * Reduce the value of the first output of a transaction to pay the given
@@ -3683,7 +3736,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return listUTXO;
     }
 
-    public Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             Long validToTime, Long validFromTime) throws Exception {
 
         Transaction tx = new Transaction(params);
@@ -3704,9 +3757,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
+//        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
+//        Script inputScript = ScriptBuilder.createInputScript(sig);
+//        signTransaction()
+//        input.setScriptSig(inputScript);
+        
+        signTransaction(tx, aesKey);
 
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();

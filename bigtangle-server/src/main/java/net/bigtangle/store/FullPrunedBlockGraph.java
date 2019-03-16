@@ -1097,7 +1097,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Add the old leftover orders from the db to get all open orders
         Map<Sha256Hash, OrderRecord> oldOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-        oldOrders.putAll(remainingOrders);
+        oldOrders.putAll(remainingOrders); // TODO blockStore.getOrderMatchingIssuedOrders(prevRewardHash)
         remainingOrders.putAll(newOrders);
         
         // From all orders and ops, begin order matching algorithm:
@@ -1120,6 +1120,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // If the order is not valid yet, it may not be added yet to the order books for matching!
             if (!o.isValidYet(block.getTimeSeconds()))
             	continue;
+            // TODO let orders not valid yet enter with the new orders
 
             OrderBook orderBook = orderBooks.get(tokenId);
             if (orderBook == null) {
@@ -1131,6 +1132,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             orderBook.enter(orderId, side, price, size);
             orderId++;
         }
+        
+        // TODO let orders not valid yet enter here
         
         // Match new orders
         for (OrderRecord o : newOrders.values()) {
@@ -1146,6 +1149,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // If the order is not valid yet, it may not be added yet to the order books for matching!
             if (!o.isValidYet(block.getTimeSeconds()))
             	continue;
+            // TODO let orders not valid yet enter with the new orders
 
             OrderBook orderBook = orderBooks.get(tokenId);
             if (orderBook == null) {
