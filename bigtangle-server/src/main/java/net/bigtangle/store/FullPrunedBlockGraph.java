@@ -1122,7 +1122,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         remainingOrders.putAll(newOrders);
         
         // From all orders and ops, begin order matching algorithm by filling order books
-        long orderId = 0; 
+        int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
         

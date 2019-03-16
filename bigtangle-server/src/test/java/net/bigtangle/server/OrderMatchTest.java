@@ -726,6 +726,56 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
 
+    @Test
+    public void testMultiMatching3() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 456, 20, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 789, 3, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 987, 10, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 654, 8, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 321, 5, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 159, 2, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 951, 25, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify token amount invariance (adding the mining reward)
+        origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 753, 12, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 357, 23, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 456, 45, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
     // public void payToken(ECKey outKey) throws Exception {
     // HashMap<String, String> requestParam = new HashMap<String, String>();
     // byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
