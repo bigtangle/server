@@ -371,8 +371,11 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
         // Generate blocks until passing first reward interval
         Block rollingBlock = predecessor;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
+        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedRewardBlockHash());
+        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_HEIGHT_INTERVAL 
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; // TODO change other tests to this too...
+        for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
             addedBlocks.add(rollingBlock);
@@ -389,14 +392,24 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
+        assertCurrentTokenAmountEquals(origTokenAmounts, false);
+    }
+
+    protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts, boolean skipBig) throws BlockStoreException {
         // Asserts that the current token amounts are equal to the given token
         // amounts
         HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
         for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
+            if (skipBig && origTokenAmount.getKey().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
+                continue;
+            
             assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
             assertEquals(origTokenAmount.getValue(), currTokenAmounts.get(origTokenAmount.getKey()));
         }
         for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
+            if (skipBig && currTokenAmount.getKey().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
+                continue;
+            
             assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
             assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
         }

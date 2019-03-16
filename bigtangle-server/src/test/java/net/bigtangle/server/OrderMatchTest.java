@@ -1,8 +1,13 @@
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,9 +15,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutput;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -377,7 +395,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        // TODO check result
         
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
@@ -464,7 +481,136 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testValidFromTime() throws Exception {
+        final int waitTime = 5000;
+        
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Open sell order for test tokens with timeout
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        long sellAmount = (long) 100;
+        Block block = null;
+        Transaction tx = new Transaction(networkParameters);
+        OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+        tx.setData(info.toByteArray());
+        
+        // Burn tokens to sell
+        Coin amount = Coin.valueOf(sellAmount, testTokenId);
+        List<UTXO> outputs = getBalance(false, testKey).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+        
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+        
+        // Create block with order
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+
+        // Execute order matching
+        Block matcherBlock1 = makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify the order is still open
+        // NOTE: Can fail if the test takes longer than 5 seconds. In that case, increase the wait time variable
+        assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
+        assertFalse(store.getOrderSpent(block.getHash(), matcherBlock1.getHash()));
+        
+        // Wait until valid
+        Thread.sleep(waitTime);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify the order is now closed
+        assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
+        assertTrue(store.getOrderSpent(block.getHash(), matcherBlock1.getHash()));
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
     public void testValidToTime() throws Exception {
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Open sell order for test tokens with timeout
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        long sellAmount = (long) 100;
+        Block block = null;
+        Transaction tx = new Transaction(networkParameters);
+        OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+        tx.setData(info.toByteArray());
+        
+        // Burn tokens to sell
+        Coin amount = Coin.valueOf(sellAmount, testTokenId);
+        List<UTXO> outputs = getBalance(false, testKey).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
+                0);
+        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+        // amount, testKey));
+        tx.addOutput(
+                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+        TransactionInput input = tx.addInput(spendableOutput);
+        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
+        
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+        
+        // Create block with order
+        block = predecessor.createNextBlock();
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+        block.solve();
+        this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify there is no open order left
+        assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void testAllOrdersSpent() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = outKey;
@@ -477,29 +623,104 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Get current existing token amount
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
-        // Open sell orders for test tokens
-        Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
-        // Open buy order for test tokens
-     //   addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000l, 100l, null));
-        addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(null, genesisKey, testTokenId, 1000l, 100l, System.currentTimeMillis() - 10000,null));
-     //   addedBlocks.add(walletAppKit.wallet().makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000l, 100l, System.currentTimeMillis() + 10000));
+        // Open orders
+        Block b1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+        Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 999, 50, addedBlocks);
         
-        // Cancel sell
-        makeAndConfirmCancelOp(sell, testKey, addedBlocks);
-
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
+        makeAndConfirmOrderMatching(addedBlocks);
+        makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify all tokens changed possession
-        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
-        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+        // Cancel orders
+        makeAndConfirmCancelOp(b1, testKey, addedBlocks);
+        makeAndConfirmCancelOp(b2, genesisKey, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify token amount invariance (adding the mining reward)
+        origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+        assertCurrentTokenAmountEquals(origTokenAmounts, true);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void testMultiMatching1() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 225, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 75, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 450000l);
+        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 450l);
 
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
                         + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void testMultiMatching2() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = outKey;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 400000l);
+        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 400l);
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
