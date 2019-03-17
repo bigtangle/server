@@ -417,11 +417,11 @@ public class OrderController extends ExchangeController {
         }
         boolean ifMineOrder = mineCB.isSelected();
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         List<String> address = new ArrayList<String>();
         if (ifMineOrder) {
             for (ECKey ecKey : keys) {
@@ -546,7 +546,7 @@ public class OrderController extends ExchangeController {
 
     public void cancelOrderDo() throws Exception {
         String ContextRoot = Main.getContextRoot();
-        Main.bitcoin.wallet().setServerURL(ContextRoot);
+        Main.walletAppKit.wallet().setServerURL(ContextRoot);
         Map<String, Object> rowData = orderTable.getSelectionModel().getSelectedItem();
         if (rowData == null || rowData.isEmpty()) {
             GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
@@ -556,15 +556,15 @@ public class OrderController extends ExchangeController {
         ECKey legitimatingKey = null;
 
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         for (ECKey ecKey : keys) {
             if (rowData.get("address").equals(ecKey.toAddress(Main.params).toString())) {
                 legitimatingKey = ecKey;
-                Main.bitcoin.wallet().makeAndConfirmCancelOp(hash, legitimatingKey);
+                Main.walletAppKit.wallet().makeAndConfirmCancelOp(hash, legitimatingKey);
                 break;
             }
         }
@@ -623,14 +623,14 @@ public class OrderController extends ExchangeController {
         }
 
         String ContextRoot = Main.getContextRoot();
-        Main.bitcoin.wallet().setServerURL(ContextRoot);
+        Main.walletAppKit.wallet().setServerURL(ContextRoot);
 
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         ECKey beneficiary = null;
         for (ECKey ecKey : keys) {
             if (addressComboBox1.getValue().equals(ecKey.toAddress(Main.params).toString())) {
@@ -640,10 +640,10 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.bitcoin.wallet().makeAndConfirmSellOrder(beneficiary, tokenid, price.getValue(), quantity, totime,
+            Main.walletAppKit.wallet().makeAndConfirmSellOrder(aesKey,beneficiary, tokenid, price.getValue(), quantity, totime,
                     fromtime);
         } else {
-            Main.bitcoin.wallet().makeAndConfirmBuyOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity, totime,
+            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity, totime,
                     fromtime);
         }
 

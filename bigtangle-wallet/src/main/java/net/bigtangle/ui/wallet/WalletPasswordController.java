@@ -74,13 +74,13 @@ public class WalletPasswordController {
             return;
         }
 
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
             protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
-                if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
+                if (Main.walletAppKit.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
                 } else {
                     log.warn("User entered incorrect password");
@@ -116,11 +116,11 @@ public class WalletPasswordController {
     // Writes the given time to the wallet as a tag so we can find it again in this class.
     public static void setTargetTime(Duration targetTime) {
         ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-        Main.bitcoin.wallet().setTag(TAG, bytes);
+        Main.walletAppKit.wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
     public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+        return Duration.ofMillis(Longs.fromByteArray(Main.walletAppKit.wallet().getTag(TAG).toByteArray()));
     }
 }

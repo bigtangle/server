@@ -33,7 +33,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -97,6 +96,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
+import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
@@ -115,7 +115,6 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.bigtangle.wallet.Wallet.BalanceType;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
 import net.bigtangle.wallet.WalletTransaction.Pool;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
@@ -2632,12 +2631,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             lock.unlock();
         }
     }
-    
+
     /**
      * <p>
-     * Given a transaction, attempts to sign it's
-     * inputs. This method expects transaction to have all necessary inputs
-     * connected or they will be ignored.
+     * Given a transaction, attempts to sign it's inputs. This method expects
+     * transaction to have all necessary inputs connected or they will be
+     * ignored.
      * </p>
      * <p>
      * Actual signing is done by pluggable {@link #signers} and it's not
@@ -2670,6 +2669,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
                 if (redeemData != null)
                     txIn.setScriptSig(
                             scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+                    
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
@@ -2679,7 +2679,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
             }
 
             // resolve missing sigs if any
-            new MissingSigResolutionSigner(MissingSigsMode.USE_OP_ZERO).signInputs(proposal, maybeDecryptingKeyBag);
+            new MissingSigResolutionSigner(MissingSigsMode.THROW).signInputs(proposal, maybeDecryptingKeyBag);
         } finally {
             lock.unlock();
         }
@@ -3675,39 +3675,33 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    public void payMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult, ECKey fromkey) throws Exception {
+    public void payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Integer> giveMoneyResult, ECKey fromkey)
+            throws Exception {
 
         if (giveMoneyResult.isEmpty()) {
             return;
         }
-        Coin coinbase = Coin.ZERO;
+        Coin summe = Coin.ZERO;
         Transaction multispent = new Transaction(params);
-
+        
         for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
-            Coin amount = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
+            Coin a = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
             Address address = Address.fromBase58(params, entry.getKey());
-            multispent.addOutput(amount, address);
-            coinbase = coinbase.add(amount);
+            multispent.addOutput(a, address);
+            summe = summe.add(a);
         }
+        Coin amount = summe;
+        List<UTXO> outputs = getTransactionAndGetBalances(fromkey).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
+                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
 
-        UTXO findOutput = null;
-        for (UTXO output : getTransactionAndGetBalances(fromkey)) {
-            if (Arrays.equals(coinbase.getTokenid(), output.getValue().getTokenid())) {
-                findOutput = output;
-            }
-        }
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput, 0);
-        Coin amount = spendableOutput.getValue().subtract(coinbase);
-
-        multispent.addOutput(amount, fromkey);
-        TransactionInput input = multispent.addInput(spendableOutput);
-        Sha256Hash sighash = multispent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                false);
-
-        TransactionSignature tsrecsig = new TransactionSignature(fromkey.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-        input.setScriptSig(inputScript);
+        // rest to itself
+        multispent.addOutput( spendableOutput.getValue().subtract(amount), fromkey);
+        multispent.addInput(spendableOutput);
+        signTransaction(multispent, aesKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -3736,8 +3730,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return listUTXO;
     }
 
-    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            Long validToTime, Long validFromTime) throws Exception {
+    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long buyPrice,
+            long buyAmount, Long validToTime, Long validFromTime) throws Exception {
 
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
@@ -3753,17 +3747,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
-        tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(spendableOutput);
-        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-//        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
-//        Script inputScript = ScriptBuilder.createInputScript(sig);
-//        signTransaction()
-//        input.setScriptSig(inputScript);
-        
+        tx.addOutput( spendableOutput.getValue().subtract(amount), beneficiary);
+         tx.addInput(spendableOutput);
         signTransaction(tx, aesKey);
-
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -3780,12 +3766,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    public Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            Long validToTime, Long validFromTime) throws Exception {
+    public Block makeAndConfirmSellOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long sellPrice,
+            long sellAmount, Long validToTime, Long validFromTime) throws Exception {
 
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL, beneficiary.toAddress(params).toBase58());
+                beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
+                beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
 
         // Burn tokens to sell
@@ -3797,13 +3784,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(spendableOutput);
-        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
-
+        tx.addInput(spendableOutput);
+        
+        signTransaction(tx, aesKey);
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -3815,6 +3798,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
     }
+
     public Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey) throws Exception {
         // Make an order op
         Transaction tx = new Transaction(params);
@@ -3838,4 +3822,41 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
     }
+
+    public void paySubtangle(KeyParameter aesKey, String outputStr, ECKey genesiskey, Address toAddressInSubtangle,
+            Coin coin, Address address) throws Exception {
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hexStr", outputStr);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getOutputWithKey.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
+        UTXO findOutput = outputsDetailsResponse.getOutputs();
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput, 0);
+        Transaction transaction = new Transaction(params);
+
+        transaction.addOutput(coin, address);
+
+        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160());
+
+        TransactionInput input = transaction.addInput(spendableOutput);
+        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                false);
+
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash, aesKey),
+                Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
+        input.setScriptSig(inputScript);
+
+        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(transaction);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+    }
+
 }

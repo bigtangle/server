@@ -4,7 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
-import static net.bigtangle.ui.wallet.Main.bitcoin;
+import static net.bigtangle.ui.wallet.Main.walletAppKit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,12 +97,12 @@ public class VOSController {
         try {
 
             KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
             List<String> list = new ArrayList<String>();
-            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
 
@@ -145,12 +145,12 @@ public class VOSController {
     private void initTableView(List<String> pubkeyList) {
         try {
             KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
             List<String> pubKeyList = new ArrayList<String>();
-            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
              Type blocktype = Block.Type.BLOCKTYPE_VOS;
@@ -203,17 +203,17 @@ public class VOSController {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_VOS);
             KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
 
             ECKey pubKeyTo = null;
-            if (bitcoin.wallet().isEncrypted()) {
+            if (walletAppKit.wallet().isEncrypted()) {
                 pubKeyTo = issuedKeys.get(0);
             } else {
-                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
             }
 
             Transaction coinbase = new Transaction(Main.params);

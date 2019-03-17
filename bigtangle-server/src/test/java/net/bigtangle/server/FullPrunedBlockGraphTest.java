@@ -99,8 +99,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectTokenUTXOs() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
+      ;
+        byte[] pubKey =  walletKeys.get(0).getPubKey();
 
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
@@ -114,11 +114,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             tokenInfo.setTokens(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase,  walletKeys.get(0), null, null, null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -140,11 +140,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             tokenInfo.setTokens(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase,  walletKeys.get(0), null, null, null);
 
             // Should exist now
             store.getTokenConfirmed(block1.getHash().toString()); // Fine as
@@ -169,7 +169,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Give it the legitimation of an order opening tx by finally signing
         // the hash
-        ECKey.ECDSASignature party1Signature = outKey.sign(tx.getHash(), null);
+        ECKey.ECDSASignature party1Signature = walletKeys.get(8).sign(tx.getHash(), null);
         byte[] buf1 = party1Signature.encodeToDER();
         tx.setDataSignature(buf1);
 
@@ -306,7 +306,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         tokenInfo.setTokens(tokens);
         tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
 
         // This (saveBlock) calls milestoneUpdate currently
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
@@ -1387,7 +1387,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = outKey;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -1407,7 +1408,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks);
 
         // Generate spending block
-        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, outKey2, testTokenId, 50, addedBlocks,
+        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, walletKeys.get(0), testTokenId, 50, addedBlocks,
                 addedBlocks.get(addedBlocks.size() - 2));
 
         // Unconfirm order matching
@@ -1427,7 +1428,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsOrderMatchingDependentReclaim() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = outKey;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -1469,7 +1471,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsOrderReclaimDependent() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = outKey;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token

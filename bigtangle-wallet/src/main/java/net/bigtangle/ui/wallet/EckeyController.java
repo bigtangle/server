@@ -4,7 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
-import static net.bigtangle.ui.wallet.Main.bitcoin;
+import static net.bigtangle.ui.wallet.Main.walletAppKit;
 import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
@@ -78,7 +78,7 @@ public class EckeyController {
             return;
         }
 
-        if (bitcoin.wallet().isEncrypted()) {
+        if (walletAppKit.wallet().isEncrypted()) {
             test("addKey");
         } else {
             addKey("");
@@ -91,11 +91,11 @@ public class EckeyController {
         ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
                 Utils.HEX.decode(newPubkeyTextField.getText()));
         if ("".equals(password)) {
-            bitcoin.wallet().importKey(newKey);
+            walletAppKit.wallet().importKey(newKey);
         } else {
-            bitcoin.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
+            walletAppKit.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
         }
-        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         try {
             initEcKeyList();
         } catch (Exception e) {
@@ -104,7 +104,7 @@ public class EckeyController {
     }
 
     public void newKey2wallet(ActionEvent event) {
-        if (bitcoin.wallet().isEncrypted()) {
+        if (walletAppKit.wallet().isEncrypted()) {
             test("newKey");
         } else {
             newKey("");
@@ -115,11 +115,11 @@ public class EckeyController {
     public void newKey(String password) {
         ECKey newKey = new ECKey();
         if ("".equals(password)) {
-            bitcoin.wallet().importKey(newKey);
+            walletAppKit.wallet().importKey(newKey);
         } else {
-            bitcoin.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
+            walletAppKit.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
         }
-        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         try {
             initEcKeyList();
         } catch (Exception e) {
@@ -132,11 +132,11 @@ public class EckeyController {
 
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {
                 issuedKeyData.add(new EckeyModel(ecKey.getPublicKeyAsHex(), ecKey.getPrivateKeyAsHex(),
@@ -184,7 +184,7 @@ public class EckeyController {
         });
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(usernamePassword -> {
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             try {
                 if (Main.password.trim().equals(usernamePassword.trim())) {
 
@@ -223,7 +223,7 @@ public class EckeyController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("ex_c_m1"));
             return;
         }
-        if (bitcoin.wallet().isEncrypted()) {
+        if (walletAppKit.wallet().isEncrypted()) {
             test("showKey");
         } else {
             showKey();
@@ -259,7 +259,7 @@ public class EckeyController {
         String filename = file.getName();
 
         Main.keyFilePrefix = filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
-        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         GuiUtils.informationalAlert("", Main.getText("e_c"), "");
         Main.password = "";
         try {

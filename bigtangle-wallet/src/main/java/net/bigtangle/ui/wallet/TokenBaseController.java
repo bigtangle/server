@@ -117,7 +117,7 @@ public class TokenBaseController {
     @Deprecated
     public void initSerialTableView() throws Exception {
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
@@ -126,7 +126,7 @@ public class TokenBaseController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidTF.getText());
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
@@ -221,7 +221,7 @@ public class TokenBaseController {
     @SuppressWarnings({ "unchecked" })
     public void initMultisignTableView() throws Exception {
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
@@ -230,7 +230,7 @@ public class TokenBaseController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidTF.getText());
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);

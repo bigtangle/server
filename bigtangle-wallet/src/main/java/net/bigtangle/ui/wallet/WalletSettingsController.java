@@ -69,7 +69,7 @@ public class WalletSettingsController {
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = getKeyChainSeed();// Main.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = getKeyChainSeed();// Main.walletAppKit.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
@@ -80,7 +80,7 @@ public class WalletSettingsController {
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(Main.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(checkNotNull(Main.walletAppKit.wallet().getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -168,21 +168,21 @@ public class WalletSettingsController {
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "",
                 birthday);
         // Shut down bitcoinj and restart it with the new seed.
-        Main.bitcoin.addListener(new Service.Listener() {
+        Main.walletAppKit.addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
                 Main.instance.setupWalletKit(seed);
-                Main.bitcoin.startAsync();
+                Main.walletAppKit.startAsync();
             }
         }, Platform::runLater);
-        Main.bitcoin.stopAsync();
+        Main.walletAppKit.stopAsync();
     }
 
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
             Main.instance.overlayUI("wallet_set_password.fxml");
         } else {
-            Main.bitcoin.wallet().decrypt(aesKey);
+            Main.walletAppKit.wallet().decrypt(aesKey);
             informationalAlert(Main.getText("w_s_c_m2"), Main.getText("w_s_c_d2"));
             passwordButton.setText("Set password");
             aesKey = null;

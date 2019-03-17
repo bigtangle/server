@@ -49,7 +49,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.google.common.base.Strings;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -62,11 +61,8 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.exception.ProtocolException;
-import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
@@ -80,21 +76,18 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.WatchedInfo;
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -110,7 +103,7 @@ public class Main extends Application {
     public static final String version = "0.3.3";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
-    public static WalletAppKit bitcoin;
+    public static WalletAppKit walletAppKit;
     public static Main instance;
 
     private StackPane uiStack;
@@ -200,16 +193,16 @@ public class Main extends Application {
         ECKey pubKeyTo = null;
 
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
 
-        if (Main.bitcoin.wallet().isEncrypted()) {
+        if (Main.walletAppKit.wallet().isEncrypted()) {
             pubKeyTo = issuedKeys.get(0);
         } else {
-            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
         }
 
         Transaction coinbase = new Transaction(Main.params);
@@ -329,7 +322,7 @@ public class Main extends Application {
     }
 
     public static void initAeskey(KeyParameter aesKey) {
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
@@ -365,7 +358,7 @@ public class Main extends Application {
         }
         ResourceBundle resourceBundle = ResourceBundle.getBundle(resourceFile, locale);
         loader.setResources(resourceBundle);
-        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
 
         // set local kafka to send
         if (!Locale.CHINESE.equals(locale)) {
@@ -442,17 +435,17 @@ public class Main extends Application {
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
 
         ECKey pubKeyTo = null;
-        if (bitcoin.wallet().isEncrypted()) {
+        if (walletAppKit.wallet().isEncrypted()) {
             pubKeyTo = issuedKeys.get(0);
         } else {
-            pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+            pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
         }
 
         Transaction coinbase = new Transaction(Main.params);
@@ -580,7 +573,7 @@ public class Main extends Application {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
 
         if (seed != null)
-            bitcoin.restoreWalletFromSeed(seed);
+            walletAppKit.restoreWalletFromSeed(seed);
     }
 
     private Node stopClickPane = new Pane();
@@ -938,17 +931,17 @@ public class Main extends Application {
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
             KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-            List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
 
             ECKey pubKeyTo = null;
-            if (bitcoin.wallet().isEncrypted()) {
+            if (walletAppKit.wallet().isEncrypted()) {
                 pubKeyTo = issuedKeys.get(0);
             } else {
-                pubKeyTo = Main.bitcoin.wallet().currentReceiveKey();
+                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
             }
 
             if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)

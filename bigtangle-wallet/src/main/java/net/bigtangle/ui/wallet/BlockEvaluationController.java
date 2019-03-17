@@ -291,11 +291,11 @@ public class BlockEvaluationController {
         if (address == null || address.equals("")) {
             KeyParameter aesKey = null;
             // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
             }
@@ -363,11 +363,11 @@ public class BlockEvaluationController {
         if (address == null || address.equals("")) {
             KeyParameter aesKey = null;
             // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-            List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
             }

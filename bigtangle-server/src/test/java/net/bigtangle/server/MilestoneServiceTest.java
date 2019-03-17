@@ -90,7 +90,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
@@ -400,7 +400,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
@@ -621,7 +621,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
@@ -1018,7 +1018,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, outKey));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);

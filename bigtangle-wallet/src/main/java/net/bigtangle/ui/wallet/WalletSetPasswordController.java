@@ -63,7 +63,7 @@ public class WalletSetPasswordController {
 
     @FXML
     public void initialize() {
-        if (Main.bitcoin.wallet().isEncrypted()) {
+        if (Main.walletAppKit.wallet().isEncrypted()) {
             oldPassHBox.setVisible(true);
         } else {
             oldPassHBox.setVisible(false);
@@ -129,10 +129,10 @@ public class WalletSetPasswordController {
                 // The actual encryption part doesn't take very long as most
                 // private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                if (Main.bitcoin.wallet().isEncrypted()) {
-                    Main.bitcoin.wallet().decrypt(oldPassword.getText());
+                if (Main.walletAppKit.wallet().isEncrypted()) {
+                    Main.walletAppKit.wallet().decrypt(oldPassword.getText());
                 }
-                Main.bitcoin.wallet().encrypt(scrypt, aesKey);
+                Main.walletAppKit.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert(Main.getText("w_s_p_c_m2"), Main.getText("w_s_p_c_d2"));
                 overlayUI.done();

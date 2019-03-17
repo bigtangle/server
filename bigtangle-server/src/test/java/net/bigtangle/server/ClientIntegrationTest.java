@@ -172,7 +172,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             ECKey outKey = new ECKey();
             giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000);
         }
-       walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, genesiskey);
+       walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
 
         for (UTXO utxo : getBalance(false, genesiskey)) {
             log.info("UTXO : " + utxo); 

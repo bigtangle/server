@@ -18,7 +18,7 @@
 
 package net.bigtangle.ui.wallet;
 
-import static net.bigtangle.ui.wallet.Main.bitcoin;
+import static net.bigtangle.ui.wallet.Main.walletAppKit;
 import static net.bigtangle.ui.wallet.Main.params;
 
 import java.io.File;
@@ -131,7 +131,7 @@ public class MainController {
     public void initialize() {
         try {
             if (checkVersion()) {
-                if (bitcoin.wallet().isEncrypted()) {
+                if (walletAppKit.wallet().isEncrypted()) {
                     searchPane.setVisible(false);
                     serverPane.setVisible(false);
                     buttonHBox.setVisible(false);
@@ -185,15 +185,15 @@ public class MainController {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = Main.getContextRoot();
-        bitcoin = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
         aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
         List<String> keyStrHex000 = new ArrayList<String>();
         if (addressString == null || "".equals(addressString.trim())) {
-            for (ECKey ecKey : bitcoin.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
                 keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
             }
         } else {
@@ -297,7 +297,7 @@ public class MainController {
             serverPane.setVisible(true);
             buttonHBox.setVisible(true);
             passwordHBox.setVisible(false);
-            // bitcoin.wallet().isEncrypted()
+            // walletAppKit.wallet().isEncrypted()
             // if (!passwordHBox.isVisible()) {
             // utxoTable.setLayoutY(utxoTable.getLayoutY() -
             // passwordHBox.getHeight());

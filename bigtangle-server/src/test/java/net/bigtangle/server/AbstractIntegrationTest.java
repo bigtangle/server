@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -47,6 +48,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
@@ -60,8 +62,6 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
@@ -123,8 +123,8 @@ public abstract class AbstractIntegrationTest {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 
-    protected static ECKey outKey = new ECKey();
-    protected static ECKey outKey2 = new ECKey();
+  //  protected static ECKey outKey = new ECKey();
+  //  protected static ECKey outKey2 = new ECKey();
     protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
@@ -209,6 +209,8 @@ public abstract class AbstractIntegrationTest {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
     }
+    
+    
 
     protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
@@ -247,10 +249,17 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
+        
+        Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null, beneficiary, tokenId, sellPrice, sellAmount,null,null);
+        addedBlocks.add(block);
+         return block;
+                 
+    }
+    protected Block makeAndConfirmSellOrder1(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            List<Block> addedBlocks) throws Exception {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
     }
-
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
         Block block = null;
@@ -290,10 +299,19 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
+        
+        Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null, beneficiary, tokenId, buyPrice, buyAmount,null,null);
+        addedBlocks.add(block);
+        return block;
+
+    }
+
+    protected Block makeAndConfirmBuyOrder1(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            List<Block> addedBlocks) throws Exception {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
     }
-
+    
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
         Block block = null;
@@ -543,6 +561,8 @@ public abstract class AbstractIntegrationTest {
         if (f.exists())
             f.delete();
         walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
+        walletAppKit.wallet().importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+        //add ge
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
@@ -645,7 +665,7 @@ public abstract class AbstractIntegrationTest {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333);
-        walletAppKit.wallet().payMoneyToECKeyList(giveMoneyResult, fromkey);
+        walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, fromkey);
     }
 
     protected void testCreateToken() throws JsonProcessingException, Exception {

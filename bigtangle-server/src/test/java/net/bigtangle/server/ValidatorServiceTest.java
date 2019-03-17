@@ -721,7 +721,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 try {
                     // Build transaction
                     Transaction tx = new Transaction(networkParameters);
-                    tx.addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+                    tx.addOutput(Coin.SATOSHI.times(2),  walletKeys.get(8).toAddress(networkParameters));
 
                     // The input does not really need to be a valid signature,
                     // as long
@@ -1823,7 +1823,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
-                tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(Utils.HEX.encode(outKey2.getPubKey()));
+                tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(Utils.HEX.encode( walletKeys.get(8).getPubKey()));
             }
 
             @Override
@@ -2034,11 +2034,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         multiSignByRequest6.getMultiSignBies().get(0).setPublickey(null);
         multiSignByRequest7.getMultiSignBies().get(0).setPublickey("");
         multiSignByRequest8.getMultiSignBies().get(0).setPublickey("test");
-        multiSignByRequest9.getMultiSignBies().get(0).setPublickey(Utils.HEX.encode(outKey2.getPubKey()));
+     //   multiSignByRequest9.getMultiSignBies().get(0).setPublickey(Utils.HEX.encode(outKey2.getPubKey()));
         multiSignByRequest10.getMultiSignBies().get(0).setSignature(null);
         multiSignByRequest11.getMultiSignBies().get(0).setSignature("");
         multiSignByRequest12.getMultiSignBies().get(0).setSignature("test");
-        multiSignByRequest13.getMultiSignBies().get(0).setSignature(Utils.HEX.encode(outKey2.getPubKey()));
+     //   multiSignByRequest13.getMultiSignBies().get(0).setSignature(Utils.HEX.encode(outKey2.getPubKey()));
         multiSignByRequest14.getMultiSignBies().get(0).setTokenid(null);
         multiSignByRequest15.getMultiSignBies().get(0).setTokenid("");
         multiSignByRequest16.getMultiSignBies().get(0).setTokenid("test");
@@ -2347,7 +2347,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
 
         // Generate a subsequent issuance that does not work
-        byte[] pubKey2 = outKey2.getPubKey();
+        byte[] pubKey2 =  walletKeys.get(8).getPubKey();
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey2);
         long amount2 = coinbase2.getValue();
@@ -2355,7 +2355,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 "Test", 1, 1, amount2, false, true);
         tokenInfo2.setTokens(tokens2);
         tokenInfo2.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey2.getPublicKeyAsHex()));
+                .add(new MultiSignAddress(tokens2.getTokenid(), "",  walletKeys.get(8).getPublicKeyAsHex()));
         try {
             Wallet r = walletAppKit.wallet();
             Block block = r.makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());

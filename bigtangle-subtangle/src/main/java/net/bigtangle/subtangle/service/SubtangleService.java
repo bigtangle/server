@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,13 +35,14 @@ import net.bigtangle.server.service.WalletService;
 import net.bigtangle.subtangle.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 @Service
 public class SubtangleService {
 
     @SuppressWarnings("deprecation")
     public void giveMoneyToTargetAccount() throws Exception {
-        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()), 
+        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
                 Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
         List<ECKey> keys = new ArrayList<>();
         keys.add(signKey);
@@ -67,10 +69,10 @@ public class SubtangleService {
 
                 Address address = new Address(this.networkParameters, toAddressInSubtangle);
                 this.giveMoney(signKey, address, coinbase);
-                
+
                 this.giveRemoteMoney(signKey, coinbase, output);
             } catch (Exception e) {
-                //e.printStackTrace();
+                // e.printStackTrace();
             }
         }
     }
@@ -79,8 +81,8 @@ public class SubtangleService {
     private void giveRemoteMoney(ECKey signKey, Coin amount, UTXO output) throws Exception {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
-        
-        ECKey outKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()), 
+
+        ECKey outKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()),
                 Utils.HEX.decode(subtangleConfiguration.getPubKeyHex1()));
         transaction.addOutput(amount, outKey);
 
@@ -99,26 +101,22 @@ public class SubtangleService {
     }
 
     public void giveMoney(ECKey signKey, Address address, Coin amount) throws Exception {
-        UTXO findOutput = null;
-        for (UTXO output : getBalancesUTOXList(false, signKey, amount.getTokenid())) {
-            if (Arrays.equals(NetworkParameters.BIGTANGLE_TOKENID, output.getValue().getTokenid())) {
-                findOutput = output;
-            }
-        }
-        if (findOutput == null) {
+        Wallet wallet = new Wallet(networkParameters);
+        wallet.setServerURL(subtangleConfiguration.getParentContextRoot());
+
+        List<UTXO> utxolist = getBalancesUTOXList(false, signKey, amount.getTokenid()).stream()
+                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
+                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
+                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+
+        if (utxolist.isEmpty()) {
             return;
         }
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, utxolist.get(0), 0);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, address);
-
-        TransactionInput input = transaction.addInput(spendableOutput);
-        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                false);
-
-        TransactionSignature tsrecsig = new TransactionSignature(signKey.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-        input.setScriptSig(inputScript);
+        transaction.addOutput(spendableOutput.getValue().subtract(amount), signKey);
+        wallet.signTransaction(transaction, null);
 
         Block b = transactionService.askTransactionBlock();
         b.addTransaction(transaction);

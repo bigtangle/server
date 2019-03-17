@@ -133,12 +133,12 @@ public class ExchangeController {
 
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
 
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         List<String> addressList = new ArrayList<String>();
         for (ECKey ecKey : keys) {
             String address = ecKey.toAddress(Main.params).toString();
@@ -238,11 +238,11 @@ public class ExchangeController {
 
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             addresses.add(key.toAddress(Main.params).toString());
@@ -282,7 +282,7 @@ public class ExchangeController {
             return;
         }
         SendRequest request = SendRequest.forTx(mTransaction);
-        Main.bitcoin.wallet().signTransaction(request);
+        Main.walletAppKit.wallet().signTransaction(request);
 
         String ContextRoot = Main.getContextRoot();
         byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.getTip.name(),
@@ -467,7 +467,7 @@ public class ExchangeController {
             }
         }
         SendRequest request = SendRequest.forTx(transaction);
-        Main.bitcoin.wallet().signTransaction(request);
+        Main.walletAppKit.wallet().signTransaction(request);
 
         String ContextRoot = Main.getContextRoot();
 
@@ -528,12 +528,12 @@ public class ExchangeController {
         }
         this.mOrderid = stringValueOf(rowData.get("orderid"));
         String toAddress = stringValueOf(rowData.get("toAddress"));
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         KeyParameter aesKey = null;
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> list = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> list = Main.walletAppKit.wallet().walletKeys(aesKey);
         boolean flag = false;
         for (ECKey ecKey : list) {
             if (toAddress.equals(ecKey.toAddress(Main.params).toBase58())) {
@@ -543,7 +543,7 @@ public class ExchangeController {
         }
         try {
 
-            PayOrder payOrder = new PayOrder(Main.bitcoin.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
+            PayOrder payOrder = new PayOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.setAesKey(aesKey);
             payOrder.setSellFlag(flag);
             payOrder.sign();
@@ -557,11 +557,11 @@ public class ExchangeController {
     public boolean calculatedAddressHit(String address) throws Exception {
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> keys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
         for (ECKey key : keys) {
             String n = key.toAddress(Main.params).toString();
             if (n.equalsIgnoreCase(address)) {
@@ -603,7 +603,7 @@ public class ExchangeController {
         Address toAddress00 = new Address(Main.params, toAddress);
         KeyParameter aesKey = null;
         // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
@@ -611,7 +611,7 @@ public class ExchangeController {
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.bitcoin.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
@@ -630,10 +630,10 @@ public class ExchangeController {
             // addressResult.put((String) exchangemap.get("toTokenHex"),
             // fromAddress00);
 
-            List<TransactionOutput> candidates = Main.bitcoin.wallet().transforSpendCandidates(outputs);
-            Main.bitcoin.wallet().setServerURL(ContextRoot);
-            Main.bitcoin.wallet().completeTx(req, candidates, false, addressResult);
-            Main.bitcoin.wallet().signTransaction(req);
+            List<TransactionOutput> candidates = Main.walletAppKit.wallet().transforSpendCandidates(outputs);
+            Main.walletAppKit.wallet().setServerURL(ContextRoot);
+            Main.walletAppKit.wallet().completeTx(req, candidates, false, addressResult);
+            Main.walletAppKit.wallet().signTransaction(req);
 
             // walletAppKit.wallet().completeTx(req,
             // walletAppKit.wallet().transforSpendCandidates(ulist), false,

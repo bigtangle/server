@@ -19,7 +19,7 @@
 package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
-import static net.bigtangle.ui.wallet.Main.bitcoin;
+import static net.bigtangle.ui.wallet.Main.walletAppKit;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -444,7 +444,7 @@ public class SendMoneyController {
     public void initSignTable() throws Exception {
         KeyParameter aesKey = null;
         List<String> pubKeys = new ArrayList<String>();
-        for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+        for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
             pubKeys.add(ecKey.toAddress(Main.params).toString());
         }
         String ContextRoot = Main.getContextRoot();
@@ -615,16 +615,16 @@ public class SendMoneyController {
 
     public void paySubtangle() throws Exception {
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
-        List<ECKey> issuedKeys = Main.bitcoin.wallet().walletKeys(aesKey);
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
         ECKey genesiskey = null;
-        if (bitcoin.wallet().isEncrypted()) {
+        if (walletAppKit.wallet().isEncrypted()) {
             genesiskey = issuedKeys.get(0);
         } else {
-            genesiskey = Main.bitcoin.wallet().currentReceiveKey();
+            genesiskey = Main.walletAppKit.wallet().currentReceiveKey();
         }
         int index = tokeninfo1.getSelectionModel().getSelectedIndex();
         String outputStr = this.subtangleHashHexList.get(index);
@@ -632,39 +632,14 @@ public class SendMoneyController {
         requestParam.put("hexStr", outputStr);
         String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getOutputWithKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-
-        OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
-        UTXO findOutput = outputsDetailsResponse.getOutputs();
-
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Main.params, findOutput, 0);
-        Transaction transaction = new Transaction(Main.params);
-        Coin coinbase = Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText()));
-        // Address address = Address.fromBase58(Main.params,
-        // addressComboBox2.getValue());
         Address address = ECKey
                 .fromPublicOnly(Utils.HEX
                         .decode(subtangleComboBox.getValue().substring(0, subtangleComboBox.getValue().indexOf(":"))))
                 .toAddress(Main.params);
-        transaction.addOutput(coinbase, address);
 
-        transaction.setToAddressInSubtangle(Address.fromBase58(Main.params, addressComboBox2.getValue()).getHash160());
-
-        TransactionInput input = transaction.addInput(spendableOutput);
-        Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                false);
-
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash, aesKey),
-                Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
-        input.setScriptSig(inputScript);
-
-        byte[] data = OkHttp3Util.post(Main.getContextRoot() + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(transaction);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(Main.getContextRoot() + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        walletAppKit.wallet().paySubtangle(aesKey, outputStr, genesiskey,
+                Address.fromBase58(Main.params, addressComboBox2.getValue()),
+                Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText())), address);
     }
 
     public void send(ActionEvent event) {
@@ -691,7 +666,7 @@ public class SendMoneyController {
 
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
-            Wallet wallet = Main.bitcoin.wallet();
+            Wallet wallet = Main.walletAppKit.wallet();
             wallet.setServerURL(CONTEXT_ROOT);
 
             Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
@@ -746,7 +721,7 @@ public class SendMoneyController {
             }
             String CONTEXT_ROOT = Main.getContextRoot();
 
-            Main.bitcoin.wallet().setServerURL(CONTEXT_ROOT);
+            Main.walletAppKit.wallet().setServerURL(CONTEXT_ROOT);
 
             int signnum = signnumberTF1.getText() == null || signnumberTF1.getText().isEmpty() ? 1
                     : Integer.parseInt(signnumberTF1.getText().trim());
@@ -770,7 +745,7 @@ public class SendMoneyController {
             Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
 
             SendRequest request = SendRequest.forTx(multiSigTransaction);
-            Main.bitcoin.wallet().completeTx(request);
+            Main.walletAppKit.wallet().completeTx(request);
             rollingBlock.addTransaction(request.tx);
             rollingBlock.solve();
 
@@ -1072,7 +1047,7 @@ public class SendMoneyController {
             if (payMultiSignAddress.getSign() == 1) {
                 continue;
             }
-            for (ECKey ecKey : Main.bitcoin.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
                 if (ecKey.toAddress(Main.params).toString().equals(payMultiSignAddress.getPubKey())) {
                     currentECKey = ecKey;
                     break;
@@ -1119,7 +1094,7 @@ public class SendMoneyController {
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
 
         KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
         }
