@@ -1435,21 +1435,21 @@ public class ValidatorService {
 
         // Check that we have a correct price given in full BIGs
         if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (burnedCoins.getValue() % orderInfo.getTargetValue() != 0) {
+            if (burnedCoins.getValue() % orderInfo.getTargetValue() != 0 || burnedCoins.getValue() / orderInfo.getTargetValue() <= 0) {
                 if (throwExceptions)
                     throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();
             }
         } else {
-            if (orderInfo.getTargetValue() % burnedCoins.getValue() != 0) {
+            if (orderInfo.getTargetValue() % burnedCoins.getValue() != 0 || orderInfo.getTargetValue() / burnedCoins.getValue() <= 0) {
                 if (throwExceptions)
                     throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();
             }
         }
-
-        // TODO throw on overflow!
-        if (orderInfo.getValidToTime() > orderInfo.getValidFromTime() + NetworkParameters.ORDER_TIMEOUT_MAX) {
+        
+        // TODO put overflow checks everywhere!
+        if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(), NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
                 throw new InvalidOrderException("The given order's timeout is too long.");
             return SolidityState.getFailState();
