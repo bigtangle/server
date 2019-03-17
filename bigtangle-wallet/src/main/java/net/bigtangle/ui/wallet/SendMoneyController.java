@@ -437,7 +437,7 @@ public class SendMoneyController {
             }
         });
         initSignTable();
-        initHistoryTable();
+     //   initHistoryTable();
     }
 
     @SuppressWarnings({ "unchecked" })

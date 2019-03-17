@@ -449,6 +449,7 @@ public class OrderController extends ExchangeController {
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
+            map.put("orderId", orderRecord.getInitialBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
             map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
