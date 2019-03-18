@@ -778,6 +778,12 @@ public class TokenController extends TokenBaseController {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
+            String amount = stockAmount1.getText();
+            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid1.getValue())
+                    && !amount.matches("^\\+?[1-9][0-9]*$")) {
+                GuiUtils.informationalAlert("", Main.getText("NoNumber"));
+                return;
+            }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
                     && Long.parseLong(signnumberTF.getText().trim()) == 1) {
@@ -799,7 +805,12 @@ public class TokenController extends TokenBaseController {
                         mykey = key;
                     }
                 }
-                saveToken(tokenInfo, basecoin, mykey);
+                Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
+                GuiUtils.informationalAlert("", Main.getText("s_c_m"));
+                Main.instance.controller.initTableView();
+                checkGuiThread();
+                initTableView();
+                overlayUI.done();
                 return;
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
@@ -809,12 +820,7 @@ public class TokenController extends TokenBaseController {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
-            String amount = stockAmount1.getText();
-            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid1.getValue())
-                    && !amount.matches("^\\+?[1-9][0-9]*$")) {
-                GuiUtils.informationalAlert("", Main.getText("NoNumber"));
-                return;
-            }
+
             byte[] pubKey = outKey.getPubKey();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
