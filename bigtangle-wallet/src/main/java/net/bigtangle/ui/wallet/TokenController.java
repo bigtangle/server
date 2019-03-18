@@ -779,8 +779,8 @@ public class TokenController extends TokenBaseController {
                 return;
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
-                    && signnumberTF.getText().matches("[1-9]\\d*") && Long.parseLong(signnumberTF.getText().trim()) == 1
-                    && signAddrChoiceBox.getItems().size() == 1) {
+                    && signnumberTF.getText().matches("[1-9]\\d*")
+                    && Long.parseLong(signnumberTF.getText().trim()) == 1) {
 
                 TokenInfo tokenInfo = new TokenInfo();
                 Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(),
