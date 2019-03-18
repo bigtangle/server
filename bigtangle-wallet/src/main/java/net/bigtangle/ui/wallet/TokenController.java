@@ -194,6 +194,24 @@ public class TokenController extends TokenBaseController {
                     break;
                 }
             });
+            KeyParameter aesKey = null;
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
+            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+            tokenid1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
+
+                if (newv != null && !newv.isEmpty() && !signAddrChoiceBox.getItems().contains(newv)) {
+                    signAddrChoiceBox.getItems().add(newv);
+                    signAddrChoiceBox.getSelectionModel().selectLast();
+                }
+                if (oldv != null && !oldv.isEmpty() && signAddrChoiceBox.getItems().contains(oldv)) {
+                    signAddrChoiceBox.getItems().remove(oldv);
+                    signAddrChoiceBox.getSelectionModel().selectLast();
+                }
+
+            });
             initTableView();
             initMultisignTableView();
             Main.walletAppKit.wallet().setServerURL(Main.getContextRoot());
@@ -552,7 +570,7 @@ public class TokenController extends TokenBaseController {
             if (!"".equals(Main.password.trim())) {
                 aesKey = keyCrypter.deriveKey(Main.password);
             }
-            Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, aesKey);
+
             String amount = stockAmount.getText();
 
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid.getValue())
@@ -560,6 +578,7 @@ public class TokenController extends TokenBaseController {
                 GuiUtils.informationalAlert("", Main.getText("NoNumber"));
                 return;
             }
+            Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, aesKey);
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
@@ -760,6 +779,30 @@ public class TokenController extends TokenBaseController {
                 return;
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
+                    && signnumberTF.getText().matches("[1-9]\\d*") && Long.parseLong(signnumberTF.getText().trim()) == 1
+                    && signAddrChoiceBox.getItems().size() == 1) {
+
+                TokenInfo tokenInfo = new TokenInfo();
+                Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(),
+                        stockName1.getText().trim(), stockDescription1.getText().trim(), 1, 0,
+                        Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(), false,
+                        true);
+                tokens.setUrl(urlTF.getText().trim());
+                tokenInfo.setTokens(tokens);
+
+                tokenInfo.getMultiSignAddresses()
+                        .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                Coin basecoin = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()));
+                ECKey mykey = null;
+                for (ECKey key : issuedKeys) {
+                    if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
+                        mykey = key;
+                    }
+                }
+                saveToken(tokenInfo, basecoin, mykey);
+                return;
+            }
+            if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
                     && Long.parseLong(signnumberTF.getText().trim()) < signAddrChoiceBox.getItems().size() + 1) {
 
@@ -914,14 +957,6 @@ public class TokenController extends TokenBaseController {
                 (boolean) map.get("tokenstop"));
         tokens.setUrl(Main.getString(map.get("url")).trim());
         tokenInfo.setTokens(tokens);
-        ECKey outKey = null;
-        for (ECKey key : keys) {
-            if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
-                outKey = key;
-            }
-        }
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
