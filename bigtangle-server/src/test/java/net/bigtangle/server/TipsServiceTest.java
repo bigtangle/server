@@ -485,7 +485,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 break;
         }
         assertTrue(hit1);
-     //TODO   assertTrue(hit2);
+        assertTrue(hit2);
         
         // After confirming one of them into the milestone, only that one block is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
