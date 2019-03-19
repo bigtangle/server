@@ -123,18 +123,20 @@ public abstract class AbstractIntegrationTest {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
     }
 
-  //  protected static ECKey outKey = new ECKey();
-  //  protected static ECKey outKey2 = new ECKey();
+    protected static ECKey outKey = new ECKey();
+    protected static ECKey outKey2 = new ECKey();
     protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() throws Exception {
+    	Utils.unsetMockClock();
+    	
         store.resetStore();
         walletKeys();
     }
-
+    
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
         store.resetStore();

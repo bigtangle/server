@@ -709,7 +709,8 @@ public class Block extends Message {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
         if (time > currentTime + NetworkParameters.ALLOWED_TIME_DRIFT)
-            throw new TimeTravelerException(); // TODO this shouldn't throw because it does not make the block invalid forever.
+            throw new TimeTravelerException(); 
+        // TODO this shouldn't throw because it does not make the block invalid forever.
     }
 
     private void checkSigOps() throws VerificationException {

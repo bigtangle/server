@@ -372,6 +372,13 @@ public class Utils {
     }
 
     /**
+     * Unsets the mock clock to the current time.
+     */
+    public static void unsetMockClock() {
+        mockTime = null;
+    }
+
+    /**
      * Sets the mock clock to the current time.
      */
     public static void setMockClock() {
