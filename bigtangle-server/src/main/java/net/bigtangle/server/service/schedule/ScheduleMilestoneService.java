@@ -32,10 +32,7 @@ public class ScheduleMilestoneService {
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
                 milestoneService.update();
-                logger.debug(" Start updateReward: ");
-                //TODO check first
-                //TODO separate ordermatch
-                transactionService.createAndAddMiningRewardBlock();
+  
             } catch (Exception e) {
                 logger.warn("updateMilestoneService ", e);
             }
