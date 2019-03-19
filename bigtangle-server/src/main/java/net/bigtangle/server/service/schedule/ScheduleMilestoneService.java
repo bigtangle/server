@@ -37,13 +37,16 @@ public class ScheduleMilestoneService {
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
                 milestoneService.update();
-                test();
+                logger.debug(" Start updateReward: ");
+                //TODO check first
+                //TODO separate ordermatch
+                transactionService.createAndAddMiningRewardBlock();
             } catch (Exception e) {
                 logger.warn("updateMilestoneService ", e);
             }
         }
     }
-    @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
+   // @Scheduled(fixedRateString = "${service.milestoneschedule.rate:10000}")
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
