@@ -184,7 +184,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
 		signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
 		TokenInfo tokenInfo = new TokenInfo();
-		testCreateMultiSigToken(signKeys, tokenInfo);
+		testCreateMultiSigToken(signKeys, tokenInfo, "test");
 		ECKey toKey = walletKeys.get(1);
 
 		String tokenid = tokenInfo.getToken().getTokenid();
@@ -928,7 +928,12 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
 		signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
 		TokenInfo tokenInfo = new TokenInfo();
-		testCreateMultiSigToken(signKeys, tokenInfo);
+		testCreateMultiSigToken(signKeys, tokenInfo, "gold");
+		testCreateMultiSigToken(signKeys, tokenInfo, "BTC");
+		testCreateMultiSigToken(signKeys, tokenInfo, "ETH");
+		testCreateMultiSigToken(signKeys, tokenInfo, "CNY");
+		testCreateMultiSigToken(signKeys, tokenInfo, "USD");
+		testCreateMultiSigToken(signKeys, tokenInfo, "EUR");
 	}
 
  

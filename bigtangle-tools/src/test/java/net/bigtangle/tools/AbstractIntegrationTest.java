@@ -88,10 +88,10 @@ public abstract class AbstractIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-		System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		System.setProperty("https.proxyPort", "3128");
+		//System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		//System.setProperty("https.proxyPort", "3128");
 		walletKeys();
-		emptyBlocks(10);
+	//	emptyBlocks(10);
 	}
 
 	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
@@ -346,14 +346,14 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	// create a token with multi sign
-	protected void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo)
+	protected void testCreateMultiSigToken(List<ECKey> keys, TokenInfo tokenInfo, String tokename)
 			throws JsonProcessingException, Exception {
 		// First issuance cannot be multisign but instead needs the signature of
 		// the token id
 		// Hence we first create a normal token with multiple permissioned, then
 		// we can issue via multisign
 
-		String tokenid = createFirstMultisignToken(keys, tokenInfo);
+		String tokenid = createFirstMultisignToken(keys, tokenInfo,tokename);
 
 		int amount = 2000000;
 		Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -439,7 +439,7 @@ public abstract class AbstractIntegrationTest {
 		checkBalance(basecoin, key1);
 	}
 
-	private String createFirstMultisignToken(List<ECKey> keys, TokenInfo tokenInfo)
+	private String createFirstMultisignToken(List<ECKey> keys, TokenInfo tokenInfo, String tokename)
 			throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
 		String tokenid = keys.get(1).getPublicKeyAsHex();
 
@@ -457,8 +457,8 @@ public abstract class AbstractIntegrationTest {
 		long tokenindex_ = tokenIndexResponse.getTokenindex();
 		String prevblockhash = tokenIndexResponse.getBlockhash();
 
-		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-				"Multitest", 2, tokenindex_, amount, true, false);
+		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename,
+				tokename, 2, tokenindex_, amount, true, false);
 		tokenInfo.setToken(tokens);
 
 		ECKey key1 = keys.get(1);
