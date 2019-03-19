@@ -122,7 +122,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Token tokens = Token.buildSubtangleTokenInfo(false, "", Utils.HEX.encode(pubKey), "subtangle", "", "");
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 

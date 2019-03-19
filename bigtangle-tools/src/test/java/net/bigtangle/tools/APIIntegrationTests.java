@@ -187,7 +187,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		testCreateMultiSigToken(signKeys, tokenInfo);
 		ECKey toKey = walletKeys.get(1);
 
-		String tokenid = tokenInfo.getTokens().getTokenid();
+		String tokenid = tokenInfo.getToken().getTokenid();
 		Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
 		// pay to address toKey, remainder return to signKeys with multi signs
 		PayMultiSign payMultiSign = launchPayMultiSign(toKey, signKeys, tokenInfo, amount);
@@ -419,7 +419,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		TokenInfo tokenInfo = new TokenInfo();
 		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), -1, 0, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
 		block.solve();
@@ -447,7 +447,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, 0, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
 		block.solve();
@@ -483,7 +483,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		String prevblockhash = tokenIndexResponse.getBlockhash();
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
 		block.solve();
@@ -520,7 +520,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -561,7 +561,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -642,7 +642,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -721,7 +721,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
@@ -788,7 +788,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 			long amount = basecoin.getValue();
 			Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
 					UUID.randomUUID().toString(), 1, 0, amount, true, false);
-			tokenInfo.setTokens(tokens);
+			tokenInfo.setToken(tokens);
 
 			// add MultiSignAddress item
 			tokenInfo.getMultiSignAddresses()
@@ -843,7 +843,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		long tokenindex1 = 1;
 		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex1, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		ECKey key1 = keys.get(0);
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
@@ -867,7 +867,6 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		// save block
 		String resp000 = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
 		HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-		int duration = (Integer) result000.get("errorcode");
 		log.debug("resp : " + resp000);
 
 		List<ECKey> ecKeys = new ArrayList<ECKey>();
@@ -932,14 +931,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		testCreateMultiSigToken(signKeys, tokenInfo);
 	}
 
-	@Test
-	public void testECKey() {
-		ECKey outKey = new ECKey();
-		log.debug("pubkey= " + Utils.HEX.encode(outKey.getPubKey()));
-		// ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
-		log.debug("privkey= " + outKey.getPrivateKeyAsHex());
-	}
-
+ 
 	public void testRequestBlock(Block block) throws Exception {
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -996,7 +988,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
 				UUID.randomUUID().toString(), 3, tokenindex_, amount, true, false);
-		tokenInfo.setTokens(tokens);
+		tokenInfo.setToken(tokens);
 
 		ECKey key1 = keys.get(0);
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
@@ -1031,7 +1023,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		Transaction transaction = block0.getTransactions().get(0);
 
 		TokenInfo updateTokenInfo = TokenInfo.parse(transaction.getData());
-		updateTokenInfo.getTokens().setTokenname("UPDATE_TOKEN");
+		updateTokenInfo.getToken().setTokenname("UPDATE_TOKEN");
 		ECKey key4 = keys.get(3);
 		updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
 		requestParam = new HashMap<String, String>();

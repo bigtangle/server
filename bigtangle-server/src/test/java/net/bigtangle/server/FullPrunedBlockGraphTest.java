@@ -112,7 +112,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, false);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
 
@@ -138,7 +138,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, false, true);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
 
@@ -304,7 +304,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 false, true);
 
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
 
@@ -569,7 +569,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, false, true);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
@@ -756,7 +756,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 false, true);
 
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
@@ -1034,7 +1034,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, false, true);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
@@ -1337,7 +1337,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, false);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
@@ -1357,7 +1357,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, false, true);
 
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 

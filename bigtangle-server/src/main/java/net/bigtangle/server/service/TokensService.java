@@ -70,12 +70,12 @@ public class TokensService {
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = TokenInfo.parse(buf);
 
-            final String tokenid = tokenInfo.getTokens().getTokenid();
-            Token tokens = this.store.getToken(tokenInfo.getTokens().getBlockhash());
+            final String tokenid = tokenInfo.getToken().getTokenid();
+            Token tokens = this.store.getToken(tokenInfo.getToken().getBlockhash());
             if (tokens != null) {
                 throw new BlockStoreException("token can't update");
             }
-            Token tokens2 = tokenInfo.getTokens();
+            Token tokens2 = tokenInfo.getToken();
             List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokens2.getTokenindex());
             int signnumber = 0;
             for (MultiSign multiSign : multiSigns) {

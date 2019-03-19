@@ -61,7 +61,7 @@ public class GiveMoneyUtils {
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount, true, false);
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTip.name(),
@@ -187,7 +187,7 @@ public class GiveMoneyUtils {
         
         Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), "", 1, 0, amount, false, true);
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTip.name(),

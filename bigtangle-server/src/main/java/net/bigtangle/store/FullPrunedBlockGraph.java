@@ -1024,10 +1024,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 TokenInfo tokenInfo = TokenInfo.parse(buf);
                 
                 // Correctly insert tokens
-                tokenInfo.getTokens().setConfirmed(false);
-                tokenInfo.getTokens().setBlockhash(block.getHashAsString());
+                tokenInfo.getToken().setConfirmed(false);
+                tokenInfo.getToken().setBlockhash(block.getHashAsString());
                 
-                this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getTokens());
+                this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getToken());
                 for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
                     permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
                     blockStore.insertMultiSignAddress(permissionedAddress);

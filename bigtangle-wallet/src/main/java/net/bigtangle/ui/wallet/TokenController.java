@@ -266,14 +266,14 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
         tabPane.getSelectionModel().clearAndSelect(3);
-        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
+        stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenid1.setValue(tokenid);
-        String amountString = Coin.valueOf(tokenInfo.getTokens().getAmount(), tokenid).toPlainString();
+        String amountString = Coin.valueOf(tokenInfo.getToken().getAmount(), tokenid).toPlainString();
         stockAmount1.setText(amountString);
-        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
-        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
-        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
-        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getToken().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getToken().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getToken().getSignnumber()).trim());
         signAddrChoiceBox.getItems().clear();
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
@@ -333,16 +333,16 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
         tabPane.getSelectionModel().clearAndSelect(3);
-        stockName1.setText(Main.getString(tokenInfo.getTokens().getTokenname()).trim());
+        stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenid1.setValue(tokenid);
         // String amountString =
         // Coin.valueOf(tokenInfo.getTokenSerial().getAmount(),
         // tokenid).toPlainString();
         // stockAmount1.setText(amountString);
-        tokenstopCheckBox.setSelected(tokenInfo.getTokens().isTokenstop());
-        urlTF.setText(Main.getString(tokenInfo.getTokens().getUrl()).trim());
-        stockDescription1.setText(Main.getString(tokenInfo.getTokens().getDescription()).trim());
-        signnumberTF.setText(Main.getString(tokenInfo.getTokens().getSignnumber()).trim());
+        tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
+        urlTF.setText(Main.getString(tokenInfo.getToken().getUrl()).trim());
+        stockDescription1.setText(Main.getString(tokenInfo.getToken().getDescription()).trim());
+        signnumberTF.setText(Main.getString(tokenInfo.getToken().getSignnumber()).trim());
         signAddrChoiceBox.getItems().clear();
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         if (multiSignAddresses != null && !multiSignAddresses.isEmpty()) {
@@ -544,7 +544,7 @@ public class TokenController extends TokenBaseController {
             Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
                     stockDescription.getText().trim(), 1, 0, amount, false, true);
             tokens.setUrl(stockUrl.getText().trim());
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
             // outKey must be the same key as tokenid
             ECKey outKey = null;
             for (ECKey key : issuedKeys) {
@@ -602,7 +602,7 @@ public class TokenController extends TokenBaseController {
 
             Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(),
                     marketName.getText().trim(), marketDescription.getText().trim(), marketurl.getText());
-            tokenInfo.setTokens(tokens);
+            tokenInfo.setToken(tokens);
 
             ECKey outKey = null;
             for (ECKey key : issuedKeys) {
@@ -698,7 +698,7 @@ public class TokenController extends TokenBaseController {
         Token tokens = Token.buildSubtangleTokenInfo(false, "", String.valueOf(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Main.getString(map.get("url")).trim());
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         if (signAddrChoiceBox1.getItems() != null && !signAddrChoiceBox1.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {
                 ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
@@ -794,7 +794,7 @@ public class TokenController extends TokenBaseController {
                         Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(), false,
                         true);
                 tokens.setUrl(urlTF.getText().trim());
-                tokenInfo.setTokens(tokens);
+                tokenInfo.setToken(tokens);
 
                 tokenInfo.getMultiSignAddresses()
                         .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -962,7 +962,7 @@ public class TokenController extends TokenBaseController {
                 Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true,
                 (boolean) map.get("tokenstop"));
         tokens.setUrl(Main.getString(map.get("url")).trim());
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
 
         if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
             for (String pubKeyHex : signAddrChoiceBox.getItems()) {

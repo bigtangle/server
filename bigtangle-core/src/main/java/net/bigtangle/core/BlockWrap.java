@@ -100,7 +100,7 @@ public class BlockWrap {
         case BLOCKTYPE_TOKEN_CREATION:
             try {
                 TokenInfo tokenInfo = TokenInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getTokens()));                    
+                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));                    
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();

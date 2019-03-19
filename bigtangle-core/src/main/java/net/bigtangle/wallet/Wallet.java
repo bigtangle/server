@@ -3612,7 +3612,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
         multiSignBy0.setTokenindex(0);
         multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
@@ -3661,7 +3661,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(tokenInfo.getTokens().getTokenid().trim());
+        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
         multiSignBy0.setTokenindex(0);
         multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));

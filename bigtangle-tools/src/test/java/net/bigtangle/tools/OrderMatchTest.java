@@ -26,8 +26,6 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderMatchTest extends AbstractIntegrationTest {
 
 	@Test
@@ -164,9 +162,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
-		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
-		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+ 
 	}
 
 	@Test
@@ -187,9 +183,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
-		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
-		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+	
 
 	}
 

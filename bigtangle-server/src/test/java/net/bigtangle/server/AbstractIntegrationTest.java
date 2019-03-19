@@ -148,7 +148,7 @@ public abstract class AbstractIntegrationTest {
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
                 amount, false, true);
 
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
@@ -678,8 +678,8 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "浜烘皯甯佹敮绁�", "", 1, 0, amount, false, true);
-        tokenInfo.setTokens(tokens);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, false, true);
+        tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
@@ -695,7 +695,7 @@ public abstract class AbstractIntegrationTest {
 
         String tokenid = Utils.HEX.encode(pubKey);
         Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:8089");
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
@@ -765,7 +765,7 @@ public abstract class AbstractIntegrationTest {
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));
@@ -853,7 +853,7 @@ public abstract class AbstractIntegrationTest {
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key1.getPublicKeyAsHex()));

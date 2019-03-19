@@ -1139,12 +1139,12 @@ public class Block extends Message {
                     ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         } else {
 
-            if (tokenInfo.getTokens() == null || tokenInfo.getTokens().getSignnumber() == 0) {
+            if (tokenInfo.getToken() == null || tokenInfo.getToken().getSignnumber() == 0) {
                 coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                         ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
 
             } else {
-                long signnumber = tokenInfo.getTokens().getSignnumber();
+                long signnumber = tokenInfo.getToken().getSignnumber();
 
                 List<ECKey> keys = new ArrayList<ECKey>();
                 for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {

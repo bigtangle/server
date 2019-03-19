@@ -43,8 +43,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 //Manuell test
 @Ignore
 public class SubtangleIntegrationTests extends AbstractIntegrationTest {
@@ -58,7 +57,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(0L, pubKey);
 
         Token tokens = Token.buildSubtangleTokenInfo(false, "", Utils.HEX.encode(pubKey), "subtangle", "", "");
-        tokenInfo.setTokens(tokens);
+        tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 
         HashMap<String, String> requestParam = new HashMap<String, String>();

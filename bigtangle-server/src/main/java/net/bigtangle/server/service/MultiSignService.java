@@ -63,10 +63,10 @@ public class MultiSignService {
             Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockhash());
             Transaction transaction = block.getTransactions().get(0);
             TokenInfo tokenInfo = TokenInfo.parse(transaction.getData());
-            map.put("signnumber", tokenInfo.getTokens().getSignnumber());
-            map.put("tokenname", tokenInfo.getTokens().getTokenname());
+            map.put("signnumber", tokenInfo.getToken().getSignnumber());
+            map.put("tokenname", tokenInfo.getToken().getTokenname());
 
-            Coin fromAmount = Coin.valueOf(tokenInfo.getTokens().getAmount(), multiSign.getTokenid());
+            Coin fromAmount = Coin.valueOf(tokenInfo.getToken().getAmount(), multiSign.getTokenid());
             map.put("amount", fromAmount.toPlainString());
             int signcount = 0;
             if (transaction.getDataSignature() == null) {
@@ -96,7 +96,7 @@ public class MultiSignService {
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = TokenInfo.parse(buf);
-            final Token tokens = tokenInfo.getTokens();
+            final Token tokens = tokenInfo.getToken();
 
             String prevblockhash = tokens.getPrevblockhash();
             List<MultiSignAddress> multiSignAddresses = store
@@ -158,7 +158,7 @@ public class MultiSignService {
             }
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = TokenInfo.parse(buf);
-            final Token tokens = tokenInfo.getTokens();
+            final Token tokens = tokenInfo.getToken();
             if (tokens == null) {
                 throw new BlockStoreException("tokeninfo is null");
             }
@@ -188,7 +188,7 @@ public class MultiSignService {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
             }
-            if (tokenInfo.getTokens().getSignnumber() > multiSignAddresses.size()) {
+            if (tokenInfo.getToken().getSignnumber() > multiSignAddresses.size()) {
                 throw new BlockStoreException("signnumber multisignaddresse list size not eq");
             }
 

@@ -46,7 +46,7 @@ public class SerializationTest {
     	List<MultiSignAddress> addresses = new ArrayList<>();
     	Token tokens = Token.buildSimpleTokenInfo(true, "1", "2", "3", "4", 2, 3, 4, true, true);
     	TokenInfo info1 = new TokenInfo();
-    	info1.setTokens(tokens);
+    	info1.setToken(tokens);
     	info1.setMultiSignAddresses(addresses);
     	byte[] bytes1 = info1.toByteArray();
     	TokenInfo info2 = TokenInfo.parse(bytes1);
@@ -54,18 +54,18 @@ public class SerializationTest {
 
     	assertArrayEquals(bytes1, bytes2);
     	assertEquals(info1.getMultiSignAddresses().size(), info2.getMultiSignAddresses().size());
-    	assertEquals(info1.getTokens().getAmount(), info2.getTokens().getAmount());
-    	assertEquals(info1.getTokens().getBlockhash(), info2.getTokens().getBlockhash());
-    	assertEquals(info1.getTokens().getDescription(), info2.getTokens().getDescription());
-    	assertEquals(info1.getTokens().getPrevblockhash(), info2.getTokens().getPrevblockhash());
-    	assertEquals(info1.getTokens().getSignnumber(), info2.getTokens().getSignnumber());
-    	assertEquals(info1.getTokens().getTokenid(), info2.getTokens().getTokenid());
-    	assertEquals(info1.getTokens().getTokenindex(), info2.getTokens().getTokenindex());
-    	assertEquals(info1.getTokens().getTokenname(), info2.getTokens().getTokenname());
-    	assertEquals(info1.getTokens().getTokentype(), info2.getTokens().getTokentype());
-    	assertEquals(info1.getTokens().getUrl(), info2.getTokens().getUrl());
-    	assertEquals(info1.getTokens().isConfirmed(), info2.getTokens().isConfirmed());
-    	assertEquals(info1.getTokens().isMultiserial(), info2.getTokens().isMultiserial());
-    	assertEquals(info1.getTokens().isTokenstop(), info2.getTokens().isTokenstop());
+    	assertEquals(info1.getToken().getAmount(), info2.getToken().getAmount());
+    	assertEquals(info1.getToken().getBlockhash(), info2.getToken().getBlockhash());
+    	assertEquals(info1.getToken().getDescription(), info2.getToken().getDescription());
+    	assertEquals(info1.getToken().getPrevblockhash(), info2.getToken().getPrevblockhash());
+    	assertEquals(info1.getToken().getSignnumber(), info2.getToken().getSignnumber());
+    	assertEquals(info1.getToken().getTokenid(), info2.getToken().getTokenid());
+    	assertEquals(info1.getToken().getTokenindex(), info2.getToken().getTokenindex());
+    	assertEquals(info1.getToken().getTokenname(), info2.getToken().getTokenname());
+    	assertEquals(info1.getToken().getTokentype(), info2.getToken().getTokentype());
+    	assertEquals(info1.getToken().getUrl(), info2.getToken().getUrl());
+    	assertEquals(info1.getToken().isConfirmed(), info2.getToken().isConfirmed());
+    	assertEquals(info1.getToken().isMultiserial(), info2.getToken().isMultiserial());
+    	assertEquals(info1.getToken().isTokenstop(), info2.getToken().isTokenstop());
     }
 }

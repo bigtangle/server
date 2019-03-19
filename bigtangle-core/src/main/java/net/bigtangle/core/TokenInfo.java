@@ -12,52 +12,53 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class TokenInfo   extends DataClass  implements java.io.Serializable {
+public class TokenInfo extends DataClass implements java.io.Serializable {
 
-    // TODO drop string from everywhere, stop using Sha256Hash.wrap, instead use Sha256Hash, stop using jsonserialization!
+	// TODO drop string from everywhere, stop using Sha256Hash.wrap, instead use
+	// Sha256Hash, stop using jsonserialization!
 
-    private static final long serialVersionUID = 1554582498768357964L;
+	private static final long serialVersionUID = 1554582498768357964L;
 
-    private Token tokens;
-    private List<MultiSignAddress> multiSignAddresses;
+	private Token token;
+	private List<MultiSignAddress> multiSignAddresses;
 
-    public byte[] toByteArray() {
-        try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
+	public byte[] toByteArray() {
+		try {
+			String jsonStr = Json.jsonmapper().writeValueAsString(this);
+			return jsonStr.getBytes();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new byte[0];
+	}
 
-    public static TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        return Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
-    }
+	public static TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+		String jsonStr = new String(buf);
+		return Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
+	}
 
-    public Token getTokens() {
-        return tokens;
-    }
+	public Token getToken() {
+		return token;
+	}
 
-    public void setTokens(Token tokens) {
-        this.tokens = tokens;
-    }
+	public void setToken(Token tokens) {
+		this.token = tokens;
+	}
 
-    public List<MultiSignAddress> getMultiSignAddresses() {
-        return multiSignAddresses;
-    }
+	public List<MultiSignAddress> getMultiSignAddresses() {
+		return multiSignAddresses;
+	}
 
-    public void setMultiSignAddresses(List<MultiSignAddress> multiSignAddresses) {
-        this.multiSignAddresses = multiSignAddresses;
-    }
+	public void setMultiSignAddresses(List<MultiSignAddress> multiSignAddresses) {
+		this.multiSignAddresses = multiSignAddresses;
+	}
 
-    public TokenInfo() {
-        this.multiSignAddresses = new ArrayList<>();
-    }
+	public TokenInfo() {
+		this.multiSignAddresses = new ArrayList<>();
+	}
 
-    @Override
-    public String toString() {
-        return "TokenInfo [tokens=" + tokens + ", multiSignAddresses=" + multiSignAddresses + "]";
-    }
+	@Override
+	public String toString() {
+		return "TokenInfo [tokens=" + token + ", multiSignAddresses=" + multiSignAddresses + "]";
+	}
 }
