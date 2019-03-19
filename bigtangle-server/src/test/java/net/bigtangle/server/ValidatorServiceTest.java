@@ -1319,7 +1319,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo0 = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -2025,7 +2025,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 MultiSignByRequest.class);
         MultiSignByRequest multiSignByRequest18 = Json.jsonmapper().readValue(transaction.getDataSignature(),
                 MultiSignByRequest.class);
-
+        
         multiSignByRequest1.setMultiSignBies(null);
         multiSignByRequest2.setMultiSignBies(new ArrayList<>());
         multiSignByRequest3.getMultiSignBies().get(0).setAddress(null);
@@ -2034,11 +2034,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         multiSignByRequest6.getMultiSignBies().get(0).setPublickey(null);
         multiSignByRequest7.getMultiSignBies().get(0).setPublickey("");
         multiSignByRequest8.getMultiSignBies().get(0).setPublickey("test");
-     //   multiSignByRequest9.getMultiSignBies().get(0).setPublickey(Utils.HEX.encode(outKey2.getPubKey()));
+        multiSignByRequest9.getMultiSignBies().get(0).setPublickey(Utils.HEX.encode(outKey2.getPubKey()));
         multiSignByRequest10.getMultiSignBies().get(0).setSignature(null);
         multiSignByRequest11.getMultiSignBies().get(0).setSignature("");
         multiSignByRequest12.getMultiSignBies().get(0).setSignature("test");
-     //   multiSignByRequest13.getMultiSignBies().get(0).setSignature(Utils.HEX.encode(outKey2.getPubKey()));
+        multiSignByRequest13.getMultiSignBies().get(0).setSignature(Utils.HEX.encode(outKey2.getPubKey()));
         multiSignByRequest14.getMultiSignBies().get(0).setTokenid(null);
         multiSignByRequest15.getMultiSignBies().get(0).setTokenid("");
         multiSignByRequest16.getMultiSignBies().get(0).setTokenid("test");
