@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.tools;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -17,14 +16,10 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Contact;
@@ -58,35 +53,12 @@ import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
 public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
 
-    @Test
-    public void testBatchBlock() throws Exception {
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        this.store.insertBatchBlock(block);
-
-        List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 1);
-
-        BatchBlock batchBlock = batchBlocks.get(0);
-
-        // String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
-        // String hex2 = Utils.HEX.encode(batchBlock.getBlock());
-        // assertEquals(hex1, hex2);
-
-        assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
-
-        this.store.deleteBatchBlock(batchBlock.getHash());
-        batchBlocks = this.store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 0);
-    }
-
+  
     @Test
     public void testTransactionResolveSubtangleID() throws Exception {
         Transaction transaction = new Transaction(this.networkParameters);
@@ -578,7 +550,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        milestoneService.update();
+      
 
         int blocktype = (int) Block.Type.BLOCKTYPE_VOS.ordinal();
 
@@ -624,7 +596,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             }
         }
 
-        milestoneService.update();
+   
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("vosKey", outKey.getPublicKeyAsHex());
@@ -712,7 +684,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
-        milestoneService.update();
+    
 
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
@@ -752,7 +724,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        milestoneService.update();
+  
 
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());

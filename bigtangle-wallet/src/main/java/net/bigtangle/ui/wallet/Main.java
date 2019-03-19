@@ -135,7 +135,9 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
-
+        	//System.setProperty("java.net.useSystemProxies", "true");
+        	System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+        	System.setProperty("https.proxyPort", "3128");
             realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);

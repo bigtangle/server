@@ -289,7 +289,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "浜烘皯甯佹敮绁�", "", 1, 0, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, false, true);
         tokenInfo.setTokens(tokens);
 
         // add MultiSignAddress item
@@ -474,4 +474,24 @@ public abstract class AbstractIntegrationTest {
         return tokenid;
     }
 
+	public Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
+			throws JsonProcessingException, Exception, BlockStoreException {
+
+		Block block = null;
+		TokenInfo tokenInfo = new TokenInfo();
+
+		Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
+		long amount = coinbase.getValue();
+		Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
+				amount, false, true);
+
+		tokenInfo.setTokens(tokens);
+		tokenInfo.getMultiSignAddresses()
+				.add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
+
+		// TODO This (saveBlock) calls milestoneUpdate currently
+		block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+
+		return block;
+	}
 }
