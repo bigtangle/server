@@ -23,6 +23,17 @@ dependencies {
      compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
       compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
      compile project(':bigtangle-core')
+      /**
+     * test dependencies
+     */
+ 
+    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',version:ver.junit
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+        testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
+    runtime group:'io.micrometer', name:'micrometer-registry-prometheus', version:ver.spring_metrics_promet
+     
 }
 
 mainClassName = "net.bigtangle.tools.Simulator"
