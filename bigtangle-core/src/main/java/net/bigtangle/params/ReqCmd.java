@@ -20,5 +20,5 @@ public enum ReqCmd {
     
     getOutputsHistory, regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
     
-    getSubtanglePermissionListByPubkeys, updateSubtangle, getOrder;
+    getSubtanglePermissionListByPubkeys, updateSubtangle, getOrder, updateReward;
 }

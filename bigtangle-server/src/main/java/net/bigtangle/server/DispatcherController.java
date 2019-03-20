@@ -451,6 +451,11 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case updateReward: {  
+                transactionService.createAndAddMiningRewardBlock();
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
             default:
                 break;
             }
