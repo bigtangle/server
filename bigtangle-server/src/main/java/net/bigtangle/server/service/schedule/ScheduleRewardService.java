@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
-import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.TransactionService;
 
 @Component
@@ -26,7 +25,7 @@ public class ScheduleRewardService {
     @Autowired
     private  TransactionService transactionService;
 
-    @Scheduled(fixedRateString = "${service.rewardschedule.rate:10000}")
+    @Scheduled(fixedRateString = "${service.rewardschedule.rate:90000}")
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
