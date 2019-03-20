@@ -93,344 +93,353 @@ import net.bigtangle.wallet.WalletProtobufSerializer;
  * </p>
  */
 public class WalletAppKit extends AbstractIdleService {
-    protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
+	protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
-    protected final String filePrefix;
-    protected final NetworkParameters params;
+	protected final String filePrefix;
+	protected final NetworkParameters params;
 
-    protected volatile BlockStore vStore;
-    protected volatile Wallet vWallet;
+	protected volatile BlockStore vStore;
+	protected volatile Wallet vWallet;
 
-    protected final File directory;
-    protected volatile File vWalletFile;
+	protected final File directory;
+	protected volatile File vWalletFile;
 
-    protected boolean useAutoSave = true;
+	protected boolean useAutoSave = true;
 
-    protected boolean autoStop = true;
-    protected InputStream checkpoints;
-    protected boolean blockingStartup = true;
-    protected boolean useTor = false; // Perhaps in future we can change this to
-                                      // true.
-    protected String userAgent, version;
-    protected WalletProtobufSerializer.WalletFactory walletFactory;
-    @Nullable
-    protected DeterministicSeed restoreFromSeed;
+	protected boolean autoStop = true;
+	protected InputStream checkpoints;
+	protected boolean blockingStartup = true;
+	protected boolean useTor = false; // Perhaps in future we can change this to
+										// true.
+	protected String userAgent, version;
+	protected WalletProtobufSerializer.WalletFactory walletFactory;
+	@Nullable
+	protected DeterministicSeed restoreFromSeed;
 
-    protected volatile Context context;
+	protected volatile Context context;
 
-    /**
-     * Creates a new WalletAppKit, with a newly created {@link Context}. Files
-     * will be stored in the given directory.
-     */
-    public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), directory, filePrefix);
-    }
+	/**
+	 * Creates a new WalletAppKit, with a newly created {@link Context}. Files will
+	 * be stored in the given directory.
+	 */
+	public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
+		this(new Context(params), directory, filePrefix);
+	}
 
-    /**
-     * Creates a new WalletAppKit, with the given {@link Context}. Files will be
-     * stored in the given directory.
-     */
-    public WalletAppKit(Context context, File directory, String filePrefix) {
-        this.context = context;
-        this.params = checkNotNull(context.getParams());
-        this.directory = checkNotNull(directory);
-        this.filePrefix = checkNotNull(filePrefix);
-    }
+	/**
+	 * Creates a new WalletAppKit, with the given {@link Context}. Files will be
+	 * stored in the given directory.
+	 */
+	public WalletAppKit(Context context, File directory, String filePrefix) {
+		this.context = context;
+		this.params = checkNotNull(context.getParams());
+		this.directory = checkNotNull(directory);
+		this.filePrefix = checkNotNull(filePrefix);
+	}
 
-    /**
-     * If true, the wallet will save itself to disk automatically whenever it
-     * changes.
-     */
-    public WalletAppKit setAutoSave(boolean value) {
-        checkState(state() == State.NEW, "Cannot call after startup");
-        useAutoSave = value;
-        return this;
-    }
+	/**
+	 * If true, the wallet will save itself to disk automatically whenever it
+	 * changes.
+	 */
+	public WalletAppKit setAutoSave(boolean value) {
+		checkState(state() == State.NEW, "Cannot call after startup");
+		useAutoSave = value;
+		return this;
+	}
 
-    /**
-     * If true, will register a shutdown hook to stop the library. Defaults to
-     * true.
-     */
-    public WalletAppKit setAutoStop(boolean autoStop) {
-        this.autoStop = autoStop;
-        return this;
-    }
+	/**
+	 * If true, will register a shutdown hook to stop the library. Defaults to true.
+	 */
+	public WalletAppKit setAutoStop(boolean autoStop) {
+		this.autoStop = autoStop;
+		return this;
+	}
 
-    /**
-     * If set, the file is expected to contain a checkpoints file calculated
-     * with BuildCheckpoints. It makes initial block sync faster for new users -
-     * please refer to the documentation on the bitcoinj website for further
-     * details.
-     */
-    public WalletAppKit setCheckpoints(InputStream checkpoints) {
-        if (this.checkpoints != null)
-            Utils.closeUnchecked(this.checkpoints);
-        this.checkpoints = checkNotNull(checkpoints);
-        return this;
-    }
+	/**
+	 * If set, the file is expected to contain a checkpoints file calculated with
+	 * BuildCheckpoints. It makes initial block sync faster for new users - please
+	 * refer to the documentation on the bitcoinj website for further details.
+	 */
+	public WalletAppKit setCheckpoints(InputStream checkpoints) {
+		if (this.checkpoints != null)
+			Utils.closeUnchecked(this.checkpoints);
+		this.checkpoints = checkNotNull(checkpoints);
+		return this;
+	}
 
-    /**
-     * If true (the default) then the startup of this service won't be
-     * considered complete until the network has been brought up, peer
-     * connections established and the block chain synchronised. Therefore
-     * {@link #awaitRunning()} can potentially take a very long time. If false,
-     * then startup is considered complete once the network activity begins and
-     * peer connections/block chain sync will continue in the background.
-     */
-    public WalletAppKit setBlockingStartup(boolean blockingStartup) {
-        this.blockingStartup = blockingStartup;
-        return this;
-    }
+	/**
+	 * If true (the default) then the startup of this service won't be considered
+	 * complete until the network has been brought up, peer connections established
+	 * and the block chain synchronised. Therefore {@link #awaitRunning()} can
+	 * potentially take a very long time. If false, then startup is considered
+	 * complete once the network activity begins and peer connections/block chain
+	 * sync will continue in the background.
+	 */
+	public WalletAppKit setBlockingStartup(boolean blockingStartup) {
+		this.blockingStartup = blockingStartup;
+		return this;
+	}
 
-    /**
-     * Sets the string that will appear in the subver field of the version
-     * message.
-     * 
-     * @param userAgent
-     *            A short string that should be the name of your app, e.g. "My
-     *            Wallet"
-     * @param version
-     *            A short string that contains the version number, e.g.
-     *            "1.0-BETA"
-     */
-    public WalletAppKit setUserAgent(String userAgent, String version) {
-        this.userAgent = checkNotNull(userAgent);
-        this.version = checkNotNull(version);
-        return this;
-    }
+	/**
+	 * Sets the string that will appear in the subver field of the version message.
+	 * 
+	 * @param userAgent
+	 *            A short string that should be the name of your app, e.g. "My
+	 *            Wallet"
+	 * @param version
+	 *            A short string that contains the version number, e.g. "1.0-BETA"
+	 */
+	public WalletAppKit setUserAgent(String userAgent, String version) {
+		this.userAgent = checkNotNull(userAgent);
+		this.version = checkNotNull(version);
+		return this;
+	}
 
-    /**
-     * If called, then an embedded Tor client library will be used to connect to
-     * the P2P network. The user does not need any additional software for this:
-     * it's all pure Java. As of April 2014 <b>this mode is experimental</b>.
-     */
-    public WalletAppKit useTor() {
-        this.useTor = true;
-        return this;
-    }
+	/**
+	 * If called, then an embedded Tor client library will be used to connect to the
+	 * P2P network. The user does not need any additional software for this: it's
+	 * all pure Java. As of April 2014 <b>this mode is experimental</b>.
+	 */
+	public WalletAppKit useTor() {
+		this.useTor = true;
+		return this;
+	}
 
-    /**
-     * If a seed is set here then any existing wallet that matches the file name
-     * will be renamed to a backup name, the chain file will be deleted, and the
-     * wallet object will be instantiated with the given seed instead of a fresh
-     * one being created. This is intended for restoring a wallet from the
-     * original seed. To implement restore you would shut down the existing
-     * appkit, if any, then recreate it with the seed given by the user, then
-     * start up the new kit. The next time your app starts it should work as
-     * normal (that is, don't keep calling this each time).
-     */
-    public WalletAppKit restoreWalletFromSeed(DeterministicSeed seed) {
-        this.restoreFromSeed = seed;
-        return this;
-    }
+	/**
+	 * If a seed is set here then any existing wallet that matches the file name
+	 * will be renamed to a backup name, the chain file will be deleted, and the
+	 * wallet object will be instantiated with the given seed instead of a fresh one
+	 * being created. This is intended for restoring a wallet from the original
+	 * seed. To implement restore you would shut down the existing appkit, if any,
+	 * then recreate it with the seed given by the user, then start up the new kit.
+	 * The next time your app starts it should work as normal (that is, don't keep
+	 * calling this each time).
+	 */
+	public WalletAppKit restoreWalletFromSeed(DeterministicSeed seed) {
+		this.restoreFromSeed = seed;
+		return this;
+	}
 
-    /**
-     * <p>
-     * Override this to return wallet extensions if any are necessary.
-     * </p>
-     *
-     * <p>
-     * When this is called, chain(), store(), and peerGroup() will return the
-     * created objects, however they are not initialized/started.
-     * </p>
-     */
-    protected List<WalletExtension> provideWalletExtensions() throws Exception {
-        return ImmutableList.of();
-    }
+	/**
+	 * <p>
+	 * Override this to return wallet extensions if any are necessary.
+	 * </p>
+	 *
+	 * <p>
+	 * When this is called, chain(), store(), and peerGroup() will return the
+	 * created objects, however they are not initialized/started.
+	 * </p>
+	 */
+	protected List<WalletExtension> provideWalletExtensions() throws Exception {
+		return ImmutableList.of();
+	}
 
-    /**
-     * This method is invoked on a background thread after all objects are
-     * initialised, but before the peer group or block chain download is
-     * started. You can tweak the objects configuration here.
-     */
-    protected void onSetupCompleted() {
-    }
+	/**
+	 * This method is invoked on a background thread after all objects are
+	 * initialised, but before the peer group or block chain download is started.
+	 * You can tweak the objects configuration here.
+	 */
+	protected void onSetupCompleted() {
+	}
 
-    /**
-     * Tests to see if the spvchain file has an operating system file lock on
-     * it. Useful for checking if your app is already running. If another copy
-     * of your app is running and you start the appkit anyway, an exception will
-     * be thrown during the startup process. Returns false if the chain file
-     * does not exist or is a directory.
-     */
-    public boolean isChainFileLocked() throws IOException {
-        RandomAccessFile file2 = null;
-        try {
-            File file = new File(directory, filePrefix + ".spvchain");
-            if (!file.exists())
-                return false;
-            if (file.isDirectory())
-                return false;
-            file2 = new RandomAccessFile(file, "rw");
-            FileLock lock = file2.getChannel().tryLock();
-            if (lock == null)
-                return true;
-            lock.release();
-            return false;
-        } finally {
-            if (file2 != null)
-                file2.close();
-        }
-    }
+	/**
+	 * Tests to see if the spvchain file has an operating system file lock on it.
+	 * Useful for checking if your app is already running. If another copy of your
+	 * app is running and you start the appkit anyway, an exception will be thrown
+	 * during the startup process. Returns false if the chain file does not exist or
+	 * is a directory.
+	 */
+	public boolean isChainFileLocked() throws IOException {
+		RandomAccessFile file2 = null;
+		try {
+			File file = new File(directory, filePrefix + ".spvchain");
+			if (!file.exists())
+				return false;
+			if (file.isDirectory())
+				return false;
+			file2 = new RandomAccessFile(file, "rw");
+			FileLock lock = file2.getChannel().tryLock();
+			if (lock == null)
+				return true;
+			lock.release();
+			return false;
+		} finally {
+			if (file2 != null)
+				file2.close();
+		}
+	}
 
-    @Override
-    protected void startUp() throws Exception {
-        // Runs in a separate thread.
-        Context.propagate(context);
-        if (!directory.exists()) {
-            if (!directory.mkdirs()) {
-                throw new IOException("Could not create directory " + directory.getAbsolutePath());
-            }
-        }
-        log.info("Starting up with directory = {}", directory);
+	@Override
+	protected void startUp() throws Exception {
+		// Runs in a separate thread.
+		Context.propagate(context);
+		if (!directory.exists()) {
+			if (!directory.mkdirs()) {
+				throw new IOException("Could not create directory " + directory.getAbsolutePath());
+			}
+		}
+		log.info("Starting up with directory = {}", directory);
 
-        vWalletFile = new File(directory, filePrefix + ".wallet");
-        boolean shouldReplayWallet = vWalletFile.exists();
-        vWallet = createOrLoadWallet(shouldReplayWallet);
-    }
+		vWalletFile = new File(directory, filePrefix + ".wallet");
+		boolean shouldReplayWallet = vWalletFile.exists();
+		vWallet = createOrLoadWallet(shouldReplayWallet);
+	}
 
-    private Wallet createOrLoadWallet(boolean shouldReplayWallet) throws Exception {
-        Wallet wallet;
+	private Wallet createOrLoadWallet(boolean shouldReplayWallet) throws Exception {
+		Wallet wallet;
 
-        maybeMoveOldWalletOutOfTheWay();
+		maybeMoveOldWalletOutOfTheWay();
 
-        if (vWalletFile.exists()) {
-            wallet = loadWallet(shouldReplayWallet);
-        } else {
-            wallet = createWallet();
-            wallet.freshReceiveKey();
-            for (WalletExtension e : provideWalletExtensions()) {
-                wallet.addExtension(e);
-            }
+		if (vWalletFile.exists()) {
+			wallet = loadWallet(shouldReplayWallet);
+		} else {
+			wallet = createWallet();
+			wallet.freshReceiveKey();
+			for (WalletExtension e : provideWalletExtensions()) {
+				wallet.addExtension(e);
+			}
 
-            // Currently the only way we can be sure that an extension is aware
-            // of its containing wallet is by
-            // deserializing the extension (see
-            // WalletExtension#deserializeWalletExtension(Wallet, byte[]))
-            // Hence, we first save and then load wallet to ensure any
-            // extensions are correctly initialized.
-            wallet.saveToFile(vWalletFile);
-            wallet = loadWallet(false);
-        }
+			// Currently the only way we can be sure that an extension is aware
+			// of its containing wallet is by
+			// deserializing the extension (see
+			// WalletExtension#deserializeWalletExtension(Wallet, byte[]))
+			// Hence, we first save and then load wallet to ensure any
+			// extensions are correctly initialized.
+			wallet.saveToFile(vWalletFile);
+			wallet = loadWallet(false);
+		}
 
-        if (useAutoSave) {
-            this.setupAutoSave(wallet);
-        }
+		if (useAutoSave) {
+			this.setupAutoSave(wallet);
+		}
 
-        return wallet;
-    }
+		return wallet;
+	}
 
-    protected void setupAutoSave(Wallet wallet) {
-        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
-    }
+	protected void setupAutoSave(Wallet wallet) {
+		wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
+	}
 
-    private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
-        Wallet wallet;
-        FileInputStream walletStream = new FileInputStream(vWalletFile);
-        try {
-            List<WalletExtension> extensions = provideWalletExtensions();
-            WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
-            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer;
-            if (walletFactory != null)
-                serializer = new WalletProtobufSerializer(walletFactory);
-            else
-                serializer = new WalletProtobufSerializer();
-            wallet = serializer.readWallet(params, extArray, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
-        } finally {
-            walletStream.close();
-        }
-        return wallet;
-    }
+	public Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream) throws Exception {
+		Wallet wallet;
+		try {
+			List<WalletExtension> extensions = provideWalletExtensions();
+			WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
+			Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
+			final WalletProtobufSerializer serializer;
+			if (walletFactory != null)
+				serializer = new WalletProtobufSerializer(walletFactory);
+			else
+				serializer = new WalletProtobufSerializer();
+			wallet = serializer.readWallet(params, extArray, proto);
+			if (shouldReplayWallet)
+				wallet.reset();
+		} finally {
+			walletStream.close();
+		}
+		return wallet;
+	}
 
-    protected Wallet createWallet() {
-        KeyChainGroup kcg;
-        if (restoreFromSeed != null)
-            kcg = new KeyChainGroup(params, restoreFromSeed);
-        else
-            kcg = new KeyChainGroup(params);
-        if (walletFactory != null) {
-            return walletFactory.create(params, kcg);
-        } else {
-            return new Wallet(params, kcg); // default
-        }
-    }
+	private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
 
-    private void maybeMoveOldWalletOutOfTheWay() {
-        if (restoreFromSeed == null)
-            return;
-        if (!vWalletFile.exists())
-            return;
-        int counter = 1;
-        File newName;
-        do {
-            newName = new File(vWalletFile.getParent(), "Backup " + counter + " for " + vWalletFile.getName());
-            counter++;
-        } while (newName.exists());
-        log.info("Renaming old wallet file {} to {}", vWalletFile, newName);
-        if (!vWalletFile.renameTo(newName)) {
-            // This should not happen unless something is really messed up.
-            throw new RuntimeException("Failed to rename wallet for restore");
-        }
-    }
+		return loadWallet(shouldReplayWallet, new FileInputStream(vWalletFile));
+	}
 
-    private void installShutdownHook() {
-        if (autoStop)
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        WalletAppKit.this.stopAsync();
-                        WalletAppKit.this.awaitTerminated();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-    }
+	protected Wallet createWallet() {
+		KeyChainGroup kcg;
+		if (restoreFromSeed != null)
+			kcg = new KeyChainGroup(params, restoreFromSeed);
+		else
+			kcg = new KeyChainGroup(params);
+		if (walletFactory != null) {
+			return walletFactory.create(params, kcg);
+		} else {
+			return new Wallet(params, kcg); // default
+		}
+	}
 
-    @Override
-    protected void shutDown() throws Exception {
-        // Runs in a separate thread.
-        try {
-            Context.propagate(context);
+	private void maybeMoveOldWalletOutOfTheWay() {
+		if (restoreFromSeed == null)
+			return;
+		if (!vWalletFile.exists())
+			return;
+		int counter = 1;
+		File newName;
+		do {
+			newName = new File(vWalletFile.getParent(), "Backup " + counter + " for " + vWalletFile.getName());
+			counter++;
+		} while (newName.exists());
+		log.info("Renaming old wallet file {} to {}", vWalletFile, newName);
+		if (!vWalletFile.renameTo(newName)) {
+			// This should not happen unless something is really messed up.
+			throw new RuntimeException("Failed to rename wallet for restore");
+		}
+	}
 
-            vWallet.saveToFile(vWalletFile);
-            vStore.close();
+	private void installShutdownHook() {
+		if (autoStop)
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
+					try {
+						WalletAppKit.this.stopAsync();
+						WalletAppKit.this.awaitTerminated();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+			});
+	}
 
-            vWallet = null;
-            vStore = null;
+	@Override
+	protected void shutDown() throws Exception {
+		// Runs in a separate thread.
+		try {
+			Context.propagate(context);
 
-        } catch (BlockStoreException e) {
-            throw new IOException(e);
-        }
-    }
+			vWallet.saveToFile(vWalletFile);
+			vStore.close();
 
-    public NetworkParameters params() {
-        return params;
-    }
+			vWallet = null;
+			vStore = null;
 
-    public BlockStore store() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
-        return vStore;
-    }
+		} catch (BlockStoreException e) {
+			throw new IOException(e);
+		}
+	}
 
-    public Wallet wallet() {
-        // checkState(state() == State.STARTING || state() == State.RUNNING,
-        // "Cannot call until startup is complete");
-        if (vWallet == null) {
-            try {
-                this.startUp();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return vWallet;
-    }
+	public NetworkParameters params() {
+		return params;
+	}
 
-    public File directory() {
-        return directory;
-    }
+	public BlockStore store() {
+		checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+		return vStore;
+	}
+
+	public Wallet wallet() {
+		// checkState(state() == State.STARTING || state() == State.RUNNING,
+		// "Cannot call until startup is complete");
+		if (vWallet == null) {
+			try {
+				this.startUp();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return vWallet;
+	}
+
+	public Wallet wallet(InputStream input) {
+		try {
+			vWallet = loadWallet(false, input);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return vWallet;
+	}
+
+	public File directory() {
+		return directory;
+	}
 }
