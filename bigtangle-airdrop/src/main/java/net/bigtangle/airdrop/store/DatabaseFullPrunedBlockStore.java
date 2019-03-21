@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.airdrop.bean.Vm_deposit;
 import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.NetworkParameters;
@@ -214,68 +215,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public HashMap<Long, String> queryDepositKeyFromOrderKey() throws BlockStoreException {
-        HashMap<Long, String> map = new HashMap<>();
-        String sql = "select d.userid d_id,d.useraccount d_ua, d.status d_status,pubkey " + "from vm_deposit d "
-                + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+    public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
+        List<Vm_deposit> l = new ArrayList<Vm_deposit>();
+        String sql = "select userid , amount  status, pubkey " + "from vm_deposit d "
+        + "join Account a on d.userid=a.id "
+        + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
-                    map.put(resultSet.getLong("d_id"),
-                            resultSet.getString("d_ua") + "-" + resultSet.getString("pubkey"));
-                }
-
-            }
-            return map;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    public HashMap<String, Integer> queryFromOrder() throws BlockStoreException {
-        HashMap<String, Integer> map = new HashMap<>();
-        String sql = "select pubkey,amount, d.status d_status,deposittype,currency " + "from vm_deposit d "
-                + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(sql);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                if ("bigtangle".equals(resultSet.getString("deposittype"))&&"BIG".equals(resultSet.getString("currency"))) {
-                    continue;
-                }
-                if (!"PAID".equalsIgnoreCase(resultSet.getString("d_status"))) {
+                Vm_deposit vm_deposit = new Vm_deposit();
+                vm_deposit.setStatus(resultSet.getString("status"));
+                vm_deposit.setUserid(resultSet.getLong("userid"));
+                vm_deposit.setAmount(resultSet.getBigDecimal("amount"));
+                vm_deposit.setPubkey(resultSet.getString("pubkey"));
+                // add only correct pub key to return list for transfer money
+                if (!"PAID".equalsIgnoreCase(vm_deposit.getStatus())) {
+                    boolean flag = true;
+                    String pubkey = resultSet.getString("pubkey");
                     try {
-                     String pubkey = resultSet.getString("pubkey");
                         Address.fromBase58(MainNetParams.get(), pubkey);
-                     map.put(pubkey, resultSet.getBigDecimal("amount").intValue());    
                     } catch (Exception e) {
+                        // logger.debug("", e);
+                        flag = false;
+                    }
+                    if (flag) {
 
                     }
-                   
+
                 }
 
             }
-            return map;
+            return l;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {
@@ -291,18 +265,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-
     }
 
-    public void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException {
-        String sql = "update vm_deposit set status = ? where userid = ? and useraccount=?";
+    public void updateDepositStatus(Long id,  String status) throws BlockStoreException {
+        String sql = "update vm_deposit set status = ? where userid = ? ";
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             s.setString(1, status);
             s.setLong(2, id);
-            s.setString(3, useraccount);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -318,14 +290,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
 
     public void resetDepositPaid() throws BlockStoreException {
         String sql = "update vm_deposit set status = 'RESET' ";
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(sql);  
+            s = conn.get().prepareStatement(sql);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -341,6 +312,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
         String sql = "select id, wechatId, wechatInviterId, createTime, status,pubkey  from wechatinvite where status = 0";
         List<WechatInvite> wechatInvites = new ArrayList<WechatInvite>();
@@ -682,14 +654,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If the tables couldn't be cleared and initialised.
      */
     public void resetStore() throws BlockStoreException {
-//        maybeConnect();
-//        try {
-//            // deleteStore();
-//            createTables();
-//        } catch (SQLException ex) {
-//            log.warn("Warning: deleteStore", ex);
-//            throw new RuntimeException(ex);
-//        }
+        // maybeConnect();
+        // try {
+        // // deleteStore();
+        // createTables();
+        // } catch (SQLException ex) {
+        // log.warn("Warning: deleteStore", ex);
+        // throw new RuntimeException(ex);
+        // }
     }
 
     /**
@@ -698,20 +670,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             If tables couldn't be deleted.
      */
-//    public void deleteStore() throws BlockStoreException {
-//        maybeConnect();
-//        try {
-//            for (String sql : getDropTablesSQL()) {
-//                Statement s = conn.get().createStatement();
-//                try {
-//                    log.info("drop table : " + sql);
-//                    s.execute(sql);
-//                } finally {
-//                    s.close();
-//                }
-//            }
-//        } catch (Exception ex) {
-//            log.warn("Warning: deleteStore", ex);
-//        }
-//    }
+    // public void deleteStore() throws BlockStoreException {
+    // maybeConnect();
+    // try {
+    // for (String sql : getDropTablesSQL()) {
+    // Statement s = conn.get().createStatement();
+    // try {
+    // log.info("drop table : " + sql);
+    // s.execute(sql);
+    // } finally {
+    // s.close();
+    // }
+    // }
+    // } catch (Exception ex) {
+    // log.warn("Warning: deleteStore", ex);
+    // }
+    // }
 }

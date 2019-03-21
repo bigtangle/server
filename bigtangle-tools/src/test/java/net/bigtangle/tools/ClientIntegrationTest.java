@@ -129,30 +129,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
-    @Test
-    public void testGiveMoney() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
-        
-        @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
-
-        HashMap<String, Integer> giveMoneyResult = new HashMap<>();
-        for (int i = 0; i < 3; i++) {
-            ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000);
-        }
-       walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
-
-        for (UTXO utxo : getBalance(false, genesiskey)) {
-            log.info("UTXO : " + utxo); 
-                assertTrue(utxo.getValue().getValue() == 999999993666667l);
-            
-        }
-    }
-
+    
     @Test
     @SuppressWarnings("deprecation")
     public void testWalletImportKeyGiveMoney() throws Exception {

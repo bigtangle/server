@@ -5,7 +5,7 @@
 package net.bigtangle.airdrop.schedule;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,82 +14,63 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.bigtangle.airdrop.bean.Vm_deposit;
 import net.bigtangle.airdrop.config.ScheduleConfiguration;
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
 import net.bigtangle.airdrop.utils.GiveMoneyUtils;
-import net.bigtangle.core.Address;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.params.MainNetParams;
 
 @Component
 @EnableAsync
 public class ScheduleOrderService {
 
-	private static final Logger logger = LoggerFactory.getLogger(ScheduleOrderService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleOrderService.class);
 
-	@Autowired
-	private ScheduleConfiguration scheduleConfiguration;
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
 
-	@Autowired
-	private GiveMoneyUtils giveMoneyUtils;
+    @Autowired
+    private GiveMoneyUtils giveMoneyUtils;
 
-	@Autowired
-	private FullPrunedBlockStore store;
+    @Autowired
+    private FullPrunedBlockStore store;
 
-	@Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
-	public void updateMilestoneService() {
-		if (scheduleConfiguration.isGiveMoneyServiceActive()) {
-			try {
-				logger.debug(" Start ScheduleGiveMoneyOrderService"); 
-				HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
+    @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
+    public void updateMilestoneService() throws Exception {
+        if (scheduleConfiguration.isGiveMoneyServiceActive()) {
 
-				HashMap<String, Integer> orderMap = sendFromOrder(giveMoneyResult);
+            logger.debug(" Start ScheduleGiveMoneyOrderService");
 
-				if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
+            List<Vm_deposit> deposits = sendFromOrder();
 
-					// only update, if money is given for order
-					HashMap<Long, String> map = this.store.queryDepositKeyFromOrderKey();
-					for (String string : orderMap.keySet()) {
-						for (Map.Entry<Long, String> entry : map.entrySet()) {
-							Long userid = entry.getKey();
-							String useraccount = entry.getValue().split("-")[0];
-							String pubkey = entry.getValue().split("-")[1];
-							if (string.equals(pubkey)) {
-								boolean flag = true;
-								try {
-									Address.fromBase58(MainNetParams.get(), pubkey);
-								} catch (Exception e) {
-									// logger.debug("", e);
-									flag = false;
-								}
-								if (flag) {
-									this.store.updateDepositStatus(userid, useraccount, "PAID");
-									logger.info("wechat invite update status, id : " + userid + "," + useraccount
-											+ ", success");
-									break;
-								}
-							}
+            if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
 
-						}
-					}
+                // only update, if money is given for order
 
-				}
-			} catch (Exception e) {
-				logger.warn("ScheduleGiveMoneyService", e);
-			}
-		}
-	}
+                for (Vm_deposit d : deposits) {
 
-	private HashMap<String, Integer> sendFromOrder(HashMap<String, Integer> giveMoneyResult) {
-		try {
-			HashMap<String, Integer> map = this.store.queryFromOrder();
+                    this.store.updateDepositStatus(d.getUserid(), "PAID");
+                    logger.info("  update deposit : " + d.getUserid() + ", success");
 
-			giveMoneyResult.putAll(map);
+                }
+            }
+        }
+    }
 
-		} catch (BlockStoreException e) {
-			logger.warn("ScheduleGiveMoneyService", e);
-		}
-		return giveMoneyResult;
-	}
+    private List<Vm_deposit> sendFromOrder() throws BlockStoreException {
+        return this.store.queryDepositKeyFromOrderKey();
+
+    }
+
+    private HashMap<String, Long> giveMoneyResult(List<Vm_deposit> l) throws BlockStoreException {
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+        for (Vm_deposit d : l) {
+            giveMoneyResult.put(d.getPubkey(),
+                    Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+        }
+        return giveMoneyResult;
+    }
 
 }

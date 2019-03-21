@@ -36,7 +36,7 @@ public class GiveMoneyUtils {
     @Autowired
     private ServerConfiguration serverConfiguration;
  
-    public synchronized boolean batchGiveMoneyToECKeyList(HashMap<String, Integer> giveMoneyResult) throws Exception {
+    public synchronized boolean batchGiveMoneyToECKeyList(HashMap<String, Long> giveMoneyResult) throws Exception {
         if (giveMoneyResult.isEmpty()) {
             return true;
         }

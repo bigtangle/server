@@ -75,12 +75,12 @@ public class ScheduleRewardService {
 					logger.debug(" inviter data   isEmpty " + wechatInvites);
 					return;
 				}
-				HashMap<String, Integer> giveMoneyResult = new HashMap<String, Integer>();
+				HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
 				wechatToplevel(dataMap, wechatInviteResult, giveMoneyResult);
 				wechatRecursive(wechatInviteResult, giveMoneyResult);
 
 				for (String invitedPubkey : invitedSet) {
-					giveMoneyResult.put(invitedPubkey, wechatReward);
+					giveMoneyResult.put(invitedPubkey, wechatReward*1l);
 				}
 				// no data for process
 				if (giveMoneyResult.isEmpty()) {
@@ -116,7 +116,7 @@ public class ScheduleRewardService {
 	}
 
 	private void wechatToplevel(HashMap<String, List<WechatInvite>> dataMap,
-			Map<String, HashMap<String, String>> wechatInviteResult, HashMap<String, Integer> giveMoneyResult) {
+			Map<String, HashMap<String, String>> wechatInviteResult, HashMap<String, Long> giveMoneyResult) {
 		logger.debug("wechatToplevel with data size " + dataMap.size());
 		for (Iterator<Map.Entry<String, List<WechatInvite>>> iterator = dataMap.entrySet().iterator(); iterator
 				.hasNext();) {
@@ -135,7 +135,7 @@ public class ScheduleRewardService {
 			}
 			try {
 				// Address.fromBase58(MainNetParams.get(), pubkey);
-				giveMoneyResult.put(pubkey, (count + 1) * wechatReward);
+				giveMoneyResult.put(pubkey, (count + 1) * wechatReward *1l);
 			} catch (Exception e) {
 				// logger.debug("", e);
 
@@ -168,7 +168,7 @@ public class ScheduleRewardService {
 	}
 
 	private void wechatRecursive(Map<String, HashMap<String, String>> wechatInviteResult,
-			HashMap<String, Integer> giveMoneyResult) throws BlockStoreException {
+			HashMap<String, Long> giveMoneyResult) throws BlockStoreException {
 		if (wechatInviteResult.get("wechatInviterId") != null && !wechatInviteResult.get("wechatInviterId").isEmpty()) {
 
 			Map<String, HashMap<String, String>> wechatInviteResult1 = this.store
@@ -186,7 +186,7 @@ public class ScheduleRewardService {
 							giveMoneyResult.put(pubkey,
 									giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor);
 						} else {
-							giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor);
+							giveMoneyResult.put(pubkey, wechatReward*1l / wechatRewardfactor);
 						}
 					} catch (Exception e) {
 						logger.debug(pubkey);
@@ -212,7 +212,7 @@ public class ScheduleRewardService {
 								giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
 										+ wechatReward / wechatRewardfactor / wechatRewardfactor);
 							} else {
-								giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor);
+								giveMoneyResult.put(pubkey, wechatReward *1l/ wechatRewardfactor / wechatRewardfactor);
 							}
 						} catch (Exception e) {
 							// logger.debug("", e);
@@ -238,7 +238,7 @@ public class ScheduleRewardService {
 									giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward
 											/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 								} else {
-									giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor / wechatRewardfactor
+									giveMoneyResult.put(pubkey, wechatReward *1l/ wechatRewardfactor / wechatRewardfactor
 											/ wechatRewardfactor);
 								}
 							} catch (Exception e) {
@@ -266,7 +266,7 @@ public class ScheduleRewardService {
 												giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
 														/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									} else {
-										giveMoneyResult.put(pubkey, wechatReward / wechatRewardfactor
+										giveMoneyResult.put(pubkey, wechatReward*1l / wechatRewardfactor
 												/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									}
 								} catch (Exception e) {

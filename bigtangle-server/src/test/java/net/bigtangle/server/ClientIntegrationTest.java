@@ -167,10 +167,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
-        HashMap<String, Integer> giveMoneyResult = new HashMap<>();
+        HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000l);
         }
        walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
 

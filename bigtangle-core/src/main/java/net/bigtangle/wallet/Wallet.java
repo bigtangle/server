@@ -3675,7 +3675,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         return block;
     }
 
-    public void payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Integer> giveMoneyResult, ECKey fromkey)
+    public void payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws Exception {
 
         if (giveMoneyResult.isEmpty()) {
@@ -3684,7 +3684,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
         Coin summe = Coin.ZERO;
         Transaction multispent = new Transaction(params);
         
-        for (Map.Entry<String, Integer> entry : giveMoneyResult.entrySet()) {
+        for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
             Coin a = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
             Address address = Address.fromBase58(params, entry.getKey());
             multispent.addOutput(a, address);
