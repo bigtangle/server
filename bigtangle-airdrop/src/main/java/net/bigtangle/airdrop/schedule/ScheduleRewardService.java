@@ -80,7 +80,17 @@ public class ScheduleRewardService {
 				wechatRecursive(wechatInviteResult, giveMoneyResult);
 
 				for (String invitedPubkey : invitedSet) {
-					giveMoneyResult.put(invitedPubkey, wechatReward*1l);
+					boolean flag = true;
+					try {
+						Address.fromBase58(MainNetParams.get(), invitedPubkey);
+					} catch (Exception e) {
+						// logger.debug("", e);
+						flag = false;
+					}
+					if (flag) {
+						giveMoneyResult.put(invitedPubkey, wechatReward * 1l);
+					}
+
 				}
 				// no data for process
 				if (giveMoneyResult.isEmpty()) {
@@ -124,18 +134,15 @@ public class ScheduleRewardService {
 			String wechatinviterId = entry.getKey();
 			// logger.debug("wechatid:" + wechatinviterId);
 			String pubkey = wechatInviteResult.get("pubkey").get(wechatinviterId);
-			if (!StringUtils.nonEmptyString(pubkey)) {
-				iterator.remove();
-				continue;
-			}
+
 			final int count = entry.getValue().size();
 			if (count == 0) {
 				iterator.remove();
 				continue;
 			}
 			try {
-				// Address.fromBase58(MainNetParams.get(), pubkey);
-				giveMoneyResult.put(pubkey, (count + 1) * wechatReward *1l);
+				Address.fromBase58(MainNetParams.get(), pubkey);
+				giveMoneyResult.put(pubkey, (count + 1) * wechatReward * 1l);
 			} catch (Exception e) {
 				// logger.debug("", e);
 
@@ -149,7 +156,7 @@ public class ScheduleRewardService {
 		for (WechatInvite wechatInvite : wechatInvites) {
 			if (wechatInvite.getPubkey() != null && !"".equals(wechatInvite.getPubkey().trim())) {
 				try {
-					// Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
+					Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
 					invitedSet.add(wechatInvite.getPubkey());
 				} catch (Exception e) {
 					// logger.debug("", e);
@@ -175,18 +182,14 @@ public class ScheduleRewardService {
 					.queryByUWechatInvitePubKeyInviterIdMap(wechatInviteResult.get("wechatInviterId").values());
 			if (wechatInviteResult1.get("pubkey") != null && !wechatInviteResult1.get("pubkey").isEmpty())
 				for (String pubkey : wechatInviteResult1.get("pubkey").values()) {
-					if (pubkey == null || pubkey.trim().isEmpty()) {
-						continue;
-					}
-					// logger.debug("==============");
 
 					try {
-						// Address.fromBase58(MainNetParams.get(), pubkey);
+						Address.fromBase58(MainNetParams.get(), pubkey);
 						if (giveMoneyResult.containsKey(pubkey)) {
 							giveMoneyResult.put(pubkey,
 									giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor);
 						} else {
-							giveMoneyResult.put(pubkey, wechatReward*1l / wechatRewardfactor);
+							giveMoneyResult.put(pubkey, wechatReward * 1l / wechatRewardfactor);
 						}
 					} catch (Exception e) {
 						logger.debug(pubkey);
@@ -212,7 +215,8 @@ public class ScheduleRewardService {
 								giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
 										+ wechatReward / wechatRewardfactor / wechatRewardfactor);
 							} else {
-								giveMoneyResult.put(pubkey, wechatReward *1l/ wechatRewardfactor / wechatRewardfactor);
+								giveMoneyResult.put(pubkey,
+										wechatReward * 1l / wechatRewardfactor / wechatRewardfactor);
 							}
 						} catch (Exception e) {
 							// logger.debug("", e);
@@ -238,8 +242,8 @@ public class ScheduleRewardService {
 									giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward
 											/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 								} else {
-									giveMoneyResult.put(pubkey, wechatReward *1l/ wechatRewardfactor / wechatRewardfactor
-											/ wechatRewardfactor);
+									giveMoneyResult.put(pubkey, wechatReward * 1l / wechatRewardfactor
+											/ wechatRewardfactor / wechatRewardfactor);
 								}
 							} catch (Exception e) {
 								logger.debug(pubkey, e);
@@ -266,7 +270,7 @@ public class ScheduleRewardService {
 												giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
 														/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									} else {
-										giveMoneyResult.put(pubkey, wechatReward*1l / wechatRewardfactor
+										giveMoneyResult.put(pubkey, wechatReward * 1l / wechatRewardfactor
 												/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									}
 								} catch (Exception e) {
