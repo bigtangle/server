@@ -210,7 +210,7 @@ public class ScheduleRewardService {
 						logger.debug("==============");
 						logger.debug(pubkey);
 						try {
-							// Address.fromBase58(MainNetParams.get(), pubkey);
+							 Address.fromBase58(MainNetParams.get(), pubkey);
 							if (giveMoneyResult.containsKey(pubkey)) {
 								giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
 										+ wechatReward / wechatRewardfactor / wechatRewardfactor);
@@ -237,7 +237,7 @@ public class ScheduleRewardService {
 							// logger.debug("==============");
 							// logger.debug(pubkey);
 							try {
-								// Address.fromBase58(MainNetParams.get(), pubkey);
+								 Address.fromBase58(MainNetParams.get(), pubkey);
 								if (giveMoneyResult.containsKey(pubkey)) {
 									giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward
 											/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
@@ -264,7 +264,7 @@ public class ScheduleRewardService {
 								// logger.debug("==============");
 								//
 								try {
-									// Address.fromBase58(MainNetParams.get(), pubkey);
+								  Address.fromBase58(MainNetParams.get(), pubkey);
 									if (giveMoneyResult.containsKey(pubkey)) {
 										giveMoneyResult.put(pubkey,
 												giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
@@ -274,7 +274,7 @@ public class ScheduleRewardService {
 												/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									}
 								} catch (Exception e) {
-									logger.debug(pubkey, e);
+								//	logger.debug(pubkey, e);
 
 								}
 
