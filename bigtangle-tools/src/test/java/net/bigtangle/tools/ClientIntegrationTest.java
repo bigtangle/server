@@ -295,7 +295,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
         TokenInfo tokenInfo = new TokenInfo();
-        testCreateMultiSigToken(keys, tokenInfo, "test");
+        testCreateMultiSigToken(keys.get(0), tokenInfo, "test");
         UTXO multitemp = null;
         UTXO systemcoin = null;
         List<UTXO> utxos = getBalance(false, keys);
