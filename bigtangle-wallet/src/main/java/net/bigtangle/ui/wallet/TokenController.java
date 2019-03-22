@@ -756,7 +756,9 @@ public class TokenController extends TokenBaseController {
     public void saveMultiToken(ActionEvent event) {
         try {
             ECKey outKey = null;
+            String CONTEXT_ROOT = Main.getContextRoot();
 
+            Main.walletAppKit.wallet().setServerURL(CONTEXT_ROOT);
             KeyParameter aesKey = null;
             final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
             if (!"".equals(Main.password.trim())) {
@@ -815,7 +817,7 @@ public class TokenController extends TokenBaseController {
             }
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF.getText().trim()) < signAddrChoiceBox.getItems().size() + 1) {
+                    && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
 
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
