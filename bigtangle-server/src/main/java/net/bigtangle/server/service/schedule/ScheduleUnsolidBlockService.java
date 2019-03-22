@@ -37,16 +37,10 @@ public class ScheduleUnsolidBlockService {
      */
     @Scheduled(fixedRateString = "${service.updateUnsolideService.rate:5000}")
     public void updateUnsolideService() {
-        if (scheduleConfiguration.isMilestone_active()) {
-            try {
-                logger.debug(" Start ScheduleMilestoneService: ");
-                blockService. deleteOldUnsolidBlock();
-                blockService.reCheckUnsolidBlock(); 
-           
-            } catch (Exception e) {
-                logger.warn("updateUnsolideService ", e);
-            }
+        if (scheduleConfiguration.isMilestone_active()) { 
+            updateUnsolideServiceSingle();
         }
+        
     }
     public void updateUnsolideServiceSingle() {
         if (!lock.tryAcquire()) {
@@ -54,9 +48,10 @@ public class ScheduleUnsolidBlockService {
             return;
         }
         try {
-                logger.debug(" Start ScheduleMilestoneService: ");
+                logger.debug(" Start updateUnsolideServiceSingle: ");
                 blockService. deleteOldUnsolidBlock();
                 blockService.reCheckUnsolidBlock(); 
+                logger.debug(" end  updateUnsolideServiceSingle: ");
 
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
