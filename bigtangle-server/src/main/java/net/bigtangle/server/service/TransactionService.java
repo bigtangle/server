@@ -7,6 +7,7 @@ package net.bigtangle.server.service;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -14,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -63,7 +66,7 @@ public class TransactionService {
 
 	protected CoinSelector coinSelector = new DefaultCoinSelector();
 
-	private final Semaphore lock = new Semaphore(1, true);
+	private final Semaphore lock = new Semaphore(1);
 
 	public ByteBuffer askTransaction() throws Exception {
 		Block rollingBlock = askTransactionBlock();
@@ -89,8 +92,13 @@ public class TransactionService {
 			return;
 		}
 		try {
+		    logger.info("createAndAddMiningRewardBlock  started");
+            Stopwatch watch = Stopwatch.createStarted();
 			Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
 			createAndAddMiningRewardBlock(prevRewardHash);
+			logger.info("createAndAddMiningRewardBlock   time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+	            watch.stop();
 		} finally {
 			lock.release();
 		}

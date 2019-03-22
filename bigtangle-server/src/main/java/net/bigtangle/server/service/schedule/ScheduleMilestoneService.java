@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.service.MilestoneService;
-import net.bigtangle.server.service.TransactionService;
 
 @Component
 @EnableAsync
@@ -21,8 +20,7 @@ public class ScheduleMilestoneService {
     private static final Logger logger = LoggerFactory.getLogger(ScheduleMilestoneService.class);
     @Autowired
     private MilestoneService milestoneService;
-    @Autowired
-    private  TransactionService transactionService;
+  
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 

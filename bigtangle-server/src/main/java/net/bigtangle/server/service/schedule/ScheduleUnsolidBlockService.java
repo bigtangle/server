@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.service.schedule;
 
+import java.util.concurrent.Semaphore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class ScheduleUnsolidBlockService {
     @Autowired
     private  BlockService blockService;
 
+    
+    private final Semaphore lock = new Semaphore(1);
+    
     /*
      * unsolid blocks can be solid, if previous can be found  in  network etc.
      * read data from table oder by insert time,  use add Block to check again, 
@@ -43,5 +48,19 @@ public class ScheduleUnsolidBlockService {
             }
         }
     }
+    public void updateUnsolideServiceSingle() {
+        if (!lock.tryAcquire()) {
+            logger.debug("updateUnsolideService Update already running. Returning...");
+            return;
+        }
+        try {
+                logger.debug(" Start ScheduleMilestoneService: ");
+                blockService. deleteOldUnsolidBlock();
+                blockService.reCheckUnsolidBlock(); 
 
+        } catch (Exception e) {
+            logger.warn("updateUnsolideService ", e);
+        }
+         
+    }
 }
