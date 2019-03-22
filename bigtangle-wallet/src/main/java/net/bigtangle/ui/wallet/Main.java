@@ -99,7 +99,7 @@ import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = MainNetParams.get();
-    public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version;
+    public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version + "-22-03";
     public static final String version = "0.3.3";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
