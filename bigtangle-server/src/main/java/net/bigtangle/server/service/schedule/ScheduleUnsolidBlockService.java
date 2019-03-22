@@ -55,6 +55,8 @@ public class ScheduleUnsolidBlockService {
 
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
+        }    finally {
+            lock.release();
         }
          
     }
