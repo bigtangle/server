@@ -217,7 +217,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
 	public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
 		List<Vm_deposit> l = new ArrayList<Vm_deposit>();
-		String sql = "select userid , amount,  status, pubkey " + "from vm_deposit d "
+		String sql = "select userid , amount,  d.status, pubkey " + "from vm_deposit d "
 				+ "join Account a on d.userid=a.id "
 				+ "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
 
