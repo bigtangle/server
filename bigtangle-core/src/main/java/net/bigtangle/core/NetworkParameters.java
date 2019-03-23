@@ -169,10 +169,9 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final int REWARD_HEIGHT_INTERVAL = 10; 
+    public static final int REWARD_HEIGHT_INTERVAL = 500; 
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-    public static final long TARGET_YEARLY_MINING_PAYOUT = 20000000000L; //3 digits after comma, 2% of 1 trillion total supply
-
+   
     public static final int TARGET_MAX_TPS = 10;
     public static final long REWARD_OVERRULE_TIME_MS = 3000;
 
@@ -185,10 +184,10 @@ public abstract class NetworkParameters {
     // max time of an order in seconds 
 	public static final long ORDER_TIMEOUT_MAX = 8*60*60;
 
-
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 	public static long testCoin = 1000000000000000l;
+	 public static final long TARGET_YEARLY_MINING_PAYOUT =testCoin /1000;
 
 	protected NetworkParameters() {
 	}
