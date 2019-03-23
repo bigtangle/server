@@ -103,17 +103,9 @@ public class ScheduleRewardService {
 						logger.info("wechat invite give money : " + entry.getKey() + ", money : "
 								+ (entry.getValue().size() * wechatReward));
 						for (WechatInvite wechatInvite : entry.getValue()) {
-							boolean flag = true;
-							try {
-								Address.fromBase58(MainNetParams.get(), wechatInvite.getPubkey());
-							} catch (Exception e) {
-								// logger.debug("", e);
-								flag = false;
-							}
-							if (flag) {
-								this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
-								logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
-							}
+
+							this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+							logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
 
 						}
 					}
@@ -210,7 +202,7 @@ public class ScheduleRewardService {
 						logger.debug("==============");
 						logger.debug(pubkey);
 						try {
-							 Address.fromBase58(MainNetParams.get(), pubkey);
+							Address.fromBase58(MainNetParams.get(), pubkey);
 							if (giveMoneyResult.containsKey(pubkey)) {
 								giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey)
 										+ wechatReward / wechatRewardfactor / wechatRewardfactor);
@@ -237,7 +229,7 @@ public class ScheduleRewardService {
 							// logger.debug("==============");
 							// logger.debug(pubkey);
 							try {
-								 Address.fromBase58(MainNetParams.get(), pubkey);
+								Address.fromBase58(MainNetParams.get(), pubkey);
 								if (giveMoneyResult.containsKey(pubkey)) {
 									giveMoneyResult.put(pubkey, giveMoneyResult.get(pubkey) + wechatReward
 											/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
@@ -264,7 +256,7 @@ public class ScheduleRewardService {
 								// logger.debug("==============");
 								//
 								try {
-								  Address.fromBase58(MainNetParams.get(), pubkey);
+									Address.fromBase58(MainNetParams.get(), pubkey);
 									if (giveMoneyResult.containsKey(pubkey)) {
 										giveMoneyResult.put(pubkey,
 												giveMoneyResult.get(pubkey) + wechatReward / wechatRewardfactor
@@ -274,7 +266,7 @@ public class ScheduleRewardService {
 												/ wechatRewardfactor / wechatRewardfactor / wechatRewardfactor);
 									}
 								} catch (Exception e) {
-								//	logger.debug(pubkey, e);
+									// logger.debug(pubkey, e);
 
 								}
 
