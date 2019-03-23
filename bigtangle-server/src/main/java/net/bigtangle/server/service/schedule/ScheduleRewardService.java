@@ -25,7 +25,7 @@ public class ScheduleRewardService {
     @Autowired
     private  TransactionService transactionService;
 
-    @Scheduled(fixedDelay = 90000)
+    @Scheduled(fixedDelay = 300000)
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
