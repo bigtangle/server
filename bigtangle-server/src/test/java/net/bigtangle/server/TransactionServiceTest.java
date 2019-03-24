@@ -50,7 +50,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
@@ -64,7 +64,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         
         // After updating, we shall make new blocks now
         rollingBlock = rewardBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);

@@ -69,7 +69,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -106,7 +106,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -209,7 +209,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -246,7 +246,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -285,7 +285,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -324,7 +324,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -357,7 +357,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -387,7 +387,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Cancel
@@ -434,7 +434,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -604,7 +604,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts, true);
 
         // Verify deterministic overall execution
@@ -643,7 +643,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -717,7 +717,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Open orders

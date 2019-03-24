@@ -133,8 +133,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             checkState(lock.isHeldByCurrentThread());
 
-            StoredBlock storedPrev = blockStore.get(block.getPrevBlockHash());
-            StoredBlock storedPrevBranch = blockStore.get(block.getPrevBranchBlockHash());
+            BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
+            BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
             
             // Check the block's solidity, if dependency missing, put on waiting list unless disallowed
             // The class SolidityState is used for the Spark implementation and should stay.
@@ -156,7 +156,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Otherwise, all dependencies exist and the block has been validated
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    connect(block, Math.max(storedPrev.getHeight(), storedPrevBranch.getHeight()) + 1);
+                    connect(block, Math.max(storedPrev.getBlockEvaluation().getHeight(), storedPrevBranch.getBlockEvaluation().getHeight()) + 1);
                     blockStore.commitDatabaseBatchWrite();
                     return true;
                 } catch (BlockStoreException e) {
@@ -1343,7 +1343,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         long fromHeight = prevToHeight + 1;
-        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL;
+        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(), 
+                prevBranchBlock.getBlockEvaluation().getHeight()) 
+                - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
 
         // Initialize
         BlockWrap currentBlock = null, approvedBlock = null;
@@ -1461,7 +1463,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         long fromHeight = prevToHeight + 1;
-        long toHeight = prevToHeight + (long) NetworkParameters.REWARD_HEIGHT_INTERVAL;
+        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(), 
+                prevBranchBlock.getBlockEvaluation().getHeight()) 
+                - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
 
         // Initialize
         Set<BlockWrap> currentHeightBlocks = new HashSet<>();

@@ -393,8 +393,8 @@ public abstract class AbstractIntegrationTest {
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
         long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedRewardBlockHash());
-        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_HEIGHT_INTERVAL 
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; // TODO change other tests to this too...
+        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL 
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE; // TODO change other tests to this too...
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);

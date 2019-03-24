@@ -81,7 +81,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -261,7 +261,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -402,7 +402,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -490,7 +490,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -615,7 +615,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -706,7 +706,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i1++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
@@ -862,7 +862,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -952,7 +952,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -1080,7 +1080,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -1170,19 +1170,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing second reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i1++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i1++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-
         // Generate mining reward block
+        Block rollingBlock = networkParameters.getGenesisBlock();
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+                + 1; i1++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
         Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
@@ -1194,6 +1188,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
 
         // Generate second mining reward block
+        rollingBlock = rewardBlock11;
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+                + 1; i1++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
         Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
@@ -1240,7 +1240,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
                 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);

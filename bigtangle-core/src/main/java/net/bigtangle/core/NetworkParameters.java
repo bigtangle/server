@@ -169,7 +169,7 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final int REWARD_HEIGHT_INTERVAL = 500; 
+    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10; //TODO revert
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
    
     public static final int TARGET_MAX_TPS = 10;
