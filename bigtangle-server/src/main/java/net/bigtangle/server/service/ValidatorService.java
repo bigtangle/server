@@ -324,9 +324,7 @@ public class ValidatorService {
 
     private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
             long currPerTxReward, long totalRewardCount, long difficulty, long prevDifficulty) {
-        // TODO payout percentages via time interval instead of perTxReward
-        
-        // The following is used as proxy for current time by consensus rules
+        // The previous time max is equal to the block time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
                 prevBranchBlock.getBlock().getTimeSeconds());
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
@@ -967,8 +965,7 @@ public class ValidatorService {
 
             // TODO different block type transactions should include their block
             // type in the transaction hash
-            // for now, we must disallow someone burning this transaction as
-            // non-order opening
+            // for now, we must disallow someone burning other people's orders
             if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
                 for (Transaction tx : block.getTransactions())
                     try {
@@ -1034,7 +1031,7 @@ public class ValidatorService {
             }
 
             // Check type-specific solidity
-            SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, height, throwExceptions);
+            SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch, height, throwExceptions);
             if (!(typeSpecificSolidityState.getState() == State.Success)) {
                 return typeSpecificSolidityState;
             }
@@ -1225,7 +1222,7 @@ public class ValidatorService {
         return true;
     }
 
-    private SolidityState checkTypeSpecificSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkTypeSpecificSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height, boolean throwExceptions)
             throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
@@ -1238,7 +1235,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_REWARD:
             // Check rewards are solid
-            SolidityState rewardSolidityState = checkRewardSolidity(block, height, throwExceptions);
+            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch, height, throwExceptions);
             if (!(rewardSolidityState.getState() == State.Success)) {
                 return rewardSolidityState;
             }
@@ -1564,7 +1561,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkRewardSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkRewardSolidity(Block block, StoredBlock storedPrev, StoredBlock storedPrevBranch, long height, boolean throwExceptions)
             throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
@@ -1638,6 +1635,13 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too close to the rewarded interval");
             return SolidityState.getFailState();
         }
+        
+        // Ensure the timestamps are correct
+        if (block.getTimeSeconds() != Math.max(storedPrev.getHeader().getTimeSeconds(), storedPrevBranch.getHeader().getTimeSeconds())) {
+            if (throwExceptions)
+                throw new TimeReversionException();
+            return SolidityState.getFailState();
+        }
 
         // Ensure the new difficulty is set correctly
         Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(block.getPrevBlockHash(),
@@ -1646,7 +1650,7 @@ public class ValidatorService {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect difficulty target");
             return SolidityState.getFailState();
-        }
+        }        
 
         // Fallback: Ensure the reward information is generated canonically
         if (!block.getTransactions().get(0).equals(result.getMiddle())) {

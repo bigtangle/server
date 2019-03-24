@@ -1530,11 +1530,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         }
 
-        // Exception for height 0 (genesis): since prevblock null, finish payout
+        // Exception for height 0 (genesis): since prevblock does not exist, finish payout
         // calculation
         if (currentHeight == 0) {
-            // For each height, throw away anything below the 99-percentile
-            // in terms of reduced weight
             totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
                     totalRewardCount);
         }
@@ -1555,6 +1553,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return tx;
     }
 
+    // For each height, throw away anything below the 99-percentile
+    // in terms of reduced weight
     private long calculateHeightRewards(Set<BlockWrap> currentHeightBlocks,
             Map<BlockWrap, Set<Sha256Hash>> snapshotWeights, Map<Address, Long> finalRewardCount,
             long totalRewardCount) {
