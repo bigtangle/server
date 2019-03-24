@@ -248,7 +248,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
-	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+    public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
+
+    public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException;
 	
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;

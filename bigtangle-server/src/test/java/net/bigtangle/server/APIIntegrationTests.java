@@ -6,7 +6,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -48,7 +47,6 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.VerificationException.TimeTravelerException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;

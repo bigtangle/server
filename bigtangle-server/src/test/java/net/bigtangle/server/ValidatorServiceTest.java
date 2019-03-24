@@ -105,7 +105,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         Block b = r2.createNextBlock(r1);
-        b.setNonce(1377836811);
+        for (int i = 0; i < 300; i++) {
+            b.setNonce(i);
+            try {
+                b.verifyHeader();
+            } catch (ProofOfWorkException e) {
+                break;
+            }
+        }
         try {
             blockService.saveBlock(b);
             fail();

@@ -286,7 +286,7 @@ public class ValidatorService {
                 store.getRewardNextTxReward(prevRewardHash), totalRewardCount, difficulty, prevDifficulty);
 
         // Invalid if not fulfilling consensus rules
-        if (toHeight - fromHeight <  + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1)
+        if (Math.subtractExact(toHeight, fromHeight) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1)
             return Triple.of(RewardEligibility.INVALID, tx, Pair.of(difficulty, perTxReward));        
 
         // Ensure enough blocks are approved to be eligible
@@ -561,10 +561,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) // prefilter
-                                                                                                      // for
-                                                                                                      // reward
-                                                                                                      // blocks
+        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) 
                 .filter(b -> {
                     try {
                         switch (store.getRewardEligible(b.getBlock().getHash())) {
@@ -603,10 +600,8 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
-        new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isMilestone()) // Milestones
-                                                                                                        // are
-                                                                                                        // always
-                                                                                                        // ok
+        // Milestone blocks are always ok
+        new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isMilestone()) 
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
                     try {
                         return !isConfirmed(c); // Any candidates where used
@@ -1450,7 +1445,6 @@ public class ValidatorService {
             }
         }
         
-        // TODO put overflow checks everywhere!
         if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(), NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
                 throw new InvalidOrderException("The given order's timeout is too long.");
@@ -1626,9 +1620,6 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Invalid fromHeight");
             return SolidityState.getFailState();
         }
-
-        // TODO replace with checked arithmetics everywhere
-        // TODO test bigger reward intervals work as expected
         
         // Ensure toHeights follow the rules
         if (rewardInfo.getToHeight() != Math.max(storedPrev.getBlockEvaluation().getHeight(), 
@@ -1640,7 +1631,7 @@ public class ValidatorService {
         }
         
         // Ensure heights follow the rules
-        if (rewardInfo.getToHeight() - rewardInfo.getFromHeight() < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1) {
+        if (Math.subtractExact(rewardInfo.getToHeight(), rewardInfo.getFromHeight()) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid heights");
             return SolidityState.getFailState();

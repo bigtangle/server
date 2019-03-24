@@ -5,6 +5,7 @@
 package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutPoint;
@@ -86,6 +88,41 @@ public class TransactionService {
 		Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
 		return r1.createNextBlock(r2);
+	}
+	
+	public Block createAndAddOrderReclaim(Sha256Hash reclaimedOrder, Sha256Hash orderMatchingHash) throws Exception {
+        Transaction tx = new Transaction(networkParameters);
+        OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, orderMatchingHash);
+        tx.setData(info.toByteArray());
+
+        // Create block with order reclaim
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+
+        Block block = r1.createNextBlock(r2);
+        block.addTransaction(tx);
+        block.setBlockType(Block.Type.BLOCKTYPE_ORDER_RECLAIM);
+
+        block.solve();
+        blockgraph.add(block, false);
+        return block;
+	}
+	
+	public List<Block> performOrderReclaims() throws Exception {
+	    // Find height from which on all orders are finished
+        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+        long finishedHeight = store.getRewardToHeight(prevRewardHash);
+        
+        // Find orders that are unspent confirmed with height lower than the passed matching
+        List<Sha256Hash> lostOrders = store.getLostOrders(finishedHeight);
+
+        // Perform reclaim for each of the lost orders
+        List<Block> result = new ArrayList<>();
+        for (Sha256Hash lostOrder : lostOrders) {
+            result.add(createAndAddOrderReclaim(lostOrder, prevRewardHash));
+        }
+        return result;
 	}
 	
 	/**

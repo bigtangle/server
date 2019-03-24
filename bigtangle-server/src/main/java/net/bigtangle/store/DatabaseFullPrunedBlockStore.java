@@ -232,6 +232,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, "
             + "spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiaryaddress"
             + " FROM openorders WHERE collectinghash = ?";
+    protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
+            + " FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash"
+            + " WHERE blocks.height <= ? AND blocks.milestone = 1" + afterSelect();
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
@@ -4889,6 +4892,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
                         resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
                         resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15)));
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<Sha256Hash> result = new ArrayList<>();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_LOST_ORDERS_BEFORE_SQL);
+            preparedStatement.setLong(1, toHeight);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                result.add(Sha256Hash.wrap(resultSet.getBytes(1)));
             }
             return result;
         } catch (SQLException ex) {

@@ -35,6 +35,49 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderMatchTest extends AbstractIntegrationTest {
+    
+    // TODO after splitting order matching and rewarding, we can check token amount invariance everywhere always!
+
+    @Test
+    public void testOrderReclaim() throws Exception {
+        @SuppressWarnings({ "deprecation", "unused" })
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  walletKeys.get(8);;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open lost sell order for test tokens
+        Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        
+        // Execute order matching losing the order
+        Block match = makeAndConfirmOrderMatching(addedBlocks, networkParameters.getGenesisBlock());
+        
+        // Fuse and let all be confirmed
+        addedBlocks.add(createAndAddNextBlock(sell, match));
+        milestoneService.update();
+        
+        // Try reclaiming
+        addedBlocks.addAll(transactionService.performOrderReclaims());
+        milestoneService.update();
+        
+        // Verify the tokens returned possession
+        assertHasAvailableToken(testKey, testKey.getPublicKeyAsHex(), 77777l);
+
+        // Verify token amount invariance (adding the mining reward)
+        origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL);
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
 
     @Test
     public void buy() throws Exception {

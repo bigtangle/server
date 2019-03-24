@@ -154,7 +154,6 @@ public abstract class AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
-        // TODO This (saveBlock) calls milestoneUpdate currently
         block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>());
@@ -394,7 +393,7 @@ public abstract class AbstractIntegrationTest {
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
         long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedRewardBlockHash());
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL 
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE; // TODO change other tests to this too...
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE; 
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
@@ -557,6 +556,7 @@ public abstract class AbstractIntegrationTest {
         return tx;
     }
 
+    @SuppressWarnings("deprecation")
     protected void walletKeys() throws Exception {
         KeyParameter aesKey = null;
         File f = new File("./logs/", "bigtangle");
