@@ -25,6 +25,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
@@ -90,6 +91,14 @@ public class TransactionService {
 		return r1.createNextBlock(r2);
 	}
 	
+	/**
+	 * Generates an order reclaim block for the given order and order matching hash
+	 * 
+	 * @param reclaimedOrder
+	 * @param orderMatchingHash
+	 * @return generated block
+	 * @throws Exception
+	 */
 	public Block createAndAddOrderReclaim(Sha256Hash reclaimedOrder, Sha256Hash orderMatchingHash) throws Exception {
         Transaction tx = new Transaction(networkParameters);
         OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, orderMatchingHash);
@@ -108,11 +117,18 @@ public class TransactionService {
         blockgraph.add(block, false);
         return block;
 	}
-	
+
+    
+    /**
+     * Runs the order reclaim logic: look for lost orders and issue reclaims for the orders
+     * 
+     * @return the new blocks
+     * @throws Exception
+     */
 	public List<Block> performOrderReclaims() throws Exception {
 	    // Find height from which on all orders are finished
-        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-        long finishedHeight = store.getRewardToHeight(prevRewardHash);
+        Sha256Hash prevRewardHash = store.getMaxConfirmedOrderMatchingBlockHash();
+        long finishedHeight = store.getOrderMatchingToHeight(prevRewardHash);
         
         // Find orders that are unspent confirmed with height lower than the passed matching
         List<Sha256Hash> lostOrders = store.getLostOrders(finishedHeight);
@@ -124,6 +140,105 @@ public class TransactionService {
         }
         return result;
 	}
+
+    
+    /**
+     * Runs the reward voting logic: push existing best eligible reward if exists or make a new eligible reward now
+     * 
+     * @return the new block or block voted on
+     * @throws Exception
+     */
+	public Block performOrderMatchingVoting() throws Exception {
+        // Find eligible rewards building on top of the newest reward
+        Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
+        List<Sha256Hash> candidateHashes = store.getOrderMatchingBlocksWithPrevHash(prevHash);
+        candidateHashes.removeIf(c -> {
+            try {
+                return store.getOrderMatchingEligible(c) != Eligibility.ELIGIBLE;
+            } catch (BlockStoreException e) {
+                // Cannot happen
+                throw new RuntimeException();
+            }
+        });
+        
+        // Find the one most likely to win
+        List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
+        BlockWrap votingTarget = candidates.stream().max(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating())).orElse(null);
+        
+        // If exists, push that one, else make new one
+        if (votingTarget != null) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+            blockgraph.add(r1.createNextBlock(r2), false);
+            return votingTarget.getBlock();
+        } else {
+            return createAndAddOrderMatchingBlock();
+        }
+	}
+
+    public Block createAndAddOrderMatchingBlock() throws Exception {
+        logger.info("createAndAddMiningRewardBlock  started");
+        Stopwatch watch = Stopwatch.createStarted();
+        
+        if (!lock.tryAcquire()) {
+            logger.debug("createAndAddMiningRewardBlock already running. Returning...");
+            return null;
+        }
+        
+        try {
+            Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+            return createAndAddOrderMatchingBlock(prevRewardHash);
+        } finally {
+            lock.release();
+            logger.info("createAndAddMiningRewardBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        }
+    }
+
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash) throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        return createAndAddOrderMatchingBlock(prevHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+    }
+
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
+        return createAndAddOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws Exception {
+
+        Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
+        blockgraph.add(block, false);
+        return block;
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws BlockStoreException {
+        return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws BlockStoreException {
+        
+        BlockWrap r1 = blockService.getBlockWrap(prevTrunk);
+        BlockWrap r2 = blockService.getBlockWrap(prevBranch);
+
+        Block block = new Block(networkParameters, r1.getBlock(), r2.getBlock());
+        block.setBlockType(Block.Type.BLOCKTYPE_ORDER_MATCHING);
+        
+        OrderMatchingInfo info = new OrderMatchingInfo(store.getOrderMatchingToHeight(prevHash)
+                - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE, 
+                Math.max(r1.getBlockEvaluation().getHeight(), r2.getBlockEvaluation().getHeight()) + 1, prevHash);
+
+        // Add the data
+        Transaction tx = new Transaction(networkParameters);
+        tx.setData(info.toByteArray());
+        block.addTransaction(tx);
+
+        block.solve();
+        return block;
+    }
 	
 	/**
 	 * Runs the reward voting logic: push existing best eligible reward if exists or make a new eligible reward now
@@ -137,7 +252,7 @@ public class TransactionService {
         List<Sha256Hash> candidateHashes = store.getRewardBlocksWithPrevHash(prevRewardHash);
         candidateHashes.removeIf(c -> {
             try {
-                return store.getRewardEligible(c) != RewardEligibility.ELIGIBLE;
+                return store.getRewardEligible(c) != Eligibility.ELIGIBLE;
             } catch (BlockStoreException e) {
                 // Cannot happen
                 throw new RuntimeException();
@@ -160,77 +275,77 @@ public class TransactionService {
         }
 	}
 
-	public Block createAndAddMiningRewardBlock() throws Exception {
+    public Block createAndAddMiningRewardBlock() throws Exception {
         logger.info("createAndAddMiningRewardBlock  started");
         Stopwatch watch = Stopwatch.createStarted();
         
-		if (!lock.tryAcquire()) {
-			logger.debug("createAndAddMiningRewardBlock  already running. Returning...");
-			return null;
-		}
-		
-		try {
-			Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-			return createAndAddMiningRewardBlock(prevRewardHash);
-		} finally {
+        if (!lock.tryAcquire()) {
+            logger.debug("createAndAddMiningRewardBlock already running. Returning...");
+            return null;
+        }
+        
+        try {
+            Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+            return createAndAddMiningRewardBlock(prevRewardHash);
+        } finally {
             lock.release();
-            logger.info("createAndAddMiningRewardBlock   time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-		}
-	}
+            logger.info("createAndAddMiningRewardBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        }
+    }
 
-	public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-		return createAndAddMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
-	}
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        return createAndAddMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+    }
 
-	public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-			throws Exception {
-		return createAndAddMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
-	}
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
+        return createAndAddMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
+    }
 
-	public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-			boolean override) throws Exception {
+    public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws Exception {
 
-		Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
-		blockgraph.add(block, false);
-		return block;
-	}
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
+        blockgraph.add(block, false);
+        return block;
+    }
 
-	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-			throws BlockStoreException {
-		return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
-	}
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws BlockStoreException {
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
+    }
 
-	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-			boolean override) throws BlockStoreException {
-		Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk,
-				prevBranch, prevRewardHash);
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws BlockStoreException {
+        Triple<Eligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk,
+                prevBranch, prevRewardHash);
 
-		if (result.getLeft() != RewardEligibility.ELIGIBLE) {
-			if (!override) {
-			    logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
-			    return null;
-			}
-			logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
-		}
+        if (result.getLeft() != Eligibility.ELIGIBLE) {
+            if (!override) {
+                logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
+                return null;
+            }
+            logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
+        }
 
-		Block r1 = blockService.getBlock(prevTrunk);
-		Block r2 = blockService.getBlock(prevBranch);
+        Block r1 = blockService.getBlock(prevTrunk);
+        Block r2 = blockService.getBlock(prevBranch);
 
-		Block block = new Block(networkParameters, r1, r2);
-		block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
+        Block block = new Block(networkParameters, r1, r2);
+        block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
 
-		// Make the new block
-		block.addTransaction(result.getMiddle());
-		block.setDifficultyTarget(result.getRight().getLeft());
-		block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
+        // Make the new block
+        block.addTransaction(result.getMiddle());
+        block.setDifficultyTarget(result.getRight().getLeft());
+        block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
 
-		// Enforce timestamp equal to previous max for reward blocktypes
-		block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        // Enforce timestamp equal to previous max for reward blocktypes
+        block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
-		block.solve();
-		return block;
-	}
+        block.solve();
+        return block;
+    }
 
 	public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
 		return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();

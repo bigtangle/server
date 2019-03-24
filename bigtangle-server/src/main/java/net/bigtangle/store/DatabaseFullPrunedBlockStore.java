@@ -64,7 +64,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
-import net.bigtangle.server.service.RewardEligibility;
+import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -99,6 +99,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
     public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
     public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS openorders";
+    public static String DROP_ORDER_MATCHING_TABLE = "DROP TABLE IF EXISTS ordermatching";
     public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
 
     // Queries SQL.
@@ -367,6 +368,24 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_NEXT_TX_REWARD_SQL = "UPDATE txreward SET nexttxreward = ? WHERE blockhash = ?";
+    
+    /* ORDER MATCHING BLOCKS */
+    protected final String INSERT_ORDER_MATCHING_SQL = getInsert()
+            + "  INTO ordermatching (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_ORDER_MATCHING_TOHEIGHT_SQL = "SELECT toheight FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_MAX_CONFIRMED_SQL = "SELECT blockhash FROM ordermatching WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM ordermatching WHERE confirmed=1)";
+    protected final String SELECT_ORDER_MATCHING_CONFIRMED_SQL = "SELECT confirmed " + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_ELIGIBLE_SQL = "SELECT eligibility " + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_SPENT_SQL = "SELECT spent " + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_SPENDER_SQL = "SELECT spenderblockhash "
+            + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_PREVBLOCKHASH_SQL = "SELECT prevblockhash "
+            + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_WHERE_PREV_HASH_SQL = "SELECT blockhash "
+            + "FROM ordermatching WHERE prevblockhash = ?";
+    protected final String UPDATE_ORDER_MATCHING_CONFIRMED_SQL = "UPDATE ordermatching SET confirmed = ? WHERE blockhash = ?";
+    protected final String UPDATE_ORDER_MATCHING_SPENT_SQL = "UPDATE ordermatching SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
+    protected final String UPDATE_ORDER_MATCHING_NEXT_TX_REWARD_SQL = "UPDATE ordermatching SET nexttxreward = ? WHERE blockhash = ?";
 
     /* OTHER */
     protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
@@ -595,6 +614,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_BATCHBLOCK_TABLE);
         sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(DROP_ORDERS_TABLE);
+        sqlStatements.add(DROP_ORDER_MATCHING_TABLE);
         sqlStatements.add(DROP_CONFIRMATION_DEPENDENCY_TABLE);
         return sqlStatements;
     }
@@ -851,9 +871,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertReward(params.getGenesisBlock().getHash(), 0, RewardEligibility.ELIGIBLE,
+            insertReward(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE,
                     Sha256Hash.ZERO_HASH, NetworkParameters.REWARD_INITIAL_TX_REWARD);
+            insertOrderMatching(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE,
+                    Sha256Hash.ZERO_HASH);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
+            updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
             // Token output table
             Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, "BIG",
@@ -3534,7 +3557,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException {
+    public Eligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3542,7 +3565,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            return RewardEligibility.values()[resultSet.getInt(1)];
+            return Eligibility.values()[resultSet.getInt(1)];
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
@@ -3674,7 +3697,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash,
+    public void insertReward(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash,
             long nextTxReward) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3765,6 +3788,77 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_NEXT_TX_REWARD_SQL);
+            preparedStatement.setBytes(1, blockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<Sha256Hash> list = new ArrayList<Sha256Hash>();
+            while (resultSet.next()) {
+                list.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
@@ -4466,77 +4560,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_NEXT_TX_REWARD_SQL);
-            preparedStatement.setBytes(1, blockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getLong(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return Sha256Hash.wrap(resultSet.getBytes(1));
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-    
-    @Override
-    public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
-            preparedStatement.setBytes(1, hash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<Sha256Hash> list = new ArrayList<Sha256Hash>();
-            while (resultSet.next()) {
-                list.add(Sha256Hash.wrap(resultSet.getBytes(1)));
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
@@ -5351,6 +5374,267 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (s != null) {
                 try {
                     s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public Eligibility getOrderMatchingEligible(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_ELIGIBLE_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Eligibility.values()[resultSet.getInt(1)];
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_SPENT_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getOrderMatchingSpender(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_SPENDER_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            return resultSet.getBytes(1) == null ? null : Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getOrderMatchingPrevBlockHash(Sha256Hash blockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_PREVBLOCKHASH_SQL);
+            preparedStatement.setBytes(1, blockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public long getOrderMatchingToHeight(Sha256Hash blockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_TOHEIGHT_SQL);
+            preparedStatement.setBytes(1, blockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean getOrderMatchingConfirmed(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_CONFIRMED_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getBoolean(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_ORDER_MATCHING_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.setLong(2, toHeight);
+            preparedStatement.setBoolean(3, false);
+            preparedStatement.setBoolean(4, false);
+            preparedStatement.setBytes(5, null);
+            preparedStatement.setInt(6, eligibility.ordinal());
+            preparedStatement.setBytes(7, prevBlockHash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateOrderMatchingConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_MATCHING_CONFIRMED_SQL);
+            preparedStatement.setBoolean(1, b);
+            preparedStatement.setBytes(2, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateOrderMatchingSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_MATCHING_SPENT_SQL);
+            preparedStatement.setBoolean(1, b);
+            preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
+            preparedStatement.setBytes(3, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Sha256Hash getMaxConfirmedOrderMatchingBlockHash() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_MAX_CONFIRMED_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getOrderMatchingBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_WHERE_PREV_HASH_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<Sha256Hash> list = new ArrayList<Sha256Hash>();
+            while (resultSet.next()) {
+                list.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Failed to close PreparedStatement");
                 }

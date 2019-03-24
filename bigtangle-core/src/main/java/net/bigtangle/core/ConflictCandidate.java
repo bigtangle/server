@@ -34,6 +34,10 @@ public class ConflictCandidate {
         return new ConflictCandidate(block, ConflictPoint.fromOrder(order));
     }
 
+    public static ConflictCandidate fromOrderMatching(BlockWrap block, OrderMatchingInfo order) {
+        return new ConflictCandidate(block, ConflictPoint.fromOrderMatching(order));
+    }
+
     public static ConflictCandidate fromConflictPoint(BlockWrap block, ConflictPoint conflictPoint) {
         return new ConflictCandidate(block, conflictPoint);
     }

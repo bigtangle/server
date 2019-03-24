@@ -90,6 +90,16 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   nexttxreward bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) )";
     
+    private static final String CREATE_ORDER_MATCHING_TABLE = "CREATE TABLE ordermatching (\n"
+            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   toheight bigint NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash varbinary(32),\n"
+            + "   eligibility int NOT NULL,\n"
+            + "   prevblockhash varbinary(32) NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) )";
+    
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n" 
             + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
@@ -258,6 +268,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ORDERS_TABLE);
+        sqlStatements.add(CREATE_ORDER_MATCHING_TABLE);
         sqlStatements.add(CREATE_CONFIRMATION_DEPENDENCY_TABLE);
         return sqlStatements;
     }

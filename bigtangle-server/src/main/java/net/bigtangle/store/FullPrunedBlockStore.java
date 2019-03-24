@@ -35,7 +35,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.KafkaMessageProducer;
-import net.bigtangle.server.service.RewardEligibility;
+import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -257,7 +257,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
 
-    public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
+    public Eligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
 
     public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;
 
@@ -267,7 +267,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, long toHeight, RewardEligibility eligibility, Sha256Hash prevBlockHash,
+    public void insertReward(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash,
             long nextTxReward) throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
@@ -279,6 +279,29 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public Sha256Hash getRewardSpender(Sha256Hash hash) throws BlockStoreException;
 
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
+    
+    /* Order Matching TXOs */
+    public Sha256Hash getMaxConfirmedOrderMatchingBlockHash() throws BlockStoreException;
+
+    public List<Sha256Hash> getOrderMatchingBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
+
+    public Eligibility getOrderMatchingEligible(Sha256Hash hash) throws BlockStoreException;
+
+    public long getOrderMatchingToHeight(Sha256Hash blockHash) throws BlockStoreException;
+
+    public boolean getOrderMatchingConfirmed(Sha256Hash hash) throws BlockStoreException;
+
+    public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException;
+
+    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash) throws BlockStoreException;
+
+    public void updateOrderMatchingConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
+
+    public void updateOrderMatchingSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
+
+    public Sha256Hash getOrderMatchingSpender(Sha256Hash hash) throws BlockStoreException;
+
+    public Sha256Hash getOrderMatchingPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
 
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;

@@ -549,13 +549,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 		
 		// Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);

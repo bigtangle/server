@@ -47,6 +47,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
@@ -74,7 +75,7 @@ import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
-import net.bigtangle.server.service.RewardEligibility;
+import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
@@ -82,13 +83,7 @@ import net.bigtangle.server.service.ValidatorService;
 /**
  * <p>
  * A FullPrunedBlockChain works in conjunction with a
- * {@link FullPrunedBlockStore} to verify all the rules of the Bitcoin system,
- * with the downside being a large cost in system resources. Fully verifying
- * means all unspent transaction outputs are stored. Once a transaction output
- * is spent and that spend is buried deep enough, the data related to it is
- * deleted to ensure disk space usage doesn't grow forever. For this reason a
- * pruning node cannot serve the full block chain to other clients, but it
- * nevertheless provides the same security guarantees as Bitcoin Core does.
+ * {@link FullPrunedBlockStore} to verify all the rules of the BigTangle system.
  * </p>
  */
 @Service
@@ -328,9 +323,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             // For rewards, update reward to be confirmed now
             confirmReward(block);
-            
-            // Also do the orders here, since we merged order matching into the rewards
-            confirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // For token creations, update token db
@@ -353,6 +345,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		case BLOCKTYPE_ORDER_RECLAIM:
 			confirmOrderReclaim(block);
 			break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            // Do order matching
+            confirmOrderMatching(block);
+            break;
         default:
             throw new NotImplementedException();
         
@@ -425,6 +421,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set new orders confirmed
         for (OrderRecord o : matchingResult.getRight())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
+        
+        // Set used other output spent
+        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getHash()), true, block.getHash());
+
+        // Set own output confirmed
+        blockStore.updateOrderMatchingConfirmed(block.getHash(), true);
     }
 
     private void confirmOrderReclaim(Block block) throws BlockStoreException {
@@ -613,9 +615,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             // Unconfirm dependents
             unconfirmRewardDependents(block, traversedBlockHashes);
-            
-            // Also do order matching since it is merged into rewards
-            unconfirmOrderMatchingDependents(block, traversedBlockHashes);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
@@ -637,6 +636,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		case BLOCKTYPE_ORDER_RECLAIM:
 			unconfirmOrderReclaimDependents(block, traversedBlockHashes);
 			break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            unconfirmOrderMatchingDependents(block, traversedBlockHashes);
+            break;
         default:
             throw new NotImplementedException();
         
@@ -647,9 +649,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Get list of consumed orders, virtual order matching tx and newly generated remaining order book
         Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> matchingResult = generateOrderMatching(block);
         
-        // Disconnect reward record spender
-        if (blockStore.getRewardSpent(block.getHash())) {
-            removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+        // Disconnect matching record spender
+        if (blockStore.getOrderMatchingSpent(block.getHash())) {
+            removeBlockFromMilestone(blockStore.getOrderMatchingSpender(block.getHash()), traversedBlockHashes);
         }
         
         // Disconnect all virtual transaction output dependents
@@ -737,9 +739,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_REWARD:
             unconfirmReward(block);
-            
-            // Also do the orders here, since we merged order matching into the rewards
-            unconfirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             unconfirmToken(block.getHashAsString());
@@ -760,6 +759,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 		case BLOCKTYPE_ORDER_RECLAIM:
             unconfirmOrderReclaim(block);
 			break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            unconfirmOrderMatching(block);
+            break;
         default:
             throw new NotImplementedException();
         
@@ -781,6 +783,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set new orders unconfirmed
         for (OrderRecord o : matchingResult.getRight())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false);
+        
+        // Set used other output unspent
+        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getHash()), false, null);
+
+        // Set own output unconfirmed
+        blockStore.updateOrderMatchingConfirmed(block.getHash(), false);
     }
 
     private void unconfirmOrderReclaim(Block block) throws BlockStoreException {
@@ -973,6 +981,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 			break;
 		case BLOCKTYPE_ORDER_RECLAIM:
 			break;
+		case BLOCKTYPE_ORDER_MATCHING:
+            connectOrderMatching(block);
         default:
             break;
         
@@ -999,9 +1009,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    private void connectOrderMatching(Block block) throws BlockStoreException {
+        // Check if eligible:
+        Eligibility eligiblity = validatorService.checkOrderMatchingEligibility(block);    
+        
+        try {
+            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
+            Sha256Hash prevHash = info.getPrevHash();
+            long toHeight = info.getToHeight();
+   
+            blockStore.insertOrderMatching(block.getHash(), toHeight, eligiblity, prevHash);
+        } catch (IOException e) {
+            // Cannot happen when connecting
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
     private void connectReward(Block block) throws BlockStoreException {
         // Check if eligible:
-        Pair<RewardEligibility, Long> eligiblityAndTxReward = validatorService.checkRewardEligibility(block);    
+        Pair<Eligibility, Long> eligiblityAndTxReward = validatorService.checkRewardEligibility(block);    
         
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
@@ -1071,32 +1098,41 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Map<ByteBuffer, TreeMap<String, Long>> pubKey2Proceeds = new HashMap<>();
         
         // Get previous order matching block
-        Sha256Hash prevRewardHash = null;
+        Sha256Hash prevHash = null;
+        long fromHeight = 0;
+        long toHeight = 0;
         try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-            prevRewardHash = rewardInfo.getPrevRewardHash();
+            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
+            prevHash = info.getPrevHash();
+            fromHeight = info.getFromHeight();
+            toHeight = info.getToHeight();
         } catch (IOException e) {
             // Cannot happen since checked before
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        final Block prevMatchingBlock = blockStore.getBlockWrap(prevRewardHash).getBlock();
+        final Block prevMatchingBlock = blockStore.getBlockWrap(prevHash).getBlock();
         
         // Deterministic randomization
         byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
 
-        // Collect all orders approved by this block in the reward interval
+        // Collect all orders approved by this block in the interval
         List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-        Set<OrderRecord> spentOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevRewardHash).values()); 
+        Set<OrderRecord> spentOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevHash).values()); 
         Set<OrderRecord> cancelledOrders = new HashSet<>();
 
-        for (BlockWrap b : collectConsumedOrdersAndOpsBlocks(block, prevRewardHash)) {
+        for (BlockWrap b : collectConsumedOrdersAndOpsBlocks(block, fromHeight, toHeight)) {
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
                 final Sha256Hash blockHash = b.getBlock().getHash();
-                newOrders.put(blockHash, blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
-                spentOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                
+                // Add only if not taken yet or taken by this block
+                OrderRecord order = blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
+                if (!order.isSpent() || order.getSpenderBlockHash().equals(block.getHash())) {
+                    newOrders.put(blockHash, order);
+                    spentOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
+                }
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
                 OrderOpInfo info = null;
                 try {
@@ -1115,7 +1151,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // OPTIMIZATION POSSIBLE: stop getting orders twice, just do a deep copy
         // Collect all remaining orders, split into newOrders and oldOrders
-        HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevRewardHash);
+        HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
         Map<Sha256Hash, OrderRecord> oldOrders = new TreeMap<>(Comparator
                 .comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
         oldOrders.putAll(remainingOrders); 
@@ -1319,7 +1355,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return Triple.of(spentOrders, tx, remainingOrders.values());
     }
 
-    private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, Sha256Hash prevRewardHash) throws BlockStoreException {
+    private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, long fromHeight, long toHeight) throws BlockStoreException {
         List<BlockWrap> relevantBlocks = new ArrayList<>();
         
         Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
@@ -1329,23 +1365,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         BlockWrap prevBranchBlock = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
         blockQueue.add(prevTrunkBlock);
         blockQueue.add(prevBranchBlock);
-
-        // Read previous reward block's data
-        BlockWrap prevRewardBlock = blockStore.getBlockWrap(prevRewardHash);
-        long prevToHeight = 0;
-        try {
-            RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-            prevToHeight = rewardInfo.getToHeight();
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        
-        long fromHeight = prevToHeight + 1;
-        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(), 
-                prevBranchBlock.getBlockEvaluation().getHeight()) 
-                - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
 
         // Initialize
         BlockWrap currentBlock = null, approvedBlock = null;

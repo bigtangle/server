@@ -51,6 +51,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
@@ -185,10 +186,10 @@ public class ValidatorService {
      * @return eligibility of rewards + new perTxReward)
      * @throws BlockStoreException
      */
-    public Pair<RewardEligibility, Long> checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
+    public Pair<Eligibility, Long> checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-            Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(rewardBlock.getPrevBlockHash(),
+            Triple<Eligibility, Transaction, Pair<Long, Long>> result = makeReward(rewardBlock.getPrevBlockHash(),
                     rewardBlock.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
             return Pair.of(result.getLeft(), result.getRight().getRight());
 
@@ -197,9 +198,7 @@ public class ValidatorService {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-    }
-
-    /**
+    }/**
      * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
      * Pair.of(new difficulty + new perTxReward) here for new reward blocks.
      * This is a prototype implementation. In the actual Spark implementation,
@@ -216,7 +215,7 @@ public class ValidatorService {
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
-    public Triple<RewardEligibility, Transaction, Pair<Long, Long>> makeReward(Sha256Hash prevTrunk,
+    public Triple<Eligibility, Transaction, Pair<Long, Long>> makeReward(Sha256Hash prevTrunk,
             Sha256Hash prevBranch, Sha256Hash prevRewardHash) throws BlockStoreException {
         
         // Count how many blocks from miners in the reward interval are approved
@@ -287,13 +286,85 @@ public class ValidatorService {
 
         // Invalid if not fulfilling consensus rules
         if (Math.subtractExact(toHeight, fromHeight) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1)
-            return Triple.of(RewardEligibility.INVALID, tx, Pair.of(difficulty, perTxReward));        
+            return Triple.of(Eligibility.INVALID, tx, Pair.of(difficulty, perTxReward));        
 
         // Ensure enough blocks are approved to be eligible
-        if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * 99 / 100)
-            return Triple.of(RewardEligibility.ELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+        if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * NetworkParameters.REWARD_MIN_MILESTONE_PERCENTAGE / 100)
+            return Triple.of(Eligibility.ELIGIBLE, tx, Pair.of(difficulty, perTxReward));
         else
-            return Triple.of(RewardEligibility.INELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+            return Triple.of(Eligibility.INELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+    }
+
+    /**
+     * NOTE: The block is assumed to having successfully gone through
+     * checkSolidity beforehand! For connecting purposes, checks if the
+     * given matching block is eligible NOW. In Spark, this would be calculated
+     * delayed and more or less free.
+     * 
+     * @param block
+     * @return eligibility 
+     * @throws BlockStoreException
+     */
+    public Eligibility checkOrderMatchingEligibility(Block block) throws BlockStoreException {
+        long toHeight = 0;
+        long fromHeight = 0;
+        try {
+            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
+            toHeight = info.getToHeight();
+            fromHeight = info.getFromHeight();
+        } catch (IOException e) {
+            // Cannot happen since checked before
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        
+        // Count how many blocks from miners in the reward interval are approved
+        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
+
+        BlockWrap prevTrunkBlock = store.getBlockWrap(block.getPrevBlockHash());
+        BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
+        blockQueue.add(prevTrunkBlock);
+        blockQueue.add(prevBranchBlock);
+        
+        // Initialize
+        BlockWrap currentBlock = null, approvedBlock = null;
+        long currentHeight = Long.MAX_VALUE;
+        long totalBlockCount = 0;
+
+        // Go backwards by height
+        while ((currentBlock = blockQueue.poll()) != null) {
+            currentHeight = currentBlock.getBlockEvaluation().getHeight();
+
+            // Stop criterion: Block height lower than approved interval height
+            if (currentHeight < fromHeight)
+                break;
+
+            // If in relevant reward height interval, count it
+            if (currentHeight <= toHeight) {
+                totalBlockCount++;
+            }
+
+            // Continue with both approved blocks
+            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
+            if (!blockQueue.contains(approvedBlock)) {
+                if (approvedBlock != null) {
+                    blockQueue.add(approvedBlock);
+                }
+            }
+            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
+            if (!blockQueue.contains(approvedBlock)) {
+                if (approvedBlock != null) {
+                    blockQueue.add(approvedBlock);
+                }
+            }
+        }        
+
+        // Ensure enough blocks are approved to be eligible
+        if (totalBlockCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight) * NetworkParameters.ORDER_MATCHING_MIN_MILESTONE_PERCENTAGE / 100)
+            return Eligibility.ELIGIBLE;
+        else
+            return Eligibility.INELIGIBLE;
     }
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
@@ -446,6 +517,8 @@ public class ValidatorService {
         case ORDERRECLAIM:
             OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
             return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
+        case ORDERMATCH:
+            return store.getOrderMatchingSpent(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
             throw new NotImplementedException();
         }
@@ -472,6 +545,8 @@ public class ValidatorService {
             // but the non-collecting issuing block must be confirmed too
             return store.getOrderConfirmed(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH)
                     && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isMilestone();
+        case ORDERMATCH:
+            return store.getOrderMatchingConfirmed(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
             throw new NotImplementedException();
         }
@@ -561,7 +636,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) 
+        Set<BlockWrap> result = blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD) 
                 .filter(b -> {
                     try {
                         switch (store.getRewardEligible(b.getBlock().getHash())) {
@@ -589,6 +664,37 @@ public class ValidatorService {
                         throw new RuntimeException(e);
                     }
                 }).collect(Collectors.toSet());
+
+        result.addAll(blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_MATCHING) 
+                .filter(b -> {
+                    try {
+                        switch (store.getOrderMatchingEligible(b.getBlock().getHash())) {
+                        case ELIGIBLE:
+                            // OK
+                            return false;
+                        case INELIGIBLE:
+                            // Overruled?
+                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                                    && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()
+                                            - NetworkParameters.REWARD_OVERRULE_TIME_MS));
+                        case INVALID:
+                            // Cannot happen in non-Spark implementation.
+                            return true;
+                        case UNKNOWN:
+                            // Cannot happen in non-Spark implementation.
+                            return true;
+                        default:
+                            throw new NotImplementedException();
+
+                        }
+                    } catch (BlockStoreException e) {
+                        // Cannot happen.
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                }).collect(Collectors.toSet()));
+        
+        return result;
     }
 
     /**
@@ -924,6 +1030,12 @@ public class ValidatorService {
             if (orderSpender == null)
                 return null;
             return store.getBlockWrap(orderSpender);
+        case ORDERMATCH:
+            final Sha256Hash orderMatchSpender = store
+                    .getOrderMatchingSpender(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
+            if (orderMatchSpender == null)
+                return null;
+            return store.getBlockWrap(orderMatchSpender);
         default:
             throw new NotImplementedException();
         }
@@ -1275,6 +1387,13 @@ public class ValidatorService {
                 return recSolidityState;
             }
             break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            // Check rewards are solid
+            SolidityState matchingSolidityState = checkOrderMatchingSolidity(block, storedPrev, storedPrevBranch, height, throwExceptions);
+            if (!(matchingSolidityState.getState() == State.Success)) {
+                return matchingSolidityState;
+            }
+            break;
         default:
             throw new NotImplementedException("Blocktype not implemented!");
         }
@@ -1345,7 +1464,7 @@ public class ValidatorService {
         }
 
         // Ensure it is an order matching block
-        if (orderMatchingBlock.getBlock().getBlockType() != Type.BLOCKTYPE_REWARD) {
+        if (orderMatchingBlock.getBlock().getBlockType() != Type.BLOCKTYPE_ORDER_MATCHING) {
             if (throwExceptions)
                 throw new InvalidDependencyException("The given matching block is not the right type.");
             return SolidityState.getFailState();
@@ -1353,7 +1472,7 @@ public class ValidatorService {
 
         // Ensure the predecessing order matching block approves sufficient
         // height, i.e. higher than the order opening
-        if (store.getRewardToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation().getHeight()) {
+        if (store.getOrderMatchingToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation().getHeight()) {
             if (throwExceptions)
                 throw new InvalidDependencyException(
                         "The order matching block does not approve the given reclaim block height yet.");
@@ -1560,6 +1679,84 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
+    private SolidityState checkOrderMatchingSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch, long height, boolean throwExceptions)
+            throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!transactions.get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState();
+        }
+
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Check that the tx has correct data
+        OrderMatchingInfo info;
+        try {
+            info = OrderMatchingInfo.parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (info.getPrevHash() == null) {
+            if (throwExceptions)
+                throw new MissingDependencyException();
+            return SolidityState.getFailState();
+        }
+
+        // Ensure dependency (prev hash) exists
+        Sha256Hash prevRewardHash = info.getPrevHash();
+        BlockWrap dependency = store.getBlockWrap(prevRewardHash);
+        if (dependency == null)
+            return SolidityState.from(prevRewardHash);
+
+        // Ensure dependency (prev hash) is valid predecessor
+        if (dependency.getBlock().getBlockType() != Type.BLOCKTYPE_INITIAL
+                && dependency.getBlock().getBlockType() != Type.BLOCKTYPE_ORDER_MATCHING) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("Predecessor is not reward or genesis");
+            return SolidityState.getFailState();
+        }
+
+        // Ensure fromHeight is starting from prevToHeight - overlap range
+        if (info.getFromHeight() != store.getOrderMatchingToHeight(prevRewardHash) - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid fromHeight");
+            return SolidityState.getFailState();
+        }
+        
+        // Ensure toHeight follows the rules
+        if (info.getToHeight() != height) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid toHeight");
+            return SolidityState.getFailState();
+        }
+        
+        // Ensure heights follow the rules
+        if (Math.subtractExact(info.getToHeight(), store.getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL - 1) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid heights");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
     private SolidityState checkRewardSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch, long height, boolean throwExceptions)
             throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
@@ -1652,7 +1849,7 @@ public class ValidatorService {
         }
 
         // Ensure the new difficulty is set correctly
-        Triple<RewardEligibility, Transaction, Pair<Long, Long>> result = makeReward(block.getPrevBlockHash(),
+        Triple<Eligibility, Transaction, Pair<Long, Long>> result = makeReward(block.getPrevBlockHash(),
                 block.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
         if (block.getDifficultyTarget() != result.getRight().getLeft()) {
             if (throwExceptions)

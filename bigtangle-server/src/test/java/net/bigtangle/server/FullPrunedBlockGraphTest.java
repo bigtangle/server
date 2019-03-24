@@ -402,14 +402,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -433,9 +432,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
         blockGraph.confirm(block2.getHash(), new HashSet<>());
 
-        // Reward should be confirmed
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        // Should be confirmed
+        assertTrue(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
 
         // Order should be confirmed and spent now
         assertTrue(store.getOrderConfirmed(block1.getHash(), Sha256Hash.ZERO_HASH));
@@ -490,22 +489,21 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        assertTrue(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
 
         // Ensure consumed order record is now spent
         OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -615,22 +613,21 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        assertTrue(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
 
         // Ensure all consumed order records are now spent
         OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -644,7 +641,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertTrue(order2.isSpent());
 
         // Ensure virtual UTXOs are now confirmed
-        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
+        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle(); 
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -862,14 +859,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -896,9 +892,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Unconfirm
         blockGraph.unconfirm(block2.getHash(), new HashSet<>());
 
-        // Reward should be confirmed
-        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        // Should be confirmed
+        assertTrue(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
 
         // Order should be confirmed and unspent now
         assertTrue(store.getOrderConfirmed(block1.getHash(), Sha256Hash.ZERO_HASH));
@@ -952,14 +948,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -969,8 +964,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
-        assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
+        assertNull(store.getOrderMatchingSpender(rewardBlock1.getHash()));
 
         // Ensure consumed order record is now unspent
         OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -1080,14 +1076,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        // Generate matching block
+        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -1097,8 +1092,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
-        assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
-        assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
+        assertNull(store.getOrderMatchingSpender(rewardBlock1.getHash()));
 
         // Ensure all consumed order records are now unspent
         OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -1112,7 +1108,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(order2.isSpent());
 
         // Ensure virtual UTXOs are now confirmed
-        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
+        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle(); 
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());

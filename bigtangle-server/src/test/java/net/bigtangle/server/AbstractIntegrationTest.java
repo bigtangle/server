@@ -388,26 +388,25 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
-        // Generate blocks until passing first reward interval
+        // Generate blocks until passing interval
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
-        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedRewardBlockHash());
-        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL 
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE; 
+        long currMilestoneHeight = store.getOrderMatchingToHeight(store.getMaxConfirmedOrderMatchingBlockHash());
+        long targetHeight = currMilestoneHeight + NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; 
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
             addedBlocks.add(rollingBlock);
         }
 
-        // Generate mining reward block
-        Block rewardBlock = transactionService.createAndAddMiningRewardBlock(store.getMaxConfirmedRewardBlockHash(),
+        // Generate matching block
+        Block block = transactionService.createAndAddOrderMatchingBlock(store.getMaxConfirmedOrderMatchingBlockHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        addedBlocks.add(rewardBlock);
+        addedBlocks.add(block);
 
         // Confirm
-        blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
-        return rewardBlock;
+        blockGraph.confirm(block.getHash(), new HashSet<>());
+        return block;
     }
 
     protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {

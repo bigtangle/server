@@ -134,7 +134,8 @@ public class Block extends Message {
         BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO transfer from mainnet to permissioned
         BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens a new order
         BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a refresh/cancel of an order
-        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Reclaims lost orders
+        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims lost orders
+        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform order matching
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs

@@ -16,8 +16,8 @@ import net.bigtangle.server.service.TransactionService;
 
 @Component
 @EnableAsync
-public class ScheduleRewardService {
-    private static final Logger logger = LoggerFactory.getLogger(ScheduleRewardService.class);
+public class ScheduleOrderMatchingService {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleOrderMatchingService.class);
 
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
@@ -26,13 +26,13 @@ public class ScheduleRewardService {
     private TransactionService transactionService;
 
     @Scheduled(fixedDelay = 30000)
-    public void updateReward() {
+    public void updateOrderMatching() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
-                logger.debug(" Start updateReward: ");
-                transactionService.performRewardVoting();
+                logger.debug(" Start updateOrderMatching: ");
+                transactionService.performOrderMatchingVoting();
             } catch (Exception e) {
-                logger.warn("performRewardVoting ", e);
+                logger.warn("performOrderMatchingVoting ", e);
             }
         }
     }

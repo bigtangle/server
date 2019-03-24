@@ -23,31 +23,38 @@ public class ConflictPoint {
     private Token connectedToken;
     @Nullable
     private OrderReclaimInfo connectedOrder;
+    @Nullable
+    private OrderMatchingInfo connectedOrderMatch;
 
     private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-            Token connectedToken, OrderReclaimInfo connectedOrder) {
+            Token connectedToken, OrderReclaimInfo connectedOrder, OrderMatchingInfo connectedOrderMatch) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
         this.connectedReward = reward;
         this.connectedToken = connectedToken;
         this.connectedOrder = connectedOrder;
+        this.connectedOrderMatch = connectedOrderMatch;
     }
 
     public static ConflictPoint fromTransactionOutpoint(TransactionOutPoint connectedOutpoint) {
-        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null);
+        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null, null);
     }
 
     public static ConflictPoint fromReward(RewardInfo reward) {
-        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null);
+        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null, null);
     }
 
     public static ConflictPoint fromToken(Token token) {
-        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null);
+        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null, null);
     }
 
     public static ConflictPoint fromOrder(OrderReclaimInfo connectedOrder) {
-        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder);
+        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder, null);
+    }
+
+    public static ConflictPoint fromOrderMatching(OrderMatchingInfo match) {
+        return new ConflictPoint(ConflictType.ORDERMATCH, null, null, null, null, match);
     }
     
     @Override
@@ -72,6 +79,8 @@ public class ConflictPoint {
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
 			return getConnectedOrder().getOrderBlockHash().equals(other.getConnectedOrder().getOrderBlockHash());
+        case ORDERMATCH:
+            return getConnectedOrderMatching().getPrevHash().equals(other.getConnectedOrderMatching().getPrevHash());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
         }
@@ -81,20 +90,22 @@ public class ConflictPoint {
     public int hashCode() {
         switch (type) {
         case REWARDISSUANCE:
-            return Objects.hashCode(getConnectedReward().getPrevRewardHash());
+            return Objects.hashCode(type, getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
-            return Objects.hashCode(getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
+            return Objects.hashCode(type, getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
         case TXOUT:
-            return Objects.hashCode(getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
+            return Objects.hashCode(type, getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
-            return Objects.hashCode(getConnectedOrder().getOrderBlockHash());
+            return Objects.hashCode(type, getConnectedOrder().getOrderBlockHash());
+        case ORDERMATCH:
+            return Objects.hashCode(type, getConnectedOrderMatching().getPrevHash());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
         }
     }
 
     public enum ConflictType {
-        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM
+        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM, ORDERMATCH
     }
 
     public ConflictType getType() {
@@ -115,5 +126,9 @@ public class ConflictPoint {
 
     public OrderReclaimInfo getConnectedOrder() {
         return connectedOrder;
+    }
+
+    public OrderMatchingInfo getConnectedOrderMatching() {
+        return connectedOrderMatch;
     }
 }

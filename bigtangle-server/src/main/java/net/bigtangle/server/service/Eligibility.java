@@ -1,5 +1,5 @@
 package net.bigtangle.server.service;
 
-public enum RewardEligibility {
+public enum Eligibility {
     INVALID, UNKNOWN, ELIGIBLE, INELIGIBLE
 }

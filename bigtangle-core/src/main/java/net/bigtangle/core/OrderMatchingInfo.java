@@ -10,52 +10,50 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-public class RewardInfo extends DataClass implements java.io.Serializable {
-
-    // TODO drop string from everywhere, stop using sha256hash.wrap, stop using jsonserialization
+public class OrderMatchingInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 6516115233185538213L;
 
     private long fromHeight; 
     private long toHeight; 
-    private Sha256Hash prevRewardHash;
+    private Sha256Hash prevHash;
 
-    public RewardInfo() {
+    public OrderMatchingInfo() {
     }
     
-    public RewardInfo(long fromHeight, long toHeight, Sha256Hash prevRewardHash) {
+    public OrderMatchingInfo(long fromHeight, long toHeight, Sha256Hash prevHash) {
         super();
         this.fromHeight = fromHeight;
         this.toHeight = toHeight;
-        this.prevRewardHash = prevRewardHash;
+        this.prevHash = prevHash;
     }
 
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
 
-    public void setFromHeight(long fromHeight) {
-        this.fromHeight = fromHeight;
-    }
-
-    public void setToHeight(long toHeight) {
-        this.toHeight = toHeight;
-    }
-
-    public void setPrevRewardHash(Sha256Hash prevRewardHash) {
-        this.prevRewardHash = prevRewardHash;
-    }
-
     public long getFromHeight() {
         return fromHeight;
+    }
+
+    public void setFromHeight(long fromHeight) {
+        this.fromHeight = fromHeight;
     }
 
     public long getToHeight() {
         return toHeight;
     }
 
-    public Sha256Hash getPrevRewardHash() {
-        return prevRewardHash;
+    public void setToHeight(long toHeight) {
+        this.toHeight = toHeight;
+    }
+
+    public void setPrevHash(Sha256Hash prevHash) {
+        this.prevHash = prevHash;
+    }
+
+    public Sha256Hash getPrevHash() {
+        return prevHash;
     }
 
     public byte[] toByteArray() {
@@ -68,9 +66,9 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         return new byte[0];
     }
 
-    public static RewardInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+    public static OrderMatchingInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
-        RewardInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, RewardInfo.class);
+        OrderMatchingInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderMatchingInfo.class);
         return tokenInfo;
     }
     
