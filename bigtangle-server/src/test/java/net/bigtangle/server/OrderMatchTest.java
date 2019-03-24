@@ -401,7 +401,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void partialCancel() throws Exception {
+    public void effectiveCancel() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey =  walletKeys.get(8);;
@@ -418,57 +418,18 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
         // Open buy order for test tokens
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
+        Block buy = makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
-        // Cancel sell
+        // Cancel all
         makeAndConfirmCancelOp(sell, testKey, addedBlocks);
+        makeAndConfirmCancelOp(buy, genesisKey, addedBlocks);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify some tokens changed possession
-        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 50000l);
-        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 50l);
-
-        // Verify token amount invariance (adding the mining reward)
-        origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                origTokenAmounts.get(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        + NetworkParameters.REWARD_INITIAL_TX_REWARD * NetworkParameters.REWARD_HEIGHT_INTERVAL);
-        assertCurrentTokenAmountEquals(origTokenAmounts);
-
-        // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-    }
-
-    @Test
-    public void ineffectiveCancel() throws Exception {
-        @SuppressWarnings("deprecation")
-        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
-        List<Block> addedBlocks = new ArrayList<>();
-
-        // Make test token
-        resetAndMakeTestToken(testKey, addedBlocks);
-        String testTokenId = testKey.getPublicKeyAsHex();
-
-        // Get current existing token amount
-        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
-        // Open sell orders for test tokens
-        Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
-        // Open buy order for test tokens
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-
-        // Cancel sell
-        makeAndConfirmCancelOp(sell, testKey, addedBlocks);
-
-        // Execute order matching
-        makeAndConfirmOrderMatching(addedBlocks);
-
-        // Verify all tokens changed possession
-        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
-        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+        // Verify all tokens did not change possession
+        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, null);
+        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), null);
 
         // Verify token amount invariance (adding the mining reward)
         origTokenAmounts.put(NetworkParameters.BIGTANGLE_TOKENID_STRING,

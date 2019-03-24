@@ -1121,6 +1121,47 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         oldOrders.putAll(remainingOrders); 
         remainingOrders.putAll(newOrders);
         
+        // Issue timeout cancels, set issuing order blockhash
+        Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
+        while (it.hasNext()) {
+            OrderRecord order = it.next().getValue(); 
+            order.setIssuingMatcherBlockHash(block.getHash());
+            if (order.isTimeouted(block.getTimeSeconds())) { 
+                cancelledOrders.add(order);
+            } 
+        }
+    
+        // Process cancel ops after matching
+        for (OrderOpInfo c : cancels) {
+            if (remainingOrders.containsKey(c.getInitialBlockHash())) {
+                cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
+            }
+        }
+        
+        // Remove the now cancelled orders from remaining orders
+        for (OrderRecord c : cancelledOrders) {
+            if (remainingOrders.remove(c.getInitialBlockHash()) == null)
+                log.error("Should not happen: non-existent order");
+
+            oldOrders.remove(c.getInitialBlockHash());
+            newOrders.remove(c.getInitialBlockHash());
+        }
+        
+        // Add to proceeds all cancelled orders going back to the beneficiary
+        for (OrderRecord o : cancelledOrders) {
+            TreeMap<String, Long> proceeds = pubKey2Proceeds.get(ByteBuffer.wrap(o.getBeneficiaryPubKey()));
+            if (proceeds == null) {
+                proceeds = new TreeMap<>();
+                pubKey2Proceeds.put(ByteBuffer.wrap(o.getBeneficiaryPubKey()), proceeds);
+            }
+            Long offerTokenProceeds = proceeds.get(o.getOfferTokenid());
+            if (offerTokenProceeds == null) {
+                offerTokenProceeds = 0L;
+                proceeds.put(o.getOfferTokenid(), offerTokenProceeds);
+            }
+            proceeds.put(o.getOfferTokenid(), offerTokenProceeds + o.getOfferValue());
+        }
+        
         // From all orders and ops, begin order matching algorithm by filling order books
         int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
@@ -1253,44 +1294,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     }
                 }
             }
-        }
-        
-        // All remaining: remove timeouts, set issuing order blockhash
-        Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
-        while (it.hasNext()) {
-            OrderRecord order = it.next().getValue(); 
-            order.setIssuingMatcherBlockHash(block.getHash());
-            if (order.isTimeouted(block.getTimeSeconds())) { 
-                cancelledOrders.add(order);
-            } 
-        }
-    
-        // Process cancel ops after matching
-        for (OrderOpInfo c : cancels) {
-        	if (remainingOrders.containsKey(c.getInitialBlockHash())) {
-                cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
-        	}
-        }
-        
-        // Remove the now cancelled orders from remaining orders
-        for (OrderRecord c : cancelledOrders) {
-            if (remainingOrders.remove(c.getInitialBlockHash()) == null)
-                throw new IllegalStateException("Should not happen: cancelled matched orders");
-        }
-        
-        // Add to proceeds all cancelled orders going back to the beneficiary
-        for (OrderRecord o : cancelledOrders) {
-            TreeMap<String, Long> proceeds = pubKey2Proceeds.get(ByteBuffer.wrap(o.getBeneficiaryPubKey()));
-            if (proceeds == null) {
-                proceeds = new TreeMap<>();
-                pubKey2Proceeds.put(ByteBuffer.wrap(o.getBeneficiaryPubKey()), proceeds);
-            }
-            Long offerTokenProceeds = proceeds.get(o.getOfferTokenid());
-            if (offerTokenProceeds == null) {
-                offerTokenProceeds = 0L;
-                proceeds.put(o.getOfferTokenid(), offerTokenProceeds);
-            }
-            proceeds.put(o.getOfferTokenid(), offerTokenProceeds + o.getOfferValue());
         }
         
         // Make deterministic tx with proceeds
