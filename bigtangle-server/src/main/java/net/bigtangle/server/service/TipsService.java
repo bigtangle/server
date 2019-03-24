@@ -84,27 +84,50 @@ public class TipsService {
      * 
      * @param prototype Invalid block that uses the contents of the 
      * @return Two blockhashes selected via MCMC
-     * @throws BlockStoreException
+     * @throws VerificationException if the given prototype is not compatible with the current milestone
      */
-    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(Block prototype) throws BlockStoreException {
+    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithPrototype(Block prototype) throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
         blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, store.getBlockWrap(prototype.getHash()));
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
     }
 
-	private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+    /**
+     * Selects two blocks to approve via MCMC for the given start block such that the two approved blocks are not conflicting with the prototype block itself
+     * 
+     * @param prototype One starting point for the MCMC walks
+     * @return Two blockhashes selected via MCMC
+     * @throws VerificationException if the given prototype is not compatible with the current milestone
+     */
+    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairStartingFrom(BlockWrap prototype) throws BlockStoreException {
+        HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
+        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, store.getBlockWrap(prototype.getBlockHash()));
+        return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, prototype);
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks) throws BlockStoreException {
+        List<BlockWrap> entryPoints = getValidationEntryPoints(2);
+        BlockWrap left = entryPoints.get(0);
+        BlockWrap right = entryPoints.get(1);
+        return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, left, right);
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, BlockWrap left) throws BlockStoreException {
+        List<BlockWrap> entryPoints = getValidationEntryPoints(1);
+        BlockWrap right = entryPoints.get(0);
+        return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, left, right);
+    }
+
+	private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, BlockWrap left, BlockWrap right) throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
-		List<BlockWrap> entryPoints = getValidationEntryPoints(2);
-		BlockWrap left = entryPoints.get(0);
-		BlockWrap right = entryPoints.get(1);
 		
-		//  Unnecessary: left/right are never non-milestone initially
-		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
-		//blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+		// Initialize approved blocks
+		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+		blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
         
         // Necessary: Initial test if the prototype's currentApprovedNonMilestoneBlocks are actually valid
         if (!validatorService.isEligibleForApprovalSelection(currentApprovedNonMilestoneBlocks))
-            throw new VerificationException("The given prototype is invalid");
+            throw new VerificationException("The given prototype is invalid under the current milestone");
 
 		// Perform next steps
 		BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);

@@ -219,7 +219,7 @@ public class ValidatorService {
      */
     public Triple<RewardEligibility, Transaction, Pair<Long, Long>> makeReward(Sha256Hash prevTrunk,
             Sha256Hash prevBranch, Sha256Hash prevRewardHash) throws BlockStoreException {
-
+        
         // Count how many blocks from miners in the reward interval are approved
         Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());

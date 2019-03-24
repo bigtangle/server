@@ -359,6 +359,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash "
             + "FROM txreward WHERE blockhash = ?";
+    protected final String SELECT_REWARD_WHERE_PREV_HASH_SQL = "SELECT blockhash "
+            + "FROM txreward WHERE prevblockhash = ?";
     protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_NEXT_TX_REWARD_SQL = "UPDATE txreward SET nexttxreward = ? WHERE blockhash = ?";
@@ -847,7 +849,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Just fill the tables with some valid data
             // Reward output table
             insertReward(params.getGenesisBlock().getHash(), 0, RewardEligibility.ELIGIBLE,
-                    params.getGenesisBlock().getHash(), NetworkParameters.REWARD_INITIAL_TX_REWARD);
+                    Sha256Hash.ZERO_HASH, NetworkParameters.REWARD_INITIAL_TX_REWARD);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
             // Token output table
@@ -4498,6 +4500,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return Sha256Hash.wrap(resultSet.getBytes(1));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<Sha256Hash> list = new ArrayList<Sha256Hash>();
+            while (resultSet.next()) {
+                list.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return list;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

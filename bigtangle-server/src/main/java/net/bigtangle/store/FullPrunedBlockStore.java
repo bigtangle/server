@@ -253,6 +253,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /* Reward TXOs */
     public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
 
+    public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
+
     public RewardEligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
 
     public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;

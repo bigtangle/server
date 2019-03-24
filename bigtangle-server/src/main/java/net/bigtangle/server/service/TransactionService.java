@@ -5,6 +5,8 @@
 package net.bigtangle.server.service;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,7 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
@@ -84,23 +87,57 @@ public class TransactionService {
 
 		return r1.createNextBlock(r2);
 	}
+	
+	/**
+	 * Runs the reward voting logic: push existing best eligible reward if exists or make a new eligible reward now
+	 * 
+	 * @return the new block or block voted on
+	 * @throws Exception
+	 */
+	public Block performRewardVoting() throws Exception {
+	    // Find eligible rewards building on top of the newest reward
+        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+        List<Sha256Hash> candidateHashes = store.getRewardBlocksWithPrevHash(prevRewardHash);
+        candidateHashes.removeIf(c -> {
+            try {
+                return store.getRewardEligible(c) != RewardEligibility.ELIGIBLE;
+            } catch (BlockStoreException e) {
+                // Cannot happen
+                throw new RuntimeException();
+            }
+        });
+        
+        // Find the one most likely to win
+        List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
+        BlockWrap votingTarget = candidates.stream().max(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating())).orElse(null);
+        
+        // If exists, push that one, else make new one
+        if (votingTarget != null) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
+            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+            Block r2 = blockService.getBlock(tipsToApprove.getRight());
+            blockgraph.add(r1.createNextBlock(r2), false);
+            return votingTarget.getBlock();
+        } else {
+            return createAndAddMiningRewardBlock();
+        }
+	}
 
-	public void createAndAddMiningRewardBlock() throws Exception {
-
+	public Block createAndAddMiningRewardBlock() throws Exception {
+        logger.info("createAndAddMiningRewardBlock  started");
+        Stopwatch watch = Stopwatch.createStarted();
+        
 		if (!lock.tryAcquire()) {
 			logger.debug("createAndAddMiningRewardBlock  already running. Returning...");
-			return;
+			return null;
 		}
+		
 		try {
-		    logger.info("createAndAddMiningRewardBlock  started");
-            Stopwatch watch = Stopwatch.createStarted();
 			Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-			createAndAddMiningRewardBlock(prevRewardHash);
-			logger.info("createAndAddMiningRewardBlock   time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-	            watch.stop();
+			return createAndAddMiningRewardBlock(prevRewardHash);
 		} finally {
-			lock.release();
+            lock.release();
+            logger.info("createAndAddMiningRewardBlock   time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		}
 	}
 
@@ -133,8 +170,10 @@ public class TransactionService {
 				prevBranch, prevRewardHash);
 
 		if (!(result.getLeft() == RewardEligibility.ELIGIBLE)) {
-			if (!override)
-				throw new RuntimeException("Generated reward block is deemed ineligible! Try again somewhere else?");
+			if (!override) {
+			    logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
+			    return null;
+			}
 			logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
 		}
 

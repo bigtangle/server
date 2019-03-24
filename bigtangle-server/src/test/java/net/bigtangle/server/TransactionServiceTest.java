@@ -4,6 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +43,37 @@ import net.bigtangle.wallet.SendRequest;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TransactionServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
- 
+
+    @Test
+    public void testRewardVoting() throws Exception {
+        store.resetStore();
+        Block rollingBlock = networkParameters.getGenesisBlock();
+
+        // Generate blocks until passing first reward interval
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+                + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+
+        // Generate mining reward blocks
+        Block rewardBlock = transactionService.performRewardVoting();
+        
+        // Assert that voting will not generate a new block since we have an eligible alternative already
+        assertEquals(rewardBlock, transactionService.performRewardVoting());
+        
+        // After updating, we shall make new blocks now
+        rollingBlock = rewardBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
+                + 1; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        Block rewardBlock2 = transactionService.performRewardVoting();
+        assertNotEquals(rewardBlock, rewardBlock2);
+        assertNotNull(rewardBlock2);
+    }
     
     //pay to mutilsigns keys wallet1Keys_part
     public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {

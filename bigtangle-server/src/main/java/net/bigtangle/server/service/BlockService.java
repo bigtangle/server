@@ -59,15 +59,26 @@ public class BlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-    // TODO drop a few functions here
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
         return store.get(blockhash).getHeader();
+    }
+    
+    public BlockWrap getBlockWrap(Sha256Hash blockhash) throws BlockStoreException {
+        return store.getBlockWrap(blockhash);
     }
 
     public List<Block> getBlocks(List<Sha256Hash> hashes) throws BlockStoreException {
         List<Block> blocks = new ArrayList<Block>();
         for (Sha256Hash hash : hashes) {
             blocks.add(getBlock(hash));
+        }
+        return blocks;
+    }
+
+    public List<BlockWrap> getBlockWraps(List<Sha256Hash> hashes) throws BlockStoreException {
+        List<BlockWrap> blocks = new ArrayList<BlockWrap>();
+        for (Sha256Hash hash : hashes) {
+            blocks.add(getBlockWrap(hash));
         }
         return blocks;
     }

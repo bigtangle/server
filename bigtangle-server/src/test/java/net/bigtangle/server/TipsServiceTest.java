@@ -126,12 +126,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.add(b2, true);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b2);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             assertTrue(tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash()));
         }
         
@@ -139,12 +139,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -198,12 +198,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -248,12 +248,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -307,12 +307,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -375,12 +375,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -429,12 +429,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -491,12 +491,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -543,12 +543,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b1);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPair(b2);
+            tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             fail();
         } catch (VerificationException e) {
             // Expected
