@@ -30,7 +30,7 @@ public class ScheduleOrderReclaimService {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
                 logger.debug(" Start ScheduleOrderReclaimService: ");
-                transactionService.performOrderReclaims();
+                transactionService.performOrderReclaimMaintenance();
             } catch (Exception e) {
                 logger.warn("performOrderReclaims ", e);
             }

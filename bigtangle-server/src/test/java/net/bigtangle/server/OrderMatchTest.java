@@ -35,8 +35,6 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderMatchTest extends AbstractIntegrationTest {
-    
-    // TODO after splitting order matching and rewarding, we can check token amount invariance everywhere always!
 
     @Test
     public void testOrderReclaim() throws Exception {
@@ -55,15 +53,19 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open lost sell order for test tokens
         Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         
-        // Execute order matching losing the order
+        // Execute order matching
         Block match = makeAndConfirmOrderMatching(addedBlocks, networkParameters.getGenesisBlock());
         
         // Fuse and let all be confirmed
-        addedBlocks.add(createAndAddNextBlock(sell, match));
+        Block fuse = createAndAddNextBlock(sell, match);
+        addedBlocks.add(fuse);
+        
+        // Pass far enough to lose order
+        addedBlocks.add(makeAndConfirmOrderMatching(addedBlocks, fuse));
         milestoneService.update();
         
         // Try reclaiming
-        addedBlocks.addAll(transactionService.performOrderReclaims());
+        addedBlocks.addAll(transactionService.performOrderReclaimMaintenance());
         milestoneService.update();
         
         // Verify the tokens returned possession
@@ -758,6 +760,72 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 753, 12, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 357, 23, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 456, 45, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify token amount invariance 
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void testMultiMatching4() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  walletKeys.get(8);;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open orders
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 456, 20, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 789, 3, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 987, 10, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 654, 8, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 150, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 456, 20, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 789, 3, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 987, 10, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 654, 8, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);

@@ -289,6 +289,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public long getOrderMatchingToHeight(Sha256Hash blockHash) throws BlockStoreException;
 
+    public long getOrderMatchingFromHeight(Sha256Hash blockHash) throws BlockStoreException;
+
     public boolean getOrderMatchingConfirmed(Sha256Hash hash) throws BlockStoreException;
 
     public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException;

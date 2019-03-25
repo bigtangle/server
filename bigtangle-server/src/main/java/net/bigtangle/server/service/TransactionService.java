@@ -125,7 +125,7 @@ public class TransactionService {
      * @return the new blocks
      * @throws Exception
      */
-	public List<Block> performOrderReclaims() throws Exception {
+	public List<Block> performOrderReclaimMaintenance() throws Exception {
 	    // Find height from which on all orders are finished
         Sha256Hash prevRewardHash = store.getMaxConfirmedOrderMatchingBlockHash();
         long finishedHeight = store.getOrderMatchingToHeight(prevRewardHash);

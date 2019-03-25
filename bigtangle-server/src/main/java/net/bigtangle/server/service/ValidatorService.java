@@ -1472,7 +1472,7 @@ public class ValidatorService {
 
         // Ensure the predecessing order matching block approves sufficient
         // height, i.e. higher than the order opening
-        if (store.getOrderMatchingToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation().getHeight()) {
+        if (store.getOrderMatchingToHeight(info.getNonConfirmingMatcherBlockHash()) - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE < orderBlock.getBlockEvaluation().getHeight()) {
             if (throwExceptions)
                 throw new InvalidDependencyException(
                         "The order matching block does not approve the given reclaim block height yet.");

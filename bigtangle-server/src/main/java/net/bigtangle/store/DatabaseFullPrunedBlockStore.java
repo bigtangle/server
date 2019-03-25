@@ -235,7 +235,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " FROM openorders WHERE collectinghash = ?";
     protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
             + " FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash"
-            + " WHERE blocks.height <= ? AND blocks.milestone = 1" + afterSelect();
+            + " WHERE blocks.height <= ? AND blocks.milestone = 1 AND openorders.spent = 0" + afterSelect();
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
@@ -373,6 +373,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String INSERT_ORDER_MATCHING_SQL = getInsert()
             + "  INTO ordermatching (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_ORDER_MATCHING_TOHEIGHT_SQL = "SELECT toheight FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_FROMHEIGHT_SQL = "SELECT fromheight FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_MAX_CONFIRMED_SQL = "SELECT blockhash FROM ordermatching WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM ordermatching WHERE confirmed=1)";
     protected final String SELECT_ORDER_MATCHING_CONFIRMED_SQL = "SELECT confirmed " + "FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_ELIGIBLE_SQL = "SELECT eligibility " + "FROM ordermatching WHERE blockhash = ?";
@@ -4937,7 +4938,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<Sha256Hash> result = new ArrayList<>();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_LOST_ORDERS_BEFORE_SQL);
-            preparedStatement.setLong(1, toHeight);
+            preparedStatement.setLong(1, toHeight - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 result.add(Sha256Hash.wrap(resultSet.getBytes(1)));
@@ -5481,6 +5482,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_TOHEIGHT_SQL);
+            preparedStatement.setBytes(1, blockHash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public long getOrderMatchingFromHeight(Sha256Hash blockHash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_FROMHEIGHT_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();

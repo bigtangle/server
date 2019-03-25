@@ -178,7 +178,7 @@ public abstract class NetworkParameters {
     
     // Order Matching Settings
     public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10; 
-    public static final long ORDER_MATCHING_OVERLAP_SIZE = 10; 
+    public static final long ORDER_MATCHING_OVERLAP_SIZE = 7; 
     public static final long ORDER_MATCHING_MIN_MILESTONE_PERCENTAGE = 97;
 
     // Token config
