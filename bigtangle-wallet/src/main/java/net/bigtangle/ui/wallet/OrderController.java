@@ -513,9 +513,9 @@ public class OrderController extends ExchangeController {
         }
 
         tokenComboBox.setItems(tokenData);
-        tokenComboBox.getSelectionModel().selectFirst();
+        // tokenComboBox.getSelectionModel().selectFirst();
         tokenComboBox1.setItems(tokenData);
-        tokenComboBox1.getSelectionModel().selectFirst();
+        // tokenComboBox1.getSelectionModel().selectFirst();
         ObservableList<String> addresses = FXCollections.observableArrayList(Main.validAddressSet);
         addressComboBox.setItems(addresses);
         addressComboBox1.setItems(addresses);
@@ -641,11 +641,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().makeAndConfirmSellOrder(aesKey,beneficiary, tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().makeAndConfirmSellOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity,
+                    totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(aesKey, beneficiary, tokenid, price.getValue(), quantity,
+                    totime, fromtime);
         }
 
         overlayUI.done();
