@@ -110,7 +110,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false, false);
+                   false);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -136,7 +136,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, false, true);
+                    "Test", 1, 1, amount,  true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -302,7 +302,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false, true);
+                 true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -565,7 +565,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, false, true);
+                    1, 0, amount,  true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -751,7 +751,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false, true);
+               true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1028,7 +1028,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, false, true);
+                    1, 0, amount,  true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1331,7 +1331,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false, false);
+                    false);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1351,7 +1351,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, false, true);
+                    "Test", 1, 1, amount,  true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()

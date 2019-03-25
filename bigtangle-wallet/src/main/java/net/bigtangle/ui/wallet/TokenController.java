@@ -464,14 +464,6 @@ public class TokenController extends TokenBaseController {
 		for (ECKey key : keys) {
 			String temp = Utils.HEX.encode(key.getPubKey());
 			boolean flag = true;
-			for (Token tokens : getTokensResponse.getTokens()) {
-				String tokenHex = tokens.getTokenid();
-				if (temp.equals(tokenHex)) {
-					if (!tokens.isMultiserial()) {
-						flag = false;
-					}
-				}
-			}
 			if (flag && !tokenData.contains(temp)) {
 				tokenData.add(temp);
 			}
@@ -544,7 +536,7 @@ public class TokenController extends TokenBaseController {
 			long amount = basecoin.getValue();
 
 			Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
-					stockDescription.getText().trim(), 1, 0, amount, false, true);
+					stockDescription.getText().trim(), 1, 0, amount,  true);
 			tokens.setUrl(stockUrl.getText().trim());
 			tokenInfo.setToken(tokens);
 			// outKey must be the same key as tokenid
@@ -840,7 +832,7 @@ public class TokenController extends TokenBaseController {
 		TokenInfo tokenInfo = new TokenInfo();
 		Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(), stockName1.getText().trim(),
 				stockDescription1.getText().trim(), 1, 0,
-				Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(), false, true);
+				Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(),  true);
 		tokens.setUrl(urlTF.getText().trim());
 		tokenInfo.setToken(tokens);
 		ECKey mykey = null;
@@ -973,7 +965,7 @@ public class TokenController extends TokenBaseController {
 
 		Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),
 				Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-				Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount, true,
+				Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
 				(boolean) map.get("tokenstop"));
 		tokens.setUrl(Main.getString(map.get("url")).trim());
 		tokenInfo.setToken(tokens);

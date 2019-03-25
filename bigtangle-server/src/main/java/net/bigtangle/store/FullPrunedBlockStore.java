@@ -309,7 +309,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
 
     void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
-            String tokenname, String description, String url, int signnumber, boolean multiserial, int tokentype,
+            String tokenname, String description, String url, int signnumber,  int tokentype,
             boolean tokenstop, String prevblockhash) throws BlockStoreException;
 
     public Token getToken(String blockhash) throws BlockStoreException;

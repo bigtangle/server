@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
+import java.util.List;
+
 public class Token implements java.io.Serializable {
     private static final long serialVersionUID = 6992138619113601243L;
 
@@ -14,23 +16,38 @@ public class Token implements java.io.Serializable {
 
     public Token() {
     }
-    
+    //indicator, if the token block is confirmed
     private boolean confirmed;
     private String tokenid;
+    //increate the index for token in serial
     private long tokenindex;
+    //name of the token
     private String tokenname;
+    //description
     private String description;
+    //the link of web site
     private String url;
+    // number of signature
     private int signnumber;
-    private boolean multiserial; // TODO multiserial is useless?
-    private int tokentype; // TODO type is useless? TODO write logic for type differentiation?
+    //difference for external exchange, meta token,  digital asset token and substangle
+    private int tokentype;
+    //if this is thue, there is no possible to change the token anymore.
     private boolean tokenstop;
+    //indicator of the prev token index blockhash
     private String prevblockhash;
+    
+    //Logical group of token as parent token, sually empty
+    private String parenttokenid;
     
     // not serialized on the wire
     private String blockhash;  // TODO slated for extraction
     private long amount; // TODO  must be inferred on insertion, slated for extraction
 
+    //Token contains any other type of data as key value, application may save use data as json for communication between systems
+    
+	private List<KeyValue> keyvalues;
+	
+    
     public String getBlockhash() {
         return blockhash;
     }
@@ -103,13 +120,6 @@ public class Token implements java.io.Serializable {
         this.signnumber = signnumber;
     }
 
-    public boolean isMultiserial() {
-        return multiserial;
-    }
-
-    public void setMultiserial(boolean multiserial) {
-        this.multiserial = multiserial;
-    }
 
     public int getTokentype() {
         return tokentype;
@@ -136,13 +146,13 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
-            int signnumber, long tokenindex, long amount, boolean multiserial, boolean tokenstop) {
+            int signnumber, long tokenindex, long amount, boolean tokenstop) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
-        tokens.multiserial = multiserial;
+      
         tokens.tokentype = TokenType.token.ordinal();
         tokens.signnumber = signnumber;
         tokens.amount = amount;
@@ -159,7 +169,7 @@ public class Token implements java.io.Serializable {
         tokens.setDescription(description);
         tokens.setUrl(url);
         tokens.tokenstop = true;
-        tokens.multiserial = false;
+   
         tokens.tokentype = TokenType.market.ordinal();
         tokens.signnumber = 1;
         tokens.amount = 0;
@@ -176,7 +186,6 @@ public class Token implements java.io.Serializable {
         tokens.setDescription(description);
         tokens.setUrl(url);
         tokens.tokenstop = true;
-        tokens.multiserial = false;
         tokens.tokentype = TokenType.subtangle.ordinal();
         tokens.signnumber = 1;
         tokens.amount = 0;
@@ -190,9 +199,17 @@ public class Token implements java.io.Serializable {
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", amount="
                 + amount + ", tokenname=" + tokenname + ", description=" + description + ", url=" + url
-                + ", signnumber=" + signnumber + ", multiserial=" + multiserial + ", tokentype=" + tokentype
+                + ", signnumber=" + signnumber +  ", tokentype=" + tokentype
                 + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash + "]";
     }
+
+	public List<KeyValue> getKeyvalues() {
+		return keyvalues;
+	}
+
+	public void setKeyvalues(List<KeyValue> keyvalues) {
+		this.keyvalues = keyvalues;
+	}
     
     
 }

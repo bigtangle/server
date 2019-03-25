@@ -60,7 +60,7 @@ public class GiveMoneyUtils {
         String prevblockhash = tokenIndexResponse.getBlockhash();
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount, true, false);
+                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false);
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -186,7 +186,7 @@ public class GiveMoneyUtils {
         long amount = basecoin.getValue();
         
         Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), "", 1, 0, amount, false, true);
+                UUID.randomUUID().toString(), "", 1, 0, amount, true);
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();

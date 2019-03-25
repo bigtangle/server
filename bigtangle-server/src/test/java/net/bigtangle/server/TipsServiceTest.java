@@ -271,7 +271,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, false);
+                amount, false);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -282,7 +282,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount2, false, true);
+                amount2,  true);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -330,7 +330,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, false);
+                amount,  false);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -341,7 +341,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount2, false, true);
+                amount2,  true);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -351,7 +351,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase3 = Coin.valueOf(666, pubKey);
         long amount3 = coinbase3.getValue();
         Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount3, false, true);
+                amount3,  true);
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));        
@@ -399,7 +399,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, true);
+                amount,  true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -453,7 +453,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false, true);
+                amount,  true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -466,7 +466,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(6666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0,
-                amount2, false, false);
+                amount2,  false);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 

@@ -148,7 +148,7 @@ public abstract class AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount, false, true);
+                amount,  true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -679,7 +679,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, false, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount,  true);
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -765,7 +765,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
+                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
@@ -853,7 +853,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount, true, false);
+                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);

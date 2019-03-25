@@ -1001,9 +1001,6 @@ public class Main extends Application {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
-            if (tokens.isMultiserial()) {
-                // continue;
-            }
             if (tokens.getSignnumber() >= 2) {
                 continue;
             }
