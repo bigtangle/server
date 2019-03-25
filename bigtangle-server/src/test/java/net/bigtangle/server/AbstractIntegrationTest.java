@@ -44,6 +44,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -57,6 +58,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -763,9 +765,15 @@ public abstract class AbstractIntegrationTest {
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
-
+        TokenKeyValues t= new TokenKeyValues();
+        List<KeyValue> keyvalues = new ArrayList<KeyValue>();
+        KeyValue kv= new  KeyValue();
+        kv.setKey("testkey");
+        kv.setKey("testvalue");
+        keyvalues.add(kv);
+        t.setKeyvalues(keyvalues);
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
+                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false,t);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);

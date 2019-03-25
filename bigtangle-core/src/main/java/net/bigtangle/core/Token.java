@@ -16,38 +16,41 @@ public class Token implements java.io.Serializable {
 
     public Token() {
     }
-    //indicator, if the token block is confirmed
+
+    // indicator, if the token block is confirmed
     private boolean confirmed;
     private String tokenid;
-    //increate the index for token in serial
+    // increate the index for token in serial
     private long tokenindex;
-    //name of the token
+    // name of the token
     private String tokenname;
-    //description
+    // description
     private String description;
-    //the link of web site
+    // the link of web site
     private String url;
     // number of signature
     private int signnumber;
-    //difference for external exchange, meta token,  digital asset token and substangle
+    // difference for external exchange, meta token, digital asset token and
+    // substangle
     private int tokentype;
-    //if this is thue, there is no possible to change the token anymore.
+    // if this is thue, there is no possible to change the token anymore.
     private boolean tokenstop;
-    //indicator of the prev token index blockhash
+    // indicator of the prev token index blockhash
     private String prevblockhash;
-    
-    //Logical group of token as parent token, sually empty
-    private String parenttokenid;
-    
-    // not serialized on the wire
-    private String blockhash;  // TODO slated for extraction
-    private long amount; // TODO  must be inferred on insertion, slated for extraction
 
-    //Token contains any other type of data as key value, application may save use data as json for communication between systems
-    
-	private List<KeyValue> keyvalues;
-	
-    
+    // Logical group of token as parent token, sually empty
+    private String parenttokenid;
+
+    // not serialized on the wire
+    private String blockhash; // TODO slated for extraction
+    private long amount; // TODO must be inferred on insertion, slated for
+                         // extraction
+
+    // Token contains any other type of data as key value, application may save
+    // use data as json for communication between systems
+
+    private TokenKeyValues tokenKeyValues;
+
     public String getBlockhash() {
         return blockhash;
     }
@@ -120,7 +123,6 @@ public class Token implements java.io.Serializable {
         this.signnumber = signnumber;
     }
 
-
     public int getTokentype() {
         return tokentype;
     }
@@ -145,31 +147,49 @@ public class Token implements java.io.Serializable {
         this.prevblockhash = prevblockhash;
     }
 
-    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, 
-            int signnumber, long tokenindex, long amount, boolean tokenstop) {
+    public TokenKeyValues getTokenKeyValues() {
+        return tokenKeyValues;
+    }
+
+    public void setTokenKeyValues(TokenKeyValues tokenKeyValues) {
+        this.tokenKeyValues = tokenKeyValues;
+    }
+
+    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+            String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
+
+        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
+                amount, tokenstop, null);
+    }
+
+    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+            String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
+            TokenKeyValues tokenKeyValues) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
-      
+
         tokens.tokentype = TokenType.token.ordinal();
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
+        tokens.tokenKeyValues = tokenKeyValues;
         return tokens;
     }
 
-    public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+    public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+            String description, String url) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.setUrl(url);
         tokens.tokenstop = true;
-   
+
         tokens.tokentype = TokenType.market.ordinal();
         tokens.signnumber = 1;
         tokens.amount = 0;
@@ -179,7 +199,8 @@ public class Token implements java.io.Serializable {
         return tokens;
     }
 
-    public static Token buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname, String description, String url) {
+    public static Token buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
+            String tokenname, String description, String url) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -199,17 +220,8 @@ public class Token implements java.io.Serializable {
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", amount="
                 + amount + ", tokenname=" + tokenname + ", description=" + description + ", url=" + url
-                + ", signnumber=" + signnumber +  ", tokentype=" + tokentype
-                + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash + "]";
+                + ", signnumber=" + signnumber + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop
+                + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash + "]";
     }
 
-	public List<KeyValue> getKeyvalues() {
-		return keyvalues;
-	}
-
-	public void setKeyvalues(List<KeyValue> keyvalues) {
-		this.keyvalues = keyvalues;
-	}
-    
-    
 }

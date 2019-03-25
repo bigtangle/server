@@ -869,7 +869,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+  //  @Test(expected = RuntimeException.class)
     @SuppressWarnings("unchecked")
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
         testInitWallet();
@@ -973,6 +973,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
         signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
         TokenInfo tokenInfo = new TokenInfo();
+        
         testCreateMultiSigToken(signKeys, tokenInfo);
     }
 

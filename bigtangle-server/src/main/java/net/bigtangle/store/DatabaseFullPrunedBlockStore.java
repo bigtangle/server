@@ -51,6 +51,7 @@ import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredBlockBinary;
 import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
@@ -248,8 +249,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)";
 
     protected final String INSERT_TOKENS_SQL = getInsert()
-            + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, prevblockhash, spent, spenderblockhash) "
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, prevblockhash, spent, spenderblockhash, tokenkeyvalues) "
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
 
@@ -265,7 +266,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_TOKEN_PREVBLOCKHASH_SQL = "SELECT prevblockhash FROM tokens WHERE blockhash = ?";
 
-    protected final String SELECT_TOKEN_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop"
+    protected final String SELECT_TOKEN_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, tokenkeyvalues"
             + " FROM tokens WHERE blockhash = ?";
 
     protected final String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = ?, spenderblockhash = ? "
@@ -274,10 +275,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " tokens SET confirmed = ? "
             + " WHERE blockhash = ?";
 
-    protected final String SELECT_CONFIRMED_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop "
+    protected final String SELECT_CONFIRMED_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop , tokenkeyvalues"
             + " FROM tokens WHERE confirmed = true";
 
-    protected final String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop "
+    protected final String SELECT_MARKET_TOKENS_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, tokenkeyvalues "
             + " FROM tokens WHERE tokentype = 1 and confirmed = true";
 
     protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = true GROUP BY tokenid";
@@ -368,15 +369,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_NEXT_TX_REWARD_SQL = "UPDATE txreward SET nexttxreward = ? WHERE blockhash = ?";
-    
+
     /* ORDER MATCHING BLOCKS */
     protected final String INSERT_ORDER_MATCHING_SQL = getInsert()
             + "  INTO ordermatching (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_ORDER_MATCHING_TOHEIGHT_SQL = "SELECT toheight FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_FROMHEIGHT_SQL = "SELECT fromheight FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_MAX_CONFIRMED_SQL = "SELECT blockhash FROM ordermatching WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM ordermatching WHERE confirmed=1)";
-    protected final String SELECT_ORDER_MATCHING_CONFIRMED_SQL = "SELECT confirmed " + "FROM ordermatching WHERE blockhash = ?";
-    protected final String SELECT_ORDER_MATCHING_ELIGIBLE_SQL = "SELECT eligibility " + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_CONFIRMED_SQL = "SELECT confirmed "
+            + "FROM ordermatching WHERE blockhash = ?";
+    protected final String SELECT_ORDER_MATCHING_ELIGIBLE_SQL = "SELECT eligibility "
+            + "FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_SPENT_SQL = "SELECT spent " + "FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_SPENDER_SQL = "SELECT spenderblockhash "
             + "FROM ordermatching WHERE blockhash = ?";
@@ -872,16 +875,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertReward(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE,
-                    Sha256Hash.ZERO_HASH, NetworkParameters.REWARD_INITIAL_TX_REWARD);
-            insertOrderMatching(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE,
-                    Sha256Hash.ZERO_HASH);
+            insertReward(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE, Sha256Hash.ZERO_HASH,
+                    NetworkParameters.REWARD_INITIAL_TX_REWARD);
+            insertOrderMatching(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE, Sha256Hash.ZERO_HASH);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
             updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
             // Token output table
             Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, "BIG",
-                    "BIG currency", 1, 0, 0,  true);
+                    "BIG currency", 1, 0, 0, true);
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -2391,9 +2393,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                // blockhash, confirmed, tokenid, tokenindex, amount, tokenname,
-                // description, url, signnumber,tokentype,
-                // tokenstop
+
                 Token tokens = new Token();
                 tokens.setBlockhash(resultSet.getString("blockhash"));
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
@@ -2404,13 +2404,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setUrl(resultSet.getString("url"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
-      
+
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                byte[] buf = resultSet.getBytes("tokenkeyvalues");
+                if (buf != null) {
+                    tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+                }
                 list.add(tokens);
             }
             return list;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -2431,8 +2435,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_MARKET_TOKENS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
-            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname,
-            // description, url, signnumber,tokentype, tokenstop
+
             while (resultSet.next()) {
                 Token tokens = new Token();
                 tokens.setBlockhash(resultSet.getString("blockhash"));
@@ -2444,13 +2447,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setUrl(resultSet.getString("url"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
-        
+
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                byte[] buf = resultSet.getBytes("tokenkeyvalues");
+                if (buf != null) {
+                    tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+                }
                 list.add(tokens);
             }
             return list;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
+
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -2513,14 +2521,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setUrl(resultSet.getString("url"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
-        
+
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                byte[] buf = resultSet.getBytes("tokenkeyvalues");
+                if (buf != null) {
+                    tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+                }
                 list.add(tokens);
             }
             return list;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
+
             throw new BlockStoreException(ex);
+
         } finally {
             if (preparedStatement != null) {
                 try {
@@ -2546,19 +2560,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         int tokentype = tokens.getTokentype();
         boolean tokenstop = tokens.isTokenstop();
         String prevblockhash = tokens.getPrevblockhash();
+        byte[] tokenkeyvalues =null;
+        if(tokens.getTokenKeyValues()!=null) {
+            tokenkeyvalues = tokens.getTokenKeyValues().toByteArray();
+        }
         this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,
-                tokentype, tokenstop, prevblockhash);
+                tokentype, tokenstop, prevblockhash, tokenkeyvalues);
     }
 
     @Override
     public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
-            String tokenname, String description, String url, int signnumber, int tokentype,
-            boolean tokenstop, String prevblockhash) throws BlockStoreException {
+            String tokenname, String description, String url, int signnumber, int tokentype, boolean tokenstop,
+            String prevblockhash, byte[] tokenkeyvalues) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname,
-            // description, url, signnumber,tokentype, tokenstop
+
             preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
             preparedStatement.setString(1, blockhash);
             preparedStatement.setBoolean(2, confirmed);
@@ -2569,12 +2586,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(7, description);
             preparedStatement.setString(8, url);
             preparedStatement.setInt(9, signnumber);
-        
+
             preparedStatement.setInt(10, tokentype);
             preparedStatement.setBoolean(11, tokenstop);
             preparedStatement.setString(12, prevblockhash);
             preparedStatement.setBoolean(13, false);
             preparedStatement.setString(14, null);
+            preparedStatement.setBytes(15, tokenkeyvalues);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2761,9 +2779,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            // tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?,
-            // description = ?, url = ?, signnumber = ?, multiserial = ?,
-            // tokentype = ?, tokenstop =?
+
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
@@ -2787,9 +2803,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            // tokenid = ?, tokenindex = ?, amount = ?, tokenname = ?,
-            // description = ?, url = ?, signnumber = ?, multiserial = ?,
-            // tokentype = ?, tokenstop =?
+
             preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
             preparedStatement.setString(2, blockHash);
@@ -3065,8 +3079,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            // blockhash, confirmed, tokenid, tokenindex, amount, tokenname,
-            // description, url, signnumber,tokentype, tokenstop
+
             preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SQL);
             preparedStatement.setString(1, blockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3084,9 +3097,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                byte[] buf = resultSet.getBytes("tokenkeyvalues");
+                if (buf != null) {
+                    tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+                }
             }
             return tokens;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -3837,7 +3854,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
@@ -5211,7 +5228,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " AND beneficiaryaddress in (";
             String temp = "";
             for (String addr : addresses) {
-                temp += ",'" + addr+"'";
+                temp += ",'" + addr + "'";
             }
             sql += temp.substring(1) + ")";
         }
@@ -5380,7 +5397,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public Eligibility getOrderMatchingEligible(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
@@ -5545,7 +5562,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash) throws BlockStoreException {
+    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -5638,7 +5656,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public List<Sha256Hash> getOrderMatchingBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
