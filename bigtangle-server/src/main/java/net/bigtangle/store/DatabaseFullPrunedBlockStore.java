@@ -249,7 +249,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, prevblockhash, spent, spenderblockhash) "
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
 
