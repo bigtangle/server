@@ -135,9 +135,10 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
-        	//System.setProperty("java.net.useSystemProxies", "true");
-        //	System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-        //	System.setProperty("https.proxyPort", "3128");
+            // System.setProperty("java.net.useSystemProxies", "true");
+            // System.setProperty("https.proxyHost",
+            // "anwproxy.anwendungen.localnet.de");
+            // System.setProperty("https.proxyPort", "3128");
             realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
@@ -519,12 +520,12 @@ public class Main extends Application {
         return watchedtokenInfo;
     }
 
-    public static void  resetWachted() throws Exception {
-    
+    public static void resetWachted() throws Exception {
+
         watchedtokenInfo = new WatchedInfo();
         for (Token token : getAllTokens().getTokens()) {
             watchedtokenInfo.getTokenList().add(new Token(token.getTokenid(), token.getTokenname()));
-        } 
+        }
     }
 
     public static boolean isTokenInWatched(String tokenid) throws Exception {
@@ -1001,7 +1002,7 @@ public class Main extends Application {
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             if (tokens.isMultiserial()) {
-                continue;
+                // continue;
             }
             if (tokens.getSignnumber() >= 2) {
                 continue;
