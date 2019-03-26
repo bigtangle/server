@@ -92,7 +92,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
         }
     }
 
-    @Test
+   // @Test
     public void testClientVersion() throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(),
