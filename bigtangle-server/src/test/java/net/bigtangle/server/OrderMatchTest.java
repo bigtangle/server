@@ -37,7 +37,50 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
-    public void testOrderReclaim() throws Exception {
+    public void testOrderMatchingSchedule() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  walletKeys.get(8);;
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        
+        // Open buy order for test tokens
+        Block b = makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+        
+        // Generate some blocks to enable eligible order matching scheduling
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+            b = b.createNextBlock();
+            blockGraph.add(b, false);
+            addedBlocks.add(b);
+        }
+        milestoneService.update();
+        
+        // Execute order matching
+        addedBlocks.add(transactionService.performOrderMatchingVoting());
+        milestoneService.update();
+        
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
+        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+
+        // Verify token amount invariance 
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void testOrderReclaimSchedule() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey =  walletKeys.get(8);;
