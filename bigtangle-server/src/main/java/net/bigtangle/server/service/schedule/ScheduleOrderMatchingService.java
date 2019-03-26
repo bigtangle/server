@@ -30,7 +30,7 @@ public class ScheduleOrderMatchingService {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
                 logger.debug(" Start updateOrderMatching: ");
-                transactionService.performOrderMatchingVoting();
+                transactionService.performRewardVotingSingleton();
             } catch (Exception e) {
                 logger.warn("performOrderMatchingVoting ", e);
             }
