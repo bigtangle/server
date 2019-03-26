@@ -132,13 +132,9 @@ public class ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
 
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        
 
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         List<String> addressList = new ArrayList<String>();
         for (ECKey ecKey : keys) {
             String address = ecKey.toAddress(Main.params).toString();
@@ -236,13 +232,8 @@ public class ExchangeController {
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
             addresses.add(key.toAddress(Main.params).toString());
@@ -529,11 +520,8 @@ public class ExchangeController {
         this.mOrderid = stringValueOf(rowData.get("orderid"));
         String toAddress = stringValueOf(rowData.get("toAddress"));
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        KeyParameter aesKey = null;
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> list = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> list = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         boolean flag = false;
         for (ECKey ecKey : list) {
             if (toAddress.equals(ecKey.toAddress(Main.params).toBase58())) {
@@ -544,7 +532,7 @@ public class ExchangeController {
         try {
 
             PayOrder payOrder = new PayOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
-            payOrder.setAesKey(aesKey);
+            payOrder.setAesKey(Main.getAesKey());
             payOrder.setSellFlag(flag);
             payOrder.sign();
             this.initTable();
@@ -555,13 +543,8 @@ public class ExchangeController {
     }
 
     public boolean calculatedAddressHit(String address) throws Exception {
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         for (ECKey key : keys) {
             String n = key.toAddress(Main.params).toString();
             if (n.equalsIgnoreCase(address)) {
@@ -601,17 +584,12 @@ public class ExchangeController {
         String ContextRoot = Main.getContextRoot();
         Address fromAddress00 = new Address(Main.params, fromAddress);
         Address toAddress00 = new Address(Main.params, toAddress);
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(aesKey), toCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(Main.getAesKey()), toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);

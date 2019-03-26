@@ -128,13 +128,9 @@ public class UserdataController {
     @FXML
     public void initialize() {
         try {
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
+            
             List<String> list = new ArrayList<String>();
-            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
             tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
@@ -183,13 +179,9 @@ public class UserdataController {
     public void saveOther(ActionEvent event) {
         String CONTEXT_ROOT = Main.getContextRoot();
         try {
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
+            
             List<String> list = new ArrayList<String>();
-            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
             String type = domianComboBox.getValue();
@@ -208,12 +200,8 @@ public class UserdataController {
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
         ECKey pubKeyTo = null;
         if (walletAppKit.wallet().isEncrypted()) {
@@ -236,7 +224,7 @@ public class UserdataController {
 
         Sha256Hash sighash = coinbase.getHash();
 
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -332,12 +320,8 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+            
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
             if (walletAppKit.wallet().isEncrypted()) {
@@ -358,7 +342,7 @@ public class UserdataController {
             coinbase.setData(myhomeaddress.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -413,12 +397,8 @@ public class UserdataController {
             coinbase.setDataClassName(DataClassName.CONTACTINFO.name());
             coinbase.setData(contactInfo.toByteArray());
 
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+           
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
             if (walletAppKit.wallet().isEncrypted()) {
@@ -428,7 +408,7 @@ public class UserdataController {
             }
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -580,13 +560,9 @@ public class UserdataController {
         ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name());
         domianComboBox.setItems(userdata);
         try {
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
+           
             List<String> pubKeyList = new ArrayList<String>();
-            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
             Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
@@ -654,13 +630,9 @@ public class UserdataController {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initWatchedTokenTable() throws Exception {
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        
         List<String> pubKeyList = new ArrayList<String>();
-        for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+        for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
             pubKeyList.add(ecKey.getPublicKeyAsHex());
         }
         Type blocktype = Block.Type.BLOCKTYPE_USERDATA;
@@ -728,12 +700,8 @@ public class UserdataController {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+           
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
             if (walletAppKit.wallet().isEncrypted()) {
@@ -757,7 +725,7 @@ public class UserdataController {
             coinbase.setData(uploadfileInfo.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

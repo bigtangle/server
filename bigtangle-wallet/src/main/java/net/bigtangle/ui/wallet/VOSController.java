@@ -96,13 +96,9 @@ public class VOSController {
     public void initialize() {
         try {
 
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
+            
             List<String> list = new ArrayList<String>();
-            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 list.add(ecKey.getPublicKeyAsHex());
             }
 
@@ -144,13 +140,9 @@ public class VOSController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void initTableView(List<String> pubkeyList) {
         try {
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
+            
             List<String> pubKeyList = new ArrayList<String>();
-            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
             }
              Type blocktype = Block.Type.BLOCKTYPE_VOS;
@@ -202,12 +194,8 @@ public class VOSController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_VOS);
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+            
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
             if (walletAppKit.wallet().isEncrypted()) {
@@ -221,7 +209,7 @@ public class VOSController {
             coinbase.setData(vos.toByteArray());
 
             Sha256Hash sighash = coinbase.getHash();
-            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,aesKey);
+            ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash,Main.getAesKey());
             byte[] buf1 = party1Signature.encodeToDER();
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

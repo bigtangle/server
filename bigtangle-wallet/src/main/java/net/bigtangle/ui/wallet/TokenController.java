@@ -196,12 +196,8 @@ public class TokenController extends TokenBaseController {
 					break;
 				}
 			});
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
-			List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+			 
+			List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 			tokenid1.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
 
 				if (newv != null && !newv.isEmpty() && !signAddrChoiceBox.getItems().contains(newv)) {
@@ -454,13 +450,8 @@ public class TokenController extends TokenBaseController {
 		GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
 		// wallet keys minus used from token list with one time (blocktype false
-		KeyParameter aeskey = null;
-		// Main.initAeskey(aeskey);
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aeskey = keyCrypter.deriveKey(Main.password);
-		}
-		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aeskey);
+	 
+		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 		for (ECKey key : keys) {
 			String temp = Utils.HEX.encode(key.getPubKey());
 			boolean flag = true;
@@ -522,13 +513,8 @@ public class TokenController extends TokenBaseController {
 
 	public void saveToken(ActionEvent event) {
 		try {
-
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
-			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+ 
+			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 			TokenInfo tokenInfo = new TokenInfo();
 
@@ -558,12 +544,7 @@ public class TokenController extends TokenBaseController {
 	public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey) {
 
 		try {
-
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
+ 
 
 			String amount = stockAmount.getText();
 
@@ -572,7 +553,7 @@ public class TokenController extends TokenBaseController {
 				GuiUtils.informationalAlert("", Main.getText("NoNumber"));
 				return;
 			}
-			Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, aesKey);
+			Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, Main.getAesKey());
 			GuiUtils.informationalAlert("", Main.getText("s_c_m"));
 			Main.instance.controller.initTableView();
 			checkGuiThread();
@@ -585,12 +566,8 @@ public class TokenController extends TokenBaseController {
 
 	public void saveMarket(ActionEvent event) {
 		try {
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
-			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+			 
+			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 			TokenInfo tokenInfo = new TokenInfo();
 
@@ -620,12 +597,8 @@ public class TokenController extends TokenBaseController {
 		try {
 			ECKey outKey = null;
 
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
-			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+			 
+			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 			if (Main.walletAppKit.wallet().isEncrypted()) {
 				outKey = issuedKeys.get(0);
@@ -678,12 +651,8 @@ public class TokenController extends TokenBaseController {
 	}
 
 	public void doSaveSubtangle(HashMap<String, Object> map) throws Exception {
-		KeyParameter aesKey = null;
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aesKey = keyCrypter.deriveKey(Main.password);
-		}
-		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+		 
+		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 		String CONTEXT_ROOT = Main.getContextRoot();
 
@@ -753,12 +722,8 @@ public class TokenController extends TokenBaseController {
 			String CONTEXT_ROOT = Main.getContextRoot();
 
 			Main.walletAppKit.wallet().setServerURL(CONTEXT_ROOT);
-			KeyParameter aesKey = null;
-			final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-			if (!"".equals(Main.password.trim())) {
-				aesKey = keyCrypter.deriveKey(Main.password);
-			}
-			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+		 
+			List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 			if (signnumberTF.getText() == null || signnumberTF.getText().trim().isEmpty()) {
 				GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
@@ -778,7 +743,7 @@ public class TokenController extends TokenBaseController {
 					&& signnumberTF.getText().matches("[1-9]\\d*")
 					&& Long.parseLong(signnumberTF.getText().trim()) == 1) {
 
-				multiSinglePpublish(aesKey, issuedKeys);
+				multiSinglePpublish(Main.getAesKey(), issuedKeys);
 				return;
 			}
 			if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
@@ -865,12 +830,8 @@ public class TokenController extends TokenBaseController {
 	@SuppressWarnings("unchecked")
 	public void doMultiSign() throws Exception {
 
-		KeyParameter aesKey = null;
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aesKey = keyCrypter.deriveKey(Main.password);
-		}
-		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+		 
+		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 		Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
 		if (rowdata == null || rowdata.isEmpty()) {
@@ -919,7 +880,7 @@ public class TokenController extends TokenBaseController {
 		}
 		Sha256Hash sighash = transaction.getHash();
 
-		ECKey.ECDSASignature party1Signature = myKey.sign(sighash, aesKey);
+		ECKey.ECDSASignature party1Signature = myKey.sign(sighash, Main.getAesKey());
 		byte[] buf1 = party1Signature.encodeToDER();
 
 		MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -940,12 +901,8 @@ public class TokenController extends TokenBaseController {
 	}
 
 	public void noSignBlock(HashMap<String, Object> map) throws Exception {
-		KeyParameter aesKey = null;
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aesKey = keyCrypter.deriveKey(Main.password);
-		}
-		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+		 
+		List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
 		String CONTEXT_ROOT = Main.getContextRoot();
 

@@ -130,13 +130,8 @@ public class EckeyController {
     public void initEcKeyList() throws Exception {
         issuedKeyData.clear();
 
-        KeyParameter aesKey = null;
-        // Main.initAeskey(aesKey);
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         if (issuedKeys != null && !issuedKeys.isEmpty()) {
             for (ECKey ecKey : issuedKeys) {
                 issuedKeyData.add(new EckeyModel(ecKey.getPublicKeyAsHex(), ecKey.getPrivateKeyAsHex(),

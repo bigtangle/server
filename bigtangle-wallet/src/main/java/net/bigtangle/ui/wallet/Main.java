@@ -195,12 +195,8 @@ public class Main extends Application {
         block.setBlockType(blocktype);
         ECKey pubKeyTo = null;
 
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
         if (Main.walletAppKit.wallet().isEncrypted()) {
             pubKeyTo = issuedKeys.get(0);
@@ -264,7 +260,7 @@ public class Main extends Application {
 
         Sha256Hash sighash = coinbase.getHash();
 
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, getAesKey());
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -374,12 +370,7 @@ public class Main extends Application {
                 IpAddress = "https://bigtangle.org";
 
         }
-        try {
-        addUsersettingData();
-        }catch (Exception e) {
-            // ignore password setting
-            
-        }
+  
 
         mainUI = loader.load();
         controller = loader.getController();
@@ -441,12 +432,8 @@ public class Main extends Application {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
-        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+  
+        List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
         ECKey pubKeyTo = null;
         if (walletAppKit.wallet().isEncrypted()) {
@@ -470,7 +457,7 @@ public class Main extends Application {
 
         Sha256Hash sighash = coinbase.getHash();
 
-        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, aesKey);
+        ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -485,6 +472,15 @@ public class Main extends Application {
         block.solve();
 
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+    }
+
+    public static KeyParameter getAesKey() {
+        KeyParameter aesKey = null;
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
+        if (!"".equals(Main.password.trim())) {
+            aesKey = keyCrypter.deriveKey(Main.password);
+        }
+        return aesKey;
     }
 
     public static String getString4block(List<String> list) throws Exception {
@@ -935,12 +931,8 @@ public class Main extends Application {
             // + ":" + Main.port + "/";
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
-            KeyParameter aesKey = null;
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+             
+            List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
             ECKey pubKeyTo = null;
             if (walletAppKit.wallet().isEncrypted()) {

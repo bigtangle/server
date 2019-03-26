@@ -116,17 +116,13 @@ public class TokenBaseController {
     @SuppressWarnings("unchecked")
     @Deprecated
     public void initSerialTableView() throws Exception {
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidTF.getText());
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
@@ -220,17 +216,13 @@ public class TokenBaseController {
 
     @SuppressWarnings({ "unchecked" })
     public void initMultisignTableView() throws Exception {
-        KeyParameter aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidTF.getText());
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);

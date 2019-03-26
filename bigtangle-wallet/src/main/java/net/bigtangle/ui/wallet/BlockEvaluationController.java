@@ -289,13 +289,8 @@ public class BlockEvaluationController {
         String address = addressComboBox1.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
-            KeyParameter aesKey = null;
-            // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+            
+            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
             }
@@ -361,13 +356,8 @@ public class BlockEvaluationController {
         String address = addressComboBox.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
-            KeyParameter aesKey = null;
-            // Main.initAeskey(aesKey);
-            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-            if (!"".equals(Main.password.trim())) {
-                aesKey = keyCrypter.deriveKey(Main.password);
-            }
-            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(aesKey);
+           
+            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
             }

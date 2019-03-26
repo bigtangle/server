@@ -125,10 +125,18 @@ public class MainController {
     @FXML
     public TextField addressTextField;
 
-    private KeyParameter aesKey = null;
+   
 
     @FXML
     public void initialize() {
+        
+        try {
+            Main.addUsersettingData();
+            }catch (Exception e) {
+                // ignore password setting
+                
+            }
+        
         try {
             if (checkVersion()) {
                 if (walletAppKit.wallet().isEncrypted()) {
@@ -186,14 +194,10 @@ public class MainController {
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = Main.getContextRoot();
         walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-        aesKey = null;
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+       
         List<String> keyStrHex000 = new ArrayList<String>();
         if (addressString == null || "".equals(addressString.trim())) {
-            for (ECKey ecKey : walletAppKit.wallet().walletKeys(aesKey)) {
+            for (ECKey ecKey : walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
             }
         } else {

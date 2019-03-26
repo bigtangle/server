@@ -442,9 +442,9 @@ public class SendMoneyController {
 
 	@SuppressWarnings({ "unchecked" })
 	public void initSignTable() throws Exception {
-		KeyParameter aesKey = null;
+	 
 		List<String> pubKeys = new ArrayList<String>();
-		for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+		for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
 			pubKeys.add(ecKey.toAddress(Main.params).toString());
 		}
 		String ContextRoot = Main.getContextRoot();
@@ -614,12 +614,8 @@ public class SendMoneyController {
 	}
 
 	public void paySubtangle() throws Exception {
-		KeyParameter aesKey = null;
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aesKey = keyCrypter.deriveKey(Main.password);
-		}
-		List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(aesKey);
+		 
+		List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 		ECKey genesiskey = null;
 		if (walletAppKit.wallet().isEncrypted()) {
 			genesiskey = issuedKeys.get(0);
@@ -637,7 +633,7 @@ public class SendMoneyController {
 						.decode(subtangleComboBox.getValue().substring(0, subtangleComboBox.getValue().indexOf(":"))))
 				.toAddress(Main.params);
 
-		walletAppKit.wallet().paySubtangle(aesKey, outputStr, genesiskey,
+		walletAppKit.wallet().paySubtangle(Main.getAesKey(), outputStr, genesiskey,
 				Address.fromBase58(Main.params, addressComboBox2.getValue()),
 				Coin.valueOf(Long.parseLong(amountEdit2.getText()), Utils.HEX.decode(btcLabel2.getText())), address);
 	}
@@ -996,14 +992,14 @@ public class SendMoneyController {
 				PayMultiSignAddressListResponse.class);
 		List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
 
-		KeyParameter aesKey = null;
+	 
 		ECKey currentECKey = null;
 
 		for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {
 			if (payMultiSignAddress.getSign() == 1) {
 				continue;
 			}
-			for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(aesKey)) {
+			for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
 				if (ecKey.toAddress(Main.params).toString().equals(payMultiSignAddress.getPubKey())) {
 					currentECKey = ecKey;
 					break;
@@ -1049,16 +1045,11 @@ public class SendMoneyController {
 
 		Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
 
-		KeyParameter aesKey = null;
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-		if (!"".equals(Main.password.trim())) {
-			aesKey = keyCrypter.deriveKey(Main.password);
-		}
-
-		TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, aesKey),
+	  
+		TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, Main.getAesKey()),
 				Transaction.SigHash.ALL, false);
 
-		ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash(), aesKey);
+		ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash(), Main.getAesKey());
 		byte[] buf1 = party1Signature.encodeToDER();
 
 		requestParam.clear();
