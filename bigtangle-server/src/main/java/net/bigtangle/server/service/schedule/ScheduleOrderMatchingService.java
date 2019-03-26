@@ -43,7 +43,7 @@ public class ScheduleOrderMatchingService {
         }
         try {
             logger.debug(" Start updateOrderMatching: ");
-            transactionService.performRewardVotingSingleton();
+            transactionService.performOrderMatchingVoting();
         } catch (Exception e) {
             logger.warn("updateOrderMatching ", e);
         } finally {
