@@ -41,7 +41,7 @@ public class BuyOrderAction extends SimpleAction {
                 if (orderPublish.getState() != OrderState.publish.ordinal()) {
                     continue;
                 }
-                if (this.account.wallet().calculatedAddressHit(orderPublish.getAddress())) {
+                if (this.account.wallet().calculatedAddressHit(null,orderPublish.getAddress())) {
                     continue;
                 }
                 if (orderPublish.getType() != 1) {

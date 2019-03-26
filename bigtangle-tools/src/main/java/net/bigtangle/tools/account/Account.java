@@ -184,7 +184,7 @@ public class Account {
     private List<ECKey> signKey;
 
     public void completeTransaction(SendRequest request) throws Exception {
-        this.walletAppKit.wallet().completeTx(request);
+        this.walletAppKit.wallet().completeTx(request,null);
     }
 
     public void signTransaction(SendRequest request) throws Exception {

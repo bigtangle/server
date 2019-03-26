@@ -209,9 +209,9 @@ public class PayOrder {
         String toAmount = exchange.getToAmount();
 
         String signtype = "to";
-        if (toSign == 0 && this.wallet().calculatedAddressHit(toAddress)) {
+        if (toSign == 0 && this.wallet().calculatedAddressHit(aesKey, toAddress)) {
             signtype = "to";
-        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(fromAddress)) {
+        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
             signtype = "from";
         }
         buf = this.makeSignTransactionBuffer(fromAddress, parseCoinValue(fromAmount, fromTokenHex, true), toAddress,
@@ -241,9 +241,9 @@ public class PayOrder {
         int toSign = this.exchange.getToSign();
         int fromSign = this.exchange.getFromSign();
         String signtype = "";
-        if (toSign == 0 && this.wallet().calculatedAddressHit(toAddress)) {
+        if (toSign == 0 && this.wallet().calculatedAddressHit(aesKey,toAddress)) {
             signtype = "to";
-        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(fromAddress)) {
+        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
             signtype = "from";
         }
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -258,7 +258,7 @@ public class PayOrder {
             throws Exception {
         String fromAddress00, toAddress00;
         Coin fromCoin00, toCoin00;
-        if (this.wallet().calculatedAddressHit(fromAddress)) {
+        if (this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
             fromAddress00 = fromAddress;
             toAddress00 = toAddress;
             fromCoin00 = fromCoin;
@@ -471,7 +471,7 @@ public class PayOrder {
                 PayMultiSignAddressListResponse.class);
         List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
 
-        KeyParameter aesKey = null;
+        
         ECKey currentECKey = null;
 
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {

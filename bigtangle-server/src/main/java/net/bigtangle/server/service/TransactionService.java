@@ -241,6 +241,20 @@ public class TransactionService {
         return block;
     }
 	
+    public Block performRewardVotingSingleton() throws Exception {
+    if (!lock.tryAcquire()) {
+        logger.debug("performRewardVoting already running. Returning...");
+        return null;
+    }
+    logger.info("performRewardVoting  started");
+    Stopwatch watch = Stopwatch.createStarted();
+    try {
+        return performRewardVoting();
+     } finally {
+        lock.release();
+        logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+    }
+    }
 	/**
 	 * Runs the reward voting logic: push existing best eligible reward if exists or make a new eligible reward now
 	 * 

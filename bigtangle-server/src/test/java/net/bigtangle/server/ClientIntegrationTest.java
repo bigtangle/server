@@ -197,7 +197,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             transaction.addOutput(amount, outKey);
 
             SendRequest request = SendRequest.forTx(transaction);
-            coinbaseWallet.completeTx(request);
+            coinbaseWallet.completeTx(request,null);
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
@@ -208,7 +208,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-            List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
+            List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
             for (TransactionOutput transactionOutput : candidates) {
                 log.info("UTXO : " + transactionOutput);
             }
@@ -235,7 +235,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
 
         SendRequest request = SendRequest.forTx(transaction);
-        coinbaseWallet.completeTx(request);
+        coinbaseWallet.completeTx(request,null);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -245,7 +245,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(false);
+        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null,false);
         for (TransactionOutput transactionOutput : candidates) {
             log.info("UTXO : " + transactionOutput);
         }
@@ -434,7 +434,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
         amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
         req = SendRequest.to(destination, amount);
-        walletAppKit.wallet().completeTx(req);
+        walletAppKit.wallet().completeTx(req,null);
         walletAppKit.wallet().signTransaction(req);
 
         exchangeTokenComplete(req.tx);
@@ -500,7 +500,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
-        walletAppKit.wallet().completeTx(request);
+        walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -531,7 +531,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
-        walletAppKit.wallet().completeTx(request);
+        walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -781,7 +781,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
-        walletAppKit.wallet().completeTx(request);
+        walletAppKit.wallet().completeTx(request,null);
         // request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);
