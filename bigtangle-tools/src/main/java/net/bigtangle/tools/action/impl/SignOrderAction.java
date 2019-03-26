@@ -52,10 +52,10 @@ public class SignOrderAction extends SimpleAction {
                 String toAddress = exchange.getToAddress();
                 // mj61qqqkFDcXFx6P5bMtspDH7tJZ7jVHL4
                 String fromAddress = exchange.getFromAddress();
-                if (toSign == 1 && this.account.wallet().calculatedAddressHit(toAddress)) {
+                if (toSign == 1 && this.account.wallet().calculatedAddressHit(null,toAddress)) {
                     continue;
                 }
-                if (fromSign == 1 && this.account.wallet().calculatedAddressHit(fromAddress)) {
+                if (fromSign == 1 && this.account.wallet().calculatedAddressHit(null,fromAddress)) {
                     continue;
                 }
                // exchangeList.add(exchange);

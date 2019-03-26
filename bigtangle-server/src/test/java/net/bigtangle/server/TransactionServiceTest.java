@@ -94,7 +94,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
-        walletAppKit.wallet().completeTx(request);
+        walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -176,7 +176,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        walletAppKit.wallet().completeTx(request);
+        walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 

@@ -62,7 +62,7 @@ public class TransactionOutputTest extends TestWithWallet {
         multiSigTransaction.addOutput(Coin.COIN, scriptPubKey);
 
         SendRequest req = SendRequest.forTx(multiSigTransaction);
-        this.wallet.completeTx(req);
+        this.wallet.completeTx(req,null);
         TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
 
      //TODO   assertThat(multiSigTransactionOutput.toString(), CoreMatchers.containsString("CHECKMULTISIG"));

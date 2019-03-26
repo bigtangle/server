@@ -2390,74 +2390,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		THROW
 	}
 
-	/**
-	 * <p>
-	 * Statelessly creates a transaction that sends the given value to address. The
-	 * change is sent to {@link Wallet#currentChangeAddress()}, so you must have
-	 * added at least one key.
-	 * </p>
-	 *
-	 * <p>
-	 * If you just want to send money quickly, you probably want
-	 * {@link Wallet#sendCoins(TransactionBroadcaster, Address, Coin)} instead. That
-	 * will create the sending transaction, commit to the wallet and broadcast it to
-	 * the network all in one go. This method is lower level and lets you see the
-	 * proposed transaction before anything is done with it.
-	 * </p>
-	 *
-	 * <p>
-	 * This is a helper method that is equivalent to using
-	 * {@link SendRequest#to(Address, Coin)} followed by
-	 * {@link Wallet#completeTx(Wallet.SendRequest)} and returning the requests
-	 * transaction object. Note that this means a fee may be automatically added if
-	 * required, if you want more control over the process, just do those two steps
-	 * yourself.
-	 * </p>
-	 *
-	 * <p>
-	 * IMPORTANT: This method does NOT update the wallet. If you call createSend
-	 * again you may get two transactions that spend the same coins. You have to
-	 * call {@link Wallet#commitTx(Transaction)} on the created transaction to
-	 * prevent this, but that should only occur once the transaction has been
-	 * accepted by the network. This implies you cannot have more than one
-	 * outstanding sending tx at once.
-	 * </p>
-	 *
-	 * <p>
-	 * You MUST ensure that the value is not smaller than
-	 * {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will almost
-	 * certainly be rejected by the network as dust.
-	 * </p>
-	 *
-	 * @param address
-	 *            The Bitcoin address to send the money to.
-	 * @param value
-	 *            How much currency to send.
-	 * @return either the created Transaction or null if there are insufficient
-	 *         coins.
-	 * @throws Exception
-	 * @throws JsonProcessingException
-	 * @throws UnsupportedEncodingException
-	 * @throws DustySendRequested
-	 *             if the resultant transaction would violate the dust rules.
-	 * @throws CouldNotAdjustDownwards
-	 *             if emptying the wallet was requested and the output can't be
-	 *             shrunk for fees without violating a protocol rule.
-	 * @throws ExceededMaxTransactionSize
-	 *             if the resultant transaction is too big for Bitcoin to process.
-	 * @throws MultipleOpReturnRequested
-	 *             if there is more than one OP_RETURN output for the resultant
-	 *             transaction.
-	 */
-	public Transaction createSend(Address address, Coin value)
-			throws UnsupportedEncodingException, JsonProcessingException, Exception {
-		SendRequest req = SendRequest.to(address, value);
-		if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
-			req.shuffleOutputs = false;
-		completeTx(req);
-		return req.tx;
-	}
-
+ 
 	/**
 	 * Given a spend request containing an incomplete transaction, makes it valid by
 	 * adding outputs and signed inputs according to the instructions in the
@@ -3342,7 +3275,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
 	// changes
 
-	public List<TransactionOutput> calculateAllSpendCandidates(boolean multisigns)
+	public List<TransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
 			throws UnsupportedEncodingException, JsonProcessingException, Exception {
 		lock.lock();
 		try {
@@ -3351,7 +3284,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
 			List<String> pubKeyHashs = new ArrayList<String>();
 
-			for (ECKey ecKey : walletKeys(null)) {
+			for (ECKey ecKey : walletKeys(aesKey)) {
 				pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
 			}
 
@@ -3382,7 +3315,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		return candidates;
 	}
 
-	public void completeTx(SendRequest req) throws UnsupportedEncodingException, JsonProcessingException, Exception {
+	public void completeTx(SendRequest req, KeyParameter aesKey) throws UnsupportedEncodingException, JsonProcessingException, Exception {
 		// Calculate a list of ALL potential candidates for spending and
 		// then ask a coin selector to provide us
 		// with the actual outputs that'll be used to gather the required
@@ -3390,7 +3323,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		// can customize coin selection policies. The call below will ignore
 		// immature coinbases and outputs
 		// we don't have the keys for.
-		List<TransactionOutput> candidates = calculateAllSpendCandidates(false);
+		List<TransactionOutput> candidates = calculateAllSpendCandidates(aesKey,false);
 		completeTx(req, candidates, true);
 	}
 
@@ -3570,8 +3503,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		return walletKeys(aesKey);
 	}
 
-	public boolean calculatedAddressHit(String address) {
-		KeyParameter aesKey = null;
+	public boolean calculatedAddressHit(KeyParameter aesKey, String address) {
+		 
 		try {
 			for (ECKey key : this.walletKeys(aesKey)) {
 				String n = key.toAddress(this.getNetworkParameters()).toString();
@@ -3859,7 +3792,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
 		SendRequest request = SendRequest.to(destination, amount);
 		request.tx.setMemo(memo);
-		completeTx(request);
+		completeTx(request,aesKey);
 		rollingBlock.addTransaction(request.tx);
 		rollingBlock.solve();
 
@@ -3882,7 +3815,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 
 		SendRequest request = SendRequest.forTx(multiSigTransaction);
 		request.tx.setMemo(memo);
-		completeTx(request);
+		completeTx(request,aesKey);
 		rollingBlock.addTransaction(request.tx);
 		rollingBlock.solve();
 
