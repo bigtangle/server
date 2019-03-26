@@ -99,7 +99,7 @@ import net.bigtangle.wallet.DeterministicSeed;
 
 public class Main extends Application {
     public static NetworkParameters params = MainNetParams.get();
-    public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version + "-22-03";
+    public static final String APP_NAME = "Bigtangle  Wallet Test " + Main.version + "-26-03";
     public static final String version = "0.3.3.1";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";
@@ -374,8 +374,12 @@ public class Main extends Application {
                 IpAddress = "https://bigtangle.org";
 
         }
-
+        try {
         addUsersettingData();
+        }catch (Exception e) {
+            // ignore password setting
+            
+        }
 
         mainUI = loader.load();
         controller = loader.getController();
@@ -769,13 +773,11 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void addUsersettingData() {
-        try {
+    public static void addUsersettingData() throws Exception {
+        
             addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
             addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
-        } catch (Exception e) {
-            GuiUtils.crashAlert(e);
-        }
+       
     }
 
     public ObservableList<CoinModel> getCoinData() {

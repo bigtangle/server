@@ -76,8 +76,8 @@ public abstract class AbstractIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-		System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		System.setProperty("https.proxyPort", "3128");
+		//System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		//System.setProperty("https.proxyPort", "3128");
 		walletKeys();
 		// emptyBlocks(10);
 	}
@@ -334,10 +334,10 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	// create a token with multi sign
-	protected void testCreateMultiSigToken(ECKey keys, TokenInfo tokenInfo, String tokename)
+	protected void testCreateMultiSigToken(ECKey key, String tokename)
 			throws JsonProcessingException, Exception {
 		try {
-		createFirstMultisignToken(keys, tokenInfo, tokename);
+		createFirstMultisignToken(key, new TokenInfo(), tokename);
 		}catch (Exception e) {
 			// TODO: handle exception
 			log.warn("",e);

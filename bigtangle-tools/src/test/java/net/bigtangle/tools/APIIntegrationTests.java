@@ -109,13 +109,13 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		wallet1();
 		List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
 		TokenInfo tokenInfo = new TokenInfo();
-		testCreateMultiSigToken(keys.get(1), tokenInfo, "gold");
-		testCreateMultiSigToken(keys.get(2), tokenInfo, "BTC");
-		testCreateMultiSigToken(keys.get(3), tokenInfo, "ETH");
-		testCreateMultiSigToken(keys.get(4), tokenInfo, "CNY");
-		testCreateMultiSigToken(keys.get(7), tokenInfo, "人民币");
-		testCreateMultiSigToken(keys.get(5), tokenInfo, "USD");
-		testCreateMultiSigToken(keys.get(6), tokenInfo, "EUR");
+		testCreateMultiSigToken(keys.get(1),  "gold");
+		testCreateMultiSigToken(keys.get(2),  "BTC");
+		testCreateMultiSigToken(keys.get(3),  "ETH");
+		testCreateMultiSigToken(keys.get(4),  "CNY");
+		testCreateMultiSigToken(keys.get(7),  "人民币");
+		testCreateMultiSigToken(keys.get(5),  "USD");
+		testCreateMultiSigToken(keys.get(6),  "EUR");
 
 	}
 
@@ -125,7 +125,7 @@ public class APIIntegrationTests extends AbstractIntegrationTest {
 		wallet2();
 		List<ECKey> keys = walletAppKit2.wallet().walletKeys(null);
 		TokenInfo tokenInfo = new TokenInfo();
-		testCreateMultiSigToken(keys.get(7), tokenInfo, "人民币");
+		testCreateMultiSigToken(keys.get(7),  "人民币");
 
 	}
 
