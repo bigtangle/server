@@ -3813,7 +3813,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		return block;
 	}
 
-	public void paySubtangle(KeyParameter aesKey, String outputStr, ECKey genesiskey, Address toAddressInSubtangle,
+	public void paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
 			Coin coin, Address address) throws Exception {
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -3835,7 +3835,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 		Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
 				false);
 
-		TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash, aesKey),
+		TransactionSignature tsrecsig = new TransactionSignature(connectKey.sign(sighash, aesKey),
 				Transaction.SigHash.ALL, false);
 		Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
 		input.setScriptSig(inputScript);
@@ -3844,6 +3844,46 @@ public class Wallet extends BaseTaggableObject implements KeyBag, TransactionBag
 				Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
 		Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
 		rollingBlock.addTransaction(transaction);
+		rollingBlock.solve();
+
+		OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+	}
+
+	public void pay(KeyParameter aesKey, Address destination, Coin amount, String memo) throws Exception {
+
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+
+		Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+
+		SendRequest request = SendRequest.to(destination, amount);
+		request.tx.setMemo(memo);
+		completeTx(request);
+		rollingBlock.addTransaction(request.tx);
+		rollingBlock.solve();
+
+		OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+	}
+
+	public void payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
+			throws Exception {
+
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+
+		Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+
+		Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(signnum, keys);
+
+		Transaction multiSigTransaction = new Transaction(params);
+		multiSigTransaction.addOutput(amount, scriptPubKey);
+
+		SendRequest request = SendRequest.forTx(multiSigTransaction);
+		request.tx.setMemo(memo);
+		completeTx(request);
+		rollingBlock.addTransaction(request.tx);
 		rollingBlock.solve();
 
 		OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
