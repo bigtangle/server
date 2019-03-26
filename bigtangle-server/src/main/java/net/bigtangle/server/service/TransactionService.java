@@ -212,7 +212,8 @@ public class TransactionService {
             boolean override) throws Exception {
 
         Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
-        blockgraph.add(block, false);
+        if (block != null)
+            blockgraph.add(block, false);
         return block;
     }
 
@@ -323,7 +324,8 @@ public class TransactionService {
             boolean override) throws Exception {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
-        blockgraph.add(block, false);
+        if (block != null)
+            blockgraph.add(block, false);
         return block;
     }
 
