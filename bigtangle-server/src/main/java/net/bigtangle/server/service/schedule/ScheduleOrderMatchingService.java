@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.service.schedule;
 
+import java.util.concurrent.Semaphore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +26,28 @@ public class ScheduleOrderMatchingService {
 
     @Autowired
     private TransactionService transactionService;
+    private final Semaphore lock = new Semaphore(1);
 
     @Scheduled(fixedDelay = 30000)
     public void updateOrderMatching() {
         if (scheduleConfiguration.isMilestone_active()) {
-            try {
-                logger.debug(" Start updateOrderMatching: ");
-                transactionService.performRewardVotingSingleton();
-            } catch (Exception e) {
-                logger.warn("performOrderMatchingVoting ", e);
-            }
+            updateOrderMatchingDo();
+        }
+    }
+
+    public void updateOrderMatchingDo() {
+
+        if (!lock.tryAcquire()) {
+            logger.debug("updateOrderMatching Update already running. Returning...");
+            return;
+        }
+        try {
+            logger.debug(" Start updateOrderMatching: ");
+            transactionService.performRewardVotingSingleton();
+        } catch (Exception e) {
+            logger.warn("updateOrderMatching ", e);
+        } finally {
+            lock.release();
         }
     }
 
