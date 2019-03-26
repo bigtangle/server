@@ -128,8 +128,8 @@ public class TransactionService {
      */
     public List<Block> performOrderReclaimMaintenance() throws Exception {
         // Find height from which on all orders are finished
-        Sha256Hash prevRewardHash = store.getMaxConfirmedOrderMatchingBlockHash();
-        long finishedHeight = store.getOrderMatchingToHeight(prevRewardHash);
+        Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
+        long finishedHeight = store.getOrderMatchingToHeight(prevHash);
 
         // Find orders that are unspent confirmed with height lower than the
         // passed matching
@@ -138,20 +138,20 @@ public class TransactionService {
         // Perform reclaim for each of the lost orders
         List<Block> result = new ArrayList<>();
         for (Sha256Hash lostOrder : lostOrders) {
-            result.add(createAndAddOrderReclaim(lostOrder, prevRewardHash));
+            result.add(createAndAddOrderReclaim(lostOrder, prevHash));
         }
         return result;
     }
 
     /**
-     * Runs the reward voting logic: push existing best eligible reward if
-     * exists or make a new eligible reward now
+     * Runs the order matching voting logic: push existing best eligible order matching if
+     * exists or make a new eligible order matching now
      * 
      * @return the new block or block voted on
      * @throws Exception
      */
     public Block performOrderMatchingVoting() throws Exception {
-        // Find eligible rewards building on top of the newest reward
+        // Find eligible order matchings building on top of the newest order matching
         Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
         List<Sha256Hash> candidateHashes = store.getOrderMatchingBlocksWithPrevHash(prevHash);
         candidateHashes.removeIf(c -> {
@@ -181,20 +181,20 @@ public class TransactionService {
     }
 
     public Block createAndAddOrderMatchingBlock() throws Exception {
-        logger.info("createAndAddMiningRewardBlock  started");
+        logger.info("createAndAddOrderMatchingBlock  started");
         Stopwatch watch = Stopwatch.createStarted();
 
         if (!lock.tryAcquire()) {
-            logger.debug("createAndAddMiningRewardBlock already running. Returning...");
+            logger.debug("createAndAddOrderMatchingBlock already running. Returning...");
             return null;
         }
 
         try {
-            Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-            return createAndAddOrderMatchingBlock(prevRewardHash);
+            Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
+            return createAndAddOrderMatchingBlock(prevHash);
         } finally {
             lock.release();
-            logger.info("createAndAddMiningRewardBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            logger.info("createAndAddOrderMatchingBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
