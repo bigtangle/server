@@ -176,7 +176,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     protected String serverurl;
     //indicator, if the server allows client mining address in the block and this  depends on the server
     protected boolean allowClientMining = false;
-    
+    //client mining address
+    protected  byte[] clientMiningAddress;
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
 
@@ -3054,9 +3055,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        if(allowClientMining)
+        if(allowClientMining && clientMiningAddress !=null)
         {
-            block.setMinerAddress(new Address(params, outKey.getPubKeyHash()).getHash160());
+            block.setMinerAddress(clientMiningAddress);
         }
         // save block
         block.solve();
@@ -3107,6 +3108,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            block.setMinerAddress(clientMiningAddress);
+        }
         // save block
         block.solve();
         return block;
@@ -3143,7 +3148,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
-   
+
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            rollingBlock.setMinerAddress(clientMiningAddress);
+        }
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -3195,6 +3204,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // block = predecessor.createNextBlock();
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            block.setMinerAddress(clientMiningAddress);
+        }
         block.solve();
 
         // check the valid to time must be at least the block creation time
@@ -3231,6 +3245,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            block.setMinerAddress(clientMiningAddress);
+        }
         block.solve();
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
@@ -3255,6 +3274,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            block.setMinerAddress(clientMiningAddress);
+        }
         block.solve();
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
@@ -3291,6 +3315,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
+
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            rollingBlock.setMinerAddress(clientMiningAddress);
+        }
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -3309,7 +3338,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
         
-        
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            rollingBlock.setMinerAddress(clientMiningAddress);
+        }
+        // 
         
         rollingBlock.solve();
 
@@ -3334,9 +3367,30 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
+        if(allowClientMining && clientMiningAddress !=null)
+        {
+            rollingBlock.setMinerAddress(clientMiningAddress);
+        }
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 
+    public boolean isAllowClientMining() {
+        return allowClientMining;
+    }
+
+    public void setAllowClientMining(boolean allowClientMining) {
+        this.allowClientMining = allowClientMining;
+    }
+
+    public byte[] getClientMiningAddress() {
+        return clientMiningAddress;
+    }
+
+    public void setClientMiningAddress(byte[] clientMiningAddress) {
+        this.clientMiningAddress = clientMiningAddress;
+    }
+
+  
 }

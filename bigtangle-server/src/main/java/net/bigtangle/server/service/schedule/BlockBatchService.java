@@ -43,7 +43,7 @@ public class BlockBatchService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
-    @Scheduled(fixedRateString = "10000")
+    @Scheduled(fixedRate = 10000)
 
     public void batch() {
         if (scheduleConfiguration.isBlockBatchService_active()) {

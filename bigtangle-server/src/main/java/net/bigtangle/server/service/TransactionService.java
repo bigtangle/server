@@ -387,7 +387,7 @@ public class TransactionService {
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (added) {
-                    logger.debug("addConnected from kafka " + block);
+                    logger.debug("addConnected from kafka " );
                 } else {
                     logger.debug(" unsolid block from kafka " + block);
                     if (request)
@@ -396,7 +396,7 @@ public class TransactionService {
                 }
                 return Optional.of(block);
             } else {
-                logger.debug("addConnected   BlockExists " + block);
+              //  logger.debug("addConnected   BlockExists " + block);
             }
         } catch (VerificationException e) {
             logger.debug("addConnected from kafka ", e);

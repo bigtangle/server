@@ -125,18 +125,23 @@ public class MainController {
     @FXML
     public TextField addressTextField;
 
-   
-
     @FXML
     public void initialize() {
-        
+
         try {
             Main.addUsersettingData();
-            }catch (Exception e) {
-                // ignore password setting
-                
-            }
-        
+        } catch (Exception e) {
+            // ignore
+        }
+        try {
+            // TODO ask server, if client ming is allowed
+            walletAppKit.wallet().setAllowClientMining(true);
+            walletAppKit.wallet()
+                    .setClientMiningAddress(walletAppKit.wallet().walletKeys(Main.getAesKey()).get(0).getPubKeyHash());
+        } catch (Exception e) {
+            // ignore
+        }
+
         try {
             if (checkVersion()) {
                 if (walletAppKit.wallet().isEncrypted()) {
@@ -194,7 +199,7 @@ public class MainController {
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = Main.getContextRoot();
         walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
-       
+
         List<String> keyStrHex000 = new ArrayList<String>();
         if (addressString == null || "".equals(addressString.trim())) {
             for (ECKey ecKey : walletAppKit.wallet().walletKeys(Main.getAesKey())) {
@@ -266,7 +271,7 @@ public class MainController {
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
 
         for (Coin coin : getBalancesResponse.getTokens()) {
-            if (!coin.isZero()) { 
+            if (!coin.isZero()) {
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
                     Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
                             Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
@@ -274,7 +279,7 @@ public class MainController {
                 } else {
                     subcoins.add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
                             Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
-                } 
+                }
             }
         }
         Main.instance.getCoinData().addAll(subcoins);

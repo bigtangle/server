@@ -25,7 +25,7 @@ public class ScheduleOrderReclaimService {
     @Autowired
     private TransactionService transactionService;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedRate = 60000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {

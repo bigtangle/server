@@ -35,7 +35,7 @@ public class ScheduleUnsolidBlockService {
      * read data from table oder by insert time,  use add Block to check again, 
      * if missing previous,  it may request network for the blocks 
      */
-    @Scheduled(fixedDelay = 15000)
+    @Scheduled(fixedRate = 15000)
     public void updateUnsolideService() {
         if (scheduleConfiguration.isMilestone_active()) { 
             updateUnsolideServiceSingle();
