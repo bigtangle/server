@@ -64,7 +64,7 @@ public class TipsService {
 		}
 
 		watch.stop();
-		log.info("getRatingTips time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("getRatingTips with count {} time {} ms.",count, watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return results;
 	}
