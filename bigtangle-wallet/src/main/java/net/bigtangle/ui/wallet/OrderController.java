@@ -499,9 +499,9 @@ public class OrderController extends ExchangeController {
             for (Token p : Main.getWatched().getTokenList()) {
                 if (!isSystemCoin(p.getTokenid())) {
                     if (!tokenData.contains(p.getTokenname() + ":" + p.getTokenid())) {
-                        if (Main.getNoMultiTokens().contains(p.getTokenid())) {
+                 //       if (Main.getNoMultiTokens().contains(p.getTokenid())) {
                             tokenData.add(p.getTokenname() + ":" + p.getTokenid());
-                        }
+                  //      }
                     }
                 }
             }
