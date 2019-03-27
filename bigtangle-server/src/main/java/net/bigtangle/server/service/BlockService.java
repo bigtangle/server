@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -257,10 +258,10 @@ public class BlockService {
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
-        List<BlockEvaluation> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount);
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount);
         HashSet<String> hashSet = new HashSet<String>();
         // filter
-        for (Iterator<BlockEvaluation> iterator = evaluations.iterator(); iterator.hasNext();) {
+        for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
             BlockEvaluation blockEvaluation = iterator.next();
             if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
                 iterator.remove();

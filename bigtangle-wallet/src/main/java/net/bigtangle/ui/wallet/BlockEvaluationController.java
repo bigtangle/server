@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.spongycastle.crypto.params.KeyParameter;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -30,10 +28,10 @@ import javafx.scene.control.cell.MapValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.BlockFormat;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -61,7 +59,7 @@ public class BlockEvaluationController {
 
     @SuppressWarnings("rawtypes")
     @FXML
-    public TableColumn<Map, String> solidColumn;
+    public TableColumn<Map, String> blocktypeColumn;
     @SuppressWarnings("rawtypes")
     @FXML
     public TableColumn<Map, String> milestoneColumn;
@@ -139,7 +137,7 @@ public class BlockEvaluationController {
     private void initCompare() {
         try {
             Map<String, String> keyMap = new HashMap<String, String>();
-            List<BlockEvaluation> blockEvaluations = this.getBlockInfos(Main.getContextRoot());
+            List<BlockEvaluationDisplay> blockEvaluations = this.getBlockInfos(Main.getContextRoot());
             if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
                 for (BlockEvaluation blockEvaluation : blockEvaluations) {
                     String key = blockEvaluation.getBlockHexStr();
@@ -148,11 +146,11 @@ public class BlockEvaluationController {
                     }
                 }
             } else {
-                blockEvaluations = new ArrayList<BlockEvaluation>();
+                blockEvaluations = new ArrayList<BlockEvaluationDisplay>();
             }
 
-            List<BlockEvaluation> compareList1 = new ArrayList<BlockEvaluation>();
-            List<BlockEvaluation> compareList2 = new ArrayList<BlockEvaluation>();
+            List<BlockEvaluationDisplay> compareList1 = new ArrayList<BlockEvaluationDisplay>();
+            List<BlockEvaluationDisplay> compareList2 = new ArrayList<BlockEvaluationDisplay>();
 
             if (compareTF1.getText() != null && !compareTF1.getText().isEmpty()) {
                 compareList1 = this.getBlockInfos(compareTF1.getText().trim());
@@ -195,7 +193,7 @@ public class BlockEvaluationController {
             });
             ObservableList<Map> allData = FXCollections.observableArrayList();
             for (int i = 0; i < blockEvaluations.size(); i++) {
-                BlockEvaluation blockEvaluation = blockEvaluations.get(i);
+                BlockEvaluationDisplay blockEvaluation = blockEvaluations.get(i);
                 String tempKey = blockEvaluation.getBlockHexStr();
                 String tempValue = keyMap.get(tempKey);
                 String tempRating = String.valueOf(blockEvaluation.getRating());
@@ -214,7 +212,7 @@ public class BlockEvaluationController {
                 map.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
                 map.put("insertTime", blockEvaluation.getInsertTime());
                 map.put("maintained", blockEvaluation.isMaintained());
-
+                map.put("blocktype", blockEvaluation.getBlockType().name());
                 if (tempValue.equalsIgnoreCase("m-c1-c2")) {
                     BlockEvaluation map1 = blockEvaluations.get(i + 1);
                     String tempRating1 = String.valueOf(map1.getRating());
@@ -283,7 +281,7 @@ public class BlockEvaluationController {
 
     }
 
-    private List<BlockEvaluation> getBlockInfos(String server) throws Exception {
+    private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
         String CONTEXT_ROOT = server;
         String lastestAmount = latestAmountTextField1.getText();
         String address = addressComboBox1.getValue();
@@ -372,7 +370,7 @@ public class BlockEvaluationController {
 
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
-        List<BlockEvaluation> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+        List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
 
         ObservableList<Map> allData = FXCollections.observableArrayList();
         if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
@@ -411,7 +409,7 @@ public class BlockEvaluationController {
 
             milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
             insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
-
+            blocktypeColumn.setCellValueFactory(new MapValueFactory("blocktype"));
             blockhashColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         }
         blockEvaluationTable.setItems(allData);

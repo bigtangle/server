@@ -34,6 +34,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -2861,14 +2862,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount)
             throws BlockStoreException {
 
         String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
         if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
             sql += "SELECT hash, rating, depth, cumulativeweight, "
-                    + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained"
+                    + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype "
                     + "  FROM  blocks ";
             sql += " ORDER BY insertTime desc ";
             Integer a = Integer.valueOf(lastestAmount);
@@ -2878,7 +2879,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " LIMIT " + a;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
-                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained"
+                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype"
                     + " FROM outputs JOIN blocks " + "ON outputs.blockhash = blocks.hash  ";
             sql += "WHERE outputs.toaddress in ";
             for (String str : address)
@@ -2887,17 +2888,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             sql += " ORDER BY insertTime desc ";
         }
-        List<BlockEvaluation> result = new ArrayList<BlockEvaluation>();
+        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(Sha256Hash.wrap(resultSet.getBytes(1)),
                         resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
                         resultSet.getBoolean(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9),
-                        resultSet.getBoolean(10));
+                        resultSet.getBoolean(10),   resultSet.getInt(11));
                 result.add(blockEvaluation);
             }
             return result;

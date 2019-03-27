@@ -14,6 +14,7 @@ import java.util.PriorityQueue;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.LogResult;
@@ -363,7 +364,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 
-    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address, String lastestAmount)
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount)
             throws BlockStoreException;
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;

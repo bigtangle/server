@@ -32,11 +32,12 @@
 										<TableColumn fx:id="heightColumn" prefWidth="60.0" text="%height" />
 										<TableColumn fx:id="milestoneDepthColumn" prefWidth="68.0" text="%milestoneDepth" />
 						
-										<TableColumn fx:id="milestoneColumn" prefWidth="79.0" text="%milestone" />
+										<TableColumn fx:id="milestoneColumn" prefWidth="50.0" text="%milestone" />
 										<TableColumn fx:id="maintainedColumn" prefWidth="50.0" text="%maintained" />
 		
 										<TableColumn fx:id="milestoneLastUpdateTimeColumn" prefWidth="148.0" text="%milestoneLastUpdateTime" />
-										<TableColumn fx:id="insertTimeColumn" prefWidth="210.0" text="%insertTime" />
+										<TableColumn fx:id="insertTimeColumn" prefWidth="130.0" text="%insertTime" />
+										<TableColumn fx:id="blocktypeColumn" prefWidth="109.0" text="%blocktype" />
 									</columns>
 								</TableView>
 								<Button cancelButton="true" layoutX="927.0" layoutY="514.0" maxWidth="60.0" minWidth="60.0" mnemonicParsing="false" onAction="#closeUI" prefWidth="60.0" text="%close" />

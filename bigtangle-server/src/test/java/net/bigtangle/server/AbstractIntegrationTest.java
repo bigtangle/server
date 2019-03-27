@@ -765,15 +765,15 @@ public abstract class AbstractIntegrationTest {
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
-        TokenKeyValues t= new TokenKeyValues();
-        List<KeyValue> keyvalues = new ArrayList<KeyValue>();
+     
+  
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
         KeyValue kv= new  KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
-        keyvalues.add(kv);
-        t.setKeyvalues(keyvalues);
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false,t);
+        tokens.addKeyvalue(kv);
+        
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);

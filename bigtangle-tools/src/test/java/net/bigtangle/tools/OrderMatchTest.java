@@ -175,7 +175,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Make test token
 		resetAndMakeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-
+		//
+	
 		// Open sell orders for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 

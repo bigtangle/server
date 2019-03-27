@@ -43,7 +43,7 @@ public class BlockEvaluation implements Serializable {
     // If false, this block has no influence on MCMC
     private boolean maintained;
 
-    private BlockEvaluation() {
+    public BlockEvaluation() {
     }
 
     // deep copy constructor
