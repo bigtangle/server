@@ -223,9 +223,9 @@ public class ExchangeController {
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
-            if (Main.getNoMultiTokens().contains(tokenHex)) {
+        //    if (Main.getNoMultiTokens().contains(tokenHex)) {
                 tokenData.add(tokenname + " : " + tokenHex);
-            }
+          //  }
 
         }
 
