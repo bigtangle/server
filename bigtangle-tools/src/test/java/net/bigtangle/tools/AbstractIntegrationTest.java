@@ -76,15 +76,15 @@ public abstract class AbstractIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-		 System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		 System.setProperty("https.proxyPort", "3128");
+		// System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		// System.setProperty("https.proxyPort", "3128");
 		walletKeys();
 		// emptyBlocks(10);
 	}
 
 	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
 			List<Block> addedBlocks) throws Exception {
-		Thread.sleep(100000);
+		Thread.sleep(30000);
 		Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null, beneficiary, tokenId, sellPrice, sellAmount,
 				null, null);
 		addedBlocks.add(block);
@@ -391,7 +391,7 @@ public abstract class AbstractIntegrationTest {
 		// TODO This (saveBlock) calls milestoneUpdate currently
 		block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
 		//wait to confirm of token
-		Thread.sleep(100000);
+		//Thread.sleep(100000);
 		return block;
 	}
 

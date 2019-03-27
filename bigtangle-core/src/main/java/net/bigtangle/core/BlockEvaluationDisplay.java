@@ -37,12 +37,12 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 		blockEvaluation.setMilestoneDepth(milestoneDepth);
 		blockEvaluation.setInsertTime(insertTime);
 		blockEvaluation.setMaintained(maintained);
-		blockEvaluation.setBlockType(blocktype);
+		blockEvaluation.setBlockTypeInt(blocktype);
 		return blockEvaluation;
 	}
 
-	public void setBlockType(long blocktype) {
-		setBlockType(Type.values()[(int) blocktype]);
+	public void setBlockTypeInt(int blocktype) {
+		setBlockType(Type.values()[ blocktype]);
 	}
 
 	/**

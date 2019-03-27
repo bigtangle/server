@@ -1292,8 +1292,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void beginDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
-        if (log.isDebugEnabled())
-            log.debug("Starting database batch write with connection: " + conn.get().toString());
+  //      if (log.isDebugEnabled())
+  //          log.debug("Starting database batch write with connection: " + conn.get().toString());
         try {
             conn.get().setAutoCommit(false);
         } catch (SQLException e) {
@@ -1304,8 +1304,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
-        if (log.isDebugEnabled())
-            log.debug("Committing database batch write with connection: " + conn.get().toString());
+     //   if (log.isDebugEnabled())
+      //      log.debug("Committing database batch write with connection: " + conn.get().toString());
         try {
             if (!conn.get().getAutoCommit())
                 conn.get().commit();
