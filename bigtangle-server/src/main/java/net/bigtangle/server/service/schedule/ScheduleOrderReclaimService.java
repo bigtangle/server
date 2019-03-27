@@ -29,7 +29,7 @@ public class ScheduleOrderReclaimService {
 
     private final Semaphore lock = new Semaphore(1);
     
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 600000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()) {
             updateMilestoneServiceDo();
