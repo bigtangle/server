@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.service.schedule;
 
+import java.util.concurrent.Semaphore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +27,27 @@ public class ScheduleOrderReclaimService {
     @Autowired
     private TransactionService transactionService;
 
+    private final Semaphore lock = new Semaphore(1);
+    
     @Scheduled(fixedRate = 60000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()) {
-            try {
-                logger.debug(" Start ScheduleOrderReclaimService: ");
-                transactionService.performOrderReclaimMaintenance();
-            } catch (Exception e) {
-                logger.warn("performOrderReclaims ", e);
-            }
+            updateMilestoneServiceDo();
         }
     }
- 
+    public void updateMilestoneServiceDo() {
+    
+    if (!lock.tryAcquire()) {
+        logger.debug("ScheduleOrderReclaimService Update already running. Returning...");
+        return;
+    }
+    try {
+        logger.debug(" Start ScheduleOrderReclaimService: ");
+        transactionService.performOrderReclaimMaintenance();
+    } catch (Exception e) {
+        logger.warn("ScheduleOrderReclaimService ", e);
+    } finally {
+        lock.release();
+    }
+}
 }
