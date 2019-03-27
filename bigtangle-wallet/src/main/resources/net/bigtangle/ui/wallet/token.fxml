@@ -76,7 +76,7 @@
 								<TextField fx:id="urlTF" layoutX="279.0" layoutY="209.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
 								<Label layoutX="24.0" layoutY="213.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%url" />
 								<Label layoutX="24.0" layoutY="381.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
-								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="377.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="2" />
+								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="377.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="1" />
 								<Button defaultButton="true" layoutX="524.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSIgnAddress" prefWidth="120.0" text="%addSignPubkey" />
                         <ChoiceBox fx:id="signAddrChoiceBox" layoutX="280.0" layoutY="482.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                         <Label layoutX="24.0" layoutY="415.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
