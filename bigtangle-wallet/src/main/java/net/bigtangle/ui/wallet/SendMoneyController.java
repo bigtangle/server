@@ -661,7 +661,7 @@ public class SendMoneyController {
 			amount = amount.multiply(factor);
 
 			try {
-				wallet.pay(null, destination, amount, memoTF.getText());
+				wallet.pay(Main.getAesKey(), destination, amount, memoTF.getText());
 			} catch (InsufficientMoneyException e) {
 
 				GuiUtils.informationalAlert(Main.getText("m_n_e"), "", "");

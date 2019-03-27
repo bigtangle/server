@@ -3334,6 +3334,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
 
         SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey=aesKey;
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
@@ -3364,6 +3365,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSigTransaction.addOutput(amount, scriptPubKey);
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
+        request.aesKey=aesKey;
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
