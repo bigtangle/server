@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -30,7 +29,6 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -41,9 +39,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
-import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
@@ -74,10 +70,11 @@ public abstract class AbstractIntegrationTest {
 
 	NetworkParameters networkParameters = MainNetParams.get();
 
+	boolean deleteWlalletFile =false;
 	@Before
 	public void setUp() throws Exception {
-		// System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		// System.setProperty("https.proxyPort", "3128");
+		  System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		  System.setProperty("https.proxyPort", "3128");
 		walletKeys();
 		// emptyBlocks(10);
 	}
@@ -155,7 +152,7 @@ public abstract class AbstractIntegrationTest {
 	protected void walletKeys() throws Exception {
 		KeyParameter aesKey = null;
 		File f = new File("./logs/", "bigtangle");
-		if (f.exists())
+		if (f.exists() & deleteWlalletFile)
 			f.delete();
 		walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
 		walletAppKit.wallet().importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
@@ -168,7 +165,7 @@ public abstract class AbstractIntegrationTest {
 		KeyParameter aesKey = null;
 		// delete first
 		File f = new File("./logs/", "bigtangle1");
-		if (f.exists())
+		if (f.exists() & deleteWlalletFile)
 			f.delete();
 		walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle1");
 		walletAppKit1.wallet().setServerURL(contextRoot);
@@ -180,7 +177,7 @@ public abstract class AbstractIntegrationTest {
 		KeyParameter aesKey = null;
 		// delete first
 		File f = new File("./logs/", "bigtangle2");
-		if (f.exists())
+		if (f.exists() & deleteWlalletFile)
 			f.delete();
 		walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle2");
 		walletAppKit2.wallet().setServerURL(contextRoot);

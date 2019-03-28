@@ -67,9 +67,9 @@ import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class APIIntegrationTests extends AbstractIntegrationTest {
+public class TokenAndPayTests extends AbstractIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(APIIntegrationTests.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenAndPayTests.class);
 
     public void testMultiSignByJson() throws Exception {
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

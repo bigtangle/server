@@ -2,9 +2,8 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server;
+package net.bigtangle.tools;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -17,14 +16,10 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Contact;
@@ -58,34 +53,9 @@ import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ClientIntegrationTest extends AbstractIntegrationTest {
+public class DirectExchangeTest extends AbstractIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(ClientIntegrationTest.class);
-
-    @Test
-    public void testBatchBlock() throws Exception {
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        this.store.insertBatchBlock(block);
-
-        List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 1);
-
-        BatchBlock batchBlock = batchBlocks.get(0);
-
-        // String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
-        // String hex2 = Utils.HEX.encode(batchBlock.getBlock());
-        // assertEquals(hex1, hex2);
-
-        assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
-
-        this.store.deleteBatchBlock(batchBlock.getHash());
-        batchBlocks = this.store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 0);
-    }
+    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
 
     @Test
     public void testTransactionResolveSubtangleID() throws Exception {
@@ -158,30 +128,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testGiveMoney() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
-        
-        @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
-
-        HashMap<String, Long> giveMoneyResult = new HashMap<>();
-        for (int i = 0; i < 3; i++) {
-            ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000l);
-        }
-       walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
-
-        for (UTXO utxo : getBalance(false, genesiskey)) {
-            log.info("UTXO : " + utxo); 
-                assertTrue(utxo.getValue().getValue() == 999999993666667l);
-            
-        }
-    }
-
-    @Test
     @SuppressWarnings("deprecation")
     public void testWalletImportKeyGiveMoney() throws Exception {
         Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
@@ -197,7 +143,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
             transaction.addOutput(amount, outKey);
 
             SendRequest request = SendRequest.forTx(transaction);
-            coinbaseWallet.completeTx(request,null);
+            coinbaseWallet.completeTx(request, null);
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
@@ -235,7 +181,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
 
         SendRequest request = SendRequest.forTx(transaction);
-        coinbaseWallet.completeTx(request,null);
+        coinbaseWallet.completeTx(request, null);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -245,7 +191,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null,false);
+        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
         for (TransactionOutput transactionOutput : candidates) {
             log.info("UTXO : " + transactionOutput);
         }
@@ -254,7 +200,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
          * { log.info("UTXO : logtput); }
          */
     }
-
 
     @Test
     public void searchBlock() throws Exception {
@@ -276,11 +221,11 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
     @SuppressWarnings("deprecation")
     @Test
     public void exchangeToken() throws Exception {
-        testInitWallet();
+
         wallet1();
         wallet2();
-        
-        //create token
+
+        // create token
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
@@ -331,22 +276,23 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void testExchangeTokenMultiManyPart() throws Exception {
-        //  5 token 1 
-        //2 token sign1  sign2  3 sign2 , sing4
-        
-        //BiG system 
+        // 5 token 1
+        // 2 token sign1 sign2 3 sign2 , sing4
+
+        // BiG system
         //
-        
+
     }
+
     @Test
     public void testExchangeTokenMulti() throws Exception {
-        testInitWallet();
+
         wallet1();
         wallet2();
 
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-        TokenInfo tokenInfo = new TokenInfo();
-        testCreateMultiSigToken(keys, tokenInfo);
+
+        testCreateMultiSigToken(keys.get(0), "test");
         UTXO multitemp = null;
         UTXO systemcoin = null;
         List<UTXO> utxos = getBalance(false, keys);
@@ -434,7 +380,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
         amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
         req = SendRequest.to(destination, amount);
-        walletAppKit.wallet().completeTx(req,null);
+        walletAppKit.wallet().completeTx(req, null);
         walletAppKit.wallet().signTransaction(req);
 
         exchangeTokenComplete(req.tx);
@@ -462,7 +408,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         }
         assertEquals(multitemp.getValue().getValue() - 10000, multitemp1.getValue().getValue());
         assertEquals(1000, systemcoin1.getValue().getValue());
-        assertEquals( 10000, mymultitemp1.getValue().getValue());
+        assertEquals(10000, mymultitemp1.getValue().getValue());
         assertEquals(mysystemcoin.getValue().getValue() - 1000, mysystemcoin1.getValue().getValue());
     }
 
@@ -500,7 +446,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -531,7 +477,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -578,7 +524,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        milestoneService.update();
 
         int blocktype = (int) Block.Type.BLOCKTYPE_VOS.ordinal();
 
@@ -623,8 +568,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
                 e.printStackTrace();
             }
         }
-
-        milestoneService.update();
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("vosKey", outKey.getPublicKeyAsHex());
@@ -712,8 +655,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
-        milestoneService.update();
-
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
@@ -752,7 +693,6 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        milestoneService.update();
 
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
@@ -766,7 +706,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void createTransaction() throws Exception {
-        testInitWallet();
+
         wallet1();
         wallet2();
 
@@ -776,12 +716,12 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         log.info("resp block, hex : " + Utils.HEX.encode(data));
 
-        Address destination = Address.fromBase58(networkParameters, "mqrXsaFj9xV9tKAw7YeP1B6zPmfEP2kjfK");
+        Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
 
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         // request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);
@@ -798,6 +738,25 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         // log.info("transaction, tokens : " +
         // Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
         log.info("transaction, datatype : " + transaction.getDataClassName());
+    }
+
+    @Test
+    public void clientMining() throws Exception {
+        for (int i = 0; i <= 1000; i++) {
+            clientMiningDo();
+            Thread.sleep(5000);
+        }
+    }
+
+    public void clientMiningDo() throws Exception {
+
+        Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
+
+        Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
+        walletAppKit.wallet().setAllowClientMining(true);
+        walletAppKit.wallet().setClientMiningAddress(walletAppKit.wallet().walletKeys(null).get(0).getPubKeyHash());
+        walletAppKit.wallet().pay(null, destination, amount, "Client Mining");
+
     }
 
 }

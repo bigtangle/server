@@ -896,7 +896,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (key.hasCreationTimestamp())
                     detkey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                 if (log.isDebugEnabled())
-                    log.debug("Deserializing: DETERMINISTIC_KEY: {}", detkey);
+                    log.trace("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 if (!isWatchingAccountKey) {
                     // If the non-encrypted case, the non-leaf keys (account, internal, external) have already
                     // been rederived and inserted at this point. In the encrypted case though,

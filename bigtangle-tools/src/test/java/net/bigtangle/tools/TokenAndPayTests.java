@@ -68,9 +68,9 @@ import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
-public class APIIntegrationTests extends AbstractIntegrationTest {
+public class TokenAndPayTests extends AbstractIntegrationTest {
 
-	private static final Logger log = LoggerFactory.getLogger(APIIntegrationTests.class);
+	private static final Logger log = LoggerFactory.getLogger(TokenAndPayTests.class);
 
 	public void testMultiSignByJson() throws Exception {
 		List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();

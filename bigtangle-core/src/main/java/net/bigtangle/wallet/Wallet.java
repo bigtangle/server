@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -2122,6 +2123,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     }
                 }
             }
+            Collections.shuffle(candidates);
             return candidates;
         } finally {
             lock.unlock();
