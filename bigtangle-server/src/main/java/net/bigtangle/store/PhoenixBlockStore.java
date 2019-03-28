@@ -16,7 +16,6 @@ import java.util.Random;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -25,6 +24,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.server.core.BlockWrap;
 
 /**
  * <p>

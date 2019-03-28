@@ -47,7 +47,7 @@ dependencies {
     compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
     compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
      compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-    compile project(':bigtangle-core')
+    compile project(':bigtangle-servercore')
      compile project(':bigtangle-pool')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring

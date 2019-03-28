@@ -351,8 +351,8 @@ public final class MonetaryFormat {
             for (int group : decimalGroups)
                 maxDecimals += group;
         int smallestUnitExponent = monetary.smallestUnitExponent();
-        checkState(maxDecimals <= smallestUnitExponent,
-                "The maximum possible number of decimals (%s) cannot exceed %s.", maxDecimals, smallestUnitExponent);
+        //checkState(maxDecimals < smallestUnitExponent,
+         //       "The maximum possible number of decimals (%s) cannot exceed %s.", maxDecimals, smallestUnitExponent);
 
         // rounding
         long satoshis = Math.abs(monetary.getValue());

@@ -43,9 +43,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
@@ -89,6 +87,8 @@ import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisa
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;

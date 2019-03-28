@@ -1,3 +1,10 @@
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+            sourceCompatibility = 1.7
+    		targetCompatibility = 1.7
+    }
+
 dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version:ver.slf4j_api
     compile group: 'com.google.guava', name: 'guava', version:ver.guava

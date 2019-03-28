@@ -23,7 +23,6 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderReclaimInfo;
@@ -35,6 +34,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;

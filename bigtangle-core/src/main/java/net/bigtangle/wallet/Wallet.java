@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -129,15 +130,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     protected final ReentrantLock keyChainGroupLock = Threading.lock("wallet-keychaingroup");
 
     // The various pools below give quick access to wallet-relevant transactions
-  
 
-
-    // server url for connected 
+    // server url for connected
     protected String serverurl;
-    //indicator, if the server allows client mining address in the block and this  depends on the server
+    // indicator, if the server allows client mining address in the block and
+    // this depends on the server
     protected boolean allowClientMining = false;
-    //client mining address
-    protected  byte[] clientMiningAddress; 
+    // client mining address
+    protected byte[] clientMiningAddress;
 
     // The key chain group is not thread safe, and generally the whole hierarchy
     // of objects should not be mutated
@@ -181,7 +181,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // another
     @GuardedBy("lock")
     private List<TransactionSigner> signers;
-
 
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no
@@ -273,7 +272,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (this.keyChainGroup.numKeys() == 0)
             this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
-  
+
         extensions = new HashMap<String, WalletExtension>();
         // Use a linked hash map to ensure ordering of event listeners is
         // correct.
@@ -612,8 +611,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Address currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
-
-
 
     /**
      * <p>
@@ -1101,6 +1098,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             keyChainGroupLock.unlock();
         }
     }
+
     /**
      * Prepares the wallet for a blockchain replay. Removes all transactions (as
      * they would get in the way of the replay) and makes the wallet think it
@@ -1110,7 +1108,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public void reset() {
         lock.lock();
         try {
-     
+
             saveLater();
 
         } finally {
@@ -1195,7 +1193,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         File temp = File.createTempFile("wallet", null, directory);
         saveToFile(temp, f);
     }
-
 
     /**
      * <p>
@@ -1322,8 +1319,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return context;
     }
 
-
-
     // region Event listeners
 
     /**
@@ -1343,10 +1338,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     // endregion
-
-
- 
-
 
     /**
      * Returns the earliest creation time of keys or watched scripts in this
@@ -1381,7 +1372,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-
     /**
      * Get the version of the Wallet. This is an int you can use to indicate
      * which versions of wallets your code understands, and which come from the
@@ -1397,7 +1387,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public void setVersion(int version) {
         this.version = version;
     }
-
 
     /**
      * Enumerates possible resolutions for missing signatures.
@@ -1419,7 +1408,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
          */
         THROW
     }
-
 
     /**
      * <p>
@@ -1582,7 +1570,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return false;
     }
 
-
     /**
      * Returns the {@link CoinSelector} object which controls which outputs can
      * be spent by this wallet.
@@ -1612,8 +1599,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             lock.unlock();
         }
     }
-
-
 
     /******************************************************************************************************************/
 
@@ -2369,8 +2354,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
         // save block
@@ -2422,8 +2406,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
         // save block
@@ -2447,11 +2430,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             summe = summe.add(a);
         }
         Coin amount = summe;
-        List<UTXO> outputs = getTransactionAndGetBalances(fromkey).stream()
-                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
-                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
+                getSpendableUTXO(fromkey, amount), 0);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
@@ -2463,8 +2443,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             rollingBlock.setMinerAddress(clientMiningAddress);
         }
         rollingBlock.solve();
@@ -2500,11 +2479,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         // Burn BIG to buy
         Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
-        List<UTXO> outputs = getTransactionAndGetBalances(beneficiary).stream()
-                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
-                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
+                getSpendableUTXO(beneficiary, amount), 0);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(spendableOutput.getValue().subtract(amount), beneficiary);
@@ -2519,8 +2496,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
         block.solve();
@@ -2529,6 +2505,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
         return block;
+    }
+
+    private UTXO getSpendableUTXO(ECKey beneficiary, Coin amount) throws Exception {
+        List<UTXO> l = getTransactionAndGetBalances(beneficiary);
+        for (UTXO u : l) {
+            if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
+                    && u.getValue().getValue() >= amount.getValue()) {
+                return u;
+            }
+        }
+        throw new InsufficientMoneyException(amount);
     }
 
     public Block makeAndConfirmSellOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long sellPrice,
@@ -2542,10 +2529,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
-        List<UTXO> outputs = getTransactionAndGetBalances(beneficiary).stream()
-                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, outputs.get(0), 0);
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
+                getSpendableUTXO(beneficiary, amount), 0);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
@@ -2560,8 +2546,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
         block.solve();
@@ -2589,8 +2574,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
         block.solve();
@@ -2630,8 +2614,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
 
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             rollingBlock.setMinerAddress(clientMiningAddress);
         }
         rollingBlock.solve();
@@ -2648,18 +2631,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
 
         SendRequest request = SendRequest.to(destination, amount);
-        request.aesKey=aesKey;
+        request.aesKey = aesKey;
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
-        
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+
+        if (allowClientMining && clientMiningAddress != null) {
             rollingBlock.setMinerAddress(clientMiningAddress);
-          //  log.debug(rollingBlock.toString());
+            // log.debug(rollingBlock.toString());
         }
-        // 
-        
+        //
+
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -2680,12 +2662,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSigTransaction.addOutput(amount, scriptPubKey);
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
-        request.aesKey=aesKey;
+        request.aesKey = aesKey;
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
-        if(allowClientMining && clientMiningAddress !=null)
-        {
+        if (allowClientMining && clientMiningAddress != null) {
             rollingBlock.setMinerAddress(clientMiningAddress);
         }
         rollingBlock.solve();
@@ -2709,5 +2690,4 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         this.clientMiningAddress = clientMiningAddress;
     }
 
-  
 }

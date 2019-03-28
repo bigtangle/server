@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Sha256Hash;
 
+@Ignore
 public class EquihashSolverTest {
 	private Sha256Hash hash1 = Sha256Hash.of("test".getBytes());
 	private Sha256Hash hash2 = Sha256Hash.of("test123".getBytes());

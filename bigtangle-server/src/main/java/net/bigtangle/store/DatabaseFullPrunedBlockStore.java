@@ -35,7 +35,6 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.LogResult;
@@ -66,6 +65,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 

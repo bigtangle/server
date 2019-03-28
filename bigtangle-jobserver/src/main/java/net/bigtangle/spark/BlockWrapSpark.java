@@ -13,11 +13,11 @@ import java.util.HashSet;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.BlockWrap;
-import net.bigtangle.core.ConflictCandidate;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.core.ConflictCandidate;
 import scala.collection.mutable.ListMap;
 
 /**

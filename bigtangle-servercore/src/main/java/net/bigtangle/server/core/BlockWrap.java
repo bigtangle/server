@@ -3,12 +3,21 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.core;
+package net.bigtangle.server.core;
 
 import java.io.IOException;
 import java.util.HashSet;
 
 import org.apache.commons.lang3.NotImplementedException;
+
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderMatchingInfo;
+import net.bigtangle.core.OrderReclaimInfo;
+import net.bigtangle.core.RewardInfo;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
 
 /**
  * Wraps a {@link Block} object with extra data from the db

@@ -16,7 +16,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockStore;
-import net.bigtangle.core.BlockWrap;
 import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -36,6 +35,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
