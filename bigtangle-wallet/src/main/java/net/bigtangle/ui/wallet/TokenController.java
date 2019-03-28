@@ -330,7 +330,7 @@ public class TokenController extends TokenBaseController {
 		byte[] buf = transaction.getData();
 		TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
-		tabPane.getSelectionModel().clearAndSelect(3);
+		tabPane.getSelectionModel().clearAndSelect(2);
 		stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
 		tokenid1.setValue(tokenid);
 		// String amountString =
