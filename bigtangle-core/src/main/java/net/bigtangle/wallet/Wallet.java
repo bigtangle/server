@@ -2656,6 +2656,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if(allowClientMining && clientMiningAddress !=null)
         {
             rollingBlock.setMinerAddress(clientMiningAddress);
+          //  log.debug(rollingBlock.toString());
         }
         // 
         

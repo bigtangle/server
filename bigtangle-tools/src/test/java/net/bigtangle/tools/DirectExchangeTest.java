@@ -10,6 +10,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -742,9 +744,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     @Test
     public void clientMining() throws Exception {
-        for (int i = 0; i <= 1000; i++) {
+        for (int i = 0; i <= 100000; i++) {
             clientMiningDo();
-            Thread.sleep(5000);
+
         }
     }
 
@@ -754,7 +756,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
         walletAppKit.wallet().setAllowClientMining(true);
-        walletAppKit.wallet().setClientMiningAddress(walletAppKit.wallet().walletKeys(null).get(0).getPubKeyHash());
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        Collections.shuffle(keys);
+        walletAppKit.wallet().setClientMiningAddress(keys.get(0).getPubKeyHash());
         walletAppKit.wallet().pay(null, destination, amount, "Client Mining");
 
     }
