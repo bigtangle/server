@@ -153,11 +153,7 @@ public class WalletProtobufSerializer {
     public Protos.Wallet walletToProto(Wallet wallet) {
         Protos.Wallet.Builder walletBuilder = Protos.Wallet.newBuilder();
         walletBuilder.setNetworkIdentifier(wallet.getNetworkParameters().getId());
-        if (wallet.getDescription() != null) {
-            walletBuilder.setDescription(wallet.getDescription());
-        }
- 
-      
+     
         walletBuilder.addAllKey(wallet.serializeKeyChainGroupToProtobuf());
 
         // Populate the scrypt parameters.
@@ -344,9 +340,7 @@ public class WalletProtobufSerializer {
         }
         Wallet wallet = factory.create(params, keyChainGroup);
 
-        if (walletProto.hasDescription()) {
-            wallet.setDescription(walletProto.getDescription());
-        }
+      
 
         loadExtensions(wallet, extensions != null ? extensions : new WalletExtension[0], walletProto);
 

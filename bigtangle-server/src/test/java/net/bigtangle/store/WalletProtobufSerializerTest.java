@@ -5,12 +5,8 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static net.bigtangle.core.Coin.COIN;
-import static net.bigtangle.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -25,16 +21,11 @@ import org.junit.Test;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Transaction.Purpose;
-import net.bigtangle.core.TransactionInput;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.params.MainNetParams;
-import net.bigtangle.testing.FakeTxBuilder;
 import net.bigtangle.testing.FooWalletExtension;
 import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.wallet.DeterministicKeyChain;
@@ -69,15 +60,14 @@ public class WalletProtobufSerializerTest {
         myWallet = new Wallet(PARAMS);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-      
-        myWallet.setDescription(WALLET_DESCRIPTION);
+ 
     }
 
     @Test
     public void empty() throws Exception {
         // Check the base case of a wallet with one key and no transactions.
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(0, wallet1.getTransactions(true).size());
+ 
        
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
@@ -85,80 +75,11 @@ public class WalletProtobufSerializerTest {
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
-/*        assertEquals(mScriptCreationTime,
-                wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
-        assertEquals(1, wallet1.getWatchedScripts().size());
-        assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(PARAMS)),
-                wallet1.getWatchedScripts().get(0));*/
-        assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
-    }
 
-   // @Test
-    public void oneTx() throws Exception {
-        // Check basic tx serialization.
-        Coin v1 = COIN;
-        Transaction t1 = createFakeTx(PARAMS, v1, myAddress);
-//        t1.getConfidence().markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByName("1.2.3.4")));
-//        t1.getConfidence().markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByName("5.6.7.8")));
-//        t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
-//       
-        Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(1, wallet1.getTransactions(true).size());
-      
-        Transaction t1copy = wallet1.getTransaction(t1.getHash());
-        assertArrayEquals(t1.unsafeBitcoinSerialize(), t1copy.unsafeBitcoinSerialize());
-//        assertEquals(2, t1copy.getConfidence().numBroadcastPeers());
-//        assertNotNull(t1copy.getConfidence().getLastBroadcastedAt());
-//        assertEquals(TransactionConfidence.Source.NETWORK, t1copy.getConfidence().getSource());
-//        
-        Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(myWallet);
-        assertEquals(Protos.Key.Type.ORIGINAL, walletProto.getKey(0).getType());
-        assertEquals(0, walletProto.getExtensionCount());
-        assertEquals(1, walletProto.getTransactionCount());
-        assertEquals(6, walletProto.getKeyCount());
-        
-        Protos.Transaction t1p = walletProto.getTransaction(0);
-        assertEquals(0, t1p.getBlockHashCount());
-        assertArrayEquals(t1.getHash().getBytes(), t1p.getHash().toByteArray());
-        assertEquals(Protos.Transaction.Pool.PENDING, t1p.getPool());
-        assertFalse(t1p.hasLockTime());
-        assertFalse(t1p.getTransactionInput(0).hasSequence());
-        assertArrayEquals(t1.getInputs().get(0).getOutpoint().getHash().getBytes(),
-                t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
-        assertEquals(0, t1p.getTransactionInput(0).getTransactionOutPointIndex());
-        assertEquals(t1p.getTransactionOutput(0).getValue(), v1.getValue());
     }
-
-    //@Test
-    public void raiseFeeTx() throws Exception {
-        // Check basic tx serialization.
-        Coin v1 = COIN;
-        Transaction t1 = createFakeTx(PARAMS, v1, myAddress);
-        t1.setPurpose(Purpose.RAISE_FEE);
-     
-        Wallet wallet1 = roundTrip(myWallet);
-        Transaction t1copy = wallet1.getTransaction(t1.getHash());
-        assertEquals(Purpose.RAISE_FEE, t1copy.getPurpose());
-    }
-
-   //TODO no need  @Test
-    public void doubleSpend() throws Exception {
-        // Check that we can serialize double spends correctly, as this is a slightly tricky case.
-        FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(PARAMS, myAddress);
-        // t1 spends to our wallet.
-        
-        // t2 rolls back t1 and spends somewhere else.
-       // myWallet.receiveFromBlock(doubleSpends.t2, null, BlockGraph.NewBlockType.BEST_CHAIN, 0);
-        Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(1, wallet1.getTransactions(true).size());
-        Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
-       // assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
-      
-
-        // TODO: Wallet should store overriding transactions even if they are not wallet-relevant.
-        // assertEquals(doubleSpends.t2, t1.getConfidence().getOverridingTransaction());
-    }
-    
+ 
+   
+ 
     @Test
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
@@ -172,24 +93,7 @@ public class WalletProtobufSerializerTest {
         }
     }
 
-    
-
-  //  @Test
-    public void testSequenceNumber() throws Exception {
-        Wallet wallet = new Wallet(PARAMS);
-        Transaction tx1 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
-        tx1.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
-       
-        Transaction tx2 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
-        tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
-       
-        Wallet walletCopy = roundTrip(wallet);
-        Transaction tx1copy = checkNotNull(walletCopy.getTransaction(tx1.getHash()));
-        assertEquals(TransactionInput.NO_SEQUENCE, tx1copy.getInput(0).getSequenceNumber());
-        Transaction tx2copy = checkNotNull(walletCopy.getTransaction(tx2.getHash()));
-        assertEquals(TransactionInput.NO_SEQUENCE - 1, tx2copy.getInput(0).getSequenceNumber());
-    }
-
+ 
     //@Test
     public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception { }
 
@@ -205,8 +109,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testRoundTripNormalWallet() throws Exception {
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(0, wallet1.getTransactions(true).size());
-        
+             
         assertArrayEquals(myKey.getPubKey(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(),
@@ -246,8 +149,7 @@ public class WalletProtobufSerializerTest {
         myAddress = myWallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(0, wallet1.getTransactions(true).size());
-       
+  
         assertEquals(2, wallet1.getActiveKeyChain().getSigsRequiredToSpend());
         assertEquals(myAddress, wallet1.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS));
     }

@@ -55,7 +55,6 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.script.ScriptOpCodes;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.WalletTransaction.Pool;
 
 /**
  * <p>
@@ -382,38 +381,6 @@ public class Transaction extends ChildMessage {
         appearsInHashes.put(blockHash, relativityOffset);
     }
 
-    /**
-     * Calculates the sum of the inputs that are spending coins with keys in the
-     * wallet. This requires the transactions sending coins to those keys to be
-     * in the wallet. This method will not attempt to download the blocks
-     * containing the input transactions if the key is in the wallet but the
-     * transactions are not.
-     *
-     * @return sum of the inputs that are spending coins with keys in the wallet
-     */
-    public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionInput input : inputs) {
-            // This input is taking value from a transaction in our wallet. To
-            // discover the value,
-            // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
-            if (connected == null)
-                continue;
-            // The connected output may be the change to the sender of a
-            // previous input sent to this wallet. In this
-            // case we ignore it.
-            if (!connected.isMineOrWatched(wallet))
-                continue;
-            v = v.add(connected.getValue());
-        }
-        return v;
-    }
 
     /**
      * Gets the sum of the outputs of the transaction. If the outputs are less

@@ -20,9 +20,6 @@
 package net.bigtangle.core;
 
 import net.bigtangle.script.Script;
-import net.bigtangle.wallet.WalletTransaction;
-
-import java.util.Map;
 
 /**
  * This interface is used to abstract the {@link net.bigtangle.wallet.Wallet} and the {@link net.bigtangle.core.Transaction}
@@ -40,6 +37,5 @@ public interface TransactionBag {
     /** Returns true if this wallet knows the script corresponding to the given hash. */
     boolean isPayToScriptHashMine(byte[] payToScriptHash);
 
-    /** Returns transactions from a specific pool. */
-    Map<Sha256Hash, Transaction> getTransactionPool(WalletTransaction.Pool pool);
+
 }

@@ -30,11 +30,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +52,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
@@ -79,12 +75,10 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.ScriptException;
-import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
@@ -134,57 +128,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     protected final ReentrantLock keyChainGroupLock = Threading.lock("wallet-keychaingroup");
 
     // The various pools below give quick access to wallet-relevant transactions
-    // by the state they're in:
-    //
-    // Pending: Transactions that didn't make it into the best chain yet.
-    // Pending transactions can be killed if a
-    // double spend against them appears in the best chain, in which case they
-    // move to the dead pool.
-    // If a double spend appears in the pending state as well, we update the
-    // confidence type
-    // of all txns in conflict to IN_CONFLICT and wait for the miners to resolve
-    // the race.
-    // Unspent: Transactions that appeared in the best chain and have outputs we
-    // can spend. Note that we store the
-    // entire transaction in memory even though for spending purposes we only
-    // really need the outputs, the
-    // reason being that this simplifies handling of re-orgs. It would be worth
-    // fixing this in future.
-    // Spent: Transactions that appeared in the best chain but don't have any
-    // spendable outputs. They're stored here
-    // for history browsing/auditing reasons only and in future will probably be
-    // flushed out to some other
-    // kind of cold storage or just removed.
-    // Dead: Transactions that we believe will never confirm get moved here, out
-    // of pending. Note that Bitcoin
-    // Core has no notion of dead-ness: the assumption is that double spends
-    // won't happen so there's no
-    // need to notify the user about them. We take a more pessimistic approach
-    // and try to track the fact that
-    // transactions have been double spent so applications can do something
-    // intelligent (cancel orders, show
-    // to the user in the UI, etc). A transaction can leave dead and move into
-    // spent/unspent if there is a
-    // re-org to a chain that doesn't include the double spend.
+  
 
-    private final Map<Sha256Hash, Transaction> pending;
-    private final Map<Sha256Hash, Transaction> unspent;
-    private final Map<Sha256Hash, Transaction> spent;
-    private final Map<Sha256Hash, Transaction> dead;
 
     // server url for connected 
     protected String serverurl;
     //indicator, if the server allows client mining address in the block and this  depends on the server
     protected boolean allowClientMining = false;
     //client mining address
-    protected  byte[] clientMiningAddress;
-    // All transactions together.
-    protected final Map<Sha256Hash, Transaction> transactions;
-
-    // All the TransactionOutput objects that we could spend (ignoring whether
-    // we have the private key or not).
-    // Used to speed up various calculations.
-    protected final HashSet<TransactionOutput> myUnspents = Sets.newHashSet();
+    protected  byte[] clientMiningAddress; 
 
     // The key chain group is not thread safe, and generally the whole hierarchy
     // of objects should not be mutated
@@ -199,22 +151,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     protected final Context context;
     protected final NetworkParameters params;
-
-    @Nullable
-    private Sha256Hash lastBlockSeenHash;
-    private int lastBlockSeenHeight;
-    private long lastBlockSeenTimeSecs;
-
-    // Whether or not to ignore pending transactions that are considered risky
-    // by the configured risk analyzer.
-    private boolean acceptRiskyTransactions;
-
-    // Stuff for notifying transaction objects that we changed their
-    // confidences. The purpose of this is to avoid
-    // spuriously sending lots of repeated notifications to listeners that API
-    // users aren't really interested in as a
-    // side effect of how the code is written (e.g. during re-orgs confidence
-    // data gets adjusted multiple times).
 
     protected volatile WalletFiles vFileManager;
     // Object that is used to send transactions asynchronously when the wallet
@@ -234,9 +170,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // contain features you
     // do not know how to deal with).
     private int version;
-    // User-provided description that may help people keep track of what a
-    // wallet is for.
-    private String description;
+
     // Stores objects that know how to serialize/unserialize themselves to byte
     // streams and whether they're mandatory
     // or not. The string key comes from the extension itself.
@@ -247,10 +181,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     @GuardedBy("lock")
     private List<TransactionSigner> signers;
 
-    // If this is set then the wallet selects spendable candidate outputs from a
-    // UTXO provider.
-    @Nullable
-    private volatile UTXOProvider vUTXOProvider;
 
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no
@@ -342,11 +272,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (this.keyChainGroup.numKeys() == 0)
             this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
-        unspent = new HashMap<Sha256Hash, Transaction>();
-        spent = new HashMap<Sha256Hash, Transaction>();
-        pending = new HashMap<Sha256Hash, Transaction>();
-        dead = new HashMap<Sha256Hash, Transaction>();
-        transactions = new HashMap<Sha256Hash, Transaction>();
+  
         extensions = new HashMap<String, WalletExtension>();
         // Use a linked hash map to ensure ordering of event listeners is
         // correct.
@@ -686,28 +612,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
 
-    /**
-     * @deprecated use {@link #currentChangeAddress()} instead.
-     */
-    public Address getChangeAddress() {
-        return currentChangeAddress();
-    }
 
-    /**
-     * <p>
-     * Deprecated alias for {@link #importKey(ECKey)}.
-     * </p>
-     *
-     * <p>
-     * <b>Replace with either {@link #freshReceiveKey()} if your call is
-     * addKey(new ECKey()), or with {@link #importKey(ECKey)} which does the
-     * same thing this method used to, but with a better name.</b>
-     * </p>
-     */
-    @Deprecated
-    public boolean addKey(ECKey key) {
-        return importKey(key);
-    }
 
     /**
      * <p>
@@ -1195,6 +1100,22 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             keyChainGroupLock.unlock();
         }
     }
+    /**
+     * Prepares the wallet for a blockchain replay. Removes all transactions (as
+     * they would get in the way of the replay) and makes the wallet think it
+     * has never seen a block. {@link WalletEventListener#onWalletChanged} will
+     * be fired.
+     */
+    public void reset() {
+        lock.lock();
+        try {
+     
+            saveLater();
+
+        } finally {
+            lock.unlock();
+        }
+    }
 
     /**
      * Saves the wallet first to the given temp file, then renames to the dest
@@ -1274,42 +1195,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         saveToFile(temp, f);
     }
 
-    /**
-     * <p>
-     * Whether or not the wallet will ignore pending transactions that fail the
-     * selected {@link RiskAnalysis}. By default, if a transaction is considered
-     * risky then it won't enter the wallet and won't trigger any event
-     * listeners. If you set this property to true, then all transactions will
-     * be allowed in regardless of risk. For example, the
-     * {@link DefaultRiskAnalysis} checks for non-finality of transactions.
-     * </p>
-     *
-     * <p>
-     * Note that this property is not serialized. You have to set it each time a
-     * Wallet object is constructed, even if it's loaded from a protocol buffer.
-     * </p>
-     */
-    public void setAcceptRiskyTransactions(boolean acceptRiskyTransactions) {
-        lock.lock();
-        try {
-            this.acceptRiskyTransactions = acceptRiskyTransactions;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * See {@link Wallet#setAcceptRiskyTransactions(boolean)} for an explanation
-     * of this property.
-     */
-    public boolean isAcceptRiskyTransactions() {
-        lock.lock();
-        try {
-            return acceptRiskyTransactions;
-        } finally {
-            lock.unlock();
-        }
-    }
 
     /**
      * <p>
@@ -1436,72 +1321,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return context;
     }
 
-    /**
-     * Adds to txSet all the txns in txPool spending outputs of txns in txSet,
-     * and all txns spending the outputs of those txns, recursively.
-     */
-    void addTransactionsDependingOn(Set<Transaction> txSet, Set<Transaction> txPool) {
-        Map<Sha256Hash, Transaction> txQueue = new LinkedHashMap<Sha256Hash, Transaction>();
-        for (Transaction tx : txSet) {
-            txQueue.put(tx.getHash(), tx);
-        }
-        while (!txQueue.isEmpty()) {
-            Transaction tx = txQueue.remove(txQueue.keySet().iterator().next());
-            for (Transaction anotherTx : txPool) {
-                if (anotherTx.equals(tx))
-                    continue;
-                for (TransactionInput input : anotherTx.getInputs()) {
-                    if (input.getOutpoint().getHash().equals(tx.getHash())) {
-                        if (txQueue.get(anotherTx.getHash()) == null) {
-                            txQueue.put(anotherTx.getHash(), anotherTx);
-                            txSet.add(anotherTx);
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    /**
-     * Creates and returns a new List with the same txns as inputSet but txns
-     * are sorted by depencency (a topological sort). If tx B spends tx A, then
-     * tx A should be before tx B on the returned List. Several invocations to
-     * this method with the same inputSet could result in lists with txns in
-     * different order, as there is no guarantee on the order of the returned
-     * txns besides what was already stated.
-     */
-    List<Transaction> sortTxnsByDependency(Set<Transaction> inputSet) {
-        ArrayList<Transaction> result = new ArrayList<Transaction>(inputSet);
-        for (int i = 0; i < result.size() - 1; i++) {
-            boolean txAtISpendsOtherTxInTheList;
-            do {
-                txAtISpendsOtherTxInTheList = false;
-                for (int j = i + 1; j < result.size(); j++) {
-                    if (spends(result.get(i), result.get(j))) {
-                        Transaction transactionAtI = result.remove(i);
-                        result.add(j, transactionAtI);
-                        txAtISpendsOtherTxInTheList = true;
-                        break;
-                    }
-                }
-            } while (txAtISpendsOtherTxInTheList);
-        }
-        return result;
-    }
-
-    /** Finds whether txA spends txB */
-    boolean spends(Transaction txA, Transaction txB) {
-        for (TransactionInput txInput : txA.getInputs()) {
-            if (txInput.getOutpoint().getHash().equals(txB.getHash())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // endregion
-
-    /******************************************************************************************************************/
 
     // region Event listeners
 
@@ -1523,194 +1343,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // endregion
 
-    /******************************************************************************************************************/
 
-    // region Vending transactions and other internal state
+ 
 
-    /**
-     * Returns a set of all transactions in the wallet.
-     * 
-     * @param includeDead
-     *            If true, transactions that were overridden by a double spend
-     *            are included.
-     */
-    public Set<Transaction> getTransactions(boolean includeDead) {
-        lock.lock();
-        try {
-            Set<Transaction> all = new HashSet<Transaction>();
-            all.addAll(unspent.values());
-            all.addAll(spent.values());
-            all.addAll(pending.values());
-            if (includeDead)
-                all.addAll(dead.values());
-            return all;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
-        lock.lock();
-        try {
-            checkArgument(numTransactions >= 0);
-            // Firstly, put all transactions into an array.
-            int size = unspent.size() + spent.size() + pending.size();
-            if (numTransactions > size || numTransactions == 0) {
-                numTransactions = size;
-            }
-            ArrayList<Transaction> all = new ArrayList<Transaction>(getTransactions(includeDead));
-            // Order by update time.
-            Collections.sort(all, Transaction.SORT_TX_BY_UPDATE_TIME);
-            if (numTransactions == all.size()) {
-                return all;
-            } else {
-                all.subList(numTransactions, all.size()).clear();
-                return all;
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns a transaction object given its hash, if it exists in this wallet,
-     * or null otherwise.
-     */
-    @Nullable
-    public Transaction getTransaction(Sha256Hash hash) {
-        lock.lock();
-        try {
-            return transactions.get(hash);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Prepares the wallet for a blockchain replay. Removes all transactions (as
-     * they would get in the way of the replay) and makes the wallet think it
-     * has never seen a block. {@link WalletEventListener#onWalletChanged} will
-     * be fired.
-     */
-    public void reset() {
-        lock.lock();
-        try {
-            clearTransactions();
-            lastBlockSeenHash = null;
-            lastBlockSeenHeight = -1; // Magic value for 'never'.
-            lastBlockSeenTimeSecs = 0;
-            saveLater();
-
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Deletes transactions which appeared above the given block height from the
-     * wallet, but does not touch the keys. This is useful if you have some keys
-     * and wish to replay the block chain into the wallet in order to pick them
-     * up. Triggers auto saving.
-     */
-    public void clearTransactions(int fromHeight) {
-        lock.lock();
-        try {
-            if (fromHeight == 0) {
-                clearTransactions();
-                saveLater();
-            } else {
-                throw new UnsupportedOperationException();
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void clearTransactions() {
-        unspent.clear();
-        spent.clear();
-        pending.clear();
-        dead.clear();
-        transactions.clear();
-        myUnspents.clear();
-    }
-
-    /**
-     * Returns all the outputs that match addresses or scripts added via
-     * {@link #addWatchedAddress(Address)} or
-     * {@link #addWatchedScripts(java.util.List)}.
-     * 
-     * @param excludeImmatureCoinbases
-     *            Whether to ignore outputs that are unspendable due to being
-     *            immature.
-     */
-    public List<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
-        lock.lock();
-        keyChainGroupLock.lock();
-        try {
-            LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-            for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                if (excludeImmatureCoinbases)
-                    continue;
-                for (TransactionOutput output : tx.getOutputs()) {
-                    if (!output.isAvailableForSpending())
-                        continue;
-                    try {
-                        Script scriptPubKey = output.getScriptPubKey();
-                        if (!watchedScripts.contains(scriptPubKey))
-                            continue;
-                        candidates.add(output);
-                    } catch (ScriptException e) {
-                        // Ignore
-                    }
-                }
-            }
-            return candidates;
-        } finally {
-            keyChainGroupLock.unlock();
-            lock.unlock();
-        }
-    }
-
-    @VisibleForTesting
-    public int getPoolSize(WalletTransaction.Pool pool) {
-        lock.lock();
-        try {
-            switch (pool) {
-            case UNSPENT:
-                return unspent.size();
-            case SPENT:
-                return spent.size();
-            case PENDING:
-                return pending.size();
-            case DEAD:
-                return dead.size();
-            }
-            throw new RuntimeException("Unreachable");
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @VisibleForTesting
-    public boolean poolContainsTxHash(final WalletTransaction.Pool pool, final Sha256Hash txHash) {
-        lock.lock();
-        try {
-            switch (pool) {
-            case UNSPENT:
-                return unspent.containsKey(txHash);
-            case SPENT:
-                return spent.containsKey(txHash);
-            case PENDING:
-                return pending.containsKey(txHash);
-            case DEAD:
-                return dead.containsKey(txHash);
-            }
-            throw new RuntimeException("Unreachable");
-        } finally {
-            lock.unlock();
-        }
-    }
 
     /**
      * Returns the earliest creation time of keys or watched scripts in this
@@ -1745,96 +1380,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    /**
-     * Returns the hash of the last seen best-chain block, or null if the wallet
-     * is too old to store this data.
-     */
-    @Nullable
-    public Sha256Hash getLastBlockSeenHash() {
-        lock.lock();
-        try {
-            return lastBlockSeenHash;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void setLastBlockSeenHash(@Nullable Sha256Hash lastBlockSeenHash) {
-        lock.lock();
-        try {
-            this.lastBlockSeenHash = lastBlockSeenHash;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void setLastBlockSeenHeight(int lastBlockSeenHeight) {
-        lock.lock();
-        try {
-            this.lastBlockSeenHeight = lastBlockSeenHeight;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void setLastBlockSeenTimeSecs(long timeSecs) {
-        lock.lock();
-        try {
-            lastBlockSeenTimeSecs = timeSecs;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns the UNIX time in seconds since the epoch extracted from the last
-     * best seen block header. This timestamp is <b>not</b> the local time at
-     * which the block was first observed by this application but rather what
-     * the block (i.e. miner) self declares. It is allowed to have some
-     * significant drift from the real time at which the block was found,
-     * although most miners do use accurate times. If this wallet is old and
-     * does not have a recorded time then this method returns zero.
-     */
-    public long getLastBlockSeenTimeSecs() {
-        lock.lock();
-        try {
-            return lastBlockSeenTimeSecs;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns a {@link Date} representing the time extracted from the last best
-     * seen block header. This timestamp is <b>not</b> the local time at which
-     * the block was first observed by this application but rather what the
-     * block (i.e. miner) self declares. It is allowed to have some significant
-     * drift from the real time at which the block was found, although most
-     * miners do use accurate times. If this wallet is old and does not have a
-     * recorded time then this method returns null.
-     */
-    @Nullable
-    public Date getLastBlockSeenTime() {
-        final long secs = getLastBlockSeenTimeSecs();
-        if (secs == 0)
-            return null;
-        else
-            return new Date(secs * 1000);
-    }
-
-    /**
-     * Returns the height of the last seen best-chain block. Can be 0 if a
-     * wallet is brand new or -1 if the wallet is old and doesn't have that
-     * data.
-     */
-    public int getLastBlockSeenHeight() {
-        lock.lock();
-        try {
-            return lastBlockSeenHeight;
-        } finally {
-            lock.unlock();
-        }
-    }
 
     /**
      * Get the version of the Wallet. This is an int you can use to indicate
@@ -1852,21 +1397,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         this.version = version;
     }
 
-    /**
-     * Set the description of the wallet. This is a Unicode encoding string
-     * typically entered by the user as descriptive text for the wallet.
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * Get the description of the wallet. See
-     * {@link Wallet#setDescription(String))}
-     */
-    public String getDescription() {
-        return description;
-    }
 
     /**
      * Enumerates possible resolutions for missing signatures.
@@ -1889,129 +1419,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         THROW
     }
 
-    /**
-     * Given a spend request containing an incomplete transaction, makes it
-     * valid by adding outputs and signed inputs according to the instructions
-     * in the request. The transaction in the request is modified by this
-     * method.
-     *
-     * @param req
-     *            a SendRequest that contains the incomplete transaction and
-     *            details for how to make it valid.
-     * @throws InsufficientMoneyException
-     *             if the request could not be completed due to not enough
-     *             balance.
-     * @throws IllegalArgumentException
-     *             if you try and complete the same SendRequest twice
-     * @throws DustySendRequested
-     *             if the resultant transaction would violate the dust rules.
-     * @throws CouldNotAdjustDownwards
-     *             if emptying the wallet was requested and the output can't be
-     *             shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize
-     *             if the resultant transaction is too big for Bitcoin to
-     *             process.
-     * @throws MultipleOpReturnRequested
-     *             if there is more than one OP_RETURN output for the resultant
-     *             transaction.
-     */
-    /*
-     * public void completeTx(SendRequest req) throws InsufficientMoneyException
-     * { lock.lock(); try { checkArgument(!req.completed,
-     * "Given SendRequest has already been completed."); // Calculate the amount
-     * of value we need to import. Coin value = Coin.ZERO; for
-     * (TransactionOutput output : req.tx.getOutputs()) { value =
-     * value.add(output.getValue()); }
-     * 
-     * log.
-     * info("Completing send tx with {} outputs totalling {} and a fee of {}/kB"
-     * , req.tx.getOutputs().size(), value.toFriendlyString(),
-     * req.feePerKb.toFriendlyString());
-     * 
-     * // If any inputs have already been added, we don't need to get their
-     * value from wallet Coin totalInput = Coin.ZERO; for (TransactionInput
-     * input : req.tx.getInputs()) if (input.getConnectedOutput() != null)
-     * totalInput = totalInput.add(input.getConnectedOutput().getValue()); else
-     * log.
-     * warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee."
-     * ); value = value.subtract(totalInput);
-     * 
-     * List<TransactionInput> originalInputs = new
-     * ArrayList<TransactionInput>(req.tx.getInputs());
-     * 
-     * // Check for dusty sends and the OP_RETURN limit. if
-     * (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is
-     * handled later for emptyWallet. int opReturnCount = 0; for
-     * (TransactionOutput output : req.tx.getOutputs()) { if (output.isDust())
-     * throw new DustySendRequested(); if
-     * (output.getScriptPubKey().isOpReturn()) ++opReturnCount; } if
-     * (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed. throw
-     * new MultipleOpReturnRequested(); }
-     * 
-     * // Calculate a list of ALL potential candidates for spending and then ask
-     * a coin selector to provide us // with the actual outputs that'll be used
-     * to gather the required amount of value. In this way, users // can
-     * customize coin selection policies. The call below will ignore immature
-     * coinbases and outputs // we don't have the keys for.
-     * List<TransactionOutput> candidates = calculateAllSpendCandidates(true,
-     * req.missingSigsMode == MissingSigsMode.THROW);
-     * 
-     * CoinSelection bestCoinSelection; TransactionOutput bestChangeOutput =
-     * null; if (!req.emptyWallet) { // This can throw
-     * InsufficientMoneyException. FeeCalculation feeCalculation =
-     * calculateFee(req, value, originalInputs, req.ensureMinRequiredFee,
-     * candidates); bestCoinSelection = feeCalculation.bestCoinSelection;
-     * bestChangeOutput = feeCalculation.bestChangeOutput; } else { // We're
-     * being asked to empty the wallet. What this means is ensuring "tx" has
-     * only a single output // of the total value we can currently spend as
-     * determined by the selector, and then subtracting the fee.
-     * checkState(req.tx.getOutputs().size() == 1,
-     * "Empty wallet TX must have a single output only."); CoinSelector selector
-     * = req.coinSelector == null ? coinSelector : req.coinSelector;
-     * bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
-     * candidates = null; // Selector took ownership and might have changed
-     * candidates. Don't access again.
-     * req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
-     * log.info("  emptying {}",
-     * bestCoinSelection.valueGathered.toFriendlyString()); }
-     * 
-     * for (TransactionOutput output : bestCoinSelection.gathered)
-     * req.tx.addInput(output);
-     * 
-     * if (req.emptyWallet) { final Coin feePerKb = req.feePerKb == null ?
-     * Coin.ZERO : req.feePerKb; if (!adjustOutputDownwardsForFee(req.tx,
-     * bestCoinSelection, feePerKb, req.ensureMinRequiredFee)) throw new
-     * CouldNotAdjustDownwards(); }
-     * 
-     * if (bestChangeOutput != null) { req.tx.addOutput(bestChangeOutput);
-     * log.info("  with {} change",
-     * bestChangeOutput.getValue().toFriendlyString()); }
-     * 
-     * // Now shuffle the outputs to obfuscate which is the change. if
-     * (req.shuffleOutputs) req.tx.shuffleOutputs();
-     * 
-     * // Now sign the inputs, thus proving that we are entitled to redeem the
-     * connected outputs. if (req.signInputs) signTransaction(req);
-     * 
-     * // Check size. final int size = req.tx.unsafeBitcoinSerialize().length;
-     * if (size > Transaction.MAX_STANDARD_TX_SIZE) throw new
-     * ExceededMaxTransactionSize();
-     * 
-     * // Label the transaction as being self created. We can use this later to
-     * spend its change output even before // the transaction is confirmed. We
-     * deliberately won't bother notifying listeners here as there's not much //
-     * point - the user isn't interested in a confidence transition they made
-     * themselves.
-     * req.tx.getConfidence().setSource(TransactionConfidence.Source.SELF); //
-     * Label the transaction as being a user requested payment. This can be used
-     * to render GUI wallet // transaction lists more appropriately, especially
-     * when the wallet starts to generate transactions itself // for internal
-     * purposes. req.tx.setPurpose(Transaction.Purpose.USER_PAYMENT); // Record
-     * the exchange rate that was valid when the transaction was completed.
-     * req.tx.setExchangeRate(req.exchangeRate); req.tx.setMemo(req.memo);
-     * req.completed = true; log.info("  completed: {}", req.tx); } finally {
-     * lock.unlock(); } }
-     */
+
     /**
      * <p>
      * Given a send request containing transaction, attempts to sign it's
@@ -2173,79 +1581,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return false;
     }
 
-    // /**
-    // * Returns the spendable candidates from the {@link UTXOProvider} based on
-    // * keys that the wallet contains.
-    // *
-    // * @return The list of candidates.
-    // */
-    // protected LinkedList<TransactionOutput>
-    // calculateAllSpendCandidatesFromUTXOProvider(
-    // boolean excludeImmatureCoinbases) {
-    // checkState(lock.isHeldByCurrentThread());
-    // checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-    // LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-    // try {
-    // long chainHeight = 0;
-    // for (UTXO output : getStoredOutputsFromUTXOProvider()) {
-    // boolean coinbase = output.isCoinbase();
-    // long depth = chainHeight - output.getHeight() + 1; // the
-    // // current
-    // // depth of
-    // // the output
-    // // (1 = same
-    // // as head).
-    // // Do not try and spend coinbases that were mined too recently,
-    // // the protocol forbids it.
-    // if (!excludeImmatureCoinbases || !coinbase || depth >=
-    // params.getSpendableCoinbaseDepth()) {
-    // candidates.add(new FreeStandingTransactionOutput(params, output,
-    // chainHeight));
-    // }
-    // }
-    // } catch (UTXOProviderException e) {
-    // throw new RuntimeException("UTXO provider error", e);
-    // }
-    // // We need to handle the pending transactions that we know about.
-    // for (Transaction tx : pending.values()) {
-    // // Remove the spent outputs.
-    // for (TransactionInput input : tx.getInputs()) {
-    // if (input.getConnectedOutput().isMine(this)) {
-    // candidates.remove(input.getConnectedOutput());
-    // }
-    // }
-    // // Add change outputs. Do not try and spend coinbases that were
-    // // mined too recently, the protocol forbids it.
-    // if (!excludeImmatureCoinbases) {
-    // for (TransactionOutput output : tx.getOutputs()) {
-    // if (output.isAvailableForSpending() && output.isMine(this)) {
-    // candidates.add(output);
-    // }
-    // }
-    // }
-    // }
-    // return candidates;
-    // }
-
-    /**
-     * Get all the {@link UTXO}'s from the {@link UTXOProvider} based on keys
-     * that the wallet contains.
-     * 
-     * @return The list of stored outputs.
-     */
-    protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
-        UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-        List<UTXO> candidates = new ArrayList<UTXO>();
-        List<ECKey> keys = getImportedKeys();
-        keys.addAll(getActiveKeyChain().getLeafKeys());
-        List<Address> addresses = new ArrayList<Address>();
-        for (ECKey key : keys) {
-            Address address = new Address(params, key.getPubKeyHash());
-            addresses.add(address);
-        }
-        candidates.addAll(utxoProvider.getOpenTransactionOutputs(addresses));
-        return candidates;
-    }
 
     /**
      * Returns the {@link CoinSelector} object which controls which outputs can
@@ -2277,30 +1612,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    /**
-     * Set the {@link UTXOProvider}.
-     *
-     * <p>
-     * The wallet will query the provider for spendable candidates, i.e. outputs
-     * controlled exclusively by private keys contained in the wallet.
-     * </p>
-     *
-     * <p>
-     * Note that the associated provider must be reattached after a wallet is
-     * loaded from disk. The association is not serialized.
-     * </p>
-     */
-    public void setUTXOProvider(@Nullable UTXOProvider provider) {
-        lock.lock();
-        try {
-            checkArgument(provider == null || provider.getParams().equals(params));
-            this.vUTXOProvider = provider;
-        } finally {
-            lock.unlock();
-        }
-    }
 
-    // endregion
 
     /******************************************************************************************************************/
 
