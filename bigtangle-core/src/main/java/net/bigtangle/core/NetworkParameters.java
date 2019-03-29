@@ -138,7 +138,7 @@ public abstract class NetworkParameters {
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 4 * 1000;
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 400 * 1000;
 
     /**
      * A "sigop" is a signature verification operation. Because they're
