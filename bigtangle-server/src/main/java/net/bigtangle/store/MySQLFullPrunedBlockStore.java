@@ -234,6 +234,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
     private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
+
+    private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING btree";
+    private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING btree";
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -280,8 +283,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
-        //sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
-        //sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
+        sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
+        sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
         return sqlStatements;
     }
 
