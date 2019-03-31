@@ -133,12 +133,12 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-    	Utils.unsetMockClock();
-    	
+        Utils.unsetMockClock();
+
         store.resetStore();
         walletKeys();
     }
-    
+
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
         store.resetStore();
@@ -150,7 +150,7 @@ public abstract class AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount,  true);
+                amount, true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -212,8 +212,6 @@ public abstract class AbstractIntegrationTest {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
     }
-    
-    
 
     protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
@@ -252,17 +250,20 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        
-        Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null, beneficiary, tokenId, sellPrice, sellAmount,null,null);
+
+        Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null, beneficiary, tokenId, sellPrice, sellAmount,
+                null, null);
         addedBlocks.add(block);
-         return block;
-                 
+        return block;
+
     }
+
     protected Block makeAndConfirmSellOrder1(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
     }
+
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
         Block block = null;
@@ -302,8 +303,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-        
-        Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null, beneficiary, tokenId, buyPrice, buyAmount,null,null);
+
+        Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null, beneficiary, tokenId, buyPrice, buyAmount,
+                null, null);
         addedBlocks.add(block);
         return block;
 
@@ -314,7 +316,7 @@ public abstract class AbstractIntegrationTest {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
         return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
     }
-    
+
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks, Block predecessor) throws Exception {
         Block block = null;
@@ -394,7 +396,7 @@ public abstract class AbstractIntegrationTest {
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
         long currMilestoneHeight = store.getOrderMatchingToHeight(store.getMaxConfirmedOrderMatchingBlockHash());
-        long targetHeight = currMilestoneHeight + NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; 
+        long targetHeight = currMilestoneHeight + NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
@@ -415,21 +417,22 @@ public abstract class AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts, false);
     }
 
-    protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts, boolean skipBig) throws BlockStoreException {
+    protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts, boolean skipBig)
+            throws BlockStoreException {
         // Asserts that the current token amounts are equal to the given token
         // amounts
         HashMap<String, Long> currTokenAmounts = getCurrentTokenAmounts();
         for (Entry<String, Long> origTokenAmount : origTokenAmounts.entrySet()) {
             if (skipBig && origTokenAmount.getKey().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
                 continue;
-            
+
             assertTrue(currTokenAmounts.containsKey(origTokenAmount.getKey()));
             assertEquals(origTokenAmount.getValue(), currTokenAmounts.get(origTokenAmount.getKey()));
         }
         for (Entry<String, Long> currTokenAmount : currTokenAmounts.entrySet()) {
             if (skipBig && currTokenAmount.getKey().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
                 continue;
-            
+
             assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
             assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
         }
@@ -565,7 +568,7 @@ public abstract class AbstractIntegrationTest {
             f.delete();
         walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
         walletAppKit.wallet().importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
-        //add ge
+        // add ge
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
@@ -668,7 +671,7 @@ public abstract class AbstractIntegrationTest {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333l);
-        walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, fromkey);
+        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
     protected void testCreateToken() throws JsonProcessingException, Exception {
@@ -681,7 +684,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount,  true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true);
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -765,15 +768,14 @@ public abstract class AbstractIntegrationTest {
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
-     
-  
+
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
-        KeyValue kv= new  KeyValue();
+                UUID.randomUUID().toString(), 2, tokenindex_, amount, false);
+        KeyValue kv = new KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
         tokens.addKeyvalue(kv);
-        
+
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
@@ -861,7 +863,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount,  false);
+                UUID.randomUUID().toString(), 2, tokenindex_, amount, false);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);

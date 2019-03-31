@@ -45,12 +45,12 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//Manuell test
+// Manuell test
 @Ignore
 public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(SubtangleIntegrationTests.class);
-    
+
     public void createTokenSubtangleId(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -106,7 +106,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = outKey.toAddress(this.networkParameters);
         transaction.addOutput(coinbase, address);
-        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160()  );
+        transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160());
 
         TransactionInput input = transaction.addInput(spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
@@ -118,15 +118,14 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
-    
+
     public Coin getBalanceCoin(ECKey ecKey, byte[] tokenid) throws Exception {
         Coin coinbase = Coin.valueOf(0, tokenid);
         for (UTXO output : getBalance(false, ecKey)) {
@@ -136,29 +135,28 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         }
         return coinbase;
     }
- 
 
     @SuppressWarnings("deprecation")
-  @Test
-    public void testGiveMoney() throws Exception { 
-        
-        ECKey subtangleKey = 
-                new ECKey(Utils.HEX.decode("1430ec255d2f92eb8d6702c2282187d8ce92f78c878248f51ae316fe995d896c"),
-                        Utils.HEX.decode("02b9416f95f21953232df29d89ee5c8d1b648bfe8d55c8e53705d4a452264a98f0"));
+    @Test
+    public void testGiveMoney() throws Exception {
+
+        ECKey subtangleKey = new ECKey(
+                Utils.HEX.decode("1430ec255d2f92eb8d6702c2282187d8ce92f78c878248f51ae316fe995d896c"),
+                Utils.HEX.decode("02b9416f95f21953232df29d89ee5c8d1b648bfe8d55c8e53705d4a452264a98f0"));
         // ECKey subtangleKey = new ECKey();
-        
-//       System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
-//       System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
-        
+
+        // System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
+        // System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
+
         this.createTokenSubtangleId(subtangleKey);
-        
+
         ECKey outKey = new ECKey();
         long amount = 1000;
         this.giveMoneySubtangleId(subtangleKey, amount, outKey.toAddress(this.networkParameters));
-        
+
         Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGTANGLE_TOKENID);
         logger.info("get balance coin : " + coinbase);
-        
+
         assertTrue(amount == coinbase.getValue());
     }
 }

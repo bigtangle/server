@@ -4,20 +4,17 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionOutPoint;
 
 public class SolidityState {
-    
+
     public enum State {
-        Success,
-        Unfixable,
-        MissingPredecessor,
-        MissingTransactionOutput,
+        Success, Unfixable, MissingPredecessor, MissingTransactionOutput,
     }
-    
+
     private static final SolidityState successState = new SolidityState(State.Success, null);
     private static final SolidityState failState = new SolidityState(State.Unfixable, null);
-    
-    private State state; 
+
+    private State state;
     private byte[] missingDependency;
-    
+
     private SolidityState(State state, byte[] missingDependency) {
         super();
         this.state = state;

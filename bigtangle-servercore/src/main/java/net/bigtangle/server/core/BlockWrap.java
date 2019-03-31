@@ -26,7 +26,7 @@ public class BlockWrap {
     protected Block block;
     protected BlockEvaluation blockEvaluation;
     protected NetworkParameters params;
-    
+
     protected BlockWrap() {
         super();
     }
@@ -58,10 +58,10 @@ public class BlockWrap {
             return false;
         return getBlock().equals(((BlockWrap) o).getBlock());
     }
-    
+
     @Override
     public String toString() {
-    	return block.toString();
+        return block.toString();
     }
 
     @Override
@@ -72,14 +72,15 @@ public class BlockWrap {
     public Sha256Hash getBlockHash() {
         return block.getHash();
     }
-    
+
     public HashSet<ConflictCandidate> toConflictCandidates() {
         HashSet<ConflictCandidate> blockConflicts = new HashSet<>();
 
         // Dynamic conflicts: conflicting transaction outpoints
         this.getBlock().getTransactions().stream().flatMap(t -> t.getInputs().stream()).filter(in -> !in.isCoinBase())
-                .map(in -> ConflictCandidate.fromTransactionOutpoint(this, in.getOutpoint())).forEach(c -> blockConflicts.add(c));
-        
+                .map(in -> ConflictCandidate.fromTransactionOutpoint(this, in.getOutpoint()))
+                .forEach(c -> blockConflicts.add(c));
+
         addTypeSpecificConflictCandidates(blockConflicts);
 
         return blockConflicts;
@@ -109,7 +110,7 @@ public class BlockWrap {
         case BLOCKTYPE_TOKEN_CREATION:
             try {
                 TokenInfo tokenInfo = TokenInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));                    
+                blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
@@ -124,21 +125,21 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_VOS_EXECUTE:
             break;
-		case BLOCKTYPE_ORDER_OPEN:
-			break;
-		case BLOCKTYPE_ORDER_OP:
-			break;
-		case BLOCKTYPE_ORDER_RECLAIM:
-			try {
-				OrderReclaimInfo orderInfo = OrderReclaimInfo.parse(this.getBlock().getTransactions().get(0).getData());
-				blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));                    
+        case BLOCKTYPE_ORDER_OPEN:
+            break;
+        case BLOCKTYPE_ORDER_OP:
+            break;
+        case BLOCKTYPE_ORDER_RECLAIM:
+            try {
+                OrderReclaimInfo orderInfo = OrderReclaimInfo.parse(this.getBlock().getTransactions().get(0).getData());
+                blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
-			break;
-		case BLOCKTYPE_ORDER_MATCHING:
+            break;
+        case BLOCKTYPE_ORDER_MATCHING:
             // Dynamic conflicts: require the previous matching
             try {
                 OrderMatchingInfo info = OrderMatchingInfo.parse(this.getBlock().getTransactions().get(0).getData());
@@ -149,10 +150,10 @@ public class BlockWrap {
                 throw new RuntimeException(e);
             }
             break;
-		    
+
         default:
-            throw new NotImplementedException("Blocktype not implemented!");       
-        
+            throw new NotImplementedException("Blocktype not implemented!");
+
         }
     }
 }

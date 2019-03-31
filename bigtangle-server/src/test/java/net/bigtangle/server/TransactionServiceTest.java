@@ -50,22 +50,23 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
 
         // Generate mining reward blocks
         Block rewardBlock = transactionService.performRewardVoting();
-        
-        // Assert that voting will not generate a new block since we have an eligible alternative already
+
+        // Assert that voting will not generate a new block since we have an
+        // eligible alternative already
         assertEquals(rewardBlock, transactionService.performRewardVoting());
-        
+
         // After updating, we shall make new blocks now
         rollingBlock = rewardBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -74,12 +75,12 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         assertNotEquals(rewardBlock, rewardBlock2);
         assertNotNull(rewardBlock2);
     }
-    
-    //pay to mutilsigns keys wallet1Keys_part
+
+    // pay to mutilsigns keys wallet1Keys_part
     public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {
 
         Transaction multiSigTransaction = new Transaction(networkParameters);
- 
+
         for (ECKey ecKey : wallet1Keys_part)
             log.debug(ecKey.getPublicKeyAsHex());
 
@@ -94,30 +95,31 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
         checkBalance(amount0, wallet1Keys_part);
     }
+
     @Test
     // transfer the coin to address with multisign for spent
     public void testMultiSigns() throws Exception {
         testInitWallet();
         wallet1();
         wallet2();
-       
+
         List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
         wallet1Keys_part.add(wallet1Keys.get(0));
         wallet1Keys_part.add(wallet1Keys.get(1));
         createMultiSigns(wallet1Keys_part);
-        multiSigns(walletAppKit.wallet().currentReceiveKey(),wallet1Keys_part );
-        multiSigns(walletAppKit2.wallet().currentReceiveKey(),wallet1Keys_part );
-        multiSigns(walletAppKit1.wallet().currentReceiveKey(),wallet1Keys_part );
-    } 
-    
-    public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception { 
+        multiSigns(walletAppKit.wallet().currentReceiveKey(), wallet1Keys_part);
+        multiSigns(walletAppKit2.wallet().currentReceiveKey(), wallet1Keys_part);
+        multiSigns(walletAppKit1.wallet().currentReceiveKey(), wallet1Keys_part);
+    }
+
+    public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception {
 
         List<UTXO> ulist = getBalance(false, wallet1Keys_part);
 
@@ -133,8 +135,8 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         // add remainder back
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
         transaction0.addOutput(amount2, scriptPubKey);
-    
-         transaction0.addInput(multisigOutput);
+
+        transaction0.addInput(multisigOutput);
 
         Transaction transaction_ = networkParameters.getDefaultSerializer()
                 .makeTransaction(transaction0.bitcoinSerialize());
@@ -150,8 +152,9 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         input2.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-          byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
-       Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction0);
 
         rollingBlock.solve();
@@ -176,7 +179,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 

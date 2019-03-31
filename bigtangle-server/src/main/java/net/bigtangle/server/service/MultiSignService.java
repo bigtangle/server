@@ -234,7 +234,7 @@ public class MultiSignService {
             int signnumber = (int) (tokens0 == null ? tokens.getSignnumber() : tokens0.getSignnumber());
             return signCount >= signnumber;
         } catch (Exception e) {
-            log.error(" error",  e );
+            log.error(" error", e);
             throw new BlockStoreException("multisign error");
         }
     }

@@ -144,14 +144,15 @@ public class TransactionService {
     }
 
     /**
-     * Runs the order matching voting logic: push existing best eligible order matching if
-     * exists or make a new eligible order matching now
+     * Runs the order matching voting logic: push existing best eligible order
+     * matching if exists or make a new eligible order matching now
      * 
      * @return the new block or block voted on
      * @throws Exception
      */
     public Block performOrderMatchingVoting() throws Exception {
-        // Find eligible order matchings building on top of the newest order matching
+        // Find eligible order matchings building on top of the newest order
+        // matching
         Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
         List<Sha256Hash> candidateHashes = store.getOrderMatchingBlocksWithPrevHash(prevHash);
         candidateHashes.removeIf(c -> {
@@ -387,7 +388,7 @@ public class TransactionService {
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (added) {
-                    logger.debug("addConnected from kafka " );
+                    logger.debug("addConnected from kafka ");
                 } else {
                     logger.debug(" unsolid block from kafka " + block);
                     if (request)
@@ -396,7 +397,7 @@ public class TransactionService {
                 }
                 return Optional.of(block);
             } else {
-              //  logger.debug("addConnected   BlockExists " + block);
+                // logger.debug("addConnected BlockExists " + block);
             }
         } catch (VerificationException e) {
             logger.debug("addConnected from kafka ", e);

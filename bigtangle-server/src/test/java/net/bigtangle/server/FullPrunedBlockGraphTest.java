@@ -81,8 +81,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -99,8 +99,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectTokenUTXOs() throws Exception {
         store.resetStore();
-      ;
-        byte[] pubKey =  walletKeys.get(0).getPubKey();
+        ;
+        byte[] pubKey = walletKeys.get(0).getPubKey();
 
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
@@ -110,15 +110,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                   false);
+                    false);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase,  walletKeys.get(0), null, null, null);
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null, null,
+                    null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -136,15 +137,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount,  true);
+                    "Test", 1, 1, amount, true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "",  walletKeys.get(0).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase,  walletKeys.get(0), null, null, null);
+            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null, null,
+                    null);
 
             // Should exist now
             store.getTokenConfirmed(block1.getHash().toString()); // Fine as
@@ -261,8 +263,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -302,7 +304,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                 true);
+                true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -565,7 +567,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount,  true);
+                    1, 0, amount, true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -641,7 +643,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertTrue(order2.isSpent());
 
         // Ensure virtual UTXOs are now confirmed
-        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle(); 
+        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -703,8 +705,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i1++) {
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -751,7 +753,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-               true);
+                true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1028,7 +1030,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount,  true);
+                    1, 0, amount, true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1108,7 +1110,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(order2.isSpent());
 
         // Ensure virtual UTXOs are now confirmed
-        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle(); 
+        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getMiddle();
         final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -1168,8 +1170,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing second reward interval
         // Generate mining reward block
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i1++) {
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1185,8 +1187,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate second mining reward block
         rollingBlock = rewardBlock11;
-        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i1++) {
+        for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1236,8 +1238,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE
-                + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1351,7 +1353,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount,  true);
+                    "Test", 1, 1, amount, true);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()

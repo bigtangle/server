@@ -40,7 +40,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testOrderMatchingSchedule() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -52,10 +53,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Open buy order for test tokens
         Block b = makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Generate some blocks to enable eligible order matching scheduling
         for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
             b = b.createNextBlock();
@@ -63,16 +64,16 @@ public class OrderMatchTest extends AbstractIntegrationTest {
             addedBlocks.add(b);
         }
         milestoneService.update();
-        
+
         // Execute order matching
         addedBlocks.add(transactionService.performOrderMatchingVoting());
         milestoneService.update();
-        
+
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -83,7 +84,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testOrderReclaimSchedule() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -95,26 +97,26 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open lost sell order for test tokens
         Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Execute order matching
         Block match = makeAndConfirmOrderMatching(addedBlocks, networkParameters.getGenesisBlock());
-        
+
         // Fuse and let all be confirmed
         Block fuse = createAndAddNextBlock(sell, match);
         addedBlocks.add(fuse);
-        
+
         // Pass far enough to lose order
         addedBlocks.add(makeAndConfirmOrderMatching(addedBlocks, fuse));
         milestoneService.update();
-        
+
         // Try reclaiming
         addedBlocks.addAll(transactionService.performOrderReclaimMaintenance());
         milestoneService.update();
-        
+
         // Verify the tokens returned possession
         assertHasAvailableToken(testKey, testKey.getPublicKeyAsHex(), 77777l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -125,7 +127,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void buy() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -138,20 +141,20 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         showOrders();
-        
+
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
         showOrders();
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();
-        
+
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -162,7 +165,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void sell() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -196,7 +200,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void multiLevelBuy() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -235,7 +240,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void multiLevelSell() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -274,7 +280,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void partialBuy() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -308,7 +315,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void partialSell() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -331,7 +339,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 50000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 50l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -342,7 +350,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void partialBidFill() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -367,7 +376,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -403,7 +412,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -414,7 +423,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void cancel() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -433,7 +443,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -444,7 +454,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void cancelTwoStep() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -460,7 +471,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Cancel
@@ -468,7 +479,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
@@ -477,7 +488,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void effectiveCancel() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -504,7 +516,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, null);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), null);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -514,10 +526,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testValidFromTime() throws Exception {
         final int waitTime = 5000;
-        
+
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -533,9 +546,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+                testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL,
+                testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
-        
+
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, testTokenId);
         List<UTXO> outputs = getBalance(false, testKey).stream()
@@ -549,11 +563,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-        
+
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
-        
+
         // Create block with order
         block = predecessor.createNextBlock();
         block.addTransaction(tx);
@@ -568,23 +582,24 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         Block matcherBlock1 = makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify the order is still open
-        // NOTE: Can fail if the test takes longer than 5 seconds. In that case, increase the wait time variable
+        // NOTE: Can fail if the test takes longer than 5 seconds. In that case,
+        // increase the wait time variable
         assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
         assertFalse(store.getOrderSpent(block.getHash(), matcherBlock1.getHash()));
-        
+
         // Wait until valid
         Thread.sleep(waitTime);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify the order is now closed
         assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
         assertTrue(store.getOrderSpent(block.getHash(), matcherBlock1.getHash()));
-        
-        // Verify token amount invariance 
+
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -593,7 +608,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testValidToTime() throws Exception {
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -609,9 +625,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+                testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL,
+                testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
-        
+
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, testTokenId);
         List<UTXO> outputs = getBalance(false, testKey).stream()
@@ -625,11 +642,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
         TransactionInput input = tx.addInput(spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-        
+
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
-        
+
         // Create block with order
         block = predecessor.createNextBlock();
         block.addTransaction(tx);
@@ -641,11 +658,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify there is no open order left
         assertTrue(store.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH));
-        
-        // Verify token amount invariance 
+
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -656,7 +673,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testAllOrdersSpent() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -669,7 +687,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open orders
         Block b1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
         Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 999, 50, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         makeAndConfirmOrderMatching(addedBlocks);
@@ -678,12 +696,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Cancel orders
         makeAndConfirmCancelOp(b1, testKey, addedBlocks);
         makeAndConfirmCancelOp(b2, genesisKey, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         makeAndConfirmOrderMatching(addedBlocks);
-        
-        // Verify token amount invariance 
+
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -694,7 +712,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testMultiMatching1() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -711,15 +730,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 75, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 450000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 450l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -730,7 +749,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testMultiMatching2() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -745,7 +765,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -754,17 +774,17 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        
+
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 400000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 400l);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-        
+
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
@@ -773,7 +793,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testMultiMatching3() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -792,11 +813,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 321, 5, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 159, 2, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 951, 25, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Open orders
@@ -808,11 +829,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
@@ -823,7 +844,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testMultiMatching4() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey =  walletKeys.get(8);;
+        ECKey testKey = walletKeys.get(8);
+        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -843,12 +865,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
@@ -863,22 +885,22 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
-        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
-        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
-        
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
-        // Verify token amount invariance 
+        // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution

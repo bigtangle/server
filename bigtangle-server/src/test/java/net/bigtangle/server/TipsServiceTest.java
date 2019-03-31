@@ -49,18 +49,20 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Block rollingBlock1 = rollingBlock;
         blockGraph.add(rollingBlock, false);
 
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, false);
         }
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, false);
         }
         blockGraph.confirm(rollingBlock.getHash(), new HashSet<>());
         blockGraph.confirm(rollingBlock1.getHash(), new HashSet<>());
 
-        // Generate ineligible mining reward blocks 
+        // Generate ineligible mining reward blocks
         Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(), true);
         transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
@@ -68,10 +70,11 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
-            
+
             // Do not hit the ineligible mining reward blocks
-            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) || tips.getLeft().equals(rollingBlock1.getHash())) 
-                    && (tips.getRight().equals(rollingBlock.getHash()) || tips.getRight().equals(rollingBlock1.getHash())));
+            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) || tips.getLeft().equals(rollingBlock1.getHash()))
+                    && (tips.getRight().equals(rollingBlock.getHash())
+                            || tips.getRight().equals(rollingBlock1.getHash())));
         }
 
         // After overruling one of them, that one should be eligible
@@ -80,20 +83,22 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, false);
         }
-        
+
         // Wait until the lock time ends. It should enter the milestone
         Thread.sleep(NetworkParameters.REWARD_OVERRULE_TIME_MS);
-        milestoneService.update();        
+        milestoneService.update();
         assertTrue(store.getBlockEvaluation(b1.getHash()).isMilestone());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
-            
-            // Do not hit the ineligible mining reward block b2 but do go through b1
-            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) && tips.getRight().equals(rollingBlock.getHash())) 
-                    || (tips.getLeft().equals(rollingBlock1.getHash()) && tips.getRight().equals(rollingBlock1.getHash())));
+
+            // Do not hit the ineligible mining reward block b2 but do go
+            // through b1
+            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) && tips.getRight().equals(rollingBlock.getHash()))
+                    || (tips.getLeft().equals(rollingBlock1.getHash())
+                            && tips.getRight().equals(rollingBlock1.getHash())));
         }
-        
+
     }
 
     @Test
@@ -108,19 +113,20 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
-                false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict
-        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
-        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
 
         blockGraph.add(b1, true);
         blockGraph.add(b2, true);
@@ -134,8 +140,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithPrototype(b2);
             assertTrue(tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash()));
         }
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -163,19 +170,20 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 0);
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  walletKeys.get(8)));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
         TransactionInput input = doublespendTX.addInput(spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL,
-                false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
         // Create blocks with conflict
-        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
-        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), doublespendTX);
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
 
         blockGraph.add(b1, true);
         blockGraph.add(b2, true);
@@ -186,15 +194,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -219,12 +228,13 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
-        // Generate eligible mining reward blocks 
+        // Generate eligible mining reward blocks
         Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         Block b2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
@@ -236,15 +246,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -259,7 +270,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             // Expected
         }
     }
-    
+
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
         store.resetStore();
@@ -270,8 +281,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount, false);
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+                false);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -281,13 +292,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount2,  true);
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
+                "Test", 1, 1, amount2, true);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
+                block1.getHash());
+        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
+                block1.getHash());
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -295,15 +308,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -329,8 +343,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount,  false);
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+                false);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -340,22 +354,24 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount2,  true);
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
+                "Test", 1, 1, amount2, true);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(), block1.getHash());
+        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
+                block1.getHash());
 
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
         long amount3 = coinbase3.getValue();
-        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test", "Test", 1, 1,
-                amount3,  true);
+        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
+                "Test", 1, 1, amount3, true);
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));        
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, block1.getHash(), block1.getHash());
+                .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, block1.getHash(),
+                block1.getHash());
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -363,15 +379,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -395,11 +412,11 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount,  true);
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+                true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -417,15 +434,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -449,26 +467,27 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
-        
+
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
-                amount,  true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+                true);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
-        
+
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(6666, pubKey);
         long amount2 = coinbase2.getValue();
-        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0,
-                amount2,  false);
+        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0, amount2,
+                false);
         tokenInfo2.setToken(tokens2);
-        tokenInfo2.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        tokenInfo2.getMultiSignAddresses()
+                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
@@ -479,15 +498,16 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
@@ -502,44 +522,45 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             // Expected
         }
     }
-    
+
     @Test
     public void testConflictOrderReclaim() throws Exception {
-		@SuppressWarnings({ "deprecation", "unused" })
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		ECKey testKey =  walletKeys.get(8);
-		List<Block> addedBlocks = new ArrayList<>();
-		
-		// Make test token
-		Block token = resetAndMakeTestToken(testKey, addedBlocks);
-		String testTokenId = testKey.getPublicKeyAsHex();
-	
-		// Open sell order for test tokens
-		Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-	
-		// Execute order matching
-		Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
-        
+        @SuppressWarnings({ "deprecation", "unused" })
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = walletKeys.get(8);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        Block token = resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Open sell order for test tokens
+        Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+
+        // Execute order matching
+        Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
+
         // Generate reclaim blocks
-		Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-		Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-		
-		// Assert that we approve only one of these at a time
+        Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
+        Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
+
+        // Assert that we approve only one of these at a time
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash())) 
+            assertTrue((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()))
                     || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash())));
             if (hit1 && hit2)
                 break;
         }
         assertTrue(hit1);
         assertTrue(hit2);
-        
-        // After confirming one of them into the milestone, only that one block is now available
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
         blockGraph.confirm(b1.getHash(), new HashSet<>());
 
         for (int i = 0; i < 20; i++) {
