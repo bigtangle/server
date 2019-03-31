@@ -451,6 +451,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return this.conn;
     }
 
+    
+    // FIXME HACK this is called manually for each thread opening a connection
+    public void closeThread() throws BlockStoreException {
+        try {
+            this.conn.get().close();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            this.conn.remove();
+        }
+    }
+
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
@@ -736,6 +748,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 props.setProperty("password", this.password);
                 conn.set(DriverManager.getConnection(connectionURL, props));
             }
+            
             allConnections.add(conn.get());
             Connection connection = conn.get();
             // set the schema if one is needed

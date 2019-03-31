@@ -5,9 +5,13 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,14 +28,14 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 
 @Service
 public class TipsService {
 	private final Logger log = LoggerFactory.getLogger(TipsService.class);
 
 	@Autowired
-	protected FullPrunedBlockStore store;
+	protected DatabaseFullPrunedBlockStore store;
 	@Autowired
 	private BlockService blockService;
 	@Autowired
@@ -52,15 +56,44 @@ public class TipsService {
 	 * @return A list of rating tips.
 	 * @throws BlockStoreException
 	 */
-	public List<BlockWrap> getRatingTips(int count) throws BlockStoreException {
+	public Collection<BlockWrap> getRatingTips(int count) throws BlockStoreException {
 		Stopwatch watch = Stopwatch.createStarted();
-
+		
 		List<BlockWrap> entryPoints = getRatingEntryPoints(count);
-		List<BlockWrap> results = new ArrayList<>();
-		long latestImportTime = store.getMaxImportTime();
+		Collection<BlockWrap> results = new ConcurrentLinkedQueue<>();
+//		long latestImportTime = store.getMaxImportTime();
 
-		for (int i = 0; i < entryPoints.size(); i++) {
-			results.add(getRatingTip(entryPoints.get(i), latestImportTime));
+	    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		try {
+		    for (BlockWrap entryPoint : entryPoints) {
+		        executor.submit(new Runnable() {
+		            @Override
+		            public void run() {
+                        try {
+                            BlockWrap ratingTip = getRatingTip(entryPoint, Long.MAX_VALUE);
+                            results.add(ratingTip);
+                            store.closeThread();
+                        } catch (BlockStoreException e) {
+                            log.error(e.getLocalizedMessage());
+                        }
+		            }
+		        });
+		    }
+		} finally {
+		    try {
+		        executor.shutdown();
+		        executor.awaitTermination(300, TimeUnit.SECONDS);
+		    }
+		    catch (InterruptedException e) {
+		        System.err.println("Tasks interrupted");
+		    }
+		    finally {
+		        if (!executor.isTerminated()) {
+		            System.err.println("Cancel non-finished tasks");
+		        }
+		        executor.shutdownNow();
+		        System.out.println("Shutdown finished");
+		    }
 		}
 
 		watch.stop();
@@ -167,7 +200,7 @@ public class TipsService {
 		}
 
 		watch.stop();
-		log.info("getValidatedBlockPair (iteratively) time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.info("getValidatedBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
 	}
@@ -231,9 +264,9 @@ public class TipsService {
 
 			// Calculate the unnormalized transition weights
 			for (int i = 0; i < candidates.size(); i++) {
-				// Aviv Zohar: Scale alpha up if very deep to prevent splitting attack
+				// Scale alpha up if very deep to prevent splitting attack
 				double alpha = 0.1
-						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - 30)));
+						* Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth() - NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF/2)));
 				
 				// Clamp
 				alpha = Math.max(0.001, alpha);
@@ -297,8 +330,7 @@ public class TipsService {
 		List<BlockWrap> results = new ArrayList<>();
 
 		for (int i = 0; i < count; i++) {
-			// Randomly select one of the candidates weighted by their
-			// cumulative weights
+			// Randomly select weighted by cumulative weights
 			double selectionRealization = seed.nextDouble() * normalizedBlockWeightSum;
 			for (int selection = 0; selection < candidates.size(); selection++) {
 				BlockWrap selectedBlock = candidates.get(selection);
@@ -310,6 +342,6 @@ public class TipsService {
 			}
 		}
 
-		return results;
-	}
+        return results;
+    }
 }

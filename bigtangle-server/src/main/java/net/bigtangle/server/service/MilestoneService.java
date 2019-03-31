@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -238,7 +239,7 @@ public class MilestoneService {
 		// Select #tipCount solid tips via MCMC
 		HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
 				NetworkParameters.NUMBER_RATING_TIPS);
-		List<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
+		Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
 
 		// Initialize all approvers as UUID
 		for (BlockWrap selectedTip : selectedTips) {
