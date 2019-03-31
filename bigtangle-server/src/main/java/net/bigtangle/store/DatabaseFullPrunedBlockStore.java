@@ -15,11 +15,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
 
@@ -440,7 +440,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
-    protected List<Connection> allConnections;
+    protected LinkedBlockingQueue<Connection> allConnections;
     protected String connectionURL;
     protected int fullStoreDepth;
     protected String username;
@@ -498,7 +498,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.username = username;
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
-        this.allConnections = new LinkedList<Connection>();
+        this.allConnections = new LinkedBlockingQueue<Connection>();
         try {
             beginDatabaseBatchWrite();
             create();
@@ -735,7 +735,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             if successful connection to the DB couldn't be made.
      */
-    protected synchronized void maybeConnect() throws BlockStoreException {
+    protected void maybeConnect() throws BlockStoreException {
         try {
             if (conn.get() != null && !conn.get().isClosed())
                 return;
@@ -750,12 +750,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             
             allConnections.add(conn.get());
-            Connection connection = conn.get();
+            
             // set the schema if one is needed
-            if (schemaName != null) {
-                Statement s = connection.createStatement();
-                for (String sql : getCreateSchemeSQL()) {
-                    s.execute(sql);
+            synchronized (this) {
+                if (schemaName != null) {
+                    Statement s = conn.get().createStatement();
+                    for (String sql : getCreateSchemeSQL()) {
+                        s.execute(sql);
+                    }
                 }
             }
             log.info("Made a new connection to database " + connectionURL);
@@ -765,21 +767,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public synchronized void close() {
-        for (Connection conn : allConnections) {
-            try {
-                if (!conn.getAutoCommit()) {
-                    conn.rollback();
+    public void close() {
+        synchronized (this) {
+            for (Connection conn : allConnections) {
+                try {
+                    if (!conn.getAutoCommit()) {
+                        conn.rollback();
+                    }
+                    conn.close();
+                    if (conn == this.conn.get()) {
+                        this.conn.set(null);
+                    }
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
                 }
-                conn.close();
-                if (conn == this.conn.get()) {
-                    this.conn.set(null);
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
             }
+            allConnections.clear();
         }
-        allConnections.clear();
     }
 
     /**

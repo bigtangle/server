@@ -104,7 +104,7 @@ public class BlockService {
             try {
 
                 broadcastBlock(block.bitcoinSerialize());
-                // FIXME remove this later, this is needed for testnet, to get
+                // FIXME remove this later, this is needed for testnet and unit tests, to get
                 // sync real time confirmation for client
 
                 milestoneService.update();
