@@ -160,8 +160,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
         testInitWallet();
-        wallet1();
-        wallet2();
+ 
         
         @SuppressWarnings("deprecation")
         ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
