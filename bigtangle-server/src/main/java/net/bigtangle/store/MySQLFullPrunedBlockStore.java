@@ -57,7 +57,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    block mediumblob NOT NULL,\n"
             + "    inserttime bigint,\n" 
             + "    reason bigint NOT NULL,\n"
-            + "    missingdependency varbinary(32) NOT NULL,\n"
+            + "    missingdependency mediumblob NOT NULL,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
             
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
@@ -74,7 +74,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    memo varchar(80),\n" 
             + "    spent boolean NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" 
-            + "    spendpending boolean NOT NULL,\n" // true iff there exists a transaction on the Tangle that can spend this output
+            + "    spendpending boolean NOT NULL,\n" // true if there exists a transaction on the Tangle that can spend this output
             + "    spenderblockhash  varbinary(32),\n"
             + "    time bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
@@ -171,7 +171,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n"
-            + "    blockhash  varbinary(32) NOT NULL,\n"
+            + "    blockhash  mediumblob NOT NULL,\n"
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
@@ -179,7 +179,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    toaddress varchar(255) NOT NULL,\n"
-            + "    blockhash varbinary(32) NOT NULL,\n"
+            + "    blockhash mediumblob NOT NULL,\n"
             + "    amount bigint(20) ,\n"
             + "    minsignnumber bigint(20) ,\n"
             + "    outputHashHex varchar(255) ,\n"
@@ -237,9 +237,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING btree";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING btree";
-    
-    private static final String CREATE_UNSOLID_DEP_INDEX = "CREATE INDEX unsolidblocks_missingdependency_idx ON unsolidblocks (missingdependency) USING btree";
-    
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -288,7 +285,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
-        sqlStatements.add(CREATE_UNSOLID_DEP_INDEX);
         return sqlStatements;
     }
 
