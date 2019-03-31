@@ -153,6 +153,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     blockStore.beginDatabaseBatchWrite();
                     connect(block, Math.max(storedPrev.getBlockEvaluation().getHeight(), storedPrevBranch.getBlockEvaluation().getHeight()) + 1);
                     blockStore.commitDatabaseBatchWrite();
+                    try {
+                        scanWaitingBlocks(block);
+                    } catch (BlockStoreException | VerificationException e) {
+                        log.debug(e.getLocalizedMessage());
+                    } 
                     return true;
                 } catch (BlockStoreException e) {
                     blockStore.abortDatabaseBatchWrite();
@@ -167,6 +172,41 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw e;
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void scanWaitingBlocks(Block block) throws BlockStoreException {
+        // Finally, look in the solidity waiting queue for blocks that are still waiting
+        // It could be a missing block...
+        for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
+            try {
+                // If going through or waiting for more dependencies, all is good
+                add(b, true);
+
+                // Clear from waiting list
+                blockStore.deleteUnsolid(b.getHash());
+                
+            } catch (VerificationException e) {
+                // If the block is deemed invalid, we do not propagate the error upwards
+                log.debug(e.getLocalizedMessage());
+            }
+        }
+        
+        // Or it could be a missing transaction
+        for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
+            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
+                try {
+                    // If going through or waiting for more dependencies, all is good
+                    add(b, true);
+                    
+                    // Clear from waiting list
+                    blockStore.deleteUnsolid(b.getHash());
+                    
+                } catch (VerificationException e) {
+                    // If the block is deemed invalid, we do not propagate the error upwards
+                    log.debug(e.getLocalizedMessage());
+                }
+            }
         }
     }
 
@@ -868,38 +908,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.deleteTip(block.getPrevBranchBlockHash());
         blockStore.deleteTip(block.getHash());
         blockStore.insertTip(block.getHash());
-
-        blockStore.commitDatabaseBatchWrite();
-        // Finally, look in the solidity waiting queue for blocks that are still waiting
-        // It could be a missing block...
-        for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
-            try {
-                // Clear from waiting list
-                blockStore.deleteUnsolid(b.getHash());
-                
-                // If going through or waiting for more dependencies, all is good
-                add(b, true);
-            } catch (VerificationException e) {
-                // If the block is deemed invalid, we do not propagate the error upwards
-                log.debug(e.getLocalizedMessage());
-            }
-        }
-        
-        // Or it could be a missing transaction
-        for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
-            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
-                try {
-                    // Clear from waiting list
-                    blockStore.deleteUnsolid(b.getHash());
-                    
-                    // If going through or waiting for more dependencies, all is good
-                    add(b, true);
-                } catch (VerificationException e) {
-                    // If the block is deemed invalid, we do not propagate the error upwards
-                    log.debug(e.getLocalizedMessage());
-                }
-            }
-        }
     }
 
     @Override

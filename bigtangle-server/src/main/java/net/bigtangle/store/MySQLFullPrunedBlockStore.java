@@ -57,7 +57,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    block mediumblob NOT NULL,\n"
             + "    inserttime bigint,\n" 
             + "    reason bigint NOT NULL,\n"
-            + "    missingdependency mediumblob NOT NULL,\n"
+            + "    missingdependency varbinary(32) NOT NULL,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
             
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
@@ -171,7 +171,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    tokenindex bigint NOT NULL   ,\n"
             + "    address varchar(255),\n"
-            + "    blockhash  mediumblob NOT NULL,\n"
+            + "    blockhash  varbinary(32) NOT NULL,\n"
             + "    sign int(11) NOT NULL,\n"
             + "    PRIMARY KEY (id) \n)";
 
@@ -179,7 +179,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    orderid varchar(255) NOT NULL  ,\n" 
             + "    tokenid varchar(255) NOT NULL  ,\n" 
             + "    toaddress varchar(255) NOT NULL,\n"
-            + "    blockhash mediumblob NOT NULL,\n"
+            + "    blockhash varbinary(32) NOT NULL,\n"
             + "    amount bigint(20) ,\n"
             + "    minsignnumber bigint(20) ,\n"
             + "    outputHashHex varchar(255) ,\n"
@@ -229,7 +229,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    status varchar(255) NOT NULL,\n"
             + "   CONSTRAINT batchblock_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
-    // Some indexes to speed up inserts
+    // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
@@ -237,6 +237,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING btree";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING btree";
+    
+    private static final String CREATE_UNSOLID_DEP_INDEX = "CREATE INDEX unsolidblocks_missingdependency_idx ON unsolidblocks (missingdependency) USING btree";
+    
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -285,6 +288,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
+        sqlStatements.add(CREATE_UNSOLID_DEP_INDEX);
         return sqlStatements;
     }
 
