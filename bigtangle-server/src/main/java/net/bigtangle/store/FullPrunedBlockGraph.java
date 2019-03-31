@@ -613,8 +613,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Then clear own dependencies since no longer confirmed
         blockStore.removeDependents(block.getHash());
 
-        // Set milestone false and update latestMilestoneUpdateTime
+        // Set milestone false and reset milestonedepth
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
+        blockStore.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockHash(), -1);
         
         // Keep track of unconfirmed blocks
         traversedBlockHashes.add(blockHash);

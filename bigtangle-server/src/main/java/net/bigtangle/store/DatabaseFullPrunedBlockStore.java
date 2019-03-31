@@ -222,6 +222,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT hash, rating, depth, "
             + "cumulativeweight, height, milestone, milestonelastupdate, " + "milestonedepth, inserttime, maintained "
             + "FROM blocks WHERE  height = ?" + afterSelect();
+    protected final String SELECT_CONFIRMED_BLOCKS_OF_HEIGHT_HIGHER_THAN_SQL = "SELECT hash "
+            + "FROM blocks WHERE height >= ? AND milestone = 1 " + afterSelect();
+    protected final String SELECT_BLOCKS_OF_INSERTTIME_HIGHER_THAN_SQL = "SELECT hash "
+            + "FROM blocks WHERE inserttime >= ? " + afterSelect();
+    
     protected final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash," + " rating, depth, cumulativeweight,   "
             + "blocks.height, milestone, milestonelastupdate, " + "milestonedepth, inserttime, maintained "
             + "FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
@@ -321,6 +326,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate()
             + " blocks SET maintained = ? WHERE hash = ?";
+    protected final String UPDATE_ALL_BLOCKS_MAINTAINED_SQL = getUpdate()
+            + " blocks SET maintained = 1 ";
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
@@ -1903,6 +1910,58 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    @Override
+    public List<Sha256Hash> getBlocksOfTimeHigherThan(long time) throws BlockStoreException {
+        List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_OF_INSERTTIME_HIGHER_THAN_SQL);
+            preparedStatement.setLong(1, time);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return storedBlockHashes;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Sha256Hash> getConfirmedBlocksOfHeightHigherThan(long fromHeight) throws BlockStoreException {
+        List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_CONFIRMED_BLOCKS_OF_HEIGHT_HIGHER_THAN_SQL);
+            preparedStatement.setLong(1, fromHeight);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
+            }
+            return storedBlockHashes;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
 
     @Override
     public List<BlockEvaluation> getSolidBlocksOfHeight(long currentHeight) throws BlockStoreException {
@@ -2109,6 +2168,28 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+    
+    @Override
+    public void updateAllBlocksMaintained() throws BlockStoreException {
+
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            preparedStatement = conn.get().prepareStatement(UPDATE_ALL_BLOCKS_MAINTAINED_SQL);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+        
     }
 
     @Override

@@ -9,6 +9,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -65,17 +66,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Block b1 = createAndAddNextBlock(depBlock, block);
 
-        milestoneService.update(1);
+        milestoneService.update();
 
-        // One update cycle should not allow the second transaction to go
-        // through since it was not confirmed yet
-        assertTrue(blockService.getBlockEvaluation(depBlock.getHash()).isMilestone());
-        assertFalse(blockService.getBlockEvaluation(block.getHash()).isMilestone());
-        assertFalse(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
-
-        milestoneService.update(1);
-
-        // Second update cycle should allow all through
+        // Update cycle should allow all through
         assertTrue(blockService.getBlockEvaluation(depBlock.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(block.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isMilestone());
@@ -862,47 +855,107 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isMilestone());
     }
 
-    // Deep reorg feature not implemented @Test
-    // public void testReorgUnmaintained() throws Exception {
-    // store.resetStore();
-    //
-    // // Generate blocks until first ones become unmaintained
-    // Block rollingBlock =
-    // networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-    // blockGraph.add(rollingBlock, true);
-    //
-    // for (int i = 0; i <
-    // NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-    // rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-    // blockGraph.add(rollingBlock, true);
-    // }
-    // milestoneService.update();
-    // milestoneService.update();
-    //
-    // Block oldTangleBlock = rollingBlock;
-    //
-    // // Genesis block is no longer maintained, while newest one is maintained
-    // assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
-    // assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-    // assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
-    //
-    // // Generate longer new Tangle
-    // rollingBlock =
-    // networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-    // blockGraph.add(rollingBlock, true);
-    //
-    // for (int i = 0; i <
-    // NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 25; i++) {
-    // rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-    // blockGraph.add(rollingBlock, true);
-    // }
-    // milestoneService.update();
-    // Block newTangleBlock = rollingBlock;
-    //
-    // // New Tangle should now be in Milestone?
-    // assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
-    // assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
-    // }
+    @Test
+    public void testDeepReorg() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until first ones become unmaintained
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        blockGraph.add(rollingBlock, true);
+
+        Block oldTangleBlock = rollingBlock;
+
+        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        milestoneService.update();
+
+        // Genesis block is no longer maintained, while newest one is maintained
+        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+
+        // Generate longer new Tangle
+        rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        blockGraph.add(rollingBlock, true);
+
+        Block newTangleBlock = rollingBlock;
+
+        for (int i = 0; i < 3 * (NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5); i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+
+        // New Tangle is not in milestone since unmaintained
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+//        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained()); // unless pruned
+        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
+        
+        // Perform reorg
+        milestoneService.triggerDeepReorg(1, TimeUnit.DAYS);
+
+        // New Tangle is now in milestone instead of old
+//        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained()); // unless pruned
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
+        
+    }
+
+    @Test
+    public void testFindDeepReorg() throws Exception {
+        store.resetStore();
+
+        // Generate blocks until first ones become unmaintained
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock();
+        blockGraph.add(rollingBlock, true);
+
+        for (int i = 0; i < 5; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+
+        Block splitBlock = rollingBlock;
+        rollingBlock = rollingBlock.createNextBlock();
+        blockGraph.add(rollingBlock, true);
+        Block oldTangleBlock = rollingBlock;
+
+        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+        milestoneService.update();
+
+        // block is no longer maintained, while newest one is maintained
+        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+
+        // Generate longer new Tangle
+        rollingBlock = splitBlock.createNextBlock();
+        blockGraph.add(rollingBlock, true);
+
+        Block newTangleBlock = rollingBlock;
+
+        for (int i = 0; i < 3 * (NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5); i++) {
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
+        }
+        milestoneService.update();
+
+        // New Tangle is not in milestone since unmaintained
+        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
+        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
+        
+        // Find correct height to reorg from
+        assertEquals(6, milestoneService.findDeepReorgHeight(1, TimeUnit.DAYS));
+    }
 
     @Test
     public void testReorgToken() throws Exception {

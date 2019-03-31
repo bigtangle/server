@@ -50,6 +50,131 @@ public class MilestoneService {
     private final Semaphore lock = new Semaphore(1, true);
 
     /**
+     * Triggers a deep reorg calculation which may be very expensive.
+     * 
+     * @throws BlockStoreException
+     */
+    public void triggerDeepReorg(long timeUnits, TimeUnit unit) throws BlockStoreException {
+        synchronized (this) {
+            // Find reorganize entry point
+            long height = findDeepReorgHeight(timeUnits, unit);
+            
+            // Use reorganize entry point height to reorganize
+            triggerDeepReorg(height);
+        }
+    }
+
+    /**
+     * Find height where blocks exist that have most of the recent blocks as approver
+     * 
+     * @return height where blocks exist that have most of the recent blocks as approver 
+     * @throws BlockStoreException 
+     */
+    public long findDeepReorgHeight(long timeUnits, TimeUnit timeUnit) throws BlockStoreException {
+        final long currTime = System.currentTimeMillis() / 1000;
+        final long fromTime = currTime - timeUnit.toSeconds(timeUnits);
+        List<Sha256Hash> blocks = store.getBlocksOfTimeHigherThan(fromTime);
+        
+        // Set target approval rate to complement of percentage required for confirmation
+        final long requiredApprovals = blocks.size() * (100 - NetworkParameters.MILESTONE_UPPER_THRESHOLD) / 100;
+        
+        // Select #tipCount solid tips via MCMC
+        HashMap<Sha256Hash, HashSet<UUID>> approverCountInits = new HashMap<Sha256Hash, HashSet<UUID>>(blocks.size());
+
+        // Initialize all approvers as UUID
+        for (Sha256Hash b : blocks) {
+            UUID randomUUID = UUID.randomUUID();
+            if (approverCountInits.containsKey(b)) {
+                HashSet<UUID> result = approverCountInits.get(b);
+                result.add(randomUUID);
+            } else {
+                HashSet<UUID> result = new HashSet<>();
+                result.add(randomUUID);
+                approverCountInits.put(b, result);
+            }
+        }
+
+        // Begin from the highest solid height tips and go backwards from there
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+        HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
+        for (BlockWrap tip : blockQueue) {
+            approvers.put(tip.getBlock().getHash(), new HashSet<>());
+        }
+
+        BlockWrap currentBlock = null;
+        while ((currentBlock = blockQueue.poll()) != null) {
+            // Add your own hash if block is selected block
+            if (approverCountInits.containsKey(currentBlock.getBlockHash()))
+                approvers.get(currentBlock.getBlockHash())
+                        .addAll(approverCountInits.get(currentBlock.getBlockHash()));
+            
+            // Stop if sufficient approval rate and confirmed
+            if (approvers.get(currentBlock.getBlockHash()).size() >= requiredApprovals
+                    && currentBlock.getBlockEvaluation().isMilestone())
+                break;
+
+            // Add all current references to both approved blocks
+            Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+            propagateToPredecessors(blockQueue, approvers, currentBlock, prevTrunk);
+
+            Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+            propagateToPredecessors(blockQueue, approvers, currentBlock, prevBranch);
+            
+            // Housekeeping
+            approvers.remove(currentBlock.getBlockHash());
+        }
+        
+        if (currentBlock != null)
+            return Math.max(1, currentBlock.getBlockEvaluation().getHeight());
+        else
+            return 1;
+    }
+
+    private void propagateToPredecessors(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
+            BlockWrap currentBlock, Sha256Hash prevTrunk) throws BlockStoreException {
+        if (!approvers.containsKey(prevTrunk)) {
+            BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
+            if (prevBlock != null) {
+                blockQueue.add(prevBlock);
+                approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));
+            }
+        } else {
+            approvers.get(prevTrunk).addAll(approvers.get(currentBlock.getBlockHash()));
+        }
+    }
+
+    /**
+     * Triggers a deep reorg calculation from the specified height which may be very expensive.
+     * 
+     * @param height
+     * @throws BlockStoreException
+     */
+    public void triggerDeepReorg(long height) throws BlockStoreException {
+        if (height <= 0)
+            throw new IllegalArgumentException();
+        
+        // Unconfirm all blocks above specified height
+        // TODO not allowed if pruned data after this height.
+        unconfirmFromHeight(height);
+        
+        // Reset maintenance 
+        store.updateAllBlocksMaintained();
+
+        // Recompute milestone depths
+        updateMilestoneDepth();
+        
+        // Now just do a normal update
+        update(Integer.MAX_VALUE);
+    }
+
+    private void unconfirmFromHeight(long height) throws BlockStoreException {
+        List<Sha256Hash> blocksToRemove = store.getConfirmedBlocksOfHeightHigherThan(height);
+        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+        for (Sha256Hash block : blocksToRemove)
+            blockGraph.unconfirm(block, traversedUnconfirms);
+    }
+
+    /**
      * Scheduled update function that updates the Tangle
      * 
      * @throws BlockStoreException
@@ -63,43 +188,50 @@ public class MilestoneService {
      * 
      * @throws BlockStoreException
      */
-    public void update(int numberUpdates) throws BlockStoreException {
+    private void update(int numberUpdates) throws BlockStoreException {
         if (!lock.tryAcquire()) {
             log.debug("Milestone Update already running. Returning...");
             return;
         }
 
-        try {
-            log.info("Milestone Update started");
-            // clearCacheBlockEvaluations();
+        synchronized (this) {
+            try {
+                log.info("Milestone Update started");
+                // clearCacheBlockEvaluations();
 
-            Stopwatch watch = Stopwatch.createStarted();
-            updateMaintained();
-            log.info("Maintained update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                Stopwatch watch = Stopwatch.createStarted();
+                updateMaintained();
+                log.info("Maintained update 1 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                
+                watch.stop();
+                watch = Stopwatch.createStarted();
+                updateWeightAndDepth();
+                log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+    
+                watch.stop();
+                watch = Stopwatch.createStarted();
+                updateRating();
+                log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+    
+                watch.stop();
+                watch = Stopwatch.createStarted();
+                updateMilestone(numberUpdates);
+                log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateWeightAndDepth();
-            log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateRating();
-            log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateMilestone(numberUpdates);
-            log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateMilestoneDepth();
-            log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-        } finally {
-            lock.release();
+                watch.stop();
+                watch = Stopwatch.createStarted();
+                updateMilestoneDepth();
+                log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                
+                watch.stop();
+                watch = Stopwatch.createStarted();
+                updateMaintained();
+                log.info("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+    
+                watch.stop();
+            } finally {
+                lock.release();
+            }
         }
     }
 
@@ -188,10 +320,8 @@ public class MilestoneService {
 
         BlockWrap currentBlock = null;
         while ((currentBlock = blockQueue.poll()) != null) {
-            // Abort if unmaintained, since it will be irrelevant (new milestone
-            // blocks will
-            // always be relevant since lower cut-off is set to zero
-            if (!currentBlock.getBlockEvaluation().isMaintained())
+            // Abort if unmaintained, since it will be irrelevant
+            if (!currentBlock.getBlockEvaluation().isMaintained()) 
                 continue;
 
             // If depth is set to -1 and we are milestone, set to 0
@@ -217,16 +347,17 @@ public class MilestoneService {
             BlockWrap currentBlock, Sha256Hash approvedBlock) throws BlockStoreException {
         boolean isMilestone = currentBlock.getBlockEvaluation().isMilestone();
         long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
+        long newMilestoneDepth = Math.min(milestoneDepth + 1, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 1);
         if (!milestoneDepths.containsKey(approvedBlock)) {
             BlockWrap prevBlock = store.getBlockWrap(approvedBlock);
             if (prevBlock != null) {
                 blockQueue.add(prevBlock);
-                milestoneDepths.put(prevBlock.getBlockHash(), isMilestone ? milestoneDepth + 1 : -1L);
+                milestoneDepths.put(prevBlock.getBlockHash(), isMilestone ? newMilestoneDepth : -1L);
             }
         } else {
             if (isMilestone)
-                if (milestoneDepth + 1 > milestoneDepths.get(approvedBlock))
-                    milestoneDepths.put(approvedBlock, milestoneDepth + 1);
+                if (newMilestoneDepth > milestoneDepths.get(approvedBlock))
+                    milestoneDepths.put(approvedBlock, newMilestoneDepth);
         }
     }
 

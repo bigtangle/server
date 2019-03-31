@@ -188,6 +188,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
 
     public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
+    
+    public List<Sha256Hash> getConfirmedBlocksOfHeightHigherThan(long height) throws BlockStoreException;
+    
+    public List<Sha256Hash> getBlocksOfTimeHigherThan(long time) throws BlockStoreException;
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
@@ -225,6 +229,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
 
     public long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
+    
+    public void updateAllBlocksMaintained() throws BlockStoreException;
 
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock)
