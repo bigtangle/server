@@ -250,7 +250,7 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
 
-        Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null, beneficiary, tokenId, sellPrice, sellAmount,
+        Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null,  tokenId, sellPrice, sellAmount,
                 null, null);
         addedBlocks.add(block);
         return block;
@@ -303,7 +303,7 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
 
-        Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null, beneficiary, tokenId, buyPrice, buyAmount,
+        Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null,  tokenId, buyPrice, buyAmount,
                 null, null);
         addedBlocks.add(block);
         return block;

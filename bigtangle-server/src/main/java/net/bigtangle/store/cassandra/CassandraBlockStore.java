@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.store;
+package net.bigtangle.store.cassandra;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +11,7 @@ import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 
 /**
  * <p>
@@ -22,7 +23,7 @@ import net.bigtangle.core.exception.BlockStoreException;
  */
 
 public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
-    
+
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.cassandra.cql.jdbc.CassandraDriver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:cassandra://";
@@ -58,7 +59,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid blob  ,\n" + "    tokenname text ,\n" + "    amount bigint ,\n" + "    description text ,\n"
             + "    blocktype bigint ,\n" + "    PRIMARY KEY (tokenid) \n)";
 
-    
     private static final String CREATE_ORDERMATCH_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle."
             + "ordermatch (\n" + "   matchid text ,\n" + "   restingOrderId text,\n" + "   incomingOrderId text,\n"
             + "   type bigint,\n" + "   price bigint,\n" + "   executedQuantity bigint,\n"
@@ -70,21 +70,11 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             + "   toSign bigint,\n" + "   fromSign bigint,\n" + "   toOrderId text,\n" + "   fromOrderId text,\n"
             + "   PRIMARY KEY (orderid) )";
 
-    // Some indexes to speed up inserts
-//    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_height_toaddress_idx ON outputs (hash, outputindex, height, toaddress) USING btree";
-//    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING btree";
-//    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING btree";
-//    private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING btree";
-//    private static final String CREATE_UNDOABLE_TABLE_INDEX = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height) USING btree";
-//    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
-//    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
-//    private static final String CREATE_ORDERMATCH_RESTINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_restingOrderId_idx ON ordermatch (restingOrderId) USING btree";
-//    private static final String CREATE_ORDERMATCH_INCOMINGORDERID_TABLE_INDEX = "CREATE INDEX ordermatch_incomingOrderId_idx ON ordermatch (incomingOrderId) USING btree";
 
     public CassandraBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
-        super(params, DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName, fullStoreDepth, username, password,
-                null);
+        super(params, hostname, fullStoreDepth, username, password, dbName);
+
     }
 
     @Override
@@ -105,7 +95,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_BLOCKEVALUATION_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
- 
+
         sqlStatements.add(CREATE_ORDERMATCH_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         return sqlStatements;
@@ -172,7 +162,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET depth = ? WHERE blockhash = ?";
     }
 
-   
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
         return getUpdate() + " blockevaluation SET milestone = ? WHERE blockhash = ?";
@@ -183,7 +172,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET rating = ? WHERE blockhash = ?";
     }
 
-   
     @Override
     protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
         return getUpdate() + " blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
@@ -194,7 +182,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " blockevaluation SET maintained = ? WHERE blockhash = ?";
     }
 
-  
     @Override
     protected String getUpdateOutputsSpentSQL() {
         return getUpdate() + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";

@@ -23,7 +23,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -2275,7 +2274,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             case Unfixable:
                 throw new RuntimeException("Should not happen");
             default:
-                throw new NotImplementedException();
+                throw new RuntimeException("Not Implemented");
 
             }
             preparedStatement.executeUpdate();

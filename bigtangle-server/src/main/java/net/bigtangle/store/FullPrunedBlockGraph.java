@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
@@ -390,7 +389,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             confirmOrderMatching(block);
             break;
         default:
-            throw new NotImplementedException();
+            throw new RuntimeException("Not Implemented");
         
         }
     }
@@ -681,7 +680,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             unconfirmOrderMatchingDependents(block, traversedBlockHashes);
             break;
         default:
-            throw new NotImplementedException();
+            throw new RuntimeException("Not Implemented");
         
         }
     }
@@ -804,7 +803,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             unconfirmOrderMatching(block);
             break;
         default:
-            throw new NotImplementedException();
+            throw new RuntimeException("Not Implemented");
         
         }
     }

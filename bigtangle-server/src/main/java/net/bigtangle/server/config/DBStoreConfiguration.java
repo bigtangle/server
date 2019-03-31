@@ -14,6 +14,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
 import net.bigtangle.store.PhoenixBlockStore;
+import net.bigtangle.store.cassandra.CassandraBlockStore;
 
 @Configuration
 public class DBStoreConfiguration {
@@ -50,8 +51,10 @@ public class DBStoreConfiguration {
             return createMysqlBlockStore();
     }
 
-    private FullPrunedBlockStore createCassandraBlockStore() {
-        return null;
+    private FullPrunedBlockStore createCassandraBlockStore() throws BlockStoreException {
+        CassandraBlockStore store = new CassandraBlockStore(networkParameters, fullStoreDepth,
+                hostname + ":" + port, dbName, username, password);
+        return store;
     }
 
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {

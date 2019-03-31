@@ -3,8 +3,8 @@ server:
   net: ${SERVER_NET:Mainnet}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  serverversion: ${SERVERVERSION:0.3.3.1}
-  clientversion: ${CLIENTVERSION:0.3.3.1}
+  serverversion: ${SERVERVERSION:0.3.3}
+  clientversion: ${CLIENTVERSION:0.3.3}
   ssl:
     enabled: ${SSL:false}
     key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
@@ -12,15 +12,19 @@ server:
     keyStoreType: ${KEYSTORETYPE:PKCS12}
   permissioned: ${PERMISSIONED:false}
   permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  
+
 db:
-  dbtype: ${DBTYPE:mysql}
+  dbtype: ${DBTYPE:cassandra}
   hostname: ${DB_HOSTNAME:localhost}
-  port: ${DB_PORT:3306}
+  port: ${DB_PORT:9042}
   dbName: ${DB_NAME:info}
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
-
+  
+cassandra:
+  keyspace: ${CASSANDRA_KEYSPACE:vdv_fahrtwissen}
+  nodes: ${CASSANDRA_NODES:localhost}
+  port: ${CASSANDRA_PORT:9042}
 
 service:
   milestoneschedule:

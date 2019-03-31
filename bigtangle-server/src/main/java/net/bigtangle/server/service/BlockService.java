@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.mortbay.log.Log;
+ 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -288,7 +288,7 @@ public class BlockService {
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
             kafkaMessageProducer.sendMessage(data);
         } catch (InterruptedException | ExecutionException e) {
-            Log.warn("", e);
+            logger.warn("", e);
         }
     }
 
