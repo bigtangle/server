@@ -9,9 +9,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,6 +48,25 @@ public class TipsService {
 
     private static Random seed = new Random();
 
+    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    /**
+     * A job submitted to the executor which finds a rating tip.
+     */
+    private class RatingTipWalker implements Callable<BlockWrap> {
+        final BlockWrap entryPoint;
+
+        public RatingTipWalker(final BlockWrap entryPoint) {
+            this.entryPoint = entryPoint;
+        }
+
+        @Override
+        public BlockWrap call() throws Exception {
+            BlockWrap ratingTip = getRatingTip(entryPoint, Long.MAX_VALUE);
+            return ratingTip;
+        }
+    }
+
     /**
      * Performs MCMC without walker restrictions. Note: We cannot disallow
      * blocks conflicting with the milestone, since reorgs must be allowed to
@@ -60,44 +82,30 @@ public class TipsService {
         Stopwatch watch = Stopwatch.createStarted();
 
         List<BlockWrap> entryPoints = getRatingEntryPoints(count);
-        Collection<BlockWrap> results = new ConcurrentLinkedQueue<>();
-        // long latestImportTime = store.getMaxImportTime();
-
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        try {
-            for (BlockWrap entryPoint : entryPoints) {
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            BlockWrap ratingTip = getRatingTip(entryPoint, Long.MAX_VALUE);
-                            results.add(ratingTip);
-                            store.closeThread();
-                        } catch (BlockStoreException e) {
-                            log.error(e.getLocalizedMessage());
-                        }
-                    }
-                });
-            }
-        } finally {
+        List<Future<BlockWrap>> ratingTipFutures = new ArrayList<Future<BlockWrap>>(count);
+        List<BlockWrap> ratingTips = new ArrayList<BlockWrap>(count);
+        
+        for (BlockWrap entryPoint : entryPoints) {
+            FutureTask<BlockWrap> future = new FutureTask<BlockWrap>(
+                    new RatingTipWalker(entryPoint));
+            executor.execute(future);
+            ratingTipFutures.add(future);
+        }
+        
+        for (Future<BlockWrap> future : ratingTipFutures) {
             try {
-                executor.shutdown();
-                executor.awaitTermination(300, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                System.err.println("Tasks interrupted");
-            } finally {
-                if (!executor.isTerminated()) {
-                    System.err.println("Cancel non-finished tasks");
-                }
-                executor.shutdownNow();
-                System.out.println("Shutdown finished");
+                ratingTips.add(future.get());
+            } catch (InterruptedException thrownE) {
+                throw new RuntimeException(thrownE); // Shouldn't happen
+            } catch (ExecutionException thrownE) {
+                throw new BlockStoreException(thrownE); // Shouldn't happen
             }
         }
 
         watch.stop();
         log.info("getRatingTips with count {} time {} ms.", count, watch.elapsed(TimeUnit.MILLISECONDS));
 
-        return results;
+        return ratingTips;
     }
 
     /**

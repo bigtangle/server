@@ -458,18 +458,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return this.conn;
     }
 
-    
-    // FIXME HACK this is called manually for each thread opening a connection
-    public void closeThread() throws BlockStoreException {
-        try {
-            this.conn.get().close();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            this.conn.remove();
-        }
-    }
-
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
