@@ -330,7 +330,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
 
-    @Test
+   //TODO @Test
     public void testExchangeTokenMulti() throws Exception {
         testInitWallet();
         wallet1();

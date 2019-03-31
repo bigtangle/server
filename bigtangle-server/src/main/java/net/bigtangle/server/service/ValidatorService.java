@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.directory.api.util.exception.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -523,7 +522,7 @@ public class ValidatorService {
         case ORDERMATCH:
             return store.getOrderMatchingSpent(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
-            throw new NotImplementedException();
+               throw new RuntimeException("No Implementation");
         }
     }
 
@@ -551,7 +550,7 @@ public class ValidatorService {
         case ORDERMATCH:
             return store.getOrderMatchingConfirmed(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
-            throw new NotImplementedException();
+               throw new RuntimeException("No Implementation");
         }
     }
 
@@ -658,7 +657,7 @@ public class ValidatorService {
                             // Cannot happen in non-Spark implementation.
                             return true;
                         default:
-                            throw new NotImplementedException();
+                               throw new RuntimeException("No Implementation");
 
                         }
                     } catch (BlockStoreException e) {
@@ -687,7 +686,7 @@ public class ValidatorService {
                             // Cannot happen in non-Spark implementation.
                             return true;
                         default:
-                            throw new NotImplementedException();
+                               throw new RuntimeException("No Implementation");
 
                         }
                     } catch (BlockStoreException e) {
@@ -1040,7 +1039,7 @@ public class ValidatorService {
                 return null;
             return store.getBlockWrap(orderMatchSpender);
         default:
-            throw new NotImplementedException();
+               throw new RuntimeException("No Implementation");
         }
     }
 
@@ -1402,7 +1401,7 @@ public class ValidatorService {
             }
             break;
         default:
-            throw new NotImplementedException("Blocktype not implemented!");
+            throw new RuntimeException("No Implementation");
         }
 
         return SolidityState.getSuccessState();

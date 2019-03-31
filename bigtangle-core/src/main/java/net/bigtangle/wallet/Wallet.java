@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -81,6 +80,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.ScriptException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
@@ -2078,10 +2078,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return time != 0 && key.getCreationTimeSeconds() < time;
     }
 
-    // endregion
-
-    // changes
-
+    // All Spend Candidates as List<TransactionOutput>
     public List<TransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
             throws UnsupportedEncodingException, JsonProcessingException, Exception {
         lock.lock();
@@ -2105,6 +2102,36 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 } else {
                     if (!output.isMultiSig()) {
                         candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+                    }
+                }
+            }
+            Collections.shuffle(candidates);
+            return candidates;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // All Spend Candidates as List<UTXO>
+    public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns)
+            throws UnsupportedEncodingException, JsonProcessingException, Exception {
+        lock.lock();
+        try {
+            List<UTXO> candidates = new ArrayList<UTXO>();
+            List<String> pubKeyHashs = new ArrayList<String>();
+            for (ECKey ecKey : walletKeys(aesKey)) {
+                pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+            }
+            String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
+                    Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
+
+            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+            for (UTXO output : getOutputsResponse.getOutputs()) {
+                if (multisigns) {
+                    candidates.add(output);
+                } else {
+                    if (!output.isMultiSig()) {
+                        candidates.add(output);
                     }
                 }
             }
@@ -2431,7 +2458,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe;
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
-                getSpendableUTXO(fromkey, amount), 0);
+                getSpendableUTXO(aesKey, amount), 0);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
@@ -2469,21 +2496,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return listUTXO;
     }
 
-    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long buyPrice,
-            long buyAmount, Long validToTime, Long validFromTime) throws Exception {
+    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
+            Long validToTime, Long validFromTime) throws Exception {
 
+        // Burn BIG to buy
+        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+        UTXO u = getSpendableUTXO(aesKey, amount);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
+        ECKey beneficiary = getECKey(aesKey, u.getAddress());
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
                 Side.BUY, beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
 
-        // Burn BIG to buy
-        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
-
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
-                getSpendableUTXO(beneficiary, amount), 0);
-        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-        // amount, testKey));
+        // BURN: amount and rest back to user
         tx.addOutput(spendableOutput.getValue().subtract(amount), beneficiary);
         tx.addInput(spendableOutput);
         signTransaction(tx, aesKey);
@@ -2507,8 +2533,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    private UTXO getSpendableUTXO(ECKey beneficiary, Coin amount) throws Exception {
-        List<UTXO> l = getTransactionAndGetBalances(beneficiary);
+    private UTXO getSpendableUTXO(KeyParameter aesKey, Coin amount) throws Exception {
+        List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
                     && u.getValue().getValue() >= amount.getValue()) {
@@ -2518,20 +2544,22 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new InsufficientMoneyException(amount);
     }
 
-    public Block makeAndConfirmSellOrder(KeyParameter aesKey, ECKey beneficiary, String tokenId, long sellPrice,
-            long sellAmount, Long validToTime, Long validFromTime) throws Exception {
+    public Block makeAndConfirmSellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount,
+            Long validToTime, Long validFromTime) throws Exception {
 
+        // Burn tokens to sell
+        Coin amount = Coin.valueOf(sellAmount, tokenId);
+
+        UTXO u = getSpendableUTXO(aesKey, amount);
+        ECKey beneficiary = getECKey(aesKey, u.getAddress());
+
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
 
-        // Burn tokens to sell
-        Coin amount = Coin.valueOf(sellAmount, tokenId);
-
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
-                getSpendableUTXO(beneficiary, amount), 0);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
@@ -2620,6 +2648,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+    }
+
+    public ECKey getECKey(KeyParameter aesKey, String address) throws Exception {
+
+        List<ECKey> keys = walletKeys(aesKey);
+        ECKey beneficiary = null;
+        for (ECKey ecKey : keys) {
+            if (address.equals(ecKey.toAddress(params).toString())) {
+                beneficiary = ecKey;
+                return beneficiary;
+            }
+        }
+        throw new UTXOProviderException("no key in wallet is found for this address " + address);
     }
 
     public void pay(KeyParameter aesKey, Address destination, Coin amount, String memo) throws Exception {

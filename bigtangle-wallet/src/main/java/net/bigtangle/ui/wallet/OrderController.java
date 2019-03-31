@@ -628,10 +628,10 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().makeAndConfirmSellOrder(Main.getAesKey(), beneficiary, tokenid, price.getValue(), quantity,
+            Main.walletAppKit.wallet().makeAndConfirmSellOrder(Main.getAesKey(),  tokenid, price.getValue(), quantity,
                     totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(Main.getAesKey(), beneficiary, tokenid, price.getValue(), quantity,
+            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity,
                     totime, fromtime);
         }
 
