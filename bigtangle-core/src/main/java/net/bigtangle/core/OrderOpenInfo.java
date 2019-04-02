@@ -40,14 +40,14 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         if (validFromTimeMilli == null) {
-            this.validFromTime = System.currentTimeMillis() / 1000;
+            this.validFromTime = System.currentTimeMillis() / 1000 - 5;
         } else {
             this.validFromTime = validFromTimeMilli / 1000;
         }
 		if (validToTimeMilli == null) {
             this.validToTime = validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX;
         } else {
-            this.validToTime = validToTimeMilli / 1000;
+            this.validToTime = Math.min(validToTimeMilli / 1000, validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX);
         }
         this.beneficiaryAddress = beneficiaryAddress;
     }

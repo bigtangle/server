@@ -174,7 +174,7 @@ public abstract class NetworkParameters {
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
    
     public static final int TARGET_MAX_TPS = 10;
-    public static final long REWARD_OVERRULE_TIME_MS = 3000;
+    public static final long REWARD_OVERRULE_TIME_MS = 1000;
     
     // Order Matching Settings
     public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10; 

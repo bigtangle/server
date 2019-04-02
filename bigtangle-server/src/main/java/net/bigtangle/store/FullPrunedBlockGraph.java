@@ -179,11 +179,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // It could be a missing block...
         for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
             try {
-                // If going through or waiting for more dependencies, all is good
-                add(b, true);
-
                 // Clear from waiting list
                 blockStore.deleteUnsolid(b.getHash());
+                
+                // If going through or waiting for more dependencies, all is good
+                add(b, true);
                 
             } catch (VerificationException e) {
                 // If the block is deemed invalid, we do not propagate the error upwards
@@ -195,11 +195,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream()).collect(Collectors.toList())) {
             for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
                 try {
-                    // If going through or waiting for more dependencies, all is good
-                    add(b, true);
-                    
                     // Clear from waiting list
                     blockStore.deleteUnsolid(b.getHash());
+                    
+                    // If going through or waiting for more dependencies, all is good
+                    add(b, true);
                     
                 } catch (VerificationException e) {
                     // If the block is deemed invalid, we do not propagate the error upwards
@@ -1012,7 +1012,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.insertOrder(record);
         } catch (IOException e) {
             // Cannot happen when connecting
-            log.error("connectOrder",e);
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -1051,7 +1051,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectToken(Block block) {
+    private void connectToken(Block block) throws BlockStoreException {
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() != null) {
             try {
@@ -1063,12 +1063,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 tokenInfo.getToken().setBlockhash(block.getHashAsString());
                 
                 this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getToken());
+                
+                // Correctly insert additional data
                 for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
+                    if (permissionedAddress == null)
+                        continue;
                     permissionedAddress.setBlockhash(block.getHashAsString()); // The primary key must be the correct block
-                    blockStore.insertMultiSignAddress(permissionedAddress);
+                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid()); // The primary key must be the correct block
+                    if (permissionedAddress.getAddress() != null)
+                        blockStore.insertMultiSignAddress(permissionedAddress);
                 }
-            } catch (Exception e) {
-                log.error("not possible checked before", e);
+            } catch (IOException e) {
+                // Cannot happen when connecting
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
 
         }
@@ -1424,6 +1432,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
         } catch (IOException e) {
             // Cannot happen.
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
         

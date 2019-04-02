@@ -55,13 +55,11 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
     public void triggerDeepReorg(long timeUnits, TimeUnit unit) throws BlockStoreException {
-        synchronized (this) {
-            // Find reorganize entry point
-            long height = findDeepReorgHeight(timeUnits, unit);
-            
-            // Use reorganize entry point height to reorganize
-            triggerDeepReorg(height);
-        }
+        // Find reorganize entry point
+        long height = findDeepReorgHeight(timeUnits, unit);
+        
+        // Use reorganize entry point height to reorganize
+        triggerDeepReorg(height);
     }
 
     /**
@@ -150,21 +148,23 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
     public void triggerDeepReorg(long height) throws BlockStoreException {
-        if (height <= 0)
-            throw new IllegalArgumentException();
-        
-        // Unconfirm all blocks above specified height
-        // TODO not allowed if pruned data after this height.
-        unconfirmFromHeight(height);
-        
-        // Reset maintenance 
-        store.updateAllBlocksMaintained();
-
-        // Recompute milestone depths
-        updateMilestoneDepth();
-        
-        // Now just do a normal update
-        update(Integer.MAX_VALUE);
+        synchronized (this) {
+            if (height <= 0)
+                throw new IllegalArgumentException();
+            
+            // Unconfirm all blocks above specified height
+            // TODO not allowed if pruned data after this height.
+            unconfirmFromHeight(height);
+            
+            // Reset maintenance 
+            store.updateAllBlocksMaintained();
+    
+            // Recompute milestone depths
+            updateMilestoneDepth();
+            
+            // Now just do a normal update
+            update(Integer.MAX_VALUE);
+        }
     }
 
     private void unconfirmFromHeight(long height) throws BlockStoreException {
