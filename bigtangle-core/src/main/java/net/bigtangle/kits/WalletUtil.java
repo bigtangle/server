@@ -28,6 +28,7 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
@@ -36,11 +37,13 @@ import net.bigtangle.wallet.WalletProtobufSerializer;
 
 public class WalletUtil {
 	protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
-
+ 
 	public static  byte[] createWallet(NetworkParameters params) throws IOException   {
 		KeyChainGroup kcg;
 		kcg = new KeyChainGroup(params);
-		Wallet wallet = new Wallet(params, kcg); // default
+		Context context =new Context(params);
+		Context.propagate(context);
+		Wallet wallet = new Wallet( params, kcg); // default
 
 		wallet.freshReceiveKey();
 		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -51,6 +54,8 @@ public class WalletUtil {
 
 	public static  Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
 			throws Exception {
+	    Context context =new Context(params);
+        Context.propagate(context);
 		Wallet wallet;
 		try {
 
