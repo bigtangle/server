@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
 
 import com.google.common.collect.Lists;
 
@@ -1019,7 +1018,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return new StoredBlock(b, r.getHeight());
     }
 
-    @Cacheable(cacheNames = "Blocks")
+    
     public StoredBlockBinary getBinary(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
 
         maybeConnect();
