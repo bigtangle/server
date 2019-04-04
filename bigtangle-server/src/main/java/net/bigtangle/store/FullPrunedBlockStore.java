@@ -503,4 +503,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
     Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
+
+    List<OrderRecord> getMyClosedOrders(String address) throws BlockStoreException;
+
+    List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
+
+    List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException;
 }

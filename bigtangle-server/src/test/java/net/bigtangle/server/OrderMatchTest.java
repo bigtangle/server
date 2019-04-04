@@ -20,6 +20,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Transaction;
@@ -828,11 +829,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open orders
         makeAndConfirmSellOrder(testKey, testTokenId, 753, 12, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 357, 23, addedBlocks);
-        makeAndConfirmSellOrder(testKey, testTokenId, 456, 45, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
-        makeAndConfirmSellOrder(testKey, testTokenId, 258, 58, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
-        makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
 
         // Execute order matching
@@ -843,6 +841,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
+        // Bonus: check open and closed orders
+        List<OrderRecord> closedOrders = store.getMyClosedOrders(genesisKey.toAddress(networkParameters).toBase58());
+        List<OrderRecord> openOrders = store.getMyRemainingOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
+        List<OrderRecord> initialOrders = store.getMyInitialOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
+
+        System.out.println(closedOrders.toString());
+        System.out.println(openOrders.toString());
+        System.out.println(initialOrders.toString());
     }
 
     @Test
