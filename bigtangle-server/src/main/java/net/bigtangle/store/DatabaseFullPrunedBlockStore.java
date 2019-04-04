@@ -440,6 +440,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
             + " FROM openorders WHERE confirmed=1 AND spent=? ";
 
+    // TODO
+    protected final String SELECT_MY_CLOSED_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders "
+            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000 "
+            + " AND blockhash NOT IN ( SELECT blockhash FROM openorders "
+            + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
+    protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders "
+            + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
+    protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders "
+            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000  "
+            + " AND blockhash IN ( SELECT blockhash FROM openorders "
+            + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
+
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
             + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
@@ -5328,6 +5349,128 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (address != null && !address.trim().isEmpty()) {
                 s.setString(2, address);
             }
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getMyClosedOrders(String address)
+            throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL);
+            s.setString(1, address);
+            s.setString(2, address);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getMyRemainingOpenOrders(String address)
+            throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
+            s.setString(1, address);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getMyInitialOpenOrders(String address)
+            throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL);
+            s.setString(1, address);
+            s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
