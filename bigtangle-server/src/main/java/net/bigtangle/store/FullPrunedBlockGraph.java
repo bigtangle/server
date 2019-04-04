@@ -75,6 +75,7 @@ import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
 import net.bigtangle.server.service.Eligibility;
+import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
@@ -89,6 +90,8 @@ import net.bigtangle.server.service.ValidatorService;
 public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
+    protected final FullPrunedBlockStore blockStore;
+
     @Autowired
     public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore)
             throws BlockStoreException {
@@ -96,16 +99,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         this.blockStore = blockStore;
         this.networkParameters = networkParameters;
     }
-
-    /**
-     * Keeps a map of block hashes to StoredBlocks.
-     */
-    protected final FullPrunedBlockStore blockStore;
     
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
+    @Autowired
+    private OrderTickerService tickerService;
 
     @Override
     public boolean add(Block block, boolean allowUnsolid) {
@@ -209,6 +209,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    /**
+     * Inserts the specified block into the DB
+     * @param block the block
+     * @param height the block's height
+     * @throws BlockStoreException 
+     * @throws VerificationException
+     */
     private void connect(final Block block, long height)
             throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
@@ -1240,6 +1247,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
             String tokenId = orderBook.getKey();
             List<Event> events = ((OrderBookEvents) orderBook.getValue().listener()).collect();
+            
+            // Ticker service: For showing the current exchange rate
+            tickerService.updatePrices(tokenId, events);
             
             for (Event event : events) {
                 if (!(event instanceof Match))
