@@ -509,4 +509,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
 
     List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException;
+
+    List<OrderRecord> getBestOpenSellOrders(String tokenId, int count) throws BlockStoreException;
+
+    List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException;
 }

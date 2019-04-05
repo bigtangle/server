@@ -2,7 +2,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -132,7 +131,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void orderTicker() throws Exception {
+    public void orderTickerPrice() throws Exception {
         @SuppressWarnings("deprecation")
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
@@ -141,9 +140,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
-
-        // Verify the order ticker has no price set yet
-        assertNull(tickerService.getLastMatchedPrice(testTokenId));
         
         // Get current existing token amount
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -166,6 +162,55 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         
         // Verify the order ticker has the correct price
         assertEquals((Long) 1000l, tickerService.getLastMatchedPrice(testTokenId));
+
+        // Verify deterministic overall execution
+        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    }
+
+    @Test
+    public void orderTickerSearch() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = walletKeys.get(8);
+        List<Block> addedBlocks = new ArrayList<>();
+        
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+        
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell order for test tokens
+        Block s1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        Block s2 = makeAndConfirmSellOrder(testKey, testTokenId, 2000, 100, addedBlocks);
+
+        // Open buy order for test tokens
+        Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
+        Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+        
+        // Verify the best orders are correct
+        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2);
+        assertEquals(2, bestOpenSellOrders.size());
+        assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getInitialBlockHash());
+        assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getInitialBlockHash());
+        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2);
+        assertEquals(2, bestOpenBuyOrders.size());
+        assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getInitialBlockHash());
+        assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getInitialBlockHash());
+
+        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1);
+        assertEquals(1, bestOpenSellOrders2.size());
+        assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getInitialBlockHash());
+        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1);
+        assertEquals(1, bestOpenBuyOrders2.size());
+        assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getInitialBlockHash());
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);

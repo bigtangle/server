@@ -8,6 +8,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -44,6 +46,26 @@ public class OrderTickerService {
                 }
             }
         }
+    }
+
+    /**
+     * Returns up to n best currently open sell orders
+     * @param tokenId the id of the token
+     * @return up to n best currently open sell orders
+     * @throws BlockStoreException
+     */
+    public List<OrderRecord> getBestOpenSellOrders(String tokenId, int count) throws BlockStoreException {
+        return store.getBestOpenSellOrders(tokenId, count);
+    }
+
+    /**
+     * Returns up to n best currently open buy orders
+     * @param tokenId the id of the token
+     * @return up to n best currently open buy orders
+     * @throws BlockStoreException
+     */
+    public List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException {
+        return store.getBestOpenBuyOrders(tokenId, count);
     }
 
     /**
