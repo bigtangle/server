@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -71,8 +70,6 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
-
-    private final Semaphore lock = new Semaphore(1);
 
     public ByteBuffer askTransaction() throws Exception {
         Block rollingBlock = askTransactionBlock();
@@ -182,21 +179,10 @@ public class TransactionService {
     }
 
     public Block createAndAddOrderMatchingBlock() throws Exception {
-        logger.info("createAndAddOrderMatchingBlock  started");
-        Stopwatch watch = Stopwatch.createStarted();
 
-        if (!lock.tryAcquire()) {
-            logger.debug("createAndAddOrderMatchingBlock already running. Returning...");
-            return null;
-        }
+        Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
+        return createAndAddOrderMatchingBlock(prevHash);
 
-        try {
-            Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
-            return createAndAddOrderMatchingBlock(prevHash);
-        } finally {
-            lock.release();
-            logger.info("createAndAddOrderMatchingBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-        }
     }
 
     public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash) throws Exception {
@@ -295,20 +281,10 @@ public class TransactionService {
 
     public Block createAndAddMiningRewardBlock() throws Exception {
         logger.info("createAndAddMiningRewardBlock  started");
-        Stopwatch watch = Stopwatch.createStarted();
 
-        if (!lock.tryAcquire()) {
-            logger.debug("createAndAddMiningRewardBlock already running. Returning...");
-            return null;
-        }
+        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+        return createAndAddMiningRewardBlock(prevRewardHash);
 
-        try {
-            Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-            return createAndAddMiningRewardBlock(prevRewardHash);
-        } finally {
-            lock.release();
-            logger.info("createAndAddMiningRewardBlock time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-        }
     }
 
     public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
