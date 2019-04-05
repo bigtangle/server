@@ -49,6 +49,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 public abstract class AbstractIntegrationTest {
 
@@ -91,7 +92,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
 			List<Block> addedBlocks) throws Exception {
-		Thread.sleep(100000);
+		//Thread.sleep(100000);
 		Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null,  tokenId, buyPrice, buyAmount,
 				null, null);
 		addedBlocks.add(block);
@@ -261,6 +262,14 @@ public abstract class AbstractIntegrationTest {
 		walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
 	}
 
+	   protected void payToWallet( Wallet wallet) throws Exception {
+	        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+	        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+	        giveMoneyResult.put(wallet.walletKeys().get(1).toAddress(networkParameters).toString(), 3333333l);
+	        wallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+	    }
+
+	   
 	protected void testCreateToken() throws JsonProcessingException, Exception {
 		ECKey outKey = walletKeys.get(0);
 		byte[] pubKey = outKey.getPubKey();
@@ -404,4 +413,7 @@ public abstract class AbstractIntegrationTest {
 			OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 		}
 	}
+	
+	 
+    
 }
