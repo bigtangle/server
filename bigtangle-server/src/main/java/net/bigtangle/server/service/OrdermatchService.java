@@ -23,6 +23,7 @@ import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -68,7 +69,10 @@ public class OrdermatchService {
                 performOrderMatchingVoting();
                 logger.info("performOrderMatchingVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-            } catch (Exception e) {
+            }  catch (VerificationException e1) {
+                //ignore it is try to do ordermatch
+            }
+            catch (Exception e) {
                 logger.warn("updateOrderMatching ", e);
             } finally {
                 lock.release();
