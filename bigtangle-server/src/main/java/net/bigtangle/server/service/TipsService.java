@@ -103,7 +103,7 @@ public class TipsService {
         }
 
         watch.stop();
-        log.info("getRatingTips with count {} time {} ms.", count, watch.elapsed(TimeUnit.MILLISECONDS));
+        log.trace("getRatingTips with count {} time {} ms.", count, watch.elapsed(TimeUnit.MILLISECONDS));
 
         return ratingTips;
     }
@@ -225,7 +225,7 @@ public class TipsService {
         }
 
         watch.stop();
-        log.info("getValidatedBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        log.trace("getValidatedBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
         return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
     }

@@ -58,7 +58,7 @@ public class RewardService {
 
     public void performRewardVotingSingleton() throws Exception {
         if (!lock.tryAcquire()) {
-            logger.debug("updateOrderMatching Update already running. Returning...");
+            logger.debug("performRewardVoting Update already running. Returning...");
             return;
         }
         synchronized (this) {
