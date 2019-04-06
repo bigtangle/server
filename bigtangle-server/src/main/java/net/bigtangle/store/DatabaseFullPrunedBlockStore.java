@@ -5480,7 +5480,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL + " limit 2000 ") ;
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
@@ -5521,7 +5521,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL+ " limit 2000 " );
             s.setString(1, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
@@ -5561,7 +5561,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + " limit 2000 ");
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();

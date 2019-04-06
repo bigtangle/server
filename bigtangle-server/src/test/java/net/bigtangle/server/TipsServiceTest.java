@@ -64,9 +64,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(rollingBlock1.getHash(), new HashSet<>());
 
         // Generate ineligible mining reward blocks
-        Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(), true);
-        transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(), true);
 
         for (int i = 0; i < 20; i++) {
@@ -241,9 +241,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward blocks
-        Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block b2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         
         for (int i = 0; i < 5; i++) {

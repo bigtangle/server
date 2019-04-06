@@ -73,7 +73,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // Execute order matching
-        addedBlocks.add(transactionService.performOrderMatchingVoting());
+        addedBlocks.add(ordermatchService.performOrderMatchingVoting());
         milestoneService.update();
 
         // Verify the tokens changed possession
@@ -117,7 +117,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // Try reclaiming
-        addedBlocks.addAll(transactionService.performOrderReclaimMaintenance());
+        addedBlocks.addAll(ordeReclaimService.performOrderReclaimMaintenance());
         milestoneService.update();
 
         // Verify the tokens returned possession

@@ -26,7 +26,13 @@ public class OrderdataService {
     public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses)
             throws BlockStoreException {
 
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses);
-        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted);
+        List<OrderRecord> closedOrders = store.getMyClosedOrders(address);
+        //TODO  closed with part match (initialOrders - remainingOrders )+closedOrders
+        List<OrderRecord> initialOrders = store.getMyInitialOpenOrders(address);
+        List<OrderRecord> remainingOrders = store.getMyRemainingOpenOrders(address);
+        if (spent)
+            return OrderdataResponse.createOrderRecordResponse(closedOrders);
+        else 
+            return OrderdataResponse.createOrderRecordResponse(remainingOrders);
     }
 }

@@ -196,37 +196,37 @@ public class MilestoneService {
 
         synchronized (this) {
             try {
-                log.info("Milestone Update started");
+                log.trace("Milestone Update started");
                 // clearCacheBlockEvaluations();
 
                 Stopwatch watch = Stopwatch.createStarted();
                 updateMaintained();
-                log.info("Maintained update 1 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Maintained update 1 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 
                 watch.stop();
                 watch = Stopwatch.createStarted();
                 updateWeightAndDepth();
-                log.info("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
     
                 watch.stop();
                 watch = Stopwatch.createStarted();
                 updateRating();
-                log.info("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
     
                 watch.stop();
                 watch = Stopwatch.createStarted();
                 updateMilestone(numberUpdates);
-                log.info("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
                 watch.stop();
                 watch = Stopwatch.createStarted();
                 updateMilestoneDepth();
-                log.info("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 
                 watch.stop();
                 watch = Stopwatch.createStarted();
                 updateMaintained();
-                log.info("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                log.trace("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
     
                 watch.stop();
             } finally {

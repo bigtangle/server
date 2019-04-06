@@ -135,9 +135,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward blocks
-        Block b1 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block b2 = transactionService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         createAndAddNextBlock(b2, b1);
 
@@ -486,9 +486,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward blocks
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
-        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
         createAndAddNextBlock(rewardBlock1, rewardBlock2);
 
@@ -563,7 +563,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -1026,7 +1026,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         blockGraph.add(fusingBlock, true);
 
         // Generate ineligible mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
@@ -1036,9 +1036,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
         // Generate eligible mining reward blocks
-        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), fusingBlock.getHash(), rollingBlock1.getHash());
-        Block rewardBlock3 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), fusingBlock.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 

@@ -88,8 +88,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Should exist now
         assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -270,8 +270,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = transactionService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
@@ -410,7 +410,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -497,7 +497,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -621,7 +621,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -712,8 +712,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
+        Block rewardBlock11 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
         blockGraph.confirm(rewardBlock11.getHash(), new HashSet<>());
@@ -867,7 +867,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -956,7 +956,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -1084,7 +1084,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = transactionService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -1175,7 +1175,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-        Block rewardBlock11 = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock11 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
@@ -1192,7 +1192,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-        Block rewardBlock2 = transactionService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
@@ -1245,7 +1245,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock = transactionService.createAndAddMiningRewardBlock(
+        Block rewardBlock = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm

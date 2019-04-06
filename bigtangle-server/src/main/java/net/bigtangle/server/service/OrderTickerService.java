@@ -42,6 +42,7 @@ public class OrderTickerService {
                 if (ev instanceof Match) {
                     if (lastMatchedPrices.size() >= OrderTickerService.LIST_SIZE)
                         lastMatchedPrices.remove(0);
+                    // TODO volume and price into db, revertible on unconfirm
                     lastMatchedPrices.add(((Match) ev).price);
                 }
             }

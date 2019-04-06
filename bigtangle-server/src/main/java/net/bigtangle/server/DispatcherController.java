@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static net.bigtangle.core.Utils.HEX;
-import static net.bigtangle.core.Utils.reverseBytes;
-
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +40,7 @@ import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
+import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokensService;
@@ -58,6 +56,8 @@ public class DispatcherController {
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
     @Autowired
     private TransactionService transactionService;
+    @Autowired
+    private RewardService rewardService;
 
     @Autowired
     private WalletService walletService;
@@ -101,9 +101,9 @@ public class DispatcherController {
                 } else {
                     String pubkey = header.split("")[0];
                     String signHex = header.split("")[1];
-                    String contentHex = header.split("")[2];
+                //    String contentHex = header.split("")[2];
                     ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                    byte[] message = reverseBytes(HEX.decode(contentHex));
+                 //   byte[] message = reverseBytes(HEX.decode(contentHex));
                     byte[] signOutput = Utils.HEX.decode(signHex);
                     flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
                     if (flag) {
@@ -116,9 +116,9 @@ public class DispatcherController {
             } else {
                 String pubkey = header.split("")[0];
                 String signHex = header.split("")[1];
-                String contentHex = header.split("")[2];
+              //  String contentHex = header.split("")[2];
                 ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                byte[] message = reverseBytes(HEX.decode(contentHex));
+               // byte[] message = reverseBytes(HEX.decode(contentHex));
                 byte[] signOutput = Utils.HEX.decode(signHex);
                 flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
 
@@ -135,7 +135,7 @@ public class DispatcherController {
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
 
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+            logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             if (settingService.getPermissionFlag()) {
@@ -452,7 +452,7 @@ public class DispatcherController {
             }
                 break;
             case updateReward: {  
-                transactionService.createAndAddMiningRewardBlock();
+                rewardService.createAndAddMiningRewardBlock();
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
@@ -460,12 +460,16 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             logger.error("", e);
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Throwable exception) {
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             logger.error("", exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create(100);

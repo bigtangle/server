@@ -57,11 +57,11 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward blocks
-        Block rewardBlock = transactionService.performRewardVoting();
+        Block rewardBlock = rewardService.performRewardVoting();
 
         // Assert that voting will not generate a new block since we have an
         // eligible alternative already
-        assertEquals(rewardBlock, transactionService.performRewardVoting());
+        assertEquals(rewardBlock, rewardService.performRewardVoting());
 
         // After updating, we shall make new blocks now
         rollingBlock = rewardBlock;
@@ -71,7 +71,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
-        Block rewardBlock2 = transactionService.performRewardVoting();
+        Block rewardBlock2 = rewardService.performRewardVoting();
         assertNotEquals(rewardBlock, rewardBlock2);
         assertNotNull(rewardBlock2);
     }
