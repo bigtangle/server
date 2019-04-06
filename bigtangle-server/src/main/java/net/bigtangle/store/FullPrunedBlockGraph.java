@@ -167,7 +167,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
-            log.debug("Could not verify block:\n" + e.toString() + "\n" + block.toString());
+           // log.debug("Could not verify block:\n" + e.toString() + "\n" + block.toString());
             throw e;
         } finally {
             lock.unlock();
