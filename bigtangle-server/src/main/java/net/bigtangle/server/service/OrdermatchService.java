@@ -51,7 +51,7 @@ public class OrdermatchService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final Logger logger = LoggerFactory.getLogger(OrdermatchService.class);
 
     private final Semaphore lock = new Semaphore(1);
 

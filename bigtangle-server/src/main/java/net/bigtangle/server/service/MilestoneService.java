@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
@@ -235,7 +234,7 @@ public class MilestoneService {
         }
     }
 
-    @CacheEvict(cacheNames = "BlockEvaluations", allEntries = true)
+ 
     private void clearCacheBlockEvaluations() throws Exception {
     }
 

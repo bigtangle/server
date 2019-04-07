@@ -46,6 +46,8 @@ public class TransactionService {
     @Autowired
     private BlockService blockService;
     @Autowired
+    private UnsolidBlockService unsolidBlockService;
+    @Autowired
     protected TipsService tipService;
     @Autowired
     protected MilestoneService milestoneService;
@@ -100,11 +102,11 @@ public class TransactionService {
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (added) {
-                    logger.debug("addConnected from kafka ");
+                    logger.trace("addConnected from kafka ");
                 } else {
                     logger.debug(" unsolid block from kafka " + block);
                     if (request)
-                        blockService.requestPrev(block);
+                        unsolidBlockService.requestPrev(block);
 
                 }
                 return Optional.of(block);

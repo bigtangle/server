@@ -54,7 +54,7 @@ public class RewardService {
 
     private final Semaphore lock = new Semaphore(1);
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RewardService.class);
 
     public void performRewardVotingSingleton() throws Exception {
         if (!lock.tryAcquire()) {
@@ -62,10 +62,16 @@ public class RewardService {
             return;
         }
         synchronized (this) {
+            try {
             logger.info("performRewardVoting  started");
             Stopwatch watch = Stopwatch.createStarted();
             performRewardVoting();
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            logger.warn("performRewardVoting ", e);
+        } finally {
+            lock.release();
+        }
         }
 
     }
