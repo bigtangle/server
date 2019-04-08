@@ -452,6 +452,7 @@ public class OrderController extends ExchangeController {
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
             map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
+         //   map.put("state", Main.getText( (String) requestParam.get("state")));
             orderData.add(map);
         }
     }

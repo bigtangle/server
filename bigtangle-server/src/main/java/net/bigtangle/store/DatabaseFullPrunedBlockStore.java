@@ -224,7 +224,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "FROM blocks WHERE height >= ? AND milestone = 1 " + afterSelect();
     protected final String SELECT_BLOCKS_OF_INSERTTIME_HIGHER_THAN_SQL = "SELECT hash "
             + "FROM blocks WHERE inserttime >= ? " + afterSelect();
-    
+
     protected final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash," + " rating, depth, cumulativeweight,   "
             + "blocks.height, milestone, milestonelastupdate, " + "milestonedepth, inserttime, maintained "
             + "FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
@@ -324,8 +324,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String UPDATE_BLOCKEVALUATION_MAINTAINED_SQL = getUpdate()
             + " blocks SET maintained = ? WHERE hash = ?";
-    protected final String UPDATE_ALL_BLOCKS_MAINTAINED_SQL = getUpdate()
-            + " blocks SET maintained = 1 ";
+    protected final String UPDATE_ALL_BLOCKS_MAINTAINED_SQL = getUpdate() + " blocks SET maintained = 1 ";
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
@@ -434,28 +433,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
             + " FROM openorders WHERE confirmed=1 AND spent=? ORDER BY blockhash, collectinghash";
-
     protected final String SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
             + " FROM openorders WHERE confirmed=1 AND spent=? ";
 
-    // TODO
+    // TODO index
+    protected final String SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders " + " WHERE confirmed=1 AND spent=0 AND offertokenid=? "
+            + " ORDER BY targetcoinvalue / offercoinvalue ASC" + " LIMIT ?";
+    protected final String SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
+            + " FROM openorders " + " WHERE confirmed=1 AND spent=0 AND targettokenid=? "
+            + " ORDER BY offercoinvalue / targetcoinvalue DESC" + " LIMIT ?";
+
     protected final String SELECT_MY_CLOSED_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
-            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
-            + " FROM openorders "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress" + " FROM openorders "
             + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000 "
             + " AND blockhash NOT IN ( SELECT blockhash FROM openorders "
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
     protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
-            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
-            + " FROM openorders "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress" + " FROM openorders "
             + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
     protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + " confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, "
-            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress"
-            + " FROM openorders "
+            + " validToTime, opindex ,validFromTime, side , beneficiaryaddress" + " FROM openorders "
             + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000  "
             + " AND blockhash IN ( SELECT blockhash FROM openorders "
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
@@ -762,9 +766,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 props.setProperty("password", this.password);
                 conn.set(DriverManager.getConnection(connectionURL, props));
             }
-            
+
             allConnections.add(conn.get());
-            
+
             // set the schema if one is needed
             synchronized (this) {
                 if (schemaName != null) {
@@ -1039,7 +1043,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return new StoredBlock(b, r.getHeight());
     }
 
-    
     public StoredBlockBinary getBinary(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
 
         maybeConnect();
@@ -1323,8 +1326,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void beginDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
-  //      if (log.isDebugEnabled())
-  //          log.debug("Starting database batch write with connection: " + conn.get().toString());
+        // if (log.isDebugEnabled())
+        // log.debug("Starting database batch write with connection: " +
+        // conn.get().toString());
         try {
             conn.get().setAutoCommit(false);
         } catch (SQLException e) {
@@ -1335,8 +1339,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         maybeConnect();
-     //   if (log.isDebugEnabled())
-      //      log.debug("Committing database batch write with connection: " + conn.get().toString());
+        // if (log.isDebugEnabled())
+        // log.debug("Committing database batch write with connection: " +
+        // conn.get().toString());
         try {
             if (!conn.get().getAutoCommit())
                 conn.get().commit();
@@ -1917,7 +1922,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public List<Sha256Hash> getBlocksOfTimeHigherThan(long time) throws BlockStoreException {
         List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
@@ -1943,7 +1948,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public List<Sha256Hash> getConfirmedBlocksOfHeightHigherThan(long fromHeight) throws BlockStoreException {
         List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
@@ -2176,7 +2181,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void updateAllBlocksMaintained() throws BlockStoreException {
 
@@ -2196,7 +2201,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
-        
+
     }
 
     @Override
@@ -2666,8 +2671,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         int tokentype = tokens.getTokentype();
         boolean tokenstop = tokens.isTokenstop();
         String prevblockhash = tokens.getPrevblockhash();
-        byte[] tokenkeyvalues =null;
-        if(tokens.getTokenKeyValues()!=null) {
+        byte[] tokenkeyvalues = null;
+        if (tokens.getTokenKeyValues() != null) {
             tokenkeyvalues = tokens.getTokenKeyValues().toByteArray();
         }
         this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,
@@ -3000,10 +3005,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(Sha256Hash.wrap(resultSet.getBytes(1)),
-                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
-                        resultSet.getBoolean(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9),
-                        resultSet.getBoolean(10),   resultSet.getInt(11));
+                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
+                        Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
+                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getBoolean(6), resultSet.getLong(7),
+                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11));
                 result.add(blockEvaluation);
             }
             return result;
@@ -5380,13 +5385,92 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecord> getMyClosedOrders(String address)
-            throws BlockStoreException {
+    public List<OrderRecord> getBestOpenSellOrders(String tokenId, int count) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL);
+            s.setString(1, tokenId);
+            s.setInt(2, count);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL);
+            s.setString(1, tokenId);
+            s.setInt(2, count);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getMyClosedOrders(String address) throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL + " limit 2000 ");
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
@@ -5421,13 +5505,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecord> getMyRemainingOpenOrders(String address)
-            throws BlockStoreException {
+    public List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL + " limit 2000 ");
             s.setString(1, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
@@ -5461,13 +5544,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecord> getMyInitialOpenOrders(String address)
-            throws BlockStoreException {
+    public List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL);
+            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + " limit 2000 ");
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
@@ -5911,4 +5993,75 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get()
+                    .prepareStatement(" insert into myserverblocks (hash, inserttime) values (?,?) ");
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.setLong(2, System.currentTimeMillis());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(" delete  from  myserverblocks  where hash = ? ");
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public boolean existMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where hash = ?");
+            preparedStatement.setBytes(1, hash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
+    }
+
 }

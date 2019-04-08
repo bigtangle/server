@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
-import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.RewardService;
 
 @Component
 @EnableAsync
@@ -23,14 +23,14 @@ public class ScheduleRewardService {
     private ScheduleConfiguration scheduleConfiguration;
 
     @Autowired
-    private TransactionService transactionService;
+    private RewardService rewardService;
 
     @Scheduled(fixedRate = 30000)
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active()) {
             try {
                 logger.debug(" Start updateReward: ");
-                transactionService.performRewardVoting();
+                rewardService.performRewardVotingSingleton();
             } catch (Exception e) {
                 logger.warn("performRewardVoting ", e);
             }

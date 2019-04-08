@@ -76,6 +76,9 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.OrderReclaimService;
+import net.bigtangle.server.service.OrdermatchService;
+import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -112,6 +115,14 @@ public abstract class AbstractIntegrationTest {
     protected MilestoneService milestoneService;
     @Autowired
     protected TransactionService transactionService;
+    @Autowired
+    protected RewardService rewardService;
+    
+    @Autowired
+    protected OrdermatchService ordermatchService;
+    @Autowired
+    protected OrderReclaimService ordeReclaimService;
+    
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -403,7 +414,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = transactionService.createAndAddOrderMatchingBlock(store.getMaxConfirmedOrderMatchingBlockHash(),
+        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedOrderMatchingBlockHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 

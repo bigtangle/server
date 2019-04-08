@@ -12,11 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
- 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
@@ -24,7 +22,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
@@ -33,8 +30,6 @@ import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.wallet.CoinSelector;
-import net.bigtangle.wallet.DefaultCoinSelector;
 
 /**
  * <p>
@@ -46,8 +41,6 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     @Autowired
     private MilestoneService milestoneService;
@@ -63,7 +56,7 @@ public class BlockService {
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
         return store.get(blockhash).getHeader();
     }
-    
+
     public BlockWrap getBlockWrap(Sha256Hash blockhash) throws BlockStoreException {
         return store.getBlockWrap(blockhash);
     }
@@ -84,16 +77,10 @@ public class BlockService {
         return blocks;
     }
 
-    @Cacheable(cacheNames = "BlockEvaluations")
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         return store.getBlockEvaluation(hash);
     }
 
-    public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
-        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-        saveBlock(block);
-    }
-	
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
         return store.getAllBlockEvaluations();
     }
@@ -104,7 +91,8 @@ public class BlockService {
             try {
 
                 broadcastBlock(block.bitcoinSerialize());
-                // FIXME remove this later, this is needed for testnet and unit tests, to get
+                // FIXME remove this later, this is needed for testnet and unit
+                // tests, to get
                 // sync real time confirmation for client
 
                 milestoneService.update();
@@ -115,69 +103,9 @@ public class BlockService {
         }
     }
 
-    /*
-     * unsolid blocks can be solid, if previous can be found in network etc.
-     * read data from table oder by insert time, use add Block to check again,
-     * if missing previous, it may request network for the blocks
-     * 
-     * BOOT_STRAP_SERVERS de.kafka.bigtangle.net:9092
-     * 
-     * CONSUMERIDSUFFIX 12324
-     */
-    public void reCheckUnsolidBlock() throws Exception {
-        List<Block> blocklist = store.getNonSolidBlocks();
-        for (Block block : blocklist) {
-            boolean added = blockgraph.add(block, true);
-            if (added) {
-                this.store.deleteUnsolid(block.getHash());
-                logger.debug("addConnected from reCheckUnsolidBlock " + block);
-                continue;
-            }
-            requestPrev(block);
-        }
-    }
-
-    public void requestPrev(Block block) {
-        try {
-            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL)  {
-                return;
-            }
-            StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
-           
-            if (storedBlock0 == null) {
-                byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
-                if (re != null) {
-                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
-
-                }
-            }
-            StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
-            if (storedBlock1 == null) {
-                byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
-                if (re != null) {
-                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
-
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("", e );
-        }
-    }
-
-    /*
-     * all very old unsolid blocks are deleted
-     */
-    public void deleteOldUnsolidBlock() throws Exception {
-
-        this.store.deleteOldUnsolid(getTimeSeconds(1));
-    }
-
     public long getTimeSeconds(int days) throws Exception {
-        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60 ;
+        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
-
-    @Autowired
-    private BlockRequester blockRequester;
 
     /**
      * Recursively removes the specified block and its approvers from the
@@ -214,7 +142,8 @@ public class BlockService {
 
         // Add this block and add all of its milestone approvers
         evaluations.add(evaluation);
-        for (Sha256Hash approverHash : store.getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
+        for (Sha256Hash approverHash : store
+                .getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
             addMilestoneApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
     }
@@ -229,16 +158,16 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) {
-    	if (block == null)
-    		return; 
-    	
+        if (block == null)
+            return;
+
         if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block))
             return;
 
         // Add this block and add all of its approved non-milestone blocks
         evaluations.add(block);
-        
-        BlockWrap prevTrunk, prevBranch;        
+
+        BlockWrap prevTrunk, prevBranch;
         try {
             prevTrunk = store.getBlockWrap(block.getBlock().getPrevBlockHash());
             prevBranch = store.getBlockWrap(block.getBlock().getPrevBranchBlockHash());
@@ -292,8 +221,23 @@ public class BlockService {
         }
     }
 
-    public void batchBlock(byte[] bodyByte) throws BlockStoreException {
-        Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+    public void batchBlock(Block block) throws BlockStoreException {
+
         this.store.insertBatchBlock(block);
+    }
+
+    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+
+        this.store.insertMyserverblocks(hash, inserttime);
+    }
+
+    public boolean existMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        return this.store.existMyserverblocks(hash);
+    }
+
+    public void deleteMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        this.store.deleteMyserverblocks(hash);
     }
 }

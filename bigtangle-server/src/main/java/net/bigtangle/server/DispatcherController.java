@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static net.bigtangle.core.Utils.HEX;
-import static net.bigtangle.core.Utils.reverseBytes;
-
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,11 +35,13 @@ import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
+import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokensService;
@@ -58,30 +57,26 @@ public class DispatcherController {
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
     @Autowired
     private TransactionService transactionService;
-
+    @Autowired
+    private RewardService rewardService;
+    @Autowired
+    private NetworkParameters networkParameters;
+    @Autowired
+    private UserDataService userDataService;
     @Autowired
     private WalletService walletService;
-
     @Autowired
     private BlockService blockService;
-
     @Autowired
     private TokensService tokensService;
-
-    public static int numberOfEmptyBlocks = 3;
-
     @Autowired
     private MultiSignService multiSignService;
-
     @Autowired
     private PayMultiSignService payMultiSignService;
-
     @Autowired
     private VOSExecuteService vosExecuteService;
-
     @Autowired
     private SettingService settingService;
-
     @Autowired
     private SubtanglePermissionService subtanglePermissionService;
     @Autowired
@@ -89,45 +84,8 @@ public class DispatcherController {
 
     @Autowired
     private LogResultService logResultService;
-
-    public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
-        String header = httprequest.getHeader("Authorization");
-        boolean flag = false;
-        if (header != null && !header.trim().isEmpty()) {
-            HttpSession session = httprequest.getSession(true);
-            if (session != null) {
-                if ("key_verified".equals(session.getAttribute("key_verify_flag"))) {
-                    flag = true;
-                } else {
-                    String pubkey = header.split("")[0];
-                    String signHex = header.split("")[1];
-                    String contentHex = header.split("")[2];
-                    ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                    byte[] message = reverseBytes(HEX.decode(contentHex));
-                    byte[] signOutput = Utils.HEX.decode(signHex);
-                    flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
-                    if (flag) {
-                        HttpSession a = httprequest.getSession(true);
-                        if (a != null) {
-                            a.setAttribute("key_verify_flag", "key_verified");
-                        }
-                    }
-                }
-            } else {
-                String pubkey = header.split("")[0];
-                String signHex = header.split("")[1];
-                String contentHex = header.split("")[2];
-                ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                byte[] message = reverseBytes(HEX.decode(contentHex));
-                byte[] signOutput = Utils.HEX.decode(signHex);
-                flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
-
-            }
-
-        }
-        return flag;
-
-    }
+    @Autowired
+    ServerConfiguration serverConfiguratio;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -135,7 +93,7 @@ public class DispatcherController {
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         try {
 
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+            logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             if (settingService.getPermissionFlag()) {
@@ -150,18 +108,47 @@ public class DispatcherController {
 
             switch (reqCmd0000) {
             case getTip: {
-                byte[] data = transactionService.askTransaction().array();
+                Block rollingBlock = transactionService.askTransactionBlock();
+                rollingBlock.setMinerAddress(Utils.HEX.decode(serverConfiguratio.getMineraddress()));
+                register(rollingBlock);
+                byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
                 break;
             case saveBlock: {
-                blockService.saveBinaryArrayToBlock(bodyByte);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                if (serverConfiguratio.getMyserverblockOnly()) {
+                    if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
+                        AbstractResponse resp = ErrorResponse.create(101);
+                        resp.setErrorcode(403);
+                        resp.setMessage("server accept only his tip selection for validation");
+                        this.outPrintJSONString(httpServletResponse, resp);
+                    } else {
+                        blockService.saveBlock(block);
+                        this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                    }
+                } else {
+                    blockService.saveBlock(block);
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                }
             }
                 break;
             case batchBlock: {
-                blockService.batchBlock(bodyByte);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                if (serverConfiguratio.getMyserverblockOnly()) {
+                    if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
+                        AbstractResponse resp = ErrorResponse.create(101);
+                        resp.setErrorcode(403);
+                        resp.setMessage("server accept only his tip selection for validation");
+                        this.outPrintJSONString(httpServletResponse, resp);
+                    } else {
+                        blockService.batchBlock(block);
+                        this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                    }
+                } else {
+                    blockService.batchBlock(block);
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                }
             }
                 break;
             case getOutputs: {
@@ -451,8 +438,8 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case updateReward: {  
-                transactionService.createAndAddMiningRewardBlock();
+            case updateReward: {
+                rewardService.createAndAddMiningRewardBlock();
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
@@ -460,18 +447,61 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             logger.error("", e);
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Throwable exception) {
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
             logger.error("", exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage(exception.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         }
+    }
+
+    public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
+        String header = httprequest.getHeader("Authorization");
+        boolean flag = false;
+        if (header != null && !header.trim().isEmpty()) {
+            HttpSession session = httprequest.getSession(true);
+            if (session != null) {
+                if ("key_verified".equals(session.getAttribute("key_verify_flag"))) {
+                    flag = true;
+                } else {
+                    String pubkey = header.split("")[0];
+                    String signHex = header.split("")[1];
+                    // String contentHex = header.split("")[2];
+                    ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+                    // byte[] message = reverseBytes(HEX.decode(contentHex));
+                    byte[] signOutput = Utils.HEX.decode(signHex);
+                    flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+                    if (flag) {
+                        HttpSession a = httprequest.getSession(true);
+                        if (a != null) {
+                            a.setAttribute("key_verify_flag", "key_verified");
+                        }
+                    }
+                }
+            } else {
+                String pubkey = header.split("")[0];
+                String signHex = header.split("")[1];
+                // String contentHex = header.split("")[2];
+                ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+                // byte[] message = reverseBytes(HEX.decode(contentHex));
+                byte[] signOutput = Utils.HEX.decode(signHex);
+                flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+
+            }
+
+        }
+        return flag;
+
     }
 
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
@@ -499,10 +529,15 @@ public class DispatcherController {
         printWriter.close();
     }
 
-    @Autowired
-    private NetworkParameters networkParameters;
+    // server may accept only block from his server
+    public void register(Block block) throws BlockStoreException {
+        if (serverConfiguratio.getMyserverblockOnly())
+            blockService.insertMyserverblocks(block.getPrevBlockHash(), System.currentTimeMillis());
+    }
 
-    @Autowired
-    private UserDataService userDataService;
-
+    public void deleteRegisterBlock(Block block) throws BlockStoreException {
+        if (serverConfiguratio.getMyserverblockOnly()) {
+            blockService.deleteMyserverblocks(block.getPrevBlockHash());
+        }
+    }
 }

@@ -43,7 +43,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
-public class PayOrder {
+public class PayOTCOrder {
 
     private Wallet wallet;
 
@@ -57,7 +57,7 @@ public class PayOrder {
     private KeyParameter aesKey = null;
     private boolean sellFlag;
 
-    public PayOrder(Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
+    public PayOTCOrder(Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
         this.wallet = wallet;
         this.orderid = orderid;
         this.serverURL = serverURL;
@@ -135,7 +135,7 @@ public class PayOrder {
                                 Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
                                 byte[] buf = Utils.HEX.decode(dataHex);
-                                ExchangeReload exchangeReload = this.reloadTransaction(buf);
+                                OTCReload exchangeReload = this.reloadTransaction(buf);
                                 Transaction transaction0 = exchangeReload.getTransaction();
                                 if (transaction0 == null) {
                                     return;
@@ -182,7 +182,7 @@ public class PayOrder {
     private void signOrderComplete() throws Exception {
         String dataHex = this.exchange.getDataHex();
         byte[] buf = Utils.HEX.decode(dataHex);
-        ExchangeReload exchangeReload = this.reloadTransaction(buf);
+        OTCReload exchangeReload = this.reloadTransaction(buf);
         Transaction transaction = exchangeReload.getTransaction();
         if (transaction == null) {
             return;
@@ -391,8 +391,8 @@ public class PayOrder {
         return listUTXO;
     }
 
-    private ExchangeReload reloadTransaction(byte[] buf) {
-        ExchangeReload exchangeReload = new ExchangeReload();
+    private OTCReload reloadTransaction(byte[] buf) {
+        OTCReload exchangeReload = new OTCReload();
         ByteBuffer byteBuffer = ByteBuffer.wrap(buf);
         {
             byte[] dst = new byte[byteBuffer.getInt()];

@@ -51,7 +51,7 @@ public class KafkaMessageProducer {
         producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-         log.debug(" sendMessage " + key);
+         log.trace(" sendMessage " + key);
         messageProducer.close();
         return mdata != null;
 

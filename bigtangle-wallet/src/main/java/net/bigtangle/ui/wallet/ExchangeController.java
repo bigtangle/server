@@ -50,7 +50,7 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
-import net.bigtangle.wallet.PayOrder;
+import net.bigtangle.wallet.PayOTCOrder;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -531,7 +531,7 @@ public class ExchangeController {
         }
         try {
 
-            PayOrder payOrder = new PayOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
+            PayOTCOrder payOrder = new PayOTCOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
             payOrder.setAesKey(Main.getAesKey());
             payOrder.setSellFlag(flag);
             payOrder.sign();

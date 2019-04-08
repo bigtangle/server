@@ -1177,23 +1177,17 @@ public class Block extends Message {
     /**
      * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
      * 
-     * @param height
-     *            block height, if known, or -1 otherwise.
      */
     public Block createNextBlock() {
         return createNextBlock(this);
     }
 
     /**
-     * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
+     * Returns a unsolved, valid empty block that builds on top of this one and the specified other Block. 
      * 
-     * @param height
-     *            block height, if known, or -1 otherwise.
      */
-    public Block createNextBlock(Block branchBlock) {
-        @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub));
-        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, testKey.getPubKeyHash());
+    public Block createNextBlock(Block branchBlock) { 
+        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, null);
     }
 
     /**

@@ -7,7 +7,7 @@ package net.bigtangle.wallet;
 
 import net.bigtangle.core.Transaction;
 
-public class ExchangeReload implements java.io.Serializable {
+public class OTCReload implements java.io.Serializable {
 
     private static final long serialVersionUID = 8257893832041422608L;
 
