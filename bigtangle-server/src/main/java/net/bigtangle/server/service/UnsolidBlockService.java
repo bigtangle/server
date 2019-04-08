@@ -28,8 +28,7 @@ public class UnsolidBlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
- 
- 
+
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -39,28 +38,28 @@ public class UnsolidBlockService {
     private BlockRequester blockRequester;
 
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
- 
+
     private final Semaphore lock = new Semaphore(1);
-    
+
     public void updateUnsolideServiceSingle() {
         if (!lock.tryAcquire()) {
             logger.debug("updateUnsolideService Update already running. Returning...");
             return;
         }
         try {
-                logger.debug(" Start updateUnsolideServiceSingle: ");
-                 deleteOldUnsolidBlock();
-                reCheckUnsolidBlock(); 
-                logger.debug(" end  updateUnsolideServiceSingle: ");
+            logger.debug(" Start updateUnsolideServiceSingle: ");
+            deleteOldUnsolidBlock();
+            reCheckUnsolidBlock();
+            logger.debug(" end  updateUnsolideServiceSingle: ");
 
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
-        }    finally {
+        } finally {
             lock.release();
         }
-         
+
     }
-    
+
     /*
      * unsolid blocks can be solid, if previous can be found in network etc.
      * read data from table oder by insert time, use add Block to check again,
@@ -85,15 +84,24 @@ public class UnsolidBlockService {
 
     public void requestPrev(Block block) {
         try {
-            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL)  {
+            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 return;
             }
             StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
-           
+
             if (storedBlock0 == null) {
                 byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
                 if (re != null) {
-                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+                    Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
+
+                    if (this.store.get(req.getPrevBlockHash()) != null
+                            && this.store.get(req.getPrevBranchBlockHash()) != null)
+                        blockgraph.add(req, true);
+                    else {
+                        // pre recursive check
+                        logger.debug(" prev not found: "+ req.toString());
+                        requestPrev(req);
+                    }
 
                 }
             }
@@ -101,12 +109,20 @@ public class UnsolidBlockService {
             if (storedBlock1 == null) {
                 byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
                 if (re != null) {
-                    blockgraph.add((Block) networkParameters.getDefaultSerializer().makeBlock(re), true);
+                    Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
 
+                    if (this.store.get(req.getPrevBlockHash()) != null
+                            && this.store.get(req.getPrevBranchBlockHash()) != null)
+                        blockgraph.add(req, true);
+                    else {
+                        // pre recursive check
+                        requestPrev(req);
+                    }
+             
                 }
             }
         } catch (Exception e) {
-            logger.debug("", e );
+            logger.debug("", e);
         }
     }
 
@@ -119,11 +135,7 @@ public class UnsolidBlockService {
     }
 
     public long getTimeSeconds(int days) throws Exception {
-        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60 ;
+        return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
-
-    
- 
-   
 }

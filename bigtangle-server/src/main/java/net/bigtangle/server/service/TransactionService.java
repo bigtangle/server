@@ -57,7 +57,7 @@ public class TransactionService {
     @Autowired
     protected KafkaConfiguration kafkaConfiguration;
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
@@ -104,7 +104,7 @@ public class TransactionService {
                 if (added) {
                     logger.trace("addConnected from kafka ");
                 } else {
-                    logger.debug(" unsolid block from kafka " + block);
+                    logger.trace(" unsolid block from kafka " + block);
                     if (request)
                         unsolidBlockService.requestPrev(block);
 
