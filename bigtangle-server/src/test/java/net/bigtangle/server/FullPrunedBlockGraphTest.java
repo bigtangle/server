@@ -1241,8 +1241,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            rollingBlock.setMinerAddress(testKey.getPubKeyHash());
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock,NetworkParameters.BLOCK_VERSION_GENESIS, testKey.getPubKeyHash());
+            rollingBlock.solve();
+          
             blockGraph.add(rollingBlock, true);
         }
 
