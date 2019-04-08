@@ -40,7 +40,7 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class BlockService {
 
     @Autowired
-    protected FullPrunedBlockStore store; 
+    protected FullPrunedBlockStore store;
 
     @Autowired
     private MilestoneService milestoneService;
@@ -79,11 +79,6 @@ public class BlockService {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
         return store.getBlockEvaluation(hash);
-    }
-
-    public void saveBinaryArrayToBlock(byte[] bytes) throws Exception {
-        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-        saveBlock(block);
     }
 
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
@@ -226,8 +221,23 @@ public class BlockService {
         }
     }
 
-    public void batchBlock(byte[] bodyByte) throws BlockStoreException {
-        Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+    public void batchBlock(Block block) throws BlockStoreException {
+
         this.store.insertBatchBlock(block);
+    }
+
+    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+
+        this.store.insertMyserverblocks(hash, inserttime);
+    }
+
+    public boolean existMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        return this.store.existMyserverblocks(hash);
+    }
+
+    public void deleteMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+
+        this.store.deleteMyserverblocks(hash);
     }
 }

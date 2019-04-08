@@ -60,15 +60,7 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
-
-    public ByteBuffer askTransaction() throws Exception {
-        Block rollingBlock = askTransactionBlock();
-
-        byte[] data = rollingBlock.bitcoinSerialize();
-
-        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-        return byteBuffer;
-    }
+ 
 
     public Block askTransactionBlock() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();

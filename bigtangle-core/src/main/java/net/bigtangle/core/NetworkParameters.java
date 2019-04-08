@@ -42,14 +42,13 @@ import net.bigtangle.utils.MonetaryFormat;
 /**
  * <p>
  * NetworkParameters contains the data needed for working with an instantiation
- * of a Bitcoin chain.
+ * of a BigTangle.
  * </p>
  *
  * <p>
  * This is an abstract class, concrete instantiations can be found in the params
- * package. There are four: one for the main network ({@link MainNetParams}),
- * one for the public test network, and two others that are intended for unit
- * testing and local app development purposes. Although this class contains some
+ * package. There are two: one for the main network ({@link MainNetParams}),
+ * one for the public test network. Although this class contains some
  * aliases for them, you are encouraged to call the static get() methods on each
  * specific params class directly.
  * </p>

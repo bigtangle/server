@@ -15,7 +15,7 @@ import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.SimpleAction;
 import net.bigtangle.tools.config.Configure;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.PayOrder;
+import net.bigtangle.wallet.PayOTCOrder;
 
 public class SignOrderAction extends SimpleAction {
 
@@ -61,7 +61,7 @@ public class SignOrderAction extends SimpleAction {
                // exchangeList.add(exchange);
                 try {
                     String orderid = exchange.getOrderid();
-                    PayOrder payOrder = new PayOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
+                    PayOTCOrder payOrder = new PayOTCOrder(this.account.wallet(), orderid, Configure.SIMPLE_SERVER_CONTEXT_ROOT,
                             Configure.ORDER_MATCH_CONTEXT_ROOT);
                     payOrder.sign();
                 } catch (Exception e) {

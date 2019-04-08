@@ -39,7 +39,7 @@ import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.PayOrder;
+import net.bigtangle.wallet.PayOTCOrder;
 import net.bigtangle.wallet.SendRequest;
 
 @RunWith(SpringRunner.class)
@@ -189,10 +189,10 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String marketURL = "http://localhost:8090";
         String orderid = (String) exchangemap.get("orderid");
 
-        PayOrder payOrder1 = new PayOrder(walletAppKit.wallet(), orderid, serverURL, marketURL);
+        PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit.wallet(), orderid, serverURL, marketURL);
         payOrder1.sign();
 
-        PayOrder payOrder2 = new PayOrder(walletAppKit1.wallet(), orderid, serverURL, marketURL);
+        PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit1.wallet(), orderid, serverURL, marketURL);
         payOrder2.sign();
         /*
          * Address fromAddress00 = new Address(networkParameters, (String)
