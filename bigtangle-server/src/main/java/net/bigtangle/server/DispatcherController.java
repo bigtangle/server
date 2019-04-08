@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -109,7 +110,8 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = transactionService.askTransactionBlock();
-                rollingBlock.setMinerAddress(Utils.HEX.decode(serverConfiguratio.getMineraddress()));
+                rollingBlock.setMinerAddress(
+                        Address.fromBase58(networkParameters, serverConfiguratio.getMineraddress()).getHash160());
                 register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
@@ -125,10 +127,12 @@ public class DispatcherController {
                         this.outPrintJSONString(httpServletResponse, resp);
                     } else {
                         blockService.saveBlock(block);
+                        deleteRegisterBlock(block);
                         this.outPrintJSONString(httpServletResponse, OkResponse.create());
                     }
                 } else {
                     blockService.saveBlock(block);
+                    deleteRegisterBlock(block);
                     this.outPrintJSONString(httpServletResponse, OkResponse.create());
                 }
             }
@@ -143,10 +147,12 @@ public class DispatcherController {
                         this.outPrintJSONString(httpServletResponse, resp);
                     } else {
                         blockService.batchBlock(block);
+                        deleteRegisterBlock(block);
                         this.outPrintJSONString(httpServletResponse, OkResponse.create());
                     }
                 } else {
                     blockService.batchBlock(block);
+                    deleteRegisterBlock(block);
                     this.outPrintJSONString(httpServletResponse, OkResponse.create());
                 }
             }
@@ -532,7 +538,7 @@ public class DispatcherController {
     // server may accept only block from his server
     public void register(Block block) throws BlockStoreException {
         if (serverConfiguratio.getMyserverblockOnly())
-            blockService.insertMyserverblocks(block.getPrevBlockHash(), System.currentTimeMillis());
+            blockService.insertMyserverblocks(block.getPrevBlockHash(), block.getHash(), System.currentTimeMillis());
     }
 
     public void deleteRegisterBlock(Block block) throws BlockStoreException {

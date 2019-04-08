@@ -658,18 +658,16 @@ public class PhoenixBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void deleteMyserverblocks(Sha256Hash blockhash) throws BlockStoreException {
         // TODO Auto-generated method stub
-        
-    }
 
-   
+    }
 
     @Override
     public boolean existMyserverblocks(Sha256Hash blockhash) throws BlockStoreException {

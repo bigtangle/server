@@ -1235,12 +1235,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
         store.resetStore();
-
+        @SuppressWarnings("deprecation")
+        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock.setMinerAddress(testKey.getPubKeyHash());
             blockGraph.add(rollingBlock, true);
         }
 
@@ -1256,8 +1258,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock.getHash()));
 
         // Generate spending block
-        @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+    
         List<UTXO> outputs = getBalance(false, testKey);
         outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.testCoin);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),

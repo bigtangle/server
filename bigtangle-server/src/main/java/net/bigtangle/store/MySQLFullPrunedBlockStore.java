@@ -187,8 +187,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
-            + "    hash varbinary(32) NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+            + "    prevhash varbinary(32) NOT NULL,\n"
+            + " hash varbinary(32) NOT NULL,\n"
+            + "    inserttime bigint,\n"
+            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ")";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";

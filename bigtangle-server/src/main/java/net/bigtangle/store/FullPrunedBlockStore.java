@@ -514,8 +514,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException;
     
-    void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException;
-    void deleteMyserverblocks(Sha256Hash blockhash) throws BlockStoreException;
-    boolean existMyserverblocks(Sha256Hash blockhash) throws BlockStoreException;
+    void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException;
+    void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
+    boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
     
 }

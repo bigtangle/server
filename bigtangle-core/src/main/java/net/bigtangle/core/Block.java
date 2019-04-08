@@ -110,54 +110,96 @@ public class Block extends Message {
     // (which Message needs)
     protected int optimalEncodingMessageSize;
 
-    /** To add new BLOCKTYPES, implement their rules in the switches:
-     * FullPrunedBlockGraph.connectBlock
-     * FullPrunedBlockGraph.confirmBlock
+    /**
+     * To add new BLOCKTYPES, implement their rules in the switches:
+     * FullPrunedBlockGraph.connectBlock FullPrunedBlockGraph.confirmBlock
      * FullPrunedBlockGraph.unconfirmBlock
      * FullPrunedBlockGraph.unconfirmDependents
      * ValidatorService.checkTypeSpecificSolidity
-     * BlockWrap.addTypeSpecificConflictCandidates
-     * ConflictCandidate enum + switches
+     * BlockWrap.addTypeSpecificConflictCandidates ConflictCandidate enum +
+     * switches
      */
     public enum Type {
-        // TODO implement all conditions for each block type in all switches    
+        // TODO implement all conditions for each block type in all switches
         // TODO add size multiplier to pow difficulty
         BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
-        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default block
-        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards of mining // TODO rename to consensus
-        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Custom token issuance
-        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined data
-        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Smart contracts
-        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO Governance of software
-        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO User-defined file
-        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO VOS execution result
-        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO transfer from mainnet to permissioned
-        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens a new order
-        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues a refresh/cancel of an order
-        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims lost orders
-        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform order matching
+        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default
+                                                                                   // block
+        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards
+                                                                                 // of
+                                                                                 // mining
+                                                                                 // //
+                                                                                 // TODO
+                                                                                 // rename
+                                                                                 // to
+                                                                                 // consensus
+        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Custom
+                                                                                        // token
+                                                                                        // issuance
+        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                                   // User-defined
+                                                                                   // data
+        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                              // Smart
+                                                                              // contracts
+        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                                     // Governance
+                                                                                     // of
+                                                                                     // software
+        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                               // User-defined
+                                                                               // file
+        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                                      // VOS
+                                                                                      // execution
+                                                                                      // result
+        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+                                                                                      // transfer
+                                                                                      // from
+                                                                                      // mainnet
+                                                                                      // to
+                                                                                      // permissioned
+        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens
+                                                                                     // a
+                                                                                     // new
+                                                                                     // order
+        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues
+                                                                                   // a
+                                                                                   // refresh/cancel
+                                                                                   // of
+                                                                                   // an
+                                                                                   // order
+        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims
+                                                                                        // lost
+                                                                                        // orders
+        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform
+                                                                                         // order
+                                                                                         // matching
 
         private boolean allowCoinbaseTransaction;
         private int powMultiplier; // TODO use in reward calcs
         private int rewardMultiplier; // TODO use in reward calcs
         private int maxSize;
-        
+
         private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize) {
             this.allowCoinbaseTransaction = allowCoinbaseTransaction;
             this.powMultiplier = powMultiplier;
             this.rewardMultiplier = rewardMultiplier;
             this.maxSize = maxSize;
         }
-        
+
         public boolean allowCoinbaseTransaction() {
             return allowCoinbaseTransaction;
         }
+
         public int getPowMultiplier() {
             return powMultiplier;
         }
+
         public int getRewardMultiplier() {
             return rewardMultiplier;
         }
+
         public int getMaxBlockSize() {
             return maxSize;
         }
@@ -169,7 +211,8 @@ public class Block extends Message {
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long type) {
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0, NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0,
+                NetworkParameters.EASIEST_DIFFICULTY_TARGET);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {
@@ -179,11 +222,11 @@ public class Block extends Message {
                 r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
                         : r2.getDifficultyTarget());
     }
-    
+
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
             long minTime, long lastMiningRewardBlock, long difficultyTarget) {
-        this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype],
-                minTime, lastMiningRewardBlock, difficultyTarget);
+        this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype], minTime, lastMiningRewardBlock,
+                difficultyTarget);
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, Type blocktype,
@@ -350,7 +393,7 @@ public class Block extends Message {
             stream.write(payload, offset, NetworkParameters.HEADER_SIZE);
             return;
         }
-        
+
         // fall back to manual write
         Utils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
@@ -693,7 +736,7 @@ public class Block extends Message {
         } else {
             BigInteger target = getDifficultyTargetAsInteger();
             BigInteger h = calculatePoWHash().toBigInteger();
-            
+
             if (h.compareTo(target) > 0) {
                 // Proof of work check failed!
                 if (throwException)
@@ -710,8 +753,9 @@ public class Block extends Message {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
         if (time > currentTime + NetworkParameters.ALLOWED_TIME_DRIFT)
-            throw new TimeTravelerException(); 
-        // TODO this shouldn't throw because it does not make the block invalid forever.
+            throw new TimeTravelerException();
+        // TODO this shouldn't throw because it does not make the block invalid
+        // forever.
     }
 
     private void checkSigOps() throws VerificationException {
@@ -856,7 +900,7 @@ public class Block extends Message {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new CoinbaseDisallowedException();
             }
-            
+
             transaction.verify();
         }
     }
@@ -1175,7 +1219,8 @@ public class Block extends Message {
     private static Random gen = new Random();
 
     /**
-     * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
+     * Returns a solved, valid empty block that builds on top of this one and
+     * the specified other Block.
      * 
      */
     public Block createNextBlock() {
@@ -1183,15 +1228,18 @@ public class Block extends Message {
     }
 
     /**
-     * Returns a unsolved, valid empty block that builds on top of this one and the specified other Block. 
+     * Returns a unsolved, valid empty block that builds on top of this one and
+     * the specified other Block.
      * 
      */
-    public Block createNextBlock(Block branchBlock) { 
-        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, null);
+    public Block createNextBlock(Block branchBlock) {
+        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
+                Address.fromBase58(params, "1Kbm8rqjcX6j5oLbq9J8FapksdvrfGUA88").getHash160());
     }
 
     /**
-     * Returns a solved, valid empty block that builds on top of this one and the specified other Block. 
+     * Returns a solved, valid empty block that builds on top of this one and
+     * the specified other Block.
      * 
      * @param height
      *            block height, if known, or -1 otherwise.
@@ -1202,15 +1250,16 @@ public class Block extends Message {
         b.setMinerAddress(mineraddress);
         b.setPrevBlockHash(getHash());
         b.setPrevBranchBlockHash(branchBlock.getHash());
-        
+
         // Set difficulty according to previous consensus
         // only BLOCKTYPE_REWARD and BLOCKTYPE_INITIAL should overwrite this
-        b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));       
-        b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget : branchBlock.difficultyTarget);        
+        b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));
+        b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget
+                : branchBlock.difficultyTarget);
 
         // Don't let timestamp go backwards
         long currTime = System.currentTimeMillis() / 1000;
-		long minTime = Math.max(currTime, branchBlock.getTimeSeconds());
+        long minTime = Math.max(currTime, branchBlock.getTimeSeconds());
         if (currTime >= minTime)
             b.setTime(currTime + 1);
         else

@@ -101,6 +101,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS openorders";
     public static String DROP_ORDER_MATCHING_TABLE = "DROP TABLE IF EXISTS ordermatching";
     public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
+    public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -651,6 +652,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_ORDERS_TABLE);
         sqlStatements.add(DROP_ORDER_MATCHING_TABLE);
         sqlStatements.add(DROP_CONFIRMATION_DEPENDENCY_TABLE);
+        sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
         return sqlStatements;
     }
 
@@ -5995,14 +5997,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get()
-                    .prepareStatement(" insert into myserverblocks (hash, inserttime) values (?,?) ");
-            preparedStatement.setBytes(1, hash.getBytes());
-            preparedStatement.setLong(2, System.currentTimeMillis());
+                    .prepareStatement(" insert into myserverblocks (prevhash, hash, inserttime) values (?,?,?) ");
+            preparedStatement.setBytes(1, prevhash.getBytes());
+            preparedStatement.setBytes(2, hash.getBytes());
+            preparedStatement.setLong(3, inserttime);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -6018,14 +6021,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void deleteMyserverblocks(Sha256Hash hash) throws BlockStoreException {
-
+    public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
+        // delete only one, but anyone
         maybeConnect();
         PreparedStatement preparedStatement = null;
+        PreparedStatement p2 = null;
         try {
-            preparedStatement = conn.get().prepareStatement(" delete  from  myserverblocks  where hash = ? ");
-            preparedStatement.setBytes(1, hash.getBytes());
-            preparedStatement.executeUpdate();
+            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement.setBytes(1, prevhash.getBytes());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                byte[] hash = resultSet.getBytes(1);
+                p2 = conn.get().prepareStatement(" delete  from  myserverblocks  where prevhash = ?  and hash =?");
+                p2.setBytes(1, prevhash.getBytes());
+                p2.setBytes(2, hash);
+                p2.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -6036,18 +6047,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     throw new BlockStoreException("Could not close statement");
                 }
             }
+            if (p2 != null) {
+                try {
+                    p2.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
         }
 
     }
 
     @Override
-    public boolean existMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+    public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where hash = ?");
-            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement.setBytes(1, prevhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException ex) {

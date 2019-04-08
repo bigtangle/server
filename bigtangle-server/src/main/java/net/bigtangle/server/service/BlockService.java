@@ -226,18 +226,18 @@ public class BlockService {
         this.store.insertBatchBlock(block);
     }
 
-    public void insertMyserverblocks(Sha256Hash hash, Long inserttime) throws BlockStoreException {
+    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
 
-        this.store.insertMyserverblocks(hash, inserttime);
+        this.store.insertMyserverblocks(prevhash,hash, inserttime);
     }
 
-    public boolean existMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+    public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 
-        return this.store.existMyserverblocks(hash);
+        return this.store.existMyserverblocks(prevhash);
     }
 
-    public void deleteMyserverblocks(Sha256Hash hash) throws BlockStoreException {
+    public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 
-        this.store.deleteMyserverblocks(hash);
+        this.store.deleteMyserverblocks(prevhash);
     }
 }
