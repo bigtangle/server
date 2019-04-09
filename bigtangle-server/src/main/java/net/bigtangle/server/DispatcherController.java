@@ -38,7 +38,6 @@ import net.bigtangle.core.http.OkResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.LogResultService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
@@ -82,9 +81,6 @@ public class DispatcherController {
     private SubtanglePermissionService subtanglePermissionService;
     @Autowired
     private OrderdataService orderdataService;
-
-    @Autowired
-    private LogResultService logResultService;
     @Autowired
     ServerConfiguration serverConfiguratio;
 
@@ -422,13 +418,6 @@ public class DispatcherController {
                 List<String> pubkeys = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkeys);
                 this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case submitLogResult: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                logResultService.submitLogResult(request);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
             case getOrder: {

@@ -36,7 +36,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.LogResult;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -408,9 +407,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = ? and pubKey = ?";
     protected final String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (?, ?, ?, ?, ?)";
     protected final String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = ?, data = ? WHERE dataclassname = ? and pubKey = ?";
-
-    protected final String INSERT_LOGRESULT_SQL = "INSERT INTO logresult (logResultId, logContent, submitDate) VALUE (?, ?, ?)";
-    protected final String SELECT_LOGRESULT_SQL = "SELECT logResultId, logContent, submitDate FROM logresult WHERE logResultId = ?";
 
     protected final String INSERT_BATCHBLOCK_SQL = "INSERT INTO batchblock (hash, block, inserttime) VALUE (?, ?, ?)";
     protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = ?";
@@ -4707,30 +4703,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
-    @Override
-    public void insertLogResult(LogResult logResult) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_LOGRESULT_SQL);
-            preparedStatement.setString(1, logResult.getLogResultId());
-            preparedStatement.setString(2, logResult.getLogContent());
-            preparedStatement.setTimestamp(3, new java.sql.Timestamp(logResult.getSubmitDate().getTime()));
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
+ 
     @Override
     public void insertBatchBlock(Block block) throws BlockStoreException {
         maybeConnect();
