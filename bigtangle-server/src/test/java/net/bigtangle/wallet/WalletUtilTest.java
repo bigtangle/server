@@ -50,11 +50,7 @@ public class WalletUtilTest {
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() > 0);
-        for (ECKey ecKey : issuedKeys) {
-            log.debug(ecKey.getPublicKeyAsHex());
-            log.debug(ecKey.getPrivateKeyAsHex());
-            log.debug(ecKey.toAddress(MainNetParams.get()).toString());
-        }
+      
         String oldPassword = "test";
         String password = "test";
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
@@ -70,8 +66,12 @@ public class WalletUtilTest {
         if (wallet.isEncrypted()) {
             wallet.decrypt(oldPassword);
         }
-        wallet.encrypt(scrypt, aesKey);
-
+       wallet.encrypt(scrypt, aesKey);
+       List<ECKey>   k2=wallet.walletKeys(aesKey);
+  
+        assertTrue(wallet.isEncrypted());
+      //  assertEquals(issuedKeys, k2);
+        issuedKeys.stream().allMatch(num -> k2.contains(num));
     }
 
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
