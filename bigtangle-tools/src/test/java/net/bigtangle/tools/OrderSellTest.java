@@ -1,15 +1,25 @@
 package net.bigtangle.tools;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.OrderdataResponse;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -18,29 +28,31 @@ public class OrderSellTest extends AbstractIntegrationTest {
     // buy everthing in test
 
     @Test
-    public void sell() throws Exception {
-    
-        while (true) {
-            Thread.sleep(5000);
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrder.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-             
-    
+    public void sellThread() throws Exception {
 
+        while (true) {
+            sell();
         }
 
     }
 
-    // let the wallet 1 has money to buy order
-    @Test
-    public void payMoneyToWallet1() throws Exception {
-        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        wallet1();
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333333300l);
+    public void sell() throws Exception {
 
-        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        List<String> keyStrHex000 = new ArrayList<String>();
+
+        for (ECKey ecKey : walletKeys) {
+            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        }
+
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        List<UTXO> utxos = getBalancesResponse.getOutputs();
+        Collections.shuffle(utxos);
+        for (UTXO utxo : utxos) {
+            walletAppKit.wallet().makeAndConfirmSellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+        }
 
     }
 
