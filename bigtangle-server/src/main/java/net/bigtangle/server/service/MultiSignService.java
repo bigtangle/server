@@ -2,8 +2,10 @@ package net.bigtangle.server.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,10 @@ public class MultiSignService {
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
+            throws Exception {
+      return   getMultiSignListWithTokenid(tokenid, new HashSet<String>(addresses), isSign);
+    }
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws Exception {
         List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses, isSign);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();

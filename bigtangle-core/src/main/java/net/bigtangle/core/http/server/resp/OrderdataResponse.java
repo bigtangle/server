@@ -6,17 +6,20 @@
 package net.bigtangle.core.http.server.resp;
 
 import java.util.List;
+import java.util.Map;
 
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.http.AbstractResponse;
 
 public class OrderdataResponse extends AbstractResponse {
 
     private List<OrderRecord> allOrdersSorted;
-
-    public static AbstractResponse createOrderRecordResponse(List<OrderRecord> allOrdersSorted) {
+    private Map<String, Token> tokennames;
+    public static AbstractResponse createOrderRecordResponse(List<OrderRecord> allOrdersSorted,Map<String, Token> tokennames) {
         OrderdataResponse res = new OrderdataResponse();
         res.allOrdersSorted = allOrdersSorted;
+        res.tokennames =tokennames;
         return res;
     }
 
@@ -26,6 +29,14 @@ public class OrderdataResponse extends AbstractResponse {
 
     public void setAllOrdersSorted(List<OrderRecord> allOrdersSorted) {
         this.allOrdersSorted = allOrdersSorted;
+    }
+
+    public Map<String, Token> getTokennames() {
+        return tokennames;
+    }
+
+    public void setTokennames(Map<String, Token> tokennames) {
+        this.tokennames = tokennames;
     }
 
 }

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
@@ -75,6 +76,9 @@ import net.bigtangle.server.service.SolidityState;
  * 
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
+    
+    private static final String LIMIT_5000 = " limit 5000 ";
+
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     public static final String VERSION_SETTING = "version";
@@ -2497,12 +2501,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Token> getTokensList() throws BlockStoreException {
+    public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND tokentype=0 ";
+            if(tokenids!=null &&!tokenids.isEmpty() ) {
+                sql+= "  tokenid in ( " +  buildINList(tokenids) + " )"; 
+            }
+            sql+= LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3229,7 +3237,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    //TODO do nothing here?
     public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
             throws BlockStoreException {
         List<TokenSerial> list = new ArrayList<TokenSerial>();
@@ -3387,19 +3395,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses, boolean isSign)
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
-        if (addresses != null && !addresses.isEmpty()) {
-            String addressString = " AND address IN(";
-            for (String address : addresses) {
-                addressString += "'" + address + "',";
-            }
-            addressString = addressString.substring(0, addressString.length() - 1) + ") ";
-            sql += addressString;
+        if (addresses != null && !addresses.isEmpty()) { 
+            sql +=  " AND address IN( "+ buildINList(addresses) + " ) ";
         }
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND tokenid=?";
@@ -3444,6 +3447,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    private String buildINList(Set<String> datalist) {
+        String in ="";
+        for (String d : datalist) {
+            in += "'" + d + "',";
+        }
+        in = in.substring(0, in.length() - 1) + ") ";
+        return in;
     }
 
     @Override
@@ -5472,7 +5484,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL + " limit 2000 ");
+            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL + LIMIT_5000);
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
@@ -5512,7 +5524,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL + " limit 2000 ");
+            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL + LIMIT_5000);
             s.setString(1, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
@@ -5551,7 +5563,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + " limit 2000 ");
+            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + LIMIT_5000);
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();

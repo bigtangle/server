@@ -5,6 +5,7 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class TokensService {
 
     public AbstractResponse getTokensList() throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        list.addAll(store.getTokensList());
+        list.addAll(store.getTokensList(new HashSet<String>()));
         return GetTokensResponse.create(list);
     }
 

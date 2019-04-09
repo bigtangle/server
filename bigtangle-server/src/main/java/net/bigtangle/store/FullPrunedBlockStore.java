@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
@@ -357,7 +358,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException;
 
     /* Wallet / Informational */
-    public List<Token> getTokensList() throws BlockStoreException;
+    public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 
     public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
             throws BlockStoreException;
@@ -395,7 +396,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public int getCountMultiSignByAlready(String tokenid, long tokenindex) throws BlockStoreException;
 
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, List<String> addresses, boolean isSign)
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException;

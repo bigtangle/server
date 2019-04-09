@@ -7,6 +7,7 @@ package net.bigtangle.server.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
@@ -140,7 +142,7 @@ public class WalletService {
         return list;
     }
 
-    public AbstractResponse getAccountOutputs(Set<byte[]> pubKeyHashs) {
+    public AbstractResponse getAccountOutputs(Set<byte[]> pubKeyHashs) throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);
@@ -148,17 +150,17 @@ public class WalletService {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-        return GetOutputsResponse.create(outputs);
+        return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
     public AbstractResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
             throws Exception {
         List<UTXO> outputs = this.store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
 
-        return GetOutputsResponse.create(outputs);
+        return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
-    public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) {
+    public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) throws BlockStoreException {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(pubKey);
 
@@ -169,7 +171,7 @@ public class WalletService {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-        return GetOutputsResponse.create(outputs);
+        return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
     public AbstractResponse getOutputsWithHexStr(String hexStr) throws BlockStoreException {
@@ -189,5 +191,19 @@ public class WalletService {
         long outputindex = Long.parseLong(strs[1]);
         UTXO utxo = store.getOutputsWithHexStr(hash, outputindex);
         return utxo;
+    }
+    
+    public Map<String, Token> getTokename(List<UTXO> outxos) throws BlockStoreException {
+        Set<String> tokenids = new HashSet<String>();
+        for (UTXO d : outxos) {
+            tokenids.add(d.getTokenId());
+      
+        }
+        Map<String, Token> re = new HashMap<String, Token>();
+        List<Token> tokens = store.getTokensList(tokenids);
+        for (Token t : tokens) {
+            re.put(t.getTokenid(), t);
+        }
+        return re;
     }
 }
