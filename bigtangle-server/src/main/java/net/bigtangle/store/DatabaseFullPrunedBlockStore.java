@@ -2504,7 +2504,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND tokentype=0 ";
             if(tokenids!=null &&!tokenids.isEmpty() ) {
-                sql+= "  tokenid in ( " +  buildINList(tokenids) + " )"; 
+                sql+= "  and tokenid in ( " +  buildINList(tokenids) + " )"; 
             }
             sql+= LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
@@ -3450,7 +3450,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         for (String d : datalist) {
             in += "'" + d + "',";
         }
-        in = in.substring(0, in.length() - 1) + ") ";
+        in = in.substring(0, in.length() - 1) ;
         return in;
     }
 
