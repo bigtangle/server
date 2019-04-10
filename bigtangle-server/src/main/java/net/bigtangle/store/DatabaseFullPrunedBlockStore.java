@@ -541,9 +541,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Create tables if needed
             if (!tablesExists()) {
                 createTables();
+            }else {
+                log.info("setting table   Exists");
             }
         } catch (SQLException e) {
-
+            log.error("create table error",e);
             throw new BlockStoreException(e);
         }
     }

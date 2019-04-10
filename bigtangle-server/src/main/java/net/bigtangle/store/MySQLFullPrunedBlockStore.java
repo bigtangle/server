@@ -216,7 +216,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_SETTINGS_TABLE);
+      
         sqlStatements.add(CREATE_BLOCKS_TABLE);
         sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
@@ -238,6 +238,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_ORDER_MATCHING_TABLE);
         sqlStatements.add(CREATE_CONFIRMATION_DEPENDENCY_TABLE);
         sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
+        sqlStatements.add(CREATE_SETTINGS_TABLE);
         return sqlStatements;
     }
 
