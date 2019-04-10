@@ -46,17 +46,15 @@ public class DBStoreConfiguration {
 
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
-        try {
-        serverConfiguration.setServiceWait();
+       
+   
         if ("phoenix".equalsIgnoreCase(dbtype))
             return createPhoenixBlockStore();
         if ("cassandra".equalsIgnoreCase(dbtype))
             return createCassandraBlockStore();
         else
             return createMysqlBlockStore();
-        }finally {
-            serverConfiguration.setServiceOK();
-        }
+       
     }
 
     private FullPrunedBlockStore createCassandraBlockStore() throws BlockStoreException {
@@ -66,9 +64,11 @@ public class DBStoreConfiguration {
     }
 
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
+        serverConfiguration.setServiceWait();
+        
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-
+        serverConfiguration.setServiceOK();
         return store;
     }
 

@@ -44,14 +44,14 @@ public class ServerConfiguration {
         return serviceReady;
     }
 
-    public synchronized Boolean setServiceOK() {
+    public synchronized void setServiceOK() {
 
-        return serviceReady = true;
+          serviceReady = true;
     }
 
-    public synchronized Boolean setServiceWait() {
+    public synchronized void setServiceWait() {
 
-        return serviceReady = false;
+          serviceReady = false;
     }
 
     public String getRequester() {
