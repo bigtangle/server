@@ -845,7 +845,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException
      *             If the block store could not be created.
      */
-    private void createTables() throws SQLException, BlockStoreException {
+    private synchronized void createTables() throws SQLException, BlockStoreException {
         try {
             beginDatabaseBatchWrite();
             // create all the database tables
