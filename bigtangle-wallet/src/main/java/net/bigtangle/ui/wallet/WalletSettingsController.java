@@ -156,11 +156,11 @@ public class WalletSettingsController {
 
         if (aesKey != null) {
             // This is weak. We should encrypt the new seed here.
-            informationalAlert(Main.getText("w_s_c_m"), Main.getText("w_s_c_d"));
+            informationalAlert(Main.getText("walletisencrypted"), Main.getText("newpassword"));
         }
 
         log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
-        informationalAlert(Main.getText("w_s_c_m1"), Main.getText("w_s_c_d1"));
+        informationalAlert(Main.getText("walletisencrypted1"), Main.getText("newpassword1"));
         overlayUI.done();
         Main.instance.controller.restoreFromSeedAnimation();
 
@@ -183,7 +183,7 @@ public class WalletSettingsController {
             Main.instance.overlayUI("wallet_set_password.fxml");
         } else {
             Main.walletAppKit.wallet().decrypt(aesKey);
-            informationalAlert(Main.getText("w_s_c_m2"), Main.getText("w_s_c_d2"));
+            informationalAlert(Main.getText("walletisencrypted2"), Main.getText("newpassword2"));
             passwordButton.setText("Set password");
             aesKey = null;
         }

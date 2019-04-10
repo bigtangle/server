@@ -99,14 +99,14 @@ public class WalletSetPasswordController {
     @FXML
     public void setPasswordClicked(ActionEvent event) {
         if (!pass1.getText().equals(pass2.getText())) {
-            informationalAlert(Main.getText("w_s_p_c_m"), Main.getText("w_s_p_c_d"));
+            informationalAlert(Main.getText("passwordnotmatch"), Main.getText("retyppassword"));
             return;
         }
         String password = pass1.getText();
         // This is kind of arbitrary and we could do much more to help people
         // pick strong passwords.
         if (password.length() < 4) {
-            informationalAlert(Main.getText("w_s_p_c_m1"), Main.getText("w_s_p_c_d1"));
+            informationalAlert(Main.getText("passwordnotmatch1"), Main.getText("retyppassword1"));
             return;
         }
         Main.password = pass1.getText();
@@ -134,7 +134,7 @@ public class WalletSetPasswordController {
                 }
                 Main.walletAppKit.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
-                informationalAlert(Main.getText("w_s_p_c_m2"), Main.getText("w_s_p_c_d2"));
+                informationalAlert(Main.getText("passwordnotmatch2"), Main.getText("retyppassword2"));
                 overlayUI.done();
             }
         };

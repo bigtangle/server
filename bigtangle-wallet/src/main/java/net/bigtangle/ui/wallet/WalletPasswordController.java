@@ -70,7 +70,7 @@ public class WalletPasswordController {
     @FXML void confirmClicked(ActionEvent event) {
         String password = pass1.getText();
         if (password.isEmpty() || password.length() < 4) {
-            informationalAlert(Main.getText("w_p_c_m"), Main.getText("w_p_c_d"));
+            informationalAlert(Main.getText("wrongpassword"), Main.getText("passwordagain"));
             return;
         }
 
@@ -88,7 +88,7 @@ public class WalletPasswordController {
                     fadeIn(widgetGrid);
                     fadeIn(explanationLabel);
                     fadeIn(buttonsBox);
-                    informationalAlert(Main.getText("w_p_c_m1"), Main.getText("w_p_c_d1"));
+                    informationalAlert(Main.getText("wrongpassword1"), Main.getText("passwordagain1"));
                 }
             }
         };

@@ -196,7 +196,7 @@ public class EckeyController {
                     alert.setWidth(500);
                     alert.setTitle("");
                     alert.setHeaderText(null);
-                    alert.setContentText(Main.getText("w_p_c_m"));
+                    alert.setContentText(Main.getText("wrongpassword"));
 
                     alert.showAndWait();
                 }
@@ -205,7 +205,7 @@ public class EckeyController {
                 alert.setWidth(500);
                 alert.setTitle("");
                 alert.setHeaderText(null);
-                alert.setContentText(Main.getText("w_p_c_m"));
+                alert.setContentText(Main.getText("wrongpassword"));
 
                 alert.showAndWait();
             }
