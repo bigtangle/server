@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -42,6 +43,7 @@ public class OrderSellTest extends AbstractIntegrationTest {
         List<UTXO> utxos = getBalancesResponse.getOutputs();
         Collections.shuffle(utxos);
         for (UTXO utxo : utxos) {
+            if(!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId()))
             walletAppKit.wallet().makeAndConfirmSellOrder(null, utxo.getTokenId(), 100, 2, null, null);
         }
 
