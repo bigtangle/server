@@ -98,6 +98,7 @@ public class DispatcherController {
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
+            if(serverConfiguration.getPermissioned())
             checkPermission(httpServletResponse, httprequest);
             checkReady(httpServletResponse, httprequest);
             switch (reqCmd0000) {
@@ -474,14 +475,13 @@ public class DispatcherController {
 
     private void checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
-        if (serverConfiguration.checkService()) {
-            if (!checkAuth(httpServletResponse, httprequest)) {
+        if (!serverConfiguration.checkService()) {
+            
                 AbstractResponse resp = ErrorResponse.create(103);
                 resp.setMessage("service is not ready.");
                 this.outPrintJSONString(httpServletResponse, resp);
                 return;
-
-            }
+ 
         }
     }
 

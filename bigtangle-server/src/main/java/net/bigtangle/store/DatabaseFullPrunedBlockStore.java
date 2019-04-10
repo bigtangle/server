@@ -75,7 +75,7 @@ import net.bigtangle.server.service.SolidityState;
  * 
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
-    
+
     private static final String LIMIT_5000 = " limit 5000 ";
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
@@ -848,9 +848,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             beginDatabaseBatchWrite();
             // create all the database tables
             for (String sql : getCreateTablesSQL()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql);
-                }
+
+                log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql);
+
                 Statement s = conn.get().createStatement();
                 try {
                     s.execute(sql);
@@ -2503,10 +2503,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND tokentype=0 ";
-            if(tokenids!=null &&!tokenids.isEmpty() ) {
-                sql+= "  and tokenid in ( " +  buildINList(tokenids) + " )"; 
+            if (tokenids != null && !tokenids.isEmpty()) {
+                sql += "  and tokenid in ( " + buildINList(tokenids) + " )";
             }
-            sql+= LIMIT_5000;
+            sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3233,7 +3233,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    //TODO do nothing here?
+
+    // TODO do nothing here?
     public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
             throws BlockStoreException {
         List<TokenSerial> list = new ArrayList<TokenSerial>();
@@ -3397,8 +3398,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
-        if (addresses != null && !addresses.isEmpty()) { 
-            sql +=  " AND address IN( "+ buildINList(addresses) + " ) ";
+        if (addresses != null && !addresses.isEmpty()) {
+            sql += " AND address IN( " + buildINList(addresses) + " ) ";
         }
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND tokenid=?";
@@ -3446,11 +3447,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     private String buildINList(Set<String> datalist) {
-        String in ="";
+        String in = "";
         for (String d : datalist) {
             in += "'" + d + "',";
         }
-        in = in.substring(0, in.length() - 1) ;
+        in = in.substring(0, in.length() - 1);
         return in;
     }
 
@@ -4703,7 +4704,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
- 
+
     @Override
     public void insertBatchBlock(Block block) throws BlockStoreException {
         maybeConnect();

@@ -129,6 +129,11 @@ public class Context {
         isStrictMode = true;
     }
 
+    
+    public static Context create(NetworkParameters params) {
+        Context  context = new Context(params);
+        return context;
+    }
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
     public static Context getOrCreate(NetworkParameters params) {
         Context context;

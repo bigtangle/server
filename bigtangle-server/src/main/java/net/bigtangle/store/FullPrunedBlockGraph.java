@@ -95,7 +95,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Autowired
     public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore)
             throws BlockStoreException {
-        super(Context.getOrCreate(networkParameters), blockStore);
+         
+        super(Context.create(networkParameters), blockStore);
         this.blockStore = blockStore;
         this.networkParameters = networkParameters;
     }
