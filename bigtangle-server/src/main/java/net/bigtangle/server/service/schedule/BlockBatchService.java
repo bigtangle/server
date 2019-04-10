@@ -18,6 +18,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -43,10 +44,13 @@ public class BlockBatchService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
+    @Autowired
+    ServerConfiguration serverConfiguration;
+    
     @Scheduled(fixedRate = 10000)
 
     public void batch() {
-        if (scheduleConfiguration.isBlockBatchService_active()) {
+        if (scheduleConfiguration.isBlockBatchService_active()&& serverConfiguration.checkService()) {
             batchDo();
         }
 

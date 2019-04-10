@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.UnsolidBlockService;
 
 @Component
@@ -21,7 +22,8 @@ public class ScheduleUnsolidBlockService {
 
     @Autowired
     private UnsolidBlockService unsolidBlockService;
-
+    @Autowired
+    ServerConfiguration serverConfiguration;
     /*
      * unsolid blocks can be solid, if previous can be found in network etc.
      * read data from table oder by insert time, use add Block to check again,
@@ -29,7 +31,7 @@ public class ScheduleUnsolidBlockService {
      */
     @Scheduled(fixedRate = 5000)
     public void updateUnsolideService() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             unsolidBlockService.updateUnsolideServiceSingle();
         }
 

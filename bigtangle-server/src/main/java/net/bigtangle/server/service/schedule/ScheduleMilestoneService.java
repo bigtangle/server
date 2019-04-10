@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.MilestoneService;
 
 @Component
@@ -23,10 +24,11 @@ public class ScheduleMilestoneService {
   
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
-
+    @Autowired
+    ServerConfiguration serverConfiguration;
     @Scheduled(fixedRate = 5000)
     public void updateMilestoneService() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
                 milestoneService.update();

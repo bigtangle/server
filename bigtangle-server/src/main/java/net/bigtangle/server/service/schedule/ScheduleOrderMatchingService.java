@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.OrdermatchService;
 
 @Component
@@ -24,10 +25,11 @@ public class ScheduleOrderMatchingService {
 
     @Autowired
     private OrdermatchService ordermatchService;
-    
+    @Autowired
+    ServerConfiguration serverConfiguration;
     @Scheduled(fixedRate = 30000)
     public void updateOrderMatching() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             ordermatchService. updateOrderMatchingDo();
         }
     }

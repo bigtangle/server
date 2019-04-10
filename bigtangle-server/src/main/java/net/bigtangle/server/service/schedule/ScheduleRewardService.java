@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.RewardService;
 
 @Component
@@ -25,9 +26,12 @@ public class ScheduleRewardService {
     @Autowired
     private RewardService rewardService;
 
+    @Autowired
+    ServerConfiguration serverConfiguration;
+    
     @Scheduled(fixedRate = 30000)
     public void updateReward() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
                 logger.debug(" Start updateReward: ");
                 rewardService.performRewardVotingSingleton();

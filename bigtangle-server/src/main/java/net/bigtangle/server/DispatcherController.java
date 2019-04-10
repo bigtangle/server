@@ -4,7 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -82,7 +87,7 @@ public class DispatcherController {
     @Autowired
     private OrderdataService orderdataService;
     @Autowired
-    ServerConfiguration serverConfiguratio;
+    ServerConfiguration serverConfiguration;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -93,64 +98,24 @@ public class DispatcherController {
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
-            if (settingService.getPermissionFlag()) {
-                if (!checkAuth(httpServletResponse, httprequest)) {
-                    AbstractResponse resp = ErrorResponse.create(100);
-                    resp.setMessage("no auth");
-                    this.outPrintJSONString(httpServletResponse, resp);
-                    return;
-
-                }
-            }
-
+            checkPermission(httpServletResponse, httprequest);
+            checkReady(httpServletResponse, httprequest);
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = transactionService.askTransactionBlock();
                 rollingBlock.setMinerAddress(
-                        Address.fromBase58(networkParameters, serverConfiguratio.getMineraddress()).getHash160());
+                        Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
                 register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
                 break;
             case saveBlock: {
-                Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                if (serverConfiguratio.getMyserverblockOnly()) {
-                    if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
-                        AbstractResponse resp = ErrorResponse.create(101);
-                        resp.setErrorcode(403);
-                        resp.setMessage("server accept only his tip selection for validation");
-                        this.outPrintJSONString(httpServletResponse, resp);
-                    } else {
-                        blockService.saveBlock(block);
-                        deleteRegisterBlock(block);
-                        this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                    }
-                } else {
-                    blockService.saveBlock(block);
-                    deleteRegisterBlock(block);
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                }
+                saveBlock(bodyByte, httpServletResponse);
             }
                 break;
             case batchBlock: {
-                Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                if (serverConfiguratio.getMyserverblockOnly()) {
-                    if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
-                        AbstractResponse resp = ErrorResponse.create(101);
-                        resp.setErrorcode(403);
-                        resp.setMessage("server accept only his tip selection for validation");
-                        this.outPrintJSONString(httpServletResponse, resp);
-                    } else {
-                        blockService.batchBlock(block);
-                        deleteRegisterBlock(block);
-                        this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                    }
-                } else {
-                    blockService.batchBlock(block);
-                    deleteRegisterBlock(block);
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                }
+                batchBlock(bodyByte, httpServletResponse);
             }
                 break;
             case getOutputs: {
@@ -165,15 +130,7 @@ public class DispatcherController {
             }
                 break;
             case getOutputsHistory: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();
-                String toaddress = request.get("toaddress") == null ? "" : request.get("toaddress").toString();
-                Long starttime = request.get("starttime") == null ? null
-                        : Long.valueOf(request.get("starttime").toString());
-                Long endtime = request.get("endtime") == null ? null : Long.valueOf(request.get("endtime").toString());
-                AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
-                this.outPrintJSONString(httpServletResponse, response);
+                outputHistory(bodyByte, httpServletResponse);
             }
                 break;
             case getTokens: {
@@ -353,16 +310,7 @@ public class DispatcherController {
                 String hexStr = (String) request.get("hexStr");
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
                 this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case getOutputMultiList: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String hexStr = (String) request.get("hexStr");
-                int index = (int) request.get("index");
-                AbstractResponse response = walletService.getOutputsMultiList(hexStr, index);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
+            }  
                 break;
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -433,11 +381,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case updateReward: {
-                rewardService.createAndAddMiningRewardBlock();
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
-            }
-                break;
+
             default:
                 break;
             }
@@ -460,6 +404,88 @@ public class DispatcherController {
         }
     }
 
+    private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse)
+            throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
+        String reqStr = new String(bodyByte, "UTF-8");
+        Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+        String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();
+        String toaddress = request.get("toaddress") == null ? "" : request.get("toaddress").toString();
+        Long starttime = request.get("starttime") == null ? null
+                : Long.valueOf(request.get("starttime").toString());
+        Long endtime = request.get("endtime") == null ? null : Long.valueOf(request.get("endtime").toString());
+        AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
+        this.outPrintJSONString(httpServletResponse, response);
+    }
+
+    private void batchBlock(byte[] bodyByte, HttpServletResponse httpServletResponse)
+            throws BlockStoreException, Exception {
+        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+        if (serverConfiguration.getMyserverblockOnly()) {
+            if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
+                AbstractResponse resp = ErrorResponse.create(101);
+                resp.setErrorcode(403);
+                resp.setMessage("server accept only his tip selection for validation");
+                this.outPrintJSONString(httpServletResponse, resp);
+            } else {
+                blockService.batchBlock(block);
+                deleteRegisterBlock(block);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+        } else {
+            blockService.batchBlock(block);
+            deleteRegisterBlock(block);
+            this.outPrintJSONString(httpServletResponse, OkResponse.create());
+        }
+    }
+
+    private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse)
+            throws BlockStoreException, Exception {
+        Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+        if (serverConfiguration.getMyserverblockOnly()) {
+            if (!blockService.existMyserverblocks(block.getPrevBlockHash())) {
+                AbstractResponse resp = ErrorResponse.create(101);
+                resp.setErrorcode(403);
+                resp.setMessage("server accept only his tip selection for validation");
+                this.outPrintJSONString(httpServletResponse, resp);
+            } else {
+                blockService.saveBlock(block);
+                deleteRegisterBlock(block);
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+        } else {
+            blockService.saveBlock(block);
+            deleteRegisterBlock(block);
+            this.outPrintJSONString(httpServletResponse, OkResponse.create());
+        }
+    }
+
+    private void checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+            throws BlockStoreException, Exception {
+        if (settingService.getPermissionFlag()) {
+            if (!checkAuth(httpServletResponse, httprequest)) {
+                AbstractResponse resp = ErrorResponse.create(100);
+                resp.setMessage("no auth");
+                this.outPrintJSONString(httpServletResponse, resp);
+                return;
+
+            }
+        }
+    }
+
+    private void checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+            throws BlockStoreException, Exception {
+        if (serverConfiguration.checkService()) {
+            if (!checkAuth(httpServletResponse, httprequest)) {
+                AbstractResponse resp = ErrorResponse.create(103);
+                resp.setMessage("service is not ready.");
+                this.outPrintJSONString(httpServletResponse, resp);
+                return;
+
+            }
+        }
+    }
+
+    
     public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
         String header = httprequest.getHeader("Authorization");
         boolean flag = false;
@@ -526,12 +552,12 @@ public class DispatcherController {
 
     // server may accept only block from his server
     public void register(Block block) throws BlockStoreException {
-        if (serverConfiguratio.getMyserverblockOnly())
+        if (serverConfiguration.getMyserverblockOnly())
             blockService.insertMyserverblocks(block.getPrevBlockHash(), block.getHash(), System.currentTimeMillis());
     }
 
     public void deleteRegisterBlock(Block block) throws BlockStoreException {
-        if (serverConfiguratio.getMyserverblockOnly()) {
+        if (serverConfiguration.getMyserverblockOnly()) {
             blockService.deleteMyserverblocks(block.getPrevBlockHash());
         }
     }

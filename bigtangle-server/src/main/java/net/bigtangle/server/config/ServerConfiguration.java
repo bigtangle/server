@@ -30,6 +30,30 @@ public class ServerConfiguration {
 
     private Boolean myserverblockOnly = false;
 
+    // does not reply all service request until service is set ready
+    private Boolean serviceReady = true;
+
+    public synchronized Boolean checkService() {
+        if (!serviceReady) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+            }
+        }
+        return serviceReady;
+    }
+
+    public synchronized Boolean setServiceOK() {
+
+        return serviceReady = true;
+    }
+
+    public synchronized Boolean setServiceWait() {
+
+        return serviceReady = false;
+    }
+
     public String getRequester() {
         return requester;
     }
@@ -108,6 +132,14 @@ public class ServerConfiguration {
 
     public void setMyserverblockOnly(Boolean myserverblockOnly) {
         this.myserverblockOnly = myserverblockOnly;
+    }
+
+    public Boolean getServiceReady() {
+        return serviceReady;
+    }
+
+    public void setServiceReady(Boolean serviceReady) {
+        this.serviceReady = serviceReady;
     }
 
 }

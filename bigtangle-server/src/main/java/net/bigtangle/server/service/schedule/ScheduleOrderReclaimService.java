@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.OrderReclaimService;
 
 @Component
@@ -24,10 +25,12 @@ public class ScheduleOrderReclaimService {
 
     @Autowired
     private OrderReclaimService orderReclaimService;
-
+    @Autowired
+    ServerConfiguration serverConfiguration;
+    
     @Scheduled(fixedRate = 600000)
     public void updateMilestoneService() {
-        if (scheduleConfiguration.isMilestone_active()) {
+        if (scheduleConfiguration.isMilestone_active()&& serverConfiguration.checkService()) {
             orderReclaimService.updateOrderReclaim();
         }
     }

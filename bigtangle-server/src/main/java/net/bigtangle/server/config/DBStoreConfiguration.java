@@ -40,15 +40,23 @@ public class DBStoreConfiguration {
     private int fullStoreDepth = 10;
     @Autowired
     NetworkParameters networkParameters;
+    @Autowired
+    ServerConfiguration serverConfiguration;
+    
 
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
+        try {
+        serverConfiguration.setServiceWait();
         if ("phoenix".equalsIgnoreCase(dbtype))
             return createPhoenixBlockStore();
         if ("cassandra".equalsIgnoreCase(dbtype))
             return createCassandraBlockStore();
         else
             return createMysqlBlockStore();
+        }finally {
+            serverConfiguration.setServiceOK();
+        }
     }
 
     private FullPrunedBlockStore createCassandraBlockStore() throws BlockStoreException {
