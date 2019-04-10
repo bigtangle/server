@@ -518,14 +518,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
         this.allConnections = new LinkedBlockingQueue<Connection>();
-        try {
-            beginDatabaseBatchWrite();
-            create();
-            commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            log.error("", e);
-            this.abortDatabaseBatchWrite();
-        }
+//        try {
+//            beginDatabaseBatchWrite();
+//            create();
+//            commitDatabaseBatchWrite();
+//        } catch (Exception e) {
+//            log.error("", e);
+//            this.abortDatabaseBatchWrite();
+//        }
     }
 
     public void create() throws BlockStoreException {

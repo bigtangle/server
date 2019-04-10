@@ -68,8 +68,10 @@ public class DBStoreConfiguration {
         
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
+        store.create();
+        
         serverConfiguration.setServiceOK();
-        return store;
+        return store ;
     }
 
     public FullPrunedBlockStore createPhoenixBlockStore() throws BlockStoreException {
