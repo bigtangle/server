@@ -31,7 +31,7 @@ public class ServerConfiguration {
     private Boolean myserverblockOnly = false;
 
     // does not reply all service request until service is set ready
-    private Boolean serviceReady = true;
+    private Boolean serviceReady = false;
 
     public synchronized Boolean checkService() {
         if (!serviceReady) {
