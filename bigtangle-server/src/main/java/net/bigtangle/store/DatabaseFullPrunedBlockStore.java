@@ -518,14 +518,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
         this.allConnections = new LinkedBlockingQueue<Connection>();
-//        try {
-//            beginDatabaseBatchWrite();
-//            create();
-//            commitDatabaseBatchWrite();
-//        } catch (Exception e) {
-//            log.error("", e);
-//            this.abortDatabaseBatchWrite();
-//        }
+        // try {
+        // beginDatabaseBatchWrite();
+        // create();
+        // commitDatabaseBatchWrite();
+        // } catch (Exception e) {
+        // log.error("", e);
+        // this.abortDatabaseBatchWrite();
+        // }
     }
 
     public void create() throws BlockStoreException {
@@ -541,11 +541,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Create tables if needed
             if (!tablesExists()) {
                 createTables();
-            }else {
+            } else {
                 log.info("setting table   Exists");
             }
-        } catch (SQLException e) {
-            log.error("create table error",e);
+        } catch (Exception e) {
+            log.warn("create table error", e);
             throw new BlockStoreException(e);
         }
     }
@@ -847,7 +847,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     private synchronized void createTables() throws SQLException, BlockStoreException {
         try {
-            beginDatabaseBatchWrite();
+            // beginDatabaseBatchWrite();
             // create all the database tables
             for (String sql : getCreateTablesSQL()) {
 
@@ -856,6 +856,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 Statement s = conn.get().createStatement();
                 try {
                     s.execute(sql);
+                } catch (Exception e) {
+                    log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql, e);
+
                 } finally {
                     s.close();
                 }
@@ -885,11 +888,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // "default
             // market", "http://localhost:8089/", 0,
             // false, true, true);
-            this.commitDatabaseBatchWrite();
+            // this.commitDatabaseBatchWrite();
 
         } catch (Exception e) {
             log.error("", e);
-            this.abortDatabaseBatchWrite();
+            // this.abortDatabaseBatchWrite();
         }
     }
 
