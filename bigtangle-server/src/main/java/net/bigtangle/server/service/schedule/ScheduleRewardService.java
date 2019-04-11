@@ -33,7 +33,7 @@ public class ScheduleRewardService {
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start updateReward: ");
+                logger.debug(" Start schedule updateReward: ");
                 rewardService.performRewardVotingSingleton();
             } catch (Exception e) {
                 logger.warn("performRewardVoting ", e);

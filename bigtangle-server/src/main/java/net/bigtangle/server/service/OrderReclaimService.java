@@ -7,12 +7,15 @@ package net.bigtangle.server.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
@@ -47,7 +50,7 @@ public class OrderReclaimService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-    private final Semaphore lock = new Semaphore(1);
+    private final Semaphore lock = new Semaphore(1, true);
 
     public void updateOrderReclaim() {
 
@@ -55,16 +58,19 @@ public class OrderReclaimService {
             logger.debug("performOrderReclaimMaintenance Update already running. Returning...");
             return;
         }
-        synchronized (this) {
-            try {
-                logger.debug(" Start performOrderReclaimMaintenance: ");
-                performOrderReclaimMaintenance();
-            } catch (Exception e) {
-                logger.warn("performOrderReclaimMaintenance ", e);
-            } finally {
-                lock.release();
-            }
+
+        try {
+            logger.debug(" Start performOrderReclaimMaintenance: ");
+            Stopwatch watch = Stopwatch.createStarted();
+            performOrderReclaimMaintenance();
+            logger.info("performOrderReclaimMaintenance time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+        } catch (Exception e) {
+            logger.warn("performOrderReclaimMaintenance ", e);
+        } finally {
+            lock.release();
         }
+
     }
 
     /**

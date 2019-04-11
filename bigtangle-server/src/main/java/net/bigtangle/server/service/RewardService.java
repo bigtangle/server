@@ -52,7 +52,7 @@ public class RewardService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    private final Semaphore lock = new Semaphore(1);
+    private final Semaphore lock = new Semaphore(1, true);
 
     private static final Logger logger = LoggerFactory.getLogger(RewardService.class);
 
@@ -61,8 +61,8 @@ public class RewardService {
             logger.debug("performRewardVoting Update already running. Returning...");
             return;
         }
-        synchronized (this) {
-            try {
+
+        try {
             logger.info("performRewardVoting  started");
             Stopwatch watch = Stopwatch.createStarted();
             performRewardVoting();
@@ -72,7 +72,7 @@ public class RewardService {
         } finally {
             lock.release();
         }
-        }
+        
 
     }
 

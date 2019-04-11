@@ -53,7 +53,7 @@ public class OrdermatchService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrdermatchService.class);
 
-    private final Semaphore lock = new Semaphore(1);
+    private final Semaphore lock =  new Semaphore(1, true);
 
     public void updateOrderMatchingDo() {
 
@@ -61,7 +61,7 @@ public class OrdermatchService {
             logger.debug("updateOrderMatching Update already running. Returning...");
             return;
         }
-        synchronized (this) {
+    
             try {
                 logger.debug(" Start updateOrderMatching: ");
 
@@ -77,7 +77,7 @@ public class OrdermatchService {
             } finally {
                 lock.release();
             }
-        }
+
     }
 
     /**
