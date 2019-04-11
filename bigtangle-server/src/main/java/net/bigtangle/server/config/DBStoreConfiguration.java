@@ -64,13 +64,10 @@ public class DBStoreConfiguration {
     }
 
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
-        serverConfiguration.setServiceWait();
-        
+  
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-        store.create();
-        
-        serverConfiguration.setServiceOK();
+    
         return store ;
     }
 
