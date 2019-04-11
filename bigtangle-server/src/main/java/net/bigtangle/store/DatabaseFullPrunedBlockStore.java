@@ -871,6 +871,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 Statement s = conn.get().createStatement();
                 try {
                     s.execute(sql);
+
+                } catch (Exception e) {
+                    log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql, e);
+
                 } finally {
                     s.close();
                 }
