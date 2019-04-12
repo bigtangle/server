@@ -21,7 +21,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
     public void buy() throws Exception {
         wallet1();
         while (true) {
-            Thread.sleep(5000);
+         
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrder.name(),
                     Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -39,9 +39,9 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 }
 
             }
-
+            Thread.sleep(5000);
         }
-
+     
     }
 
     // let the wallet 1 has money to buy order
