@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;

@@ -126,6 +126,22 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    beneficiaryaddress varchar(255),\n" // public addressl
             + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n";
 
+    private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
+            + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
+            + "    txhash varbinary(32) NOT NULL,\n" 
+            + "    tokenid varchar(255) NOT NULL,\n" 
+
+            + "    restingOrderId varchar(64) NOT NULL,\n" 
+            + "    incomingOrderId varchar(64) NOT NULL,\n" 
+            + "    incomingBuy boolean NOT NULL,\n" 
+            + "    price bigint NOT NULL,\n" 
+            + "    executedQuantity bigint NOT NULL,\n" 
+            + "    remainingQuantity bigint NOT NULL,\n" 
+            
+            + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n" 
+            + ")\n";
+
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    confirmed boolean NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
@@ -223,6 +239,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
+        sqlStatements.add(CREATE_MATCHING_TABLE);
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
         sqlStatements.add(CREATE_MULTISIGN_TABLE);

@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +77,7 @@ import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
+import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 
 /**
  * <p>
@@ -88,6 +87,7 @@ import net.bigtangle.server.service.ValidatorService;
  */
 @Service
 public class FullPrunedBlockGraph extends AbstractBlockGraph {
+
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
     protected final FullPrunedBlockStore blockStore;
@@ -107,6 +107,33 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private ValidatorService validatorService;
     @Autowired
     private OrderTickerService tickerService;
+    
+    public static class OrderMatchingResult {
+        Set<OrderRecord> spentOrders;
+        Transaction outputTx; 
+        Collection<OrderRecord> remainingOrders;
+        Map<String, List<Event>> tokenId2Events;
+        
+        public OrderMatchingResult(Set<OrderRecord> spentOrders, Transaction outputTx, Collection<OrderRecord> remainingOrders, Map<String, List<Event>> tokenId2Events) {
+            this.spentOrders = spentOrders;
+            this.outputTx = outputTx;
+            this.remainingOrders = remainingOrders;
+            this.tokenId2Events = tokenId2Events;
+            
+        }
+
+        public Set<OrderRecord> getSpentOrders() {
+            return spentOrders;
+        }
+
+        public Transaction getOutputTx() {
+            return outputTx;
+        }
+
+        public Collection<OrderRecord> getRemainingOrders() {
+            return remainingOrders;
+        }
+    }
 
     @Override
     public boolean add(Block block, boolean allowUnsolid) {
@@ -449,24 +476,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     
     private void confirmOrderMatching(Block block) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly generated remaining order book
-        Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> matchingResult = generateOrderMatching(block);
+        OrderMatchingResult matchingResult = generateOrderMatching(block);
         
         // All consumed order records are now spent by this block
-        for (OrderRecord o : matchingResult.getLeft()) {
+        for (OrderRecord o : matchingResult.getSpentOrders()) {
             blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true, block.getHash());
         }
 
         // If virtual outputs have not been inserted yet, insert them  
-        insertVirtualUTXOs(block, matchingResult.getMiddle());
+        insertVirtualUTXOs(block, matchingResult.getOutputTx());
 
         // Set virtual outputs confirmed
-        confirmTransaction(matchingResult.getMiddle(), block.getHash());
+        confirmTransaction(matchingResult.getOutputTx(), block.getHash());
         
         // Finally, if the new orders have not been inserted yet, insert them
-        insertVirtualOrderRecords(block, matchingResult.getRight());
+        insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
 
         // Set new orders confirmed
-        for (OrderRecord o : matchingResult.getRight())
+        for (OrderRecord o : matchingResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
         
         // Set used other output spent
@@ -474,6 +501,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set own output confirmed
         blockStore.updateOrderMatchingConfirmed(block.getHash(), true);
+        
+        // Update the matching history in db
+        tickerService.addMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
     }
 
     private void confirmOrderReclaim(Block block) throws BlockStoreException {
@@ -695,7 +725,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     
     private void unconfirmOrderMatchingDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly generated remaining order book
-        Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> matchingResult = generateOrderMatching(block);
+        OrderMatchingResult matchingResult = generateOrderMatching(block);
         
         // Disconnect matching record spender
         if (blockStore.getOrderMatchingSpent(block.getHash())) {
@@ -703,7 +733,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         // Disconnect all virtual transaction output dependents
-        Transaction tx = matchingResult.getMiddle();
+        Transaction tx = matchingResult.getOutputTx();
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
@@ -818,18 +848,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     
     private void unconfirmOrderMatching(Block block) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly generated remaining order book
-        Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> matchingResult = generateOrderMatching(block);
+        OrderMatchingResult matchingResult = generateOrderMatching(block);
         
         // All consumed order records are now unspent by this block
-        for (OrderRecord o : matchingResult.getLeft()) {
+        for (OrderRecord o : matchingResult.getSpentOrders()) {
             blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false, null);
         }
 
         // Set virtual outputs unconfirmed
-        unconfirmTransaction(matchingResult.getMiddle(), block);
+        unconfirmTransaction(matchingResult.getOutputTx(), block);
 
         // Set new orders unconfirmed
-        for (OrderRecord o : matchingResult.getRight())
+        for (OrderRecord o : matchingResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false);
         
         // Set used other output unspent
@@ -837,6 +867,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set own output unconfirmed
         blockStore.updateOrderMatchingConfirmed(block.getHash(), false);
+        
+        // Update the matching history in db
+        tickerService.removeMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
     }
 
     private void unconfirmOrderReclaim(Block block) throws BlockStoreException {
@@ -1043,15 +1076,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void connectReward(Block block) throws BlockStoreException {
-        // Check if eligible:
-        Pair<Eligibility, Long> eligiblityAndTxReward = validatorService.checkRewardEligibility(block);    
+        // Check if eligible when connecting (prototype):
+        RewardBuilderResult reward = validatorService.checkRewardEligibility(block);    
         
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
             long toHeight = rewardInfo.getToHeight();
    
-            blockStore.insertReward(block.getHash(), toHeight, eligiblityAndTxReward.getLeft(), prevRewardHash, eligiblityAndTxReward.getRight());
+            blockStore.insertReward(block.getHash(), toHeight, reward.getEligibility(), prevRewardHash, reward.getPerTxReward());
         } catch (IOException e) {
             // Cannot happen when connecting
             e.printStackTrace();
@@ -1118,7 +1151,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return new consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
      * @throws BlockStoreException
      */
-    public Triple<Collection<OrderRecord>, Transaction, Collection<OrderRecord>> generateOrderMatching(Block block) throws BlockStoreException {
+    public OrderMatchingResult generateOrderMatching(Block block) throws BlockStoreException {
         Map<ByteBuffer, TreeMap<String, Long>> pubKey2Proceeds = new HashMap<>();
         
         // Get previous order matching block
@@ -1223,6 +1256,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         // From all orders and ops, begin order matching algorithm by filling order books
+        // TODO use txhash as order ID?
         int orderId = 0; 
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
@@ -1245,12 +1279,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         
         // Collect and process all matching events
+        Map<String, List<Event>> tokenId2Events = new HashMap<>();
         for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
             String tokenId = orderBook.getKey();
             List<Event> events = ((OrderBookEvents) orderBook.getValue().listener()).collect();
-            
-            // Ticker service: For showing the current exchange rate
-            tickerService.updatePrices(tokenId, events);
+            tokenId2Events.put(tokenId, events);
             
             for (Event event : events) {
                 if (!(event instanceof Match))
@@ -1379,7 +1412,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         tx.addInput(input);
         
         // Return all consumed orders, virtual order matching tx and newly generated remaining MODIFIED order book
-        return Triple.of(spentOrders, tx, remainingOrders.values());
+        return new OrderMatchingResult(spentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
     private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, long fromHeight, long toHeight) throws BlockStoreException {

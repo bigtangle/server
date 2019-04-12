@@ -10,7 +10,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +20,9 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -147,10 +146,10 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException {
-        Triple<Eligibility, Transaction, Pair<Long, Long>> result = validatorService.makeReward(prevTrunk, prevBranch,
+        RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch,
                 prevRewardHash);
 
-        if (result.getLeft() != Eligibility.ELIGIBLE) {
+        if (result.getEligibility() != Eligibility.ELIGIBLE) {
             if (!override) {
                 logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
                 return null;
@@ -165,8 +164,8 @@ public class RewardService {
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
 
         // Make the new block
-        block.addTransaction(result.getMiddle());
-        block.setDifficultyTarget(result.getRight().getLeft());
+        block.addTransaction(result.getTx());
+        block.setDifficultyTarget(result.getDifficulty());
         block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
 
         // Enforce timestamp equal to previous max for reward blocktypes
