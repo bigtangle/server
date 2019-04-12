@@ -172,4 +172,12 @@ public class BlockEvaluation implements Serializable {
         this.maintained = maintained;
     }
 
+    @Override
+    public String toString() {
+        return "BlockEvaluation [blockHash=" + blockHash + ", rating=" + rating + ", depth=" + depth
+                + ", cumulativeWeight=" + cumulativeWeight + ", height=" + height + ", milestone=" + milestone
+                + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", milestoneDepth=" + milestoneDepth
+                + ", insertTime=" + insertTime + ", maintained=" + maintained + "]";
+    }
+
 }

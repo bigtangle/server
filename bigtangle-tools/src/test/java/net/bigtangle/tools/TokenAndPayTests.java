@@ -62,7 +62,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.3.3"));
+        assertTrue(version.equals("0.3.3.1"));
     }
 
     @Test
@@ -81,15 +81,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void testCreateTokenYuan() throws JsonProcessingException, Exception {
-        // Setup transaction and signatures
-        wallet2();
-        List<ECKey> keys = walletAppKit2.wallet().walletKeys(null);
-
-        testCreateMultiSigToken(keys.get(7), "人民币");
-
-    }
+  
 
     public void testRequestBlock(Block block) throws Exception {
 
