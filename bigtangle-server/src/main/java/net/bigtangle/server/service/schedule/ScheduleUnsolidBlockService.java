@@ -32,7 +32,7 @@ public class ScheduleUnsolidBlockService {
     @Scheduled(fixedRate = 5000)
     public void updateUnsolideService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
-            unsolidBlockService.updateUnsolideServiceSingle();
+            unsolidBlockService.startSingleProcess();
         }
 
     }

@@ -39,14 +39,20 @@ public class UnsolidBlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
-    private final Semaphore lock = new Semaphore(1);
+    private boolean lock = false;
+    private Long lockTime;
+    private Long lockTimeMaximum = 1000000l;
 
-    public void updateUnsolideServiceSingle() {
-        if (!lock.tryAcquire()) {
-            logger.debug("updateUnsolideService Update already running. Returning...");
+    public void startSingleProcess() {
+
+        if (lock && lockTime + lockTimeMaximum < System.currentTimeMillis()) {
+            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
+
         try {
+            lock = true;
+
             logger.debug(" Start updateUnsolideServiceSingle: ");
             deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
@@ -55,7 +61,7 @@ public class UnsolidBlockService {
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
         } finally {
-            lock.release();
+            lock = false;
         }
 
     }
@@ -99,7 +105,7 @@ public class UnsolidBlockService {
                         blockgraph.add(req, true);
                     else {
                         // pre recursive check
-                        logger.debug(" prev not found: "+ req.toString());
+                        logger.debug(" prev not found: " + req.toString());
                         requestPrev(req);
                     }
 
@@ -118,7 +124,7 @@ public class UnsolidBlockService {
                         // pre recursive check
                         requestPrev(req);
                     }
-             
+
                 }
             }
         } catch (Exception e) {
