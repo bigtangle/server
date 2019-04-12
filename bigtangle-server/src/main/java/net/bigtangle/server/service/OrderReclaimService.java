@@ -4,9 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -48,18 +48,20 @@ public class OrderReclaimService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final Semaphore lock = new Semaphore(1, true);
+    private   boolean lock = false;
+    private   Long lockTime;
+    private   Long lockTimeMaximum=1000000l;
+    public void startSingleProcess() {
 
-    public void updateOrderReclaim() {
-
-        if (!lock.tryAcquire()) {
-            logger.debug("performOrderReclaimMaintenance Update already running. Returning...");
+        if (lock && lockTime + lockTimeMaximum < System.currentTimeMillis() ) {
+            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
 
         try {
+            lock =true;
             logger.debug(" Start performOrderReclaimMaintenance: ");
             Stopwatch watch = Stopwatch.createStarted();
             performOrderReclaimMaintenance();
@@ -68,7 +70,7 @@ public class OrderReclaimService {
         } catch (Exception e) {
             logger.warn("performOrderReclaimMaintenance ", e);
         } finally {
-            lock.release();
+            lock= false;
         }
 
     }

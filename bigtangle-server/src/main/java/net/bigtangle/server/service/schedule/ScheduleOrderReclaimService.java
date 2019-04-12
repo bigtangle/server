@@ -18,7 +18,7 @@ import net.bigtangle.server.service.OrderReclaimService;
 @Component
 @EnableAsync
 public class ScheduleOrderReclaimService {
-    private static final Logger logger = LoggerFactory.getLogger(ScheduleOrderReclaimService.class);
+    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
@@ -31,7 +31,7 @@ public class ScheduleOrderReclaimService {
     @Scheduled(fixedRate = 600000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()&& serverConfiguration.checkService()) {
-            orderReclaimService.updateOrderReclaim();
+            orderReclaimService.startSingleProcess();
         }
     }
 

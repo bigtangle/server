@@ -34,7 +34,7 @@ public class ScheduleRewardService {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
                 logger.debug(" Start schedule updateReward: ");
-                rewardService.performRewardVotingSingleton();
+                rewardService.startSingleProcess();
             } catch (Exception e) {
                 logger.warn("performRewardVoting ", e);
             }

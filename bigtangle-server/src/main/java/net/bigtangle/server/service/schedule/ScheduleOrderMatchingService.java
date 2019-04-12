@@ -30,7 +30,7 @@ public class ScheduleOrderMatchingService {
     @Scheduled(fixedRate = 30000)
     public void updateOrderMatching() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
-            ordermatchService. updateOrderMatchingDo();
+            ordermatchService. startSingleProcess();
         }
     }
 

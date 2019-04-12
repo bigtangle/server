@@ -51,18 +51,22 @@ public class OrdermatchService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    private static final Logger logger = LoggerFactory.getLogger(OrdermatchService.class);
+    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final Semaphore lock =  new Semaphore(1, true);
+    private   boolean lock = false;
+    private   Long lockTime;
+    private   Long lockTimeMaximum=1000000l;
+    public void startSingleProcess() {
 
-    public void updateOrderMatchingDo() {
-
-        if (!lock.tryAcquire()) {
-            logger.debug("updateOrderMatching Update already running. Returning...");
+        if (lock && lockTime + lockTimeMaximum >  System.currentTimeMillis() ) {
+            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-    
-            try {
+
+        try {
+            lock =true;
+            lockTime=System.currentTimeMillis();
+            
                 logger.debug(" Start updateOrderMatching: ");
 
                 Stopwatch watch = Stopwatch.createStarted();
@@ -75,7 +79,7 @@ public class OrdermatchService {
             catch (Exception e) {
                 logger.warn("updateOrderMatching ", e);
             } finally {
-                lock.release();
+                lock=false;
             }
 
     }

@@ -50,18 +50,20 @@ public class RewardService {
     private ValidatorService validatorService;
     @Autowired
     protected NetworkParameters networkParameters;
+    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private   boolean lock = false;
+    private   Long lockTime;
+    private   Long lockTimeMaximum=1000000l;
+    public void startSingleProcess() {
 
-    private final Semaphore lock = new Semaphore(1, true);
-
-    private static final Logger logger = LoggerFactory.getLogger(RewardService.class);
-
-    public void performRewardVotingSingleton() throws Exception {
-        if (!lock.tryAcquire()) {
-            logger.debug("performRewardVoting Update already running. Returning...");
+        if (lock && lockTime + lockTimeMaximum >  System.currentTimeMillis() ) {
+            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
 
         try {
+            lock =true;
+            lockTime=System.currentTimeMillis();
             logger.info("performRewardVoting  started");
             Stopwatch watch = Stopwatch.createStarted();
             performRewardVoting();
@@ -69,7 +71,7 @@ public class RewardService {
         } catch (Exception e) {
             logger.warn("performRewardVoting ", e);
         } finally {
-            lock.release();
+            lock=false;
         }
         
 
