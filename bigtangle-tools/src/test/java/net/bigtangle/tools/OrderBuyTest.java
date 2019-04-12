@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import org.junit.Test;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -34,7 +35,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
                     // sell order and make buy
                     long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-                    walletAppKit1.wallet().makeAndConfirmBuyOrder(null, orderRecord.getOfferTokenid(), price,
+                   walletAppKit1.wallet().makeAndConfirmBuyOrder(null, orderRecord.getOfferTokenid(), price,
                             orderRecord.getOfferValue(), null, null);
                 }
 
@@ -52,7 +53,8 @@ public class OrderBuyTest extends AbstractIntegrationTest {
         wallet1();
         giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333333300l);
 
-        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+     Block   b=  walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+     log.debug("block " + b.toString());
 
     }
 

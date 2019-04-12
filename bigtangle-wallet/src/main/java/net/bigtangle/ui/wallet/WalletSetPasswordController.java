@@ -106,7 +106,7 @@ public class WalletSetPasswordController {
         // This is kind of arbitrary and we could do much more to help people
         // pick strong passwords.
         if (password.length() < 4) {
-            informationalAlert(Main.getText("passwordnotmatch1"), Main.getText("retyppassword1"));
+            informationalAlert(Main.getText("passwordMinmum"), Main.getText("retyppassword1"));
             return;
         }
         Main.password = pass1.getText();

@@ -81,7 +81,6 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.crypto.ChildNumber;
@@ -1390,8 +1389,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     /**
      * Enumerates possible resolutions for missing signatures.
      */
-    public enum MissingSigsMode
-    {
+    public enum MissingSigsMode {
         /** Input script will have OP_0 instead of missing signatures */
         USE_OP_ZERO,
         /**
@@ -2113,8 +2111,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     // All Spend Candidates as List<UTXO>
-    public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns)
-            throws IOException {
+    public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns) throws IOException {
         lock.lock();
         try {
             List<UTXO> candidates = new ArrayList<UTXO>();
@@ -2150,8 +2147,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return candidates;
     }
 
-    public void completeTx(SendRequest req, KeyParameter aesKey) throws InsufficientMoneyException, IOException
-            {
+    public void completeTx(SendRequest req, KeyParameter aesKey) throws InsufficientMoneyException, IOException {
         // Calculate a list of ALL potential candidates for spending and
         // then ask a coin selector to provide us
         // with the actual outputs that'll be used to gather the required
@@ -2351,7 +2347,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return false;
     }
 
-    public void saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey) throws JsonProcessingException, IOException {
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
+            throws JsonProcessingException, IOException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
@@ -2384,7 +2381,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // save block
         block.solve();
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-
+        return block;
     }
 
     // for unit tests
@@ -2397,7 +2394,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // for unit tests
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-            Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws JsonProcessingException, IOException  {
+            Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws JsonProcessingException, IOException {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -2438,11 +2435,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    public void payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey) throws JsonProcessingException, IOException, InsufficientMoneyException
-             {
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         if (giveMoneyResult.isEmpty()) {
-            return;
+            return null;
         }
         Coin summe = Coin.ZERO;
         Transaction multispent = new Transaction(params);
@@ -2473,28 +2470,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-
-    }
-
-    private List<UTXO> getTransactionAndGetBalances(ECKey ecKey) throws JsonProcessingException, IOException {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        List<String> keyStrHex000 = new ArrayList<String>();
-        keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-
-        String response = OkHttp3Util.post(serverurl + ReqCmd.getBalances.name(),
-                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
-
-        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
-        for (UTXO utxo : getBalancesResponse.getOutputs()) {
-            if (utxo.getValue().getValue() > 0) {
-                listUTXO.add(utxo);
-            }
-        }
-        return listUTXO;
+        return rollingBlock;
     }
 
     public Block makeAndConfirmBuyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
-            Long validToTime, Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+            Long validToTime, Long validFromTime)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
         // Burn BIG to buy
         Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
@@ -2530,7 +2511,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    private UTXO getSpendableUTXO(KeyParameter aesKey, Coin amount) throws IOException, InsufficientMoneyException  {
+    private UTXO getSpendableUTXO(KeyParameter aesKey, Coin amount) throws IOException, InsufficientMoneyException {
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
@@ -2542,7 +2523,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block makeAndConfirmSellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount,
-            Long validToTime, Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException  {
+            Long validToTime, Long validFromTime)
+            throws IOException, InsufficientMoneyException, UTXOProviderException {
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
@@ -2579,7 +2561,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    public Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey) throws JsonProcessingException, IOException  {
+    public Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey)
+            throws JsonProcessingException, IOException {
         // Make an order op
         Transaction tx = new Transaction(params);
         OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, orderblockhash);
@@ -2608,7 +2591,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
-            Coin coin, Address address) throws JsonProcessingException, IOException  {
+            Coin coin, Address address) throws JsonProcessingException, IOException {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
@@ -2647,7 +2630,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 
-    public ECKey getECKey(KeyParameter aesKey, String address) throws UTXOProviderException  {
+    public ECKey getECKey(KeyParameter aesKey, String address) throws UTXOProviderException {
 
         List<ECKey> keys = walletKeys(aesKey);
         ECKey beneficiary = null;
@@ -2660,7 +2643,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new UTXOProviderException("no key in wallet is found for this address " + address);
     }
 
-    public void pay(KeyParameter aesKey, Address destination, Coin amount, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException  {
+    public void pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
@@ -2685,8 +2669,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
     }
 
-    public void payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException
-             {
+    public void payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
