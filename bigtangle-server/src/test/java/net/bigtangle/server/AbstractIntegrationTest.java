@@ -459,7 +459,7 @@ public abstract class AbstractIntegrationTest {
             hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
         }
 
-        assertEquals(amount, hashMap.get(tokenId_));
+        assertEquals(amount == 0 ? null : amount, hashMap.get(tokenId_));
     }
 
     protected HashMap<String, Long> getCurrentTokenAmounts() throws BlockStoreException {

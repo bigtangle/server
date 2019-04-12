@@ -32,8 +32,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,6 +141,35 @@ public class ValidatorService {
         }
     }
 
+    public static class RewardBuilderResult {
+        Eligibility eligibility;
+        Transaction tx;
+        long difficulty, perTxReward;
+
+        public RewardBuilderResult(Eligibility eligibility, Transaction tx, long difficulty, long perTxReward) {
+            this.eligibility = eligibility;
+            this.tx = tx;
+            this.difficulty = difficulty;
+            this.perTxReward = perTxReward;
+        }
+
+        public Eligibility getEligibility() {
+            return eligibility;
+        }
+
+        public Transaction getTx() {
+            return tx;
+        }
+
+        public long getDifficulty() {
+            return difficulty;
+        }
+
+        public long getPerTxReward() {
+            return perTxReward;
+        }
+    }
+
     /**
      * Get the {@link Script} from the script bytes or return Script of empty
      * byte array.
@@ -185,12 +212,11 @@ public class ValidatorService {
      * @return eligibility of rewards + new perTxReward)
      * @throws BlockStoreException
      */
-    public Pair<Eligibility, Long> checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
+    public RewardBuilderResult checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-            Triple<Eligibility, Transaction, Pair<Long, Long>> result = makeReward(rewardBlock.getPrevBlockHash(),
+            return makeReward(rewardBlock.getPrevBlockHash(),
                     rewardBlock.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
-            return Pair.of(result.getLeft(), result.getRight().getRight());
 
         } catch (IOException e) {
             // Cannot happen since checked before
@@ -216,7 +242,7 @@ public class ValidatorService {
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
-    public Triple<Eligibility, Transaction, Pair<Long, Long>> makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch,
+    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch,
             Sha256Hash prevRewardHash) throws BlockStoreException {
 
         // Count how many blocks from miners in the reward interval are approved
@@ -286,14 +312,14 @@ public class ValidatorService {
 
         // Invalid if not fulfilling consensus rules
         if (Math.subtractExact(toHeight, fromHeight) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1)
-            return Triple.of(Eligibility.INVALID, tx, Pair.of(difficulty, perTxReward));
+            return new RewardBuilderResult(Eligibility.INVALID, tx, difficulty, perTxReward);
 
         // Ensure enough blocks are approved to be eligible
         if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight)
                 * NetworkParameters.REWARD_MIN_MILESTONE_PERCENTAGE / 100)
-            return Triple.of(Eligibility.ELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+            return new RewardBuilderResult(Eligibility.ELIGIBLE, tx, difficulty, perTxReward);
         else
-            return Triple.of(Eligibility.INELIGIBLE, tx, Pair.of(difficulty, perTxReward));
+            return new RewardBuilderResult(Eligibility.INELIGIBLE, tx, difficulty, perTxReward);
     }
 
     /**
@@ -1864,16 +1890,16 @@ public class ValidatorService {
         }
 
         // Ensure the new difficulty is set correctly
-        Triple<Eligibility, Transaction, Pair<Long, Long>> result = makeReward(block.getPrevBlockHash(),
+        RewardBuilderResult result = makeReward(block.getPrevBlockHash(),
                 block.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
-        if (block.getDifficultyTarget() != result.getRight().getLeft()) {
+        if (block.getDifficultyTarget() != result.getDifficulty()) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect difficulty target");
             return SolidityState.getFailState();
         }
 
-        // Fallback: Ensure the reward information is generated canonically
-        if (!block.getTransactions().get(0).equals(result.getMiddle())) {
+        // Fallback: Ensure everything is generated canonically
+        if (!block.getTransactions().get(0).equals(result.getTx())) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect Transaction");
             return SolidityState.getFailState();

@@ -45,6 +45,7 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredBlockBinary;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -64,6 +65,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
@@ -90,6 +92,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
     public static String DROP_TIPS_TABLE = "DROP TABLE IF EXISTS tips";
     public static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
+    public static String DROP_MATCHING_TABLE = "DROP TABLE IF EXISTS matching";
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
     public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE IF EXISTS multisignby";
     public static String DROP_MULTISIGN_TABLE = "DROP TABLE IF EXISTS multisign";
@@ -399,6 +402,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_ORDER_MATCHING_CONFIRMED_SQL = "UPDATE ordermatching SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_SPENT_SQL = "UPDATE ordermatching SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_NEXT_TX_REWARD_SQL = "UPDATE ordermatching SET nexttxreward = ? WHERE blockhash = ?";
+    
+    /* MATCHING EVENTS */
+    protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
+            + " INTO matching (txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_MATCHING_EVENT_BY_TIME_SQL = "SELECT txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime "
+            + "FROM matching "
+            + "WHERE tokenid = ? "
+            + "ORDER BY inserttime DESC "
+            + "LIMIT ? ";
+    protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
 
     /* OTHER */
     protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex, minimumsign) values (?, ?, ?, ?)";
@@ -640,6 +653,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
         sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
+        sqlStatements.add(DROP_MATCHING_TABLE);
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
         sqlStatements.add(DROP_MULTISIGNBY_TABLE);
         sqlStatements.add(DROP_MULTISIGN_TABLE);
@@ -6076,5 +6090,83 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
     }
-
+    
+    @Override
+    public void insertMatchingEvent(Sha256Hash hash, String key, Match match, long currentTimeMillis)
+            throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_MATCHING_EVENT_SQL);
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.setString(2, key);
+            preparedStatement.setString(3, match.restingOrderId);
+            preparedStatement.setString(4, match.restingOrderId);
+            preparedStatement.setBoolean(5, match.incomingSide == Side.BUY);
+            preparedStatement.setLong(6, match.price);
+            preparedStatement.setLong(7, match.executedQuantity);
+            preparedStatement.setLong(8, match.remainingQuantity);
+            preparedStatement.setLong(9, currentTimeMillis);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<Match> getLastMatchingEvents(String tokenId, int count) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_MATCHING_EVENT_BY_TIME_SQL);
+            preparedStatement.setString(1, tokenId);
+            preparedStatement.setInt(2, count);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<Match> list = new ArrayList<>();
+            while (resultSet.next()) {
+                list.add(new Match(resultSet.getString(3), resultSet.getString(4), 
+                        resultSet.getBoolean(5) ? Side.BUY : Side.SELL, resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8)));
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void deleteMatchingEvents(Sha256Hash hash) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
+            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }
