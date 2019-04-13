@@ -943,8 +943,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
             // Token output table
-            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, "BIG",
-                    "BIG currency", 1, 0, 0, true);
+            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                    "BigTangle currency", 1, 0, 0, true);
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 

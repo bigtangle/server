@@ -200,7 +200,7 @@ public class MonetaryFormatTest {
 
     //@Test
     public void standardCodes() throws Exception {
-        assertEquals(MonetaryFormat.CODE_BTC+" 0.00", MonetaryFormat.BTA.format(Coin.ZERO).toString());
+        assertEquals(NetworkParameters.BIGTANGLE_TOKENID_STRING+" 0.00", MonetaryFormat.BTA.format(Coin.ZERO).toString());
       
     }
 
@@ -208,13 +208,13 @@ public class MonetaryFormatTest {
   
   //  @Test
     public void codeOrientation() throws Exception {
-        assertEquals(MonetaryFormat.CODE_BTC +" 0.00", MonetaryFormat.BTA.prefixCode().format(Coin.ZERO).toString());
-        assertEquals("0.00 "+MonetaryFormat.CODE_BTC, MonetaryFormat.BTA.postfixCode().format(Coin.ZERO).toString());
+        assertEquals(NetworkParameters.BIGTANGLE_TOKENID_STRING +" 0.00", MonetaryFormat.BTA.prefixCode().format(Coin.ZERO).toString());
+        assertEquals("0.00 "+NetworkParameters.BIGTANGLE_TOKENID_STRING, MonetaryFormat.BTA.postfixCode().format(Coin.ZERO).toString());
     }
 
     //@Test
     public void codeSeparator() throws Exception {
-        assertEquals(MonetaryFormat.CODE_BTC+"@0.00", MonetaryFormat.BTA.codeSeparator('@').format(Coin.ZERO).toString());
+        assertEquals(NetworkParameters.BIGTANGLE_TOKENID_STRING+"@0.00", MonetaryFormat.BTA.codeSeparator('@').format(Coin.ZERO).toString());
     }
 
  

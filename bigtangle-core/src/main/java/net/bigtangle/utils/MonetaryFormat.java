@@ -55,8 +55,7 @@ public final class MonetaryFormat {
 
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
-    /** Currency code for base Bitcoin. */
-    public static final String CODE_BTC = "BIG";
+   
   
     public static final int MAX_DECIMALS = 2;
 
