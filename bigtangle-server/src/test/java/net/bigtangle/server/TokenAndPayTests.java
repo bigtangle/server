@@ -1087,7 +1087,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         block_.solve();
 
         // save block
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block_.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());
 
     }
 
