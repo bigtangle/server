@@ -37,6 +37,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
@@ -401,7 +402,16 @@ public class DispatcherController {
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
-        } catch (Throwable exception) {
+        } catch (NoBlockException e) {
+            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length);
+            logger.error("", e);
+            AbstractResponse resp = ErrorResponse.create(404);
+            resp.setErrorcode(404);
+            resp.setMessage(e.getLocalizedMessage());
+            this.outPrintJSONString(httpServletResponse, resp);
+        } 
+        catch (Throwable exception) {
             logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             logger.error("", exception);

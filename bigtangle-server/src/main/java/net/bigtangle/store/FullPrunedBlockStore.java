@@ -110,13 +110,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException;
 
-    /**
-     * Returns the StoredBlock that was added as a StoredUndoableBlock given a
-     * hash. The returned values block.getHash() method will be equal to the
-     * parameter. If no such block is found, returns null.
-     */
-    StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
-
+ 
     /**
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
      * null if none is found

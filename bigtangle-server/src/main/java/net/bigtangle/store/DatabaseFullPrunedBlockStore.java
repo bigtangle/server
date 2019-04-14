@@ -60,6 +60,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
@@ -1061,10 +1062,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     }
 
-    public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
+    public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException, NoBlockException {
         StoredBlockBinary r = getBinary(hash, wasUndoableOnly);
         if (r == null)
-            return null;
+             throw new NoBlockException();
         Block b = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
         b.verifyHeader();
         return new StoredBlock(b, r.getHeight());
@@ -1215,14 +1216,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+    public StoredBlock get(Sha256Hash hash) throws BlockStoreException, NoBlockException {
         return get(hash, false);
     }
 
-    @Override
-    public StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
-        return get(hash, true);
-    }
+ 
 
     @Override
     public Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException {

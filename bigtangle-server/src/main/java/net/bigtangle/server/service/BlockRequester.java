@@ -17,6 +17,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
@@ -41,35 +42,37 @@ public class BlockRequester {
 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
-     //  log.debug("requestBlock" + hash.toString()); 
+        // log.debug("requestBlock" + hash.toString());
         String[] re = serverConfiguration.getRequester().split(",");
-        List<String> badserver=new ArrayList<String>();
+        List<String> badserver = new ArrayList<String>();
         byte[] data = null;
-        for (String s : re) { 
-            if(s!=null && !"".equals(  s.trim()) && ! badserver (badserver,s))
-                    {
-            HashMap<String, String> requestParam = new HashMap<String, String>();
-            requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes())); 
-            try {
-                data = OkHttp3Util.post(  s.trim() +"/" + ReqCmd.getBlock, Json.jsonmapper().writeValueAsString(requestParam));
-                transactionService.addConnected(data, false, false);
-                break;
-            } catch (Exception e) {
-                log.debug(s, e);
-                badserver.add(s);
+        for (String s : re) {
+            if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
+                HashMap<String, String> requestParam = new HashMap<String, String>();
+                requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes()));
+                try {
+                    data = OkHttp3Util.post(s.trim() + "/" + ReqCmd.getBlock,
+                            Json.jsonmapper().writeValueAsString(requestParam));
+                    transactionService.addConnected(data, false, false);
+                    break;
+                } catch (Exception e) {
+                    log.debug(s, e);
+             
+                    badserver.add(s);
+                }
             }
-                    }
         }
         return data;
     }
 
-    public boolean  badserver( List<String> badserver, String s) {
-        for(String d: badserver)
-        {
-            if(d.equals(s)) return true;
+    public boolean badserver(List<String> badserver, String s) {
+        for (String d : badserver) {
+            if (d.equals(s))
+                return true;
         }
         return false;
     }
+
     public void broadcastBlocks(long startheight, String kafkaserver) {
 
     }

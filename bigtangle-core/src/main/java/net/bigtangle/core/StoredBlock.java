@@ -25,6 +25,7 @@ import java.util.Locale;
 import com.google.common.base.Objects;
 
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 
@@ -104,12 +105,13 @@ public class StoredBlock {
      *
      * @return the previous block in the graph or null if it was not found in
      *         the store.
+     * @throws NoBlockException 
      */
-    public StoredBlock getPrev(BlockStore store) throws BlockStoreException {
+    public StoredBlock getPrev(BlockStore store) throws BlockStoreException, NoBlockException {
         return store.get(getHeader().getPrevBlockHash());
     }
 
-    public StoredBlock getPrevBranch(BlockStore store) throws BlockStoreException {
+    public StoredBlock getPrevBranch(BlockStore store) throws BlockStoreException, NoBlockException {
         return store.get(getHeader().getPrevBranchBlockHash());
     }
 

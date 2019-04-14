@@ -21,6 +21,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -142,12 +143,12 @@ public class RewardService {
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws BlockStoreException {
+            throws BlockStoreException, NoBlockException {
         return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException {
+            boolean override) throws BlockStoreException, NoBlockException {
         RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch,
                 prevRewardHash);
 

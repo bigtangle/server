@@ -23,6 +23,7 @@ import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.kafka.KafkaConfiguration;
@@ -53,7 +54,7 @@ public class BlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-    public Block getBlock(Sha256Hash blockhash) throws BlockStoreException {
+    public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash).getHeader();
     }
 
@@ -61,7 +62,7 @@ public class BlockService {
         return store.getBlockWrap(blockhash);
     }
 
-    public List<Block> getBlocks(List<Sha256Hash> hashes) throws BlockStoreException {
+    public List<Block> getBlocks(List<Sha256Hash> hashes) throws BlockStoreException, NoBlockException {
         List<Block> blocks = new ArrayList<Block>();
         for (Sha256Hash hash : hashes) {
             blocks.add(getBlock(hash));

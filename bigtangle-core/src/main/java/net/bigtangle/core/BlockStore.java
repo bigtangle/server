@@ -20,6 +20,7 @@
 package net.bigtangle.core;
 
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
@@ -43,7 +44,7 @@ public interface BlockStore {
      * Returns the StoredBlock given a hash. The returned values block.getHash() method will be equal to the
      * parameter. If no such block is found, returns null.
      */
-    StoredBlock get(Sha256Hash hash) throws BlockStoreException;
+    StoredBlock get(Sha256Hash hash) throws BlockStoreException, NoBlockException;
     
     /** Closes the store. */
     void close() throws BlockStoreException;

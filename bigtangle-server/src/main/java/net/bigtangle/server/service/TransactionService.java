@@ -19,6 +19,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
@@ -117,7 +118,7 @@ public class TransactionService {
     /*
      * check before add Block from kafka , the block can be already exists.
      */
-    public boolean checkBlockExists(Block block) throws BlockStoreException {
+    public boolean checkBlockExists(Block block) throws BlockStoreException, NoBlockException {
         return store.get(block.getHash()) != null;
     }
 
