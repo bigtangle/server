@@ -18,14 +18,11 @@ defaultTasks 'clean', 'build'
  
  
 dependencies {
-    compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
+
     compile project(':bigtangle-core')
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-cache', version:  ver.spring_boot
-    compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
-    compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
     compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
     compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
@@ -35,11 +32,10 @@ dependencies {
     compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
  
     compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
-    compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
+  
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     compile project(':bigtangle-core')
-    compile group: 'org.springframework', name: 'spring-web', version: ver.spring
-    compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
+
 //   compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: ver.spring_boot
 //   compile group: 'javax.servlet.jsp.jstl', name: 'jstl-api', version: '1.2'
     
