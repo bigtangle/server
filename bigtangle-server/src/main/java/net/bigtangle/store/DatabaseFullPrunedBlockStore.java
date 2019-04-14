@@ -280,6 +280,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TOKEN_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, tokenkeyvalues"
             + " FROM tokens WHERE blockhash = ?";
 
+    protected final String SELECT_TOKENID_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, tokenkeyvalues"
+            + " FROM tokens WHERE tokenid = ?";
+    
     protected final String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = ?, spenderblockhash = ? "
             + " WHERE blockhash = ?";
 
@@ -402,15 +405,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String UPDATE_ORDER_MATCHING_CONFIRMED_SQL = "UPDATE ordermatching SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_SPENT_SQL = "UPDATE ordermatching SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_NEXT_TX_REWARD_SQL = "UPDATE ordermatching SET nexttxreward = ? WHERE blockhash = ?";
-    
+
     /* MATCHING EVENTS */
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
             + " INTO matching (txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_MATCHING_EVENT_BY_TIME_SQL = "SELECT txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime "
-            + "FROM matching "
-            + "WHERE tokenid = ? "
-            + "ORDER BY inserttime DESC "
-            + "LIMIT ? ";
+            + "FROM matching " + "WHERE tokenid = ? " + "ORDER BY inserttime DESC " + "LIMIT ? ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
 
     /* OTHER */
@@ -943,8 +943,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
             // Token output table
-            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    "BigTangle currency", 1, 0, 0, true);
+            Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true);
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -2648,6 +2648,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
             }
+            sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3255,6 +3256,52 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    @Override
+    public List<Token> getTokenID(String tokenid) throws BlockStoreException {
+        List<Token> list = new ArrayList<Token>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENID_SQL);
+            preparedStatement.setString(1, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Token tokens = new Token();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setConfirmed(resultSet.getBoolean("confirmed"));
+                tokens.setTokenid(resultSet.getString("tokenid"));
+                tokens.setTokenindex(resultSet.getInt("tokenindex"));
+                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setTokenname(resultSet.getString("tokenname"));
+                tokens.setDescription(resultSet.getString("description"));
+                tokens.setUrl(resultSet.getString("url"));
+                tokens.setSignnumber(resultSet.getInt("signnumber"));
+
+                tokens.setTokentype(resultSet.getInt("tokentype"));
+                tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
+                byte[] buf = resultSet.getBytes("tokenkeyvalues");
+                if (buf != null) {
+                    tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+                }
+                list.add(tokens);
+            }
+            return list;
+        } catch (Exception ex) {
+
+            throw new BlockStoreException(ex);
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
     }
 
     // TODO do nothing here?
@@ -6090,7 +6137,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
     }
-    
+
     @Override
     public void insertMatchingEvent(Sha256Hash hash, String key, Match match, long currentTimeMillis)
             throws BlockStoreException {
@@ -6120,7 +6167,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public List<Match> getLastMatchingEvents(String tokenId, int count) throws BlockStoreException {
         maybeConnect();
@@ -6132,8 +6179,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             List<Match> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new Match(resultSet.getString(3), resultSet.getString(4), 
-                        resultSet.getBoolean(5) ? Side.BUY : Side.SELL, resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8)));
+                list.add(new Match(resultSet.getString(3), resultSet.getString(4),
+                        resultSet.getBoolean(5) ? Side.BUY : Side.SELL, resultSet.getLong(6), resultSet.getLong(7),
+                        resultSet.getLong(8)));
             }
             return list;
         } catch (SQLException ex) {
@@ -6148,7 +6196,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
     public void deleteMatchingEvents(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();

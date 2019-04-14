@@ -46,7 +46,6 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
-import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokensService;
@@ -62,8 +61,6 @@ public class DispatcherController {
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
     @Autowired
     private TransactionService transactionService;
-    @Autowired
-    private RewardService rewardService;
     @Autowired
     private NetworkParameters networkParameters;
     @Autowired
@@ -141,12 +138,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getTokensNoMarket: {
+            case getTokensAmount: {
                 AbstractResponse response = tokensService.getTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getMarkets: {
+            case getOTCMarkets: {
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -246,12 +243,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case updateTokenInfo: {
-                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.tokensService.updateTokenInfo(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
-            }
-                break;
+      
             case getUserData: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

@@ -28,7 +28,7 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class TokensService {
 
     public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
-        Token tokens = this.store.getToken(tokenid);
+        List<Token> tokens = this.store.getTokenID(tokenid);
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }

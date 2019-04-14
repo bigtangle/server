@@ -12,7 +12,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.http.AbstractResponse;
 
 public class GetTokensResponse extends AbstractResponse {
-    private Token token;
+  
     private List<Token> tokens;
     private List<TokenSerial> tokenSerials;
     private Map<String, Long> amountMap;
@@ -22,12 +22,7 @@ public class GetTokensResponse extends AbstractResponse {
         res.tokenSerials = tokenSerials;
         return res;
     }
-
-    public static AbstractResponse create(Token token) {
-        GetTokensResponse res = new GetTokensResponse();
-        res.token = token;
-        return res;
-    }
+ 
 
     public static AbstractResponse create(List<Token> tokens) {
         GetTokensResponse res = new GetTokensResponse();
@@ -50,10 +45,7 @@ public class GetTokensResponse extends AbstractResponse {
         return amountMap;
     }
 
-    public Token getToken() {
-        return token;
-    }
-
+  
     public List<TokenSerial> getTokenSerials() {
         return tokenSerials;
     }

@@ -6,19 +6,19 @@ package net.bigtangle.params;
 
 public enum ReqCmd {
 
-    getTip, saveBlock, getOutputs, getTokens, getTokensNoMarket, getMarkets, getTokenById,
+    getTip, saveBlock, getOutputs, getBalances, searchBlock, getBlock, streamBlocks, getOutputsHistory,
 
-    getBalances, searchBlock, getBlock, streamBlocks,
+    getTokens, getTokensAmount, getTokenById, getTokenSerials, getCalTokenIndex,
 
-    getMultiSignWithAddress, getMultiSignWithTokenid,
+    getOrder, getOTCMarkets, getOrdersTicker,
 
-    multiSign, getTokenSerials, getCalTokenIndex, getCountSign, updateTokenInfo, getUserData, userDataList,
+    getMultiSignWithAddress, getMultiSignWithTokenid, getOutputWithKey,
 
-    launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
+    multiSign, getCountSign, launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
 
-    getVOSExecuteList, version,  getOutputWithKey, batchBlock,
-    
-    getOutputsHistory, regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
-    
-    getSubtanglePermissionListByPubkeys, updateSubtangle, getOrder, updateReward;
+    getUserData, userDataList, getVOSExecuteList, version, batchBlock,
+
+    regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
+
+    getSubtanglePermissionListByPubkeys, updateSubtangle;
 }

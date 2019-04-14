@@ -360,7 +360,7 @@ public class OrderController extends ExchangeController {
             requestParam.put("state", orderState.ordinal());
         }
 
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -461,7 +461,7 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMarkets.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {
@@ -482,7 +482,7 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensNoMarket.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensAmount.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -698,7 +698,7 @@ public class OrderController extends ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        Token token_ = getTokensResponse.getToken();
+        Token token_ = getTokensResponse.getTokens().get(0);
 
         String url = token_.getUrl();
         OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),

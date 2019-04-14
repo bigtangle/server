@@ -127,7 +127,7 @@ public class ExchangeController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMarkets.name(), "{}");
+        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(), "{}");
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
 
@@ -507,7 +507,7 @@ public class ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        String marketURL = getTokensResponse.getToken().getUrl();
+        String marketURL = getTokensResponse.getTokens().get(0).getUrl();
 
         if (marketURL == null || marketURL.equals("")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));

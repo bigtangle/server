@@ -989,7 +989,7 @@ public class Main extends Application {
         List<String> tokenList = new ArrayList<String>();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensNoMarket.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensAmount.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);

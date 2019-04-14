@@ -78,10 +78,12 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.InsufficientMoneyException;
+import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
@@ -1085,10 +1087,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     /******************************************************************************************************************/
 
     // region Serialization support
-
-    // TODO: Make this package private once the classes finish moving around.
+ 
     /** Internal use only. */
-    public List<Protos.Key> serializeKeyChainGroupToProtobuf() {
+    protected List<Protos.Key> serializeKeyChainGroupToProtobuf() {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.serializeToProtobuf();
@@ -2473,10 +2474,26 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
-    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
-            Long validToTime, Long validFromTime)
-            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+    // check the token id is on the server
+    // throw NoTokenException
+    public void checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
 
+        GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        if (token.getTokens() == null ||  token.getTokens().isEmpty()) {
+            throw new NoTokenException();
+        }
+
+    }
+
+    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
+            Long validToTime, Long validFromTime) throws JsonProcessingException, IOException,
+            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        // add client check if the tokenid exists
+        checkTokenId(tokenId);
         // Burn BIG to buy
         Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
         UTXO u = getSpendableUTXO(aesKey, amount);
