@@ -1,15 +1,21 @@
 package net.bigtangle.server.service;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.http.server.resp.OrderTickerResponse;
+import net.bigtangle.server.ordermatch.bean.MatchResults;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -20,6 +26,8 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class OrderTickerService {
 
+    
+    private int MAXCOUNT=500;
     @Autowired
     protected FullPrunedBlockStore store;
 
@@ -57,17 +65,37 @@ public class OrderTickerService {
         return store.getBestOpenBuyOrders(tokenId, count);
     }
 
+   
+    
     /**
      * Returns a list of up to n last prices in ascending occurrence
      * @param tokenId ID of token
      * @return a list of up to n last prices in ascending occurrence
      * @throws BlockStoreException 
      */
-    public List<Match> getLastMatchingEvents(String tokenId, int count) throws BlockStoreException {
-        // Count is limited:
-        if (count > 500)
-            count = 500;
-        
-        return store.getLastMatchingEvents(tokenId, count);
+    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds) throws BlockStoreException {
+            
+         List<MatchResults> re = store.getLastMatchingEvents(tokenIds, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
+
+    }
+    
+    private List<MatchResults> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException {
+    
+        return store.getLastMatchingEvents(tokenId,MAXCOUNT);
+    }
+
+    public Map<String, Token> getTokename(List<MatchResults> res) throws BlockStoreException {
+        Set<String> tokenids = new HashSet<String>();
+        for (MatchResults d : res) {
+            tokenids.add(d.getTokenid());
+       
+        }
+        Map<String, Token> re = new HashMap<String, Token>();
+        List<Token> tokens = store.getTokensList(tokenids);
+        for (Token t : tokens) {
+            re.put(t.getTokenid(), t);
+        }
+        return re;
     }
 }

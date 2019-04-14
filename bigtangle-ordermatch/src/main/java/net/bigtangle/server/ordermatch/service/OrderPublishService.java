@@ -19,16 +19,16 @@ import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
-import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
+import net.bigtangle.server.utils.OrderBook;
 
 @Service
 public class OrderPublishService {

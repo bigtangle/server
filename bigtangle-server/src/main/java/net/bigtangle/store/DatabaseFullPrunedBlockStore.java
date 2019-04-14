@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.ordermatch.bean.MatchResults;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
@@ -282,7 +284,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_TOKENID_SQL = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop, tokenkeyvalues"
             + " FROM tokens WHERE tokenid = ?";
-    
+
     protected final String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = ?, spenderblockhash = ? "
             + " WHERE blockhash = ?";
 
@@ -409,8 +411,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /* MATCHING EVENTS */
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
             + " INTO matching (txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected final String SELECT_MATCHING_EVENT_BY_TIME_SQL = "SELECT txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime "
-            + "FROM matching " + "WHERE tokenid = ? " + "ORDER BY inserttime DESC " + "LIMIT ? ";
+    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime "
+            + "FROM matching ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
 
     /* OTHER */
@@ -6169,19 +6171,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Match> getLastMatchingEvents(String tokenId, int count) throws BlockStoreException {
+    public List<MatchResults> getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MATCHING_EVENT_BY_TIME_SQL);
-            preparedStatement.setString(1, tokenId);
-            preparedStatement.setInt(2, count);
+            String sql = SELECT_MATCHING_EVENT;
+            if (tokenIds == null || tokenIds.isEmpty()) {
+                sql += " ORDER BY inserttime DESC " + "LIMIT ? ";
+            } else {
+                sql += " where tokenid IN (" + buildINList(tokenIds) + " )" + "  ORDER BY inserttime DESC " + "LIMIT   "
+                        + count;
+            }
+            preparedStatement = conn.get().prepareStatement(sql);
+
             ResultSet resultSet = preparedStatement.executeQuery();
-            List<Match> list = new ArrayList<>();
+            List<MatchResults> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new Match(resultSet.getString(3), resultSet.getString(4),
-                        resultSet.getBoolean(5) ? Side.BUY : Side.SELL, resultSet.getLong(6), resultSet.getLong(7),
-                        resultSet.getLong(8)));
+                list.add(new MatchResults(Utils.HEX.encode(resultSet.getBytes(1)), resultSet.getString(2),
+                        resultSet.getString(3), resultSet.getString(4), resultSet.getBoolean(5) ? Side.BUY : Side.SELL,
+                        resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9)));
             }
             return list;
         } catch (SQLException ex) {

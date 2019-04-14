@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
+import net.bigtangle.core.Side;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
-import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.service.OrderPublishService;
+import net.bigtangle.server.utils.OrderBook;
 
 @Component
 public class OrderBookHolder {

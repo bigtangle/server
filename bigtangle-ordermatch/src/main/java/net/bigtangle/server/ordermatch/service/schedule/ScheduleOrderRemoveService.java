@@ -14,9 +14,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
+import net.bigtangle.server.utils.OrderBook;
 
 @Component
 @EnableAsync

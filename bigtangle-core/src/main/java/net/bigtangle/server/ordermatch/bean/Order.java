@@ -4,7 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch.bean;
 
-class Order {
+public class Order {
 
     private PriceLevel level;
 

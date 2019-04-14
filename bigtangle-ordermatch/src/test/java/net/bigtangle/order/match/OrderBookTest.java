@@ -10,15 +10,14 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
- 
 
-import net.bigtangle.server.ordermatch.bean.OrderBook;
+import net.bigtangle.core.Side;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Add;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Cancel;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
-import net.bigtangle.server.ordermatch.bean.Side;
+import net.bigtangle.server.utils.OrderBook;
 @Ignore
 //TODO
 public class OrderBookTest {

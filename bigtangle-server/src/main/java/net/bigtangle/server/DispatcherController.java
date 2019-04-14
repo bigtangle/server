@@ -44,6 +44,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MultiSignService;
+import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.SettingService;
@@ -85,6 +86,8 @@ public class DispatcherController {
     private OrderdataService orderdataService;
     @Autowired
     ServerConfiguration serverConfiguration;
+    @Autowired
+    private OrderTickerService orderTickerService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -95,8 +98,8 @@ public class DispatcherController {
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
-            if(serverConfiguration.getPermissioned())
-            checkPermission(httpServletResponse, httprequest);
+            if (serverConfiguration.getPermissioned())
+                checkPermission(httpServletResponse, httprequest);
             checkReady(httpServletResponse, httprequest);
             switch (reqCmd0000) {
             case getTip: {
@@ -308,7 +311,7 @@ public class DispatcherController {
                 String hexStr = (String) request.get("hexStr");
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
                 this.outPrintJSONString(httpServletResponse, response);
-            }  
+            }
                 break;
             case getVOSExecuteList: {
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -379,7 +382,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
+            case getOrdersTicker: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
+                AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             default:
                 break;
             }
@@ -408,8 +418,7 @@ public class DispatcherController {
         Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
         String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();
         String toaddress = request.get("toaddress") == null ? "" : request.get("toaddress").toString();
-        Long starttime = request.get("starttime") == null ? null
-                : Long.valueOf(request.get("starttime").toString());
+        Long starttime = request.get("starttime") == null ? null : Long.valueOf(request.get("starttime").toString());
         Long endtime = request.get("endtime") == null ? null : Long.valueOf(request.get("endtime").toString());
         AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
         this.outPrintJSONString(httpServletResponse, response);
@@ -473,16 +482,15 @@ public class DispatcherController {
     private void checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
         if (!serverConfiguration.checkService()) {
-            
-                AbstractResponse resp = ErrorResponse.create(103);
-                resp.setMessage("service is not ready.");
-                this.outPrintJSONString(httpServletResponse, resp);
-                return;
- 
+
+            AbstractResponse resp = ErrorResponse.create(103);
+            resp.setMessage("service is not ready.");
+            this.outPrintJSONString(httpServletResponse, resp);
+            return;
+
         }
     }
 
-    
     public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
         String header = httprequest.getHeader("Authorization");
         boolean flag = false;

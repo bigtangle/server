@@ -34,10 +34,10 @@ dependencies {
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
     compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
  
-    compile group: 'joda-time', name: 'joda-time', version:  '2.9.8'
-    compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
+   
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     compile project(':bigtangle-core')
+        compile project(':bigtangle-servercore')
     compile group: 'org.springframework', name: 'spring-web', version: ver.spring
     compile group: 'org.springframework', name: 'spring-jdbc', version:  ver.spring
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all

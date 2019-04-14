@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import net.bigtangle.core.Side;
 
-class PriceLevel {
+public class PriceLevel {
 
     private Side side;
 

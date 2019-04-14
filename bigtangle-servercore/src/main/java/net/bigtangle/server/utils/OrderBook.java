@@ -2,15 +2,19 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.ordermatch.bean;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.longs.LongComparators;
+package net.bigtangle.server.utils;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.longs.LongComparators;
+import net.bigtangle.core.Side;
+import net.bigtangle.server.ordermatch.bean.Order;
+import net.bigtangle.server.ordermatch.bean.OrderBookListener;
+import net.bigtangle.server.ordermatch.bean.PriceLevel;
 
 /**
  * An order book.
@@ -30,6 +34,8 @@ public class OrderBook {
     public void lock() {
         this.lock.lock();
     }
+  
+
 
     public void unlock() {
         this.lock.unlock();

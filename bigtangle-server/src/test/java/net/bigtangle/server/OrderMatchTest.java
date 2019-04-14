@@ -39,8 +39,8 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderMatchTest extends AbstractIntegrationTest {
-    
-    @Autowired 
+
+    @Autowired
     OrderTickerService tickerService;
 
     @Test
@@ -136,11 +136,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
-        
+
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
-        
+
         // Get current existing token amount
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
@@ -159,9 +159,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-        
+
         // Verify the order ticker has the correct price
-        assertEquals(1000l, tickerService.getLastMatchingEvents(testTokenId, 1).get(0).price);
+        HashSet<String> a = new HashSet<String>();
+        a.add(testTokenId);
+        assertEquals(1000l, tickerService.getLastMatchingEvents(a).getTickers().get(0).getPrice());
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
@@ -173,11 +175,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
-        
+
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
-        
+
         // Get current existing token amount
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
@@ -194,7 +196,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-        
+
         // Verify the best orders are correct
         List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2);
         assertEquals(2, bestOpenSellOrders.size());
@@ -876,54 +878,58 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
 
-    // TODO this fails sometimes because the wallet uses a random owned key as beneficiary...
-//    @Test
-//    public void testMultiMatching2() throws Exception {
-//        @SuppressWarnings("deprecation")
-//        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-//        ECKey testKey = walletKeys.get(8);
-//        ;
-//        List<Block> addedBlocks = new ArrayList<>();
-//
-//        // Make test token
-//        resetAndMakeTestToken(testKey, addedBlocks);
-//        String testTokenId = testKey.getPublicKeyAsHex();
-//
-//        // Get current existing token amount
-//        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-//
-//        // Open orders
-//        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
-//        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
-//        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-//        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-//
-//        // Execute order matching
-//        makeAndConfirmOrderMatching(addedBlocks);
-//
-//        // Verify the tokens changed possession
-//        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 150000l);
-//        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 150l);
-//
-//        // Open orders
-//        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-//        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-//        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
-//        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
-//
-//        // Execute order matching
-//        makeAndConfirmOrderMatching(addedBlocks);
-//
-//        // Verify token amount invariance
-//        assertCurrentTokenAmountEquals(origTokenAmounts);
-//
-//        // Verify the tokens changed possession
-//        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 400000l);
-//        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 400l);
-//
-//        // Verify deterministic overall execution
-//        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-//    }
+    // TODO this fails sometimes because the wallet uses a random owned key as
+    // beneficiary...
+    // @Test
+    // public void testMultiMatching2() throws Exception {
+    // @SuppressWarnings("deprecation")
+    // ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv),
+    // Utils.HEX.decode(testPub));
+    // ECKey testKey = walletKeys.get(8);
+    // ;
+    // List<Block> addedBlocks = new ArrayList<>();
+    //
+    // // Make test token
+    // resetAndMakeTestToken(testKey, addedBlocks);
+    // String testTokenId = testKey.getPublicKeyAsHex();
+    //
+    // // Get current existing token amount
+    // HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+    //
+    // // Open orders
+    // makeAndConfirmSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
+    // makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
+    // makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+    // makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+    //
+    // // Execute order matching
+    // makeAndConfirmOrderMatching(addedBlocks);
+    //
+    // // Verify the tokens changed possession
+    // assertHasAvailableToken(testKey,
+    // NetworkParameters.BIGTANGLE_TOKENID_STRING, 150000l);
+    // assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 150l);
+    //
+    // // Open orders
+    // makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+    // makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+    // makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
+    // makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
+    //
+    // // Execute order matching
+    // makeAndConfirmOrderMatching(addedBlocks);
+    //
+    // // Verify token amount invariance
+    // assertCurrentTokenAmountEquals(origTokenAmounts);
+    //
+    // // Verify the tokens changed possession
+    // assertHasAvailableToken(testKey,
+    // NetworkParameters.BIGTANGLE_TOKENID_STRING, 400000l);
+    // assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 400l);
+    //
+    // // Verify deterministic overall execution
+    // readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+    // }
 
     @Test
     public void testMultiMatching3() throws Exception {
@@ -971,11 +977,13 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-        
+
         // Bonus: check open and closed orders
         List<OrderRecord> closedOrders = store.getMyClosedOrders(genesisKey.toAddress(networkParameters).toBase58());
-        List<OrderRecord> openOrders = store.getMyRemainingOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
-        List<OrderRecord> initialOrders = store.getMyInitialOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
+        List<OrderRecord> openOrders = store
+                .getMyRemainingOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
+        List<OrderRecord> initialOrders = store
+                .getMyInitialOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
 
         System.out.println(closedOrders.toString());
         System.out.println(openOrders.toString());

@@ -68,7 +68,6 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
@@ -78,6 +77,7 @@ import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
+import net.bigtangle.server.utils.OrderBook;
 
 /**
  * <p>

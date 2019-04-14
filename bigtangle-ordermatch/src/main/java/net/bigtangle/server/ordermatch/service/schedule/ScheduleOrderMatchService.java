@@ -18,15 +18,15 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.server.ordermatch.bean.OrderBook;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderMatch;
-import net.bigtangle.server.ordermatch.bean.Side;
 import net.bigtangle.server.ordermatch.config.ScheduleConfiguration;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
+import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.OrderState;
 
 @Component
