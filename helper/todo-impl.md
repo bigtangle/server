@@ -399,3 +399,17 @@ https://github.com/xmrig/xmrig
 ## archtecture of bigtangle and subtangle
 
 ## javaFx to Mobile ? https://gluonhq.com/products/mobile/javafxports/
+
+## shop car problem with not loging missing data
+
+## matchresults display as public service
+## query of block as public service
+
+## fix bug of add images in product  edit
+
+## elk kibana for log monitor
+
+## create kafka cluster and permission
+
+
+
