@@ -24,6 +24,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
@@ -124,7 +125,7 @@ public class SubtangleService {
         this.blockService.saveBlock(b);
     }
 
-    private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid) {
+    private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid) throws BlockStoreException {
         Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
         pubKeyHashs.add(signKey.toAddress(this.networkParameters).getHash160());
         GetBalancesResponse getBalancesResponse = (GetBalancesResponse) walletService

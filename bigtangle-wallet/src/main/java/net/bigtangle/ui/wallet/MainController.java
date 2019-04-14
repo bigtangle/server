@@ -270,7 +270,7 @@ public class MainController {
 
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
 
-        for (Coin coin : getBalancesResponse.getTokens()) {
+        for (Coin coin : getBalancesResponse.getBalance()) {
             if (!coin.isZero()) {
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
                     Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.getTokenid(),

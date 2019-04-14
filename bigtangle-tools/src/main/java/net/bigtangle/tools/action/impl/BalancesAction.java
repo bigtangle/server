@@ -33,7 +33,7 @@ public class BalancesAction extends SimpleAction {
             String resp = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getBalances.name(),
                     Json.jsonmapper().writeValueAsString(pubKeyHashs));
             GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp, GetBalancesResponse.class);
-            this.account.syncTokenCoinbase(getBalancesResponse.getTokens());
+            this.account.syncTokenCoinbase(getBalancesResponse.getBalance());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -426,7 +426,7 @@ public class OrderController extends ExchangeController {
             requestParam.put("addresses", address);
         }
 
-        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrder.name(),
+        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response0);
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);

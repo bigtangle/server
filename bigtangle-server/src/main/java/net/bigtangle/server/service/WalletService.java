@@ -43,7 +43,7 @@ import net.bigtangle.wallet.Wallet;
 @Service
 public class WalletService {
 
-    public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs) {
+    public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs) throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);
@@ -69,7 +69,8 @@ public class WalletService {
             r.put("tokenHex", entry.getValue().getTokenHex());
             r.put("tokenName", entry.getValue().getTokenHex());
         }
-        return GetBalancesResponse.create(tokens, outputs);
+
+        return GetBalancesResponse.create(tokens, outputs, getTokename(outputs));
     }
 
     public Wallet makeWallat(ECKey ecKey) {
@@ -192,12 +193,12 @@ public class WalletService {
         UTXO utxo = store.getOutputsWithHexStr(hash, outputindex);
         return utxo;
     }
-    
+
     public Map<String, Token> getTokename(List<UTXO> outxos) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (UTXO d : outxos) {
             tokenids.add(d.getTokenId());
-      
+
         }
         Map<String, Token> re = new HashMap<String, Token>();
         List<Token> tokens = store.getTokensList(tokenids);

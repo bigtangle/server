@@ -143,7 +143,7 @@ public class Account {
                         Json.jsonmapper().writeValueAsString(pubKeyHashs));
                 GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(resp, GetBalancesResponse.class);
 
-                for (Coin coinbase : getBalancesResponse.getTokens()) {
+                for (Coin coinbase : getBalancesResponse.getBalance()) {
                     if (Arrays.equals(coinbase.getTokenid(), NetworkParameters.BIGTANGLE_TOKENID)) {
                         this.buyKey = ecKey;
                         break;

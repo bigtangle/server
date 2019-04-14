@@ -24,7 +24,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
         while (true) {
          
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrder.name(),
+            String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                     Json.jsonmapper().writeValueAsString(requestParam).getBytes());
              
             OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);

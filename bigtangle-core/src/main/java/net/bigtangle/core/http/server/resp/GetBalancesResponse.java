@@ -5,8 +5,10 @@
 package net.bigtangle.core.http.server.resp;
 
 import java.util.List;
+import java.util.Map;
 
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.http.AbstractResponse;
 
@@ -14,12 +16,15 @@ public class GetBalancesResponse extends AbstractResponse {
 
     private List<UTXO> outputs;
 
-    private List<Coin> tokens;
+    private List<Coin> balance;
 
-    public static AbstractResponse create(List<Coin> tokens, List<UTXO> outputs) {
+    private Map<String, Token> tokennames;
+    
+    public static AbstractResponse create(List<Coin> coinbalance, List<UTXO> outputs, Map<String, Token> tokennames ) {
         GetBalancesResponse res = new GetBalancesResponse();
         res.outputs = outputs;
-        res.tokens = tokens;
+        res.balance = coinbalance;
+        res.tokennames = tokennames;
         return res;
     }
 
@@ -27,7 +32,16 @@ public class GetBalancesResponse extends AbstractResponse {
         return outputs;
     }
 
-    public List<Coin> getTokens() {
-        return tokens;
+    public List<Coin> getBalance() {
+        return balance;
+        
+    }
+
+    public Map<String, Token> getTokennames() {
+        return tokennames;
+    }
+
+    public void setTokennames(Map<String, Token> tokennames) {
+        this.tokennames = tokennames;
     }
 }

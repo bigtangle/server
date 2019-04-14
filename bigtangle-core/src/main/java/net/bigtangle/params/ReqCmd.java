@@ -10,7 +10,7 @@ public enum ReqCmd {
 
     getTokens, getTokensAmount, getTokenById, getTokenSerials, getCalTokenIndex,updateTokenInfo,
 
-    getOrder, getOTCMarkets, getOrdersTicker,
+    getOrders, getOTCMarkets, getOrdersTicker,
 
     getMultiSignWithAddress, getMultiSignWithTokenid, getOutputWithKey,
 

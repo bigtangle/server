@@ -62,7 +62,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.3.3.1"));
+        assertTrue(version.equals("0.3.3.2"));
     }
 
     @Test
