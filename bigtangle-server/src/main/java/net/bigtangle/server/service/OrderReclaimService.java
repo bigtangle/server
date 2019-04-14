@@ -99,7 +99,7 @@ public class OrderReclaimService {
         block.setBlockType(Block.Type.BLOCKTYPE_ORDER_RECLAIM);
 
         block.solve();
-        blockgraph.add(block, false);
+        blockService.saveBlock(block);
         return block;
     }
 

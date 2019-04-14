@@ -107,7 +107,7 @@ public class RewardService {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            blockgraph.add(r1.createNextBlock(r2), false);
+            blockService.saveBlock(r1.createNextBlock(r2));
             return votingTarget.getBlock();
         } else {
             return createAndAddMiningRewardBlock();
@@ -137,7 +137,7 @@ public class RewardService {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
         if (block != null)
-            blockgraph.add(block, false);
+            blockService.saveBlock(block );
         return block;
     }
 
