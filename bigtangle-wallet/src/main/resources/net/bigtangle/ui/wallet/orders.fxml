@@ -44,7 +44,7 @@
 									</toggleGroup>
 								</RadioButton>
 								<RadioButton fx:id="stateRB2" layoutX="261.0" layoutY="106.0" mnemonicParsing="false" text="%match" toggleGroup="$stateTG" />
-								<RadioButton fx:id="stateRB3" layoutX="357.0" layoutY="106.0" mnemonicParsing="false" text="%finish" toggleGroup="$stateTG" />
+					
                         <CheckBox fx:id="mineCB" layoutX="165.0" layoutY="146.0" mnemonicParsing="false" selected="true" text="%yes" />
                         <Label layoutX="43.0" layoutY="147.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
                         <Button layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />

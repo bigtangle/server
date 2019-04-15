@@ -558,7 +558,7 @@ public class OrderController extends ExchangeController {
         for (ECKey ecKey : keys) {
             if (rowData.get("address").equals(ecKey.toAddress(Main.params).toString())) {
                 legitimatingKey = ecKey;
-                Main.walletAppKit.wallet().makeAndConfirmCancelOp(hash, legitimatingKey);
+                Main.walletAppKit.wallet().cancelOrder(hash, legitimatingKey);
                 break;
             }
         }
@@ -629,10 +629,10 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().makeAndConfirmSellOrder(Main.getAesKey(),  tokenid, price.getValue(), quantity,
+            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(),  tokenid, price.getValue(), quantity,
                     totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().makeAndConfirmBuyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity,
+            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity,
                     totime, fromtime);
         }
 

@@ -44,7 +44,7 @@ public class OrderSellTest extends AbstractIntegrationTest {
         Collections.shuffle(utxos);
         for (UTXO utxo : utxos) {
             if(!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId()))
-            walletAppKit.wallet().makeAndConfirmSellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+            walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
         }
 
     }

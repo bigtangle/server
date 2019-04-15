@@ -35,7 +35,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
                     // sell order and make buy
                     long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-                   walletAppKit1.wallet().makeAndConfirmBuyOrder(null, orderRecord.getOfferTokenid(), price,
+                   walletAppKit1.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                             orderRecord.getOfferValue(), null, null);
                 }
 

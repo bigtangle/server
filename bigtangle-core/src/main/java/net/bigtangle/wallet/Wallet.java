@@ -2489,7 +2489,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     }
 
-    public Block makeAndConfirmBuyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
+    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
             Long validToTime, Long validFromTime) throws JsonProcessingException, IOException,
             InsufficientMoneyException, UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
@@ -2539,7 +2539,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new InsufficientMoneyException(amount);
     }
 
-    public Block makeAndConfirmSellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount,
+    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount,
             Long validToTime, Long validFromTime)
             throws IOException, InsufficientMoneyException, UTXOProviderException {
 
@@ -2578,7 +2578,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    public Block makeAndConfirmCancelOp(Sha256Hash orderblockhash, ECKey legitimatingKey)
+    public Block cancelOrder(Sha256Hash orderblockhash, ECKey legitimatingKey)
             throws JsonProcessingException, IOException {
         // Make an order op
         Transaction tx = new Transaction(params);

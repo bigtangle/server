@@ -56,7 +56,7 @@ public abstract class AbstractIntegrationTest {
 	// private static final String CONTEXT_ROOT_TEMPLATE =
 	// "http://localhost:%s/";
 	protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-	public String contextRoot = "https://bigtangle.info/";
+	public String contextRoot = "https://bigtangle.de/";
 	        //"https://bigtangle.org/";
 	public List<ECKey> walletKeys;
 	public List<ECKey> wallet1Keys;
@@ -75,16 +75,18 @@ public abstract class AbstractIntegrationTest {
 	boolean deleteWlalletFile =false;
 	@Before
 	public void setUp() throws Exception {
-		//   System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		//   System.setProperty("https.proxyPort", "3128");
+		    System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		    System.setProperty("https.proxyPort", "3128");
 		walletKeys();
+		wallet1();
+		wallet2();
 		// emptyBlocks(10);
 	}
 
 	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
 			List<Block> addedBlocks) throws Exception {
 		Thread.sleep(30000);
-		Block block = walletAppKit.wallet().makeAndConfirmSellOrder(null,  tokenId, sellPrice, sellAmount,
+		Block block = walletAppKit.wallet().sellOrder(null,  tokenId, sellPrice, sellAmount,
 				null, null);
 		addedBlocks.add(block);
 		return block;
@@ -94,7 +96,7 @@ public abstract class AbstractIntegrationTest {
 	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
 			List<Block> addedBlocks) throws Exception {
 		//Thread.sleep(100000);
-		Block block = walletAppKit.wallet().makeAndConfirmBuyOrder(null,  tokenId, buyPrice, buyAmount,
+		Block block = walletAppKit.wallet().buyOrder(null,  tokenId, buyPrice, buyAmount,
 				null, null);
 		addedBlocks.add(block);
 		return block;
@@ -103,7 +105,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
 			throws Exception {
-		Block block = walletAppKit.wallet().makeAndConfirmCancelOp(order.getHash(), legitimatingKey);
+		Block block = walletAppKit.wallet().cancelOrder(order.getHash(), legitimatingKey);
 		addedBlocks.add(block);
 		return block;
 	}
@@ -344,7 +346,7 @@ public abstract class AbstractIntegrationTest {
 	protected void testCreateMultiSigToken(ECKey key, String tokename)
 			throws JsonProcessingException, Exception {
 		try {
-		createFirstMultisignToken(key, new TokenInfo(), tokename);
+		createMultisignToken(key, new TokenInfo(), tokename,678900000);
 		}catch (Exception e) {
 			// TODO: handle exception
 			log.warn("",e);
@@ -352,14 +354,11 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	private void createFirstMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename)
+	protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount)
 			throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
 		String tokenid = key.getPublicKeyAsHex();
 
-		int amount = 678900000;
 		Coin basecoin = Coin.valueOf(amount, tokenid);
-
-		// TokenInfo tokenInfo = new TokenInfo();
 
 		HashMap<String, String> requestParam00 = new HashMap<String, String>();
 		requestParam00.put("tokenid", tokenid);
