@@ -1065,7 +1065,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException, NoBlockException {
         StoredBlockBinary r = getBinary(hash, wasUndoableOnly);
         if (r == null)
-             throw new NoBlockException();
+            throw new NoBlockException();
         Block b = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
         b.verifyHeader();
         return new StoredBlock(b, r.getHeight());
@@ -1219,8 +1219,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException, NoBlockException {
         return get(hash, false);
     }
-
- 
 
     @Override
     public Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException {
@@ -6175,7 +6173,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = SELECT_MATCHING_EVENT;
             if (tokenIds == null || tokenIds.isEmpty()) {
-                sql += " ORDER BY inserttime DESC " + "LIMIT ? ";
+                sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
+
             } else {
                 sql += " where tokenid IN (" + buildINList(tokenIds) + " )" + "  ORDER BY inserttime DESC " + "LIMIT   "
                         + count;
