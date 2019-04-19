@@ -63,6 +63,10 @@ public class OrderRecord implements java.io.Serializable {
         this.beneficiaryAddress = beneficiaryAddress;
     }
 
+    public long price() {
+        return getTargetValue() / getOfferValue();
+    }
+
     @Override
     public String toString() {
         return "Order \n[initialBlockHash=" + initialBlockHash + ", \nissuingMatcherBlockHash="
@@ -84,9 +88,11 @@ public class OrderRecord implements java.io.Serializable {
     public Sha256Hash getInitialBlockHash() {
         return initialBlockHash;
     }
+
     public String getInitialBlockHashHex() {
-        return initialBlockHash!=null? Utils.HEX.encode(this.initialBlockHash.getBytes()) : "";
+        return initialBlockHash != null ? Utils.HEX.encode(this.initialBlockHash.getBytes()) : "";
     }
+
     public void setInitialBlockHash(Sha256Hash initialBlockHash) {
         this.initialBlockHash = initialBlockHash;
     }

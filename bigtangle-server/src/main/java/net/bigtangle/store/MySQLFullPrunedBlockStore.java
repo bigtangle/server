@@ -128,16 +128,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
-            + "    txhash varbinary(32) NOT NULL,\n" 
+            + "    txhash varchar(255) NOT NULL,\n" 
             + "    tokenid varchar(255) NOT NULL,\n" 
-
-            + "    restingOrderId varchar(64) NOT NULL,\n" 
-            + "    incomingOrderId varchar(64) NOT NULL,\n" 
-            + "    incomingBuy boolean NOT NULL,\n" 
             + "    price bigint NOT NULL,\n" 
             + "    executedQuantity bigint NOT NULL,\n" 
-            + "    remainingQuantity bigint NOT NULL,\n" 
-            
             + "    inserttime bigint NOT NULL,\n"
             + "    PRIMARY KEY (id) \n" 
             + ")\n";

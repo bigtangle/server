@@ -73,7 +73,7 @@ public class MilestoneService {
 
         // Set target approval rate to complement of percentage required for
         // confirmation
-        final long requiredApprovals = blocks.size() * (100 - NetworkParameters.MILESTONE_UPPER_THRESHOLD) / 100;
+        final long requiredApprovals = blocks.size() * 50 / 100;
 
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> approverCountInits = new HashMap<Sha256Hash, HashSet<UUID>>(blocks.size());

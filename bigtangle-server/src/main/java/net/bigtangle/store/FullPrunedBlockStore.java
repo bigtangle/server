@@ -36,8 +36,7 @@ import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.ordermatch.bean.MatchResults;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
+import net.bigtangle.server.ordermatch.bean.MatchResult;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
@@ -526,10 +525,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
 
-    void insertMatchingEvent(Sha256Hash hash, String key, Match match, long currentTimeMillis)
+    void insertMatchingEvent(MatchResult matchresults)
             throws BlockStoreException;
 
-    void deleteMatchingEvents(Sha256Hash hash) throws BlockStoreException;
+    void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
-    List<MatchResults> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
+    List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
 }

@@ -24,7 +24,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +45,6 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.StoredBlockBinary;
 import net.bigtangle.core.StoredUndoableBlock;
@@ -67,8 +65,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.ordermatch.bean.MatchResults;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
+import net.bigtangle.server.ordermatch.bean.MatchResult;
 import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
@@ -411,8 +408,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /* MATCHING EVENTS */
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
-            + " INTO matching (txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid, restingOrderId, incomingOrderId, incomingBuy, price, executedQuantity, remainingQuantity, inserttime "
+            + " INTO matching (txhash, tokenid,  price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?)";
+    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,  price, executedQuantity, inserttime "
             + "FROM matching ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
 
@@ -6137,21 +6134,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertMatchingEvent(Sha256Hash hash, String key, Match match, long currentTimeMillis)
-            throws BlockStoreException {
+    public void insertMatchingEvent(MatchResult match) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_MATCHING_EVENT_SQL);
-            preparedStatement.setBytes(1, hash.getBytes());
-            preparedStatement.setString(2, key);
-            preparedStatement.setString(3, match.restingOrderId);
-            preparedStatement.setString(4, match.restingOrderId);
-            preparedStatement.setBoolean(5, match.incomingSide == Side.BUY);
-            preparedStatement.setLong(6, match.price);
-            preparedStatement.setLong(7, match.executedQuantity);
-            preparedStatement.setLong(8, match.remainingQuantity);
-            preparedStatement.setLong(9, currentTimeMillis);
+            preparedStatement.setString(1, match.getTxhash());
+            preparedStatement.setString(2, match.getTokenid());
+            preparedStatement.setLong(3, match.getPrice());
+            preparedStatement.setLong(4, match.getExecutedQuantity());
+            preparedStatement.setLong(5, match.getInserttime());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -6167,7 +6159,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MatchResults> getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -6182,11 +6174,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            List<MatchResults> list = new ArrayList<>();
+            List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new MatchResults(Utils.HEX.encode(resultSet.getBytes(1)), resultSet.getString(2),
-                        resultSet.getString(3), resultSet.getString(4), resultSet.getBoolean(5) ? Side.BUY : Side.SELL,
-                        resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9)));
+                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
+
+                        resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5)));
             }
             return list;
         } catch (SQLException ex) {
@@ -6203,12 +6195,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void deleteMatchingEvents(Sha256Hash hash) throws BlockStoreException {
+    public void deleteMatchingEvents(String hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
-            preparedStatement.setBytes(1, hash.getBytes());
+            preparedStatement.setString(1, Utils.HEX.encode(hash.getBytes()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

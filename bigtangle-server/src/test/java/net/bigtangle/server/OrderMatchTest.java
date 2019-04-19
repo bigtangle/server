@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,8 +21,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.OrderTickerResponse;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
@@ -31,9 +37,12 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.ordermatch.bean.MatchResult;
 import net.bigtangle.server.service.OrderTickerService;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -167,6 +176,52 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+
+        // check the method of client service
+
+    }
+
+    @Test
+    public void orderTickerSearchAPI() throws Exception {
+        @SuppressWarnings("deprecation")
+        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = walletKeys.get(8);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell order for test tokens
+        Block s1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        
+        // Open buy order for test tokens
+        Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
+        
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // get the datat
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        List<String> tokenids = new ArrayList<String>();
+
+        requestParam.put("tokenids", tokenids);
+        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
+
+        assertTrue(orderTickerResponse.getTickers().size() > 0);
+       for(MatchResult m:  orderTickerResponse.getTickers()) {
+           assertTrue(m.getTokenid().equals(  testTokenId));
+           assertTrue(m.getExecutedQuantity() == 99);
+           assertTrue(m.getPrice() == 1001);
+       }
     }
 
     @Test

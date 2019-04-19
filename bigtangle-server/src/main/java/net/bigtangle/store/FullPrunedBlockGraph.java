@@ -133,6 +133,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         public Collection<OrderRecord> getRemainingOrders() {
             return remainingOrders;
         }
+
+        public Map<String, List<Event>> getTokenId2Events() {
+            return tokenId2Events;
+        }
+
+        public void setTokenId2Events(Map<String, List<Event>> tokenId2Events) {
+            this.tokenId2Events = tokenId2Events;
+        }
     }
 
     @Override
@@ -503,7 +511,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateOrderMatchingConfirmed(block.getHash(), true);
         
         // Update the matching history in db
-        tickerService.addMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
+        tickerService.addMatchingEvents(matchingResult);
     }
 
     private void confirmOrderReclaim(Block block) throws BlockStoreException {

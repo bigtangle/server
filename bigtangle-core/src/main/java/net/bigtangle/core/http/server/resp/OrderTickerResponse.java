@@ -10,22 +10,22 @@ import java.util.Map;
 
 import net.bigtangle.core.Token;
 import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.server.ordermatch.bean.MatchResults;
+import net.bigtangle.server.ordermatch.bean.MatchResult;
 
 public class OrderTickerResponse extends AbstractResponse {
 
-    private List<MatchResults> tickers;
+    private List<MatchResult> tickers;
     private Map<String, Token> tokennames;
-    public static OrderTickerResponse createOrderRecordResponse(List<MatchResults> tickers,Map<String, Token> tokennames) {
+    public static OrderTickerResponse createOrderRecordResponse(List<MatchResult> tickers,Map<String, Token> tokennames) {
         OrderTickerResponse res = new OrderTickerResponse();
         res.tickers =  tickers;
         res.tokennames =tokennames;
         return res;
     }
-    public List<MatchResults> getTickers() {
+    public List<MatchResult> getTickers() {
         return tickers;
     }
-    public void setTickers(List<MatchResults> tickers) {
+    public void setTickers(List<MatchResult> tickers) {
         this.tickers = tickers;
     }
     public Map<String, Token> getTokennames() {
