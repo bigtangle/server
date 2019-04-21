@@ -44,7 +44,7 @@ public class Token implements java.io.Serializable {
     // only
     private String parenttokenid;
     // classification of a token, can be null, optional for query only
-    private String classfication;
+    private String classification;
     // language of the token, can be null, optional for query only
     private String language;
 
@@ -172,12 +172,13 @@ public class Token implements java.io.Serializable {
         this.parenttokenid = parenttokenid;
     }
 
-    public String getClassfication() {
-        return classfication;
+  
+    public String getClassification() {
+        return classification;
     }
 
-    public void setClassfication(String classfication) {
-        this.classfication = classfication;
+    public void setClassification(String classification) {
+        this.classification = classification;
     }
 
     public String getLanguage() {
@@ -192,12 +193,12 @@ public class Token implements java.io.Serializable {
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null);
-    }
+                amount, tokenstop, null,null,null,null);
+    } 
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues) {
+            TokenKeyValues tokenKeyValues,String parenttokenid, String language,String classification) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -211,9 +212,12 @@ public class Token implements java.io.Serializable {
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
         tokens.tokenKeyValues = tokenKeyValues;
+        tokens.parenttokenid = parenttokenid;
+        tokens.language = language;
+        tokens.classification = classification;
         return tokens;
     }
-
+    
     public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, String url) {
         Token tokens = new Token();
@@ -249,13 +253,15 @@ public class Token implements java.io.Serializable {
         return tokens;
     }
 
+
+ 
     @Override
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
                 + tokenname + ", description=" + description + ", url=" + url + ", signnumber=" + signnumber
                 + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
                 + ", blockhash=" + blockhash + ", amount=" + amount + ", parenttokenid=" + parenttokenid
-                + ", classfication=" + classfication + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues
+                + ", classification=" + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues
                 + "]";
     }
 

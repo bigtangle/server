@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -16,6 +17,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -51,7 +53,7 @@ public class TransactionService {
     protected TipsService tipService;
     @Autowired
     protected MilestoneService milestoneService;
- 
+
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -60,7 +62,6 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
- 
 
     public Block askTransactionBlock() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
@@ -69,9 +70,7 @@ public class TransactionService {
 
         return r1.createNextBlock(r2);
     }
- 
 
-     
     public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
         return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
     }
@@ -90,13 +89,15 @@ public class TransactionService {
 
     public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock, boolean request) {
         try {
-            Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
+            StoredBlock storedBlock = StoredBlock.deserializeCompact(networkParameters, ByteBuffer.wrap(bytes));
+            Block block = storedBlock.getHeader();
             if (!checkBlockExists(block)) {
-                boolean added = blockgraph.add(block, true);
-                if (added) {
+                StoredBlock added = blockgraph.add(block, true);
+                if (added != null) {
                     logger.trace("addConnected from kafka ");
                 } else {
-                    logger.trace(" unsolid block from kafka " + block);
+                    logger.debug(" unsolid block from kafka heigth " + storedBlock.getHeight() + " Blockhash"
+                            + block.getHashAsString());
                     if (request)
                         unsolidBlockService.requestPrev(block);
 
@@ -119,7 +120,12 @@ public class TransactionService {
      * check before add Block from kafka , the block can be already exists.
      */
     public boolean checkBlockExists(Block block) throws BlockStoreException, NoBlockException {
-        return store.get(block.getHash()) != null;
+        try {
+            return store.get(block.getHash()) != null;
+        } catch (NoBlockException e) {
+            return false;
+        }
+        
     }
 
     public void streamBlocks(Long heightstart) throws BlockStoreException {

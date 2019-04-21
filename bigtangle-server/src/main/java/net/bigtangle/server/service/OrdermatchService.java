@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -53,19 +55,16 @@ public class OrdermatchService {
 
     private   final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private   boolean lock = false;
-    private   Long lockTime;
-    private   Long lockTimeMaximum=1000000l;
-    public void startSingleProcess() {
+    protected final ReentrantLock lock = Threading.lock("OrdermatchService");
+ 
 
-        if (lock && lockTime + lockTimeMaximum >  System.currentTimeMillis() ) {
-            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
+    public void startSingleProcess() {
+        if (!lock.tryLock()) {
+            logger.debug(this.getClass().getName() + "  OrdermatchService running. Returning...");
             return;
         }
 
-        try {
-            lock =true;
-            lockTime=System.currentTimeMillis();
+        try { 
             
                 logger.debug(" Start updateOrderMatching: ");
 
@@ -79,7 +78,7 @@ public class OrdermatchService {
             catch (Exception e) {
                 logger.warn("updateOrderMatching ", e);
             } finally {
-                lock=false;
+                lock.unlock();;
             }
 
     }

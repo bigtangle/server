@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -51,20 +53,17 @@ public class RewardService {
     private ValidatorService validatorService;
     @Autowired
     protected NetworkParameters networkParameters;
-    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private   boolean lock = false;
-    private   Long lockTime;
-    private   Long lockTimeMaximum=1000000l;
-    public void startSingleProcess() {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-        if (lock && lockTime + lockTimeMaximum >  System.currentTimeMillis() ) {
-            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
+    protected final ReentrantLock lock = Threading.lock("RewardService");
+
+    public void startSingleProcess() {
+        if (!lock.tryLock()) {
+            logger.debug(this.getClass().getName() + "  RewardService running. Returning...");
             return;
         }
 
         try {
-            lock =true;
-            lockTime=System.currentTimeMillis();
             logger.info("performRewardVoting  started");
             Stopwatch watch = Stopwatch.createStarted();
             performRewardVoting();
@@ -72,9 +71,8 @@ public class RewardService {
         } catch (Exception e) {
             logger.warn("performRewardVoting ", e);
         } finally {
-            lock=false;
+            lock.unlock();
         }
-        
 
     }
 
@@ -138,7 +136,7 @@ public class RewardService {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
         if (block != null)
-            blockService.saveBlock(block );
+            blockService.saveBlock(block);
         return block;
     }
 
@@ -149,8 +147,7 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException {
-        RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch,
-                prevRewardHash);
+        RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
 
         if (result.getEligibility() != Eligibility.ELIGIBLE) {
             if (!override) {

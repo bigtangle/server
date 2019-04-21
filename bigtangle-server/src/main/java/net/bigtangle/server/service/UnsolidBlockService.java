@@ -6,6 +6,7 @@ package net.bigtangle.server.service;
 
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.StoredBlock;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -39,19 +41,15 @@ public class UnsolidBlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
-    private boolean lock = false;
-    private Long lockTime;
-    private Long lockTimeMaximum = 1000000l;
+    protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
 
     public void startSingleProcess() {
-
-        if (lock && lockTime + lockTimeMaximum < System.currentTimeMillis()) {
-            logger.debug(this.getClass().getName() + "  Update already running. Returning...");
+        if (!lock.tryLock()) {
+            logger.debug(this.getClass().getName() + " UnsolidBlockService running. Returning...");
             return;
         }
 
         try {
-            lock = true;
 
             logger.debug(" Start updateUnsolideServiceSingle: ");
             deleteOldUnsolidBlock();
@@ -61,7 +59,8 @@ public class UnsolidBlockService {
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
         } finally {
-            lock = false;
+            lock.unlock();
+            ;
         }
 
     }
@@ -78,8 +77,8 @@ public class UnsolidBlockService {
     public void reCheckUnsolidBlock() throws Exception {
         List<Block> blocklist = store.getNonSolidBlocks();
         for (Block block : blocklist) {
-            boolean added = blockgraph.add(block, true);
-            if (added) {
+            StoredBlock added = blockgraph.add(block, true);
+            if (added != null) {
                 this.store.deleteUnsolid(block.getHash());
                 logger.debug("addConnected from reCheckUnsolidBlock " + block);
                 continue;

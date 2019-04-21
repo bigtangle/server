@@ -44,8 +44,8 @@ public class StoredBlock {
     // graph. As of May 2011 it takes 8
     // bytes to represent this field, so 12 bytes should be plenty for now.
 
-    public static final int COMPACT_SERIALIZED_SIZE = NetworkParameters.HEADER_SIZE + 4; // for
-                                                                             // height
+    public static final int COMPACT_SERIALIZED_SIZE = NetworkParameters.HEADER_SIZE + 8; // for
+    // height
 
     private Block header;
     private long height;
@@ -90,8 +90,7 @@ public class StoredBlock {
      * Creates a new StoredBlock, calculating the additional fields by adding to
      * the values in this block.
      */
-    public static StoredBlock  build(Block block, long height)
-            throws VerificationException {
+    public static StoredBlock build(Block block, long height) throws VerificationException {
         // Stored blocks track total work done in this graph, because the
         // canonical graph is the one that represents
         // the largest amount of work done not the tallest.
@@ -105,7 +104,7 @@ public class StoredBlock {
      *
      * @return the previous block in the graph or null if it was not found in
      *         the store.
-     * @throws NoBlockException 
+     * @throws NoBlockException
      */
     public StoredBlock getPrev(BlockStore store) throws BlockStoreException, NoBlockException {
         return store.get(getHeader().getPrevBlockHash());
@@ -126,8 +125,9 @@ public class StoredBlock {
         // same bytes we read off the wire,
         // avoiding serialization round-trips.
         byte[] bytes = getHeader().unsafeBitcoinSerialize();
-        buffer.put(bytes, 0, NetworkParameters.HEADER_SIZE); // Trim the trailing 00 byte
-                                                 // (zero transactions).
+        buffer.put(bytes, 0, NetworkParameters.HEADER_SIZE); // Trim the
+                                                             // trailing 00 byte
+        // (zero transactions).
     }
 
     /**
@@ -136,10 +136,12 @@ public class StoredBlock {
      */
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
 
-        int height = buffer.getInt(); // +4 bytes
-        byte[] header = new byte[NetworkParameters.HEADER_SIZE + 1]; // Extra byte for the
-                                                         // 00 transactions
-                                                         // length.
+        Long height = buffer.getLong(); // +4 bytes
+        byte[] header = new byte[NetworkParameters.HEADER_SIZE + 1]; // Extra
+                                                                     // byte for
+                                                                     // the
+        // 00 transactions
+        // length.
         buffer.get(header, 0, NetworkParameters.HEADER_SIZE);
         return new StoredBlock(params.getDefaultSerializer().makeBlock(header), height);
     }

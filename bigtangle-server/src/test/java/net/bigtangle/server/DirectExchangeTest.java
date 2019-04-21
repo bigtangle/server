@@ -309,7 +309,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
         ulist.addAll(utxos);
         walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
-        walletAppKit.wallet().signTransaction(req);
+       // walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
 

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
@@ -87,16 +89,16 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
-        boolean added = blockgraph.add(block, false);
-        if (added) {
+        StoredBlock added = blockgraph.add(block, false);
+        if (added !=null) {
             try {
 
-                broadcastBlock(block.bitcoinSerialize());
+                broadcastBlock(added);
                 // FIXME remove this later, this is needed for testnet and unit
                 // tests, to get
                 // sync real time confirmation for client
 
-                milestoneService.update();
+               // milestoneService.update();
             } catch (Exception e) {
                 // TODO: handle exception
                 logger.warn(" saveBlock problem after save milestoneService  ", e);
@@ -211,6 +213,21 @@ public class BlockService {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
 
+
+    public void broadcastBlock(StoredBlock storedBlock) {
+        try {
+            if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
+                return;
+            KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
+            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+            ByteBuffer buffer = ByteBuffer.allocate(size);
+            storedBlock.serializeCompact(buffer);
+            kafkaMessageProducer.sendMessage(buffer.array());
+        } catch (InterruptedException | ExecutionException e) {
+            logger.warn("", e);
+        }
+    }
+    
     public void broadcastBlock(byte[] data) {
         try {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))

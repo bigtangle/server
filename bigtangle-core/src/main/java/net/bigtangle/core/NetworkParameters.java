@@ -185,7 +185,9 @@ public abstract class NetworkParameters {
     public static final int TOKEN_MAX_NAME_LENGTH = 50;
     public static final int TOKEN_MAX_DESC_LENGTH = 500;
     public static final int TOKEN_MAX_URL_LENGTH = 100;
-
+    public static final int TOKEN_MAX_ID_LENGTH = 100;
+    public static final int TOKEN_MAX_LANGUAGE_LENGTH = 2;
+    public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
     // max time of an order in seconds 
 	public static final long ORDER_TIMEOUT_MAX = 8*60*60;
 

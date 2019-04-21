@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Threading;
 
 /*
  *  This service offers maintenance functions to update the local state of the Tangle
@@ -189,19 +191,15 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
 
-    private boolean lock = false;
+    protected final ReentrantLock lock = Threading.lock("milestoneService");
     private Long lockTime;
     private Long lockTimeMaximum = 1000000l;
 
     public void update(int numberUpdates) {
-
-        if (lock && lockTime + lockTimeMaximum > System.currentTimeMillis()) {
+        if (!lock.tryLock()) {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-
-        lock = true;
-        lockTime = System.currentTimeMillis();
 
         try {
             log.trace("Milestone Update started");
@@ -240,7 +238,7 @@ public class MilestoneService {
         } catch (Exception e) {
             log.warn("", e);
         } finally {
-            lock = false;
+            lock.unlock();
         }
 
     }

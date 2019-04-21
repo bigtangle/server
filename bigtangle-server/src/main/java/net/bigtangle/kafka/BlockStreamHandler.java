@@ -12,19 +12,25 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.server.service.TransactionService;
 
- @Service
+@Service
 public class BlockStreamHandler extends AbstractStreamHandler {
 
-  
-    @Autowired TransactionService transactionService;
+    @Autowired
+    TransactionService transactionService;
 
     @Override
     public void run(KStreamBuilder streamBuilder) {
+ 
+            dorun(streamBuilder);
+       
+    }
+
+    public void dorun(KStreamBuilder streamBuilder) {
+
         final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOutName());
 
-        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes, true,true)));
+        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes, true, true)));
 
     }
-   
 
 }

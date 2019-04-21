@@ -19,6 +19,8 @@
 package net.bigtangle.tools;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +28,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.OkHttp3Util;
@@ -46,7 +50,7 @@ public class SendEmptyBlock {
     public static void main(String[] args) {
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
         boolean c = true;
-        int i = 0;
+ 
         while (c) {
             try {
                 sendEmptyBlock.send();
@@ -70,5 +74,19 @@ public class SendEmptyBlock {
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
     }
+    
+    private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
+        String CONTEXT_ROOT = server;
+        String lastestAmount = "200";
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("lastestAmount", lastestAmount);
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.searchBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        return getBlockEvaluationsResponse.getEvaluations();
+    }
+    
 
 }

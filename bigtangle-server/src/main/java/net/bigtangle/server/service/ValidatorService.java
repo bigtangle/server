@@ -215,8 +215,8 @@ public class ValidatorService {
     public RewardBuilderResult checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-            return makeReward(rewardBlock.getPrevBlockHash(),
-                    rewardBlock.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
+            return makeReward(rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(),
+                    rewardInfo.getPrevRewardHash());
 
         } catch (IOException e) {
             // Cannot happen since checked before
@@ -242,8 +242,8 @@ public class ValidatorService {
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
-    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            Sha256Hash prevRewardHash) throws BlockStoreException {
+    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash)
+            throws BlockStoreException {
 
         // Count how many blocks from miners in the reward interval are approved
         Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
@@ -548,7 +548,7 @@ public class ValidatorService {
         case ORDERMATCH:
             return store.getOrderMatchingSpent(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
-               throw new RuntimeException("No Implementation");
+            throw new RuntimeException("No Implementation");
         }
     }
 
@@ -576,7 +576,7 @@ public class ValidatorService {
         case ORDERMATCH:
             return store.getOrderMatchingConfirmed(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         default:
-               throw new RuntimeException("No Implementation");
+            throw new RuntimeException("No Implementation");
         }
     }
 
@@ -683,7 +683,7 @@ public class ValidatorService {
                             // Cannot happen in non-Spark implementation.
                             return true;
                         default:
-                               throw new RuntimeException("No Implementation");
+                            throw new RuntimeException("No Implementation");
 
                         }
                     } catch (BlockStoreException e) {
@@ -712,7 +712,7 @@ public class ValidatorService {
                             // Cannot happen in non-Spark implementation.
                             return true;
                         default:
-                               throw new RuntimeException("No Implementation");
+                            throw new RuntimeException("No Implementation");
 
                         }
                     } catch (BlockStoreException e) {
@@ -1065,7 +1065,7 @@ public class ValidatorService {
                 return null;
             return store.getBlockWrap(orderMatchSpender);
         default:
-               throw new RuntimeException("No Implementation");
+            throw new RuntimeException("No Implementation");
         }
     }
 
@@ -1786,9 +1786,8 @@ public class ValidatorService {
         }
 
         // Ensure heights follow the rules
-        if (Math.subtractExact(info.getToHeight(),
-                store.getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL
-                        - 1) {
+        if (Math.subtractExact(info.getToHeight(), store
+                .getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL - 1) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid heights");
             return SolidityState.getFailState();
@@ -1890,8 +1889,8 @@ public class ValidatorService {
         }
 
         // Ensure the new difficulty is set correctly
-        RewardBuilderResult result = makeReward(block.getPrevBlockHash(),
-                block.getPrevBranchBlockHash(), rewardInfo.getPrevRewardHash());
+        RewardBuilderResult result = makeReward(block.getPrevBlockHash(), block.getPrevBranchBlockHash(),
+                rewardInfo.getPrevRewardHash());
         if (block.getDifficultyTarget() != result.getDifficulty()) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect difficulty target");
@@ -2148,6 +2147,31 @@ public class ValidatorService {
                 && currentToken.getToken().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long description");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getToken().getTokenid() != null
+                && currentToken.getToken().getTokenid().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long tokenid");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getToken().getParenttokenid() != null
+                && currentToken.getToken().getParenttokenid().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long tokenid");
+            return SolidityState.getFailState();
+        }
+
+        if (currentToken.getToken().getLanguage() != null
+                && currentToken.getToken().getLanguage().length() > NetworkParameters.TOKEN_MAX_LANGUAGE_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long language");
+            return SolidityState.getFailState();
+        }
+        if (currentToken.getToken().getClassification() != null && currentToken.getToken().getClassification()
+                .length() > NetworkParameters.TOKEN_MAX_CLASSIFICATION_LENGTH) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Too long classification");
             return SolidityState.getFailState();
         }
         if (currentToken.getToken().getTokenname() != null

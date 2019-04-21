@@ -4,10 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -48,20 +49,18 @@ public class OrderReclaimService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    private   final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private   boolean lock = false;
-    private   Long lockTime;
-    private   Long lockTimeMaximum=1000000l;
+    protected final ReentrantLock lock = Threading.lock("OrderReclaimService");
+
     public void startSingleProcess() {
-
-        if (lock && lockTime + lockTimeMaximum < System.currentTimeMillis() ) {
+        if (!lock.tryLock()) {
             logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
 
         try {
-            lock =true;
+
             logger.debug(" Start performOrderReclaimMaintenance: ");
             Stopwatch watch = Stopwatch.createStarted();
             performOrderReclaimMaintenance();
@@ -70,7 +69,7 @@ public class OrderReclaimService {
         } catch (Exception e) {
             logger.warn("performOrderReclaimMaintenance ", e);
         } finally {
-            lock= false;
+            lock.unlock();
         }
 
     }

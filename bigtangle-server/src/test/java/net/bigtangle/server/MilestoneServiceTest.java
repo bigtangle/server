@@ -583,7 +583,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block2, false));
+        assertTrue(this.blockGraph.add(block2, false) !=null);
 
         // Try order reclaim 2
         Block block3 = null;
@@ -600,7 +600,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block3, false));
+        assertTrue(this.blockGraph.add(block3, false) !=null);
 
         // But only the first shall win
         milestoneService.update();
