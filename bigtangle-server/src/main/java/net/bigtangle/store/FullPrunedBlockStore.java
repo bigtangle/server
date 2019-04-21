@@ -474,7 +474,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Block> getNonSolidBlocks() throws BlockStoreException;
 
-    void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
+    void insertUnsolid(Block block, SolidityState solidityState, Long    height ) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
 

@@ -186,7 +186,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // If dependency missing and allowing waiting list, add to
                     // list
                     if (allowUnsolid)
-                        insertUnsolidBlock(block, solidityState);
+                        insertUnsolidBlock(block, solidityState, Math.max(storedPrev.getBlockEvaluation().getHeight(),
+                                storedPrevBranch.getBlockEvaluation().getHeight()) + 1);
                     else
                         log.debug("Dropping unresolved block!");
                     return null;
@@ -995,14 +996,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertTip(block.getHash());
     }
 
-    @Override
-    protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
+   
+    protected void insertUnsolidBlock(Block block, SolidityState solidityState, Long height) throws BlockStoreException {
         if (solidityState.getState() == State.Success || solidityState.getState() == State.Unfixable)
             return;
 
         // Insert waiting into solidity waiting queue until dependency is
         // resolved
-        blockStore.insertUnsolid(block, solidityState);
+        blockStore.insertUnsolid(block, solidityState,height);
     }
 
     protected void connectUTXOs(Block block, long height) throws BlockStoreException, VerificationException {

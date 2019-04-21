@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.StoredBlock;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -92,7 +93,13 @@ public class UnsolidBlockService {
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 return;
             }
-            StoredBlock storedBlock0 = this.store.get(block.getPrevBlockHash());
+            
+            StoredBlock storedBlock0 =null;
+            try {
+                storedBlock0= this.store.get(block.getPrevBlockHash());
+            }catch (NoBlockException e) {
+                // Ok, no prev
+            }
 
             if (storedBlock0 == null) {
                 byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
@@ -105,7 +112,7 @@ public class UnsolidBlockService {
                     else {
                         // pre recursive check
                         logger.debug(" prev not found: " + req.toString());
-                        requestPrev(req);
+                      //No recursive  requestPrev(req);
                     }
 
                 }
@@ -121,7 +128,7 @@ public class UnsolidBlockService {
                         blockgraph.add(req, true);
                     else {
                         // pre recursive check
-                        requestPrev(req);
+                        //No recursive  requestPrev(req);
                     }
 
                 }

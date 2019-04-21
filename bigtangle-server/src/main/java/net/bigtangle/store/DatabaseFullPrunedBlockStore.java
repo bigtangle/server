@@ -137,8 +137,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " VALUES(?, ?, ?, ?, ?,?,  ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?)";
 
     protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert()
-            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency)"
-            + " VALUES(?, ?, ?, ?, ? )";
+            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency, height)"
+            + " VALUES(?, ?, ?, ?, ?,? )";
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
@@ -2300,7 +2300,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException {
+    public void insertUnsolid(Block block, SolidityState solidityState, Long heigth) throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return;
         }
@@ -2312,6 +2312,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(2, block.bitcoinSerialize());
             preparedStatement.setLong(3, block.getTimeSeconds());
             preparedStatement.setLong(4, solidityState.getState().ordinal());
+            preparedStatement.setLong(5,  heigth);
             switch (solidityState.getState()) {
             case MissingPredecessor:
             case MissingTransactionOutput:

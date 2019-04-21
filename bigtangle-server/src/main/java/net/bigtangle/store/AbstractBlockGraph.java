@@ -124,7 +124,7 @@ public abstract class AbstractBlockGraph {
      *            The current solidity state of the block
      * @throws BlockStoreException
      */
-    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState)
+    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState, Long heigth)
             throws BlockStoreException;
 
     /**
