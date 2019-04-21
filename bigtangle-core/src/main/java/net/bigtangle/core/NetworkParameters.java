@@ -137,7 +137,7 @@ public abstract class NetworkParameters {
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 400 * 1000;
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 300 * 1000;
 
     /**
      * A "sigop" is a signature verification operation. Because they're
@@ -172,7 +172,7 @@ public abstract class NetworkParameters {
     public static final long REWARD_MIN_MILESTONE_PERCENTAGE = 97;
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
    
-    public static final int TARGET_MAX_TPS = 10;
+    public static final int TARGET_MAX_TPS = 100;
     public static final long REWARD_OVERRULE_TIME_MS = 1000;
     
     // Order Matching Settings

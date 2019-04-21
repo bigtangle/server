@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
+    private static final long FROMTIME = System.currentTimeMillis() / 1000 - 5;
     private static final long serialVersionUID = 433387247051352702L;
     private static final Logger logger = LoggerFactory.getLogger(OrderOpenInfo.class);
     private long targetValue;
@@ -40,7 +41,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         if (validFromTimeMilli == null) {
-            this.validFromTime = System.currentTimeMillis() / 1000 - 5;
+            this.validFromTime = FROMTIME;
         } else {
             this.validFromTime = validFromTimeMilli / 1000;
         }

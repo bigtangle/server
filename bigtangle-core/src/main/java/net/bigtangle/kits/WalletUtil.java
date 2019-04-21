@@ -32,42 +32,43 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
+import net.bigtangle.wallet.UnreadableWalletException;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletProtobufSerializer;
 
 public class WalletUtil {
-	protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
- 
-	public static  byte[] createWallet(NetworkParameters params) throws IOException   {
-		KeyChainGroup kcg;
-		kcg = new KeyChainGroup(params);
-		Context context =new Context(params);
-		Context.propagate(context);
-		Wallet wallet = new Wallet( params, kcg); // default
+    protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
 
-		wallet.freshReceiveKey();
-		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-		new WalletProtobufSerializer().writeWallet(wallet, outStream);
-		return outStream.toByteArray();
-
-	}
-
-	public static  Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
-			throws Exception {
-	    Context context =new Context(params);
+    public static byte[] createWallet(NetworkParameters params) throws IOException {
+        KeyChainGroup kcg;
+        kcg = new KeyChainGroup(params);
+        Context context = new Context(params);
         Context.propagate(context);
-		Wallet wallet;
-		try {
+        Wallet wallet = new Wallet(params, kcg); // default
 
-			Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-			final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
-			wallet = serializer.readWallet(params, null, proto);
-			if (shouldReplayWallet)
-				wallet.reset();
-		} finally {
-			walletStream.close();
-		}
-		return wallet;
-	}
+        wallet.freshReceiveKey();
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(wallet, outStream);
+        return outStream.toByteArray();
+
+    }
+
+    public static Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
+            throws IOException, UnreadableWalletException {
+        Context context = new Context(params);
+        Context.propagate(context);
+        Wallet wallet;
+        try {
+
+            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
+            final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
+            wallet = serializer.readWallet(params, null, proto);
+            if (shouldReplayWallet)
+                wallet.reset();
+        } finally {
+            walletStream.close();
+        }
+        return wallet;
+    }
 
 }
