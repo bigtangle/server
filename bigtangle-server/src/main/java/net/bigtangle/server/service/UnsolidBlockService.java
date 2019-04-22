@@ -76,15 +76,34 @@ public class UnsolidBlockService {
      * CONSUMERIDSUFFIX 12324
      */
     public void reCheckUnsolidBlock() throws Exception {
-        List<Block> blocklist = store.getNonSolidBlocks();
-        for (Block block : blocklist) {
-            StoredBlock added = blockgraph.add(block, true);
-            if (added != null) {
-                this.store.deleteUnsolid(block.getHash());
-                logger.debug("addConnected from reCheckUnsolidBlock " + block);
-                continue;
+        StoredBlock storedBlock = store.getNonSolidBlocksFirst();
+        if (storedBlock != null) {
+
+            StoredBlock storedBlock0 = null;
+            try {
+                storedBlock0 = this.store.get(storedBlock.getHeader().getPrevBlockHash());
+            } catch (NoBlockException e) {
+                // Ok, no prev
             }
-            requestPrev(block);
+
+            StoredBlock storedBlock1 = null;
+            try {
+                storedBlock1 = this.store.get(storedBlock.getHeader().getPrevBranchBlockHash());
+            } catch (NoBlockException e) {
+                // Ok, no prev
+            }
+            if (storedBlock1 != null && storedBlock0 != null) {
+                StoredBlock added = blockgraph.add(storedBlock.getHeader(), true);
+                if (added != null) {
+                    this.store.deleteUnsolid(storedBlock.getHeader().getHash());
+                    logger.debug("addConnected from reCheckUnsolidBlock " + storedBlock.getHeader());
+
+                } else {
+                    requestPrev(storedBlock.getHeader());
+                }
+            } else {
+                requestPrev(storedBlock.getHeader());
+            }
         }
     }
 
@@ -93,11 +112,11 @@ public class UnsolidBlockService {
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 return;
             }
-            
-            StoredBlock storedBlock0 =null;
+
+            StoredBlock storedBlock0 = null;
             try {
-                storedBlock0= this.store.get(block.getPrevBlockHash());
-            }catch (NoBlockException e) {
+                storedBlock0 = this.store.get(block.getPrevBlockHash());
+            } catch (NoBlockException e) {
                 // Ok, no prev
             }
 
@@ -112,12 +131,19 @@ public class UnsolidBlockService {
                     else {
                         // pre recursive check
                         logger.debug(" prev not found: " + req.toString());
-                      //No recursive  requestPrev(req);
+                        // No recursive requestPrev(req);
                     }
 
                 }
             }
-            StoredBlock storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
+            StoredBlock storedBlock1 = null;
+
+            try {
+                storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
+            } catch (NoBlockException e) {
+                // Ok, no prev
+            }
+
             if (storedBlock1 == null) {
                 byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
                 if (re != null) {
@@ -128,7 +154,7 @@ public class UnsolidBlockService {
                         blockgraph.add(req, true);
                     else {
                         // pre recursive check
-                        //No recursive  requestPrev(req);
+                        // No recursive requestPrev(req);
                     }
 
                 }

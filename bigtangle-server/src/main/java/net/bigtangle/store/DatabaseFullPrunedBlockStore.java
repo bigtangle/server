@@ -205,7 +205,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "rating, depth, cumulativeweight,  height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained " + " FROM blocks ";
 
-    protected final String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime from unsolidblocks order by inserttime asc ";
+    protected final String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime, height from unsolidblocks order by inserttime asc, height desc ";
 
     protected final String SELECT_BLOCKWRAPS_TO_ADD_TO_MILESTONE_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"
@@ -1633,6 +1633,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public StoredBlock getNonSolidBlocksFirst() throws BlockStoreException {
+       
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return new StoredBlock(params.getDefaultSerializer().makeBlock(resultSet.getBytes("block")),
+                        resultSet.getLong("height"));
+            } else {
+                return null;
+            }
+
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
+    }
+
+    @Override
     public List<Block> getNonSolidBlocks() throws BlockStoreException {
         List<Block> storedBlockHashes = new ArrayList<Block>();
         maybeConnect();
@@ -2312,7 +2341,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(2, block.bitcoinSerialize());
             preparedStatement.setLong(3, block.getTimeSeconds());
             preparedStatement.setLong(4, solidityState.getState().ordinal());
-            preparedStatement.setLong(5,  heigth);
+
+            preparedStatement.setLong(6, heigth);
             switch (solidityState.getState()) {
             case MissingPredecessor:
             case MissingTransactionOutput:

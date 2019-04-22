@@ -96,7 +96,7 @@ public class TransactionService {
                 if (added != null) {
                     logger.trace("addConnected from kafka ");
                 } else {
-                    logger.debug(" unsolid block from kafka heigth " + storedBlock.getHeight() + " Blockhash"
+                    logger.debug(" unsolid block from kafka height " + storedBlock.getHeight() + " Blockhash="
                             + block.getHashAsString());
                     if (request)
                         unsolidBlockService.requestPrev(block);
