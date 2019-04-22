@@ -186,7 +186,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // If dependency missing and allowing waiting list, add to
                     // list
                     if (allowUnsolid) {
-                        Long h = null;
+                        Long h = -1l;
                         if (storedPrev != null && storedPrev.getBlockEvaluation() != null && storedPrevBranch != null
                                 && storedPrevBranch.getBlockEvaluation() != null) {
                             h = Math.max(storedPrev.getBlockEvaluation().getHeight(),
