@@ -54,19 +54,17 @@ public class SendEmptyBlock {
             int c = sendEmptyBlock.needEmptyBlocks(sendEmptyBlock.CONTEXT_ROOT);
             if (c > 0) {
                 for (int i = 0; i < c; i++) {
-                    new Thread("" + i) {
-                        public void run() {
-                            try {
-                                sendEmptyBlock.send();
-                            } catch (JsonProcessingException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (Exception e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
+
+                    try {
+                        sendEmptyBlock.send();
+                    } catch (JsonProcessingException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
                 }
 
             }
