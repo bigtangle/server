@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -122,8 +123,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL = "SELECT block FROM unsolidblocks WHERE missingDependency = ? "
             + afterSelect();
 
-    protected final String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block FROM blocks WHERE height >= ?" + afterSelect()
-            + " order by height asc ";
+    protected final String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block, height FROM blocks WHERE height >= ?"
+            + afterSelect() + " order by height asc ";
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
             + "   block FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?)" + afterSelect();
@@ -1112,7 +1113,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void streamBlocks(long height, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException {
+    public void streamBlocks(long height, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
+            throws BlockStoreException {
         // Optimize for chain head
 
         maybeConnect();
@@ -1124,7 +1126,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet results = s.executeQuery();
             long count = 0;
             while (results.next()) {
-                kafkaMessageProducer.sendMessage(results.getBytes(1));
+                StoredBlock storedBlock = new StoredBlock(params.getDefaultSerializer().makeBlock(results.getBytes(1)),
+                        height);
+                final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
+                ByteBuffer buffer = ByteBuffer.allocate(size);
+                storedBlock.serializeCompact(buffer);
+
+                kafkaMessageProducer.sendMessage(buffer.array(), serveraddress);
                 count += 1;
             }
             log.info(" streamBlocks count= " + count + " from height " + height + " to kafka:"
@@ -1634,7 +1642,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public StoredBlock getNonSolidBlocksFirst() throws BlockStoreException {
-       
+
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

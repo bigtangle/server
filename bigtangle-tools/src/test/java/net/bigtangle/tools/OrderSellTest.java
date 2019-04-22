@@ -32,7 +32,7 @@ public class OrderSellTest extends AbstractIntegrationTest {
 
         List<String> keyStrHex000 = new ArrayList<String>();
 
-        for (ECKey ecKey : walletKeys) {
+        for (ECKey ecKey : wallet1Keys) {
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
 
@@ -44,7 +44,7 @@ public class OrderSellTest extends AbstractIntegrationTest {
         Collections.shuffle(utxos);
         for (UTXO utxo : utxos) {
             if(!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId()))
-            walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+            walletAppKit1.wallet().sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
         }
 
     }

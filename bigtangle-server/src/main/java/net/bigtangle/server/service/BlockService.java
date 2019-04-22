@@ -30,6 +30,7 @@ import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -53,6 +54,9 @@ public class BlockService {
     FullPrunedBlockGraph blockgraph;
     @Autowired
     private KafkaConfiguration kafkaConfiguration;
+
+    @Autowired
+    private ServerConfiguration serverConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
@@ -90,7 +94,7 @@ public class BlockService {
 
     public void saveBlock(Block block) throws Exception {
         StoredBlock added = blockgraph.add(block, false);
-        if (added !=null) {
+        if (added != null) {
             try {
 
                 broadcastBlock(added);
@@ -98,7 +102,7 @@ public class BlockService {
                 // tests, to get
                 // sync real time confirmation for client
 
-               // milestoneService.update();
+                // milestoneService.update();
             } catch (Exception e) {
                 // TODO: handle exception
                 logger.warn(" saveBlock problem after save milestoneService  ", e);
@@ -213,7 +217,6 @@ public class BlockService {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
 
-
     public void broadcastBlock(StoredBlock storedBlock) {
         try {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
@@ -222,23 +225,13 @@ public class BlockService {
             final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
             ByteBuffer buffer = ByteBuffer.allocate(size);
             storedBlock.serializeCompact(buffer);
-            kafkaMessageProducer.sendMessage(buffer.array());
-        } catch (InterruptedException | ExecutionException e) {
-            logger.warn("", e);
-        }
-    }
-    
-    public void broadcastBlock(byte[] data) {
-        try {
-            if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
-                return;
-            KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-            kafkaMessageProducer.sendMessage(data);
+            kafkaMessageProducer.sendMessage(buffer.array(),serverConfiguration.getMineraddress());
         } catch (InterruptedException | ExecutionException e) {
             logger.warn("", e);
         }
     }
 
+  
     public void batchBlock(Block block) throws BlockStoreException {
 
         this.store.insertBatchBlock(block);
@@ -246,7 +239,7 @@ public class BlockService {
 
     public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
 
-        this.store.insertMyserverblocks(prevhash,hash, inserttime);
+        this.store.insertMyserverblocks(prevhash, hash, inserttime);
     }
 
     public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {

@@ -136,7 +136,7 @@ public class StoredBlock {
      */
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
 
-        Long height = buffer.getLong(); // +4 bytes
+        Long height = buffer.getLong(); // +8 bytes
         byte[] header = new byte[NetworkParameters.HEADER_SIZE + 1]; // Extra
                                                                      // byte for
                                                                      // the

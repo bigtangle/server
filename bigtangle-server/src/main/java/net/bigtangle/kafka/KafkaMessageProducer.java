@@ -35,17 +35,19 @@ public class KafkaMessageProducer {
         this.binaryMessageKey = binaryMessageKey;
     }
 
-    public KafkaMessageProducer(KafkaConfiguration kafkaConfiguration) {
+    public KafkaMessageProducer(KafkaConfiguration kafkaConfiguration ) {
         super();
         this.kafkaserver = kafkaConfiguration.getBootstrapServers();
         this.topic = kafkaConfiguration.getTopicOutName();
 
     }
 
-    public boolean sendMessage(byte[] data) throws InterruptedException, ExecutionException {
+    public boolean sendMessage(byte[] data, String serveraddress) throws InterruptedException, ExecutionException {
         if ("".equalsIgnoreCase(kafkaserver))
-            return false;
-        final String key = UUID.randomUUID().toString();
+            {return false;}
+        // messages can be ordered per a certain property,
+        //set a consistent message key and use multiple partitions
+        final String key = serveraddress;//UUID.randomUUID().toString();
         KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig());
         ProducerRecord<String, byte[]> producerRecord = null;
         producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);

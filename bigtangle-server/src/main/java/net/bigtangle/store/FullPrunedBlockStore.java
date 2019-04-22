@@ -109,7 +109,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      */
     void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException;
 
- 
     /**
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
      * null if none is found
@@ -322,10 +321,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
             String tokenname, String description, String url, int signnumber, int tokentype, boolean tokenstop,
-            String prevblockhash, byte[] tokenkeyvalues,String parenttokenid, String language,String classification) throws BlockStoreException;
+            String prevblockhash, byte[] tokenkeyvalues, String parenttokenid, String language, String classification)
+            throws BlockStoreException;
 
-    public  Token  getToken(String blockhash) throws BlockStoreException;
+    public Token getToken(String blockhash) throws BlockStoreException;
+
     public List<Token> getTokenID(String tokenid) throws BlockStoreException;
+
     public String getTokenPrevblockhash(String blockhash) throws BlockStoreException;
 
     public boolean getTokenSpent(String blockhash) throws BlockStoreException;
@@ -380,7 +382,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount)
             throws BlockStoreException;
 
-    public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer) throws BlockStoreException;
+    public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
+            throws BlockStoreException;
 
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
@@ -475,8 +478,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<Block> getNonSolidBlocks() throws BlockStoreException;
 
     public StoredBlock getNonSolidBlocksFirst() throws BlockStoreException;
-    
-    void insertUnsolid(Block block, SolidityState solidityState, Long    height ) throws BlockStoreException;
+
+    void insertUnsolid(Block block, SolidityState solidityState, Long height) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
 
@@ -527,8 +530,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
 
-    void insertMatchingEvent(MatchResult matchresults)
-            throws BlockStoreException;
+    void insertMatchingEvent(MatchResult matchresults) throws BlockStoreException;
 
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 

@@ -20,7 +20,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
 
     @Test
     public void buy() throws Exception {
-        wallet1();
+       
         while (true) {
          
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -35,7 +35,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
                     // sell order and make buy
                     long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-                   walletAppKit1.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
+                   walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                             orderRecord.getOfferValue(), null, null);
                 }
 

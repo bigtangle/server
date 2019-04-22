@@ -45,20 +45,32 @@ public class SendEmptyBlock {
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    private String CONTEXT_ROOT = "http://localhost:8088/";//"https://bigtangle.org/";
+    public String CONTEXT_ROOT = "https://bigtangle.org/";
 
-    public static void main(String[] args) {
-        SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
-        boolean c = true;
- 
-        while (c) {
-            try {
-                sendEmptyBlock.send();
-            } catch (JsonProcessingException e) {
-                log.warn("", e);
-            } catch (Exception e) {
-                log.warn("", e);
+    // "http://localhost:8088/";//
+    public static void main(String[] args) throws Exception {
+        while (true) {
+            SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
+            int c = sendEmptyBlock.needEmptyBlocks(sendEmptyBlock.CONTEXT_ROOT);
+            if (c > 0) {
+                for (int i = 0; i < c; i++) {
+                    new Thread("" + i) {
+                        public void run() {
+                            try {
+                                sendEmptyBlock.send();
+                            } catch (JsonProcessingException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } catch (Exception e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+                    }.start();
+                }
+
             }
+            Thread.sleep(1000);
         }
     }
 
@@ -74,7 +86,20 @@ public class SendEmptyBlock {
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
     }
-    
+
+    private int needEmptyBlocks(String server) throws Exception {
+        List<BlockEvaluationDisplay> a = getBlockInfos(server);
+        // only paralell blocks with rating < 70 need empty to solve conflicts
+        int res = 0;
+        for (BlockEvaluationDisplay b : a) {
+            if (b.getRating() < 70) {
+                res += 1;
+            }
+        }
+        // empty blocks
+        return res * 5;
+    }
+
     private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
         String CONTEXT_ROOT = server;
         String lastestAmount = "200";
@@ -87,6 +112,5 @@ public class SendEmptyBlock {
                 GetBlockEvaluationsResponse.class);
         return getBlockEvaluationsResponse.getEvaluations();
     }
-    
 
 }

@@ -25,6 +25,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -58,6 +59,9 @@ public class TransactionService {
     protected NetworkParameters networkParameters;
     @Autowired
     protected KafkaConfiguration kafkaConfiguration;
+
+    @Autowired
+    protected ServerConfiguration serverConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
@@ -125,12 +129,12 @@ public class TransactionService {
         } catch (NoBlockException e) {
             return false;
         }
-        
+
     }
 
     public void streamBlocks(Long heightstart) throws BlockStoreException {
         KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-        store.streamBlocks(heightstart, kafkaMessageProducer);
+        store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 
     public void streamBlocks(Long heightstart, String kafka) throws BlockStoreException {
@@ -140,6 +144,6 @@ public class TransactionService {
         } else {
             kafkaMessageProducer = new KafkaMessageProducer(kafka, kafkaConfiguration.getTopicOutName(), true);
         }
-        store.streamBlocks(heightstart, kafkaMessageProducer);
+        store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 }
