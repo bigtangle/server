@@ -28,7 +28,7 @@ public class ScheduleOrderReclaimService {
     @Autowired
     ServerConfiguration serverConfiguration;
     
-    @Scheduled(fixedRate = 600000)
+    @Scheduled(fixedRate = 1600000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active()&& serverConfiguration.checkService()) {
             orderReclaimService.startSingleProcess();

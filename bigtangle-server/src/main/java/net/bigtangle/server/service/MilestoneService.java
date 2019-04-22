@@ -192,8 +192,7 @@ public class MilestoneService {
      */
 
     protected final ReentrantLock lock = Threading.lock("milestoneService");
-    private Long lockTime;
-    private Long lockTimeMaximum = 1000000l;
+  
 
     public void update(int numberUpdates) {
         if (!lock.tryLock()) {
@@ -204,7 +203,7 @@ public class MilestoneService {
         try {
             log.trace("Milestone Update started");
             // clearCacheBlockEvaluations();
-
+            Stopwatch watchAll = Stopwatch.createStarted();
             Stopwatch watch = Stopwatch.createStarted();
             updateMaintained();
             log.trace("Maintained update 1 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -235,6 +234,11 @@ public class MilestoneService {
             log.trace("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
+            
+            log.debug("Maintained update 1 time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
+
+            watchAll.stop();
+            
         } catch (Exception e) {
             log.warn("", e);
         } finally {
@@ -243,9 +247,7 @@ public class MilestoneService {
 
     }
 
-    private void clearCacheBlockEvaluations() throws Exception {
-    }
-
+  
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
      * Update depth: the longest chain of blocks to a tip

@@ -26,7 +26,7 @@ public class ScheduleMilestoneService {
     private ScheduleConfiguration scheduleConfiguration;
     @Autowired
     ServerConfiguration serverConfiguration;
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 3000)
     public void updateMilestoneService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
