@@ -6,8 +6,6 @@ package net.bigtangle.tools;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -37,21 +35,20 @@ public class KafkaBridge {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaBridge.class);
 
-    List<String> kafkaServerList;
+    String kafkaServerFrom = "10.1.70.11:9092,10.1.70.12:9092,10.1.70.13:9092";
+    String kafkaServerTo = "test.kafka.bigtangle.de:9092";
 
     public static void main(String[] args) {
         KafkaBridge kafkaBridge = new KafkaBridge();
         // TODO auto discover
-        kafkaBridge.kafkaServerList = new ArrayList<String>();
-        kafkaBridge.kafkaServerList.add("de.kafka.bigtangle.net:9092");
-        kafkaBridge.kafkaServerList.add("cn.kafka.bigtangle.net:9092");
+
         kafkaBridge.runStream();
     }
 
     public void runStream() {
-        for (String bootstrapServers : kafkaServerList) {
-            runStream(bootstrapServers, "bigtangle");
-        }
+
+        runStream(kafkaServerFrom, "bigtangle");
+
     }
 
     public void runStream(String bootstrapServers, String topic) {
@@ -75,22 +72,23 @@ public class KafkaBridge {
 
     public void run(KStreamBuilder streamBuilder, String bootstrapServers, String topic) {
         final KStream<byte[], byte[]> input = streamBuilder.stream(topic);
-        input.map((key, bytes) -> KeyValue.pair(key, broadcast(bytes, bootstrapServers)));
+        input.map((key, bytes) -> KeyValue.pair(key, broadcast(bytes, kafkaServerTo)));
 
     }
 
     public boolean broadcast(byte[] data, String bootstrapServers) {
-        for (String s : kafkaServerList) {
-            if (!s.equals(bootstrapServers)) {
-                try {
-                    sendMessage(data, "bigtangle2", s);
-                } catch (Exception e) {
-                     
-                    log.warn("uncaught exception handler {} {}",e);
-                }
-            }
+
+        try {
+            sendMessage(data, "bigtangle", bootstrapServers);
+            return true;
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-        return true;
+        return false;
     }
 
     private Properties prepareConfiguration(String bootstrapServers) {
