@@ -1126,13 +1126,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet results = s.executeQuery();
             long count = 0;
             while (results.next()) {
-                StoredBlock storedBlock = new StoredBlock(params.getDefaultSerializer().makeBlock(results.getBytes(1)),
-                        height);
-                final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-                ByteBuffer buffer = ByteBuffer.allocate(size);
-                storedBlock.serializeCompact(buffer);
 
-                kafkaMessageProducer.sendMessage(buffer.array(), serveraddress);
+                kafkaMessageProducer.sendMessage(results.getBytes(1), serveraddress);
                 count += 1;
             }
             log.info(" streamBlocks count= " + count + " from height " + height + " to kafka:"
