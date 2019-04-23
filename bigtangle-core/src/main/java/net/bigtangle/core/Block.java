@@ -826,6 +826,7 @@ public class Block extends Message {
         // / \ / \ / \
         // t1 t2 t3 t4 t5 t5
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
+        if(transactions==null) return tree;
         // Start by adding all the hashes of the transactions as leaves of the
         // tree.
         for (Transaction t : transactions) {
