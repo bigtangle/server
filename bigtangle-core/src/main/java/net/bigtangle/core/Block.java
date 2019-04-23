@@ -1065,9 +1065,9 @@ public class Block extends Message {
      * Returns an immutable list of transactions held in this block, or null if
      * this object represents just a header.
      */
-    @Nullable
+   //return new List<> to avoid check null  @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : ImmutableList.copyOf(transactions);
+        return transactions == null ? new ArrayList<>() : ImmutableList.copyOf(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
