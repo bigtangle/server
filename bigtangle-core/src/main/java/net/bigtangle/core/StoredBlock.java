@@ -124,10 +124,8 @@ public class StoredBlock {
         // Using unsafeBitcoinSerialize here can give us direct access to the
         // same bytes we read off the wire,
         // avoiding serialization round-trips.
-        byte[] bytes = getHeader().unsafeBitcoinSerialize();
-        buffer.put(bytes, 0, NetworkParameters.HEADER_SIZE); // Trim the
-                                                             // trailing 00 byte
-        // (zero transactions).
+        byte[] bytes = getHeader().bitcoinSerialize();
+        buffer.put(bytes, 0, NetworkParameters.HEADER_SIZE);  
     }
 
     /**
@@ -137,11 +135,7 @@ public class StoredBlock {
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
 
         Long height = buffer.getLong(); // +8 bytes
-        byte[] header = new byte[NetworkParameters.HEADER_SIZE + 1]; // Extra
-                                                                     // byte for
-                                                                     // the
-        // 00 transactions
-        // length.
+        byte[] header = new byte[NetworkParameters.HEADER_SIZE ];
         buffer.get(header, 0, NetworkParameters.HEADER_SIZE);
         return new StoredBlock(params.getDefaultSerializer().makeBlock(header), height);
     }
