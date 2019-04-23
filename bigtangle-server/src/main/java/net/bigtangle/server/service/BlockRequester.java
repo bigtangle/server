@@ -17,7 +17,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
@@ -53,7 +52,7 @@ public class BlockRequester {
                 try {
                     data = OkHttp3Util.post(s.trim() + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    transactionService.addConnected(data, false, false);
+                    transactionService.addConnected(data,   false);
                     break;
                 } catch (Exception e) {
                     log.debug(s, e);

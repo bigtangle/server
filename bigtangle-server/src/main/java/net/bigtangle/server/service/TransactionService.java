@@ -91,17 +91,33 @@ public class TransactionService {
         return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    public Optional<Block> addConnected(byte[] bytes, boolean emptyBlock, boolean request) {
+    public Optional<Block> addConnectedStoredBlock(byte[] bytes, boolean request) {
+        StoredBlock storedBlock = StoredBlock.deserializeCompact(networkParameters, ByteBuffer.wrap(bytes));
+        Block block = storedBlock.getHeader();
+        Optional<Block> a = addConnectedBlock(block, request);
+        if(!a.isPresent()) {
+            logger.debug(" unsolid block from kafka    height =" + storedBlock.getHeight());
+                
+        }
+         return a;
+    }
+
+    /*
+     * StoredBlock byte[] bytes
+     */
+    public Optional<Block> addConnected(byte[] bytes, boolean request) {
+        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request);
+    }
+
+    public Optional<Block> addConnectedBlock(Block block, boolean request) {
         try {
-            StoredBlock storedBlock = StoredBlock.deserializeCompact(networkParameters, ByteBuffer.wrap(bytes));
-            Block block = storedBlock.getHeader();
+
             if (!checkBlockExists(block)) {
                 StoredBlock added = blockgraph.add(block, true);
                 if (added != null) {
                     logger.trace("addConnected from kafka ");
                 } else {
-                    logger.debug(" unsolid block from kafka height " + storedBlock.getHeight() + " Blockhash="
-                            + block.getHashAsString());
+                    logger.debug(" unsolid block from kafka   Blockhash=" + block.getHashAsString());
                     if (request)
                         unsolidBlockService.requestPrev(block);
 

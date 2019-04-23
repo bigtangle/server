@@ -134,7 +134,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         System.out.println(block.getHashAsString());
 
         // Send over kafka method to allow unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
     }
 
     @Test (expected =NoBlockException.class)
@@ -168,7 +168,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
         System.out.println(block.getHashAsString());
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
 
         // Should not be added since insolid
          store.get(block.getHash()) ;
@@ -193,7 +193,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setPrevBranchBlockHash(networkParameters.getGenesisBlock().getHash());
         block.solve();
         System.out.println(block.getHashAsString());
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         store.get(block.getHash());
@@ -218,7 +218,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setPrevBranchBlockHash(sha256Hash);
         block.solve();
         System.out.println(block.getHashAsString());
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         assertNull(store.get(block.getHash()));
@@ -250,7 +250,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Add block allowing unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         assertNull(store.get(block.getHash()));
@@ -317,7 +317,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(rewardBlock2.bitcoinSerialize(), true, false);
+        transactionService.addConnected(rewardBlock2.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         assertNull(store.get(rewardBlock2.getHash()));
@@ -363,7 +363,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Add block allowing unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         store.get(block.getHash());
@@ -451,7 +451,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(block2.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block2.bitcoinSerialize(),false);
 
         // Should not be added since insolid
           store.get(block2.getHash() ) ;
@@ -543,7 +543,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(block2.bitcoinSerialize(), true, false);
+        transactionService.addConnected(block2.bitcoinSerialize(),false);
 
         // Should not be added since insolid
         assertNull(store.get(block2.getHash()));

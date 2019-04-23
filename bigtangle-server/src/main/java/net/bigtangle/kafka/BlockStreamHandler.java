@@ -29,7 +29,7 @@ public class BlockStreamHandler extends AbstractStreamHandler {
 
         final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOutName());
 
-        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes, true, true)));
+        input.map((key, bytes) -> KeyValue.pair(key, transactionService.addConnected(bytes, true)));
 
     }
 
