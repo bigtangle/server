@@ -763,6 +763,7 @@ public class Block extends Message {
         // This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
         int sigOps = 0;
+        if(transactions==null) return;
         for (Transaction tx : transactions) {
             sigOps += tx.getSigOpCount();
         }
@@ -896,7 +897,7 @@ public class Block extends Message {
             throw new LargerThanMaxBlockSize();
         checkMerkleRoot();
         checkSigOps();
-
+        if(transactions==null) return;
         for (Transaction transaction : transactions) {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new CoinbaseDisallowedException();
