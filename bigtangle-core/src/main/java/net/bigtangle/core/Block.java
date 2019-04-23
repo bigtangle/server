@@ -1067,7 +1067,7 @@ public class Block extends Message {
      */
    //return new List<> to avoid check null  @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? (new ArrayList<>() ) : ImmutableList.copyOf(transactions);
+        return transactions == null ? new ArrayList<Transaction>() : ImmutableList.copyOf(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
