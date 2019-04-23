@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,9 +44,7 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-
-    @Autowired
-    private MilestoneService milestoneService;
+ 
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -222,10 +219,9 @@ public class BlockService {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
                 return;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
-            storedBlock.serializeCompact(buffer);
-            kafkaMessageProducer.sendMessage(buffer.array(),serverConfiguration.getMineraddress());
+  
+            kafkaMessageProducer.sendMessage(storedBlock.getHeader()
+                    .bitcoinSerialize(),serverConfiguration.getMineraddress());
         } catch (InterruptedException | ExecutionException e) {
             logger.warn("", e);
         }
