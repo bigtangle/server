@@ -173,7 +173,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000l);
         }
        walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
-
+       milestoneService.update();
         for (UTXO utxo : getBalance(false, genesiskey)) {
             log.info("UTXO : " + utxo); 
                 assertTrue(utxo.getValue().getValue() == 999999993666667l);
@@ -285,6 +285,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
         testCreateToken();
+        
+        milestoneService.update();
+        
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);

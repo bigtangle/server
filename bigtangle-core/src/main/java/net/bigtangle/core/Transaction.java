@@ -124,7 +124,7 @@ public class Transaction extends ChildMessage {
      * adjustment: February 2017.
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000, NetworkParameters.BIGTANGLE_TOKENID); // 1
-                                                                                                          // mBTC
+                                                                                                         // mBTC
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in
@@ -381,7 +381,6 @@ public class Transaction extends ChildMessage {
         appearsInHashes.put(blockHash, relativityOffset);
     }
 
-
     /**
      * Gets the sum of the outputs of the transaction. If the outputs are less
      * than the inputs, it does not count the fee.
@@ -567,8 +566,8 @@ public class Transaction extends ChildMessage {
         long len = readUint32();
         optimalEncodingMessageSize += 4;
 
-        if (len > 0) { 
-            this.memo = new String( readBytes((int) len));
+        if (len > 0) {
+            this.memo = new String(readBytes((int) len));
             optimalEncodingMessageSize += len;
         }
 
@@ -586,7 +585,7 @@ public class Transaction extends ChildMessage {
             this.data = readBytes((int) len);
             optimalEncodingMessageSize += len;
         }
-        
+
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
@@ -1195,7 +1194,7 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(this.data.length, stream);
             stream.write(this.data);
         }
-        
+
         if (this.toAddressInSubtangle == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
@@ -1357,6 +1356,21 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
+        if (this.getMemo()!=null && this.getMemo().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
+            throw new VerificationException("memo size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+
+        if (this.getData()!=null && this.getData().length > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
+            throw new VerificationException(
+                    "getData size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+
+        if (this.getDataClassName()!=null&& this.getDataClassName().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
+            throw new VerificationException(
+                    "getDataClassName size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+
+        if (this.getDataSignature()!=null && this.getDataSignature().length > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
+            throw new VerificationException(
+                    "getDataSignature size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
@@ -1507,5 +1521,5 @@ public class Transaction extends ChildMessage {
         this.toAddressInSubtangle = subtangleID;
         unCache();
     }
-    
+
 }

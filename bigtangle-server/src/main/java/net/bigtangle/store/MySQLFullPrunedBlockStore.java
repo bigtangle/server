@@ -42,9 +42,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
             + "    hash varbinary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    reason bigint NOT NULL,\n" 
-            + "    missingdependency mediumblob NOT NULL,\n"
-            + "    height bigint ,\n"
+            + "    reason bigint NOT NULL,\n" + "    missingdependency mediumblob NOT NULL,\n" + "    height bigint ,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
@@ -52,7 +50,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    scriptbytes mediumblob NOT NULL,\n" + "    toaddress varchar(255),\n"
             + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    blockhash varbinary(32),\n" // confirming
                                                                                                                // blockhash
-            + "    tokenid varchar(255),\n" + "    fromaddress varchar(255),\n" + "    memo varchar(80),\n"
+            + "    tokenid varchar(255),\n" + "    fromaddress varchar(255),\n" + "    memo MEDIUMTEXT,\n"
             + "    spent boolean NOT NULL,\n" + "    confirmed boolean NOT NULL,\n"
             + "    spendpending boolean NOT NULL,\n" // true if there exists a
                                                      // transaction on the
@@ -129,14 +127,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n";
 
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
-            + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
-            + "    txhash varchar(255) NOT NULL,\n" 
-            + "    tokenid varchar(255) NOT NULL,\n" 
-            + "    price bigint NOT NULL,\n" 
-            + "    executedQuantity bigint NOT NULL,\n" 
-            + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY (id) \n" 
-            + ")\n";
+            + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
+            + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n" + ")\n";
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    confirmed boolean NOT NULL,\n"
@@ -145,10 +139,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    url varchar(100) ,\n" + "    signnumber bigint NOT NULL   ,\n" + "    tokentype int(11),\n"
             + "    tokenstop boolean,\n" + "    prevblockhash varchar(255) NOT NULL,\n"
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  varbinary(32),\n"
-            + "    tokenkeyvalues  mediumblob,\n"
-            + "    parenttokenid varchar(255)   ,\n"
-            + "    language char(2)   ,\n"
-            + "    classification varchar(255)   ,\n"
+            + "    tokenkeyvalues  mediumblob,\n" + "    parenttokenid varchar(255)   ,\n"
+            + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
             + "    PRIMARY KEY (blockhash) \n)";
 
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
@@ -203,9 +195,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
-            + "    prevhash varbinary(32) NOT NULL,\n"
-            + " hash varbinary(32) NOT NULL,\n"
-            + "    inserttime bigint,\n"
+            + "    prevhash varbinary(32) NOT NULL,\n" + " hash varbinary(32) NOT NULL,\n" + "    inserttime bigint,\n"
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ")";
 
     // Some indexes to speed up stuff
@@ -232,7 +222,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-      
+
         sqlStatements.add(CREATE_BLOCKS_TABLE);
         sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);

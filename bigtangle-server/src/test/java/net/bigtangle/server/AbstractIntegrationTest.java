@@ -169,6 +169,7 @@ public abstract class AbstractIntegrationTest {
         block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>());
+        milestoneService.update();
         return block;
     }
 
@@ -264,6 +265,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null,  tokenId, sellPrice, sellAmount,
                 null, null);
         addedBlocks.add(block);
+        milestoneService.update();
         return block;
 
     }
@@ -307,6 +309,7 @@ public abstract class AbstractIntegrationTest {
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
+        milestoneService.update();
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
@@ -317,6 +320,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null,  tokenId, buyPrice, buyAmount,
                 null, null);
         addedBlocks.add(block);
+        milestoneService.update();
         return block;
 
     }
@@ -324,6 +328,7 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmBuyOrder1(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
         Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        
         return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
     }
 
@@ -360,9 +365,13 @@ public abstract class AbstractIntegrationTest {
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
         this.blockGraph.add(block, true);
+        milestoneService.update();
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        milestoneService.update();
         return block;
+        
+
     }
 
     protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
@@ -392,7 +401,9 @@ public abstract class AbstractIntegrationTest {
 
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
+        milestoneService.update();
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        milestoneService.update();
         return block;
     }
 
@@ -420,6 +431,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm
         blockGraph.confirm(block.getHash(), new HashSet<>());
+        milestoneService.update();
         return block;
     }
 

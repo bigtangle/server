@@ -137,7 +137,7 @@ public abstract class NetworkParameters {
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 300 * 1000;
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 300000;
 
     /**
      * A "sigop" is a signature verification operation. Because they're
@@ -165,6 +165,9 @@ public abstract class NetworkParameters {
             + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
 
+    // Transaction setting
+    public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
+    
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
