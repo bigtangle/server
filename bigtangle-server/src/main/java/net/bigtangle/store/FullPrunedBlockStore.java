@@ -352,6 +352,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses)
             throws BlockStoreException;
 
+    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses,
+            String tokenid) throws BlockStoreException;
+
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
 
     public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;

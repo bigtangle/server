@@ -375,11 +375,12 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String spentStr = (String) request.get("spent");
                 String address = (String) request.get("address");
+                String tokenid = (String) request.get("tokenid");
                 boolean spent = false;
                 if (spentStr != null && spentStr.equals("true"))
                     spent = true;
                 List<String> addresses = (List<String>) request.get("addresses");
-                AbstractResponse response = orderdataService.getOrderdataList(spent, address, addresses);
+                AbstractResponse response = orderdataService.getOrderdataList(spent, address, addresses, tokenid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -410,8 +411,7 @@ public class DispatcherController {
             resp.setErrorcode(404);
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
-        } 
-        catch (Throwable exception) {
+        } catch (Throwable exception) {
             logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
             logger.error("", exception);
