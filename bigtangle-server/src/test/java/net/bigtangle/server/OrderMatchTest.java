@@ -220,7 +220,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
        for(MatchResult m:  orderTickerResponse.getTickers()) {
            assertTrue(m.getTokenid().equals(  testTokenId));
            assertTrue(m.getExecutedQuantity() == 99);
-           assertTrue(m.getPrice() == 1001);
+           assertTrue(m.getPrice() == 1000);
        }
     }
 
