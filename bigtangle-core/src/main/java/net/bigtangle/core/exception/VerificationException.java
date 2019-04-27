@@ -33,6 +33,12 @@ public class VerificationException extends RuntimeException {
         super(msg, t);
     }
 
+    public static class InfeasiblePrototypeException extends VerificationException {
+        public InfeasiblePrototypeException(String string) {
+            super(string);
+        }
+    }
+
     public static class LargerThanMaxBlockSize extends VerificationException {
         public LargerThanMaxBlockSize() {
             super("Message larger than MAX_BLOCK_SIZE");

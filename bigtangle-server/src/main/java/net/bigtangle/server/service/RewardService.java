@@ -23,6 +23,8 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -68,8 +70,10 @@ public class RewardService {
             Stopwatch watch = Stopwatch.createStarted();
             performRewardVoting();
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        } catch (VerificationException e1) {
+            logger.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
-            logger.warn("performRewardVoting ", e);
+            logger.error("performRewardVoting ", e);
         } finally {
             lock.unlock();
         }
@@ -95,22 +99,27 @@ public class RewardService {
                 throw new RuntimeException();
             }
         });
-
-        // Find the one most likely to win
+        
+        // Sort by rating
         List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
-        BlockWrap votingTarget = candidates.stream()
-                .max(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating())).orElse(null);
-
+        candidates.sort(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating()));
+        
         // If exists, push that one, else make new one
-        if (votingTarget != null) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
-            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-            Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            blockService.saveBlock(r1.createNextBlock(r2));
-            return votingTarget.getBlock();
-        } else {
-            return createAndAddMiningRewardBlock();
+        while (!candidates.isEmpty()) {
+            BlockWrap votingTarget = candidates.get(candidates.size()-1);
+            candidates.remove(candidates.size()-1);
+            try {
+                Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
+                Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+                Block r2 = blockService.getBlock(tipsToApprove.getRight());
+                blockService.saveBlock(r1.createNextBlock(r2));
+                return votingTarget.getBlock();
+            } catch (InfeasiblePrototypeException e) {
+                continue;
+            }
         }
+    
+        return createAndAddMiningRewardBlock();
     }
 
     public Block createAndAddMiningRewardBlock() throws Exception {

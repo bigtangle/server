@@ -168,8 +168,9 @@ public abstract class AbstractIntegrationTest {
 
         block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>());
         milestoneService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>());
+       
         return block;
     }
 

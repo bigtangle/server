@@ -30,6 +30,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 
@@ -184,7 +185,7 @@ public class TipsService {
         // Necessary: Initial test if the prototype's
         // currentApprovedNonMilestoneBlocks are actually valid
         if (!validatorService.isEligibleForApprovalSelection(currentApprovedNonMilestoneBlocks))
-            throw new VerificationException("The given prototype is invalid under the current milestone");
+            throw new InfeasiblePrototypeException("The given prototype is invalid under the current milestone");
 
         // Perform next steps
         BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);

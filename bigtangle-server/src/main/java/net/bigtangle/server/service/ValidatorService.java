@@ -107,7 +107,7 @@ public class ValidatorService {
     @Autowired
     private NetworkParameters params;
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 
     ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("Script verification"));
@@ -772,7 +772,7 @@ public class ValidatorService {
             // If it is pruned or not maintained, we drop the blocks and warn
             if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained()) {
                 blockService.removeBlockAndApproversFrom(blocksToAdd, c.getBlock());
-                logger.error("Dropping would-be blocks due to pruning. Reorg not possible!");
+                logger.warn("Dropping would-be blocks due to pruning. Reorg not possible!");
             }
         }
     }
@@ -1505,7 +1505,7 @@ public class ValidatorService {
         // Ensure the predecessing order matching block approves sufficient
         // height, i.e. higher than the order opening
         if (store.getOrderMatchingToHeight(info.getNonConfirmingMatcherBlockHash())
-                - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE < orderBlock.getBlockEvaluation().getHeight()) {
+                - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE <= orderBlock.getBlockEvaluation().getHeight()) {
             if (throwExceptions)
                 throw new InvalidDependencyException(
                         "The order matching block does not approve the given reclaim block height yet.");
