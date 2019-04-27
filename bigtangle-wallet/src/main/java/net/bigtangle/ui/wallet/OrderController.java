@@ -182,7 +182,7 @@ public class OrderController extends ExchangeController {
             sellRadioButton1.setUserData("sell");
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
-            stateRB3.setUserData("finish");
+         //   stateRB3.setUserData("finish");
             mineCB.setSelected(true);
             Main.resetWachted();
             initMarketComboBox();
