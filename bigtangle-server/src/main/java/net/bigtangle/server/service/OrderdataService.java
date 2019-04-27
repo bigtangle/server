@@ -28,10 +28,10 @@ public class OrderdataService {
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
     }
 
-    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses)
+    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid)
             throws BlockStoreException {
 
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses);
+        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses, tokenid);
 
         // List<OrderRecord> closedOrders = store.getMyClosedOrders(address);
         // TODO closed with part match (initialOrders - remainingOrders

@@ -5,7 +5,6 @@
 
 package net.bigtangle.store;
 
-import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -5462,6 +5461,72 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBoolean(1, spent);
             if (address != null && !address.trim().isEmpty()) {
                 s.setString(2, address);
+            }
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                OrderRecord order = new OrderRecord(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        Sha256Hash.wrap(resultSet.getBytes(2)), resultSet.getLong(3), resultSet.getString(4),
+                        resultSet.getBoolean(5), resultSet.getBoolean(6),
+                        resultSet.getBytes(7) == null ? null : Sha256Hash.wrap(resultSet.getBytes(7)),
+                        resultSet.getLong(8), resultSet.getString(9), resultSet.getBytes(10), resultSet.getLong(11),
+                        resultSet.getInt(12), resultSet.getLong(13), resultSet.getString(14), resultSet.getString(15));
+                result.add(order);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses,
+            String tokenid) throws BlockStoreException {
+        List<OrderRecord> result = new ArrayList<>();
+        maybeConnect();
+        String sql = SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL;
+        String orderby = " ORDER BY blockhash, collectinghash";
+
+        if (address != null && !address.trim().isEmpty()) {
+            sql += " AND beneficiaryaddress=? ";
+        }
+        if (tokenid != null && !tokenid.trim().isEmpty()) {
+            sql += " AND (offertokenid=? or targettokenid=?)";
+        }
+        if (addresses != null && !addresses.isEmpty()) {
+            sql += " AND beneficiaryaddress in (";
+            String temp = "";
+            for (String addr : addresses) {
+                temp += ",'" + addr + "'";
+            }
+            sql += temp.substring(1) + ")";
+        }
+        sql += orderby;
+        PreparedStatement s = null;
+        try {
+            log.debug(sql);
+            s = conn.get().prepareStatement(sql);
+            s.setBoolean(1, spent);
+            if (address != null && !address.trim().isEmpty()) {
+                s.setString(2, address);
+            }
+            if (tokenid != null && !tokenid.trim().isEmpty()) {
+                s.setString(3, tokenid);
+                s.setString(4, tokenid);
             }
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
