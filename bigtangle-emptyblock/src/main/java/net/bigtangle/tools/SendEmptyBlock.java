@@ -56,10 +56,7 @@ public class SendEmptyBlock {
                 for (int i = 0; i < c; i++) {
 
                     try {
-                        sendEmptyBlock.send();
-                    } catch (JsonProcessingException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        sendEmptyBlock.send(); 
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -86,6 +83,7 @@ public class SendEmptyBlock {
     }
 
     private int needEmptyBlocks(String server) throws Exception {
+        try {
         List<BlockEvaluationDisplay> a = getBlockInfos(server);
         // only parallel blocks with rating < 70 need empty to resolve conflicts
         int res = 0;
@@ -96,6 +94,9 @@ public class SendEmptyBlock {
         }
         // empty blocks
         return res ;
+        }catch (Exception e) {
+          return 0;
+        }
     }
 
     private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
