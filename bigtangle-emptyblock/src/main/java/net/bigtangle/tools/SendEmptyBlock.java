@@ -87,7 +87,7 @@ public class SendEmptyBlock {
 
     private int needEmptyBlocks(String server) throws Exception {
         List<BlockEvaluationDisplay> a = getBlockInfos(server);
-        // only paralell blocks with rating < 70 need empty to solve conflicts
+        // only parallel blocks with rating < 70 need empty to resolve conflicts
         int res = 0;
         for (BlockEvaluationDisplay b : a) {
             if (b.getRating() < 70) {
@@ -95,7 +95,7 @@ public class SendEmptyBlock {
             }
         }
         // empty blocks
-        return res * 5;
+        return res ;
     }
 
     private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {

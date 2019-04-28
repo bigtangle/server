@@ -40,22 +40,9 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 }
 
             }
-            Thread.sleep(15000);
+            Thread.sleep(5000);
         }
      
-    }
-
-    // let the wallet 1 has money to buy order
-    @Test
-    public void payMoneyToWallet1() throws Exception {
-        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        wallet1();
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333333300l);
-
-     Block   b=  walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-     log.debug("block " + b.toString());
-
-    }
+    } 
 
 }

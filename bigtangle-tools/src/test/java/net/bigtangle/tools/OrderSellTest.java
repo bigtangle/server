@@ -23,7 +23,12 @@ public class OrderSellTest extends AbstractIntegrationTest {
     public void sellThread() throws Exception {
 
         while (true) {
+            try {
             sell();
+            }catch (Exception e) {
+                // TODO: handle exception
+                Thread.sleep(3000);
+            }
         }
 
     }
