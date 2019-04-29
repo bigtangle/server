@@ -177,6 +177,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case searchBlockByBlockHash: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = this.blockService.searchBlockByBlockHash(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getBlock: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

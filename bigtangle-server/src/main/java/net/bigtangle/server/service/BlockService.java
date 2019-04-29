@@ -44,7 +44,7 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
- 
+
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -205,6 +205,24 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
+    @SuppressWarnings("unchecked")
+    public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
+        String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
+        String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(blockhash, lastestAmount);
+        HashSet<String> hashSet = new HashSet<String>();
+        // filter
+        for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
+            BlockEvaluation blockEvaluation = iterator.next();
+            if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
+                iterator.remove();
+            } else {
+                hashSet.add(blockEvaluation.getBlockHexStr());
+            }
+        }
+        return GetBlockEvaluationsResponse.create(evaluations);
+    }
+
     public List<BlockWrap> getRatingEntryPointCandidates() throws BlockStoreException {
         return store.getBlocksInMilestoneDepthInterval((long) 0,
                 NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
@@ -219,15 +237,14 @@ public class BlockService {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
                 return;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-  
-            kafkaMessageProducer.sendMessage(storedBlock.getHeader()
-                    .bitcoinSerialize(),serverConfiguration.getMineraddress());
+
+            kafkaMessageProducer.sendMessage(storedBlock.getHeader().bitcoinSerialize(),
+                    serverConfiguration.getMineraddress());
         } catch (InterruptedException | ExecutionException e) {
             logger.warn("", e);
         }
     }
 
-  
     public void batchBlock(Block block) throws BlockStoreException {
 
         this.store.insertBatchBlock(block);

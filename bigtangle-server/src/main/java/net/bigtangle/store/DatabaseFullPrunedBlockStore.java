@@ -247,7 +247,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " FROM openorders WHERE collectinghash = ?";
     protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
             + " FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash"
-            + " WHERE blocks.height <= ? AND blocks.milestone = 1 AND openorders.spent = 0 AND openorders.collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000" + afterSelect();
+            + " WHERE blocks.height <= ? AND blocks.milestone = 1 AND openorders.spent = 0 AND openorders.collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000"
+            + afterSelect();
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM openorders WHERE blockhash = ? AND collectinghash = ?";
@@ -3078,6 +3079,60 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
+                        Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
+                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getBoolean(6), resultSet.getLong(7),
+                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11));
+                result.add(blockEvaluation);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(String blockhash, String lastestAmount)
+            throws BlockStoreException {
+
+        String sql = "";
+        // if (!"0".equalsIgnoreCase(lastestAmount) &&
+        // !"".equalsIgnoreCase(lastestAmount)) {
+        sql += "SELECT hash, rating, depth, cumulativeweight, "
+                + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype "
+                + "  FROM  blocks ";
+        if (blockhash != null && !"".equals(blockhash.trim())) {
+            sql += " WHERE hash=? ";
+        }
+        sql += " ORDER BY insertTime desc ";
+
+        if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
+            Integer a = Integer.valueOf(lastestAmount);
+            if (a > 1000) {
+                a = 2000;
+            }
+            sql += " LIMIT " + a;
+        }
+
+        // }
+        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            if (blockhash != null && !"".equals(blockhash.trim())) {
+                preparedStatement.setBytes(1, Utils.HEX.decode(blockhash));
+            }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
