@@ -64,6 +64,9 @@ public class HeathCheckService {
                 Thread.sleep(1000);
                 // second check then set the server to not running
                 if (!checkStatus().isStatus()) {
+
+                    log.error("  HeathCheckService  status is not running setServiceWait " + status.getFailedMessage());
+
                     serverConfiguration.setServiceWait();
                 }
                 ;
@@ -81,9 +84,9 @@ public class HeathCheckService {
         StatusCollector statusCollector = new StatusCollector();
 
         checkDB(statusCollector);
-        if(kafkaHealthIndicator.kafkaStart()) {
-    //    checkKafkaStream(statusCollector);
-        checkKafka(statusCollector);
+        if (kafkaHealthIndicator.kafkaStart()) {
+            // checkKafkaStream(statusCollector);
+            checkKafka(statusCollector);
         }
         return statusCollector;
 
@@ -141,5 +144,4 @@ public class HeathCheckService {
         return status;
     }
 
-     
 }
