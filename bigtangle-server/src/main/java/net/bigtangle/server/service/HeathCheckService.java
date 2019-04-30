@@ -67,7 +67,7 @@ public class HeathCheckService {
 
                     log.error("  HeathCheckService  status is not running setServiceWait " + status.getFailedMessage());
 
-                    serverConfiguration.setServiceWait();
+                  //  serverConfiguration.setServiceWait();
                 }
                 ;
             }
