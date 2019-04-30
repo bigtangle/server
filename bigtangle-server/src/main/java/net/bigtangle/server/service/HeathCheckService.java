@@ -82,7 +82,7 @@ public class HeathCheckService {
 
         checkDB(statusCollector);
         if(kafkaHealthIndicator.kafkaStart()) {
-        checkKafkaStream(statusCollector);
+    //    checkKafkaStream(statusCollector);
         checkKafka(statusCollector);
         }
         return statusCollector;
