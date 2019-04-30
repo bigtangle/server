@@ -46,12 +46,14 @@ public class KafkaHealthIndicator implements HealthIndicator {
         return health.withDetail("controller", String.valueOf(controllerFound)).build();
     }
 
-    private Node check() {
+    public Node check() {
+        
         try {
-
+            if (kafkaStart()) {
             return adminClient.describeCluster().controller().get();
+            }
         } catch (InterruptedException e) {
-            log.error("Interrupted während describe cluster", e);
+            log.error("Interrupted  describe cluster", e);
             Thread.currentThread().interrupt();
         } catch (ExecutionException ignored) {
             // Controller not found, do nothing
@@ -67,7 +69,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
         return config;
     }
 
-    private boolean kafkaStart() {
+    public boolean kafkaStart() {
         if (kafkaProperties.getBootstrapServers() != null && !"".equals(kafkaProperties.getBootstrapServers())) {
             return true;
         }

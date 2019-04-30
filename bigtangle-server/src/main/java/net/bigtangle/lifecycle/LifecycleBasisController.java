@@ -64,8 +64,8 @@ public abstract class LifecycleBasisController {
     private StatusCollector checkKafka(StatusCollector status) {
         try {
             final StringBuilder st = new StringBuilder();
-            final AbstractStreamHandler risFahrtStreamHandler = findKafka(BlockStreamHandler_STREAM_HDL);
-            if (risFahrtStreamHandler == null || !risFahrtStreamHandler.isRunning()) {
+            final AbstractStreamHandler blockStreamHandler = findKafka(BlockStreamHandler_STREAM_HDL);
+            if (blockStreamHandler == null || !blockStreamHandler.isRunning()) {
                 log.debug("checkKafka: OUT-ERR1");
                 st.append(BlockStreamHandler_STREAM_HDL);
             }
@@ -93,7 +93,7 @@ public abstract class LifecycleBasisController {
     private FullPrunedBlockStore findStore() {
         FullPrunedBlockStore bean = appContext.getBean(FullPrunedBlockStore.class);
         if (bean == null) {
-            log.error("VdvFahrtenRepository - bean not found");
+            log.error("FullPrunedBlockStore - bean not found");
         }
         return bean;
     }

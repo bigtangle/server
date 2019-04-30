@@ -83,6 +83,7 @@ public abstract class AbstractStreamHandler {
                 + kafkaConfiguration.getConsumerIdSuffix();
     }
     public boolean isRunning() {
+        if(streams==null) return false;
         return   org.apache.kafka.streams.KafkaStreams.State.RUNNING.equals(streams.state());
     }
 }
