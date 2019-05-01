@@ -1,5 +1,6 @@
 package net.bigtangle.health;
 
+import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -8,6 +9,7 @@ import javax.annotation.PostConstruct;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
+import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,13 +71,13 @@ public class KafkaHealthIndicator implements HealthIndicator {
 
         try {
             if (kafkaStart()) {
-                adminClient.listTopics(new ListTopicsOptions()).listings().get();
-
+                Collection<TopicListing> a = adminClient.listTopics(new ListTopicsOptions()).listings().get();
+                log.debug("TopicListing", a);
                 return true;
             }
         } catch (InterruptedException e) {
             log.error("Interrupted  describe cluster", e);
-
+            return true;
         } catch (ExecutionException ignored) {
             return false;
         }

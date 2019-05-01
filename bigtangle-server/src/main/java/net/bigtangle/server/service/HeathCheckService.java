@@ -62,7 +62,7 @@ public class HeathCheckService {
                 log.error(" Database is down. Close the kafka stream and set server down.  ");
             }
             if (!checkKafka()) {
-                blockStreamHandler.closeStream(); 
+             //TODO   blockStreamHandler.closeStream(); 
                 serverConfiguration.setServiceWait();
                 log.error(" Kafka is down. Close the kafka stream and set server down.  ");
             }

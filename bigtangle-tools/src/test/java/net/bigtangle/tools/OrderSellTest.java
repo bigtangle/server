@@ -17,7 +17,7 @@ import net.bigtangle.utils.OkHttp3Util;
 
 public class OrderSellTest extends AbstractIntegrationTest {
 
-    // buy everthing in test
+    // buy everything in test
 
     @Test
     public void sellThread() throws Exception {
