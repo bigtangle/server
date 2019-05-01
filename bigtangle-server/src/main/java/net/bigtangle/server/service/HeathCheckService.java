@@ -57,15 +57,16 @@ public class HeathCheckService {
 
         try {
             if (!checkDB()) {
-                blockStreamHandler.closeStream(); 
+                blockStreamHandler.closeStream();
                 serverConfiguration.setServiceWait();
                 log.error(" Database is down. Close the kafka stream and set server down.  ");
             }
-            if (!checkKafka()) {
-             //TODO   blockStreamHandler.closeStream(); 
-                serverConfiguration.setServiceWait();
-                log.error(" Kafka is down. Close the kafka stream and set server down.  ");
-            }
+            // if (!checkKafka()) {
+            // TODO blockStreamHandler.closeStream();
+            // serverConfiguration.setServiceWait();
+            // log.warn(" Kafka is down. Close the kafka stream and set server
+            // down. ");
+            // }
 
         } catch (Exception e) {
             log.warn("HeathCheckService ", e);
@@ -74,8 +75,6 @@ public class HeathCheckService {
 
         }
     }
-
- 
 
     private boolean checkDB() {
         StatusCollector statusCollector = new StatusCollector();
@@ -87,7 +86,7 @@ public class HeathCheckService {
                 // ignore
             }
             return checkDB(statusCollector).isStatus();
-        } 
+        }
         return true;
     }
 
@@ -114,9 +113,10 @@ public class HeathCheckService {
                 // ignore
             }
             return checkKafka(statusCollector).isStatus();
-        } 
+        }
         return true;
     }
+
     private StatusCollector checkKafka(StatusCollector status) {
         try {
             if (!kafkaHealthIndicator.checkTopic()) {

@@ -88,7 +88,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
     private Properties prepareConfiguration() {
         Properties config = new Properties();
         config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
-        config.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 1000);
+        config.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 10000);
         return config;
     }
 
