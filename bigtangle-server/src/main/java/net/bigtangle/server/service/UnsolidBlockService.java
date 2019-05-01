@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -124,16 +122,7 @@ public class UnsolidBlockService {
                 byte[] re = blockRequester.requestBlock(block.getPrevBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-
-                    if (this.store.get(req.getPrevBlockHash()) != null
-                            && this.store.get(req.getPrevBranchBlockHash()) != null)
-                        blockgraph.add(req, true);
-                    else {
-                        // pre recursive check
-                        logger.debug(" prev not found: " + req.toString());
-                        // No recursive requestPrev(req);
-                    }
-
+                    blockgraph.add(req, true);
                 }
             }
             StoredBlock storedBlock1 = null;
@@ -148,15 +137,7 @@ public class UnsolidBlockService {
                 byte[] re = blockRequester.requestBlock(block.getPrevBranchBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-
-                    if (this.store.get(req.getPrevBlockHash()) != null
-                            && this.store.get(req.getPrevBranchBlockHash()) != null)
-                        blockgraph.add(req, true);
-                    else {
-                        // pre recursive check
-                        // No recursive requestPrev(req);
-                    }
-
+                    blockgraph.add(req, true);
                 }
             }
         } catch (Exception e) {
