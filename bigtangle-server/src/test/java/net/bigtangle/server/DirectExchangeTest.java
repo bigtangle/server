@@ -158,6 +158,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
+    //TODO sometimes failed
     public void testGiveMoney() throws Exception {
         store.resetStore();
         testInitWallet();
