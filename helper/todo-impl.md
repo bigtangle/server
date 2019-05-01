@@ -400,16 +400,19 @@ https://github.com/xmrig/xmrig
 
 ## javaFx to Mobile ? https://gluonhq.com/products/mobile/javafxports/
 
-## shop car problem with not loging missing data
-
-## matchresults display as public service
+## shop cart problem after login missing data
+ 
 ## query of block as public service
 
 ## fix bug of add images in product  edit
 
 ## elk kibana for log monitor
 
-## create kafka cluster and permission
+## create kafka cluster and permission (protected)
 
+## use spring jdbctemplate and c3po for pool. Problem with too many database connections.
 
+## add permission to publish token
+
+## add cache hazecast
 

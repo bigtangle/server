@@ -7,6 +7,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.common.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +48,12 @@ public class KafkaHealthIndicator implements HealthIndicator {
     }
 
     public Node check() {
-        
+
         try {
             if (kafkaStart()) {
-            return adminClient.describeCluster().controller().get();
+                adminClient.listTopics(new ListTopicsOptions()).listings().get();
+
+                return adminClient.describeCluster().controller().get();
             }
         } catch (InterruptedException e) {
             log.error("Interrupted  describe cluster", e);
@@ -60,6 +63,24 @@ public class KafkaHealthIndicator implements HealthIndicator {
         }
 
         return null;
+    }
+
+    public boolean checkTopic() {
+
+        try {
+            if (kafkaStart()) {
+                adminClient.listTopics(new ListTopicsOptions()).listings().get();
+
+                return true;
+            }
+        } catch (InterruptedException e) {
+            log.error("Interrupted  describe cluster", e);
+
+        } catch (ExecutionException ignored) {
+            return false;
+        }
+
+        return false;
     }
 
     private Properties prepareConfiguration() {

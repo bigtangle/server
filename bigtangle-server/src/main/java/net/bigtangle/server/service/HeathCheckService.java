@@ -4,20 +4,16 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.kafka.common.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.health.KafkaHealthIndicator;
 import net.bigtangle.kafka.BlockStreamHandler;
-import net.bigtangle.lifecycle.LifecycleStatus;
 import net.bigtangle.lifecycle.StatusCollector;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -25,7 +21,9 @@ import net.bigtangle.utils.Threading;
 
 /**
  * <p>
- * Provides services for blocks.
+ * Provides services for check of system components. if the database is down,
+ * then it will close the kafka streams and set server is down. If kafka stream
+ * is down, then it set the server down.
  * </p>
  */
 @Service
@@ -58,18 +56,15 @@ public class HeathCheckService {
         }
 
         try {
-
-            StatusCollector status = checkStatus();
-            if (!status.isStatus()) {
-                Thread.sleep(1000);
-                // second check then set the server to not running
-                if (!checkStatus().isStatus()) {
-
-                    log.error("  HeathCheckService  status is not running setServiceWait " + status.getFailedMessage());
-
-                  //  serverConfiguration.setServiceWait();
-                }
-                ;
+            if (!checkDB()) {
+                blockStreamHandler.closeStream(); 
+                serverConfiguration.setServiceWait();
+                log.error(" Database is down. Close the kafka stream and set server down.  ");
+            }
+            if (!checkKafka()) {
+                blockStreamHandler.closeStream(); 
+                serverConfiguration.setServiceWait();
+                log.error(" Kafka is down. Close the kafka stream and set server down.  ");
             }
 
         } catch (Exception e) {
@@ -80,16 +75,20 @@ public class HeathCheckService {
         }
     }
 
-    public StatusCollector checkStatus() {
+ 
+
+    private boolean checkDB() {
         StatusCollector statusCollector = new StatusCollector();
 
-        checkDB(statusCollector);
-        if (kafkaHealthIndicator.kafkaStart()) {
-            // checkKafkaStream(statusCollector);
-            checkKafka(statusCollector);
-        }
-        return statusCollector;
-
+        if (!checkDB(statusCollector).isStatus()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+            return checkDB(statusCollector).isStatus();
+        } 
+        return true;
     }
 
     private StatusCollector checkDB(StatusCollector status) {
@@ -105,35 +104,23 @@ public class HeathCheckService {
         return status;
     }
 
+    private boolean checkKafka() {
+        StatusCollector statusCollector = new StatusCollector();
+
+        if (!checkKafka(statusCollector).isStatus()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+            return checkKafka(statusCollector).isStatus();
+        } 
+        return true;
+    }
     private StatusCollector checkKafka(StatusCollector status) {
         try {
-
-            Node controllerFound = kafkaHealthIndicator.check();
-
-            if (controllerFound != null) {
-
+            if (!kafkaHealthIndicator.checkTopic()) {
                 status.setFailedMessage("Kafka cluster node down");
-            } else {
-                status.setOkMessage("kafka");
-            }
-        } catch (Exception e) {
-            log.error("Kafka down:" + e.getMessage(), e);
-            status.setFailedMessage("kafka");
-        }
-        return status;
-    }
-
-    private StatusCollector checkKafkaStream(StatusCollector status) {
-        try {
-            final StringBuilder st = new StringBuilder();
-
-            if (blockStreamHandler == null || !blockStreamHandler.isRunning()) {
-                log.debug("checkKafka: OUT-ERR1");
-                st.append(BlockStreamHandler_STREAM_HDL);
-            }
-            if (st.length() > 0) {
-                log.error("Kafka ndown:" + st.toString());
-                status.setFailedMessage("Kafka(" + st.toString() + ")");
             } else {
                 status.setOkMessage("kafka");
             }
