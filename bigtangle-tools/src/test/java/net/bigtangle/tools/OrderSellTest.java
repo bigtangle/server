@@ -24,16 +24,17 @@ public class OrderSellTest extends AbstractIntegrationTest {
 
         while (true) {
             try {
-            sell();
+            sell("https://bigtangle.org/");
+            sell("https://bigtangle.de/");
             }catch (Exception e) {
                 // TODO: handle exception
-                Thread.sleep(3000);
+             //   Thread.sleep(3000);
             }
         }
 
     }
 
-    public void sell() throws Exception {
+    public void sell(String url) throws Exception {
 
         List<String> keyStrHex000 = new ArrayList<String>();
 
@@ -41,15 +42,20 @@ public class OrderSellTest extends AbstractIntegrationTest {
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+        String response = OkHttp3Util.post(url + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
         List<UTXO> utxos = getBalancesResponse.getOutputs();
         Collections.shuffle(utxos);
         for (UTXO utxo : utxos) {
-            if(!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId()))
+            if(!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
+                    && utxo.getValue().getValue() >0 )
+            {
+                walletAppKit1.wallet().setServerURL(url);
             walletAppKit1.wallet().sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+            
+            }
         }
 
     }
