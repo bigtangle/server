@@ -1786,8 +1786,9 @@ public class ValidatorService {
         }
 
         // Ensure heights follow the rules
-        if (Math.subtractExact(info.getToHeight(), store
-                .getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL - 1) {
+        if (Math.subtractExact(info.getToHeight(),
+                store.getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL
+                        - 1) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid heights");
             return SolidityState.getFailState();
@@ -2149,6 +2150,7 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long description");
             return SolidityState.getFailState();
         }
+
         if (currentToken.getToken().getTokenid() != null
                 && currentToken.getToken().getTokenid().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
             if (throwExceptions)
@@ -2174,10 +2176,14 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long classification");
             return SolidityState.getFailState();
         }
+        if (currentToken.getToken().getTokenname() == null || "".equals(currentToken.getToken().getTokenname())) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Token name cannot be null.");
+        }
         if (currentToken.getToken().getTokenname() != null
                 && currentToken.getToken().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
             if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long name");
+                throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
         if (currentToken.getToken().getUrl() != null
