@@ -1,7 +1,6 @@
 package net.bigtangle.tools;
 
 import java.util.HashMap;
-import java.util.Random;
 
 import org.junit.Test;
 
@@ -31,14 +30,27 @@ public class OrderBuyTest extends AbstractIntegrationTest {
             int i = 0;
             for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
                 if (i % 2 == 0) {
-                    buy("https://bigtangle.org/", walletAppKit.wallet(), orderRecord);
+                    if (isWallet1Token(orderRecord, orderdataResponse)) {
+                        buy("https://bigtangle.org/", walletAppKit2.wallet(), orderRecord);
+                    } else {
+                        buy("https://bigtangle.org/", walletAppKit1.wallet(), orderRecord);
+                    }
                 } else {
-                    buy("https://bigtangle.de/", walletAppKit1.wallet(), orderRecord);
+                    if (isWallet1Token(orderRecord, orderdataResponse)) {
+                        buy("https://bigtangle.de/", walletAppKit2.wallet(), orderRecord);
+                    } else {
+                        buy("https://bigtangle.de/", walletAppKit1.wallet(), orderRecord);
+                    }
                 }
-                i+=1;
+                i += 1;
             }
 
         }
+
+    }
+
+    private boolean isWallet1Token(OrderRecord orderRecord, OrderdataResponse orderdataResponse) {
+        return orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokenname().contains("test-1");
 
     }
 

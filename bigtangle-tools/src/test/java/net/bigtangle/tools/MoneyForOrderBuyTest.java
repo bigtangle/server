@@ -30,4 +30,16 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
     }
 
+    @Test
+    public void payMoneyToWallet2() throws Exception {
+        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+        wallet2();
+        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 33333333300l);
+
+     Block   b=  walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+     log.debug("block " + b.toString());
+
+    }
+    
 }

@@ -20,7 +20,8 @@ public class CompareServerTest extends AbstractIntegrationTest {
     public void diffThread() throws Exception {
 
         while (true) {
-            diff("https://bigtangle.org", "https://bigtangle.info");
+            diff("https://bigtangle.org", "https://bigtangle.de");
+        
             Thread.sleep(100000);
         }
 
@@ -50,6 +51,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
                 System.out.println(" block from " + server2 + " not found in  " + server + "  " + b.toString());
         }
 
+        System.out.println(" finish difference check " + server + "  :   " + server2 + "  "  );
     }
 
     private BlockEvaluationDisplay find(List<BlockEvaluationDisplay> l, BlockEvaluationDisplay b) throws Exception {

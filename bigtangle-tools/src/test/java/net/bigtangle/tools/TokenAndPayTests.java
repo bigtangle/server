@@ -70,7 +70,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         // Setup transaction and signatures
         wallet1();
         List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-
+        
         testCreateMultiSigToken(keys.get(1), "Gold");
         testCreateMultiSigToken(keys.get(2), "BTC");
         testCreateMultiSigToken(keys.get(3), "ETH");

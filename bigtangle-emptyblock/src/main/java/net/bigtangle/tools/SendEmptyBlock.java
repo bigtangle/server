@@ -45,10 +45,12 @@ public class SendEmptyBlock {
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    public String CONTEXT_ROOT = "https://bigtangle.org/";
+    public String CONTEXT_ROOT = "https://bigtangle.de/";
 
     // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
+        System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+        System.setProperty("https.proxyPort", "3128");
         while (true) {
             SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
             int c = sendEmptyBlock.needEmptyBlocks(sendEmptyBlock.CONTEXT_ROOT);
