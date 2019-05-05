@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.GetHeadersMessage;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionOutPoint;
@@ -103,7 +104,7 @@ public class TransactionService {
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (!added) {
-                    logger.debug(" unsolid block from kafka   Blockhash=" + block.getHashAsString());
+                    logger.debug(" unsolid block from kafka   Blockhash=" + block.getHashAsString() + " height =" +block.getHeigth());
                     if (request)
                         unsolidBlockService.requestPrev(block);
 

@@ -3,8 +3,8 @@ server:
   net: ${SERVER_NET:Mainnet}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:1Kbm8rqjcX6j5oLbq9J8FapksdvrfGUA88}
-  serverversion: ${SERVERVERSION:0.3.3.2}
-  clientversion: ${CLIENTVERSION:0.3.3.2}
+  serverversion: ${SERVERVERSION:0.3.3.3}
+  clientversion: ${CLIENTVERSION:0.3.3.3}
   ssl:
     enabled: ${SSL:false}
     key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
