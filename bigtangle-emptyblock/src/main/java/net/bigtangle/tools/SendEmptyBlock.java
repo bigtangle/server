@@ -45,7 +45,7 @@ public class SendEmptyBlock {
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    public String CONTEXT_ROOT = "https://bigtangle.de/";
+    public String CONTEXT_ROOT = "https://bigtangle.org/";
 
     // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
