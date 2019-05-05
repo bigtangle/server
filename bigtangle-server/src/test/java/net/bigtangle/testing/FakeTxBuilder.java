@@ -25,15 +25,12 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MessageSerializer;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.TipsService;
@@ -267,72 +264,15 @@ public class FakeTxBuilder {
     }
 
     public static class BlockPair {
-        public StoredBlock storedBlock;
+    
         public Block block;
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds,
-            Transaction... transactions) {
-        return createFakeBlock(blockStore, version, timeSeconds, 0, transactions);
-    }
-
-    /** Emulates receiving a valid block */
-    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
-            long timeSeconds, int height, Transaction... transactions) {
-        try {
-            Block previousBlock = previousStoredBlock.getHeader();
-            Block b = previousBlock.createNextBlock(previousBlock);
-            // Coinbase tx was already added.
-            for (Transaction tx : transactions) {
-                // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
-                b.addTransaction(tx);
-            }
-            b.solve();
-            BlockPair pair = new BlockPair();
-            pair.block = b;
-            pair.storedBlock = StoredBlock.build(b, height);
-            blockStore.put(pair.storedBlock);
-            // blockStore.setChainHead(pair.storedBlock);
-            return pair;
-        } catch (VerificationException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
-    }
-
-    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height,
-            Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, NetworkParameters.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(),
-                height, transactions);
-    }
-
-    /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds, int height,
-            Transaction... transactions) {
-        try {
-            return createFakeBlock(blockStore, blockStore.get(tipsManager.getValidatedBlockPair().getLeft()), version,
-                    timeSeconds, height, transactions);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, NetworkParameters.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height,
-                transactions);
-    }
-
-    /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
-        return createFakeBlock(blockStore, NetworkParameters.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), 0, transactions);
-    }
-
+    
+ 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws Exception {
         Pair<Sha256Hash, Sha256Hash> validatedBlockPair = tipsManager.getValidatedBlockPair();
-        Block b = blockStore.get(validatedBlockPair.getLeft()).getHeader().createNextBlock(blockStore.get(validatedBlockPair.getRight()).getHeader());
+        Block b = blockStore.get(validatedBlockPair.getLeft()).createNextBlock(blockStore.get(validatedBlockPair.getRight()));
         b.solve();
         return b;
     }

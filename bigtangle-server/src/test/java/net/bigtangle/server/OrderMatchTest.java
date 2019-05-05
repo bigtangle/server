@@ -221,7 +221,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
            assertTrue(m.getTokenid().equals(  testTokenId));
            assertTrue(m.getExecutedQuantity() == 99);
            //TODO check the execute ordering. price is 1000 or 1001
-           assertTrue(m.getPrice() == 1000);
+           assertTrue(m.getPrice() == 1000 ||m.getPrice() == 1001 );
        }
     }
 
@@ -696,7 +696,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
@@ -775,7 +775,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);

@@ -118,8 +118,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null, null,
-                    null);
+            Block block1 =  saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0),null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -145,8 +144,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null, null,
-                    null);
+            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null);
 
             // Should exist now
             store.getTokenConfirmed(block1.getHash().toString()); // Fine as
@@ -311,7 +309,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
 
         // This (saveBlock) calls milestoneUpdate currently
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         blockGraph.confirm(block1.getHash(), new HashSet<>());
 
         // Should be confirmed now
@@ -574,7 +572,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                     .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently
-            block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+            block2 = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
             blockGraph.confirm(block2.getHash(), new HashSet<>());
         }
 
@@ -760,7 +758,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         // This (saveBlock) calls milestoneUpdate currently
-        Block block11 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         blockGraph.confirm(block11.getHash(), new HashSet<>());
 
         // Should be confirmed now
@@ -1037,7 +1035,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                     .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently
-            block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+            block2 = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
             blockGraph.confirm(block2.getHash(), new HashSet<>());
         }
 
@@ -1343,7 +1341,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            Block block1 =saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
             firstIssuance = block1.getHash();
         }
 
@@ -1363,7 +1361,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
             subseqIssuance = block1.getHash();
         }
 

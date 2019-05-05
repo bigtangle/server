@@ -11,7 +11,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.service.SolidityState;
@@ -124,7 +123,7 @@ public abstract class AbstractBlockGraph {
      *            The current solidity state of the block
      * @throws BlockStoreException
      */
-    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState, Long heigth)
+    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState )
             throws BlockStoreException;
 
     /**
@@ -143,5 +142,5 @@ public abstract class AbstractBlockGraph {
      * @throws VerificationException
      *             if the block cannot be added to the chain.
      */
-    public abstract StoredBlock add(Block block, boolean allowUnsolid) throws VerificationException;
+    public abstract boolean add(Block block, boolean allowUnsolid) throws VerificationException;
 }

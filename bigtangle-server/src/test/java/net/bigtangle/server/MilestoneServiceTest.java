@@ -169,7 +169,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -180,10 +180,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block conflictBlock1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,
-                block1.getHash(), block1.getHash());
-        Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,
-                block1.getHash(), block1.getHash());
+        Block conflictBlock1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        Block conflictBlock2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
 
         // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
@@ -217,7 +215,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -228,8 +226,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block conflictBlock1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,
-                block1.getHash(), block1.getHash());
+        Block conflictBlock1 =saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
 
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -239,8 +236,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block conflictBlock2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null,
-                block1.getHash(), block1.getHash());
+        Block conflictBlock2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null);
 
         // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
@@ -277,11 +273,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block block2 =saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
 
@@ -316,7 +312,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -329,7 +325,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
+        Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
 
@@ -450,11 +446,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block genHash = networkParameters.getGenesisBlock();
+        Block block2 =  saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
 
@@ -465,7 +461,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isMilestone());
 
         // Reorg to block 2
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 25; i++) {
             createAndAddNextBlock(block2, block2);
         }
         milestoneService.update();
@@ -583,7 +579,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block2, false) !=null);
+        assertTrue(this.blockGraph.add(block2, false) );
 
         // Try order reclaim 2
         Block block3 = null;
@@ -600,7 +596,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block3, false) !=null);
+        assertTrue(this.blockGraph.add(block3, false)  );
 
         // But only the first shall win
         milestoneService.update();
@@ -977,7 +973,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         milestoneService.update();
 
         // Should go through

@@ -188,7 +188,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         blockGraph.add(b1, true);
         blockGraph.add(b2, true);
-        
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
@@ -245,7 +245,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         Block b2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
@@ -297,7 +297,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -308,11 +308,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
-                block1.getHash());
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
-                block1.getHash());
-        
+        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1, block1);
+        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1, block1);
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(block1, block1);
         }
@@ -364,7 +362,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -375,8 +373,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1.getHash(),
-                block1.getHash());
+        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
 
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -386,9 +383,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, block1.getHash(),
-                block1.getHash());
-        
+        Block b2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null);
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(block1, block1);
         }
@@ -443,12 +439,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
-        
+        Block genHash = networkParameters.getGenesisBlock();
+        Block b2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
@@ -503,7 +499,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block b1 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null, null);
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -515,9 +511,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block b2 = walletAppKit.wallet().saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, genHash, genHash);
-        
+        Block genHash = networkParameters.getGenesisBlock() ;
+        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,genHash,genHash);
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
@@ -574,7 +570,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate reclaim blocks
         Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
         Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-        
+
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }

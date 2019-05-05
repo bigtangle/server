@@ -1088,21 +1088,35 @@ public class ValidatorService {
      * Otherwise, appropriate solidity states are returned to imply missing
      * dependencies.
      */
-    public SolidityState checkBlockSolidity(Block block, @Nullable BlockWrap storedPrev,
-            @Nullable BlockWrap storedPrevBranch, boolean throwExceptions) {
+    public SolidityState checkBlockSolidity(Block block, BlockWrap storedPrev,
+            BlockWrap storedPrevBranch, boolean throwExceptions) {
         try {
             if (block.getHash() == Sha256Hash.ZERO_HASH) {
                 if (throwExceptions)
                     throw new VerificationException("Lucky zeros not allowed");
                 return SolidityState.getFailState();
             }
-
+            // Check predecessor blocks exist
+            if (storedPrev == null) {
+                return SolidityState.from(block.getPrevBlockHash());
+            }
+            if (storedPrevBranch == null) {
+                return SolidityState.from(block.getPrevBranchBlockHash());
+            }
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 if (throwExceptions)
                     throw new GenesisBlockDisallowedException();
                 return SolidityState.getFailState();
             }
 
+            if (block.getHeigth() != Math.max(storedPrev.getBlock().getHeigth(),
+                    storedPrevBranch.getBlock().getHeigth()) + 1) {
+                if (throwExceptions)
+                    throw new VerificationException("Wrong height");
+                return SolidityState.getFailState();
+            }
+
+            
             // TODO different block type transactions should include their block
             // type in the transaction hash
             // for now, we must disallow someone burning other people's orders
@@ -1118,13 +1132,7 @@ public class ValidatorService {
                     }
             }
 
-            // Check predecessor blocks exist
-            if (storedPrev == null) {
-                return SolidityState.from(block.getPrevBlockHash());
-            }
-            if (storedPrevBranch == null) {
-                return SolidityState.from(block.getPrevBranchBlockHash());
-            }
+  
 
             // Check timestamp: enforce monotone time increase
             if (block.getTimeSeconds() < storedPrev.getBlock().getTimeSeconds()

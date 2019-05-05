@@ -22,7 +22,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
@@ -58,7 +57,7 @@ public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
-        return store.get(blockhash).getHeader();
+        return store.get(blockhash);
     }
 
     public BlockWrap getBlockWrap(Sha256Hash blockhash) throws BlockStoreException {
@@ -90,20 +89,9 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
-        StoredBlock added = blockgraph.add(block, false);
-        if (added != null) {
-            try {
-
-                broadcastBlock(added);
-                // FIXME remove this later, this is needed for testnet and unit
-                // tests, to get
-                // sync real time confirmation for client
-
-                // milestoneService.update();
-            } catch (Exception e) {
-                // TODO: handle exception
-                logger.warn(" saveBlock problem after save milestoneService  ", e);
-            }
+        boolean added = blockgraph.add(block, false);
+        if (added  ) {
+                broadcastBlock(block);
         }
     }
 
@@ -232,13 +220,13 @@ public class BlockService {
         return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
     }
 
-    public void broadcastBlock(StoredBlock storedBlock) {
+    public void broadcastBlock(Block block) {
         try {
             if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
                 return;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
 
-            kafkaMessageProducer.sendMessage(storedBlock.getHeader().bitcoinSerialize(),
+            kafkaMessageProducer.sendMessage(block.bitcoinSerialize(),
                     serverConfiguration.getMineraddress());
         } catch (InterruptedException | ExecutionException e) {
             logger.warn("", e);

@@ -627,15 +627,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return importKeys(Lists.newArrayList(key)) == 1;
     }
 
-    /**
-     * Replace with {@link #importKeys(java.util.List)}, which does the same
-     * thing but with a better name.
-     */
-    @Deprecated
-    public int addKeys(List<ECKey> keys) {
-        return importKeys(keys);
-    }
-
+ 
     /**
      * Imports the given keys to the wallet. If
      * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, net.bigtangle.wallet.WalletFiles.Listener)}
@@ -2385,57 +2377,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    // for unit tests
-    public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-            Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws IOException {
-        Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
-        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-        return block;
-    }
-
-    // for unit tests
-    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-            Sha256Hash overrideHash1, Sha256Hash overrideHash2) throws JsonProcessingException, IOException {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-
-        if (overrideHash1 != null)
-            block.setPrevBlockHash(overrideHash1);
-
-        if (overrideHash2 != null)
-            block.setPrevBranchBlockHash(overrideHash2);
-
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
-
-        Transaction transaction = block.getTransactions().get(0);
-
-        Sha256Hash sighash = transaction.getHash();
-
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
-        multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-
-        if (allowClientMining && clientMiningAddress != null) {
-            block.setMinerAddress(clientMiningAddress);
-        }
-        // save block
-        block.solve();
-        return block;
-    }
-
+  
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 

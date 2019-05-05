@@ -27,8 +27,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
@@ -45,13 +43,9 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.StoredBlockBinary;
-import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
@@ -304,7 +298,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
-    protected final String UPDATE_BLOCKS_SQL = getUpdate() + " blocks SET wasundoable=? WHERE hash=?";
 
     protected final String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
             + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
@@ -719,13 +712,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return INSERT_BLOCKS_SQL;
     }
 
-    /**
-     * Get the SQL to update a blocks record.
-     * 
-     * @return The SQL update statement.
-     */
-    protected abstract String getUpdateHeadersSQL();
-
+ 
     /**
      * Get the SQL to select a outputs record.
      * 
@@ -929,12 +916,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
-            // Set up the genesis block and initial state of tables
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock(), 0);
-            List<Transaction> genesisTransactions = Lists.newLinkedList();
-            StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(),
-                    genesisTransactions);
-            put(storedGenesisHeader, storedGenesis);
+      
+            put(params.getGenesisBlock());
             saveGenesisTransactionOutput(params.getGenesisBlock());
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
 
@@ -985,20 +968,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable, BlockEvaluation blockEval)
-            throws SQLException {
-
-        putBinary(new StoredBlockBinary(storedBlock.getHeader().bitcoinSerialize(), storedBlock.getHeight()),
-                blockEval);
-    }
-
-    protected void putBinary(StoredBlockBinary r, BlockEvaluation blockEvaluation) throws SQLException {
+    protected void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
         try {
-            Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
 
             PreparedStatement s = conn.get().prepareStatement(getInsertHeadersSQL());
             s.setBytes(1, block.getHash().getBytes());
-            s.setLong(2, r.getHeight());
+            s.setLong(2, block.getHeigth());
             s.setBytes(3, block.unsafeBitcoinSerialize());
             s.setBoolean(4, false);
             s.setBytes(5, block.getPrevBlockHash().getBytes());
@@ -1027,52 +1002,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // In that case, we just update the entry to mark it wasUndoable
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw e;
-            Block block = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
-            PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
-            s.setBoolean(1, true);
-
-            s.setBytes(2, block.getHash().getBytes());
-            s.executeUpdate();
-            s.close();
         }
     }
 
     @Override
-    public void put(StoredBlock storedBlock) throws BlockStoreException {
-        maybeConnect();
-        try {
-            BlockEvaluation blockEval = BlockEvaluation.buildInitial(storedBlock.getHeader());
-            putUpdateStoredBlock(storedBlock, false, blockEval);
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        }
-    }
-
-    @Override
-    public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
+    public void put(Block block) throws BlockStoreException {
         maybeConnect();
 
         try {
 
-            BlockEvaluation blockEval = BlockEvaluation.buildInitial(storedBlock.getHeader());
+            BlockEvaluation blockEval = BlockEvaluation.buildInitial(block);
 
-            putUpdateStoredBlock(storedBlock, true, blockEval);
+            putUpdateStoredBlock(block, blockEval);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
 
     }
 
-    public StoredBlock get(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException, NoBlockException {
-        StoredBlockBinary r = getBinary(hash, wasUndoableOnly);
-        if (r == null)
-            throw new NoBlockException();
-        Block b = params.getDefaultSerializer().makeBlock(r.getBlockBytes());
-        b.verifyHeader();
-        return new StoredBlock(b, r.getHeight());
-    }
-
-    public StoredBlockBinary getBinary(Sha256Hash hash, boolean wasUndoableOnly) throws BlockStoreException {
+    public Block get(Sha256Hash hash) throws BlockStoreException, NoBlockException {
 
         maybeConnect();
         PreparedStatement s = null;
@@ -1085,12 +1033,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-            if (wasUndoableOnly && !results.getBoolean(3))
-                return null;
-
-            int height = results.getInt(1);
-
-            return new StoredBlockBinary(results.getBytes(2), height);
+    
+            return params.getDefaultSerializer().makeBlock(results.getBytes(2));
 
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1111,6 +1055,36 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    public List<byte[]> blocksFromHeight(long height) throws BlockStoreException {
+        // Optimize for chain head
+        List<byte[]> re = new ArrayList<byte[]>();
+        maybeConnect();
+        PreparedStatement s = null;
+        // log.info("find block hexStr : " + hash.toString());
+        try {
+            s = conn.get().prepareStatement(SELECT_BLOCKS_HEIGHT_SQL);
+            s.setLong(1, height);
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+
+                re.add(results.getBytes(2));
+
+            }
+            return re;
+        } catch (Exception ex) {
+            log.warn("", ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+        return re;
     }
 
     public void streamBlocks(long height, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
@@ -1218,10 +1192,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
-    public StoredBlock get(Sha256Hash hash) throws BlockStoreException, NoBlockException {
-        return get(hash, false);
-    }
+   
 
     @Override
     public Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException {
@@ -1636,7 +1607,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public StoredBlock getNonSolidBlocksFirst() throws BlockStoreException {
+    public Block getNonSolidBlocksFirst() throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -1644,8 +1615,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_BLOCKS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                return new StoredBlock(params.getDefaultSerializer().makeBlock(resultSet.getBytes("block")),
-                        resultSet.getLong("height"));
+                return params.getDefaultSerializer().makeBlock(resultSet.getBytes("block"));
             } else {
                 return null;
             }
@@ -2332,7 +2302,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertUnsolid(Block block, SolidityState solidityState, Long heigth) throws BlockStoreException {
+    public void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException {
         if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return;
         }
@@ -2345,7 +2315,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(3, block.getTimeSeconds());
             preparedStatement.setLong(4, solidityState.getState().ordinal());
 
-            preparedStatement.setLong(6, heigth);
+            preparedStatement.setLong(6, block.getHeigth());
             switch (solidityState.getState()) {
             case MissingPredecessor:
             case MissingTransactionOutput:

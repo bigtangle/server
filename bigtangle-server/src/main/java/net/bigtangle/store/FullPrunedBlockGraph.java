@@ -53,8 +53,6 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.StoredUndoableBlock;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -149,12 +147,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
 
     @Override
-    public StoredBlock add(Block block, boolean allowUnsolid) {
+    public boolean add(Block block, boolean allowUnsolid) {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null)
-                return null;
+                return false;
 
             // Check the block is partly formally valid and fulfills PoW
             try {
@@ -186,32 +184,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // If dependency missing and allowing waiting list, add to
                     // list
                     if (allowUnsolid) {
-                        Long h = -1l;
-                        if (storedPrev != null && storedPrev.getBlockEvaluation() != null && storedPrevBranch != null
-                                && storedPrevBranch.getBlockEvaluation() != null) {
-                            h = Math.max(storedPrev.getBlockEvaluation().getHeight(),
-                                    storedPrevBranch.getBlockEvaluation().getHeight()) + 1;
-                        }
-
-                        insertUnsolidBlock(block, solidityState, h);
+                        insertUnsolidBlock(block, solidityState);
                     } else
                         log.debug("Dropping unresolved block!");
-                    return null;
+                    return false;
                 }
             } else {
                 // Otherwise, all dependencies exist and the block has been
                 // validated
                 try {
-                    blockStore.beginDatabaseBatchWrite();
-                    StoredBlock s = connect(block, Math.max(storedPrev.getBlockEvaluation().getHeight(),
-                            storedPrevBranch.getBlockEvaluation().getHeight()) + 1);
+                    blockStore.beginDatabaseBatchWrite(); 
+                     connect(block);
                     blockStore.commitDatabaseBatchWrite();
                     try {
                         scanWaitingBlocks(block);
                     } catch (BlockStoreException | VerificationException e) {
                         log.debug(e.getLocalizedMessage());
                     }
-                    return s;
+                    return true;
                 } catch (BlockStoreException e) {
                     blockStore.abortDatabaseBatchWrite();
                     throw e;
@@ -280,14 +270,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      * @throws VerificationException
      */
-    private StoredBlock connect(final Block block, long height) throws BlockStoreException, VerificationException {
+    private void connect(final Block block) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
-        connectUTXOs(block, height);
-        connectTypeSpecificUTXOs(block, height);
-        StoredBlock newBlock = StoredBlock.build(block, height);
-        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
+        connectUTXOs(block);
+        connectTypeSpecificUTXOs(block);
+
+        blockStore.put(block);
         solidifyBlock(block);
-        return newBlock;
+
     }
 
     /**
@@ -1002,17 +992,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertTip(block.getHash());
     }
 
-    protected void insertUnsolidBlock(Block block, SolidityState solidityState, Long height)
-            throws BlockStoreException {
+    protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
         if (solidityState.getState() == State.Success || solidityState.getState() == State.Unfixable)
             return;
 
         // Insert waiting into solidity waiting queue until dependency is
         // resolved
-        blockStore.insertUnsolid(block, solidityState, height);
+        blockStore.insertUnsolid(block, solidityState);
     }
 
-    protected void connectUTXOs(Block block, long height) throws BlockStoreException, VerificationException {
+    protected void connectUTXOs(Block block) throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();
         connectUTXOs(transactions);
     }
@@ -1049,7 +1038,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectTypeSpecificUTXOs(Block block, long height) throws BlockStoreException {
+    private void connectTypeSpecificUTXOs(Block block) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;

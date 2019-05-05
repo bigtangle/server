@@ -117,12 +117,12 @@ public abstract class AbstractIntegrationTest {
     protected TransactionService transactionService;
     @Autowired
     protected RewardService rewardService;
-    
+
     @Autowired
     protected OrdermatchService ordermatchService;
     @Autowired
     protected OrderReclaimService ordeReclaimService;
-    
+
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -166,17 +166,17 @@ public abstract class AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
-        block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+        block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
         milestoneService.update();
         blockGraph.confirm(block.getHash(), new HashSet<>());
-       
+
         return block;
     }
 
     protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeAndConfirmReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
     }
 
@@ -191,7 +191,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks)
             throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
     }
 
@@ -221,7 +221,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
     }
 
@@ -263,8 +263,7 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
 
-        Block block = walletAppKit.wallet().sellOrder(null,  tokenId, sellPrice, sellAmount,
-                null, null);
+        Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         milestoneService.update();
         return block;
@@ -273,7 +272,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder1(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
     }
 
@@ -318,8 +317,7 @@ public abstract class AbstractIntegrationTest {
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
 
-        Block block = walletAppKit.wallet().buyOrder(null,  tokenId, buyPrice, buyAmount,
-                null, null);
+        Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         milestoneService.update();
         return block;
@@ -328,8 +326,8 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder1(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
-        
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+
         return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
     }
 
@@ -371,13 +369,12 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         milestoneService.update();
         return block;
-        
 
     }
 
     protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
             throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
     }
 
@@ -409,7 +406,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft()).getHeader();
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
         return makeAndConfirmOrderMatching(addedBlocks, predecessor);
     }
 
@@ -792,8 +789,8 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount, false);
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
+                false);
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
@@ -885,8 +882,8 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 2, tokenindex_, amount, false);
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
+                false);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
@@ -897,6 +894,65 @@ public abstract class AbstractIntegrationTest {
 
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, keys.get(1), null);
         return tokenid;
+    }
+
+    // for unit tests
+    public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
+            throws IOException {
+        return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
+    }
+
+    public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+            Block overrideHash1, Block overrideHash2) throws IOException {
+        Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
+        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        return block;
+    }
+
+    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
+            throws JsonProcessingException, IOException {
+        return makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
+    }
+
+    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+            Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+
+        if (overrideHash1 != null && overrideHash2 != null) {
+            block.setPrevBlockHash(overrideHash1.getHash());
+
+            block.setPrevBranchBlockHash(overrideHash2.getHash());
+
+            block.setHeigth(Math.max(overrideHash2.getHeigth(), overrideHash1.getHeigth()) + 1);
+        }
+
+        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+
+        Transaction transaction = block.getTransactions().get(0);
+
+        Sha256Hash sighash = transaction.getHash();
+
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+
+        // save block
+        block.solve();
+        return block;
     }
 
 }

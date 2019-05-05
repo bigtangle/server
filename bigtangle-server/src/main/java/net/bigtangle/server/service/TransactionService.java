@@ -4,7 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,7 +17,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -91,19 +90,8 @@ public class TransactionService {
         return store.getTransactionOutput(out.getHash(), out.getIndex());
     }
 
-    public Optional<Block> addConnectedStoredBlock(byte[] bytes, boolean request) {
-        StoredBlock storedBlock = StoredBlock.deserializeCompact(networkParameters, ByteBuffer.wrap(bytes));
-        Block block = storedBlock.getHeader();
-        Optional<Block> a = addConnectedBlock(block, request);
-        if(!a.isPresent()) {
-            logger.debug(" unsolid block from kafka    height =" + storedBlock.getHeight());
-                
-        }
-         return a;
-    }
-
     /*
-     * StoredBlock byte[] bytes
+     * Block byte[] bytes
      */
     public Optional<Block> addConnected(byte[] bytes, boolean request) {
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request);
@@ -113,10 +101,8 @@ public class TransactionService {
         try {
 
             if (!checkBlockExists(block)) {
-                StoredBlock added = blockgraph.add(block, true);
-                if (added != null) {
-                    logger.trace("addConnected from kafka ");
-                } else {
+                boolean added = blockgraph.add(block, true);
+                if (!added) {
                     logger.debug(" unsolid block from kafka   Blockhash=" + block.getHashAsString());
                     if (request)
                         unsolidBlockService.requestPrev(block);
@@ -161,5 +147,10 @@ public class TransactionService {
             kafkaMessageProducer = new KafkaMessageProducer(kafka, kafkaConfiguration.getTopicOutName(), true);
         }
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
+    }
+
+    public List<byte[]> blocksFromHeight(Long heightstart) throws BlockStoreException {
+
+        return store.blocksFromHeight(heightstart);
     }
 }

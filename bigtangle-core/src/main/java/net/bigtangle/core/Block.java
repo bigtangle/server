@@ -85,7 +85,7 @@ public class Block extends Message {
     private long nonce;
     private byte[] minerAddress; // Utils.sha256hash160
     private Type blockType;
-
+    private long heigth;
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
     // solution
     /** If null, it means this PoW was not solved yet. */
@@ -207,12 +207,12 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
-                NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+                NetworkParameters.EASIEST_DIFFICULTY_TARGET, 0);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long type) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0,
-                NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+                NetworkParameters.EASIEST_DIFFICULTY_TARGET, 0);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {
@@ -220,11 +220,12 @@ public class Block extends Message {
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()),
                 Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()),
                 r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
-                        : r2.getDifficultyTarget());
+                        : r2.getDifficultyTarget(),
+                Math.max(r1.getHeigth(), r2.getHeigth()) + 1);
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
-            long minTime, long lastMiningRewardBlock, long difficultyTarget) {
+            long minTime, long lastMiningRewardBlock, long difficultyTarget, long heigth) {
         this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype], minTime, lastMiningRewardBlock,
                 difficultyTarget);
     }
@@ -366,7 +367,7 @@ public class Block extends Message {
         nonce = readUint32();
         minerAddress = readBytes(20);
         blockType = Type.values()[(int) readUint32()];
-
+        heigth = readInt64();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
@@ -405,6 +406,7 @@ public class Block extends Message {
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
         Utils.uint32ToByteStreamLE(blockType.ordinal(), stream);
+        Utils.int64ToByteStreamLE(heigth, stream);
     }
 
     void writePoW(OutputStream stream) throws IOException {
@@ -644,6 +646,7 @@ public class Block extends Message {
         }
         s.append("   version: ").append(version);
         s.append('\n');
+        s.append("   heigth: ").append(heigth).append("\n");
         s.append("   previous: ").append(getPrevBlockHash()).append("\n");
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");
@@ -763,7 +766,8 @@ public class Block extends Message {
         // This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
         int sigOps = 0;
-        if(transactions==null) return;
+        if (transactions == null)
+            return;
         for (Transaction tx : transactions) {
             sigOps += tx.getSigOpCount();
         }
@@ -827,7 +831,8 @@ public class Block extends Message {
         // / \ / \ / \
         // t1 t2 t3 t4 t5 t5
         ArrayList<byte[]> tree = new ArrayList<byte[]>();
-        if(transactions==null) transactions =   new ArrayList<Transaction>() ;
+        if (transactions == null)
+            transactions = new ArrayList<Transaction>();
         // Start by adding all the hashes of the transactions as leaves of the
         // tree.
         for (Transaction t : transactions) {
@@ -897,7 +902,8 @@ public class Block extends Message {
             throw new LargerThanMaxBlockSize();
         checkMerkleRoot();
         checkSigOps();
-        if(transactions==null) return;
+        if (transactions == null)
+            return;
         for (Transaction transaction : transactions) {
             if (!allowCoinbaseTransaction() && transaction.isCoinBase()) {
                 throw new CoinbaseDisallowedException();
@@ -1065,7 +1071,7 @@ public class Block extends Message {
      * Returns an immutable list of transactions held in this block, or null if
      * this object represents just a header.
      */
-   //return new List<> to avoid check null  @Nullable
+    // return new List<> to avoid check null @Nullable
     public List<Transaction> getTransactions() {
         return transactions == null ? new ArrayList<Transaction>() : ImmutableList.copyOf(transactions);
     }
@@ -1242,9 +1248,6 @@ public class Block extends Message {
     /**
      * Returns a solved, valid empty block that builds on top of this one and
      * the specified other Block.
-     * 
-     * @param height
-     *            block height, if known, or -1 otherwise.
      */
     public Block createNextBlock(Block branchBlock, final long version, byte[] mineraddress) {
         Block b = new Block(params, version);
@@ -1258,6 +1261,8 @@ public class Block extends Message {
         b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));
         b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget
                 : branchBlock.difficultyTarget);
+
+        b.setHeigth(Math.max(getHeigth(), branchBlock.getHeigth()) + 1);
 
         // Don't let timestamp go backwards
         long currTime = System.currentTimeMillis() / 1000;
@@ -1338,6 +1343,17 @@ public class Block extends Message {
 
     public void setLastMiningRewardBlock(long lastMiningRewardBlock) {
         this.lastMiningRewardBlock = lastMiningRewardBlock;
+    }
+
+    public long getHeigth() {
+        return heigth;
+    }
+
+    public void setHeigth(long heigth) {
+        unCacheHeader();
+        this.heigth = heigth;
+        this.hash = null;
+
     }
 
 }

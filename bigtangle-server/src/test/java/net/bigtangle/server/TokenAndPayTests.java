@@ -830,8 +830,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
             Coin basecoin = Coin.valueOf(100000L, pubKey);
             long amount = basecoin.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(), 1, 0, amount, false);
+            Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test",
+                   "test", 1, 0, amount, false);
             tokenInfo.setToken(tokens);
 
             // add MultiSignAddress item

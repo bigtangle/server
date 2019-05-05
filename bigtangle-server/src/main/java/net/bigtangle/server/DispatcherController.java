@@ -203,6 +203,15 @@ public class DispatcherController {
                 }
             }
                 break;
+            case blocksFromHeight: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+
+                this.transactionService.blocksFromHeight(Long.valueOf((String) request.get("heightstart")));
+
+                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            }
+                break;
             case getMultiSignWithAddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

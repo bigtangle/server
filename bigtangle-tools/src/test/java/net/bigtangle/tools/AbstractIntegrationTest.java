@@ -29,6 +29,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -39,6 +40,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -397,7 +399,7 @@ public abstract class AbstractIntegrationTest {
 				.add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
 		// TODO This (saveBlock) calls milestoneUpdate currently
-		block = walletAppKit.wallet().saveTokenUnitTest(tokenInfo, coinbase, testKey, null, null, null);
+		block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
 		//wait to confirm of token
 		//Thread.sleep(100000);
 		return block;
@@ -416,6 +418,48 @@ public abstract class AbstractIntegrationTest {
 		}
 	}
 	
-	 
+	 // for unit tests
+    public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey
+             ) throws IOException {
+        Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey);
+        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        return block;
+    }
+
+    // for unit tests
+    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey
+           ) throws JsonProcessingException, IOException {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+
+     
+        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+
+        Transaction transaction = block.getTransactions().get(0);
+
+        Sha256Hash sighash = transaction.getHash();
+
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+
+       
+        // save block
+        block.solve();
+        return block;
+    }
     
 }

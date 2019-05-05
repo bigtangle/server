@@ -13,7 +13,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.store.PhoenixBlockStore;
 import net.bigtangle.store.cassandra.CassandraBlockStore;
 
 @Configuration
@@ -42,39 +41,29 @@ public class DBStoreConfiguration {
     NetworkParameters networkParameters;
     @Autowired
     ServerConfiguration serverConfiguration;
-    
 
     @Bean
     public FullPrunedBlockStore store() throws BlockStoreException {
-       
-   
-        if ("phoenix".equalsIgnoreCase(dbtype))
-            return createPhoenixBlockStore();
+ 
         if ("cassandra".equalsIgnoreCase(dbtype))
             return createCassandraBlockStore();
         else
             return createMysqlBlockStore();
-       
+
     }
 
     private FullPrunedBlockStore createCassandraBlockStore() throws BlockStoreException {
-        CassandraBlockStore store = new CassandraBlockStore(networkParameters, fullStoreDepth,
-                hostname + ":" + port, dbName, username, password);
+        CassandraBlockStore store = new CassandraBlockStore(networkParameters, fullStoreDepth, hostname + ":" + port,
+                dbName, username, password);
         return store;
     }
 
     public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
-  
+
         MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
                 hostname + ":" + port, dbName, username, password);
-    
-        return store ;
-    }
-
-    public FullPrunedBlockStore createPhoenixBlockStore() throws BlockStoreException {
-        PhoenixBlockStore store = new PhoenixBlockStore(networkParameters, fullStoreDepth, hostname + ":" + port, "",
-                null, null);
 
         return store;
     }
+
 }

@@ -147,11 +147,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-    @Override
-    protected String getUpdateHeadersSQL() {
-        return getUpdate() + " headers SET wasundoable=? WHERE hash=?";
-    }
-
+  
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
         return getUpdate() + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";

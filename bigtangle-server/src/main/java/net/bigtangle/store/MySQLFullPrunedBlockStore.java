@@ -278,11 +278,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-    @Override
-    protected String getUpdateHeadersSQL() {
-        return UPDATE_BLOCKS_SQL;
-    }
-
+  
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
         return UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL;

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -74,33 +73,33 @@ public class UnsolidBlockService {
      * CONSUMERIDSUFFIX 12324
      */
     public void reCheckUnsolidBlock() throws Exception {
-        StoredBlock storedBlock = store.getNonSolidBlocksFirst();
+         Block storedBlock = store.getNonSolidBlocksFirst();
         if (storedBlock != null) {
 
-            StoredBlock storedBlock0 = null;
+             Block storedBlock0 = null;
             try {
-                storedBlock0 = this.store.get(storedBlock.getHeader().getPrevBlockHash());
+                storedBlock0 = this.store.get(storedBlock.getPrevBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
 
-            StoredBlock storedBlock1 = null;
+           Block storedBlock1 = null;
             try {
-                storedBlock1 = this.store.get(storedBlock.getHeader().getPrevBranchBlockHash());
+                storedBlock1 = this.store.get(storedBlock.getPrevBranchBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
             if (storedBlock1 != null && storedBlock0 != null) {
-                StoredBlock added = blockgraph.add(storedBlock.getHeader(), true);
-                if (added != null) {
-                    this.store.deleteUnsolid(storedBlock.getHeader().getHash());
-                    logger.debug("addConnected from reCheckUnsolidBlock " + storedBlock.getHeader());
+               boolean added= blockgraph.add(storedBlock , true);
+                if (added ) {
+                    this.store.deleteUnsolid(storedBlock.getHash());
+                    logger.debug("addConnected from reCheckUnsolidBlock " + storedBlock);
 
                 } else {
-                    requestPrev(storedBlock.getHeader());
+                    requestPrev(storedBlock);
                 }
             } else {
-                requestPrev(storedBlock.getHeader());
+                requestPrev(storedBlock );
             }
         }
     }
@@ -111,7 +110,7 @@ public class UnsolidBlockService {
                 return;
             }
 
-            StoredBlock storedBlock0 = null;
+             Block storedBlock0 = null;
             try {
                 storedBlock0 = this.store.get(block.getPrevBlockHash());
             } catch (NoBlockException e) {
@@ -125,7 +124,7 @@ public class UnsolidBlockService {
                     blockgraph.add(req, true);
                 }
             }
-            StoredBlock storedBlock1 = null;
+            Block storedBlock1 = null;
 
             try {
                 storedBlock1 = this.store.get(block.getPrevBranchBlockHash());

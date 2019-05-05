@@ -156,12 +156,13 @@ public abstract class NetworkParameters {
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
-    public static final int HEADER_SIZE = 80 // bitcoin
+    public static final int HEADER_SIZE = 88 // bitcoin
             + 32 // additional branch prev block
             + 2 * 4 // time and difftarget from int to long
             + 8 // sequence (lastMiningReward) long
             + 20 // miner address
             + 4 // blockType
+            + 8 // heigth
             + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
 
@@ -220,7 +221,7 @@ public abstract class NetworkParameters {
 		add(params, testCoin + "," + testPub, coinbase);
 		genesisBlock.addTransaction(coinbase);
 		genesisBlock.setNonce(0);
-		
+		genesisBlock.setHeigth(0);
 		//genesisBlock.solve();
 		
 		return genesisBlock;

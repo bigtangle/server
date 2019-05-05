@@ -38,13 +38,13 @@ public interface BlockStore {
      * StoredBlock directly. Can throw if there is a problem with the underlying storage layer such as running out of
      * disk space.
      */
-    void put(StoredBlock block) throws BlockStoreException;
+    void put(Block block) throws BlockStoreException;
 
     /**
-     * Returns the StoredBlock given a hash. The returned values block.getHash() method will be equal to the
+     * Returns the  Block given a hash. The returned values block.getHash() method will be equal to the
      * parameter. If no such block is found, returns null.
      */
-    StoredBlock get(Sha256Hash hash) throws BlockStoreException, NoBlockException;
+     Block get(Sha256Hash hash) throws BlockStoreException, NoBlockException;
     
     /** Closes the store. */
     void close() throws BlockStoreException;

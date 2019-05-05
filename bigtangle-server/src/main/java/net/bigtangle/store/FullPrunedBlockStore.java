@@ -25,8 +25,7 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
-import net.bigtangle.core.StoredUndoableBlock;
+ 
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.UTXO;
@@ -70,7 +69,7 @@ import net.bigtangle.server.service.SolidityState;
  * </p>
  * 
  * <p>
- * It must store the {@link StoredBlock} of all blocks.
+ * It must store the {@link  Block} of all blocks.
  * </p>
  *
  * <p>
@@ -89,25 +88,6 @@ import net.bigtangle.server.service.SolidityState;
  * </p>
  */
 public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
-    /**
-     * <p>
-     * Saves the given {@link StoredUndoableBlock} and {@link StoredBlock}.
-     * Calculates keys from the {@link StoredBlock}
-     * </p>
-     * 
-     * <p>
-     * Though not required for proper function of a FullPrunedBlockStore, any
-     * user of a FullPrunedBlockStore should ensure that a StoredUndoableBlock
-     * for each block up to the fully verified chain head has been added to this
-     * block store using this function (not put(StoredBlock)), so that the
-     * ability to perform reorgs is maintained.
-     * </p>
-     * 
-     * @throws BlockStoreException
-     *             if there is a problem with the underlying storage layer, such
-     *             as running out of disk space.
-     */
-    void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException;
 
     /**
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
@@ -391,6 +371,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
             throws BlockStoreException;
 
+    public List<byte[] > blocksFromHeight(long heightstart) throws BlockStoreException;
+
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
     public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid, String prevblockhash)
@@ -483,9 +465,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Block> getNonSolidBlocks() throws BlockStoreException;
 
-    public StoredBlock getNonSolidBlocksFirst() throws BlockStoreException;
+    public Block getNonSolidBlocksFirst() throws BlockStoreException;
 
-    void insertUnsolid(Block block, SolidityState solidityState, Long height) throws BlockStoreException;
+    void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
 

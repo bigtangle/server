@@ -26,12 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.StoredBlock;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -949,11 +949,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void put(StoredBlock block) throws BlockStoreException {
+    public void put(Block block) throws BlockStoreException {
     }
 
     @Override
-    public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+    public Block get(Sha256Hash hash) throws BlockStoreException {
         return null;
     }
 
