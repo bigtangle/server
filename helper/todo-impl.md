@@ -416,3 +416,39 @@ https://github.com/xmrig/xmrig
 
 ## add cache hazecast
 
+
+## payment fiat to token
+
+User start a payment with 80 yuan to yuan-token
+ UI 1)
+ -> Quantity: 80
+ -> Address: 1Mxxxxx (set first as default, select one form wallet)
+ -> Product: Yuan-Token
+ 
+ Pay to product owner  80 yuan via bank or weixin
+ Product owner confirm the payments.
+ product owner create a yuan-token in BigTangle and pay the 80 Yuan-Token to the given address
+ 
+ 
+ UI 2)
+  -> Quantity: 80
+ -> Address: 1Mxxxxx (set first as default, select one form wallet)
+ -> Product: bc
+
+ Pay to product owner  80 yuan via bank or weixin
+ Product owner confirm the payments.
+ 
+ product owner  pay the amount bc using the last exchange rate 80 Yuan-Token in bc  to the given address
+ 
+ 
+ 
+ User get back the Yuan-Token in FIAT
+ 
+ User refund the token:
+ 
+ 
+ 1) user pay the YUAN-Token to the product owner refund address
+  -> write in field memo the account info (bank info?)
+ 3) product owner send 80 yuan to bank or wechat account:
+ 
+
