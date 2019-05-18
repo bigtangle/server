@@ -452,3 +452,18 @@ User start a payment with 80 yuan to yuan-token
  3) product owner send 80 yuan to bank or wechat account:
  
 
+
+## permission of token creation 
+
+### new type of token with domain name
+ domain name is tree of permission
+ system parameter defines the root permission for single name as cn, com, bund.de etc.
+ the creation of top name need the signature of root permission and user signature
+ the other domain need the signature of parent signature and user signature
+
+### other type of token must be have a domain name
+   the token must be signed by domain name signature and user signature
+
+### display with tokenname + domainname +":"+ tokenid
+
+ 
