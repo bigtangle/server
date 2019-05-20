@@ -7,5 +7,5 @@ package net.bigtangle.core;
 
 public enum TokenType {
 
-    token, market, subtangle;
+    token, market, subtangle, domainname;
 }

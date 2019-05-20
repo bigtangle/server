@@ -18,7 +18,7 @@ public class Token implements java.io.Serializable {
     // indicator, if the token block is confirmed
     private boolean confirmed;
     private String tokenid;
-    // increate the index for token in serial
+    //  the index for token in serial
     private long tokenindex;
     // name of the token
     private String tokenname;
@@ -49,7 +49,7 @@ public class Token implements java.io.Serializable {
     private String language;
 
     // Token contains any other type of data as key value, application may save
-    // use data as json for communication between systems
+    // customer data as json for communication between systems
     // It can be saved in a NoSQL database as key value pair for query
     private TokenKeyValues tokenKeyValues;
 
@@ -193,19 +193,27 @@ public class Token implements java.io.Serializable {
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null,null,null,null);
+                amount, tokenstop, null,null,null,null,TokenType.token.ordinal() );
     } 
 
+    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+            String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
+
+        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
+                amount, tokenstop, null,null,null,null,TokenType.domainname.ordinal() );
+    } 
+
+    
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues,String parenttokenid, String language,String classification) {
+            TokenKeyValues tokenKeyValues,String parenttokenid, String language,String classification, int tokentype) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
 
-        tokens.tokentype = TokenType.token.ordinal();
+        tokens.tokentype = tokentype; //;
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
