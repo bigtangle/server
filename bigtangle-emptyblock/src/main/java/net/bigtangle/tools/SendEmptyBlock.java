@@ -31,7 +31,10 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
+import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.OkHttp3Util;
@@ -49,8 +52,9 @@ public class SendEmptyBlock {
 
     // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
-      //  System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-      //  System.setProperty("https.proxyPort", "3128");
+          System.setProperty("https.proxyHost",
+         "anwproxy.anwendungen.localnet.de");
+        System.setProperty("https.proxyPort", "3128");
         while (true) {
             SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
             int c = sendEmptyBlock.needEmptyBlocks(sendEmptyBlock.CONTEXT_ROOT);
@@ -58,7 +62,7 @@ public class SendEmptyBlock {
                 for (int i = 0; i < c; i++) {
 
                     try {
-                        sendEmptyBlock.send(); 
+                        sendEmptyBlock.send();
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -86,18 +90,23 @@ public class SendEmptyBlock {
 
     private int needEmptyBlocks(String server) throws Exception {
         try {
-        List<BlockEvaluationDisplay> a = getBlockInfos(server);
-        // only parallel blocks with rating < 70 need empty to resolve conflicts
-        int res = 0;
-        for (BlockEvaluationDisplay b : a) {
-            if (b.getRating() < 70) {
-                res += 1;
+            List<BlockEvaluationDisplay> a = getBlockInfos(server);
+            // only parallel blocks with rating < 70 need empty to resolve
+            // conflicts
+            int res = 0;
+            for (BlockEvaluationDisplay b : a) {
+                if (b.getRating() < 70) {
+                    res += 1;
+                }
             }
-        }
-        // empty blocks
-        return res ;
-        }catch (Exception e) {
-          return 0;
+            if (getOrders(server)) {
+                res += 20;
+            }
+            // empty blocks
+
+            return res;
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -114,4 +123,24 @@ public class SendEmptyBlock {
         return getBlockEvaluationsResponse.getEvaluations();
     }
 
+    private boolean getOrders(String server) throws Exception {
+        boolean orderbuy = false;
+        boolean ordersell = false;
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            if (Side.BUY.equals(orderRecord.getSide())) {
+                orderbuy = true;
+            } else {
+                ordersell = true;
+            }
+            if (orderbuy && ordersell)
+                return true;
+        }
+        return false;
+    }
 }
