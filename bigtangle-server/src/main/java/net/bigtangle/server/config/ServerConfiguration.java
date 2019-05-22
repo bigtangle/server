@@ -4,9 +4,15 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import com.google.common.collect.ImmutableList;
+
+import net.bigtangle.core.NetworkParameters;
 
 @Component
 @ConfigurationProperties(prefix = "server")
@@ -30,6 +36,8 @@ public class ServerConfiguration {
 
     private Boolean myserverblockOnly = false;
 
+    private List<String> permissionDomainname =  ImmutableList.of(NetworkParameters.testPub );
+
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
 
@@ -46,12 +54,12 @@ public class ServerConfiguration {
 
     public synchronized void setServiceOK() {
 
-          serviceReady = true;
+        serviceReady = true;
     }
 
     public synchronized void setServiceWait() {
 
-          serviceReady = false;
+        serviceReady = false;
     }
 
     public String getRequester() {
@@ -140,6 +148,14 @@ public class ServerConfiguration {
 
     public void setServiceReady(Boolean serviceReady) {
         this.serviceReady = serviceReady;
+    }
+
+    public List<String> getPermissionDomainname() {
+        return permissionDomainname;
+    }
+
+    public void setPermissionDomainname(List<String> permissionDomainname) {
+        this.permissionDomainname = permissionDomainname;
     }
 
 }
