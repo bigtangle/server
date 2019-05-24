@@ -39,6 +39,8 @@ public class MultiSignService {
     private static final Logger log = LoggerFactory.getLogger(MultiSignService.class);
     @Autowired
     protected FullPrunedBlockStore store;
+    @Autowired
+    protected ValidatorService validatorService;
 
     public AbstractResponse getMultiSignListWithAddress(String address) throws BlockStoreException {
         List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
@@ -153,8 +155,9 @@ public class MultiSignService {
 
     public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
         try {
-            // TODO this won't work, check ValidatorService.checkTokenSolidity()
-
+            
+            // TODO delete this method, replace calls with validatorService.checkTokenSolidity
+            
             if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
                 throw new BlockStoreException("block transaction is empty");
             }
@@ -247,10 +250,12 @@ public class MultiSignService {
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
         if (this.checkMultiSignPre(block, allowConflicts)) {
-            // data save only on this server, not in block.
+        // TODO use this and fix errors in TokenAndPayTests:
+//        if (validatorService.checkTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
             this.saveMultiSign(block);
             blockService.saveBlock(block);
         } else {
+            // data save only on this server, not in block.
             this.saveMultiSign(block);
         }
     }

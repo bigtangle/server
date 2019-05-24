@@ -1916,7 +1916,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) {
+    public SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1947,6 +1947,7 @@ public class ValidatorService {
 
         if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
             return SolidityState.getFailState();
+        
         // Check field correctness: amount
         if (currentToken.getToken().getAmount() != block.getTransactions().get(0).getOutputSum()) {
             if (throwExceptions)
@@ -2018,6 +2019,14 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState();
                 }
+                if ((currentToken.getToken().getParenttokenid() == null && prevToken.getParenttokenid() != null) 
+                        || (currentToken.getToken().getParenttokenid() != null && prevToken.getParenttokenid() == null) 
+                        || (currentToken.getToken().getParenttokenid() != null && prevToken.getParenttokenid() != null 
+                            && !currentToken.getToken().getParenttokenid().equals(prevToken.getParenttokenid()))) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token parent");
+                    return SolidityState.getFailState();
+                }
 
                 // Must allow more issuances
                 if (prevToken.isTokenstop()) {
@@ -2040,6 +2049,13 @@ public class ValidatorService {
             MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
                     currentToken.getToken().getTokenid());
             permissionedAddresses.add(firstTokenAddress);
+            
+            // Also the parent must sign initially if it exists
+            if (currentToken.getToken().getParenttokenid() != null) {
+                MultiSignAddress parentTokenAddress = new MultiSignAddress(currentToken.getToken().getParenttokenid(), "",
+                        currentToken.getToken().getParenttokenid());
+                permissionedAddresses.add(parentTokenAddress);
+            }
         }
 
         // Get permissioned pubkeys wrapped to check for bytearray equality
@@ -2107,7 +2123,8 @@ public class ValidatorService {
         }
 
         // Return whether sufficient signatures exist
-        int requiredSignatureCount = prevToken == null ? 1 : prevToken.getSignnumber();
+        // 2 if parent exists, 1 if no parent, previously defined number if predecessor token exists
+        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : currentToken.getToken().getParenttokenid() != null ? 2 : 1;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 
