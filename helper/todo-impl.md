@@ -456,14 +456,23 @@ User start a payment with 80 yuan to yuan-token
 ## permission of token creation 
 
 ### new type of token with domain name
- domain name is tree of permission
- system parameter defines the root permission for single name as cn, com, bund.de etc.
+ server configuration parameter defines the root permission for single name as cn, com,  de etc.
  the creation of top name need the signature of root permission and user signature
+ domain name is tree of permission
  the other domain need the signature of parent signature and user signature
+ domain name is unique in system  -> ValidationService
+
 
 ### other type of token must be have a domain name
    the token must be signed by domain name signature and user signature
 
 ### display with tokenname + domainname +":"+ tokenid
 
- 
+### test of missing prev blocks and resync
+
+### fix product token id save and check
+
+### add keys check for correct 
+
+### add cart and missing quantity and use one step for checkout and pay
+
