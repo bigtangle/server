@@ -40,7 +40,8 @@ public class ServerConfiguration {
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
-
+    private Boolean createtable=true;
+    
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -156,6 +157,14 @@ public class ServerConfiguration {
 
     public void setPermissionDomainname(List<String> permissionDomainname) {
         this.permissionDomainname = permissionDomainname;
+    }
+
+    public Boolean getCreatetable() {
+        return createtable;
+    }
+
+    public void setCreatetable(Boolean createtable) {
+        this.createtable = createtable;
     }
 
 }

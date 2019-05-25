@@ -256,12 +256,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "
-            + "tokenname, description, url, signnumber,tokentype, tokenstop,"
-            + " prevblockhash, spent, spenderblockhash, tokenkeyvalues, parenttokenid,language,classification) "
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)";
+            + "tokenname, description, domainname, signnumber,tokentype, tokenstop,"
+            + " prevblockhash, spent, spenderblockhash, tokenkeyvalues, revoked,language,classification, domainnametokenid) "
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)";
 
-    protected String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,tokentype, tokenstop ,"
-            + "tokenkeyvalues, parenttokenid,language,classification ";
+    protected String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, domainnametokenid, signnumber,tokentype, tokenstop ,"
+            + "tokenkeyvalues, revoked,language,classification ";
 
     protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
 
@@ -712,7 +712,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return INSERT_BLOCKS_SQL;
     }
 
- 
     /**
      * Get the SQL to select a outputs record.
      * 
@@ -916,7 +915,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
-      
+
             put(params.getGenesisBlock());
             saveGenesisTransactionOutput(params.getGenesisBlock());
             updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), true);
@@ -1033,7 +1032,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-    
+
             return params.getDefaultSerializer().makeBlock(results.getBytes(2));
 
         } catch (SQLException ex) {
@@ -1191,8 +1190,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
-   
 
     @Override
     public Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException {
@@ -2544,12 +2541,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setUrl(resultSet.getString("url"));
+                tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setParenttokenid(resultSet.getString("parenttokenid"));
+               
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
@@ -2590,12 +2588,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setUrl(resultSet.getString("url"));
+                tokens.setDomainname(resultSet.getString("domainname"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setParenttokenid(resultSet.getString("parenttokenid"));
+                tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
@@ -2668,12 +2666,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setUrl(resultSet.getString("url"));
+
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setParenttokenid(resultSet.getString("parenttokenid"));
+                tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
@@ -2706,7 +2705,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         long amount = token.getAmount();
         String tokenname = token.getTokenname();
         String description = token.getDescription();
-        String url = token.getUrl();
+
         int signnumber = token.getSignnumber();
 
         int tokentype = token.getTokentype();
@@ -2716,15 +2715,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (token.getTokenKeyValues() != null) {
             tokenkeyvalues = token.getTokenKeyValues().toByteArray();
         }
-        this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, url, signnumber,
-                tokentype, tokenstop, prevblockhash, tokenkeyvalues, token.getParenttokenid(), token.getLanguage(),
-                token.getClassification());
+        this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description,
+                token.getDomainname(),  token.getDomainnameTokenid(), signnumber, tokentype, tokenstop, prevblockhash, tokenkeyvalues,
+                token.getRevoked(), token.getLanguage(), token.getClassification());
     }
 
-    @Override
+   
     public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
-            String tokenname, String description, String url, int signnumber, int tokentype, boolean tokenstop,
-            String prevblockhash, byte[] tokenkeyvalues, String parenttokenid, String language, String classification)
+            String tokenname, String description, String domainname, String domainnametokenid, int signnumber, int tokentype, boolean tokenstop,
+            String prevblockhash, byte[] tokenkeyvalues, Boolean revoked, String language, String classification)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -2738,7 +2737,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(5, amount);
             preparedStatement.setString(6, tokenname);
             preparedStatement.setString(7, description);
-            preparedStatement.setString(8, url);
+            preparedStatement.setString(8, domainname);
             preparedStatement.setInt(9, signnumber);
 
             preparedStatement.setInt(10, tokentype);
@@ -2747,9 +2746,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBoolean(13, false);
             preparedStatement.setString(14, null);
             preparedStatement.setBytes(15, tokenkeyvalues);
-            preparedStatement.setString(16, parenttokenid);
+            preparedStatement.setBoolean(16, revoked);
             preparedStatement.setString(17, language);
             preparedStatement.setString(18, classification);
+            preparedStatement.setString(19, domainnametokenid);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -3305,12 +3305,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setUrl(resultSet.getString("url"));
+
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
-                tokens.setParenttokenid(resultSet.getString("parenttokenid"));
+                tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
                 if (buf != null) {
@@ -3349,12 +3350,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setAmount(resultSet.getLong("amount"));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
-                tokens.setUrl(resultSet.getString("url"));
+
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
-                tokens.setParenttokenid(resultSet.getString("parenttokenid"));
+                tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");

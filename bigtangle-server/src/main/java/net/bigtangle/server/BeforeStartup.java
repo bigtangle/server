@@ -13,15 +13,16 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Component
-public class BeforeStartup   {
+public class BeforeStartup {
 
-   
     @PostConstruct
-    public void run() throws Exception{
-        store.create();
+    public void run() throws Exception {
+        if (serverConfiguration.getCreatetable()) {
+            store.create();
+        }
         serverConfiguration.setServiceReady(true);
     }
-    
+
     @Autowired
     private ServerConfiguration serverConfiguration;
     @Autowired

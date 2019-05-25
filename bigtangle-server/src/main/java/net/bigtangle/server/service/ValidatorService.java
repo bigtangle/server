@@ -2019,14 +2019,7 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState();
                 }
-                if ((currentToken.getToken().getParenttokenid() == null && prevToken.getParenttokenid() != null) 
-                        || (currentToken.getToken().getParenttokenid() != null && prevToken.getParenttokenid() == null) 
-                        || (currentToken.getToken().getParenttokenid() != null && prevToken.getParenttokenid() != null 
-                            && !currentToken.getToken().getParenttokenid().equals(prevToken.getParenttokenid()))) {
-                    if (throwExceptions)
-                        throw new PreviousTokenDisallowsException("Cannot change token parent");
-                    return SolidityState.getFailState();
-                }
+    
 
                 // Must allow more issuances
                 if (prevToken.isTokenstop()) {
@@ -2050,10 +2043,10 @@ public class ValidatorService {
                     currentToken.getToken().getTokenid());
             permissionedAddresses.add(firstTokenAddress);
             
-            // Also the parent must sign initially if it exists
-            if (currentToken.getToken().getParenttokenid() != null) {
-                MultiSignAddress parentTokenAddress = new MultiSignAddress(currentToken.getToken().getParenttokenid(), "",
-                        currentToken.getToken().getParenttokenid());
+            // Also the domain name must sign initially if it exists
+            if (currentToken.getToken().getDomainname() != null) {
+                MultiSignAddress parentTokenAddress = new MultiSignAddress(currentToken.getToken().getDomainname(), "",
+                        currentToken.getToken().getDomainname());
                 permissionedAddresses.add(parentTokenAddress);
             }
         }
@@ -2124,7 +2117,7 @@ public class ValidatorService {
 
         // Return whether sufficient signatures exist
         // 2 if parent exists, 1 if no parent, previously defined number if predecessor token exists
-        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : currentToken.getToken().getParenttokenid() != null ? 2 : 1;
+        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : currentToken.getToken().getDomainname() != null ? 2 : 1;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 
@@ -2182,8 +2175,8 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long tokenid");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getParenttokenid() != null
-                && currentToken.getToken().getParenttokenid().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
+        if (currentToken.getToken().getDomainname() != null
+                && currentToken.getToken().getDomainname().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long tokenid");
             return SolidityState.getFailState();
@@ -2211,10 +2204,10 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getUrl() != null
-                && currentToken.getToken().getUrl().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+        if (currentToken.getToken().getDomainname() != null
+                && currentToken.getToken().getDomainname().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long url");
+                throw new InvalidTransactionDataException("Too long domainname");
             return SolidityState.getFailState();
         }
         if (currentToken.getToken().getSignnumber() < 0) {

@@ -298,12 +298,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
-
-    void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
-            String tokenname, String description, String url, int signnumber, int tokentype, boolean tokenstop,
-            String prevblockhash, byte[] tokenkeyvalues, String parenttokenid, String language, String classification)
-            throws BlockStoreException;
-
+ 
     public Token getToken(String blockhash) throws BlockStoreException;
 
     public List<Token> getTokenID(String tokenid) throws BlockStoreException;
@@ -523,4 +518,5 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
     List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
+ 
 }

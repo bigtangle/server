@@ -673,7 +673,7 @@ public abstract class AbstractIntegrationTest {
     protected void testInitWallet() throws Exception {
 
         // testCreateMultiSig();
-        testCreateMarket();
+    //    testCreateMarket();
         testInitTransferWallet();
         milestoneService.update();
         // testInitTransferWalletPayToTestPub();
@@ -720,7 +720,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "http://localhost:8089");
+        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", null);
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item

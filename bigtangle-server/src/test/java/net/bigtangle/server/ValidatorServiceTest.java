@@ -1644,7 +1644,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setUrl(null);
+                tokenInfo5.getToken().setDomainname(null);
             }
 
             @Override
@@ -1656,7 +1656,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
-                tokenInfo5.getToken().setUrl("");
+                tokenInfo5.getToken().setDomainname("");
             }
 
             @Override
@@ -1669,7 +1669,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public void preApply(TokenInfo tokenInfo5) {
 
                 tokenInfo5.getToken()
-                        .setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+                        .setDomainname(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
             }
 
             @Override
@@ -1682,7 +1682,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             public void preApply(TokenInfo tokenInfo5) { // 30
 
                 tokenInfo5.getToken()
-                        .setUrl(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+                        .setDomainname(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
             }
 
             @Override

@@ -283,7 +283,7 @@ add wallet pro Server config? or client config?
  	unmatched order get the BIG and token back from 
  	     
  
-## hbase
+## hbase does not work.
 
 
 ## fix problem of requester for missing previous block
@@ -333,12 +333,11 @@ This is an external dependency and will be not a part of BigTangle validation pr
 ** order match pro token, not meta token, otherwise the order match on chain will dependent on external resource.
  
 
-## multi level airdrop  5 level -> done
+
 ## email add to airdrop -> done
 
 ## direct buy/sell from Wechat
 ## monitoring of application 
-## linkedin  marketing -> done
 
 
 ## permission bigTangle
@@ -364,7 +363,6 @@ user must be activated via email and ask verification via mobile number after re
 
 ## save kafka offset and write to database 
 
-## add height in block?
 
 ## add wallet option to pay fees for miner, miner has incentive to create real blocks, not only empty block. 
  1) server config and set price
@@ -462,9 +460,24 @@ User start a payment with 80 yuan to yuan-token
  the other domain need the signature of parent signature and user signature
  domain name is unique in system  -> ValidationService
 
-
+example
+ tokentype:domainname
+ tokenname=de
+ signatures: user + root
+ check: tokenname must be unique for tokentype domainname
+ tokentype:domainname
+ tokenname=bund.de
+ signatures: user + domainame of de
+ check: tokenname must be unique for tokentype domainname
+ 
 ### other type of token must be have a domain name
    the token must be signed by domain name signature and user signature
+example
+ tokentype:token
+ tokenname=product1
+ domainname=bund.de
+ signatures: user + domainname token
+   
 
 ### display with tokenname + domainname +":"+ tokenid
 

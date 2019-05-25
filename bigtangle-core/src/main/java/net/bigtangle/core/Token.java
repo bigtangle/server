@@ -18,20 +18,22 @@ public class Token implements java.io.Serializable {
     // indicator, if the token block is confirmed
     private boolean confirmed;
     private String tokenid;
-    //  the index for token in serial
+    // the index for token in serial
     private long tokenindex;
     // name of the token
     private String tokenname;
     // description
     private String description;
-    // the link of web site
-    private String url;
+    // the  domain name of this token
+    private String domainname;
+    // the Tokenid of the domain name
+    private String domainnameTokenid;
     // number of signature
     private int signnumber;
     // difference for external exchange, meta token, digital asset token and
     // substangle
     private int tokentype;
-    // if this is thue, there is no possible to change the token anymore.
+    // if this is true, there is no possible to change the token anymore.
     private boolean tokenstop;
     // indicator of the prev token index blockhash
     private String prevblockhash;
@@ -40,13 +42,14 @@ public class Token implements java.io.Serializable {
     private long amount; // TODO must be inferred on insertion, slated for
                          // extraction
 
-    // Logical group of token using parent token, can be null, optional for query
-    // only
-    private String parenttokenid;
     // classification of a token, can be null, optional for query only
     private String classification;
     // language of the token, can be null, optional for query only
     private String language;
+
+    // disable the token usage,
+    // But it is only informative for new transaction with the token, not in consensus.
+    private Boolean revoked=false;
 
     // Token contains any other type of data as key value, application may save
     // customer data as json for communication between systems
@@ -116,12 +119,22 @@ public class Token implements java.io.Serializable {
         this.description = description;
     }
 
-    public String getUrl() {
-        return url;
+ 
+
+    public String getDomainname() {
+        return domainname;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setDomainname(String domainname) {
+        this.domainname = domainname;
+    }
+
+    public Boolean getRevoked() {
+        return revoked;
+    }
+
+    public void setRevoked(Boolean revoked) {
+        this.revoked = revoked;
     }
 
     public int getSignnumber() {
@@ -164,15 +177,7 @@ public class Token implements java.io.Serializable {
         this.tokenKeyValues = tokenKeyValues;
     }
 
-    public String getParenttokenid() {
-        return parenttokenid;
-    }
-
-    public void setParenttokenid(String parenttokenid) {
-        this.parenttokenid = parenttokenid;
-    }
-
-  
+ 
     public String getClassification() {
         return classification;
     }
@@ -189,50 +194,58 @@ public class Token implements java.io.Serializable {
         this.language = language;
     }
 
+    public String getDomainnameTokenid() {
+        return domainnameTokenid;
+    }
+
+    public void setDomainnameTokenid(String domainnameTokenid) {
+        this.domainnameTokenid = domainnameTokenid;
+    }
+
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null,null,null,null,TokenType.token.ordinal() );
-    } 
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal());
+    }
 
-    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
+    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
+            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null,null,null,null,TokenType.domainname.ordinal() );
-    } 
+                amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal());
+    }
 
-    
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues,String parenttokenid, String language,String classification, int tokentype) {
+            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification,
+            int tokentype) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
 
-        tokens.tokentype = tokentype; //;
+        tokens.tokentype = tokentype; // ;
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
         tokens.tokenKeyValues = tokenKeyValues;
-        tokens.parenttokenid = parenttokenid;
+        tokens.revoked = revoked;
         tokens.language = language;
         tokens.classification = classification;
         return tokens;
     }
-    
+
     public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, String url) {
+            String description, String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
-        tokens.setUrl(url);
+        tokens.setDomainname(domainname);
         tokens.tokenstop = true;
 
         tokens.tokentype = TokenType.market.ordinal();
@@ -245,12 +258,12 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
-            String tokenname, String description, String url) {
+            String tokenname, String description, String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
-        tokens.setUrl(url);
+        tokens.setDomainname(domainname);
         tokens.tokenstop = true;
         tokens.tokentype = TokenType.subtangle.ordinal();
         tokens.signnumber = 1;
@@ -261,14 +274,12 @@ public class Token implements java.io.Serializable {
         return tokens;
     }
 
-
- 
     @Override
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
-                + tokenname + ", description=" + description + ", url=" + url + ", signnumber=" + signnumber
+                + tokenname + ", description=" + description + ", url=" + domainname + ", signnumber=" + signnumber
                 + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
-                + ", blockhash=" + blockhash + ", amount=" + amount + ", parenttokenid=" + parenttokenid
+                + ", blockhash=" + blockhash + ", amount=" + amount + ", revoked=" + revoked
                 + ", classification=" + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues
                 + "]";
     }
