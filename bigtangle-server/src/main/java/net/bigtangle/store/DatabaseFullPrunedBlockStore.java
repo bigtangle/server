@@ -2542,6 +2542,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setDomainnameTokenid(resultSet.getString("domainnametokenid"));
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
@@ -2589,6 +2590,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setDomainnameTokenid(resultSet.getString("domainnametokenid"));
                 tokens.setSignnumber(resultSet.getInt("signnumber"));
 
                 tokens.setTokentype(resultSet.getInt("tokentype"));
@@ -2672,6 +2674,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setDomainnameTokenid(resultSet.getString("domainnametokenid"));
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
@@ -3311,6 +3314,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
                 tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setDomainnameTokenid(resultSet.getString("domainnametokenid"));
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
@@ -3356,6 +3360,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setTokentype(resultSet.getInt("tokentype"));
                 tokens.setTokenstop(resultSet.getBoolean("tokenstop"));
                 tokens.setDomainname(resultSet.getString("domainname"));
+                tokens.setDomainnameTokenid(resultSet.getString("domainnametokenid"));
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
