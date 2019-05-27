@@ -5,9 +5,11 @@
 
 package net.bigtangle.wallet;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -18,6 +20,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletUtil;
 import net.bigtangle.params.MainNetParams;
@@ -76,5 +80,17 @@ public class WalletUtilTest {
 
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
             .setN(32768).setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt())).build();
+    
+    @Test
+    // transfer the coin to address
+    public void walletSingleKey() throws Exception {
+
+        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(from);
+        Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
+        assertEquals(wallet.walletKeys().size(), 1) ;
+    }
 
 }
