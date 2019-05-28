@@ -111,7 +111,7 @@ public abstract class NetworkParameters {
 	public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
 
     // Token ID for System Coin 
-    public static final String BIGTANGLE_TOKENID_STRING = "abc"; 
+    public static final String BIGTANGLE_TOKENID_STRING = "bc"; 
     public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
 
     // Use Equihash
