@@ -627,7 +627,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return importKeys(Lists.newArrayList(key)) == 1;
     }
 
- 
     /**
      * Imports the given keys to the wallet. If
      * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, net.bigtangle.wallet.WalletFiles.Listener)}
@@ -1079,7 +1078,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     /******************************************************************************************************************/
 
     // region Serialization support
- 
+
     /** Internal use only. */
     protected List<Protos.Key> serializeKeyChainGroupToProtobuf() {
         keyChainGroupLock.lock();
@@ -2377,9 +2376,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-  
+    // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long> giveMoneyResult of
+    // address and amount and return the remainder back to fromkey.
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID);
+    }
+
+    // pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
+    // address and amount and return the remainder back to fromkey.
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+            byte[] tokenid) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         if (giveMoneyResult.isEmpty()) {
             return null;
@@ -2388,7 +2395,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Transaction multispent = new Transaction(params);
 
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
-            Coin a = Coin.valueOf(entry.getValue(), NetworkParameters.BIGTANGLE_TOKENID);
+            Coin a = Coin.valueOf(entry.getValue(), tokenid);
             Address address = Address.fromBase58(params, entry.getKey());
             multispent.addOutput(a, address);
             summe = summe.add(a);
@@ -2425,15 +2432,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        if (token.getTokens() == null ||  token.getTokens().isEmpty()) {
+        if (token.getTokens() == null || token.getTokens().isEmpty()) {
             throw new NoTokenException();
         }
 
     }
 
-    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount,
-            Long validToTime, Long validFromTime) throws JsonProcessingException, IOException,
-            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,
+            Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException,
+            UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
         checkTokenId(tokenId);
         // Burn BIG to buy
@@ -2481,9 +2488,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new InsufficientMoneyException(amount);
     }
 
-    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount,
-            Long validToTime, Long validFromTime)
-            throws IOException, InsufficientMoneyException, UTXOProviderException {
+    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
+            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException {
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
