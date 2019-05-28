@@ -40,8 +40,15 @@ public class WalletUtil {
     protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
 
     public static byte[] createWallet(NetworkParameters params) throws IOException {
+
+        return createWallet(params, 0);
+
+    }
+
+    public static byte[] createWallet(NetworkParameters params, int size) throws IOException {
         KeyChainGroup kcg;
         kcg = new KeyChainGroup(params);
+        kcg.setLookaheadSize(size);
         Context context = new Context(params);
         Context.propagate(context);
         Wallet wallet = new Wallet(params, kcg); // default

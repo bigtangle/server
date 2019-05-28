@@ -37,7 +37,7 @@ public class WalletUtilTest {
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
-        assertTrue(issuedKeys.size() > 0);
+        assertTrue(issuedKeys.size() == 1);
         for (ECKey ecKey : issuedKeys) {
             log.debug(ecKey.getPublicKeyAsHex());
             log.debug(ecKey.getPrivateKeyAsHex());
