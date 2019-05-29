@@ -210,12 +210,12 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
+            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop, String domainname) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
                 tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal());
 
-        token.setDomainname(tokenname);
+        token.setDomainname(domainname);
         token.setDomainnameTokenid("");
 
         return token;

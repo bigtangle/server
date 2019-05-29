@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.PermissionDomainname;
 
 @Component
 @ConfigurationProperties(prefix = "server")
@@ -36,7 +37,8 @@ public class ServerConfiguration {
 
     private Boolean myserverblockOnly = false;
 
-    private List<String> permissionDomainname =  ImmutableList.of(NetworkParameters.testPub );
+    private List<PermissionDomainname> permissionDomainname = 
+            ImmutableList.of(new PermissionDomainname(NetworkParameters.testPub, NetworkParameters.testPriv));
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
@@ -151,14 +153,6 @@ public class ServerConfiguration {
         this.serviceReady = serviceReady;
     }
 
-    public List<String> getPermissionDomainname() {
-        return permissionDomainname;
-    }
-
-    public void setPermissionDomainname(List<String> permissionDomainname) {
-        this.permissionDomainname = permissionDomainname;
-    }
-
     public Boolean getCreatetable() {
         return createtable;
     }
@@ -167,4 +161,11 @@ public class ServerConfiguration {
         this.createtable = createtable;
     }
 
+    public List<PermissionDomainname> getPermissionDomainname() {
+        return permissionDomainname;
+    }
+
+    public void setPermissionDomainname(List<PermissionDomainname> permissionDomainname) {
+        this.permissionDomainname = permissionDomainname;
+    }
 }
