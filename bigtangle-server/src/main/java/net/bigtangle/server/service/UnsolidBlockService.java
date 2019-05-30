@@ -37,6 +37,11 @@ public class UnsolidBlockService {
     @Autowired
     private BlockRequester blockRequester;
 
+    
+    @Autowired
+    private BlockService blockService;
+    
+    
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
     protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
@@ -78,14 +83,14 @@ public class UnsolidBlockService {
 
              Block storedBlock0 = null;
             try {
-                storedBlock0 = this.store.get(storedBlock.getPrevBlockHash());
+                storedBlock0 = blockService.getBlock(storedBlock.getPrevBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
 
            Block storedBlock1 = null;
             try {
-                storedBlock1 = this.store.get(storedBlock.getPrevBranchBlockHash());
+                storedBlock1 =blockService.getBlock(storedBlock.getPrevBranchBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
@@ -112,7 +117,7 @@ public class UnsolidBlockService {
 
              Block storedBlock0 = null;
             try {
-                storedBlock0 = this.store.get(block.getPrevBlockHash());
+                storedBlock0 =blockService.getBlock(block.getPrevBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
@@ -127,7 +132,7 @@ public class UnsolidBlockService {
             Block storedBlock1 = null;
 
             try {
-                storedBlock1 = this.store.get(block.getPrevBranchBlockHash());
+                storedBlock1 =blockService.getBlock(block.getPrevBranchBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }

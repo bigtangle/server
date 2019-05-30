@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
@@ -56,6 +57,7 @@ public class BlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
+    @Cacheable("blocks")
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
     }
