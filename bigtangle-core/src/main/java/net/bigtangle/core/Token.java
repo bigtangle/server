@@ -24,7 +24,7 @@ public class Token implements java.io.Serializable {
     private String tokenname;
     // description
     private String description;
-    // the  domain name of this token
+    // the domain name of this token
     private String domainname;
     // the Tokenid of the domain name
     private String domainnameTokenid;
@@ -41,15 +41,17 @@ public class Token implements java.io.Serializable {
     private String blockhash; // TODO slated for extraction
     private long amount; // TODO must be inferred on insertion, slated for
                          // extraction
-    private Long decimals=0L; //number of decimals for the token, default integer
+    private int decimals = 0; // number of decimals for the token, default
+                                  // integer
     // classification of a token, can be null, optional for query only
     private String classification;
     // language of the token, can be null, optional for query only
     private String language;
 
     // disable the token usage,
-    // But it is only informative for new transaction with the token, not in consensus.
-    private Boolean revoked=false;
+    // But it is only informative for new transaction with the token, not in
+    // consensus.
+    private Boolean revoked = false;
 
     // Token contains any other type of data as key value, application may save
     // customer data as json for communication between systems
@@ -119,8 +121,6 @@ public class Token implements java.io.Serializable {
         this.description = description;
     }
 
- 
-
     public String getDomainname() {
         return domainname;
     }
@@ -177,7 +177,6 @@ public class Token implements java.io.Serializable {
         this.tokenKeyValues = tokenKeyValues;
     }
 
- 
     public String getClassification() {
         return classification;
     }
@@ -202,11 +201,11 @@ public class Token implements java.io.Serializable {
         this.domainnameTokenid = domainnameTokenid;
     }
 
-    public Long getDecimals() {
+    public int getDecimals() {
         return decimals;
     }
 
-    public void setDecimals(Long decimals) {
+    public void setDecimals(int decimals) {
         this.decimals = decimals;
     }
 
@@ -218,7 +217,8 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop, String domainname) {
+            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
+            String domainname) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
                 tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal());
@@ -231,8 +231,7 @@ public class Token implements java.io.Serializable {
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification,
-            int tokentype) {
+            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -292,9 +291,8 @@ public class Token implements java.io.Serializable {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
                 + tokenname + ", description=" + description + ", url=" + domainname + ", signnumber=" + signnumber
                 + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
-                + ", blockhash=" + blockhash + ", amount=" + amount + ", revoked=" + revoked
-                + ", classification=" + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues
-                + "]";
+                + ", blockhash=" + blockhash + ", amount=" + amount + ", revoked=" + revoked + ", classification="
+                + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues + "]";
     }
 
 }

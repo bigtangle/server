@@ -416,7 +416,7 @@ public final class MonetaryFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str, byte[] tokenid) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, Coin.SMALLEST_UNIT_EXPONENT), tokenid);
+        return Coin.valueOf(parseValue(str, 2), tokenid);
     }
 
   
