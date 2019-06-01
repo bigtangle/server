@@ -1750,11 +1750,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-            boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
-        return this.calculateFee(req, value, originalInputs, needAtLeastReferenceFee, candidates, req.changeAddress);
-    }
-
-    public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
             boolean needAtLeastReferenceFee, List<TransactionOutput> candidates, Address changeAddress)
             throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
@@ -1839,7 +1834,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     // This solution definitely fits in category 3
                     isCategory3 = true;
                     additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
-                            .add(changeOutput.getMinNonDustValue().add(Coin.SATOSHI));
+                            .add(changeOutput.getMinNonDustValue());
                 } else {
                     size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size())
                             - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
@@ -1852,7 +1847,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     // This solution definitely fits in category 3 (we threw
                     // away change because it was smaller than MIN_TX_FEE)
                     isCategory3 = true;
-                    additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Coin.SATOSHI);
+                    additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
                 }
             }
 
@@ -1890,7 +1885,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 // always
                 // get us to 1
                 checkState(selection2 == null);
-                checkState(additionalValueForNextCategory.equals(Coin.CENT));
+              
                 selection2 = selection;
                 selection2Change = checkNotNull(changeOutput); // If we get
                                                                // no
@@ -2376,7 +2371,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long> giveMoneyResult of
+    // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long>
+    // giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {

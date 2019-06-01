@@ -29,7 +29,7 @@ public class ServerConfiguration {
     private String net;
 
     private String mineraddress;
-
+    private String serverurl;
     private String serverversion;
     private String clientversion;
     private Boolean permissioned;
@@ -37,13 +37,13 @@ public class ServerConfiguration {
 
     private Boolean myserverblockOnly = false;
 
-    private List<PermissionDomainname> permissionDomainname = 
-            ImmutableList.of(new PermissionDomainname(NetworkParameters.testPub, NetworkParameters.testPriv));
+    private List<PermissionDomainname> permissionDomainname = ImmutableList
+            .of(new PermissionDomainname(NetworkParameters.testPub, NetworkParameters.testPriv));
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
-    private Boolean createtable=true;
-    
+    private Boolean createtable = true;
+
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -168,4 +168,13 @@ public class ServerConfiguration {
     public void setPermissionDomainname(List<PermissionDomainname> permissionDomainname) {
         this.permissionDomainname = permissionDomainname;
     }
+
+    public String getServerurl() {
+        return serverurl;
+    }
+
+    public void setServerurl(String serverurl) {
+        this.serverurl = serverurl;
+    }
+    
 }

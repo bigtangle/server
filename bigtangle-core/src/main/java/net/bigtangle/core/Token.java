@@ -41,7 +41,7 @@ public class Token implements java.io.Serializable {
     private String blockhash; // TODO slated for extraction
     private long amount; // TODO must be inferred on insertion, slated for
                          // extraction
-
+    private Long decimals=0L; //number of decimals for the token, default integer
     // classification of a token, can be null, optional for query only
     private String classification;
     // language of the token, can be null, optional for query only
@@ -200,6 +200,14 @@ public class Token implements java.io.Serializable {
 
     public void setDomainnameTokenid(String domainnameTokenid) {
         this.domainnameTokenid = domainnameTokenid;
+    }
+
+    public Long getDecimals() {
+        return decimals;
+    }
+
+    public void setDecimals(Long decimals) {
+        this.decimals = decimals;
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,

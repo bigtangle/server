@@ -254,4 +254,9 @@ public class BlockService {
 
         this.store.deleteMyserverblocks(prevhash);
     }
+    
+    public List<byte[]> blocksFromHeight(Long heightstart, Long heightend) throws BlockStoreException {
+
+        return store.blocksFromHeight(heightstart);
+    }
 }

@@ -135,14 +135,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    confirmed boolean NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
-            + "    amount bigint(20) ,\n" + "    tokenname varchar(50) ,\n" + "    description varchar(500) ,\n"
+            + "    amount bigint(20) ,\n" + "    tokenname varchar(60) ,\n" + "    description varchar(500) ,\n"
             + "    domainname varchar(100) ,\n" + "    signnumber bigint NOT NULL   ,\n" + "    tokentype int(11),\n"
             + "    tokenstop boolean,\n" + "    prevblockhash varchar(255) NOT NULL,\n"
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  varbinary(32),\n"
-            + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n"
-            + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
-            + "    domainnametokenid varchar(255) ,\n"
-            + "    PRIMARY KEY (blockhash) \n)";
+            + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n" + "    language char(2)   ,\n"
+            + "    classification varchar(255)   ,\n" + "    domainnametokenid varchar(255) ,\n"
+            + "    decimals bigint(20) ,\n" + "    PRIMARY KEY (blockhash) \n)";
 
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
@@ -279,7 +278,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-  
     @Override
     protected String getUpdateBlockEvaluationCumulativeweightSQL() {
         return UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL;

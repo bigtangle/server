@@ -57,12 +57,7 @@ public class TransactionTest {
         tx.verify();
     }
 
-    @Test(expected = VerificationException.NegativeValueOutput.class)
-    public void negativeOutput() throws Exception {
-        tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
-        tx.verify();
-    }
-
+ 
  
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() throws Exception {

@@ -85,7 +85,7 @@ public class ScriptTest {
         // Test we can extract the from address.
         byte[] hash160 = Utils.sha256hash160(script.getPubKey());
         Address a = new Address(PARAMS, hash160);
-        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", a.toString());
+        assertEquals("15jTWe6r9zqxkjjLFntAWADZosAwiuw4U5", a.toString());
     }
 
     @Test
@@ -95,7 +95,7 @@ public class ScriptTest {
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
         Address toAddr = new Address(PARAMS, pubkey.getPubKeyHash());
-        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
+        assertEquals("15jTWe6r9zqxkjjLFntAWADZosAwiuw4U5", toAddr.toString());
     }
 
     @Test

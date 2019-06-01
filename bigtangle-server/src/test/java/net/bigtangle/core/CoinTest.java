@@ -7,8 +7,6 @@ package net.bigtangle.core;
 
 import static net.bigtangle.core.Coin.CENT;
 import static net.bigtangle.core.Coin.COIN;
-import static net.bigtangle.core.Coin.NEGATIVE_SATOSHI;
-import static net.bigtangle.core.Coin.SATOSHI;
 import static net.bigtangle.core.Coin.ZERO;
 import static net.bigtangle.core.Coin.parseCoin;
 import static net.bigtangle.core.Coin.valueOf;
@@ -41,9 +39,7 @@ public class CoinTest {
         // int version
         // assertEquals(CENT, valueOf(0,
         // 1,NetworkParameters.BIGNETCOIN_TOKENID));
-        assertEquals(SATOSHI, valueOf(1, NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(NEGATIVE_SATOSHI, valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID));
- 
+     
         valueOf(Long.MAX_VALUE, NetworkParameters.BIGTANGLE_TOKENID);
         valueOf(Long.MIN_VALUE, NetworkParameters.BIGTANGLE_TOKENID);
 
@@ -52,12 +48,7 @@ public class CoinTest {
 
     @Test
     public void testOperators() {
-        assertTrue(SATOSHI.isPositive());
-        assertFalse(SATOSHI.isNegative());
-        assertFalse(SATOSHI.isZero());
-        assertFalse(NEGATIVE_SATOSHI.isPositive());
-        assertTrue(NEGATIVE_SATOSHI.isNegative());
-        assertFalse(NEGATIVE_SATOSHI.isZero());
+   
         assertFalse(ZERO.isPositive());
         assertFalse(ZERO.isNegative());
         assertTrue(ZERO.isZero());
@@ -88,12 +79,12 @@ public class CoinTest {
 
     @Test(expected = ArithmeticException.class)
     public void testAdditionOverflow() {
-        Coin.valueOf(Long.MAX_VALUE, NetworkParameters.BIGTANGLE_TOKENID).add(Coin.SATOSHI);
+        Coin.valueOf(Long.MAX_VALUE, NetworkParameters.BIGTANGLE_TOKENID).add(Coin.COIN);
     }
 
     @Test(expected = ArithmeticException.class)
     public void testSubstractionUnderflow() {
-        Coin.valueOf(Long.MIN_VALUE, NetworkParameters.BIGTANGLE_TOKENID).subtract(Coin.SATOSHI);
+        Coin.valueOf(Long.MIN_VALUE, NetworkParameters.BIGTANGLE_TOKENID).subtract(Coin.COIN);
     }
  
     /**

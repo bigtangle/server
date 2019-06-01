@@ -21,10 +21,13 @@ public class TokenCreateTests extends AbstractIntegrationTest {
     @Test
     public void testCreateToken() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
+        while (true) { 
+       
         wallet1();
         wallet2();
         createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
         createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
+        }
     }
 
     private void createToken(List<ECKey> keys, String pre) throws JsonProcessingException, Exception {

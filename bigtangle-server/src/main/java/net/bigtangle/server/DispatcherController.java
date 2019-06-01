@@ -207,7 +207,8 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
 
-                this.transactionService.blocksFromHeight(Long.valueOf((String) request.get("heightstart")));
+                this.blockService.blocksFromHeight(Long.valueOf((String) request.get("heightstart")),
+                        Long.valueOf((String) request.get("heightend")));
 
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }

@@ -97,13 +97,17 @@ public class TransactionService {
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request);
     }
 
-    public Optional<Block> addConnectedBlock(Block block, boolean request) {
+    private Optional<Block> addConnectedBlock(Block block, boolean request) {
         try {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (!added) {
-                    logger.debug(" unsolid block from kafka   Blockhash=" + block.getHashAsString() + " height =" +block.getHeigth());
+                    logger.debug(" unsolid block from kafka   Blockhash="
+                + block.getHashAsString() + " height ="
+                            + block.getHeigth()
+                            + " block: " + block.toString() 
+                            + " request remote: " + request);
                     if (request)
                         unsolidBlockService.requestPrev(block);
 
@@ -149,8 +153,5 @@ public class TransactionService {
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 
-    public List<byte[]> blocksFromHeight(Long heightstart) throws BlockStoreException {
 
-        return store.blocksFromHeight(heightstart);
-    }
 }

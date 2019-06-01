@@ -725,7 +725,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 try {
                     // Build transaction
                     Transaction tx = new Transaction(networkParameters);
-                    tx.addOutput(Coin.SATOSHI.times(2), walletKeys.get(8).toAddress(networkParameters));
+                    tx.addOutput(Coin.COIN.times(2), walletKeys.get(8).toAddress(networkParameters));
 
                     // The input does not really need to be a valid signature,
                     // as long
@@ -2535,7 +2535,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction transaction = block.getTransactions().get(0);
 
         // Add another output for other tokens
-        block.getTransactions().get(0).addOutput(Coin.SATOSHI.times(2), outKey.toAddress(networkParameters));
+        block.getTransactions().get(0).addOutput(Coin.COIN.times(2), outKey.toAddress(networkParameters));
 
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
@@ -2560,7 +2560,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blockGraph.add(block, false);
 
             fail();
-        } catch (InvalidTokenOutputException e) {
+        } catch (InvalidTransactionDataException e) {
         }
     }
 

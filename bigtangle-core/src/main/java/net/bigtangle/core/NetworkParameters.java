@@ -197,7 +197,7 @@ public abstract class NetworkParameters {
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-	public static long testCoin = 1000000000000000l;
+	public static long testCoin = 100000000000000l;
 	 public static final long TARGET_YEARLY_MINING_PAYOUT =testCoin /1000;
 
 	protected NetworkParameters() {

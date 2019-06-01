@@ -30,8 +30,8 @@ import com.google.common.primitives.Longs;
 import net.bigtangle.utils.MonetaryFormat;
 
 /**
- * Represents a monetary Coin value. This class is immutable. Only the BIG has 2
- * digit decimal, all others coins are long number.
+ * Represents a token as Coin value. This class is immutable. Only the  bitangle coin has 2
+ * digit decimal.
  */
 public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
@@ -52,17 +52,17 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public static final long COIN_VALUE = LongMath.pow(10, SMALLEST_UNIT_EXPONENT);
 
     /**
-     * Zero Bitcoins.
+     * Zero .
      */
     public static final Coin ZERO = Coin.valueOf(0, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
-     * One Bitcoin.
+     * One .
      */
     public static final Coin COIN = Coin.valueOf(COIN_VALUE, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
-     * 0.01 Bitcoins. This unit is not really used much.
+     * 0.01 . This unit is not really used much.
      */
     public static final Coin CENT = COIN.divide(100);
     /**
@@ -82,12 +82,23 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     private long value;
     private byte[] tokenid;
+    private long decimals = 0L;
+
+    private Coin(final long satoshis, final byte[] tokenid, long decimals) {
+        this.value = satoshis;
+        this.tokenid = tokenid;
+        this.decimals = decimals;
+    }
 
     private Coin(final long satoshis, final byte[] tokenid) {
         this.value = satoshis;
         this.tokenid = tokenid;
     }
 
+    public static Coin valueOf(final long satoshis, byte[] tokenid, long decimals) {
+        return new Coin(satoshis, tokenid,decimals);
+    }
+    
     public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
     }
@@ -326,6 +337,14 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     public byte[] getTokenid() {
         return tokenid;
+    }
+
+    public long getDecimals() {
+        return decimals;
+    }
+
+    public void setDecimals(long decimals) {
+        this.decimals = decimals;
     }
 
 }

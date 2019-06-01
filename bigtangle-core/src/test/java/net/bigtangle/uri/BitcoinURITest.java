@@ -155,18 +155,7 @@ public class BitcoinURITest {
         }
     }
 
-    /**
-     * Test a broken URI (bad address type)
-     */
-    @Test
-    public void testBad_IncorrectAddressType() {
-        try {
-            testObject = new BitcoinURI(MainNetParams.get(), BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
-            fail("Expecting BitcoinURIParseException");
-        } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad address"));
-        }
-    }
+ 
 
     /**
      * Handles a simple amount
