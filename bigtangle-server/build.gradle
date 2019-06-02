@@ -39,7 +39,7 @@ dependencies {
  
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     
-  compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12'
+    compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12'
     //compile("com.hazelcast:hazelcast-spring:3.7.4")
     
    //   compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0

@@ -33,6 +33,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
@@ -41,6 +42,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
+import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
@@ -55,6 +57,7 @@ import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.VOSExecuteService;
 import net.bigtangle.server.service.WalletService;
+import net.bigtangle.store.FullPrunedBlockStore;
 
 @RestController
 @RequestMapping("/")
@@ -89,6 +92,8 @@ public class DispatcherController {
     ServerConfiguration serverConfiguration;
     @Autowired
     private OrderTickerService orderTickerService;
+    @Autowired
+    protected FullPrunedBlockStore store;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -409,6 +414,18 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case queryPermissionedAddresses: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                final String tokenid = (String) request.get("tokenid");
+                final String prevblockhash = (String) request.get("prevblockhash");
+                List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokenid,
+                        prevblockhash);
+                AbstractResponse response = PermissionedAddressesResponse.create(permissionedAddresses);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
             default:
                 break;
             }

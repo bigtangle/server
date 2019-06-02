@@ -51,6 +51,7 @@ import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.PermissionDomainname;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -84,6 +85,7 @@ import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisa
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.SolidityState.State;
@@ -106,6 +108,8 @@ public class ValidatorService {
     private TransactionService transactionService;
     @Autowired
     private NetworkParameters params;
+    @Autowired
+    private ServerConfiguration serverConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 
@@ -1986,7 +1990,7 @@ public class ValidatorService {
 
         // Get permissioned addresses
         Token prevToken = null;
-        List<MultiSignAddress> permissionedAddresses = null;
+        List<MultiSignAddress> permissionedAddresses = currentToken.getMultiSignAddresses();
         // If not initial issuance, we check according to the previous token
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
@@ -2029,25 +2033,17 @@ public class ValidatorService {
                 }
 
                 // Get addresses allowed to reissue
-                permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
-                        prevToken.getBlockhash());
+                permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
+                        prevToken.getBlockhash()));
+                
             } catch (BlockStoreException e) {
                 // Cannot happen, previous token must exist
                 e.printStackTrace();
             }
         } else {
-            permissionedAddresses = currentToken.getMultiSignAddresses();
-
             // First time issuances must sign for the token id
-            MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
-                    currentToken.getToken().getTokenid());
-            permissionedAddresses.add(firstTokenAddress);
-            
-            // Also the domain name must sign initially if it exists
-            if (currentToken.getToken().getDomainname() != null) {
-                MultiSignAddress parentTokenAddress = new MultiSignAddress(currentToken.getToken().getDomainname(), "",
-                        currentToken.getToken().getDomainname());
-                permissionedAddresses.add(parentTokenAddress);
+            for (PermissionDomainname permissionDomainname : this.serverConfiguration.getPermissionDomainname()) {
+                permissionedAddresses.add(new MultiSignAddress(currentToken.getToken().getTokenid(), "", permissionDomainname.getPubKeyHex()));
             }
         }
 
