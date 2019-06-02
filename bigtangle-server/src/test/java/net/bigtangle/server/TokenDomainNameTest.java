@@ -32,6 +32,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -83,6 +84,17 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
+    }
+
+    public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("tokenid", token.getTokenid());
+        requestParam.put("prevblockhash", token.getBlockhash());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
+                PermissionedAddressesResponse.class);
+        return permissionedAddressesResponse;
     }
 
     public void upstreamToken2LocalServer(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
@@ -159,6 +171,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
     public void testCreateDomainTokenBatch() throws Exception {
         store.resetStore();
 
+        wallet1();
+        wallet2();
         Map<String, List<ECKey>> linkMap = new LinkedHashMap<String, List<ECKey>>();
         linkMap.put("de", this.walletKeys);
         linkMap.put("bigtangle.de", this.wallet1Keys);
@@ -167,10 +181,12 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         int amount = 678900000;
         int index = 0;
         for (Map.Entry<String, List<ECKey>> entry : linkMap.entrySet()) {
+            System.out.println("domainname : " + entry.getKey() + ", values : " + entry.getValue().size());
             List<ECKey> walletKeys = entry.getValue();
-            String tokenid = walletKeys.get(1).getPublicKeyAsHex();
+            String tokenid = this.walletKeys.get(1).getPublicKeyAsHex();
             final String domainname = entry.getKey();
             this.createDomainToken(tokenid, "中央银行token - 00" + (++index), domainname, amount, walletKeys);
+            System.out.println(tokenid);
             this.checkTokenAssertTrue(tokenid, domainname);
         }
     }
@@ -196,8 +212,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
 
         int signnumber = 3;
 
-        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, "de", "de domain name", signnumber,
-                tokenindex_, amount, false, "de");
+        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
+                signnumber, tokenindex_, amount, false, domainname);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -209,11 +225,23 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
-                .iterator(); iterator.hasNext();) {
-            PermissionDomainname permissionDomainname = iterator.next();
-            ECKey ecKey = permissionDomainname.getOutKey();
-            multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
+        // if token index eq 0
+        if (tokens.getTokenindex() == 0) {
+            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
+                    .iterator(); iterator.hasNext();) {
+                PermissionDomainname permissionDomainname = iterator.next();
+                ECKey ecKey = permissionDomainname.getOutKey();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
+            }
+        } else {
+            PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokens);
+            if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                    && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+                for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                    final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                    multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+                }
+            }
         }
 
         signnumber++;
@@ -226,9 +254,13 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
             pullBlockDoMultiSign(outKey, aesKey);
         }
 
-        PermissionDomainname permissionDomainname = this.serverConfiguration.getPermissionDomainname().get(0);
-        ECKey outKey = permissionDomainname.getOutKey();
-        this.pullBlockDoMultiSign(outKey, aesKey);
-
+        if (tokens.getTokenindex() == 0) {
+            PermissionDomainname permissionDomainname = this.serverConfiguration.getPermissionDomainname().get(0);
+            ECKey outKey = permissionDomainname.getOutKey();
+            this.pullBlockDoMultiSign(outKey, aesKey);
+        } else {
+            ECKey outKey = this.walletKeys.get(1);
+            pullBlockDoMultiSign(outKey, aesKey);
+        }
     }
 }
