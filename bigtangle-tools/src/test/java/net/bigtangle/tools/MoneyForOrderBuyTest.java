@@ -25,7 +25,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333333300L);
+        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 333333333300L);
 
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
@@ -37,7 +37,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet2();
-        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 33333333300l);
+        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 333333333300l);
 
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());

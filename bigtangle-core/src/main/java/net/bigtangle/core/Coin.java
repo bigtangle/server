@@ -289,6 +289,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public String toPlainString() {
         if (isBIG()) {
+            this.decimals=2;
             return PLAIN_FORMAT.format(this).toString();
         } else {
             return String.valueOf(this.value);
@@ -296,8 +297,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public static String toPlainString(long value) {
-
-        return PLAIN_FORMAT.format(Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID)).toString();
+        Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
+        coin.setDecimals(2);
+        return PLAIN_FORMAT.format(coin).toString();
 
     }
 
