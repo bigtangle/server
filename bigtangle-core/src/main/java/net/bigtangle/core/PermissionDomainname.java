@@ -41,8 +41,8 @@ public class PermissionDomainname {
     public ECKey getOutKey() {
         byte[] privKeyBytes = this.getPriKeyBuf();
         byte[] pubKey = this.getPubKeyBuf();
-        @SuppressWarnings("deprecation")
-        ECKey outKey = new ECKey(privKeyBytes, pubKey);
+
+        ECKey outKey = ECKey.fromPrivateAndPrecalculatedPublic(privKeyBytes, pubKey);
         return outKey;
     }
 }

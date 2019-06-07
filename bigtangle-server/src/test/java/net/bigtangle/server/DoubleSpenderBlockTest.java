@@ -98,7 +98,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(buf);
         
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         
@@ -163,7 +163,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
                 Block.Type.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000,0, NetworkParameters.EASIEST_DIFFICULTY_TARGET);
         
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         
@@ -179,7 +179,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
     public void giveBlockDoubleSpentTransaction(Block rollingBlock, ECKey outKey, Coin coinbase, UTXO output)
             throws Exception {
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         
         Transaction doublespent = new Transaction(this.networkParameters);

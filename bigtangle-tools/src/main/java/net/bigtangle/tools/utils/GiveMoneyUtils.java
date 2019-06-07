@@ -118,7 +118,7 @@ public class GiveMoneyUtils {
         Block block = getAskTransactionBlock();
 
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
 

@@ -560,7 +560,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Transaction createTestGenesisTransaction() throws Exception {
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesiskey =   ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -587,7 +587,7 @@ public abstract class AbstractIntegrationTest {
         if (f.exists())
             f.delete();
         walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
-        walletAppKit.wallet().importKey(new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+        walletAppKit.wallet().importKey(  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
         // add ge
         walletAppKit.wallet().setServerURL(contextRoot);
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
@@ -688,7 +688,7 @@ public abstract class AbstractIntegrationTest {
     // transfer the coin from protected testPub to address in wallet
     @SuppressWarnings("deprecation")
     protected void testInitTransferWallet() throws Exception {
-        ECKey fromkey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333l);
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);

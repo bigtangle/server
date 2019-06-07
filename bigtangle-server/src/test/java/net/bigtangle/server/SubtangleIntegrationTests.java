@@ -90,7 +90,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
     public void giveMoneySubtangleId(ECKey outKey, long amount, Address toAddressInSubtangle) throws Exception {
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
         UTXO findOutput = null;
@@ -140,17 +140,17 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
 
-        ECKey subtangleKey = new ECKey(
+        ECKey subtangleKey =  ECKey.fromPrivateAndPrecalculatedPublic(
                 Utils.HEX.decode("1430ec255d2f92eb8d6702c2282187d8ce92f78c878248f51ae316fe995d896c"),
                 Utils.HEX.decode("02b9416f95f21953232df29d89ee5c8d1b648bfe8d55c8e53705d4a452264a98f0"));
-        // ECKey subtangleKey = new ECKey();
+        // ECKey subtangleKey =  ECKey.fromPrivateAndPrecalculatedPublic();
 
         // System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
         // System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));
 
         this.createTokenSubtangleId(subtangleKey);
 
-        ECKey outKey = new ECKey();
+        ECKey outKey = new  ECKey();
         long amount = 1000;
         this.giveMoneySubtangleId(subtangleKey, amount, outKey.toAddress(this.networkParameters));
 
