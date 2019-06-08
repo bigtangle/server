@@ -45,7 +45,7 @@ public class ScheduleRewardService {
     @Autowired
     private FullPrunedBlockStore store;
 
-    @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
+  //  @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() {
         if (scheduleConfiguration.isGiveMoneyServiceActive()) {
             try {
