@@ -159,7 +159,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConnectOrderOpenUTXOs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
         Transaction tx = new Transaction(networkParameters);
@@ -321,7 +321,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConfirmOrderOpenUTXOs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
         Transaction tx = new Transaction(networkParameters);
@@ -365,7 +365,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConfirmOrderReclaimUTXOs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -452,7 +452,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConfirmOrderMatchUTXOs1() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -522,7 +522,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConfirmOrderMatchUTXOs2() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make a buy order for testKey.getPubKey()s
         Block block1 = null;
@@ -777,7 +777,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmOrderOpenUTXOs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
         Transaction tx = new Transaction(networkParameters);
@@ -822,7 +822,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmOrderReclaimUTXOs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -911,7 +911,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmOrderMatchUTXOs1() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -985,7 +985,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmOrderMatchUTXOs2() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make a buy order for testKey.getPubKey()s
         Block block1 = null;
@@ -1234,7 +1234,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
@@ -1384,7 +1384,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
         @SuppressWarnings("deprecation")
-        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -1425,7 +1425,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsOrderMatchingDependentReclaim() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
-        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -1468,7 +1468,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsOrderReclaimDependent() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
-        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();

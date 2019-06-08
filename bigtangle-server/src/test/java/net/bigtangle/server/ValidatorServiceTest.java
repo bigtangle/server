@@ -377,7 +377,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidMissingOrderReclaimOrderMatching() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<Block> premiseBlocks = new ArrayList<>();
 
         Block block1 = null;
@@ -466,7 +466,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidMissingOrderReclaimOrder() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<Block> premiseBlocks = new ArrayList<>();
 
         Block block1 = null;
@@ -786,7 +786,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Again but with less output coins
         {
             @SuppressWarnings("deprecation")
-            ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
                     outputs.get(0), 0);
@@ -810,7 +810,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Again but with more output coins
         try {
             @SuppressWarnings("deprecation")
-            ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
                     outputs.get(0), 0);
@@ -839,7 +839,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Create block with negative outputs
         try {
             @SuppressWarnings("deprecation")
-            ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
                     outputs.get(0), 0);
@@ -884,7 +884,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Create block with outputs
         try {
             @SuppressWarnings("deprecation")
-            ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+            ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
                     outputs.get(0), 0);
@@ -976,7 +976,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction tx = rewardBlock.getTransactions().get(0);
 
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -1320,7 +1320,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMutatedData() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(1);
@@ -2568,7 +2568,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenOk() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -2630,7 +2630,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenMultipleTXs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2718,7 +2718,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenNoTokensOffered() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -2747,7 +2747,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenMultipleTokens() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2835,7 +2835,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenNoBIGs() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2904,7 +2904,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpenFractionalPrice() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -3013,7 +3013,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpOk() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -3078,7 +3078,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderOpWrongSig() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -3150,7 +3150,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderReclaimOk() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -3220,7 +3220,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderReclaimInvalidDependencyOrder() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -3294,7 +3294,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderReclaimInvalidDependencyOrderMatching() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -3368,7 +3368,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityOrderReclaimInvalidDependencyOrderMatchingWrongHeight() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();

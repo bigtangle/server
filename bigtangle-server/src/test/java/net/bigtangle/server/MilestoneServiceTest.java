@@ -80,7 +80,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -392,7 +392,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
         List<UTXO> outputs = getBalance(false, genesiskey);
@@ -516,7 +516,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testUpdateConflictingReclaimMilestoneCandidates() throws Exception {
         store.resetStore();
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -617,7 +617,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
         List<UTXO> outputs = getBalance(false, genesiskey);
@@ -1083,7 +1083,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Generate two conflicting blocks where the second block approves the
         // first
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);

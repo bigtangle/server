@@ -24,7 +24,7 @@ public class GiveMoneyUtils {
         String contextRoot = serverConfiguration.getServerURL();
         payWallet = new Wallet(networkParameters, contextRoot);
         payWallet.importKey(
-                new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+                  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
         payWallet.setServerURL(contextRoot);
     }
 
@@ -41,7 +41,7 @@ public class GiveMoneyUtils {
             return true;
         }
         @SuppressWarnings("deprecation")
-        ECKey fromkey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
       

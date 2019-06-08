@@ -2376,20 +2376,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // address and amount and return the remainder back to fromkey.
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID);
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
+    }
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+            String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo);
     }
 
     // pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            byte[] tokenid) throws JsonProcessingException, IOException, InsufficientMoneyException {
+            byte[] tokenid, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
         Coin summe = Coin.ZERO;
         Transaction multispent = new Transaction(params);
-
+        multispent.setMemo(memo);
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
             Coin a = Coin.valueOf(entry.getValue(), tokenid);
             Address address = Address.fromBase58(params, entry.getKey());

@@ -108,7 +108,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -165,7 +165,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks
         @SuppressWarnings("deprecation")
-        ECKey testKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
                 0);
@@ -553,7 +553,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictOrderReclaim() throws Exception {
         @SuppressWarnings({ "deprecation", "unused" })
-        ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
 
