@@ -210,18 +210,18 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
+            String description, int signnumber, long tokenindex, long amount, boolean tokenstop, int decimals) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal());
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals);
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
             String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            String domainname) {
+            String domainname,int decimals ) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal());
+                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(),decimals);
 
         token.setDomainname(domainname);
         token.setDomainnameTokenid("");
@@ -231,7 +231,7 @@ public class Token implements java.io.Serializable {
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype) {
+            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype, int decimals) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -248,6 +248,7 @@ public class Token implements java.io.Serializable {
         tokens.revoked = revoked;
         tokens.language = language;
         tokens.classification = classification;
+        tokens.decimals = decimals;
         return tokens;
     }
 

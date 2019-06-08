@@ -89,7 +89,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     }
 
     public void giveMoneySubtangleId(ECKey outKey, long amount, Address toAddressInSubtangle) throws Exception {
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
@@ -136,7 +136,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         return coinbase;
     }
 
-    @SuppressWarnings("deprecation")
+    
     @Test
     public void testGiveMoney() throws Exception {
 

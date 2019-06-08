@@ -287,7 +287,7 @@ public abstract class AbstractIntegrationTest {
 		Coin basecoin = Coin.valueOf(77777L, pubKey);
 		long amount = basecoin.getValue();
 
-		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true);
+		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0);
 		tokenInfo.setToken(tokens);
 
 		// add MultiSignAddress item
@@ -374,7 +374,7 @@ public abstract class AbstractIntegrationTest {
 		String prevblockhash = tokenIndexResponse.getBlockhash();
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, tokename, 1, tokenindex_,
-				amount,  false);
+				amount,  false,0);
 		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
@@ -392,7 +392,7 @@ public abstract class AbstractIntegrationTest {
 		Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
 		long amount = coinbase.getValue();
 		Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-				amount, true);
+				amount, true,0);
 
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()

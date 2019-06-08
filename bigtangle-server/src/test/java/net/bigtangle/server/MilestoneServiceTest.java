@@ -79,7 +79,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate two conflicting blocks
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
@@ -165,7 +165,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -176,7 +176,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -211,7 +211,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -222,7 +222,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -232,7 +232,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase3 = Coin.valueOf(666, pubKey);
         long amount3 = coinbase3.getValue();
         Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount3, true);
+                "Test", 1, 1, amount3, true,0);
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -267,7 +267,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -276,7 +276,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+      //  Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 =saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
@@ -306,7 +306,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -319,12 +319,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(6666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0, amount2,
-                false);
+                false,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+      //  Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
@@ -391,7 +391,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
         store.resetStore();
 
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
@@ -440,7 +440,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -515,7 +515,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testUpdateConflictingReclaimMilestoneCandidates() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -616,7 +616,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
@@ -966,7 +966,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         long amount = coinbase.getValue();
 
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
 
         tokenInfo.setToken(tokens);
@@ -1082,7 +1082,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks where the second block approves the
         // first
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),

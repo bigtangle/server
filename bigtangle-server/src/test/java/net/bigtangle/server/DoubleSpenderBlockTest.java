@@ -79,7 +79,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
     }
     
-    @SuppressWarnings("deprecation")
+    
     public void test50AskTransactionBlock() throws Exception {
         for (int i = 0; i < 50; i++) {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -124,7 +124,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
     }
 
-    @SuppressWarnings("deprecation")
+    
     public void test100EmptyBlock() throws Exception {
         Sha256Hash sha256Hash1, sha256Hash2;
         {
@@ -178,7 +178,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
 
     public void giveBlockDoubleSpentTransaction(Block rollingBlock, ECKey outKey, Coin coinbase, UTXO output)
             throws Exception {
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         
@@ -231,7 +231,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         
         Coin basecoin = Coin.valueOf(100000L, pubKey);
         long amount = basecoin.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 0, 1, amount,  true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 0, 1, amount,  true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));

@@ -54,7 +54,6 @@ import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowed
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.exception.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
-import net.bigtangle.core.exception.VerificationException.InvalidTokenOutputException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.exception.VerificationException.MalformedTransactionDataException;
@@ -340,7 +339,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -350,7 +349,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();
         Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount, false);
+                "Test", 1, 1, amount, false,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -376,7 +375,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test  
     public void testUnsolidMissingOrderReclaimOrderMatching() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<Block> premiseBlocks = new ArrayList<>();
 
@@ -465,7 +464,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testUnsolidMissingOrderReclaimOrder() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<Block> premiseBlocks = new ArrayList<>();
 
@@ -785,7 +784,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Again but with less output coins
         {
-            @SuppressWarnings("deprecation")
+            
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -809,7 +808,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Again but with more output coins
         try {
-            @SuppressWarnings("deprecation")
+            
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -838,7 +837,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Create block with negative outputs
         try {
-            @SuppressWarnings("deprecation")
+            
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -883,7 +882,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Create block with outputs
         try {
-            @SuppressWarnings("deprecation")
+            
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -975,7 +974,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
         Transaction tx = rewardBlock.getTransactions().get(0);
 
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
@@ -1187,7 +1186,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1222,7 +1221,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1257,7 +1256,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1292,7 +1291,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1319,7 +1318,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenMutatedData() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate an eligible issuance tokenInfo
@@ -1329,7 +1328,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo0.setToken(tokens);
         tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1930,6 +1929,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 }
             } else {
                 if (! blockGraph.add(block, false) )
+                    //TODO 
                     fail("Number " + i + " failed");
             }
         }
@@ -1946,7 +1946,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2213,7 +2213,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2267,7 +2267,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2344,7 +2344,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2356,7 +2356,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey2);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey2), "Test",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", walletKeys.get(8).getPublicKeyAsHex()));
@@ -2380,7 +2380,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2391,7 +2391,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 2, amount2, true);
+                "Test", 1, 2, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2415,7 +2415,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2426,7 +2426,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2450,7 +2450,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2461,7 +2461,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokens2.setTokentype(123);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
@@ -2486,7 +2486,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2497,7 +2497,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test2",
-                "Test", 1, 1, amount2, true);
+                "Test", 1, 1, amount2, true,0);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2521,7 +2521,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue() + 2;
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2567,7 +2567,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenOk() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -2629,7 +2629,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenMultipleTXs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
@@ -2640,7 +2640,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -2717,7 +2717,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenNoTokensOffered() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -2746,7 +2746,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenMultipleTokens() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
@@ -2757,7 +2757,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -2834,7 +2834,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenNoBIGs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
@@ -2845,7 +2845,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -2903,7 +2903,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenFractionalPrice() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
@@ -2914,7 +2914,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -3012,7 +3012,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpOk() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -3077,7 +3077,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpWrongSig() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -3149,7 +3149,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderReclaimOk() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -3219,7 +3219,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderReclaimInvalidDependencyOrder() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -3293,7 +3293,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderReclaimInvalidDependencyOrderMatching() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -3367,7 +3367,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderReclaimInvalidDependencyOrderMatchingWrongHeight() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate blocks until passing first reward interval

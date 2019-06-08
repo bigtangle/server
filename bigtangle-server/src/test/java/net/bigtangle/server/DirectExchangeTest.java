@@ -164,7 +164,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testInitWallet();
  
         
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
@@ -183,7 +183,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    
     public void testWalletImportKeyGiveMoney() throws Exception {
         Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
         coinbaseWallet.importKey(
@@ -221,7 +221,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    
     public void testWalletBatchGiveMoney() throws Exception {
         Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
         coinbaseWallet.importKey(
@@ -274,7 +274,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
-    @SuppressWarnings("deprecation")
+    
     @Test
     public void exchangeToken() throws Exception {
         testInitWallet();

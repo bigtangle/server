@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -160,7 +159,7 @@ public abstract class AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount, true);
+                amount, true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -559,7 +558,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Transaction createTestGenesisTransaction() throws Exception {
-        @SuppressWarnings("deprecation")
+        
         ECKey genesiskey =   ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
@@ -580,7 +579,7 @@ public abstract class AbstractIntegrationTest {
         return tx;
     }
 
-    @SuppressWarnings("deprecation")
+    
     protected void walletKeys() throws Exception {
         KeyParameter aesKey = null;
         File f = new File("./logs/", "bigtangle");
@@ -686,7 +685,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     // transfer the coin from protected testPub to address in wallet
-    @SuppressWarnings("deprecation")
+    
     protected void testInitTransferWallet() throws Exception {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
@@ -704,7 +703,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true);
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0);
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -790,7 +789,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
-                false);
+                false,0);
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
@@ -883,7 +882,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
-                false);
+                false,0);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);

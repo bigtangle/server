@@ -110,7 +110,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false);
+                    false,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -136,7 +136,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true);
+                    "Test", 1, 1, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -158,7 +158,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectOrderOpenUTXOs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
@@ -302,7 +302,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -320,7 +320,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderOpenUTXOs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
@@ -364,7 +364,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderReclaimUTXOs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -451,7 +451,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderMatchUTXOs1() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -521,7 +521,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderMatchUTXOs2() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make a buy order for testKey.getPubKey()s
@@ -565,7 +565,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -751,7 +751,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true);
+                true,0);
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -776,7 +776,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderOpenUTXOs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Set the order
@@ -821,7 +821,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderReclaimUTXOs() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -910,7 +910,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderMatchUTXOs1() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
@@ -984,7 +984,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderMatchUTXOs2() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make a buy order for testKey.getPubKey()s
@@ -1028,7 +1028,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true);
+                    1, 0, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1233,7 +1233,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
         store.resetStore();
-        @SuppressWarnings("deprecation")
+        
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
@@ -1333,7 +1333,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false);
+                    false,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1353,7 +1353,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true);
+                    "Test", 1, 1, amount, true,0);
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1383,7 +1383,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
-        @SuppressWarnings("deprecation")
+        
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;

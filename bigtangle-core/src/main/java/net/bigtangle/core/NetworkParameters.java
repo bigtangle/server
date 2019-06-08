@@ -47,71 +47,71 @@ import net.bigtangle.utils.MonetaryFormat;
  *
  * <p>
  * This is an abstract class, concrete instantiations can be found in the params
- * package. There are two: one for the main network ({@link MainNetParams}),
- * one for the public test network. Although this class contains some
- * aliases for them, you are encouraged to call the static get() methods on each
- * specific params class directly.
+ * package. There are two: one for the main network ({@link MainNetParams}), one
+ * for the public test network. Although this class contains some aliases for
+ * them, you are encouraged to call the static get() methods on each specific
+ * params class directly.
  * </p>
  */
 public abstract class NetworkParameters {
-    
+
     // TODO Mainnet release
-    
-	/**
-	 * The string returned by getId() for the main, production network where people
-	 * trade things.
-	 */
-	public static final String ID_MAINNET = "net.bigtangle";
 
-	/** Unit test network. */
-	public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
+    /**
+     * The string returned by getId() for the main, production network where
+     * people trade things.
+     */
+    public static final String ID_MAINNET = "net.bigtangle";
 
-	protected Block genesisBlock;
-	protected BigInteger maxTarget;
- 
-	protected long packetMagic; // Indicates message origin network and is used
-								// to seek to the next message when stream state
-								// is unknown.
-	protected int addressHeader;
-	protected int p2shHeader;
-	protected int dumpedPrivateKeyHeader;
-	protected byte[] alertSigningKey;
-	protected int bip32HeaderPub;
-	protected int bip32HeaderPriv;
+    /** Unit test network. */
+    public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
-	/** Used to check majorities for block version upgrade */
-	protected int majorityEnforceBlockUpgrade;
-	protected int majorityRejectBlockOutdated;
-	protected int majorityWindow;
+    protected Block genesisBlock;
+    protected BigInteger maxTarget;
 
-	/**
-	 * See getId(). This may be null for old deserialized wallets. In that case we
-	 * derive it heuristically by looking at the port number.
-	 */
-	protected String id;
+    protected long packetMagic; // Indicates message origin network and is used
+                                // to seek to the next message when stream state
+                                // is unknown.
+    protected int addressHeader;
+    protected int p2shHeader;
+    protected int dumpedPrivateKeyHeader;
+    protected byte[] alertSigningKey;
+    protected int bip32HeaderPub;
+    protected int bip32HeaderPriv;
 
-	/**
-	 * The depth of blocks required for a coinbase transaction to be spendable.
-	 */
-	protected int spendableCoinbaseDepth;
-	protected int subsidyDecreaseBlockCount;
+    /** Used to check majorities for block version upgrade */
+    protected int majorityEnforceBlockUpgrade;
+    protected int majorityRejectBlockOutdated;
+    protected int majorityWindow;
 
-	protected int[] acceptableAddressCodes;
-	protected String[] dnsSeeds;
-	protected int[] addrSeeds;
+    /**
+     * See getId(). This may be null for old deserialized wallets. In that case
+     * we derive it heuristically by looking at the port number.
+     */
+    protected String id;
 
-	protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
-	protected transient MessageSerializer defaultSerializer = null;
+    /**
+     * The depth of blocks required for a coinbase transaction to be spendable.
+     */
+    protected int spendableCoinbaseDepth;
+    protected int subsidyDecreaseBlockCount;
 
-	// Consensus settings
-	public static final int MILESTONE_UPPER_THRESHOLD = 70;
-	public static final int MILESTONE_LOWER_THRESHOLD = 67;
-	public static final int NUMBER_RATING_TIPS = 100;
-	public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
-	public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
+    protected int[] acceptableAddressCodes;
+    protected String[] dnsSeeds;
+    protected int[] addrSeeds;
 
-    // Token ID for System Coin 
-    public static final String BIGTANGLE_TOKENID_STRING = "bc"; 
+    protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
+    protected transient MessageSerializer defaultSerializer = null;
+
+    // Consensus settings
+    public static final int MILESTONE_UPPER_THRESHOLD = 70;
+    public static final int MILESTONE_LOWER_THRESHOLD = 67;
+    public static final int NUMBER_RATING_TIPS = 100;
+    public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
+    public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
+
+    // Token ID for System Coin
+    public static final String BIGTANGLE_TOKENID_STRING = "bc";
     public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
 
     // Use Equihash
@@ -129,7 +129,7 @@ public abstract class NetworkParameters {
      * hash solutions. Used in unit testing.
      */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-    
+
     /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
@@ -150,7 +150,7 @@ public abstract class NetworkParameters {
     /**
      * The maximum allowed time drift of blocks into the future in seconds.
      */
-    public static final long ALLOWED_TIME_DRIFT = 5 * 60; 
+    public static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
     /**
      * How many bytes are required to represent a block header WITHOUT the
@@ -165,23 +165,22 @@ public abstract class NetworkParameters {
             + 8 // heigth
             + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
-
     // Transaction setting
     public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
-    
+
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10; 
+    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10;
     public static final long REWARD_MIN_MILESTONE_PERCENTAGE = 97;
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-   
+
     public static final int TARGET_MAX_TPS = 100;
     public static final long REWARD_OVERRULE_TIME_MS = 1000;
-    
+
     // Order Matching Settings
-    public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10; 
-    public static final long ORDER_MATCHING_OVERLAP_SIZE = 7; 
+    public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10;
+    public static final long ORDER_MATCHING_OVERLAP_SIZE = 7;
     public static final long ORDER_MATCHING_MIN_MILESTONE_PERCENTAGE = 97;
 
     // Token config
@@ -192,326 +191,330 @@ public abstract class NetworkParameters {
     public static final int TOKEN_MAX_ID_LENGTH = 100;
     public static final int TOKEN_MAX_LANGUAGE_LENGTH = 2;
     public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
-    // max time of an order in seconds 
-	public static final long ORDER_TIMEOUT_MAX = 8*60*60;
+    // max time of an order in seconds
+    public static final long ORDER_TIMEOUT_MAX = 8 * 60 * 60;
 
-	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-	public static long testCoin = 100000000000000l;
-	 public static final long TARGET_YEARLY_MINING_PAYOUT =testCoin /1000;
+    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    // 100 billions with decimals 2
+    public static long testCoin = 10000000000000l;
+    public static final long TARGET_YEARLY_MINING_PAYOUT = testCoin / 1000;
 
-	protected NetworkParameters() {
-	}
+    protected NetworkParameters() {
+    }
 
-	public static Block createGenesis(NetworkParameters params) {
-		Block genesisBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS, Block.Type.BLOCKTYPE_INITIAL.ordinal());
-		genesisBlock.setTime(1532896109L);
-		
-		// 1 in 4 blocks shall be correct
-		BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET); 
-		genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
+    public static Block createGenesis(NetworkParameters params) {
+        Block genesisBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS,
+                Block.Type.BLOCKTYPE_INITIAL.ordinal());
+        genesisBlock.setTime(1532896109L);
 
-		Transaction coinbase = new Transaction(params);
-		final ScriptBuilder inputBuilder = new ScriptBuilder();
-		coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
-		
-		RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH);
-		
-		coinbase.setData(rewardInfo.toByteArray());
-		add(params, testCoin + "," + testPub, coinbase);
-		genesisBlock.addTransaction(coinbase);
-		genesisBlock.setNonce(0);
-		genesisBlock.setHeigth(0);
-		//genesisBlock.solve();
-		
-		return genesisBlock;
+        // 1 in 4 blocks shall be correct
+        BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+        genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
-	}
+        Transaction coinbase = new Transaction(params);
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 
-	public static void add(NetworkParameters params, String account, Transaction coinbase) {
-		// account space seperate lis with amount, many public keys
-		String[] list = account.split(",");
-		Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGTANGLE_TOKENID);
-		List<ECKey> keys = new ArrayList<ECKey>();
-		for (int i = 1; i < list.length; i++) {
-			keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
-		}
-		if (keys.size() <= 1) {
-			coinbase.addOutput(new TransactionOutput(params, coinbase, base,
-					ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(keys.get(0).getPubKey())).getProgram()));
-		} else {
-			Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) keys.size() - 1, keys);
-			coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
-		}
-	}
+        RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH);
 
-	/**
-	 * A Java package style string acting as unique ID for these parameters
-	 */
-	public String getId() {
-		return id;
-	}
+        coinbase.setData(rewardInfo.toByteArray());
+        add(params, testCoin + "," + testPub, coinbase);
+        genesisBlock.addTransaction(coinbase);
+        genesisBlock.setNonce(0);
+        genesisBlock.setHeigth(0);
+        // genesisBlock.solve();
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		return getId().equals(((NetworkParameters) o).getId());
-	}
+        return genesisBlock;
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(getId());
-	}
+    }
 
-	/**
-	 * Returns the network parameters for the given string ID or NULL if not
-	 * recognized.
-	 */
-	@Nullable
-	public static NetworkParameters fromID(String id) {
-		if (id.equals(ID_MAINNET)) {
-			return MainNetParams.get();
-		} else if (id.equals(ID_UNITTESTNET)) {
-			return MainNetParams.get();
-		} else {
-			return null;
-		}
-	}
+    public static void add(NetworkParameters params, String account, Transaction coinbase) {
+        // account space seperate lis with amount, many public keys
+        String[] list = account.split(",");
+        Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGTANGLE_TOKENID);
+        List<ECKey> keys = new ArrayList<ECKey>();
+        for (int i = 1; i < list.length; i++) {
+            keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
+        }
+        if (keys.size() <= 1) {
+            coinbase.addOutput(new TransactionOutput(params, coinbase, base,
+                    ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(keys.get(0).getPubKey())).getProgram()));
+        } else {
+            Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) keys.size() - 1, keys);
+            coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
+        }
+    }
 
-	public int getSpendableCoinbaseDepth() {
-		return spendableCoinbaseDepth;
-	}
+    /**
+     * A Java package style string acting as unique ID for these parameters
+     */
+    public String getId() {
+        return id;
+    }
 
-	/**
-	 * Returns DNS names that when resolved, give IP addresses of active peers.
-	 */
-	public String[] getDnsSeeds() {
-		return dnsSeeds;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        return getId().equals(((NetworkParameters) o).getId());
+    }
 
-	/** Returns IP address of active peers. */
-	public int[] getAddrSeeds() {
-		return addrSeeds;
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
 
-	/**
-	 * <p>
-	 * Genesis block for this chain.
-	 * </p>
-	 *
-	 * <p>
-	 * The first block in every chain is a well known constant shared between all
-	 * Bitcoin implemenetations. For a block to be valid, it must be eventually
-	 * possible to work backwards to the genesis block by following the
-	 * prevBlockHash pointers in the block headers.
-	 * </p>
-	 */
-	public Block getGenesisBlock() {
-		return genesisBlock;
-	}
+    /**
+     * Returns the network parameters for the given string ID or NULL if not
+     * recognized.
+     */
+    @Nullable
+    public static NetworkParameters fromID(String id) {
+        if (id.equals(ID_MAINNET)) {
+            return MainNetParams.get();
+        } else if (id.equals(ID_UNITTESTNET)) {
+            return MainNetParams.get();
+        } else {
+            return null;
+        }
+    }
 
- 
-	/** The header bytes that identify the start of a packet on this network. */
-	public long getPacketMagic() {
-		return packetMagic;
-	}
+    public int getSpendableCoinbaseDepth() {
+        return spendableCoinbaseDepth;
+    }
 
-	/**
-	 * First byte of a base58 encoded address. See
-	 * {@link net.bigtangle.core.Address}. This is the same as
-	 * acceptableAddressCodes[0] and is the one used for "normal" addresses. Other
-	 * types of address may be encountered with version codes found in the
-	 * acceptableAddressCodes array.
-	 */
-	public int getAddressHeader() {
-		return addressHeader;
-	}
+    /**
+     * Returns DNS names that when resolved, give IP addresses of active peers.
+     */
+    public String[] getDnsSeeds() {
+        return dnsSeeds;
+    }
 
-	/**
-	 * First byte of a base58 encoded P2SH address. P2SH addresses are defined as
-	 * part of BIP0013.
-	 */
-	public int getP2SHHeader() {
-		return p2shHeader;
-	}
+    /** Returns IP address of active peers. */
+    public int[] getAddrSeeds() {
+        return addrSeeds;
+    }
 
-	/**
-	 * First byte of a base58 encoded dumped private key. See
-	 * {@link net.bigtangle.core.DumpedPrivateKey}.
-	 */
-	public int getDumpedPrivateKeyHeader() {
-		return dumpedPrivateKeyHeader;
-	}
+    /**
+     * <p>
+     * Genesis block for this chain.
+     * </p>
+     *
+     * <p>
+     * The first block in every chain is a well known constant shared between
+     * all Bitcoin implemenetations. For a block to be valid, it must be
+     * eventually possible to work backwards to the genesis block by following
+     * the prevBlockHash pointers in the block headers.
+     * </p>
+     */
+    public Block getGenesisBlock() {
+        return genesisBlock;
+    }
 
-	/**
-	 * The version codes that prefix addresses which are acceptable on this network.
-	 * Although Satoshi intended these to be used for "versioning", in fact they are
-	 * today used to discriminate what kind of data is contained in the address and
-	 * to prevent accidentally sending coins across chains which would destroy them.
-	 */
-	public int[] getAcceptableAddressCodes() {
-		return acceptableAddressCodes;
-	}
+    /** The header bytes that identify the start of a packet on this network. */
+    public long getPacketMagic() {
+        return packetMagic;
+    }
 
-	/**
-	 * If we are running in testnet-in-a-box mode, we allow connections to nodes
-	 * with 0 non-genesis blocks.
-	 */
-	public boolean allowEmptyPeerChain() {
-		return true;
-	}
+    /**
+     * First byte of a base58 encoded address. See
+     * {@link net.bigtangle.core.Address}. This is the same as
+     * acceptableAddressCodes[0] and is the one used for "normal" addresses.
+     * Other types of address may be encountered with version codes found in the
+     * acceptableAddressCodes array.
+     */
+    public int getAddressHeader() {
+        return addressHeader;
+    }
 
-	/** Maximum target represents the easiest allowable proof of work. */
-	public BigInteger getMaxTarget() {
-		return maxTarget;
-	}
+    /**
+     * First byte of a base58 encoded P2SH address. P2SH addresses are defined
+     * as part of BIP0013.
+     */
+    public int getP2SHHeader() {
+        return p2shHeader;
+    }
 
-	/**
-	 * The key used to sign {@link net.bigtangle.core.AlertMessage}s. You can use
-	 * {@link net.bigtangle.core.ECKey#verify(byte[], byte[], byte[])} to verify
-	 * signatures using it.
-	 */
-	public byte[] getAlertSigningKey() {
-		return alertSigningKey;
-	}
+    /**
+     * First byte of a base58 encoded dumped private key. See
+     * {@link net.bigtangle.core.DumpedPrivateKey}.
+     */
+    public int getDumpedPrivateKeyHeader() {
+        return dumpedPrivateKeyHeader;
+    }
 
-	/** Returns the 4 byte header for BIP32 (HD) wallet - public key part. */
-	public int getBip32HeaderPub() {
-		return bip32HeaderPub;
-	}
+    /**
+     * The version codes that prefix addresses which are acceptable on this
+     * network. Although Satoshi intended these to be used for "versioning", in
+     * fact they are today used to discriminate what kind of data is contained
+     * in the address and to prevent accidentally sending coins across chains
+     * which would destroy them.
+     */
+    public int[] getAcceptableAddressCodes() {
+        return acceptableAddressCodes;
+    }
 
-	/** Returns the 4 byte header for BIP32 (HD) wallet - private key part. */
-	public int getBip32HeaderPriv() {
-		return bip32HeaderPriv;
-	}
+    /**
+     * If we are running in testnet-in-a-box mode, we allow connections to nodes
+     * with 0 non-genesis blocks.
+     */
+    public boolean allowEmptyPeerChain() {
+        return true;
+    }
 
-	/**
-	 * Returns the number of coins that will be produced in total, on this network.
-	 * Where not applicable, a very large number of coins is returned instead (i.e.
-	 * the main coin issue for Dogecoin).
-	 */
-	// public abstract Coin getMaxMoney();
+    /** Maximum target represents the easiest allowable proof of work. */
+    public BigInteger getMaxTarget() {
+        return maxTarget;
+    }
 
-	/**
-	 * Any standard (ie pay-to-address) output smaller than this value will most
-	 * likely be rejected by the network.
-	 */
-	public abstract Coin getMinNonDustOutput();
+    /**
+     * The key used to sign {@link net.bigtangle.core.AlertMessage}s. You can
+     * use {@link net.bigtangle.core.ECKey#verify(byte[], byte[], byte[])} to
+     * verify signatures using it.
+     */
+    public byte[] getAlertSigningKey() {
+        return alertSigningKey;
+    }
 
-	/**
-	 * The monetary object for this currency.
-	 */
-	public abstract MonetaryFormat getMonetaryFormat();
+    /** Returns the 4 byte header for BIP32 (HD) wallet - public key part. */
+    public int getBip32HeaderPub() {
+        return bip32HeaderPub;
+    }
 
-	/**
-	 * Scheme part for URIs, for example "bitcoin".
-	 */
-	public abstract String getUriScheme();
+    /** Returns the 4 byte header for BIP32 (HD) wallet - private key part. */
+    public int getBip32HeaderPriv() {
+        return bip32HeaderPriv;
+    }
 
-	/**
-	 * Returns whether this network has a maximum number of coins (finite supply) or
-	 * not. Always returns true for Bitcoin, but exists to be overriden for other
-	 * networks.
-	 */
-	public abstract boolean hasMaxMoney();
+    /**
+     * Returns the number of coins that will be produced in total, on this
+     * network. Where not applicable, a very large number of coins is returned
+     * instead (i.e. the main coin issue for Dogecoin).
+     */
+    // public abstract Coin getMaxMoney();
 
-	/**
-	 * Return the default serializer for this network. This is a shared serializer.
-	 * 
-	 * @return
-	 */
-	public final MessageSerializer getDefaultSerializer() {
-		// Construct a default serializer if we don't have one
-		if (null == this.defaultSerializer) {
-			// Don't grab a lock unless we absolutely need it
-			synchronized (this) {
-				// Now we have a lock, double check there's still no serializer
-				// and create one if so.
-				if (null == this.defaultSerializer) {
-					// As the serializers are intended to be immutable, creating
-					// two due to a race condition should not be a problem,
-					// however
-					// to be safe we ensure only one exists for each network.
-					this.defaultSerializer = getSerializer(false);
-				}
-			}
-		}
-		return defaultSerializer;
-	}
+    /**
+     * Any standard (ie pay-to-address) output smaller than this value will most
+     * likely be rejected by the network.
+     */
+    public abstract Coin getMinNonDustOutput();
 
-	/**
-	 * Construct and return a custom serializer.
-	 */
-	public abstract BitcoinSerializer getSerializer(boolean parseRetain);
+    /**
+     * The monetary object for this currency.
+     */
+    public abstract MonetaryFormat getMonetaryFormat();
 
-	/**
-	 * The number of blocks in the last {@link getMajorityWindow()} blocks at which
-	 * to trigger a notice to the user to upgrade their client, where the client
-	 * does not understand those blocks.
-	 */
-	public int getMajorityEnforceBlockUpgrade() {
-		return majorityEnforceBlockUpgrade;
-	}
+    /**
+     * Scheme part for URIs, for example "bitcoin".
+     */
+    public abstract String getUriScheme();
 
-	/**
-	 * The number of blocks in the last {@link getMajorityWindow()} blocks at which
-	 * to enforce the requirement that all new blocks are of the newer type (i.e.
-	 * outdated blocks are rejected).
-	 */
-	public int getMajorityRejectBlockOutdated() {
-		return majorityRejectBlockOutdated;
-	}
+    /**
+     * Returns whether this network has a maximum number of coins (finite
+     * supply) or not. Always returns true for Bitcoin, but exists to be
+     * overriden for other networks.
+     */
+    public abstract boolean hasMaxMoney();
 
-	/**
-	 * The sampling window from which the version numbers of blocks are taken in
-	 * order to determine if a new block version is now the majority.
-	 */
-	public int getMajorityWindow() {
-		return majorityWindow;
-	}
+    /**
+     * Return the default serializer for this network. This is a shared
+     * serializer.
+     * 
+     * @return
+     */
+    public final MessageSerializer getDefaultSerializer() {
+        // Construct a default serializer if we don't have one
+        if (null == this.defaultSerializer) {
+            // Don't grab a lock unless we absolutely need it
+            synchronized (this) {
+                // Now we have a lock, double check there's still no serializer
+                // and create one if so.
+                if (null == this.defaultSerializer) {
+                    // As the serializers are intended to be immutable, creating
+                    // two due to a race condition should not be a problem,
+                    // however
+                    // to be safe we ensure only one exists for each network.
+                    this.defaultSerializer = getSerializer(false);
+                }
+            }
+        }
+        return defaultSerializer;
+    }
 
-	/**
-	 * The flags indicating which script validation tests should be applied to the
-	 * given transaction. Enables support for alternative blockchains which enable
-	 * tests based on different criteria.
-	 *
-	 * @param block
-	 *            block the transaction belongs to.
-	 * @param transaction
-	 *            to determine flags for.
-	 * @param height
-	 *            height of the block, if known, null otherwise. Returned tests
-	 *            should be a safe subset if block height is unknown.
-	 */
-	public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block, final Transaction transaction) {
-		final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
-		// if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
-		verifyFlags.add(Script.VerifyFlag.P2SH);
+    /**
+     * Construct and return a custom serializer.
+     */
+    public abstract BitcoinSerializer getSerializer(boolean parseRetain);
 
-		// Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
-		// blocks, when 75% of the network has upgraded:
+    /**
+     * The number of blocks in the last {@link getMajorityWindow()} blocks at
+     * which to trigger a notice to the user to upgrade their client, where the
+     * client does not understand those blocks.
+     */
+    public int getMajorityEnforceBlockUpgrade() {
+        return majorityEnforceBlockUpgrade;
+    }
 
-		verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
+    /**
+     * The number of blocks in the last {@link getMajorityWindow()} blocks at
+     * which to enforce the requirement that all new blocks are of the newer
+     * type (i.e. outdated blocks are rejected).
+     */
+    public int getMajorityRejectBlockOutdated() {
+        return majorityRejectBlockOutdated;
+    }
 
-		return verifyFlags;
-	}
+    /**
+     * The sampling window from which the version numbers of blocks are taken in
+     * order to determine if a new block version is now the majority.
+     */
+    public int getMajorityWindow() {
+        return majorityWindow;
+    }
 
-	public abstract int getProtocolVersionNum(final ProtocolVersion version);
+    /**
+     * The flags indicating which script validation tests should be applied to
+     * the given transaction. Enables support for alternative blockchains which
+     * enable tests based on different criteria.
+     *
+     * @param block
+     *            block the transaction belongs to.
+     * @param transaction
+     *            to determine flags for.
+     * @param height
+     *            height of the block, if known, null otherwise. Returned tests
+     *            should be a safe subset if block height is unknown.
+     */
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
+            final Transaction transaction) {
+        final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
+        // if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
+        verifyFlags.add(Script.VerifyFlag.P2SH);
 
-	public static enum ProtocolVersion {
-		MINIMUM(70000), PONG(60001), BLOOM_FILTER(70000), CURRENT(70001);
+        // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
+        // blocks, when 75% of the network has upgraded:
 
-		private final int bitcoinProtocol;
+        verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
 
-		ProtocolVersion(final int bitcoinProtocol) {
-			this.bitcoinProtocol = bitcoinProtocol;
-		}
+        return verifyFlags;
+    }
 
-		public int getBitcoinProtocolVersion() {
-			return bitcoinProtocol;
-		}
-	}
+    public abstract int getProtocolVersionNum(final ProtocolVersion version);
+
+    public static enum ProtocolVersion {
+        MINIMUM(70000), PONG(60001), BLOOM_FILTER(70000), CURRENT(70001);
+
+        private final int bitcoinProtocol;
+
+        ProtocolVersion(final int bitcoinProtocol) {
+            this.bitcoinProtocol = bitcoinProtocol;
+        }
+
+        public int getBitcoinProtocolVersion() {
+            return bitcoinProtocol;
+        }
+    }
 }
