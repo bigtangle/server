@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -42,9 +44,16 @@ public class MultiSignService {
     @Autowired
     protected ValidatorService validatorService;
 
-    public AbstractResponse getMultiSignListWithAddress(String address) throws BlockStoreException {
-        List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
-        return MultiSignResponse.createMultiSignResponse(multiSigns);
+    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address) throws BlockStoreException {
+        if (StringUtils.isBlank(tokenid)) {
+            List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
+            return MultiSignResponse.createMultiSignResponse(multiSigns);
+        }
+        else {
+            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
+            return MultiSignResponse.createMultiSignResponse(multiSigns);
+        }
+       
     }
 
     public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
@@ -106,9 +115,15 @@ public class MultiSignService {
             TokenInfo tokenInfo = TokenInfo.parse(buf);
             final Token tokens = tokenInfo.getToken();
 
-            String prevblockhash = tokens.getPrevblockhash();
-            List<MultiSignAddress> multiSignAddresses = store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
+            List<MultiSignAddress> multiSignAddresses;
+            if (tokens.getTokentype() == TokenType.domainname.ordinal()) {
+                multiSignAddresses = tokenInfo.getMultiSignAddresses();
+            } else {
+                String prevblockhash = tokens.getPrevblockhash();
+                multiSignAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
+                        prevblockhash);
+            }
+
             if (multiSignAddresses.size() == 0) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }
@@ -183,10 +198,15 @@ public class MultiSignService {
             if (!allowConflicts && (tokens0 != null && tokens0.isConfirmed() && tokens.getTokenindex() <= 1L)) {
                 throw new BlockStoreException("tokens already exist");
             }
+            List<MultiSignAddress> multiSignAddresses;
+            if (tokens.getTokentype() == TokenType.domainname.ordinal()) {
+                multiSignAddresses = tokenInfo.getMultiSignAddresses();
+            } else {
+                String prevblockhash = tokens.getPrevblockhash();
+                multiSignAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
+                        prevblockhash);
+            }
 
-            String prevblockhash = tokens.getPrevblockhash();
-            List<MultiSignAddress> multiSignAddresses = store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(), prevblockhash);
             if (multiSignAddresses.size() == 0) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
             }
@@ -232,13 +252,13 @@ public class MultiSignService {
                     }
                 }
 
-                for (MultiSignAddress multiSignAddress : multiSignAddressRes.values()) {
+                /*for (MultiSignAddress multiSignAddress : multiSignAddressRes.values()) {
                     String address = multiSignAddress.getAddress();
                     if (!multiSignBiesRes.containsKey(address)) {
                         signCount = 0;
                         break;
                     }
-                }
+                }*/
             }
             int signnumber = (int) (tokens0 == null ? tokens.getSignnumber() : tokens0.getSignnumber());
             return signCount >= signnumber;

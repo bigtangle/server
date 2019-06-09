@@ -140,13 +140,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenstop boolean,\n" + "    prevblockhash varchar(255) NOT NULL,\n"
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  varbinary(32),\n"
             + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n" + "    language char(2)   ,\n"
-            + "    classification varchar(255)   ,\n" + "    domainnametokenid varchar(255) ,\n"
+            + "    classification varchar(255)   ,\n"
             + "    decimals int ,\n" + "    PRIMARY KEY (blockhash) \n)";
 
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
-            + "    PRIMARY KEY (blockhash, tokenid, address) \n)";
+            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n)";
 
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"

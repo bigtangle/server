@@ -195,7 +195,6 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    @SuppressWarnings("unchecked")
     public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
         String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();

@@ -25,7 +25,6 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
- 
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.UTXO;
@@ -69,7 +68,7 @@ import net.bigtangle.server.service.SolidityState;
  * </p>
  * 
  * <p>
- * It must store the {@link  Block} of all blocks.
+ * It must store the {@link Block} of all blocks.
  * </p>
  *
  * <p>
@@ -90,8 +89,8 @@ import net.bigtangle.server.service.SolidityState;
 public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /**
-     * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or
-     * null if none is found
+     * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or null
+     * if none is found
      */
     UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException;
 
@@ -103,12 +102,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /**
      * Removes a {@link net.bigtangle.core.UTXO} from the list of unspent
-     * TransactionOutputs Note that the coinbase of the genesis block should
-     * NEVER be spendable and thus never in the list.
+     * TransactionOutputs Note that the coinbase of the genesis block should NEVER
+     * be spendable and thus never in the list.
      * 
-     * @throws BlockStoreException
-     *             if there is an underlying storage issue, or out was not in
-     *             the list.
+     * @throws BlockStoreException if there is an underlying storage issue, or out
+     *                             was not in the list.
      */
     void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException;
 
@@ -116,8 +114,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * True if this store has any unspent outputs from a transaction with a hash
      * equal to the first parameter
      * 
-     * @param numOutputs
-     *            the number of outputs the given transaction has
+     * @param numOutputs the number of outputs the given transaction has
      */
     boolean hasUnspentOutputs(Sha256Hash hash) throws BlockStoreException;
 
@@ -134,10 +131,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      *
      * <p>
      * Furthermore, any data written after a call to beginDatabaseBatchWrite()
-     * should not be readable by any other threads until
-     * commitDatabaseBatchWrite() has been called by this thread. Multiple calls
-     * to beginDatabaseBatchWrite() in any given thread should be ignored and
-     * treated as one call.
+     * should not be readable by any other threads until commitDatabaseBatchWrite()
+     * has been called by this thread. Multiple calls to beginDatabaseBatchWrite()
+     * in any given thread should be ignored and treated as one call.
      * </p>
      */
     public void beginDatabaseBatchWrite() throws BlockStoreException;
@@ -298,7 +294,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
- 
+
     public Token getToken(String blockhash) throws BlockStoreException;
 
     public List<Token> getTokenID(String tokenid) throws BlockStoreException;
@@ -366,7 +362,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
             throws BlockStoreException;
 
-    public List<byte[] > blocksFromHeight(long heightstart) throws BlockStoreException;
+    public List<byte[]> blocksFromHeight(long heightstart) throws BlockStoreException;
 
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
@@ -396,6 +392,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<OutputsMulti> queryOutputsMultiByHashAndIndex(byte[] hash, long index) throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException;
+    
+    public List<MultiSign> getMultiSignListByTokenidAndAddress(String tokenid, String address) throws BlockStoreException;
 
     int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException;
 
@@ -490,8 +488,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException;
 
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
-    // List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String>
-    // addresses) throws BlockStoreException;
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
@@ -518,5 +514,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
     List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
- 
+
+    Token queryDomainnameToken(String domainname) throws BlockStoreException;
+
+    int getCountTokenByDomainnameNumber(String domainname) throws BlockStoreException;
+
 }

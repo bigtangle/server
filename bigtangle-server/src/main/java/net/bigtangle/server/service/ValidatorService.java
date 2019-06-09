@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,7 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -110,6 +112,8 @@ public class ValidatorService {
     private NetworkParameters params;
     @Autowired
     private ServerConfiguration serverConfiguration;
+    @Autowired
+    private TokenDomainnameService tokenDomainnameService;
 
     private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 
@@ -175,8 +179,8 @@ public class ValidatorService {
     }
 
     /**
-     * Get the {@link Script} from the script bytes or return Script of empty
-     * byte array.
+     * Get the {@link Script} from the script bytes or return Script of empty byte
+     * array.
      */
     private Script getScript(byte[] scriptBytes) {
         try {
@@ -187,11 +191,10 @@ public class ValidatorService {
     }
 
     /**
-     * Get the address from the {@link Script} if it exists otherwise return
-     * empty string "".
+     * Get the address from the {@link Script} if it exists otherwise return empty
+     * string "".
      *
-     * @param script
-     *            The script.
+     * @param script The script.
      * @return The address.
      */
     private String getScriptAddress(@Nullable Script script) {
@@ -208,9 +211,9 @@ public class ValidatorService {
 
     /**
      * NOTE: The reward block is assumed to having successfully gone through
-     * checkRewardSolidity beforehand! For connecting purposes, checks if the
-     * given rewardBlock is eligible NOW. In Spark, this would be calculated
-     * delayed and free.
+     * checkRewardSolidity beforehand! For connecting purposes, checks if the given
+     * rewardBlock is eligible NOW. In Spark, this would be calculated delayed and
+     * free.
      * 
      * @param rewardBlock
      * @return eligibility of rewards + new perTxReward)
@@ -231,18 +234,14 @@ public class ValidatorService {
 
     /**
      * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-     * Pair.of(new difficulty + new perTxReward) here for new reward blocks.
-     * This is a prototype implementation. In the actual Spark implementation,
-     * the computational cost is not a problem, since it is instead
-     * backpropagated and calculated for free with delay. For more info, see
-     * notes.
+     * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
+     * a prototype implementation. In the actual Spark implementation, the
+     * computational cost is not a problem, since it is instead backpropagated and
+     * calculated for free with delay. For more info, see notes.
      * 
-     * @param prevTrunk
-     *            a predecessor block in the db
-     * @param prevBranch
-     *            a predecessor block in the db
-     * @param prevRewardHash
-     *            the predecessor reward
+     * @param prevTrunk      a predecessor block in the db
+     * @param prevBranch     a predecessor block in the db
+     * @param prevRewardHash the predecessor reward
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
@@ -327,10 +326,10 @@ public class ValidatorService {
     }
 
     /**
-     * NOTE: The block is assumed to having successfully gone through
-     * checkSolidity beforehand! For connecting purposes, checks if the given
-     * matching block is eligible NOW. In Spark, this would be calculated
-     * delayed and more or less free.
+     * NOTE: The block is assumed to having successfully gone through checkSolidity
+     * beforehand! For connecting purposes, checks if the given matching block is
+     * eligible NOW. In Spark, this would be calculated delayed and more or less
+     * free.
      * 
      * @param block
      * @return eligibility
@@ -453,13 +452,13 @@ public class ValidatorService {
     }
 
     /**
-     * Checks if the given set is eligible to be walked to during local approval
-     * tip selection given the current set of non-milestone blocks to include.
-     * This is the case if the set is compatible with the current milestone. It
-     * must disallow spent prev UTXOs / unconfirmed prev UTXOs
+     * Checks if the given set is eligible to be walked to during local approval tip
+     * selection given the current set of non-milestone blocks to include. This is
+     * the case if the set is compatible with the current milestone. It must
+     * disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
-     * @param currentApprovedNonMilestoneBlocks
-     *            The set of all currently approved non-milestone blocks.
+     * @param currentApprovedNonMilestoneBlocks The set of all currently approved
+     *                                          non-milestone blocks.
      * @return true if the given set is eligible
      * @throws BlockStoreException
      */
@@ -500,18 +499,16 @@ public class ValidatorService {
     // Both disallow where usedoutput unconfirmed or ineligible for other
     // reasons.
     /**
-     * Checks if the given block is eligible to be walked to during local
-     * approval tip selection given the current set of non-milestone blocks to
-     * include. This is the case if the block + the set is compatible with the
-     * current milestone. It must disallow spent prev UTXOs / unconfirmed prev
-     * UTXOs
+     * Checks if the given block is eligible to be walked to during local approval
+     * tip selection given the current set of non-milestone blocks to include. This
+     * is the case if the block + the set is compatible with the current milestone.
+     * It must disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
-     * @param block
-     *            The block to check for eligibility.
-     * @param currentApprovedNonMilestoneBlocks
-     *            The set of all currently approved non-milestone blocks.
-     * @return true if the given block is eligible to be walked to during
-     *         approval tip selection.
+     * @param block                             The block to check for eligibility.
+     * @param currentApprovedNonMilestoneBlocks The set of all currently approved
+     *                                          non-milestone blocks.
+     * @return true if the given block is eligible to be walked to during approval
+     *         tip selection.
      * @throws BlockStoreException
      */
     public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
@@ -604,16 +601,15 @@ public class ValidatorService {
     // disallow unconfirmed prev UTXOs and spent UTXOs if
     // unmaintained (unundoable) spend
     /**
-     * Resolves all conflicts such that the milestone is compatible with all
-     * blocks remaining in the set of blocks. If not allowing unconfirming
-     * losing milestones, the milestones are always prioritized over
-     * non-milestone candidates.
+     * Resolves all conflicts such that the milestone is compatible with all blocks
+     * remaining in the set of blocks. If not allowing unconfirming losing
+     * milestones, the milestones are always prioritized over non-milestone
+     * candidates.
      * 
-     * @param blocksToAdd
-     *            the set of blocks to add to the current milestone
-     * @param unconfirmLosingMilestones
-     *            if false, the milestones are always prioritized over
-     *            non-milestone candidates.
+     * @param blocksToAdd               the set of blocks to add to the current
+     *                                  milestone
+     * @param unconfirmLosingMilestones if false, the milestones are always
+     *                                  prioritized over non-milestone candidates.
      * @throws BlockStoreException
      */
     public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
@@ -782,8 +778,8 @@ public class ValidatorService {
     }
 
     /**
-     * Resolves conflicts between milestone blocks and milestone candidates as
-     * well as conflicts among milestone candidates.
+     * Resolves conflicts between milestone blocks and milestone candidates as well
+     * as conflicts among milestone candidates.
      * 
      * @param blocksToAdd
      * @param unconfirmLosingMilestones
@@ -1088,12 +1084,11 @@ public class ValidatorService {
      * Checks if the block has all of its dependencies to fully determine its
      * validity. Then checks if the block is valid based on its dependencies. If
      * SolidityState.getSuccessState() is returned, the block is valid. If
-     * SolidityState.getFailState() is returned, the block is invalid.
-     * Otherwise, appropriate solidity states are returned to imply missing
-     * dependencies.
+     * SolidityState.getFailState() is returned, the block is invalid. Otherwise,
+     * appropriate solidity states are returned to imply missing dependencies.
      */
-    public SolidityState checkBlockSolidity(Block block, BlockWrap storedPrev,
-            BlockWrap storedPrevBranch, boolean throwExceptions) {
+    public SolidityState checkBlockSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
+            boolean throwExceptions) {
         try {
             if (block.getHash() == Sha256Hash.ZERO_HASH) {
                 if (throwExceptions)
@@ -1120,7 +1115,6 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-            
             // TODO different block type transactions should include their block
             // type in the transaction hash
             // for now, we must disallow someone burning other people's orders
@@ -1135,8 +1129,6 @@ public class ValidatorService {
                         // Expected
                     }
             }
-
-  
 
             // Check timestamp: enforce monotone time increase
             if (block.getTimeSeconds() < storedPrev.getBlock().getTimeSeconds()
@@ -1798,9 +1790,8 @@ public class ValidatorService {
         }
 
         // Ensure heights follow the rules
-        if (Math.subtractExact(info.getToHeight(),
-                store.getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL
-                        - 1) {
+        if (Math.subtractExact(info.getToHeight(), store
+                .getOrderMatchingToHeight(prevRewardHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL - 1) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid heights");
             return SolidityState.getFailState();
@@ -1951,7 +1942,7 @@ public class ValidatorService {
 
         if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
             return SolidityState.getFailState();
-        
+
         // Check field correctness: amount
         if (currentToken.getToken().getAmount() != block.getTransactions().get(0).getOutputSum()) {
             if (throwExceptions)
@@ -1988,9 +1979,18 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
+        if (StringUtils.isBlank(currentToken.getToken().getDomainname()))
+            throw new InvalidDependencyException("Domainname is empty");
+
+        if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
+            final String domainname = currentToken.getToken().getDomainname();
+            if (this.tokenDomainnameService.checkTokenDomainnameAlreadyExists(domainname))
+                throw new InvalidDependencyException("Domainname already exists");
+        }
         // Get permissioned addresses
         Token prevToken = null;
         List<MultiSignAddress> permissionedAddresses = currentToken.getMultiSignAddresses();
+
         // If not initial issuance, we check according to the previous token
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
@@ -2023,7 +2023,6 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState();
                 }
-    
 
                 // Must allow more issuances
                 if (prevToken.isTokenstop()) {
@@ -2033,9 +2032,9 @@ public class ValidatorService {
                 }
 
                 // Get addresses allowed to reissue
-                permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(),
-                        prevToken.getBlockhash()));
-                
+                permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
+                        prevToken.getTokenid(), prevToken.getBlockhash()));
+
             } catch (BlockStoreException e) {
                 // Cannot happen, previous token must exist
                 e.printStackTrace();
@@ -2043,7 +2042,8 @@ public class ValidatorService {
         } else {
             // First time issuances must sign for the token id
             for (PermissionDomainname permissionDomainname : this.serverConfiguration.getPermissionDomainname()) {
-                permissionedAddresses.add(new MultiSignAddress(currentToken.getToken().getTokenid(), "", permissionDomainname.getPubKeyHex()));
+                permissionedAddresses.add(new MultiSignAddress(currentToken.getToken().getTokenid(), "",
+                        permissionDomainname.getPubKeyHex()));
             }
         }
 
@@ -2112,8 +2112,10 @@ public class ValidatorService {
         }
 
         // Return whether sufficient signatures exist
-        // 2 if parent exists, 1 if no parent, previously defined number if predecessor token exists
-        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : currentToken.getToken().getDomainname() != null ? 2 : 1;
+        // 2 if parent exists, 1 if no parent, previously defined number if predecessor
+        // token exists
+        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber()
+                : currentToken.getToken().getDomainname() != null ? 2 : 1;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 

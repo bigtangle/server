@@ -26,8 +26,6 @@ public class Token implements java.io.Serializable {
     private String description;
     // the domain name of this token
     private String domainname;
-    // the Tokenid of the domain name
-    private String domainnameTokenid;
     // number of signature
     private int signnumber;
     // difference for external exchange, meta token, digital asset token and
@@ -193,14 +191,6 @@ public class Token implements java.io.Serializable {
         this.language = language;
     }
 
-    public String getDomainnameTokenid() {
-        return domainnameTokenid;
-    }
-
-    public void setDomainnameTokenid(String domainnameTokenid) {
-        this.domainnameTokenid = domainnameTokenid;
-    }
-
     public int getDecimals() {
         return decimals;
     }
@@ -213,7 +203,7 @@ public class Token implements java.io.Serializable {
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal());
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), "");
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
@@ -221,17 +211,14 @@ public class Token implements java.io.Serializable {
             String domainname) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal());
-
-        token.setDomainname(domainname);
-        token.setDomainnameTokenid("");
+                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(), domainname);
 
         return token;
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype) {
+            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype, final String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -248,6 +235,8 @@ public class Token implements java.io.Serializable {
         tokens.revoked = revoked;
         tokens.language = language;
         tokens.classification = classification;
+        
+        tokens.domainname = domainname;
         return tokens;
     }
 

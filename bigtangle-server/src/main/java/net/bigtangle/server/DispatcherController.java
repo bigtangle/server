@@ -33,7 +33,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
@@ -46,6 +45,7 @@ import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -94,6 +94,8 @@ public class DispatcherController {
     private OrderTickerService orderTickerService;
     @Autowired
     protected FullPrunedBlockStore store;
+    @Autowired
+    private TokenDomainnameService tokenDomainnameService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -222,7 +224,8 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String address = (String) request.get("address");
-                AbstractResponse response = this.multiSignService.getMultiSignListWithAddress(address);
+                String tokenid = (String) request.get("tokenid");
+                AbstractResponse response = this.multiSignService.getMultiSignListWithAddress(tokenid, address);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -417,15 +420,13 @@ public class DispatcherController {
             case queryPermissionedAddresses: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                final String tokenid = (String) request.get("tokenid");
-                final String prevblockhash = (String) request.get("prevblockhash");
-                List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokenid,
-                        prevblockhash);
-                AbstractResponse response = PermissionedAddressesResponse.create(permissionedAddresses);
+                final String domainname = (String) request.get("domainname");
+                PermissionedAddressesResponse response = this.tokenDomainnameService
+                        .queryDomainnameTokenPermissionedAddresses(domainname);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             default:
                 break;
             }
@@ -459,6 +460,7 @@ public class DispatcherController {
     private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse)
             throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
         String reqStr = new String(bodyByte, "UTF-8");
+        @SuppressWarnings("unchecked")
         Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
         String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();
         String toaddress = request.get("toaddress") == null ? "" : request.get("toaddress").toString();
