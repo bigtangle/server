@@ -26,8 +26,6 @@ public class Token implements java.io.Serializable {
     private String description;
     // the domain name of this token
     private String domainname;
-    // the Tokenid of the domain name
-    private String domainnameTokenid;
     // number of signature
     private int signnumber;
     // difference for external exchange, meta token, digital asset token and
@@ -193,14 +191,6 @@ public class Token implements java.io.Serializable {
         this.language = language;
     }
 
-    public String getDomainnameTokenid() {
-        return domainnameTokenid;
-    }
-
-    public void setDomainnameTokenid(String domainnameTokenid) {
-        this.domainnameTokenid = domainnameTokenid;
-    }
-
     public int getDecimals() {
         return decimals;
     }
@@ -224,7 +214,6 @@ public class Token implements java.io.Serializable {
                 tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(),decimals);
 
         token.setDomainname(domainname);
-        token.setDomainnameTokenid("");
 
         return token;
     }
