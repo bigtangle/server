@@ -240,7 +240,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         int signnumber = 3;
 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, amount, false, domainname);
+                signnumber, tokenindex_, amount, false, domainname,0);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 

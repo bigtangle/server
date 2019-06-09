@@ -501,20 +501,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
-     * instead of a hostname and password, and optionally allowing a schema to be
-     * specified.
+     * instead of a hostname and password, and optionally allowing a schema to
+     * be specified.
      * </p>
      *
-     * @param params         A copy of the NetworkParameters used.
-     * @param connectionURL  The jdbc url to connect to the database.
-     * @param fullStoreDepth The number of blocks of history stored in full
-     *                       (something like 1000 is pretty safe).
-     * @param username       The database username.
-     * @param password       The password to the database.
-     * @param schemaName     The name of the schema to put the tables in. May be
-     *                       null if no schema is being used.
-     * @throws BlockStoreException If there is a failure to connect and/or
-     *                             initialise the database.
+     * @param params
+     *            A copy of the NetworkParameters used.
+     * @param connectionURL
+     *            The jdbc url to connect to the database.
+     * @param fullStoreDepth
+     *            The number of blocks of history stored in full (something like
+     *            1000 is pretty safe).
+     * @param username
+     *            The database username.
+     * @param password
+     *            The password to the database.
+     * @param schemaName
+     *            The name of the schema to put the tables in. May be null if no
+     *            schema is being used.
+     * @throws BlockStoreException
+     *             If there is a failure to connect and/or initialise the
+     *             database.
      */
     public DatabaseFullPrunedBlockStore(NetworkParameters params, String connectionURL, int fullStoreDepth,
             @Nullable String username, @Nullable String password, @Nullable String schemaName)
@@ -905,8 +912,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * Create a new store for the given
      * {@link net.bigtangle.core.NetworkParameters}.
      * 
-     * @param params The network.
-     * @throws BlockStoreException If the store couldn't be created.
+     * @param params
+     *            The network.
+     * @throws BlockStoreException
+     *             If the store couldn't be created.
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
@@ -925,7 +934,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Token output table
             Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true);
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true, 2);
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
