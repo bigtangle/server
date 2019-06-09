@@ -164,8 +164,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testInitWallet();
  
         
-        @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
@@ -183,11 +183,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    
     public void testWalletImportKeyGiveMoney() throws Exception {
         Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
         coinbaseWallet.importKey(
-                new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
         coinbaseWallet.setServerURL(contextRoot);
 
         ECKey outKey = new ECKey();
@@ -221,11 +221,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    
     public void testWalletBatchGiveMoney() throws Exception {
         Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
         coinbaseWallet.importKey(
-                new ECKey(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
         coinbaseWallet.setServerURL(contextRoot);
 
         Transaction transaction = new Transaction(this.networkParameters);
@@ -274,7 +274,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
-    @SuppressWarnings("deprecation")
+    
     @Test
     public void exchangeToken() throws Exception {
         testInitWallet();

@@ -60,7 +60,7 @@ public class GiveMoneyUtils {
         String prevblockhash = tokenIndexResponse.getBlockhash();
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false);
+                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false,0);
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -118,7 +118,7 @@ public class GiveMoneyUtils {
         Block block = getAskTransactionBlock();
 
         @SuppressWarnings("deprecation")
-        ECKey genesiskey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getTransactionAndGetBalances(genesiskey);
 
@@ -186,7 +186,7 @@ public class GiveMoneyUtils {
         long amount = basecoin.getValue();
         
         Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), "", 1, 0, amount, true);
+                UUID.randomUUID().toString(), "", 1, 0, amount, true,0);
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();

@@ -44,7 +44,7 @@ public class SerializationTest {
     @Test
     public void testTokenInfoSerialization() throws JsonParseException, JsonMappingException, IOException {
     	List<MultiSignAddress> addresses = new ArrayList<>();
-    	Token tokens = Token.buildSimpleTokenInfo(true, "1", "2", "3", "4", 2, 3, 4, true);
+    	Token tokens = Token.buildSimpleTokenInfo(true, "1", "2", "3", "4", 2, 3, 4, true,0);
     	TokenInfo info1 = new TokenInfo();
     	info1.setToken(tokens);
     	info1.setMultiSignAddresses(addresses);

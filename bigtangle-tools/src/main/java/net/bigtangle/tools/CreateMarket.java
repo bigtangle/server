@@ -55,7 +55,7 @@ public class CreateMarket {
         walletAppKit.wallet().setServerURL(contextRoot);
         List<ECKey> walletKeys = walletAppKit.wallet().walletKeys(aesKey);
 
-        ECKey outKey = new ECKey(Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey outKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
         byte[] pubKey = outKey.getPubKey();

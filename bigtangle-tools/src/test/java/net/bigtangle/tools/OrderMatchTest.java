@@ -28,7 +28,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void buy() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -48,7 +48,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void sell() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -67,7 +67,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void multiLevelBuy() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -86,7 +86,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void multiLevelSell() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -105,7 +105,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void partialBuy() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -124,7 +124,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void partialSell() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -143,7 +143,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void partialBidFill() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -165,7 +165,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void partialAskFill() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		List<Block> addedBlocks = new ArrayList<>();
 
@@ -188,7 +188,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void cancel() throws Exception {
 		@SuppressWarnings({ "deprecation", "unused" })
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -207,7 +207,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void cancelTwoStep() throws Exception {
 		@SuppressWarnings({ "deprecation", "unused" })
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -223,7 +223,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void partialCancel() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -246,7 +246,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void ineffectiveCancel() throws Exception {
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();
@@ -270,7 +270,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		final int waitTime = 5000;
 
 		@SuppressWarnings("deprecation")
-		ECKey genesisKey = new ECKey(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+		ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey testKey = walletKeys.get(8);
 		;
 		List<Block> addedBlocks = new ArrayList<>();

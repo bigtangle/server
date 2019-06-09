@@ -462,7 +462,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), -1, 0, amount, false);
+                UUID.randomUUID().toString(), -1, 0, amount, false,0);
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -490,7 +490,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, 0, amount, false);
+                UUID.randomUUID().toString(), 3, 0, amount, false,0);
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -526,7 +526,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -563,7 +563,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -604,7 +604,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -685,7 +685,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -764,7 +764,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -831,7 +831,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
             Coin basecoin = Coin.valueOf(100000L, pubKey);
             long amount = basecoin.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test",
-                   "test", 1, 0, amount, false);
+                   "test", 1, 0, amount, false,0);
             tokenInfo.setToken(tokens);
 
             // add MultiSignAddress item
@@ -870,7 +870,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     }
 
     // @Test(expected = RuntimeException.class)
-    @SuppressWarnings("unchecked")
+
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
         testInitWallet();
         wallet1();
@@ -886,7 +886,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         long tokenindex1 = 1;
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex1, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex1, amount, false,0);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(0);
@@ -910,8 +910,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         // save block
         String resp000 = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-        HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
-        int duration = (Integer) result000.get("errorcode");
+       // HashMap<String, Object> result000 = Json.jsonmapper().readValue(resp000, HashMap.class);
+      //  int duration = (Integer) result000.get("errorcode");
         log.debug("resp : " + resp000);
 
         List<ECKey> ecKeys = new ArrayList<ECKey>();
@@ -1040,7 +1040,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false);
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0);
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(0);

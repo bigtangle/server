@@ -43,7 +43,7 @@ public class SubtangleService {
 
     @SuppressWarnings("deprecation")
     public void giveMoneyToTargetAccount() throws Exception {
-        ECKey signKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
+        ECKey signKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
                 Utils.HEX.decode(subtangleConfiguration.getPubKeyHex0()));
         List<ECKey> keys = new ArrayList<>();
         keys.add(signKey);
@@ -83,7 +83,7 @@ public class SubtangleService {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output, 0);
         Transaction transaction = new Transaction(networkParameters);
 
-        ECKey outKey = new ECKey(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()),
+        ECKey outKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()),
                 Utils.HEX.decode(subtangleConfiguration.getPubKeyHex1()));
         transaction.addOutput(amount, outKey);
 

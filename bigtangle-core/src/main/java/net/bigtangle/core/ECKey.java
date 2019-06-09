@@ -349,16 +349,7 @@ public class ECKey implements EncryptableItem {
             return new ECKey(priv, decompressPoint(pub.get()));
     }
 
-    /**
-     * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
-     * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
-     * from the private key.
-     */
-    @Deprecated
-    public ECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
-        this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
-    }
- 
+
     /**
      * Constructs a key that has an encrypted private component. The given object wraps encrypted bytes and an
      * initialization vector. Note that the key will not be decrypted during this call: the returned ECKey is
