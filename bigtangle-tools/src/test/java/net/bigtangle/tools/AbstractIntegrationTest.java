@@ -55,13 +55,16 @@ import net.bigtangle.wallet.Wallet;
 
 public abstract class AbstractIntegrationTest {
 
+    
+    public static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
+    public static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
+    
 	// private static final String CONTEXT_ROOT_TEMPLATE =
 	// "http://localhost:%s/";
 	protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-	public String contextRoot = 
-	        "http://localhost:8088/";
-	        //
-	        //"https://bigtangle.org/";
+	public String contextRoot = HTTPS_BIGTANGLE_DE;
+	       // "http://localhost:8088/";
+	 
 	public List<ECKey> walletKeys;
 	public List<ECKey> wallet1Keys;
 	public List<ECKey> wallet2Keys;

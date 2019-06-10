@@ -20,7 +20,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
     public void diffThread() throws Exception {
 
         while (true) {
-            diff("https://bigtangle.org", "https://bigtangle.de");
+            diff(HTTPS_BIGTANGLE_INFO, HTTPS_BIGTANGLE_DE);
         
             Thread.sleep(100000);
         }
