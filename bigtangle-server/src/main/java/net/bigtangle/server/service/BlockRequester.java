@@ -7,16 +7,20 @@ package net.bigtangle.server.service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
@@ -31,11 +35,17 @@ import net.bigtangle.utils.OkHttp3Util;
 public class BlockRequester {
     private static final Logger log = LoggerFactory.getLogger(BlockRequester.class);
 
+    private static final String CHECHNUMBER = "2000";
+
     @Autowired
     protected NetworkParameters networkParameters;
 
     @Autowired
     TransactionService transactionService;
+
+    @Autowired
+    BlockService blockService;
+
     @Autowired
     protected ServerConfiguration serverConfiguration;
 
@@ -52,11 +62,11 @@ public class BlockRequester {
                 try {
                     data = OkHttp3Util.post(s.trim() + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    transactionService.addConnected(data,   false);
+                    transactionService.addConnected(data, false);
                     break;
                 } catch (Exception e) {
                     log.debug(s, e);
-             
+
                     badserver.add(s);
                 }
             }
@@ -74,6 +84,85 @@ public class BlockRequester {
 
     public void broadcastBlocks(long startheight, String kafkaserver) {
 
+    }
+
+    public void diff() throws Exception {
+        String[] re = serverConfiguration.getRequester().split(",");
+        for (String s : re) {
+            diff(s);
+        }
+    }
+
+    /*
+     * check difference to remote server2 and get it.
+     */
+    public void diff(String server2) throws Exception {
+        log.debug(" start difference check with " + server2);
+
+        List<BlockEvaluationDisplay> l1 = getBlockInfos();
+
+        List<BlockEvaluationDisplay> l2 = getBlockInfos(server2);
+        for (BlockEvaluationDisplay b : l1) {
+            BlockEvaluationDisplay s = find(l2, b);
+            if (s == null) {
+                // not found request
+                try {
+                    HashMap<String, String> requestParam = new HashMap<String, String>();
+                    requestParam.put("hashHex", b.getBlockHexStr());
+                    byte[] data = OkHttp3Util.post(server2 + "/" + ReqCmd.getBlock,
+                            Json.jsonmapper().writeValueAsString(requestParam));
+                    transactionService.addConnected(data, false);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+
+            }
+        }
+
+        System.out.println(" finish difference check " + server2 + "  ");
+    }
+
+    private BlockEvaluationDisplay find(List<BlockEvaluationDisplay> l, BlockEvaluationDisplay b) throws Exception {
+
+        for (BlockEvaluationDisplay b1 : l) {
+            if (b1.getBlockHash().equals(b.getBlockHash())) {
+                return b1;
+            }
+        }
+        return null;
+    }
+
+    private List<BlockEvaluationDisplay> getBlockInfos() throws Exception {
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("lastestAmount", CHECHNUMBER);
+        return ((GetBlockEvaluationsResponse) blockService.searchBlock(requestParam)).getEvaluations();
+
+    }
+
+    private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
+        String CONTEXT_ROOT = server;
+        String lastestAmount = CHECHNUMBER;
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("lastestAmount", lastestAmount);
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.searchBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        return getBlockEvaluationsResponse.getEvaluations();
+    }
+
+    private Block getBlock(String server, String blockhash) throws Exception {
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hashHex", blockhash);
+        String response = OkHttp3Util.postString(server + "/" + ReqCmd.getBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        return null;
     }
 
 }
