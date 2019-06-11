@@ -94,6 +94,7 @@ public class ScheduleRewardService {
                     return;
                 }
                 Map<String, String> map = this.store.queryEmailByPubkeys(giveMoneyResult.keySet());
+                this.store.batchAddReward(giveMoneyResult, map);
                 // if
                 // (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
                 // // only update, if money is given

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
@@ -385,6 +386,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
 
+    }
+
+    public void batchAddReward(Map<String, Long> pubkeyAmountMap, Map<String, String> pubkeyEmailMap)
+            throws BlockStoreException {
+        if (pubkeyAmountMap == null || pubkeyAmountMap.isEmpty()) {
+            return;
+        }
+        String sql = "insert into wechatreward (id,wechatId,pubKeyHex,amount) values(?,?,?,?) ";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+
+            for (String pubkey : pubkeyAmountMap.keySet()) {
+                s = conn.get().prepareStatement(sql);
+                s.setString(0, UUID.randomUUID().toString());
+                s.setString(1, pubkeyEmailMap.get(pubkey));
+                s.setString(2, pubkey);
+                s.setLong(3, pubkeyAmountMap.get(pubkey));
+                s.executeUpdate();
+                s.close();
+            }
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
     /**

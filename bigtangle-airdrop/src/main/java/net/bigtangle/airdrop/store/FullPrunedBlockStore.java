@@ -105,4 +105,7 @@ public interface FullPrunedBlockStore {
     void resetDepositPaid() throws BlockStoreException;
 
     Map<String, String> queryEmailByPubkeys(Collection<String> keySet) throws BlockStoreException;
+
+    void batchAddReward(Map<String, Long> pubkeyAmountMap, Map<String, String> pubkeyEmailMap)
+            throws BlockStoreException;
 }
