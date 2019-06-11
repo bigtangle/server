@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
@@ -45,7 +44,7 @@ public class ScheduleRewardService {
     @Autowired
     private FullPrunedBlockStore store;
 
-  //  @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
+    // @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() {
         if (scheduleConfiguration.isGiveMoneyServiceActive()) {
             try {
@@ -94,21 +93,25 @@ public class ScheduleRewardService {
                 if (giveMoneyResult.isEmpty()) {
                     return;
                 }
-
-                if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
-                    // only update, if money is given
-                    for (Map.Entry<String, List<WechatInvite>> entry : dataMap.entrySet()) {
-                        logger.info("wechat invite give money : " + entry.getKey() + ", money : "
-                                + (entry.getValue().size() * wechatReward));
-                        for (WechatInvite wechatInvite : entry.getValue()) {
-
-                            this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
-                            logger.info("wechat invite update status, id : " + wechatInvite.getId() + ", success");
-
-                        }
-                    }
-
-                }
+                Map<String, String> map = this.store.queryEmailByPubkeys(giveMoneyResult.keySet());
+                // if
+                // (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult)) {
+                // // only update, if money is given
+                // for (Map.Entry<String, List<WechatInvite>> entry :
+                // dataMap.entrySet()) {
+                // logger.info("wechat invite give money : " + entry.getKey() +
+                // ", money : "
+                // + (entry.getValue().size() * wechatReward));
+                // for (WechatInvite wechatInvite : entry.getValue()) {
+                //
+                // this.store.updateWechatInviteStatus(wechatInvite.getId(), 1);
+                // logger.info("wechat invite update status, id : " +
+                // wechatInvite.getId() + ", success");
+                //
+                // }
+                // }
+                //
+                // }
             } catch (Exception e) {
                 logger.warn("ScheduleGiveMoneyService", e);
             }

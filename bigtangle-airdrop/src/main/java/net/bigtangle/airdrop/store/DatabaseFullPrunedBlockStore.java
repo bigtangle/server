@@ -350,6 +350,43 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public Map<String, String> queryEmailByPubkeys(Collection<String> keySet) throws BlockStoreException {
+        if (keySet.isEmpty()) {
+            return new HashMap<String, String>();
+        }
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String s : keySet) {
+            stringBuffer.append(",").append("'").append(s).append("'");
+        }
+        String sql = "select wechatId, pubkey from wechatinvite where pubkey in (" + stringBuffer.substring(1) + ")";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            ResultSet resultSet = s.executeQuery();
+            HashMap<String, String> map = new HashMap<String, String>();
+            while (resultSet.next()) {
+                map.put(resultSet.getString("pubkey"), resultSet.getString("wechatId"));
+            }
+            return map;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
+    }
+
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
