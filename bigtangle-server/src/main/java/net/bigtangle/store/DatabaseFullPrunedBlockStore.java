@@ -934,7 +934,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Token output table
             Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true, 2);
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true, 2, "de");
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 

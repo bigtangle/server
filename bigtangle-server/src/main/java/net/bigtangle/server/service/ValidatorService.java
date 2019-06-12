@@ -2114,8 +2114,7 @@ public class ValidatorService {
         // Return whether sufficient signatures exist
         // 2 if parent exists, 1 if no parent, previously defined number if predecessor
         // token exists
-        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber()
-                : currentToken.getToken().getDomainname() != null ? 2 : 1;
+        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 

@@ -110,7 +110,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false,0);
+                    false, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -136,7 +136,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true,0);
+                    "Test", 1, 1, amount, true, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -302,7 +302,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true,0);
+                true, 0, "de");
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -565,7 +565,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true,0);
+                    1, 0, amount, true, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -751,7 +751,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true,0);
+                true, 0, "de");
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1028,7 +1028,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true,0);
+                    1, 0, amount, true, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1333,7 +1333,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false,0);
+                    false, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1353,7 +1353,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true,0);
+                    "Test", 1, 1, amount, true, 0, "de");
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1424,7 +1424,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsOrderMatchingDependentReclaim() throws Exception {
-        @SuppressWarnings({ "deprecation", "unused" })
+        @SuppressWarnings({ "unused" })
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
@@ -1467,7 +1467,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsOrderReclaimDependent() throws Exception {
-        @SuppressWarnings({ "deprecation", "unused" })
+        @SuppressWarnings({ "unused" })
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;

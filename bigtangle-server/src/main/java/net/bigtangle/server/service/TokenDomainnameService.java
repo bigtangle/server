@@ -39,7 +39,6 @@ public class TokenDomainnameService {
      */
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainname)
             throws BlockStoreException {
-        domainname = DomainnameUtil.matchParentDomainname(domainname);
         if (StringUtils.isBlank(domainname)) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
             for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()

@@ -5,7 +5,27 @@
 package net.bigtangle.core;
 
 public class Token implements java.io.Serializable {
+
     private static final long serialVersionUID = 6992138619113601243L;
+
+    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+            String description, int signnumber, long tokenindex, long amount, boolean tokenstop, int decimals,
+            String domainname) {
+
+        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, domainname);
+    }
+
+    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
+            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
+            int decimals, String domainname) {
+
+        Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
+                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(), decimals,
+                domainname);
+
+        return token;
+    }
 
     public Token(String tokenid, String tokenname) {
         this.tokenid = tokenid;
@@ -200,27 +220,9 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, int signnumber, long tokenindex, long amount, boolean tokenstop, int decimals) {
-
-        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals);
-    }
-
-    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            String domainname,int decimals ) {
-
-        Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(),decimals);
-
-        token.setDomainname(domainname);
-
-        return token;
-    }
-
-    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype, int decimals) {
+            TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
+            int decimals, final String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -238,6 +240,7 @@ public class Token implements java.io.Serializable {
         tokens.language = language;
         tokens.classification = classification;
         tokens.decimals = decimals;
+        tokens.domainname = domainname;
         return tokens;
     }
 
