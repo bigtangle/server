@@ -99,9 +99,9 @@ public class BlockRequester {
     public void diff(String server2) throws Exception {
         log.debug(" start difference check with " + server2);
 
-        List<BlockEvaluationDisplay> l1 = getBlockInfos();
+        List<BlockEvaluationDisplay> l1 = getBlockInfos(server2);
 
-        List<BlockEvaluationDisplay> l2 = getBlockInfos(server2);
+        List<BlockEvaluationDisplay> l2 = getBlockInfos();
         for (BlockEvaluationDisplay b : l1) {
             BlockEvaluationDisplay s = find(l2, b);
             if (s == null) {
