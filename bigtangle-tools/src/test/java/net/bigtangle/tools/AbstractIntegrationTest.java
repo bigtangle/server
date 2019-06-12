@@ -82,8 +82,8 @@ public abstract class AbstractIntegrationTest {
 	boolean deleteWlalletFile =false;
 	@Before
 	public void setUp() throws Exception {
-		    System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		    System.setProperty("https.proxyPort", "3128");
+		//    System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+		//    System.setProperty("https.proxyPort", "3128");
 		walletKeys();
 		wallet1();
 		wallet2();
@@ -290,7 +290,7 @@ public abstract class AbstractIntegrationTest {
 		Coin basecoin = Coin.valueOf(77777L, pubKey);
 		long amount = basecoin.getValue();
 
-		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0);
+		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0, "de");
 		tokenInfo.setToken(tokens);
 
 		// add MultiSignAddress item
@@ -377,7 +377,7 @@ public abstract class AbstractIntegrationTest {
 		String prevblockhash = tokenIndexResponse.getBlockhash();
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, tokename, 1, tokenindex_,
-				amount,  false,0);
+				amount,  false,0,"de");
 		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
@@ -395,7 +395,7 @@ public abstract class AbstractIntegrationTest {
 		Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
 		long amount = coinbase.getValue();
 		Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-				amount, true,0);
+				amount, true,0,"de");
 
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()
