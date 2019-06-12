@@ -494,3 +494,15 @@ example
 ### add cart and missing quantity and use one step for checkout and pay
 
 ### https://github.com/Dryec/tron-wallet-android
+
+
+### fix decimals for all tokens
+
+### fix select matched orders
+
+### fix from address for transaction
+
+### wallet buy order use the multiple TransactionInput
+
+### version check in wallet
+
