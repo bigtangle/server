@@ -5,6 +5,8 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +102,12 @@ public class BlockRequester {
         log.debug(" start difference check with " + server2);
 
         List<BlockEvaluationDisplay> l1 = getBlockInfos(server2);
+            //sort increasing of height for add to connected 
+        Collections.sort(l1, new Comparator<BlockEvaluationDisplay>() {
+            public int compare(BlockEvaluationDisplay p1, BlockEvaluationDisplay p2) {
+                return p1.getHeight() < p2.getHeight() ? -1 : 1;
+            }
+        });
 
         List<BlockEvaluationDisplay> l2 = getBlockInfos();
         for (BlockEvaluationDisplay b : l1) {
@@ -152,17 +160,6 @@ public class BlockRequester {
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
         return getBlockEvaluationsResponse.getEvaluations();
-    }
-
-    private Block getBlock(String server, String blockhash) throws Exception {
-
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("hashHex", blockhash);
-        String response = OkHttp3Util.postString(server + "/" + ReqCmd.getBlock.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
-                GetBlockEvaluationsResponse.class);
-        return null;
     }
 
 }
