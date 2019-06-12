@@ -50,4 +50,9 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 	 */
 	private static final long serialVersionUID = 1L;
 
+    @Override
+    public String toString() {
+        return  "  [blockType=" + blockType + "]" +super.toString() ;
+    }
+
 }
