@@ -522,7 +522,7 @@ public class TokenController extends TokenBaseController {
 			long amount = basecoin.getValue();
 
 			Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
-					stockDescription.getText().trim(), 1, 0, amount,  true,0);
+					stockDescription.getText().trim(), 1, 0, amount,  true,0,"de");
 			tokens.setDomainname(stockUrl.getText().trim());
 			tokenInfo.setToken(tokens);
 			// outKey must be the same key as tokenid
@@ -797,7 +797,7 @@ public class TokenController extends TokenBaseController {
 		TokenInfo tokenInfo = new TokenInfo();
 		Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(), stockName1.getText().trim(),
 				stockDescription1.getText().trim(), 1, 0,
-				Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(),  true,0);
+				Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(),  true,0,"de");
 		tokens.setDomainname(urlTF.getText().trim());
 		tokenInfo.setToken(tokens);
 		ECKey mykey = null;
@@ -923,7 +923,7 @@ public class TokenController extends TokenBaseController {
 		Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),
 				Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
 				Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
-				(boolean) map.get("tokenstop"),0);
+				(boolean) map.get("tokenstop"),0,"de");
 		tokens.setDomainname(Main.getString(map.get("url")).trim());
 		tokenInfo.setToken(tokens);
 
