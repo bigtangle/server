@@ -62,25 +62,10 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
         String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.3.3.2"));
+        assertTrue(version.equals("0.3.5.0"));
     }
 
-    @Test
-    public void testCreateToken() throws JsonProcessingException, Exception {
-        // Setup transaction and signatures
-        wallet1();
-        List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-        
-        testCreateMultiSigToken(keys.get(1), "Gold");
-        testCreateMultiSigToken(keys.get(2), "BTC");
-        testCreateMultiSigToken(keys.get(3), "ETH");
-        testCreateMultiSigToken(keys.get(4), "CNY");
-        testCreateMultiSigToken(keys.get(7), "人民币");
-        testCreateMultiSigToken(keys.get(5), "USD");
-        testCreateMultiSigToken(keys.get(6), "EUR");
-
-    }
-
+    
   
 
     public void testRequestBlock(Block block) throws Exception {

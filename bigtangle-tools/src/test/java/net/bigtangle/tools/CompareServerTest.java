@@ -25,7 +25,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
         while (true) {
             diff(HTTPS_BIGTANGLE_INFO, HTTPS_BIGTANGLE_DE);
         
-            Thread.sleep(100000);
+            Thread.sleep(30000);
         }
 
     }

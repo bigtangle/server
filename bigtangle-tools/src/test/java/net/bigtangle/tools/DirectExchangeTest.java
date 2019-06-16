@@ -10,7 +10,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,16 +40,11 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
-import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.script.Script;
-import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
@@ -276,144 +270,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.info("getExchange resp : " + requestParam);
     }
 
-    @Test
-    public void testExchangeTokenMultiManyPart() throws Exception {
-        // 5 token 1
-        // 2 token sign1 sign2 3 sign2 , sing4
-
-        // BiG system
-        //
-
-    }
-
-    @Test
-    public void testExchangeTokenMulti() throws Exception {
-
-        wallet1();
-        wallet2();
-
-        List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-
-        testCreateMultiSigToken(keys.get(0), "test");
-        UTXO multitemp = null;
-        UTXO systemcoin = null;
-        List<UTXO> utxos = getBalance(false, keys);
-        for (UTXO utxo : utxos) {
-            if (multitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                multitemp = utxo;
-            }
-            if (systemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                systemcoin = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO yourutxo = utxos.get(0);
-        List<UTXO> ulist = getBalance();
-        UTXO mymultitemp = null;
-        UTXO mysystemcoin = null;
-        for (UTXO utxo : ulist) {
-            if (mymultitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mymultitemp = utxo;
-            }
-            if (mysystemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mysystemcoin = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO myutxo = null;
-        for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                myutxo = u;
-            }
-        }
-        log.debug("outKey : " + myutxo.getAddress());
-
-        Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
-
-        SendRequest req = null;
-
-        // ulist.addAll(utxos);
-        Transaction transaction = new Transaction(networkParameters);
-
-        List<ECKey> signKeys = new ArrayList<>();
-        signKeys.add(keys.get(0));
-        signKeys.add(keys.get(1));
-        signKeys.add(keys.get(2));
-
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
-
-        transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
-        Coin amount2 = multisigOutput.getValue().subtract(amount);
-        transaction.addOutput(amount2, scriptPubKey);
-
-        transaction.addInput(multisigOutput);
-
-        List<byte[]> sigs = new ArrayList<byte[]>();
-        for (ECKey ecKey : signKeys) {
-            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
-            Script multisigScript_ = multisigOutput_.getScriptPubKey();
-
-            Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-            TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
-                    Transaction.SigHash.ALL, false);
-
-            ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
-            byte[] signature = party1Signature.encodeToDER();
-            boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
-            if (!success) {
-                throw new BlockStoreException("key multisign signature error");
-            }
-            sigs.add(transactionSignature.encodeToBitcoin());
-        }
-        Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-        transaction.getInput(0).setScriptSig(inputScript);
-        req = SendRequest.forTx(transaction);
-
-        exchangeTokenComplete(req.tx);
-
-        for (UTXO utxo : getBalance(false, keys)) {
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        for (UTXO utxo : getBalance()) {
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
-        amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
-        req = SendRequest.to(destination, amount);
-        walletAppKit.wallet().completeTx(req, null);
-        walletAppKit.wallet().signTransaction(req);
-
-        exchangeTokenComplete(req.tx);
-        UTXO multitemp1 = null;
-        UTXO systemcoin1 = null;
-        for (UTXO utxo : getBalance(false, keys)) {
-            if (multitemp1 == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                multitemp1 = utxo;
-            }
-            if (systemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                systemcoin1 = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO mymultitemp1 = null;
-        UTXO mysystemcoin1 = null;
-        for (UTXO utxo : getBalance()) {
-            if (mymultitemp1 == null && Arrays.equals(utxo.getTokenidBuf(), multitemp.getTokenidBuf())) {
-                mymultitemp1 = utxo;
-            }
-            if (mysystemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mysystemcoin1 = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        assertEquals(multitemp.getValue().getValue() - 10000, multitemp1.getValue().getValue());
-        assertEquals(1000, systemcoin1.getValue().getValue());
-        assertEquals(10000, mymultitemp1.getValue().getValue());
-        assertEquals(mysystemcoin.getValue().getValue() - 1000, mysystemcoin1.getValue().getValue());
-    }
-
+    
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();

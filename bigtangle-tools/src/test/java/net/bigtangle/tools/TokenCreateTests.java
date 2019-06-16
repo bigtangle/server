@@ -25,20 +25,21 @@ public class TokenCreateTests extends AbstractIntegrationTest {
        
         wallet1();
         wallet2();
-        createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
-        createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
+        createToken(walletAppKit1.wallet().walletKeys(null), "");
+      //  createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
+      //  createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
         }
     }
 
     private void createToken(List<ECKey> keys, String pre) throws JsonProcessingException, Exception {
         // String pre="test-1-" ;
-        testCreateMultiSigToken(keys.get(1), pre + "Gold");
-        testCreateMultiSigToken(keys.get(2), pre + "BTC");
-        testCreateMultiSigToken(keys.get(3), pre + "ETH");
+        testCreateMultiSigToken(keys.get(1), pre + "Gold",0);
+        testCreateMultiSigToken(keys.get(2), pre + "BTC",8);
+        testCreateMultiSigToken(keys.get(3), pre + "ETH",8);
         // testCreateMultiSigToken(keys.get(4), "CNY");
-        testCreateMultiSigToken(keys.get(7), pre + "人民币");
-        testCreateMultiSigToken(keys.get(5), pre + "USD");
-        testCreateMultiSigToken(keys.get(6), pre + "EUR");
+        testCreateMultiSigToken(keys.get(7), pre + "人民币",2);
+        testCreateMultiSigToken(keys.get(5), pre + "USD",2);
+        testCreateMultiSigToken(keys.get(6), pre + "EUR",2);
     }
 
 }

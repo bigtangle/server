@@ -58,11 +58,11 @@ public abstract class AbstractIntegrationTest {
     
     public static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
     public static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
-    
+    public static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
 	// private static final String CONTEXT_ROOT_TEMPLATE =
 	// "http://localhost:%s/";
 	protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-	public String contextRoot = HTTPS_BIGTANGLE_DE;
+	public String contextRoot = HTTPS_BIGTANGLE_ORG;
 	       // "http://localhost:8088/";
 	 
 	public List<ECKey> walletKeys;
@@ -350,10 +350,10 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	// create a token with multi sign
-	protected void testCreateMultiSigToken(ECKey key, String tokename)
+	protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals)
 			throws JsonProcessingException, Exception {
 		try {
-		createMultisignToken(key, new TokenInfo(), tokename,678900000);
+		createMultisignToken(key, new TokenInfo(), tokename,678900000, decimals);
 		}catch (Exception e) {
 			// TODO: handle exception
 			log.warn("",e);
@@ -361,7 +361,7 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount)
+	protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals)
 			throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
 		String tokenid = key.getPublicKeyAsHex();
 
@@ -386,7 +386,7 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	public Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
+	public Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks, int decimals)
 			throws JsonProcessingException, Exception, BlockStoreException {
 
 		Block block = null;
@@ -395,7 +395,7 @@ public abstract class AbstractIntegrationTest {
 		Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
 		long amount = coinbase.getValue();
 		Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-				amount, true,0,"de");
+				amount, true,decimals,"de");
 
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()
