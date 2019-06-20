@@ -62,7 +62,7 @@ public abstract class AbstractIntegrationTest {
 	// private static final String CONTEXT_ROOT_TEMPLATE =
 	// "http://localhost:%s/";
 	protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-	public String contextRoot = HTTPS_BIGTANGLE_ORG;
+	public String contextRoot = HTTPS_BIGTANGLE_DE;
 	       // "http://localhost:8088/";
 	 
 	public List<ECKey> walletKeys;

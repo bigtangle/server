@@ -14,18 +14,21 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.Wallet;
 
 public class OrderSell2Test extends AbstractIntegrationTest {
 
-    // buy everything in test
+    // sell tokens from wallet 1 and 2 on different servers 
 
     @Test
     public void sellThread() throws Exception {
 
         while (true) {
             try {
-                sell(HTTPS_BIGTANGLE_INFO);
-                sell(HTTPS_BIGTANGLE_DE);
+                sell(HTTPS_BIGTANGLE_INFO,walletAppKit2.wallet());
+                sell(HTTPS_BIGTANGLE_DE,walletAppKit1.wallet());
+                sell(HTTPS_BIGTANGLE_DE,walletAppKit2.wallet());
+                sell(HTTPS_BIGTANGLE_INFO,walletAppKit1.wallet());
             } catch (Exception e) {
                 // TODO: handle exception
                 // Thread.sleep(3000);
@@ -34,7 +37,7 @@ public class OrderSell2Test extends AbstractIntegrationTest {
 
     }
 
-    public void sell(String url) throws Exception {
+    public void sell(String url, Wallet wallet) throws Exception {
 
         List<String> keyStrHex000 = new ArrayList<String>();
 
@@ -51,8 +54,8 @@ public class OrderSell2Test extends AbstractIntegrationTest {
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
                     && utxo.getValue().getValue() > 0) {
-                walletAppKit2.wallet().setServerURL(url);
-                walletAppKit2.wallet().sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+                wallet .setServerURL(url);
+                wallet.sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
 
             }
         }

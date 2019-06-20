@@ -26,8 +26,8 @@ public class OrderSellTest extends AbstractIntegrationTest {
 
         while (true) {
             try {
-        //    sell(HTTPS_BIGTANGLE_INFO);
-            sell(HTTPS_BIGTANGLE_ORG);
+             sell(HTTPS_BIGTANGLE_INFO);
+            sell(HTTPS_BIGTANGLE_DE);
             }catch (Exception e) {
                 // TODO: handle exception
              //   Thread.sleep(3000);

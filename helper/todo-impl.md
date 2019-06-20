@@ -510,5 +510,9 @@ example
  if the utxo is unconfirmed and the block of the utxo has rating > 10 and height is < last - reward interval. 
  This is used only in wallet to avoid the double spend of the utxo
  
+### round robin for wallet to select the fast n-servers
+ wallet can select the server to connect and it make retry if there is runtime error. It can switch to next available server.
+ 
+### write test check all balance of different servers  and balanced sums for each token
  
  

@@ -25,9 +25,9 @@ public class TokenCreateTests extends AbstractIntegrationTest {
        
         wallet1();
         wallet2();
-        createToken(walletAppKit1.wallet().walletKeys(null), "");
-      //  createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
-      //  createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
+     //   createToken(walletAppKit1.wallet().walletKeys(null), "");
+        createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
+        createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
         }
     }
 

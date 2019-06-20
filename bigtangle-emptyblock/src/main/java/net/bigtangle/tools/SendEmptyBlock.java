@@ -42,7 +42,7 @@ import okhttp3.OkHttpClient;
 
 public class SendEmptyBlock {
 
-    private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
+    private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.info/";
     private static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
     public static NetworkParameters params = MainNetParams.get();
 
