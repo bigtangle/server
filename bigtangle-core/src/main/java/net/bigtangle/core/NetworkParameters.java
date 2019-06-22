@@ -113,7 +113,7 @@ public abstract class NetworkParameters {
     // Token ID for System Coin
     public static final String BIGTANGLE_TOKENID_STRING = "bc";
     public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
-
+    public static final String BIGTANGLE_TOKENNAME = "BIG";
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
     protected int equihashN;

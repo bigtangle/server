@@ -120,6 +120,8 @@ import net.jcip.annotations.GuardedBy;
 
 public class Wallet extends BaseTaggableObject implements KeyBag {
 
+    private static final int SPENTPENDINGTIMEOUT = 300000;
+
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
 
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately
@@ -2097,6 +2099,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
+    /*
+     * spendpending has timeout for 5 minute
+     */
+    public boolean checkSpendpending(UTXO output) throws IOException {
+        if(output.isSpendPending()
+                || (System.currentTimeMillis()  -  output.getSpendPendingTime()) < SPENTPENDINGTIMEOUT) {
+           return true;
+        }
+        
+        return false;
+
+    }
     // All Spend Candidates as List<UTXO>
     public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns) throws IOException {
         lock.lock();

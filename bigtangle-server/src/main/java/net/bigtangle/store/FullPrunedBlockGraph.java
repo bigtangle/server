@@ -1018,7 +1018,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     TransactionInput in = tx.getInputs().get(index);
                     UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                             in.getOutpoint().getIndex());
-                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true);
+                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true, System.currentTimeMillis());
                 }
             }
             Sha256Hash hash = tx.getHash();
@@ -1034,7 +1034,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), null, fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0,0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {

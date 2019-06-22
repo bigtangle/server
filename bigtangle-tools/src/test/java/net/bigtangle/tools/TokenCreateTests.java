@@ -13,11 +13,23 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
 
 public class TokenCreateTests extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(TokenCreateTests.class);
 
+    
+    public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
+    public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
+
+    
+    @Test
+    public void testYuanToken() throws JsonProcessingException, Exception {
+        ECKey key =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
+                Utils.HEX.decode(yuanTokenPub));
+        testCreateMultiSigToken(key,  "人民币",2);
+    }
     @Test
     public void testCreateToken() throws JsonProcessingException, Exception {
         // Setup transaction and signatures

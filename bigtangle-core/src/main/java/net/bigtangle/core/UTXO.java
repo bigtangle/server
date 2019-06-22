@@ -39,8 +39,41 @@ import net.bigtangle.script.Script;
  */
 public class UTXO {
 
+
+
+    private Coin value;
+    @JsonIgnore
+    private Script script;
+    private Sha256Hash hash;
+    private long index;
+    private boolean coinbase;
+    private String address;
+    private Sha256Hash blockhash;
+    private String fromaddress;
+    private String memo;
+    private boolean spent;
+    private boolean confirmed;
+    private boolean spendPending;
+    private long spendPendingTime;
+    private String tokenId;
+    private long time;
+  
+    private long minimumsign;
+
+    
     public UTXO() {
     }
+
+ 
+    public long getSpendPendingTime() {
+        return spendPendingTime;
+    }
+
+
+    public void setSpendPendingTime(long spendPendingTime) {
+        this.spendPendingTime = spendPendingTime;
+    }
+
 
     public void setScriptHex(String scriptHex) {
         this.script = new Script(Utils.HEX.decode(scriptHex));
@@ -73,25 +106,6 @@ public class UTXO {
     public void setAddress(String address) {
         this.address = address;
     }
-
-    private Coin value;
-    @JsonIgnore
-    private Script script;
-    private Sha256Hash hash;
-    private long index;
-    private boolean coinbase;
-    private String address;
-    private Sha256Hash blockhash;
-    private String fromaddress;
-    private String memo;
-    private boolean spent;
-    private boolean confirmed;
-    private boolean spendPending;
-    private String tokenId;
-    private long time;
-
-    private long minimumsign;
-
     public boolean isMultiSig() {
         return minimumsign > 1l;
     }
@@ -131,7 +145,7 @@ public class UTXO {
      */
     public UTXO(Sha256Hash hash, long index, Coin value, boolean coinbase, Script script, String address,
             Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed,
-            boolean spendPending, long minimumsign) {
+            boolean spendPending, long minimumsign, long spendPendingTime) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -146,6 +160,7 @@ public class UTXO {
         this.confirmed = confirmed;
         this.spendPending = spendPending;
         this.minimumsign = minimumsign;
+        this.spendPendingTime=spendPendingTime;
     }
 
     public UTXO(InputStream in) throws IOException {

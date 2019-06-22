@@ -137,18 +137,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, coinvalue, scriptbytes, toaddress, addresstargetable,"
-            + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,time)"
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " coinbase, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,time, spendpendingtime)"
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
     protected final String SELECT_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-            + "spendpending FROM outputs WHERE hash = ? AND outputindex = ?";
+            + "spendpending , spendpendingtime FROM outputs WHERE hash = ? AND outputindex = ?";
 
     protected final String SELECT_OUTPUT_CONFIRMING_BLOCK_SQL = "SELECT blockhash FROM outputs WHERE hash = ? AND outputindex = ?";
 
     protected final String SELECT_OUTPUTS_HISTORY_SQL = "SELECT hash,outputindex, coinvalue, scriptbytes, toaddress ,"
             + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-            + "spendpending,time FROM outputs WHERE 1=1";
+            + "spendpending,time,spendpendingtime FROM outputs WHERE 1=1";
 
     protected final String DELETE_OUTPUTS_SQL = "DELETE FROM outputs WHERE hash = ? AND outputindex= ?";
 
@@ -156,14 +156,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " outputs.outputindex, coinbase, " + "case  when outputs.toaddress ='' then outputsmulti.toaddress "
             + "when outputs.toaddress is null then outputsmulti.toaddress "
             + " else outputs.toaddress end, addresstargetable, blockhash, tokenid, "
-            + " fromaddress, memo, spent, confirmed, spendpending, outputsmulti.minimumsign AS minimumsign "
+            + " fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, outputsmulti.minimumsign AS minimumsign "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
     protected final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
-            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending "
+            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
@@ -310,7 +310,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " outputs SET confirmed = ? WHERE hash = ? AND outputindex= ?";
 
     protected final String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
-            + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
+            + " outputs SET spendpending = ?, spendpendingtime=? WHERE hash = ? AND outputindex= ?";
 
     protected final String UPDATE_OUTPUTS_CONFIRMING_BLOCK_SQL = getUpdate()
             + " outputs SET blockhash = ? WHERE hash = ? AND outputindex= ?";
@@ -359,7 +359,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_MULTISIGN_ADDRESS_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign,(select count(ms1.sign) from multisign ms1 where ms1.tokenid=tokenid and tokenindex=ms1.tokenindex and ms1.sign!=0 ) as count FROM multisign  WHERE 1=1 ";
     protected final String SELECT_MULTISIGN_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = ? ORDER BY tokenindex ASC";
     protected final String SELECT_MULTISIGN_TOKENID_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE tokenid = ? and address = ? ORDER BY tokenindex ASC";
-    
+
     protected final String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected final String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
@@ -445,7 +445,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex, validFromTime, side, beneficiaryaddress "
             + " FROM openorders ORDER BY blockhash, collectinghash";
     protected final String SELECT_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
-            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
+            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, hash, outputindex,  "
             + " FROM outputs ORDER BY hash, outputindex";
     protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, opindex ,validFromTime, side , beneficiaryaddress"
@@ -482,7 +482,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
 
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
-            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, hash, outputindex "
+            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, hash, outputindex "
             + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
 
     protected NetworkParameters params;
@@ -756,16 +756,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * <p>
-     * If there isn't a connection on the {@link ThreadLocal} then create and store
-     * it.
+     * If there isn't a connection on the {@link ThreadLocal} then create and
+     * store it.
      * </p>
      * <p>
-     * This will also automatically set up the schema if it does not exist within
-     * the DB.
+     * This will also automatically set up the schema if it does not exist
+     * within the DB.
      * </p>
      * 
-     * @throws BlockStoreException if successful connection to the DB couldn't be
-     *                             made.
+     * @throws BlockStoreException
+     *             if successful connection to the DB couldn't be made.
      */
     protected void maybeConnect() throws BlockStoreException {
         try {
@@ -824,8 +824,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * </p>
      *
      * <p>
-     * This specifically checks for the 'settings' table and if it exists makes an
-     * assumption that the rest of the data structures are present.
+     * This specifically checks for the 'settings' table and if it exists makes
+     * an assumption that the rest of the data structures are present.
      * </p>
      *
      * @return If the tables exists.
@@ -850,8 +850,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Create the tables/block store in the database and
      * 
-     * @throws java.sql.SQLException If there is a database error.
-     * @throws BlockStoreException   If the block store could not be created.
+     * @throws java.sql.SQLException
+     *             If there is a database error.
+     * @throws BlockStoreException
+     *             If the block store could not be created.
      */
     private synchronized void createTables() throws SQLException, BlockStoreException {
         try {
@@ -934,7 +936,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Token output table
             Token tokens = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle currency", 1, 0, 0, true, 2, "de");
+                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, 0, true, 2, "bc");
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -955,7 +957,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), true,
                     script, script.getToAddress(params, true).toString(), block.getHash(), "",
                     block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
-                    true, false, 0);
+                    true, false, 0, 0);
             addUnspentTransactionOutput(newOut);
 
             if (script.isSentToMultiSig()) {
@@ -1247,9 +1249,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             boolean spent = results.getBoolean(10);
             boolean confirmed = results.getBoolean(11);
             boolean spendPending = results.getBoolean(12);
+            long spendPendingTime = results.getLong("spendpendingtime");
             String tokenid = results.getString("tokenid");
             UTXO txout = new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
-                    fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                    fromaddress, memo, tokenid, spent, confirmed, spendPending, 0, spendPendingTime);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -1286,6 +1289,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBoolean(13, out.isConfirmed());
             s.setBoolean(14, out.isSpendPending());
             s.setLong(15, out.getTime());
+            s.setLong(16, out.getSpendPendingTime());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -1398,11 +1402,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Resets the store by deleting the contents of the tables and reinitialising
-     * them.
+     * Resets the store by deleting the contents of the tables and
+     * reinitialising them.
      * 
-     * @throws BlockStoreException If the tables couldn't be cleared and
-     *                             initialised.
+     * @throws BlockStoreException
+     *             If the tables couldn't be cleared and initialised.
      */
     public void resetStore() throws BlockStoreException {
         maybeConnect();
@@ -1418,15 +1422,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Deletes the store by deleting the tables within the database.
      * 
-     * @throws BlockStoreException If tables couldn't be deleted.
+     * @throws BlockStoreException
+     *             If tables couldn't be deleted.
      */
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
         try {
             /*
              * for (String sql : getDropIndexsSQL()) { Statement s =
-             * conn.get().createStatement(); try { log.info("drop index : " + sql);
-             * s.execute(sql); } finally { s.close(); } }
+             * conn.get().createStatement(); try { log.info("drop index : " +
+             * sql); s.execute(sql); } finally { s.close(); } }
              */
             for (String sql : getDropTablesSQL()) {
                 Statement s = conn.get().createStatement();
@@ -1474,7 +1479,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String tokenid = rs.getString("tokenid");
                     long minimumsign = rs.getLong("minimumsign");
                     UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress, blockhash,
-                            fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign);
+                            fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign,
+                            rs.getLong("spendpendingtime"));
                     outputs.add(output);
                 }
             }
@@ -1524,7 +1530,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     String tokenid = rs.getString("tokenid");
                     long minimumsign = rs.getLong("minimumsign");
                     UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress, blockhash,
-                            fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign);
+                            fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign,
+                            rs.getLong("spendpendingtime"));
                     outputs.add(output);
                 }
             }
@@ -1712,7 +1719,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 String tokenid = rs.getString("tokenid");
                 long minimumsign = 0;
                 UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress, blockhash,
-                        fromaddress1, memo, tokenid, spent, confirmed, spendPending, minimumsign);
+                        fromaddress1, memo, tokenid, spent, confirmed, spendPending, minimumsign,
+                        rs.getLong("spendpendingtime"));
                 output.setTime(rs.getLong("time"));
                 UTXOs.add(output);
             }
@@ -2474,15 +2482,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateOutputsSpendPendingSQL();
 
     @Override
-    public void updateTransactionOutputSpendPending(Sha256Hash prevTxHash, long index, boolean b)
+    public void updateTransactionOutputSpendPending(Sha256Hash prevTxHash, long index, boolean b, long spendpendingtime)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
             preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, prevTxHash.getBytes());
-            preparedStatement.setLong(3, index);
+            preparedStatement.setLong(2, spendpendingtime);
+            preparedStatement.setBytes(3, prevTxHash.getBytes());
+            preparedStatement.setLong(4, index);
+      
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -2722,15 +2732,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             tokenkeyvalues = token.getTokenKeyValues().toByteArray();
         }
         this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description,
-                token.getDomainname(), signnumber, tokentype, tokenstop, prevblockhash,
-                tokenkeyvalues, token.getRevoked(), token.getLanguage(), token.getClassification(),
-                token.getDecimals());
+                token.getDomainname(), signnumber, tokentype, tokenstop, prevblockhash, tokenkeyvalues,
+                token.getRevoked(), token.getLanguage(), token.getClassification(), token.getDecimals());
     }
 
     public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
-            String tokenname, String description, String domainname, int signnumber,
-            int tokentype, boolean tokenstop, String prevblockhash, byte[] tokenkeyvalues, Boolean revoked,
-            String language, String classification, int decimals) throws BlockStoreException {
+            String tokenname, String description, String domainname, int signnumber, int tokentype, boolean tokenstop,
+            String prevblockhash, byte[] tokenkeyvalues, Boolean revoked, String language, String classification,
+            int decimals) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3396,27 +3405,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<TokenSerial> list = new ArrayList<TokenSerial>();
         return list;
         /*
-         * maybeConnect(); PreparedStatement preparedStatement = null; String sql =
-         * SELECT_SEARCH_TOKENSERIAL_ALL_SQL; if (addresses != null &&
-         * !addresses.isEmpty()) { String addressString = " AND address IN("; for
-         * (String address : addresses) { addressString += "'" + address + "',"; }
-         * addressString = addressString.substring(0, addressString.length() - 1) +
-         * ") "; sql += addressString; } if (tokenid != null &&
-         * !tokenid.trim().isEmpty()) { sql += " AND tokenid=?"; } sql +=
-         * " ORDER BY tokenid,tokenindex";
+         * maybeConnect(); PreparedStatement preparedStatement = null; String
+         * sql = SELECT_SEARCH_TOKENSERIAL_ALL_SQL; if (addresses != null &&
+         * !addresses.isEmpty()) { String addressString = " AND address IN(";
+         * for (String address : addresses) { addressString += "'" + address +
+         * "',"; } addressString = addressString.substring(0,
+         * addressString.length() - 1) + ") "; sql += addressString; } if
+         * (tokenid != null && !tokenid.trim().isEmpty()) { sql +=
+         * " AND tokenid=?"; } sql += " ORDER BY tokenid,tokenindex";
          * 
-         * try { preparedStatement = conn.get().prepareStatement(sql); if (tokenid !=
-         * null && !tokenid.trim().isEmpty()) { preparedStatement.setString(1, tokenid);
-         * } ResultSet resultSet = preparedStatement.executeQuery(); while
-         * (resultSet.next()) { String tokenid0 = resultSet.getString("tokenid"); long
-         * tokenindex = resultSet.getLong("tokenindex"); long amount =
+         * try { preparedStatement = conn.get().prepareStatement(sql); if
+         * (tokenid != null && !tokenid.trim().isEmpty()) {
+         * preparedStatement.setString(1, tokenid); } ResultSet resultSet =
+         * preparedStatement.executeQuery(); while (resultSet.next()) { String
+         * tokenid0 = resultSet.getString("tokenid"); long tokenindex =
+         * resultSet.getLong("tokenindex"); long amount =
          * resultSet.getLong("amount"); TokenSerial tokenSerial = new
-         * TokenSerial(tokenid0, tokenindex, amount, resultSet.getLong("signnumber"),
-         * resultSet.getLong("count")); list.add(tokenSerial); } return list; } catch
-         * (SQLException ex) { throw new BlockStoreException(ex); } finally { if
-         * (preparedStatement != null) { try { preparedStatement.close(); } catch
-         * (SQLException e) { throw new
-         * BlockStoreException("Failed to close PreparedStatement"); } } }
+         * TokenSerial(tokenid0, tokenindex, amount,
+         * resultSet.getLong("signnumber"), resultSet.getLong("count"));
+         * list.add(tokenSerial); } return list; } catch (SQLException ex) {
+         * throw new BlockStoreException(ex); } finally { if (preparedStatement
+         * != null) { try { preparedStatement.close(); } catch (SQLException e)
+         * { throw new BlockStoreException("Failed to close PreparedStatement");
+         * } } }
          */
     }
 
@@ -3544,8 +3555,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
-    public List<MultiSign> getMultiSignListByTokenidAndAddress(final String tokenid, String address) throws BlockStoreException {
+
+    public List<MultiSign> getMultiSignListByTokenidAndAddress(final String tokenid, String address)
+            throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3553,7 +3565,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setString(2, address);
-            
+
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
@@ -4709,7 +4721,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException {
         String sql = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-                + " spendpending FROM outputs WHERE hash = ? and outputindex = ?";
+                + " spendpending, spendpendingtime FROM outputs WHERE hash = ? and outputindex = ?";
 
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -4738,7 +4750,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // long outputindex = results.getLong("outputindex");
 
             UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, coinvalue, coinbase, new Script(scriptBytes),
-                    address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                    address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
+                    results.getLong("spendpendingtime"));
             return utxo;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -5447,7 +5460,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 byte[] hash = resultSet.getBytes("hash");
                 long index = resultSet.getLong("outputindex");
                 UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes),
-                        address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                        address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
+                        resultSet.getLong("spendpendingtime"));
                 result.add(txout);
             }
             return result;
@@ -5858,7 +5872,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 byte[] hash = resultSet.getBytes("hash");
                 long index = resultSet.getLong("outputindex");
                 UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes),
-                        address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0);
+                        address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
+                        resultSet.getLong("spendpendingtime"));
                 result.add(txout);
             }
             return result;

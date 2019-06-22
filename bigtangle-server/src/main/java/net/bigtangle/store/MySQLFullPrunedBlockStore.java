@@ -56,6 +56,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                                                      // transaction on the
                                                      // Tangle that can spend
                                                      // this output
+            + "    spendpendingtime bigint,\n" 
             + "    spenderblockhash  varbinary(32),\n" + "    time bigint NOT NULL,\n"
             + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
 

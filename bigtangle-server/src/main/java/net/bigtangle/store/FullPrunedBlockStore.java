@@ -212,7 +212,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateTransactionOutputConfirmed(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
 
-    public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
+    public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b, long spendpendingtime) throws BlockStoreException;
 
     /* Orders */
     public boolean getOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
