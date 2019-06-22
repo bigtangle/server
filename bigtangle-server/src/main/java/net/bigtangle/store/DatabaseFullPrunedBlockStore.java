@@ -953,7 +953,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // in future.
             Script script = new Script(out.getScriptBytes());
             UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), true,
-                    script, script.getToAddress(params, true).toString(), block.getHash(), out.getFromaddress(),
+                    script, script.getToAddress(params, true).toString(), block.getHash(), "",
                     block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
                     true, false, 0);
             addUnspentTransactionOutput(newOut);

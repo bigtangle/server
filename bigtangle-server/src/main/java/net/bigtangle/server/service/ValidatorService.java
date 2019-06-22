@@ -179,37 +179,6 @@ public class ValidatorService {
     }
 
     /**
-     * Get the {@link Script} from the script bytes or return Script of empty byte
-     * array.
-     */
-    private Script getScript(byte[] scriptBytes) {
-        try {
-            return new Script(scriptBytes);
-        } catch (Exception e) {
-            return new Script(new byte[0]);
-        }
-    }
-
-    /**
-     * Get the address from the {@link Script} if it exists otherwise return empty
-     * string "".
-     *
-     * @param script The script.
-     * @return The address.
-     */
-    private String getScriptAddress(@Nullable Script script) {
-        String address = "";
-        try {
-            if (script != null) {
-                address = script.getToAddress(params, true).toString();
-            }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        }
-        return address;
-    }
-
-    /**
      * NOTE: The reward block is assumed to having successfully gone through
      * checkRewardSolidity beforehand! For connecting purposes, checks if the given
      * rewardBlock is eligible NOW. In Spark, this would be calculated delayed and
@@ -1223,7 +1192,7 @@ public class ValidatorService {
         // Transaction validation
         try {
             LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
-            LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
+//            LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
             long sigOps = 0;
 
             if (scriptVerificationExecutor.isShutdown())
@@ -1270,7 +1239,7 @@ public class ValidatorService {
                         txOutsSpent.add(prevOut);
                     }
                 }
-                Sha256Hash hash = tx.getHash();
+//                Sha256Hash hash = tx.getHash();
                 for (TransactionOutput out : tx.getOutputs()) {
                     if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
                         valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
@@ -1281,12 +1250,12 @@ public class ValidatorService {
                     // For each output, add it to the set of unspent outputs so
                     // it can be consumed
                     // in future.
-                    Script script = getScript(out.getScriptBytes());
-                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
-                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-
-                    txOutsCreated.add(newOut);
+//                    Script script = getScript(out.getScriptBytes());
+//                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
+//                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
+//                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
+//
+//                    txOutsCreated.add(newOut);
 
                     // Filter zero UTXOs
                     // if (newOut.getValue().isZero()) {

@@ -346,7 +346,6 @@ public class Script {
      * The concept of a "from address" isn't well defined in Bitcoin and you should not assume the sender of a
      * transaction can actually receive coins on it. This method may be removed in future.
      */
-    @Deprecated
     public Address getFromAddress(NetworkParameters params) throws ScriptException {
         return new Address(params, Utils.sha256hash160(getPubKey()));
     }

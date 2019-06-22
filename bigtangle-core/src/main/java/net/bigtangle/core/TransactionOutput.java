@@ -505,20 +505,20 @@ public class TransactionOutput extends ChildMessage {
         return Objects.hashCode(value, parent, Arrays.hashCode(scriptBytes));
     }
 
-    public String getFromaddress() {
-        try {
-            Script script = getScriptPubKey(); 
-            if (script.isSentToAddress() || script.isPayToScriptHash())
-                return script.getToAddress(params).toString();
-            else if (script.isSentToRawPubKey())
-                ECKey.fromPublicOnly(script.getPubKey()).toAddress(params).toString();
-
-            return "";
-
-        } catch (ScriptException e) {
-            return "";
-        }
-    }
+//    public String getFromaddress() {
+//        try {
+//            Script script = getScriptPubKey(); 
+//            if (script.isSentToAddress() || script.isPayToScriptHash())
+//                return script.getToAddress(params).toString();
+//            else if (script.isSentToRawPubKey())
+//                ECKey.fromPublicOnly(script.getPubKey()).toAddress(params).toString();
+//
+//            return "";
+//
+//        } catch (ScriptException e) {
+//            return "";
+//        }
+//    }
 
     public String getDescription() {
         return description;

@@ -62,6 +62,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.script.Script;
@@ -1023,8 +1024,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             Sha256Hash hash = tx.getHash();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
+                String fromAddress = ""; // TODO this just doesn't work if P2PK
+                try {
+                    if (!isCoinBase) {
+                        fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();
+                    }
+                } catch (ScriptException e) {
+                    // No address found.
+                }
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
-                        getScriptAddress(script), null, out.getFromaddress(), tx.getMemo(),
+                        getScriptAddress(script), null, fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);

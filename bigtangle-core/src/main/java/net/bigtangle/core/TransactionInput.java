@@ -195,7 +195,6 @@ public class TransactionInput extends ChildMessage {
      * "from address" is not well defined in Bitcoin and you should not assume that senders of a transaction can
      * actually receive coins on the same address they used to sign (e.g. this is not true for shared wallets).
      */
-    @Deprecated
     public Address getFromAddress() throws ScriptException {
         if (isCoinBase()) {
             throw new ScriptException(
