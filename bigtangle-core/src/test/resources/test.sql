@@ -35,3 +35,5 @@ select * from openorders;
 SELECT blockhash FROM blocks INNER JOIN openorders 
 ON openorders.blockhash=blocks.hash 
 WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND openorders.spent = 0;
+
+select * from vm_deposit ;
