@@ -198,6 +198,11 @@ public class MultiSignService {
             if (!allowConflicts && (tokens0 != null && tokens0.isConfirmed() && tokens.getTokenindex() <= 1L)) {
                 throw new BlockStoreException("tokens already exist");
             }
+            
+            if (StringUtils.isBlank(tokens.getDomainname())) {
+                throw new BlockStoreException("tokens domainname empty");
+            }
+            
             List<MultiSignAddress> multiSignAddresses;
             if (tokens.getTokentype() == TokenType.domainname.ordinal()) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
