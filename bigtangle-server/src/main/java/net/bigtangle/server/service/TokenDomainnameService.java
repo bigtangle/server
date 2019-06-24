@@ -18,7 +18,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.DomainnameUtil;
 
 @Service
 public class TokenDomainnameService {
@@ -39,6 +38,20 @@ public class TokenDomainnameService {
      */
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainname)
             throws BlockStoreException {
+        List<MultiSignAddress> multiSignAddresses = this.queryDomainnameTokenMultiSignAddresses(domainname);
+        PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
+                .create(false, multiSignAddresses);
+        return response;
+    }
+
+    /**
+     * get domainname token multi sign address
+     * 
+     * @param domainname
+     * @return
+     * @throws BlockStoreException
+     */
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainname) throws BlockStoreException {
         if (StringUtils.isBlank(domainname)) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
             for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
@@ -47,9 +60,7 @@ public class TokenDomainnameService {
                 ECKey ecKey = permissionDomainname.getOutKey();
                 multiSignAddresses.add(new MultiSignAddress("", "", ecKey.getPublicKeyAsHex()));
             }
-            PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
-                    .create(true, multiSignAddresses);
-            return response;
+            return multiSignAddresses;
         } else {
             Token token = this.store.queryDomainnameToken(domainname);
             if (token == null)
@@ -59,10 +70,7 @@ public class TokenDomainnameService {
             final String prevblockhash = token.getBlockhash();
             List<MultiSignAddress> multiSignAddresses = this.store
                     .getMultiSignAddressListByTokenidAndBlockHashHex(tokenid, prevblockhash);
-
-            PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
-                    .create(false, multiSignAddresses);
-            return response;
+            return multiSignAddresses;
         }
     }
 

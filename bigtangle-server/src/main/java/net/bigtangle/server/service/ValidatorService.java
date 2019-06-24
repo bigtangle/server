@@ -52,7 +52,6 @@ import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.PermissionDomainname;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
@@ -87,13 +86,13 @@ import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisa
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
-import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import net.bigtangle.utils.DomainnameUtil;
 
 @Service
 public class ValidatorService {
@@ -110,8 +109,6 @@ public class ValidatorService {
     private TransactionService transactionService;
     @Autowired
     private NetworkParameters params;
-    @Autowired
-    private ServerConfiguration serverConfiguration;
     @Autowired
     private TokenDomainnameService tokenDomainnameService;
 
@@ -1880,7 +1877,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) {
+    public SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1958,61 +1955,65 @@ public class ValidatorService {
         }
         // Get permissioned addresses
         Token prevToken = null;
-        List<MultiSignAddress> permissionedAddresses = currentToken.getMultiSignAddresses();
-
-        // If not initial issuance, we check according to the previous token
-        if (currentToken.getToken().getTokenindex() != 0) {
-            try {
-                // Previous issuance must exist to check solidity
-                prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
-                if (prevToken == null) {
-                    if (throwExceptions)
-                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-                    return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-                }
-
-                // Compare members of previous and current issuance
-                if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
-                    if (throwExceptions)
-                        throw new InvalidDependencyException("Wrong token ID");
-                    return SolidityState.getFailState();
-                }
-                if (currentToken.getToken().getTokenindex() != prevToken.getTokenindex() + 1) {
-                    if (throwExceptions)
-                        throw new InvalidDependencyException("Wrong token index");
-                    return SolidityState.getFailState();
-                }
-                if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
-                    if (throwExceptions)
-                        throw new PreviousTokenDisallowsException("Cannot change token name");
-                    return SolidityState.getFailState();
-                }
-                if (currentToken.getToken().getTokentype() != prevToken.getTokentype()) {
-                    if (throwExceptions)
-                        throw new PreviousTokenDisallowsException("Cannot change token type");
-                    return SolidityState.getFailState();
-                }
-
-                // Must allow more issuances
-                if (prevToken.isTokenstop()) {
-                    if (throwExceptions)
-                        throw new PreviousTokenDisallowsException("Previous token does not allow further issuance");
-                    return SolidityState.getFailState();
-                }
-
-                // Get addresses allowed to reissue
-                permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
-                        prevToken.getTokenid(), prevToken.getBlockhash()));
-
-            } catch (BlockStoreException e) {
-                // Cannot happen, previous token must exist
-                e.printStackTrace();
-            }
+        List<MultiSignAddress> permissionedAddresses = null;
+        if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
+            permissionedAddresses = currentToken.getMultiSignAddresses();
+            final String domainname = currentToken.getToken().getDomainname();
+            String s = DomainnameUtil.matchParentDomainname(domainname);
+            permissionedAddresses.addAll(this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(s));
         } else {
-            // First time issuances must sign for the token id
-            for (PermissionDomainname permissionDomainname : this.serverConfiguration.getPermissionDomainname()) {
-                permissionedAddresses.add(new MultiSignAddress(currentToken.getToken().getTokenid(), "",
-                        permissionDomainname.getPubKeyHex()));
+            permissionedAddresses = new ArrayList<MultiSignAddress>();
+            // If not initial issuance, we check according to the previous token
+            if (currentToken.getToken().getTokenindex() != 0) {
+                try {
+                    // Previous issuance must exist to check solidity
+                    prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
+                    if (prevToken == null) {
+                        if (throwExceptions)
+                            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                    }
+
+                    // Compare members of previous and current issuance
+                    if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
+                        if (throwExceptions)
+                            throw new InvalidDependencyException("Wrong token ID");
+                        return SolidityState.getFailState();
+                    }
+                    if (currentToken.getToken().getTokenindex() != prevToken.getTokenindex() + 1) {
+                        if (throwExceptions)
+                            throw new InvalidDependencyException("Wrong token index");
+                        return SolidityState.getFailState();
+                    }
+                    if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
+                        if (throwExceptions)
+                            throw new PreviousTokenDisallowsException("Cannot change token name");
+                        return SolidityState.getFailState();
+                    }
+                    if (currentToken.getToken().getTokentype() != prevToken.getTokentype()) {
+                        if (throwExceptions)
+                            throw new PreviousTokenDisallowsException("Cannot change token type");
+                        return SolidityState.getFailState();
+                    }
+
+                    // Must allow more issuances
+                    if (prevToken.isTokenstop()) {
+                        if (throwExceptions)
+                            throw new PreviousTokenDisallowsException("Previous token does not allow further issuance");
+                        return SolidityState.getFailState();
+                    }
+
+                    // Get addresses allowed to reissue
+                    permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
+                            prevToken.getTokenid(), prevToken.getBlockhash()));
+
+                } catch (BlockStoreException e) {
+                    // Cannot happen, previous token must exist
+                    e.printStackTrace();
+                }
+            } else {
+                final String domainname =  currentToken.getToken().getDomainname();
+                permissionedAddresses.addAll(this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(domainname));
             }
         }
 
