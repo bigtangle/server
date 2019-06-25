@@ -45,6 +45,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.MultiSignAddressPacker;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatchingInfo;
@@ -1956,11 +1957,14 @@ public class ValidatorService {
         // Get permissioned addresses
         Token prevToken = null;
         List<MultiSignAddress> permissionedAddresses = null;
+        MultiSignAddressPacker multiSignAddressPacker = null;
         if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
             permissionedAddresses = currentToken.getMultiSignAddresses();
             final String domainname = currentToken.getToken().getDomainname();
             String s = DomainnameUtil.matchParentDomainname(domainname);
-            permissionedAddresses.addAll(this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(s));
+            List<MultiSignAddress> domainnameMultiSignAddresseList =  this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(s);
+            permissionedAddresses.addAll(domainnameMultiSignAddresseList);
+            multiSignAddressPacker = new MultiSignAddressPacker(domainnameMultiSignAddresseList, 1);
         } else {
             permissionedAddresses = new ArrayList<MultiSignAddress>();
             // If not initial issuance, we check according to the previous token
@@ -2011,9 +2015,13 @@ public class ValidatorService {
                     // Cannot happen, previous token must exist
                     e.printStackTrace();
                 }
+                multiSignAddressPacker = new MultiSignAddressPacker(new ArrayList<MultiSignAddress>(), 0);
             } else {
                 final String domainname =  currentToken.getToken().getDomainname();
-                permissionedAddresses.addAll(this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(domainname));
+                List<MultiSignAddress> domainnameMultiSignAddresseList = this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(domainname);
+                permissionedAddresses.addAll(domainnameMultiSignAddresseList);
+                permissionedAddresses.addAll(currentToken.getMultiSignAddresses());
+                multiSignAddressPacker = new MultiSignAddressPacker(domainnameMultiSignAddresseList, 1);
             }
         }
 
@@ -2064,6 +2072,11 @@ public class ValidatorService {
                     throw new MissingSignatureException();
                 return SolidityState.getFailState();
             }
+        }
+
+        boolean required = multiSignAddressPacker.checkPermissionedMultiSignAddressRequiredNumber(txSignatures.getMultiSignBies());
+        if (!required) {
+            return SolidityState.getFailState();
         }
 
         // Verify signatures
