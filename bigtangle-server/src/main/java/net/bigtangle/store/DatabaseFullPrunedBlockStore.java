@@ -2492,7 +2492,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(2, spendpendingtime);
             preparedStatement.setBytes(3, prevTxHash.getBytes());
             preparedStatement.setLong(4, index);
-      
+
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5609,13 +5609,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             log.debug(sql);
             s = conn.get().prepareStatement(sql);
-            s.setBoolean(1, spent);
+            int i = 1;
+            s.setBoolean(i++, spent);
             if (address != null && !address.trim().isEmpty()) {
-                s.setString(2, address);
+                s.setString(i++, address);
             }
             if (tokenid != null && !tokenid.trim().isEmpty()) {
-                s.setString(3, tokenid);
-                s.setString(4, tokenid);
+                s.setString(i++, tokenid);
+                s.setString(i++, tokenid);
             }
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
