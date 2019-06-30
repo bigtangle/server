@@ -37,6 +37,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -156,7 +157,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -172,17 +182,30 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
-        TokenInfo tokenInfo2 = new TokenInfo();
-        Coin coinbase2 = Coin.valueOf(666, pubKey);
-        long amount2 = coinbase2.getValue();
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true, 0, "de");
-        tokenInfo2.setToken(tokens2);
-        tokenInfo2.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block conflictBlock1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-        Block conflictBlock2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-
+        
+        Block conflictBlock1, conflictBlock2;
+        {
+            TokenInfo tokenInfo2 = new TokenInfo();
+            Coin coinbase2 = Coin.valueOf(666, pubKey);
+            long amount2 = coinbase2.getValue();
+            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey),
+                    "Test", "Test", 1, 1, amount2, true, 0, "de");
+            tokenInfo2.setToken(tokens2);
+            tokenInfo2.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            conflictBlock1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        }
+        {
+            TokenInfo tokenInfo2 = new TokenInfo();
+            Coin coinbase2 = Coin.valueOf(666, pubKey);
+            long amount2 = coinbase2.getValue();
+            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey),
+                    "Test", "Test", 1, 1, amount2, true, 0, "de");
+            tokenInfo2.setToken(tokens2);
+            tokenInfo2.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            conflictBlock2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        }
         // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
@@ -202,7 +225,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -257,7 +289,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenFirstIssuance() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -296,7 +337,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidFirstIssuance() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an issuance
         ECKey outKey = walletKeys.get(0);
@@ -389,7 +439,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -904,7 +963,16 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testFindDeepReorg() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate blocks until first ones become unmaintained
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock();

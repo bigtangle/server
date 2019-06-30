@@ -72,6 +72,7 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -329,7 +330,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test 
     public void testUnsolidMissingToken() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -1317,7 +1327,17 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMutatedData() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -1332,7 +1352,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokenInfo0.setToken(tokens);
         tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
+        tokens.setDomainname("de");
+        
         TestCase[] executors = new TestCase[] { new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
@@ -2335,7 +2356,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorWrongTokenid() throws JsonProcessingException, Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -2371,7 +2401,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenWrongTokenindex() throws JsonProcessingException, Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2406,7 +2445,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorStopped() throws JsonProcessingException, Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2441,7 +2489,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorConflictingType() throws JsonProcessingException, Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2477,7 +2534,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorConflictingName() throws JsonProcessingException, Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2628,7 +2694,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenMultipleTXs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2745,7 +2820,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenMultipleTokens() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2833,7 +2917,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenNoBIGs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2902,7 +2995,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenFractionalPrice() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 

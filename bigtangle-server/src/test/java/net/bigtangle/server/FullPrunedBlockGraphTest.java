@@ -43,6 +43,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -98,7 +99,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectTokenUTXOs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ;
         byte[] pubKey = walletKeys.get(0).getPubKey();
 
@@ -292,7 +302,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmTokenUTXOs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -520,7 +539,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -699,7 +727,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmRewardUTXOs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
@@ -741,7 +778,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmTokenUTXOs() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -983,7 +1029,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -1321,7 +1376,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsToken() throws Exception {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 

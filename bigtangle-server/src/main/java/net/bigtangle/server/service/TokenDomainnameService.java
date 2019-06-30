@@ -44,7 +44,7 @@ public class TokenDomainnameService {
         return response;
     }
 
-    /**
+    /** 
      * get domainname token multi sign address
      * 
      * @param domainname

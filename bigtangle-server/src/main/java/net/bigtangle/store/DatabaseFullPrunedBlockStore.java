@@ -1418,6 +1418,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new RuntimeException(ex);
         }
     }
+    
+    public void resetStore(DatabaseStoreCallback databaseStoreCallback) throws BlockStoreException {
+        this.resetStore();
+        try {
+            databaseStoreCallback.callback();
+        } catch (Exception e) {
+            log.error("databaseStoreCallback", e);
+            throw new RuntimeException(e);
+        }
+    }
+    
 
     /**
      * Deletes the store by deleting the tables within the database.

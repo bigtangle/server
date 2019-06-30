@@ -20,7 +20,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +86,7 @@ import net.bigtangle.server.service.OrdermatchService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.DomainnameUtil;
@@ -153,6 +153,9 @@ public abstract class AbstractIntegrationTest {
     protected static ObjectMapper objectMapper = new ObjectMapper();
 
     public void testCreateDomainToken() throws Exception {
+        this.walletKeys();
+        this.initWalletKeysMapper();
+        
         String tokenid = walletKeys.get(1).getPublicKeyAsHex();
         int amount = 678900000;
         final String domainname = "de";
@@ -192,15 +195,30 @@ public abstract class AbstractIntegrationTest {
     @Before
     public void setUp() throws Exception {
         Utils.unsetMockClock();
-        store.resetStore();
-        this.walletKeys();
-        this.initWalletKeysMapper();
-        this.testCreateDomainToken();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
     }
 
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
-        store.resetStore();
+        store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    log.error("testCreateDomainToken", e);
+                }
+            }
+        });
 
         // Make the "test" token
         Block block = null;
@@ -948,24 +966,43 @@ public abstract class AbstractIntegrationTest {
 
     // for unit tests
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-            throws IOException {
+            throws Exception {
         return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
 
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-            Block overrideHash1, Block overrideHash2) throws IOException {
+            Block overrideHash1, Block overrideHash2) throws IOException, Exception {
         Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
+        String pubKeyHex = multiSignAddress.getPubKeyHex();
+        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
         return block;
     }
 
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-            throws JsonProcessingException, IOException {
+            throws JsonProcessingException, IOException, Exception {
         return makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
 
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-            Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException {
+            Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException, Exception {
+        
+        final String tokenid = tokenInfo.getToken().getTokenid();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
+        
+        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
+        
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
