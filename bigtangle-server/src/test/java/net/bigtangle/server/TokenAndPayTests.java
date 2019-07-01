@@ -60,6 +60,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
@@ -219,6 +220,16 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     @Test
     public void testCreateMultiSigList() throws Exception {
+        this.store.resetStore(new DatabaseStoreCallback() {
+            @Override
+            public void callback() {
+                try {
+                    testCreateDomainToken();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         testInitWallet();
         wallet1();
         wallet2();

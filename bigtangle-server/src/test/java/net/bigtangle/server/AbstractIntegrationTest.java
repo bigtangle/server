@@ -857,7 +857,7 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
                 false, 0, "de");
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
@@ -871,6 +871,17 @@ public abstract class AbstractIntegrationTest {
 
         ECKey key2 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
+        
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
+        
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
@@ -889,6 +900,10 @@ public abstract class AbstractIntegrationTest {
         List<ECKey> ecKeys = new ArrayList<ECKey>();
         ecKeys.add(key1);
         ecKeys.add(key2);
+        
+        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
+        final String pubKeyHex = multiSignAddress.getPubKeyHex();
+        ecKeys.add(this.walletKeyData.get(pubKeyHex));
 
         for (ECKey ecKey : ecKeys) {
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -950,7 +965,7 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 2, tokenindex_, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
                 false, 0, "de");
         tokenInfo.setToken(tokens);
 
@@ -959,6 +974,16 @@ public abstract class AbstractIntegrationTest {
 
         ECKey key2 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key2.getPublicKeyAsHex()));
+        
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
 
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, keys.get(1), null);
         return tokenid;
