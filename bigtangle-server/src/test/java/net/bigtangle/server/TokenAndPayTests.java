@@ -54,6 +54,7 @@ import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
+import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -842,12 +843,23 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
             Coin basecoin = Coin.valueOf(100000L, pubKey);
             long amount = basecoin.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test",
-                   "test", 1, 0, amount, false,0,"de");
+                   "test", 2, 0, amount, false,0,"de");
             tokenInfo.setToken(tokens);
 
             // add MultiSignAddress item
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+            
+            
+            List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+            PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+            if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                    && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+                for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                    final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                    multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+                }
+            }
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
