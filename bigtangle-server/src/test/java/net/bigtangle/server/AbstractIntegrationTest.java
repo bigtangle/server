@@ -772,14 +772,29 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true, 0, "de");
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 2, 0, amount, true, 0, "de");
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
 
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+        
+        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
+        String pubKeyHex = multiSignAddress.getPubKeyHex();
+        ECKey ecKey = this.walletKeyData.get(pubKeyHex);
+        this.pullBlockDoMultiSign(tokenid, ecKey, aesKey);
     }
 
     protected void testCreateMarket() throws JsonProcessingException, Exception {
