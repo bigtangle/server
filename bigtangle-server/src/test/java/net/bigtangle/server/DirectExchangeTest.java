@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -52,6 +53,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
@@ -63,6 +65,9 @@ import net.bigtangle.wallet.Wallet.MissingSigsMode;
 public class DirectExchangeTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
+    
+    @Autowired
+    private ServerConfiguration serverConfiguration;
 
     @Test
     public void testBatchBlock() throws Exception {
@@ -484,10 +489,10 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // get other tokenid from wallet
         UTXO utxo = null;
         List<UTXO> ulist = getBalance();
+        
         for (UTXO u : ulist) {
-            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
-
             }
         }
         log.debug(utxo.getValue().toString());
@@ -495,14 +500,16 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // utxo.getValue().getTokenid()));
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
-        SendRequest request = SendRequest.to(destination, utxo.getValue());
+        
+        Coin coinbase = Coin.parseCoin("1", utxo.getValue().getTokenid());
+        SendRequest request = SendRequest.to(destination, coinbase);
         walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
         log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
-        checkBalance(utxo.getValue(), walletAppKit1.wallet().walletKeys(null));
+        checkBalance(coinbase, walletAppKit1.wallet().walletKeys(null));
     }
 
     public void payTokenA(ECKey outKey) throws Exception {
