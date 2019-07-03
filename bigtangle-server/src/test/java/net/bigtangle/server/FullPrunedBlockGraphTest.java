@@ -120,7 +120,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false, 0, "de");
+                    false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -146,7 +146,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true, 0, "de");
+                    "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -321,7 +321,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true, 0, "de");
+                true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -593,7 +593,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, "de");
+                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -797,7 +797,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true, 0, "de");
+                true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1028,7 +1028,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUnconfirmOrderMatchUTXOs2() throws Exception {
+    public void debugTest() throws Exception {
         store.resetStore(new DatabaseStoreCallback() {
             @Override
             public void callback() {
@@ -1083,7 +1083,140 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, "de");
+                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+
+            tokenInfo.setToken(tokens);
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
+
+            // This (saveBlock) calls milestoneUpdate currently
+            block2 = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
+            blockGraph.confirm(block2.getHash(), new HashSet<>());
+        }
+
+        // Make a sell order for testKey.getPubKey()s
+        Block block3 = null;
+        {
+            Transaction tx = new Transaction(networkParameters);
+            OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey(),
+                    null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+            tx.setData(info.toByteArray());
+
+            // Create burning 2 "test"
+            List<UTXO> outputs = getBalance(false, testKey).stream().filter(
+                    out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
+                    .collect(Collectors.toList());
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
+                    outputs.get(0), 0);
+            Coin amount = Coin.valueOf(2, testKey.getPubKey());
+            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+            // amount, testKey));
+            tx.addOutput(
+                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+            TransactionInput input = tx.addInput(spendableOutput);
+            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                    false);
+
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            Script inputScript = ScriptBuilder.createInputScript(sig);
+            input.setScriptSig(inputScript);
+
+            // Create block with order
+            block3 = block2.createNextBlock(block2);
+            block3.addTransaction(tx);
+            block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+            block3.solve();
+            this.blockGraph.add(block3, true);
+        }
+
+        // Generate blocks until passing first reward interval
+        Block rollingBlock1 = block3;
+        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+        }
+
+        // Generate matching block
+        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+                networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
+
+        // Confirm
+        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>());
+
+        // Unconfirm
+        blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>());
+
+        // Should be unconfirmed now
+        assertFalse(store.getOrderMatchingConfirmed(rewardBlock1.getHash()));
+        assertFalse(store.getOrderMatchingSpent(rewardBlock1.getHash()));
+        assertNull(store.getOrderMatchingSpender(rewardBlock1.getHash()));
+
+        // Ensure all consumed order records are now unspent
+        OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
+        assertNotNull(order);
+        assertTrue(order.isConfirmed());
+        assertFalse(order.isSpent());
+
+        OrderRecord order2 = store.getOrder(block3.getHash(), Sha256Hash.ZERO_HASH);
+        assertNotNull(order2);
+        assertTrue(order2.isConfirmed());
+        assertFalse(order2.isSpent());
+
+        // Ensure virtual UTXOs are now confirmed
+        Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getOutputTx();
+        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor());
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo1.isSpent());
+    }
+
+    @Test
+    public void testUnconfirmOrderMatchUTXOs2() throws Exception {
+        store.resetStore();
+        
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        // Make a buy order for testKey.getPubKey()s
+        Block block1 = null;
+        {
+            Transaction tx = new Transaction(networkParameters);
+            OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey(), null,
+                    null, Side.BUY, testKey.toAddress(networkParameters).toBase58());
+            tx.setData(info.toByteArray());
+
+            // Create burning 2 BIG
+            List<UTXO> outputs = getBalance(false, testKey);
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
+                    outputs.get(0), 0);
+            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+            // amount, testKey));
+            tx.addOutput(
+                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+            TransactionInput input = tx.addInput(spendableOutput);
+            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
+                    false);
+
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            Script inputScript = ScriptBuilder.createInputScript(sig);
+            input.setScriptSig(inputScript);
+
+            // Create block with order
+            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1.addTransaction(tx);
+            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+            block1.solve();
+            this.blockGraph.add(block1, true);
+        }
+
+        // Make the "test" token
+        Block block2 = null;
+        {
+            TokenInfo tokenInfo = new TokenInfo();
+
+            Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
+            long amount = coinbase.getValue();
+            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
+                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1397,7 +1530,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                    false, 0, "de");
+                    false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1417,7 +1550,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount, true, 0, "de");
+                    "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -1470,7 +1603,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks);
 
         // Generate spending block
-        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, walletKeys.get(0), testTokenId, 50, addedBlocks,
+        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, walletKeys.get(8), testTokenId, 50, addedBlocks,
                 addedBlocks.get(addedBlocks.size() - 2));
 
         // Unconfirm order matching
@@ -1490,7 +1623,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsOrderMatchingDependentReclaim() throws Exception {
         @SuppressWarnings({ "unused" })
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -1533,7 +1666,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testUnconfirmDependentsOrderReclaimDependent() throws Exception {
         @SuppressWarnings({ "unused" })
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 

@@ -10,19 +10,19 @@ public class Token implements java.io.Serializable {
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop, int decimals,
-            String domainname) {
+            String predecessingDomainBlockHash) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, domainname);
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null, predecessingDomainBlockHash);
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
             String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
-            int decimals, String domainname) {
+            int decimals, String domainname, String predecessingDomainBlockHash) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
                 tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(), decimals,
-                domainname);
+                domainname, predecessingDomainBlockHash);
 
         return token;
     }
@@ -44,8 +44,10 @@ public class Token implements java.io.Serializable {
     private String tokenname;
     // description
     private String description;
-    // the domain name of this token
-    private String domainname;
+    // the domain name defined by this token
+    private String domainName;
+    // the predecessing domain's block hash
+    private String domainPredecessorBlockHash;
     // number of signature
     private int signnumber;
     // difference for external exchange, meta token, digital asset token and
@@ -56,9 +58,8 @@ public class Token implements java.io.Serializable {
     // indicator of the prev token index blockhash
     private String prevblockhash;
 
-    private String blockhash; // TODO slated for extraction
-    private long amount; // TODO must be inferred on insertion, slated for
-                         // extraction
+    private String blockhash; 
+    private long amount; 
     private int decimals = 0; // number of decimals for the token, default
                                   // integer
     // classification of a token, can be null, optional for query only
@@ -139,15 +140,23 @@ public class Token implements java.io.Serializable {
         this.description = description;
     }
 
-    public String getDomainname() {
-        return domainname;
+    public String getDomainName() {
+        return domainName;
     }
 
-    public void setDomainname(String domainname) {
-        this.domainname = domainname;
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
     }
 
-    public Boolean getRevoked() {
+    public String getDomainPredecessorBlockHash() {
+		return domainPredecessorBlockHash;
+	}
+
+	public void setDomainPredecessorBlockHash(String domainPredecessorBlockHash) {
+		this.domainPredecessorBlockHash = domainPredecessorBlockHash;
+	}
+
+	public Boolean getRevoked() {
         return revoked;
     }
 
@@ -222,14 +231,13 @@ public class Token implements java.io.Serializable {
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
-            int decimals, final String domainname) {
+            int decimals, final String domainName, final String domainPredecessorBlockHash) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
-
-        tokens.tokentype = tokentype; // ;
+        tokens.tokentype = tokentype; 
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
@@ -240,7 +248,8 @@ public class Token implements java.io.Serializable {
         tokens.language = language;
         tokens.classification = classification;
         tokens.decimals = decimals;
-        tokens.domainname = domainname;
+        tokens.domainName = domainName;
+        tokens.domainPredecessorBlockHash = domainPredecessorBlockHash;
         return tokens;
     }
 
@@ -250,7 +259,7 @@ public class Token implements java.io.Serializable {
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
-        tokens.setDomainname(domainname);
+        tokens.setDomainName(domainname);
         tokens.tokenstop = true;
 
         tokens.tokentype = TokenType.market.ordinal();
@@ -259,6 +268,9 @@ public class Token implements java.io.Serializable {
         tokens.tokenindex = 0;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
+        
+        // TODO unmaintained, missing fields
+        
         return tokens;
     }
 
@@ -268,7 +280,7 @@ public class Token implements java.io.Serializable {
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
-        tokens.setDomainname(domainname);
+        tokens.setDomainName(domainname);
         tokens.tokenstop = true;
         tokens.tokentype = TokenType.subtangle.ordinal();
         tokens.signnumber = 1;
@@ -276,13 +288,16 @@ public class Token implements java.io.Serializable {
         tokens.tokenindex = 1;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
+        
+        // TODO unmaintained, missing fields
+        
         return tokens;
     }
 
     @Override
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
-                + tokenname + ", description=" + description + ", url=" + domainname + ", signnumber=" + signnumber
+                + tokenname + ", description=" + description + ", url=" + domainName + ", domainpred=" + domainPredecessorBlockHash + ", signnumber=" + signnumber
                 + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
                 + ", blockhash=" + blockhash + ", amount=" + amount + ", revoked=" + revoked + ", classification="
                 + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues + "]";

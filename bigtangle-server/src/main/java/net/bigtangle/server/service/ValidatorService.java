@@ -45,7 +45,6 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignAddressPacker;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderMatchingInfo;
@@ -93,7 +92,6 @@ import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
-import net.bigtangle.utils.DomainnameUtil;
 
 @Service
 public class ValidatorService {
@@ -1946,94 +1944,43 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (StringUtils.isBlank(currentToken.getToken().getDomainname()))
-            throw new InvalidDependencyException("Domainname is empty");
-
-        if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
-            final String domainname = currentToken.getToken().getDomainname();
-            if (this.tokenDomainnameService.checkTokenDomainnameAlreadyExists(domainname))
-                throw new InvalidDependencyException("Domainname already exists");
+    	// Must have a predecessing domain definition
+        if (currentToken.getToken().getDomainPredecessorBlockHash() == null) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("Domain predecessor is empty");
+            return SolidityState.getFailState();
         }
-        // Get permissioned addresses
-        Token prevToken = null;
-        List<MultiSignAddress> permissionedAddresses = null;
-        MultiSignAddressPacker multiSignAddressPacker = null;
+
+    	// Requires the predecessing domain definition block to exist and be a legal domain
+        Token prevDomain = store.getToken(currentToken.getToken().getDomainPredecessorBlockHash());
+        if (prevDomain == null) {
+            if (throwExceptions)
+                return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+        }
+        
+        if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("Domain predecessor is not a domain definition token");
+            return SolidityState.getFailState();
+        }
+
+        // Domain name defining blocks additionally NEED a defined name
         if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
-            permissionedAddresses = currentToken.getMultiSignAddresses();
-            final String domainname = currentToken.getToken().getDomainname();
-            String s = DomainnameUtil.matchParentDomainname(domainname);
-            List<MultiSignAddress> domainnameMultiSignAddresseList =  this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(s);
-            permissionedAddresses.addAll(domainnameMultiSignAddresseList);
-            multiSignAddressPacker = new MultiSignAddressPacker(domainnameMultiSignAddresseList, 1);
-        } else {
-            permissionedAddresses = new ArrayList<MultiSignAddress>();
-            // If not initial issuance, we check according to the previous token
-            if (currentToken.getToken().getTokenindex() != 0) {
-                try {
-                    // Previous issuance must exist to check solidity
-                    prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
-                    if (prevToken == null) {
-                        if (throwExceptions)
-                            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-                    }
-
-                    // Compare members of previous and current issuance
-                    if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
-                        if (throwExceptions)
-                            throw new InvalidDependencyException("Wrong token ID");
-                        return SolidityState.getFailState();
-                    }
-                    if (currentToken.getToken().getTokenindex() != prevToken.getTokenindex() + 1) {
-                        if (throwExceptions)
-                            throw new InvalidDependencyException("Wrong token index");
-                        return SolidityState.getFailState();
-                    }
-                    if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
-                        if (throwExceptions)
-                            throw new PreviousTokenDisallowsException("Cannot change token name");
-                        return SolidityState.getFailState();
-                    }
-                    if (currentToken.getToken().getTokentype() != prevToken.getTokentype()) {
-                        if (throwExceptions)
-                            throw new PreviousTokenDisallowsException("Cannot change token type");
-                        return SolidityState.getFailState();
-                    }
-
-                    // Must allow more issuances
-                    if (prevToken.isTokenstop()) {
-                        if (throwExceptions)
-                            throw new PreviousTokenDisallowsException("Previous token does not allow further issuance");
-                        return SolidityState.getFailState();
-                    }
-
-                    // Get addresses allowed to reissue
-                    permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
-                            prevToken.getTokenid(), prevToken.getBlockhash()));
-
-                } catch (BlockStoreException e) {
-                    // Cannot happen, previous token must exist
-                    e.printStackTrace();
-                }
-                multiSignAddressPacker = new MultiSignAddressPacker(new ArrayList<MultiSignAddress>(), 0);
-            } else {
-                final String domainname =  currentToken.getToken().getDomainname();
-                List<MultiSignAddress> domainnameMultiSignAddresseList = this.tokenDomainnameService.queryDomainnameTokenMultiSignAddresses(domainname);
-                permissionedAddresses.addAll(domainnameMultiSignAddresseList);
-                permissionedAddresses.addAll(currentToken.getMultiSignAddresses());
-                multiSignAddressPacker = new MultiSignAddressPacker(domainnameMultiSignAddresseList, 1);
+            if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
+                if (throwExceptions)
+                    throw new InvalidDependencyException("Domainname is empty");
+                return SolidityState.getFailState();
             }
+        	
+        	// TODO put this somewhere else: conflict points: conflicting domain definition!
+//            final String domainname = currentToken.getToken().getDomainName();
+//            if (this.tokenDomainnameService.checkTokenDomainnameAlreadyExists(domainname))
+//                throw new InvalidDependencyException("Domainname already exists");
         }
 
-        // Get permissioned pubkeys wrapped to check for bytearray equality
-        Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();
-        for (MultiSignAddress multiSignAddress : permissionedAddresses) {
-            byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
-            permissionedPubKeys.add(ByteBuffer.wrap(pubKey));
-        }
-
-        int signatureCount = 0;
         // Ensure signatures exist
+        int signatureCount = 0;
         if (tx.getDataSignature() == null) {
             if (throwExceptions)
                 throw new MissingTransactionDataException();
@@ -2051,17 +1998,95 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
+        // Get permissioned addresses
+        Token prevToken = null;
+        List<MultiSignAddress> permissionedAddresses =  new ArrayList<MultiSignAddress>();
+        // If not initial issuance, we check according to the previous token
+        if (currentToken.getToken().getTokenindex() != 0) {
+            try {
+                // Previous issuance must exist to check solidity
+                prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
+                if (prevToken == null) {
+                    if (throwExceptions)
+                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                    return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                }
+
+                // Compare members of previous and current issuance
+                if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
+                    if (throwExceptions)
+                        throw new InvalidDependencyException("Wrong token ID");
+                    return SolidityState.getFailState();
+                }
+                if (currentToken.getToken().getTokenindex() != prevToken.getTokenindex() + 1) {
+                    if (throwExceptions)
+                        throw new InvalidDependencyException("Wrong token index");
+                    return SolidityState.getFailState();
+                }
+                if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token name");
+                    return SolidityState.getFailState();
+                }
+                if (currentToken.getToken().getTokentype() != prevToken.getTokentype()) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token type");
+                    return SolidityState.getFailState();
+                }
+                if (!currentToken.getToken().getDomainPredecessorBlockHash().equals(prevToken.getDomainPredecessorBlockHash())) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token domain");
+                    return SolidityState.getFailState();
+                }
+
+                // Must allow more issuances
+                if (prevToken.isTokenstop()) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Previous token does not allow further issuance");
+                    return SolidityState.getFailState();
+                }
+
+                // Get addresses allowed to reissue
+                permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
+                        prevToken.getTokenid(), prevToken.getBlockhash()));
+
+            } catch (BlockStoreException e) {
+                // Cannot happen, previous token must exist
+                e.printStackTrace();
+            }
+        } else {
+            // First time issuances must sign for the token id
+            permissionedAddresses = currentToken.getMultiSignAddresses();
+            MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
+                    currentToken.getToken().getTokenid());
+            permissionedAddresses.add(firstTokenAddress);
+            
+            // Any first time issuances also require the domain signatures
+            List<MultiSignAddress> prevDomainPermissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
+            		prevDomain.getTokenid(), prevDomain.getBlockhash());
+            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses, txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
+            if (domainPermission != SolidityState.getSuccessState())
+            	return domainPermission;
+        }
+
+        // Get permissioned pubkeys wrapped to check for bytearray equality
+        Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();
+        for (MultiSignAddress multiSignAddress : permissionedAddresses) {
+            byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
+            permissionedPubKeys.add(ByteBuffer.wrap(pubKey));
+        }
+
         // Ensure all multiSignBys pubkeys are from the permissioned list
-        for (MultiSignBy multiSignBy : txSignatures.getMultiSignBies()) {
+        for (MultiSignBy multiSignBy : new ArrayList<>(txSignatures.getMultiSignBies())) {
             ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
             if (!permissionedPubKeys.contains(pubKey)) {
-                if (throwExceptions)
-                    throw new InvalidSignatureException();
-                return SolidityState.getFailState();
+            	// If a pubkey is not from the list, drop it.
+            	txSignatures.getMultiSignBies().remove(multiSignBy);
+            	continue;
+            } else {
+                // Otherwise the listed address is used. Cannot use same address multiple times.
+                permissionedPubKeys.remove(pubKey);
             }
-
-            // Cannot use same address multiple times
-            permissionedPubKeys.remove(pubKey);
         }
 
         // For first issuance, ensure the tokenid pubkey signature exists to
@@ -2072,11 +2097,6 @@ public class ValidatorService {
                     throw new MissingSignatureException();
                 return SolidityState.getFailState();
             }
-        }
-
-        boolean required = multiSignAddressPacker.checkPermissionedMultiSignAddressRequiredNumber(txSignatures.getMultiSignBies());
-        if (!required) {
-            return SolidityState.getFailState();
         }
 
         // Verify signatures
@@ -2095,8 +2115,6 @@ public class ValidatorService {
         }
 
         // Return whether sufficient signatures exist
-        // 2 if parent exists, 1 if no parent, previously defined number if predecessor
-        // token exists
         int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
@@ -2106,7 +2124,59 @@ public class ValidatorService {
         return SolidityState.getFailState();
     }
 
-    private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
+    private SolidityState checkDomainPermission(List<MultiSignAddress> permissionedAddresses,
+			List<MultiSignBy> multiSignBies, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
+    	
+    	// Make original list inaccessible by cloning list
+    	multiSignBies = new ArrayList<MultiSignBy>(multiSignBies);
+
+        // Get permissioned pubkeys wrapped to check for bytearray equality
+        Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();
+        for (MultiSignAddress multiSignAddress : permissionedAddresses) {
+            byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
+            permissionedPubKeys.add(ByteBuffer.wrap(pubKey));
+        }
+
+        // Ensure all multiSignBys pubkeys are from the permissioned list
+        for (MultiSignBy multiSignBy : new ArrayList<MultiSignBy>(multiSignBies)) {
+            ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
+            if (!permissionedPubKeys.contains(pubKey)) {
+            	// If a pubkey is not from the list, drop it.
+            	multiSignBies.remove(multiSignBy);
+            	continue;
+            } else {
+                // Otherwise the listed address is used. Cannot use same address multiple times.
+                permissionedPubKeys.remove(pubKey);
+            }
+        }
+
+        // Verify signatures
+        int signatureCount = 0;
+        for (MultiSignBy multiSignBy : multiSignBies) {
+            byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
+            byte[] data = txHash.getBytes();
+            byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
+
+            if (ECKey.verify(data, signature, pubKey)) {
+				signatureCount++;
+            } else {
+                if (throwExceptions)
+                    throw new InvalidSignatureException();
+                return SolidityState.getFailState();
+            }
+        }
+
+        // Return whether sufficient signatures exist
+        if (signatureCount >= requiredSignatures)
+        	return SolidityState.getSuccessState();
+        else {
+            if (throwExceptions)
+                throw new VerificationException("Domain signatures are insufficient!");
+            return SolidityState.getFailState();
+        }
+	}
+
+	private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
         if (currentToken.getToken() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("getToken is null");
@@ -2155,12 +2225,6 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long tokenid");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getDomainname() != null
-                && currentToken.getToken().getDomainname().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too long tokenid");
-            return SolidityState.getFailState();
-        }
 
         if (currentToken.getToken().getLanguage() != null
                 && currentToken.getToken().getLanguage().length() > NetworkParameters.TOKEN_MAX_LANGUAGE_LENGTH) {
@@ -2184,8 +2248,8 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getDomainname() != null
-                && currentToken.getToken().getDomainname().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+        if (currentToken.getToken().getDomainName() != null
+                && currentToken.getToken().getDomainName().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long domainname");
             return SolidityState.getFailState();

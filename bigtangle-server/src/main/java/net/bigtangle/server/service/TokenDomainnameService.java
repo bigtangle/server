@@ -32,13 +32,13 @@ public class TokenDomainnameService {
     /**
      * query token type is domainname
      * 
-     * @param domainname
+     * @param domainid
      * @return
      * @throws BlockStoreException
      */
-    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainname)
+    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainid)
             throws BlockStoreException {
-        List<MultiSignAddress> multiSignAddresses = this.queryDomainnameTokenMultiSignAddresses(domainname);
+        List<MultiSignAddress> multiSignAddresses = this.queryDomainnameTokenMultiSignAddresses(domainid);
         PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
                 .create(false, multiSignAddresses);
         return response;
@@ -47,12 +47,12 @@ public class TokenDomainnameService {
     /** 
      * get domainname token multi sign address
      * 
-     * @param domainname
+     * @param domainid
      * @return
      * @throws BlockStoreException
      */
-    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainname) throws BlockStoreException {
-        if (StringUtils.isBlank(domainname)) {
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainid) throws BlockStoreException {
+        if (StringUtils.isBlank(domainid)) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
             for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
                     .iterator(); iterator.hasNext();) {
@@ -62,7 +62,7 @@ public class TokenDomainnameService {
             }
             return multiSignAddresses;
         } else {
-            Token token = this.store.queryDomainnameToken(domainname);
+            Token token = this.store.queryDomainnameToken(domainid);
             if (token == null)
                 throw new BlockStoreException("token not found");
 

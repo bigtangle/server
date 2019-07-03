@@ -63,7 +63,7 @@ public class SerializationTest {
         assertEquals(info1.getToken().getTokenindex(), info2.getToken().getTokenindex());
         assertEquals(info1.getToken().getTokenname(), info2.getToken().getTokenname());
         assertEquals(info1.getToken().getTokentype(), info2.getToken().getTokentype());
-        assertEquals(info1.getToken().getDomainname(), info2.getToken().getDomainname());
+        assertEquals(info1.getToken().getDomainName(), info2.getToken().getDomainName());
         assertEquals(info1.getToken().isConfirmed(), info2.getToken().isConfirmed());
 
         assertEquals(info1.getToken().isTokenstop(), info2.getToken().isTokenstop());

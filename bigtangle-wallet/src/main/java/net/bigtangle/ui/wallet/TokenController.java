@@ -269,7 +269,7 @@ public class TokenController extends TokenBaseController {
 		String amountString = Coin.valueOf(tokenInfo.getToken().getAmount(), tokenid).toPlainString();
 		stockAmount1.setText(amountString);
 		tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
-		urlTF.setText(Main.getString(tokenInfo.getToken().getDomainname()).trim());
+		urlTF.setText(Main.getString(tokenInfo.getToken().getDomainName()).trim());
 		stockDescription1.setText(Main.getString(tokenInfo.getToken().getDescription()).trim());
 		signnumberTF.setText(Main.getString(tokenInfo.getToken().getSignnumber()).trim());
 		signAddrChoiceBox.getItems().clear();
@@ -338,7 +338,7 @@ public class TokenController extends TokenBaseController {
 		// tokenid).toPlainString();
 		// stockAmount1.setText(amountString);
 		tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
-		urlTF.setText(Main.getString(tokenInfo.getToken().getDomainname()).trim());
+		urlTF.setText(Main.getString(tokenInfo.getToken().getDomainName()).trim());
 		stockDescription1.setText(Main.getString(tokenInfo.getToken().getDescription()).trim());
 		signnumberTF.setText(Main.getString(tokenInfo.getToken().getSignnumber()).trim());
 		signAddrChoiceBox.getItems().clear();
@@ -523,7 +523,7 @@ public class TokenController extends TokenBaseController {
 
 			Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
 					stockDescription.getText().trim(), 1, 0, amount,  true,0,"de");
-			tokens.setDomainname(stockUrl.getText().trim());
+			tokens.setDomainName(stockUrl.getText().trim());
 			tokenInfo.setToken(tokens);
 			// outKey must be the same key as tokenid
 			ECKey outKey = null;
@@ -798,7 +798,7 @@ public class TokenController extends TokenBaseController {
 		Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(), stockName1.getText().trim(),
 				stockDescription1.getText().trim(), 1, 0,
 				Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(),  true,0,"de");
-		tokens.setDomainname(urlTF.getText().trim());
+		tokens.setDomainName(urlTF.getText().trim());
 		tokenInfo.setToken(tokens);
 		ECKey mykey = null;
 		for (ECKey key : issuedKeys) {
@@ -924,7 +924,7 @@ public class TokenController extends TokenBaseController {
 				Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
 				Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
 				(boolean) map.get("tokenstop"),0,"de");
-		tokens.setDomainname(Main.getString(map.get("url")).trim());
+		tokens.setDomainName(Main.getString(map.get("url")).trim());
 		tokenInfo.setToken(tokens);
 
 		if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {

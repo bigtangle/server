@@ -212,8 +212,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
-            // log.debug("Could not verify block:\n" + e.toString() + "\n" +
-            // block.toString());
+            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString());
             throw e;
         } catch (Exception e) {
             log.error("", e);
@@ -1161,22 +1160,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
                     if (permissionedAddress == null)
                         continue;
-                    permissionedAddress.setBlockhash(block.getHashAsString()); // The
-                                                                               // primary
-                                                                               // key
-                                                                               // must
-                                                                               // be
-                                                                               // the
-                                                                               // correct
-                                                                               // block
-                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid()); // The
-                                                                                       // primary
-                                                                                       // key
-                                                                                       // must
-                                                                                       // be
-                                                                                       // the
-                                                                                       // correct
-                                                                                       // block
+                    // The primary key must be the correct block
+                    permissionedAddress.setBlockhash(block.getHashAsString()); 
+                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid()); 
                     if (permissionedAddress.getAddress() != null)
                         blockStore.insertMultiSignAddress(permissionedAddress);
                 }

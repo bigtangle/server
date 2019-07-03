@@ -186,7 +186,7 @@ public class GiveMoneyUtils {
         long amount = basecoin.getValue();
         
         Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), "", 1, 0, amount, true,0,"de");
+                UUID.randomUUID().toString(), "", 1, 0, amount, true,0, "de");//networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();

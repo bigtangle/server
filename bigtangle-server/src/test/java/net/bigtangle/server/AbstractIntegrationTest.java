@@ -86,7 +86,6 @@ import net.bigtangle.server.service.OrdermatchService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
-import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.DomainnameUtil;
@@ -171,7 +170,7 @@ public abstract class AbstractIntegrationTest {
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         Token token_ = getTokensResponse.getTokens().get(0);
-        assertTrue(token_.getDomainname().equals(domainname));
+        assertTrue(token_.getDomainName().equals(domainname));
     }
 
     public void initWalletKeysMapper() throws Exception {
@@ -195,30 +194,25 @@ public abstract class AbstractIntegrationTest {
     @Before
     public void setUp() throws Exception {
         Utils.unsetMockClock();
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
+
+        this.walletKeys();
+        this.initWalletKeysMapper();
+//        store.resetStore(new DatabaseStoreCallback() {
+//            @Override
+//            public void callback() {
+//                try {
+//                    testCreateDomainToken();
+//                } catch (Exception e) {
+//                    log.error("testCreateDomainToken", e);
+//                }
+//            }
+//        });
     }
 
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Make the "test" token
         Block block = null;
@@ -227,7 +221,7 @@ public abstract class AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount, true, 0, "de");
+                amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -772,7 +766,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         long amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true, 0, "de");
+        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -858,7 +852,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
-                false, 0, "de");
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
@@ -966,7 +960,7 @@ public abstract class AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
-                false, 0, "de");
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(1);
@@ -1000,10 +994,14 @@ public abstract class AbstractIntegrationTest {
         Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         
-        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
-        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
-        String pubKeyHex = multiSignAddress.getPubKeyHex();
-        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
+//        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+//        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
+//        String pubKeyHex = multiSignAddress.getPubKeyHex();
+//        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
+//        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+//                Utils.HEX.decode(NetworkParameters.testPub));
+//        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), genesiskey, null);
+        // TODO not working
         return block;
     }
 
@@ -1015,18 +1013,18 @@ public abstract class AbstractIntegrationTest {
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException, Exception {
         
-        final String tokenid = tokenInfo.getToken().getTokenid();
-        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
-        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
-        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
-                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
-                final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
-            }
-        }
-        
-        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
+//        final String tokenid = tokenInfo.getToken().getTokenid();
+//        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+//        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+//        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+//                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+//            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+//                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+//                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+//            }
+//        }
+//        
+//        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
@@ -1048,10 +1046,10 @@ public abstract class AbstractIntegrationTest {
 
         Sha256Hash sighash = transaction.getHash();
 
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
         multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
         multiSignBy0.setTokenindex(0);
@@ -1059,6 +1057,19 @@ public abstract class AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
+        
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash, aesKey);
+        byte[] buf2 = party2Signature.encodeToDER();
+        multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(genesiskey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(genesiskey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf2));
+        multiSignBies.add(multiSignBy0);
+
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
@@ -1079,7 +1090,7 @@ public abstract class AbstractIntegrationTest {
         int signnumber = 3;
 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, amount, false, 0, domainname);
+                signnumber, tokenindex_, amount, false, 0, domainname, networkParameters.getGenesisBlock().getHashAsString());
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -1114,6 +1125,10 @@ public abstract class AbstractIntegrationTest {
         String pubKeyHex = multiSignAddress.getPubKeyHex();
         ECKey outKey = this.walletKeyData.get(pubKeyHex);
         this.pullBlockDoMultiSign(tokenid, outKey, aesKey);
+
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        this.pullBlockDoMultiSign(tokenid, genesiskey, null);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -1155,7 +1170,7 @@ public abstract class AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
-    public void pullBlockDoMultiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
+    public Block pullBlockDoMultiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
         String address = outKey.toAddress(networkParameters).toBase58();
@@ -1194,11 +1209,12 @@ public abstract class AbstractIntegrationTest {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
+        return block0;
     }
 
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainname()));
+        requestParam.put("domainid", DomainnameUtil.matchParentDomainname(token.getDomainPredecessorBlockHash()));
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,

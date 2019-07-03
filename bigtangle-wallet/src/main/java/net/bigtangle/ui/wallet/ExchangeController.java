@@ -145,7 +145,7 @@ public class ExchangeController {
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
-            String url ="https://"+ tokens.getDomainname();
+            String url ="https://"+ tokens.getDomainName();
             log.debug(url);
             if (url == null || url.isEmpty()) {
                 continue;
@@ -507,7 +507,7 @@ public class ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        String marketURL = getTokensResponse.getTokens().get(0).getDomainname();
+        String marketURL = getTokensResponse.getTokens().get(0).getDomainName();
 
         if (marketURL == null || marketURL.equals("")) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m1"), Main.getText("ex_c_d1"));

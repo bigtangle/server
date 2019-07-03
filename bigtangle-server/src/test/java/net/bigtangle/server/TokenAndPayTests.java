@@ -474,7 +474,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), -1, 0, amount, false,0,"de");
+                UUID.randomUUID().toString(), -1, 0, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -502,7 +502,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, 0, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, 0, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -538,7 +538,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
@@ -575,7 +575,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -616,7 +616,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -697,7 +697,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -776,7 +776,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
@@ -843,7 +843,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
             Coin basecoin = Coin.valueOf(100000L, pubKey);
             long amount = basecoin.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test",
-                   "test", 2, 0, amount, false,0,"de");
+                   "test", 2, 0, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo.setToken(tokens);
 
             // add MultiSignAddress item
@@ -909,7 +909,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         long tokenindex1 = 1;
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex1, amount, false,0,"de");
+                UUID.randomUUID().toString(), 3, tokenindex1, amount, false,0,networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(0);
@@ -1063,7 +1063,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), 3, tokenindex_, amount, false, 0, "de");
+                UUID.randomUUID().toString(), 3, tokenindex_, amount, false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         ECKey key1 = keys.get(0);

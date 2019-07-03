@@ -369,7 +369,7 @@ public class OrderController extends ExchangeController {
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
-            String url ="https://"+ tokens.getDomainname();
+            String url ="https://"+ tokens.getDomainName();
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -700,7 +700,7 @@ public class OrderController extends ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         Token token_ = getTokensResponse.getTokens().get(0);
 
-        String url ="https://"+ token_.getDomainname();
+        String url ="https://"+ token_.getDomainName();
         OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
