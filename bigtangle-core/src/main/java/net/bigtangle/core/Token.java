@@ -228,6 +228,10 @@ public class Token implements java.io.Serializable {
         this.decimals = decimals;
     }
 
+    public String tokennameDisplay() {
+       return  tokenname +"@" + domainName;
+    }
+   
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,

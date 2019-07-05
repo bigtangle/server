@@ -483,7 +483,7 @@ example
  signatures: user + domainname token
    
 
-### display with tokenname + domainname +":"+ tokenid
+### display with tokenname +"@" + domainname +":"+ tokenid
 
 ### test of missing prev blocks and resync
 
