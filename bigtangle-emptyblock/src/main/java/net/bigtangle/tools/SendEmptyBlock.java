@@ -42,15 +42,16 @@ import okhttp3.OkHttpClient;
 
 public class SendEmptyBlock {
 
-    private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.info/";
+    private static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
     private static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
+    private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
     public static NetworkParameters params = MainNetParams.get();
 
     OkHttpClient client = new OkHttpClient();
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    public String CONTEXT_ROOT = HTTPS_BIGTANGLE_DE;
+    public String CONTEXT_ROOT = HTTPS_BIGTANGLE_ORG;
 
     // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
