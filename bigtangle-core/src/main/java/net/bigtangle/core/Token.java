@@ -13,7 +13,8 @@ public class Token implements java.io.Serializable {
             String predecessingDomainBlockHash) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null, predecessingDomainBlockHash);
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null,
+                predecessingDomainBlockHash);
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
@@ -58,10 +59,10 @@ public class Token implements java.io.Serializable {
     // indicator of the prev token index blockhash
     private String prevblockhash;
 
-    private String blockhash; 
-    private long amount; 
+    private String blockhash;
+    private long amount;
     private int decimals = 0; // number of decimals for the token, default
-                                  // integer
+                              // integer
     // classification of a token, can be null, optional for query only
     private String classification;
     // language of the token, can be null, optional for query only
@@ -149,14 +150,14 @@ public class Token implements java.io.Serializable {
     }
 
     public String getDomainPredecessorBlockHash() {
-		return domainPredecessorBlockHash;
-	}
+        return domainPredecessorBlockHash;
+    }
 
-	public void setDomainPredecessorBlockHash(String domainPredecessorBlockHash) {
-		this.domainPredecessorBlockHash = domainPredecessorBlockHash;
-	}
+    public void setDomainPredecessorBlockHash(String domainPredecessorBlockHash) {
+        this.domainPredecessorBlockHash = domainPredecessorBlockHash;
+    }
 
-	public Boolean getRevoked() {
+    public Boolean getRevoked() {
         return revoked;
     }
 
@@ -228,10 +229,10 @@ public class Token implements java.io.Serializable {
         this.decimals = decimals;
     }
 
-    public String tokennameDisplay() {
-       return  tokenname +"@" + domainName;
+    public String getTokennameDisplay() {
+        return tokenname + "@" + domainName;
     }
-   
+
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
@@ -241,7 +242,7 @@ public class Token implements java.io.Serializable {
         tokens.setTokenname(tokenname);
         tokens.setDescription(description);
         tokens.tokenstop = tokenstop;
-        tokens.tokentype = tokentype; 
+        tokens.tokentype = tokentype;
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
@@ -272,9 +273,9 @@ public class Token implements java.io.Serializable {
         tokens.tokenindex = 0;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
-        
+
         // TODO unmaintained, missing fields
-        
+
         return tokens;
     }
 
@@ -292,19 +293,20 @@ public class Token implements java.io.Serializable {
         tokens.tokenindex = 1;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
-        
+
         // TODO unmaintained, missing fields
-        
+
         return tokens;
     }
 
     @Override
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
-                + tokenname + ", description=" + description + ", url=" + domainName + ", domainpred=" + domainPredecessorBlockHash + ", signnumber=" + signnumber
-                + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
-                + ", blockhash=" + blockhash + ", amount=" + amount + ", revoked=" + revoked + ", classification="
-                + classification + ", language=" + language + ", tokenKeyValues=" + tokenKeyValues + "]";
+                + tokenname + ", description=" + description + ", url=" + domainName + ", domainpred="
+                + domainPredecessorBlockHash + ", signnumber=" + signnumber + ", tokentype=" + tokentype
+                + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash
+                + ", amount=" + amount + ", revoked=" + revoked + ", classification=" + classification + ", language="
+                + language + ", tokenKeyValues=" + tokenKeyValues + "]";
     }
 
 }
