@@ -63,6 +63,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
@@ -70,6 +71,7 @@ import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -85,6 +87,8 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
+import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
@@ -99,6 +103,7 @@ import net.bigtangle.signers.LocalTransactionSigner;
 import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
+import net.bigtangle.utils.DomainnameUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -2674,6 +2679,64 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+    }
+    
+    public void publishDomainName(List<ECKey> walletKeys, String tokenid, String tokenname, String domainname, KeyParameter aesKey) 
+            throws Exception {
+        int amount = 678900000;
+
+
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+        TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
+
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+
+        int signnumber = 3;
+
+        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
+                signnumber, tokenindex_, amount, false, 0, domainname);
+        TokenInfo tokenInfo = new TokenInfo();
+        tokenInfo.setToken(tokens);
+
+        List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
+        tokenInfo.setMultiSignAddresses(multiSignAddresses);
+
+        for (ECKey ecKey : walletKeys) {
+            multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
+        }
+
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokens);
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
+
+        signnumber++;
+        tokens.setSignnumber(signnumber);
+        saveToken(tokenInfo, basecoin, walletKeys.get(0), aesKey);
+    }
+    
+    public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
+        return tokenIndexResponse;
+    }
+    
+    public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainname()));
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.queryPermissionedAddresses.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
+                PermissionedAddressesResponse.class);
+        return permissionedAddressesResponse;
     }
 
     public boolean isAllowClientMining() {
