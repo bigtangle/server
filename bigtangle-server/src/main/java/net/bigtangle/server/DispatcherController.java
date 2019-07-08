@@ -420,9 +420,9 @@ public class DispatcherController {
             case queryPermissionedAddresses: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                final String domainname = (String) request.get("domainname");
+                final String domainid = (String) request.get("domainid");
                 PermissionedAddressesResponse response = this.tokenDomainnameService
-                        .queryDomainnameTokenPermissionedAddresses(domainname);
+                        .queryDomainnameTokenPermissionedAddresses(domainid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

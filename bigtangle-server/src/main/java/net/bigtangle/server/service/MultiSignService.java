@@ -43,17 +43,18 @@ public class MultiSignService {
     protected FullPrunedBlockStore store;
     @Autowired
     protected ValidatorService validatorService;
+    @Autowired
+    protected NetworkParameters params;
 
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address) throws BlockStoreException {
-        if (StringUtils.isBlank(tokenid)) {
+//        if (StringUtils.isBlank(tokenid)) {
             List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
-        }
-        else {
-            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
-            return MultiSignResponse.createMultiSignResponse(multiSigns);
-        }
-       
+//        }
+//        else {
+//            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
+//            return MultiSignResponse.createMultiSignResponse(multiSigns);
+//        }
     }
 
     public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
@@ -123,6 +124,18 @@ public class MultiSignService {
                 multiSignAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
                         prevblockhash);
             }
+            
+            // Also needs domain owner signature
+            Token prevToken = store.getToken(tokens.getDomainPredecessorBlockHash());
+            List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
+                    prevToken.getTokenid(), prevToken.getBlockhash());
+            multiSignAddresses.addAll(permissionedAddresses);
+            
+//            ECKey genesisTestKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+//                    Utils.HEX.decode(NetworkParameters.testPub));
+//            Address genesisAddress = genesisTestKey.toAddress(params);
+//            MultiSignAddress permissionedAddress = new MultiSignAddress(tokens.getTokenid(), genesisAddress.toBase58(), genesisTestKey.getPublicKeyAsHex());
+//            multiSignAddresses.add(permissionedAddress);
 
             if (multiSignAddresses.size() == 0) {
                 multiSignAddresses = tokenInfo.getMultiSignAddresses();
@@ -199,7 +212,7 @@ public class MultiSignService {
                 throw new BlockStoreException("tokens already exist");
             }
             
-            if (StringUtils.isBlank(tokens.getDomainname())) {
+            if (StringUtils.isBlank(tokens.getDomainName())) {
                 throw new BlockStoreException("tokens domainname empty");
             }
             
@@ -274,9 +287,9 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
-        if (this.checkMultiSignPre(block, allowConflicts)) {
+//        if (this.checkMultiSignPre(block, allowConflicts)) {
         // TODO use this and fix errors in TokenAndPayTests:
-//        if (validatorService.checkTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
+        if (validatorService.checkTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
             this.saveMultiSign(block);
             blockService.saveBlock(block);
         } else {

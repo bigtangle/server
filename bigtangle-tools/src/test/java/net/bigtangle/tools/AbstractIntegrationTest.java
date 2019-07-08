@@ -139,7 +139,6 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Transaction createTestGenesisTransaction() throws Exception {
-		@SuppressWarnings("deprecation")
 		ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		List<UTXO> outputs = getBalance(false, genesiskey);
 		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
@@ -264,7 +263,6 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	// transfer the coin from protected testPub to address in wallet
-	@SuppressWarnings("deprecation")
 	protected void testInitTransferWallet() throws Exception {
 		ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
@@ -290,7 +288,7 @@ public abstract class AbstractIntegrationTest {
 		Coin basecoin = Coin.valueOf(77777L, pubKey);
 		long amount = basecoin.getValue();
 
-		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0, "de");
+		Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true,0, networkParameters.getGenesisBlock().getHashAsString());
 		tokenInfo.setToken(tokens);
 
 		// add MultiSignAddress item
@@ -377,7 +375,7 @@ public abstract class AbstractIntegrationTest {
 		String prevblockhash = tokenIndexResponse.getBlockhash();
 
 		Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, tokename, 1, tokenindex_,
-				amount,  false,0,"de");
+				amount,  false,0,networkParameters.getGenesisBlock().getHashAsString());
 		tokenInfo.setToken(tokens);
 
 		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));

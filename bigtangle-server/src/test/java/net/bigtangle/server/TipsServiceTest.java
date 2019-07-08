@@ -303,7 +303,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false, 0, "de");
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -316,7 +316,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Coin coinbase2 = Coin.valueOf(666, pubKey);
             long amount2 = coinbase2.getValue();
             Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount2, true, 0, "de");
+                    "Test", 1, 1, amount2, true, 0,networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -327,7 +327,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             Coin coinbase2 = Coin.valueOf(666, pubKey);
             long amount2 = coinbase2.getValue();
             Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                    "Test", 1, 1, amount2, true, 0, "de");
+                    "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -389,7 +389,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                false, 0, "de");
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -400,7 +400,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true, 0, "de");
+                "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -410,7 +410,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase3 = Coin.valueOf(666, pubKey);
         long amount3 = coinbase3.getValue();
         Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount3, true, 0, "de");
+                "Test", 1, 1, amount3, true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -473,7 +473,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true, 0, "de");
+                true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -542,7 +542,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
-                true, 0, "de");
+                true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -555,7 +555,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Coin coinbase2 = Coin.valueOf(6666, pubKey);
         long amount2 = coinbase2.getValue();
         Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0, amount2,
-                false, 0, "de");
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));

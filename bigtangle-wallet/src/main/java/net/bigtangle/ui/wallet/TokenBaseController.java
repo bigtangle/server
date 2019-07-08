@@ -199,7 +199,7 @@ public class TokenBaseController {
                 tokenData.add(map);
             }
         }
-        tokennameColumn.setCellValueFactory(new MapValueFactory("tokenname"));
+        tokennameColumn.setCellValueFactory(new MapValueFactory("tokennameDisplay"));
         amountColumn.setCellValueFactory(new MapValueFactory("amount"));
         descriptionColumn.setCellValueFactory(new MapValueFactory("description"));
         blocktypeColumn.setCellValueFactory(new MapValueFactory("blocktype"));
