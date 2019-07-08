@@ -2695,7 +2695,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         int signnumber = 3;
 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, amount, false, 0, domainname);
+                signnumber, tokenindex_, amount, false, 0, domainname, "");
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2731,7 +2731,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainname()));
+        requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainName()));
         String resp = OkHttp3Util.postString(serverurl + ReqCmd.queryPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
