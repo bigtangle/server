@@ -1892,7 +1892,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 // always
                 // get us to 1
                 checkState(selection2 == null);
-              
+
                 selection2 = selection;
                 selection2Change = checkNotNull(changeOutput); // If we get
                                                                // no
@@ -2108,14 +2108,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * spendpending has timeout for 5 minute
      */
     public boolean checkSpendpending(UTXO output) throws IOException {
-        if(output.isSpendPending()
-                || (System.currentTimeMillis()  -  output.getSpendPendingTime()) < SPENTPENDINGTIMEOUT) {
-           return true;
+        if (output.isSpendPending()
+                || (System.currentTimeMillis() - output.getSpendPendingTime()) < SPENTPENDINGTIMEOUT) {
+            return true;
         }
-        
+
         return false;
 
     }
+
     // All Spend Candidates as List<UTXO>
     public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns) throws IOException {
         lock.lock();
@@ -2393,9 +2394,32 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long>
     // giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
+    // and repeat 3 times and wait as there may be a transaction pending for
+    // this key
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, 3, 600000);
+    }
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+            int repeat, int sleep) throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        // int sleep = 60000;
+        try {
+            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
+        } catch (InsufficientMoneyException e) {
+
+            if (repeat > 0) {
+                repeat -= 1;
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e1) {
+                }
+                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, repeat, sleep);
+            }
+        }
+        return null;
+
     }
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
@@ -2575,7 +2599,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return block;
     }
 
-    public void paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
+    public Block paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
             Coin coin, Address address) throws JsonProcessingException, IOException {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -2613,6 +2637,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        return rollingBlock;
     }
 
     public ECKey getECKey(KeyParameter aesKey, String address) throws UTXOProviderException {
@@ -2628,7 +2653,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new UTXOProviderException("no key in wallet is found for this address " + address);
     }
 
-    public void pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
+    public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2652,9 +2677,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        return rollingBlock;
     }
 
-    public void payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
+    public Block payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2672,6 +2698,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         request.aesKey = aesKey;
         request.tx.setMemo(memo);
         completeTx(request, aesKey);
+
         rollingBlock.addTransaction(request.tx);
         if (allowClientMining && clientMiningAddress != null) {
             rollingBlock.setMinerAddress(clientMiningAddress);
@@ -2679,12 +2706,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        return rollingBlock;
     }
-    
-    public void publishDomainName(List<ECKey> walletKeys, String tokenid, String tokenname, String domainname, KeyParameter aesKey) 
-            throws Exception {
-        int amount = 678900000;
 
+    public Block publishDomainName(List<ECKey> walletKeys, String tokenid, String tokenname, String domainname,
+            KeyParameter aesKey, int amount, String description, int signnumber) throws Exception {
 
         Coin basecoin = Coin.valueOf(amount, tokenid);
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
@@ -2692,10 +2718,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        int signnumber = 3;
-
-        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, amount, false, 0, domainname, "");
+        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, description, signnumber,
+                tokenindex_, amount, false, 0, domainname, "");
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2717,9 +2741,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         signnumber++;
         tokens.setSignnumber(signnumber);
-        saveToken(tokenInfo, basecoin, walletKeys.get(0), aesKey);
+        return saveToken(tokenInfo, basecoin, walletKeys.get(0), aesKey);
     }
-    
+
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("tokenid", tokenid);
@@ -2728,7 +2752,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
     }
-    
+
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainName()));
