@@ -47,14 +47,14 @@ public class MultiSignService {
     protected NetworkParameters params;
 
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address) throws BlockStoreException {
-//        if (StringUtils.isBlank(tokenid)) {
+        if (StringUtils.isBlank(tokenid)) {
             List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
-//        }
-//        else {
-//            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
-//            return MultiSignResponse.createMultiSignResponse(multiSigns);
-//        }
+        }
+        else {
+            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
+            return MultiSignResponse.createMultiSignResponse(multiSigns);
+        }
     }
 
     public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
@@ -129,6 +129,9 @@ public class MultiSignService {
             Token prevToken = store.getToken(tokens.getDomainPredecessorBlockHash());
             List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
                     prevToken.getTokenid(), prevToken.getBlockhash());
+            for (MultiSignAddress permissionedAddress : permissionedAddresses) {
+            	permissionedAddress.setTokenid(tokens.getTokenid());
+            }
             multiSignAddresses.addAll(permissionedAddresses);
             
 //            ECKey genesisTestKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),

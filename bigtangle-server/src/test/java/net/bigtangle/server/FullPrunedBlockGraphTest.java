@@ -539,16 +539,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 

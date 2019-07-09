@@ -108,8 +108,6 @@ public class ValidatorService {
     private TransactionService transactionService;
     @Autowired
     private NetworkParameters params;
-    @Autowired
-    private TokenDomainnameService tokenDomainnameService;
 
     private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 

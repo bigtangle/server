@@ -58,7 +58,6 @@ import net.bigtangle.core.exception.VerificationException.InvalidTransactionData
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.exception.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.MissingDependencyException;
-import net.bigtangle.core.exception.VerificationException.MissingSignatureException;
 import net.bigtangle.core.exception.VerificationException.MissingTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.NegativeValueOutput;
 import net.bigtangle.core.exception.VerificationException.NotCoinbaseException;
@@ -1881,14 +1880,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             }
         }, new TestCase() {
             @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
+            public void preApply(TokenInfo tokenInfo5) { // 45
+        		// TODO these tokenids are useless as they are overwritten anyways
                 tokenInfo5.getMultiSignAddresses().get(0).setTokenid("test");
             }
 
             @Override
             public boolean expectsException() {
-                return true;
+                return false;
 
             }
         }, new TestCase() {
@@ -1934,6 +1933,22 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
                 multiSignBy0.setSignature(Utils.HEX.encode(buf1));
                 multiSignBies.add(multiSignBy0);
+                
+                ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                        Utils.HEX.decode(NetworkParameters.testPub));
+                ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
+                byte[] buf2 = party2Signature.encodeToDER();
+                multiSignBy0 = new MultiSignBy();
+                if (tokenInfo.getToken() != null && tokenInfo.getToken().getTokenid() != null)
+                    multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
+                else
+                    multiSignBy0.setTokenid(Utils.HEX.encode(outKey.getPubKey()));
+                multiSignBy0.setTokenindex(0);
+                multiSignBy0.setAddress(genesiskey.toAddress(networkParameters).toBase58());
+                multiSignBy0.setPublickey(Utils.HEX.encode(genesiskey.getPubKey()));
+                multiSignBy0.setSignature(Utils.HEX.encode(buf2));
+                multiSignBies.add(multiSignBy0);
+                
                 MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
                 transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
             }
@@ -1961,7 +1976,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(8);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1991,6 +2006,22 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
+        
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
+        byte[] buf2 = party2Signature.encodeToDER();
+        multiSignBy0 = new MultiSignBy();
+        if (tokenInfo.getToken() != null && tokenInfo.getToken().getTokenid() != null)
+            multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
+        else
+            multiSignBy0.setTokenid(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setTokenindex(0);
+        multiSignBy0.setAddress(genesiskey.toAddress(networkParameters).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(genesiskey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf2));
+        multiSignBies.add(multiSignBy0);
+        
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
@@ -2112,12 +2143,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
             blockGraph.add(block1, false);
             fail();
-        } catch (MissingSignatureException e) {
+        } catch (VerificationException e) {
         }
         try {
             blockGraph.add(block2, false);
             fail();
-        } catch (MissingSignatureException e) {
+        } catch (VerificationException e) {
         }
 
         try {
@@ -2135,7 +2166,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (VerificationException e) {
             fail();
         }
-
         try {
             blockGraph.add(block6, false);
             fail();
