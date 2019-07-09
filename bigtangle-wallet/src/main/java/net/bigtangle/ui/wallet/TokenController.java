@@ -517,29 +517,38 @@ public class TokenController extends TokenBaseController {
 
     public void saveToken(ActionEvent event) {
         try {
-
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
-
-            TokenInfo tokenInfo = new TokenInfo();
-
-            Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
-            long amount = basecoin.getValue();
-
-            Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(), stockName.getText().trim(),
-                    stockDescription.getText().trim(), 1, 0, amount, true, 0, "de");
-            tokens.setDomainName(stockUrl.getText().trim());
-            tokenInfo.setToken(tokens);
             // outKey must be the same key as tokenid
             ECKey outKey = null;
             for (ECKey key : issuedKeys) {
-                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
+                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokenid.getValue().trim())) {
                     outKey = key;
                 }
             }
-            // add MultiSignAddress item
-            tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            saveToken(tokenInfo, basecoin, outKey);
+            if (domainnametypeCheckBox.selectedProperty().get()) {
+                List<ECKey> walletKeys = new ArrayList<>();
+                walletKeys.add(outKey);
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, tokenid.getValue().trim(),
+                        stockName.getText().trim(), stockUrl.getText().trim(), Main.getAesKey(),
+                        Integer.valueOf(stockAmount.getText()), stockDescription.getText().trim(), 1);
+            } else {
+
+                TokenInfo tokenInfo = new TokenInfo();
+
+                Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
+                long amount = basecoin.getValue();
+
+                Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(),
+                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, amount, true, 0, "de");
+                tokens.setDomainName(stockUrl.getText().trim());
+                tokenInfo.setToken(tokens);
+
+                // add MultiSignAddress item
+                tokenInfo.getMultiSignAddresses()
+                        .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                saveToken(tokenInfo, basecoin, outKey);
+            }
+
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
