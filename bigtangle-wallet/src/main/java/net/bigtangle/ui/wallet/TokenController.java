@@ -764,7 +764,33 @@ public class TokenController extends TokenBaseController {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
-            multiPublsih(issuedKeys);
+
+            ECKey outKey = null;
+            for (ECKey key : issuedKeys) {
+                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokenid1.getValue().trim())) {
+                    outKey = key;
+                }
+            }
+
+            if (domainnametypeCheckBox1.selectedProperty().get()) {
+                List<ECKey> walletKeys = new ArrayList<>();
+                walletKeys.add(outKey);
+                if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
+                    for (String pubKeyHex : signAddrChoiceBox.getItems()) {
+                        if (pubKeyHex.equals(outKey.getPublicKeyAsHex())) {
+                            continue;
+                        }
+                        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                        walletKeys.add(ecKey);
+                    }
+                }
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, tokenid1.getValue().trim(),
+                        stockName1.getText().trim(), urlTF.getText().trim(), Main.getAesKey(),
+                        Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim(), 1);
+            } else {
+                multiPublsih(issuedKeys);
+            }
+
             // tabPane.getSelectionModel().clearAndSelect(4);
         } catch (IgnoreServiceException e) {
         } catch (Exception e) {
