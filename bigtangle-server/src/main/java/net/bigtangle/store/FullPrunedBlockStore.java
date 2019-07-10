@@ -517,7 +517,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
 
-    Token queryDomainnameToken(String domainid) throws BlockStoreException;
+    Token queryDomainnameToken(String domainPredecessorBlockHash) throws BlockStoreException;
 
     int getCountTokenByDomainnameNumber(String domainname) throws BlockStoreException;
 

@@ -297,7 +297,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
-    protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE domainname = ? AND tokentype = 3 limit 1";
+    protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = ? limit 1";
 
     protected final String COUNT_TOKENS_BY_DOMAINNAME_SQL = "SELECT count(1) as n FROM tokens WHERE domainname = ? AND tokentype = 3";
 
@@ -6454,12 +6454,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Token queryDomainnameToken(String domainid) throws BlockStoreException {
+    public Token queryDomainnameToken(String domainPredecessorBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
-            preparedStatement.setString(1, domainid);
+            preparedStatement.setString(1, domainPredecessorBlockHash);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 Token tokens = new Token();

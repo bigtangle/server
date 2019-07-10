@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PermissionDomainname;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -26,19 +26,21 @@ public class TokenDomainnameService {
     protected FullPrunedBlockStore store;
     @Autowired
     private ServerConfiguration serverConfiguration;
+    @Autowired
+    private NetworkParameters networkParameters;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenDomainnameService.class);
 
     /**
      * query token type is domainname
      * 
-     * @param domainid
+     * @param domainPredecessorBlockHash
      * @return
      * @throws BlockStoreException
      */
-    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainid)
+    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainPredecessorBlockHash)
             throws BlockStoreException {
-        List<MultiSignAddress> multiSignAddresses = this.queryDomainnameTokenMultiSignAddresses(domainid);
+        List<MultiSignAddress> multiSignAddresses = this.queryDomainnameTokenMultiSignAddresses(domainPredecessorBlockHash);
         PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
                 .create(false, multiSignAddresses);
         return response;
@@ -47,12 +49,12 @@ public class TokenDomainnameService {
     /** 
      * get domainname token multi sign address
      * 
-     * @param domainid
+     * @param domainPredecessorBlockHash
      * @return
      * @throws BlockStoreException
      */
-    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainid) throws BlockStoreException {
-        if (StringUtils.isBlank(domainid)) {
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainPredecessorBlockHash) throws BlockStoreException {
+        if (domainPredecessorBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
             for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
                     .iterator(); iterator.hasNext();) {
@@ -62,7 +64,7 @@ public class TokenDomainnameService {
             }
             return multiSignAddresses;
         } else {
-            Token token = this.store.queryDomainnameToken(domainid);
+            Token token = this.store.queryDomainnameToken(domainPredecessorBlockHash);
             if (token == null)
                 throw new BlockStoreException("token not found");
 

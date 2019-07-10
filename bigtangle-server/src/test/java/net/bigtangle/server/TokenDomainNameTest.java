@@ -1,7 +1,5 @@
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertTrue;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,35 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.utils.DomainnameUtil;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TokenDomainNameTest extends AbstractIntegrationTest {
-
-    @Test
-    public void calcDomainname() {
-        String de = "de";
-        System.out.println(DomainnameUtil.matchParentDomainname(de));
-    }
-
-    @Test
-    public void testDomainnameSubstr() {
-        String domainname = "bigtangle.de";
-        String str = DomainnameUtil.matchParentDomainname(domainname);
-        System.out.println("domainname : " + domainname + ", str : " + str);
-        assertTrue(str.contentEquals("de"));
-
-        domainname = "www.bigtangle.de";
-        str = DomainnameUtil.matchParentDomainname(domainname);
-        System.out.println("domainname : " + domainname + ", str : " + str);
-        assertTrue(str.contentEquals("bigtangle.de"));
-
-        domainname = ".de";
-        str = DomainnameUtil.matchParentDomainname(domainname);
-        System.out.println("domainname : " + domainname + ", str : " + str);
-        assertTrue(str.contentEquals("de"));
-    }
 
     @Test
     public void testCreateDomainTokenBatch() throws Exception {

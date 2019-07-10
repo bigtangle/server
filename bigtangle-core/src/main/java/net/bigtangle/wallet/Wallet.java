@@ -103,7 +103,6 @@ import net.bigtangle.signers.LocalTransactionSigner;
 import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
-import net.bigtangle.utils.DomainnameUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -2755,7 +2754,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainname", DomainnameUtil.matchParentDomainname(token.getDomainName()));
+        requestParam.put("domainPredecessorBlockHash", token.getDomainPredecessorBlockHash());
         String resp = OkHttp3Util.postString(serverurl + ReqCmd.queryPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,

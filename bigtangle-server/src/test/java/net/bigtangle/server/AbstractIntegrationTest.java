@@ -88,7 +88,6 @@ import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.DomainnameUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -1104,6 +1103,7 @@ public abstract class AbstractIntegrationTest {
 
         int signnumber = 3;
 
+        // TODO domainname create token 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
                 signnumber, tokenindex_, amount, false, 0, domainname, networkParameters.getGenesisBlock().getHashAsString());
         TokenInfo tokenInfo = new TokenInfo();
@@ -1229,7 +1229,7 @@ public abstract class AbstractIntegrationTest {
 
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainid", DomainnameUtil.matchParentDomainname(token.getDomainPredecessorBlockHash()));
+        requestParam.put("domainPredecessorBlockHash", token.getDomainPredecessorBlockHash());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
