@@ -53,7 +53,9 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -681,9 +683,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Then unconfirm the block itself
         unconfirmBlock(block);
 
-        // Then clear own dependencies since no longer confirmed
-        blockStore.removeDependents(block.getHash());
-
         // Set milestone false and reset milestonedepth
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
         blockStore.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockHash(), -1);
@@ -702,6 +701,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Sha256Hash dependent : blockStore.getDependents(block.getHash())) {
             removeBlockFromMilestone(dependent, traversedBlockHashes);
         }
+
+        // Then clear own dependencies since no longer confirmed
+        blockStore.removeDependents(block.getHash());
 
         // Disconnect all transaction output dependents
         for (Transaction tx : block.getTransactions()) {
@@ -812,6 +814,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Disconnect token record spender
         if (blockStore.getTokenSpent(block.getHashAsString())) {
             removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
+        }
+        
+        // If applicable: Disconnect all domain definitions that were based on this domain
+        Token token = blockStore.getToken(block.getHashAsString());
+		if (token.getTokentype() == TokenType.domainname.ordinal()) {
+        	List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
+        	for (String b : dependents) {
+                removeBlockFromMilestone(Sha256Hash.wrap(b), traversedBlockHashes);
+        	}
         }
     }
 

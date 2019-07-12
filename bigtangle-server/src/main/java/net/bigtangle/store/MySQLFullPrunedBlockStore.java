@@ -152,7 +152,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    revoked boolean   ,\n" 
             + "    language char(2)   ,\n"
             + "    classification varchar(255)   ,\n"
-            + "    domainpredtokenid varchar(255) NOT NULL,\n"
+            + "    domainpredblockhash varchar(255) NOT NULL,\n"
             + "    decimals int ,\n" 
             + "    PRIMARY KEY (blockhash) \n)";
 

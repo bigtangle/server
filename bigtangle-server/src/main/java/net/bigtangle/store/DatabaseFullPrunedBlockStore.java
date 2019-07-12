@@ -257,11 +257,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "
             + "tokenname, description, domainname, signnumber,tokentype, tokenstop,"
-            + " prevblockhash, spent, spenderblockhash, tokenkeyvalues, revoked,language,classification, decimals, domainpredtokenid) "
+            + " prevblockhash, spent, spenderblockhash, tokenkeyvalues, revoked,language,classification, decimals, domainpredblockhash) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)";
 
     protected String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, signnumber,tokentype, tokenstop ,"
-            + "tokenkeyvalues, revoked,language,classification,decimals, domainpredtokenid ";
+            + "tokenkeyvalues, revoked,language,classification,decimals, domainpredblockhash ";
 
     protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = ?";
 
@@ -272,6 +272,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TOKEN_ANY_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
 
     protected final String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
+
+    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE domainname = ? AND domainpredblockhash = ? AND confirmed = true";
+
+    protected final String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM tokens WHERE domainpredblockhash = ? AND confirmed = true";
 
     protected final String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM tokens WHERE blockhash = ?";
 
@@ -2583,7 +2587,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
-                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredtokenid"));
+                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
                 if (buf != null) {
                     tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
@@ -2631,7 +2635,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
-                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredtokenid"));
+                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
                 if (buf != null) {
                     tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
@@ -2712,7 +2716,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
-                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredtokenid"));
+                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
                 if (buf != null) {
                     tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
@@ -2956,6 +2960,58 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             return getBlockWrap(Sha256Hash.wrap(resultSet.getString(1)));
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
+            preparedStatement.setString(1, domainName);
+            preparedStatement.setString(2, domainPred);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            return getBlockWrap(Sha256Hash.wrap(resultSet.getString(1)));
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<String> getDomainDescendantConfirmedBlocks(String domainPred) throws BlockStoreException {
+        List<String> storedBlocks = new ArrayList<String>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL);
+            preparedStatement.setString(1, domainPred);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                storedBlocks.add(resultSet.getString(1));
+            }
+            return storedBlocks;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -3353,7 +3409,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
-                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredtokenid"));
+                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
                 if (buf != null) {
                     tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
                 }
@@ -3400,7 +3456,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setRevoked(resultSet.getBoolean("revoked"));
                 tokens.setLanguage(resultSet.getString("language"));
                 tokens.setClassification(resultSet.getString("classification"));
-                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredtokenid"));
+                tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
                 byte[] buf = resultSet.getBytes("tokenkeyvalues");
                 if (buf != null) {
                     tokens.setTokenKeyValues(TokenKeyValues.parse(buf));

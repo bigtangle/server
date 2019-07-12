@@ -18,6 +18,7 @@ import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 
 /**
  * Wraps a {@link Block} object with extra data from the db
@@ -97,7 +98,7 @@ public class BlockWrap {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            // Dynamic conflicts: mining rewards require the previous reward
+            // Dynamic conflicts: mining rewards spend the previous reward
             try {
                 RewardInfo rewardInfo = RewardInfo.parse(this.getBlock().getTransactions().get(0).getData());
                 blockConflicts.add(ConflictCandidate.fromReward(this, rewardInfo));
@@ -108,9 +109,14 @@ public class BlockWrap {
             }
             break;
         case BLOCKTYPE_TOKEN_CREATION:
+            // Dynamic conflicts: tokens of same id and index conflict
             try {
                 TokenInfo tokenInfo = TokenInfo.parse(this.getBlock().getTransactions().get(0).getData());
                 blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));
+                
+                // Dynamic conflicts: if defining new domain, this domain name is also a conflict
+                if (tokenInfo.getToken().getTokentype() == TokenType.domainname.ordinal())
+                	blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
