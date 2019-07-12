@@ -2070,7 +2070,7 @@ public class ValidatorService {
             permissionedAddresses = currentToken.getMultiSignAddresses();
             MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
                     currentToken.getToken().getTokenid());
-            permissionedAddresses.add(firstTokenAddress);
+            //permissionedAddresses.add(firstTokenAddress);
             
             // Any first time issuances also require the domain signatures
             List<MultiSignAddress> prevDomainPermissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
