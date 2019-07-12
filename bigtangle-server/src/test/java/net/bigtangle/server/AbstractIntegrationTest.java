@@ -921,6 +921,10 @@ public abstract class AbstractIntegrationTest {
             System.out.println(resp);
 
             MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+            
+            if (multiSignResponse.getMultiSigns().isEmpty())
+            	continue;
+            
             String blockhashHex = multiSignResponse.getMultiSigns().get((int) tokenindex_).getBlockhashHex();
             byte[] payloadBytes = Utils.HEX.decode(blockhashHex);
 

@@ -116,16 +116,10 @@ public class MultiSignService {
             TokenInfo tokenInfo = TokenInfo.parse(buf);
             final Token tokens = tokenInfo.getToken();
 
-            List<MultiSignAddress> multiSignAddresses;
-            if (tokens.getTokentype() == TokenType.domainname.ordinal()) {
-                multiSignAddresses = tokenInfo.getMultiSignAddresses();
-            } else {
-                String prevblockhash = tokens.getPrevblockhash();
-                multiSignAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
-                        prevblockhash);
-            }
+            // Enter the required multisign addresses
+            List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
             
-            // Also needs domain owner signature
+            // Always needs domain owner signature
             Token prevToken = store.getToken(tokens.getDomainPredecessorBlockHash());
             List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
                     prevToken.getTokenid(), prevToken.getBlockhash());
@@ -133,17 +127,8 @@ public class MultiSignService {
             	permissionedAddress.setTokenid(tokens.getTokenid());
             }
             multiSignAddresses.addAll(permissionedAddresses);
-            
-//            ECKey genesisTestKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-//                    Utils.HEX.decode(NetworkParameters.testPub));
-//            Address genesisAddress = genesisTestKey.toAddress(params);
-//            MultiSignAddress permissionedAddress = new MultiSignAddress(tokens.getTokenid(), genesisAddress.toBase58(), genesisTestKey.getPublicKeyAsHex());
-//            multiSignAddresses.add(permissionedAddress);
 
-            if (multiSignAddresses.size() == 0) {
-                multiSignAddresses = tokenInfo.getMultiSignAddresses();
-            }
-
+            // Add the entries to DB
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
@@ -290,8 +275,6 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
-//        if (this.checkMultiSignPre(block, allowConflicts)) {
-        // TODO use this and fix errors in TokenAndPayTests:
         if (validatorService.checkTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
             this.saveMultiSign(block);
             blockService.saveBlock(block);
