@@ -63,6 +63,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -86,6 +87,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
@@ -2708,7 +2710,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
-    public Block publishDomainName(List<ECKey> walletKeys, String tokenid, String tokenname, String domainname,
+    public Block publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname, String domainPredecessorBlockHash,
             KeyParameter aesKey, int amount, String description, int signnumber) throws Exception {
 
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -2718,7 +2720,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex_, amount, false, 0, domainname, "");
+                tokenindex_, amount, false, 0, domainname, domainPredecessorBlockHash);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2740,7 +2742,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         signnumber++;
         tokens.setSignnumber(signnumber);
-        return saveToken(tokenInfo, basecoin, walletKeys.get(0), aesKey);
+        return saveToken(tokenInfo, basecoin, signKey, aesKey);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2760,6 +2762,47 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
         return permissionedAddressesResponse;
+    }
+    
+    public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+
+        String address = outKey.toAddress(params).toBase58();
+        requestParam.put("address", address);
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getMultiSignWithAddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
+
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
+        Block block = params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block.getTransactions().get(0);
+
+        List<MultiSignBy> multiSignBies = null;
+        if (transaction.getDataSignature() == null) {
+            multiSignBies = new ArrayList<MultiSignBy>();
+        } else {
+            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                    MultiSignByRequest.class);
+            multiSignBies = multiSignByRequest.getMultiSignBies();
+        }
+        Sha256Hash sighash = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+
+        multiSignBy0.setTokenid(multiSign.getTokenid());
+        multiSignBy0.setTokenindex(multiSign.getTokenindex());
+        multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
     public boolean isAllowClientMining() {
