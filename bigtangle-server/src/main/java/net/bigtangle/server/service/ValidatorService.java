@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jnr.ffi.Struct.int16_t;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
@@ -1999,6 +2000,7 @@ public class ValidatorService {
         // Get permissioned addresses
         Token prevToken = null;
         List<MultiSignAddress> permissionedAddresses =  new ArrayList<MultiSignAddress>();
+        int signNumberCount = 0;
         // If not initial issuance, we check according to the previous token
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
@@ -2009,6 +2011,7 @@ public class ValidatorService {
                         return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
                 }
+                signNumberCount = prevToken.getSignnumber();
 
                 // Compare members of previous and current issuance
                 if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
@@ -2065,6 +2068,8 @@ public class ValidatorService {
             SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses, txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
             	return domainPermission;
+            
+            signNumberCount = currentToken.getToken().getSignnumber();
         }
 
         // Get permissioned pubkeys wrapped to check for bytearray equality
@@ -2113,7 +2118,8 @@ public class ValidatorService {
         }
 
         // Return whether sufficient signatures exist
-        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
+         int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
+//        int requiredSignatureCount = signNumberCount;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 
