@@ -49,6 +49,10 @@ public class ConflictCandidate {
         return new ConflictCandidate(block, conflictPoint);
     }
 
+    public static ConflictCandidate fromDomainToken(BlockWrap block, Token token) {
+        return new ConflictCandidate(block, ConflictPoint.fromDomainToken(token));
+    }
+
 	public BlockWrap getBlock() {
         return block;
     }

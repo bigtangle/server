@@ -21,3 +21,4 @@ src/main/ixi/
 /cache/
 /.cache-main
 /.cache-tests
+/.toDelete

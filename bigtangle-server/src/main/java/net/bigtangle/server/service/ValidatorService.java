@@ -93,6 +93,7 @@ import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 @Service
 public class ValidatorService {
@@ -492,7 +493,7 @@ public class ValidatorService {
         return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
     }
 
-    private boolean isSpent(ConflictCandidate c) throws BlockStoreException {
+    private boolean hasSpentDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             return transactionService.getUTXOSpent(c.getConflictPoint().getConnectedOutpoint());
@@ -512,12 +513,15 @@ public class ValidatorService {
             return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
         case ORDERMATCH:
             return store.getOrderMatchingSpent(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
+        case DOMAINISSUANCE:
+            final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+            return store.getTokenSpent(connectedDomainToken.getDomainPredecessorBlockHash());
         default:
-            throw new RuntimeException("No Implementation");
+            throw new NotImplementedException();
         }
     }
 
-    private boolean isConfirmed(ConflictCandidate c) throws BlockStoreException {
+    private boolean hasConfirmedDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             return transactionService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint());
@@ -540,8 +544,11 @@ public class ValidatorService {
                     && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isMilestone();
         case ORDERMATCH:
             return store.getOrderMatchingConfirmed(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
+        case DOMAINISSUANCE:
+            final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+            return store.getTokenConfirmed(connectedDomainToken.getDomainPredecessorBlockHash());
         default:
-            throw new RuntimeException("No Implementation");
+            throw new NotImplementedException();
         }
     }
 
@@ -554,7 +561,7 @@ public class ValidatorService {
         // still unconfirmed
         return candidates.filter((ConflictCandidate c) -> {
             try {
-                return isSpent(c) || !isConfirmed(c);
+                return hasSpentDependencies(c) || !hasConfirmedDependencies(c);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
             }
@@ -702,7 +709,7 @@ public class ValidatorService {
         new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isMilestone())
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
                     try {
-                        return !isConfirmed(c); // Any candidates where used
+                        return !hasConfirmedDependencies(c); // Any candidates where used
                                                 // dependencies unconfirmed
                     } catch (BlockStoreException e) {
                         // Cannot happen.
@@ -1028,6 +1035,12 @@ public class ValidatorService {
             if (orderMatchSpender == null)
                 return null;
             return store.getBlockWrap(orderMatchSpender);
+        case DOMAINISSUANCE:
+            final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+
+            // The spender is always the one block with the same domainname and
+            // predecessing domain tokenid that is confirmed
+            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getDomainName(), connectedDomainToken.getDomainPredecessorBlockHash());
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -1036,7 +1049,7 @@ public class ValidatorService {
     private void filterSpent(Collection<ConflictCandidate> blockConflicts) {
         blockConflicts.removeIf(c -> {
             try {
-                return !isSpent(c);
+                return !hasSpentDependencies(c);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
                 return true;
