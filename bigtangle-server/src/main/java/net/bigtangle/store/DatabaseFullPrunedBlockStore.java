@@ -302,6 +302,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = ? limit 1";
+    
+    protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid FROM tokens WHERE domainname = ? AND tokentype = 3 limit 1";
 
     protected final String COUNT_TOKENS_BY_DOMAINNAME_SQL = "SELECT count(1) as n FROM tokens WHERE domainname = ? AND tokentype = 3";
 
@@ -505,27 +507,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
-     * instead of a hostname and password, and optionally allowing a schema to
-     * be specified.
+     * instead of a hostname and password, and optionally allowing a schema to be
+     * specified.
      * </p>
      *
-     * @param params
-     *            A copy of the NetworkParameters used.
-     * @param connectionURL
-     *            The jdbc url to connect to the database.
-     * @param fullStoreDepth
-     *            The number of blocks of history stored in full (something like
-     *            1000 is pretty safe).
-     * @param username
-     *            The database username.
-     * @param password
-     *            The password to the database.
-     * @param schemaName
-     *            The name of the schema to put the tables in. May be null if no
-     *            schema is being used.
-     * @throws BlockStoreException
-     *             If there is a failure to connect and/or initialise the
-     *             database.
+     * @param params         A copy of the NetworkParameters used.
+     * @param connectionURL  The jdbc url to connect to the database.
+     * @param fullStoreDepth The number of blocks of history stored in full
+     *                       (something like 1000 is pretty safe).
+     * @param username       The database username.
+     * @param password       The password to the database.
+     * @param schemaName     The name of the schema to put the tables in. May be
+     *                       null if no schema is being used.
+     * @throws BlockStoreException If there is a failure to connect and/or
+     *                             initialise the database.
      */
     public DatabaseFullPrunedBlockStore(NetworkParameters params, String connectionURL, int fullStoreDepth,
             @Nullable String username, @Nullable String password, @Nullable String schemaName)
@@ -760,16 +755,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * <p>
-     * If there isn't a connection on the {@link ThreadLocal} then create and
-     * store it.
+     * If there isn't a connection on the {@link ThreadLocal} then create and store
+     * it.
      * </p>
      * <p>
-     * This will also automatically set up the schema if it does not exist
-     * within the DB.
+     * This will also automatically set up the schema if it does not exist within
+     * the DB.
      * </p>
      * 
-     * @throws BlockStoreException
-     *             if successful connection to the DB couldn't be made.
+     * @throws BlockStoreException if successful connection to the DB couldn't be
+     *                             made.
      */
     protected void maybeConnect() throws BlockStoreException {
         try {
@@ -828,8 +823,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * </p>
      *
      * <p>
-     * This specifically checks for the 'settings' table and if it exists makes
-     * an assumption that the rest of the data structures are present.
+     * This specifically checks for the 'settings' table and if it exists makes an
+     * assumption that the rest of the data structures are present.
      * </p>
      *
      * @return If the tables exists.
@@ -854,10 +849,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Create the tables/block store in the database and
      * 
-     * @throws java.sql.SQLException
-     *             If there is a database error.
-     * @throws BlockStoreException
-     *             If the block store could not be created.
+     * @throws java.sql.SQLException If there is a database error.
+     * @throws BlockStoreException   If the block store could not be created.
      */
     private synchronized void createTables() throws SQLException, BlockStoreException {
         try {
@@ -918,10 +911,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * Create a new store for the given
      * {@link net.bigtangle.core.NetworkParameters}.
      * 
-     * @param params
-     *            The network.
-     * @throws BlockStoreException
-     *             If the store couldn't be created.
+     * @param params The network.
+     * @throws BlockStoreException If the store couldn't be created.
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
@@ -940,16 +931,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Token output table
             Token tokens = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true, 2, "bc", "");
+                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true,
+                    2, "bc", "");
             insertToken(params.getGenesisBlock().getHashAsString(), tokens);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
-            
+
             // Correctly insert additional data
-            ECKey genesisTestKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+            ECKey genesisTestKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                     Utils.HEX.decode(NetworkParameters.testPub));
             Address genesisAddress = genesisTestKey.toAddress(params);
-            MultiSignAddress permissionedAddress = new MultiSignAddress(tokens.getTokenid(), genesisAddress.toBase58(), genesisTestKey.getPublicKeyAsHex());
-            permissionedAddress.setBlockhash(params.getGenesisBlock().getHashAsString()); 
+            MultiSignAddress permissionedAddress = new MultiSignAddress(tokens.getTokenid(), genesisAddress.toBase58(),
+                    genesisTestKey.getPublicKeyAsHex());
+            permissionedAddress.setBlockhash(params.getGenesisBlock().getHashAsString());
             insertMultiSignAddress(permissionedAddress);
 
             // Tip table
@@ -1414,11 +1407,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Resets the store by deleting the contents of the tables and
-     * reinitialising them.
+     * Resets the store by deleting the contents of the tables and reinitialising
+     * them.
      * 
-     * @throws BlockStoreException
-     *             If the tables couldn't be cleared and initialised.
+     * @throws BlockStoreException If the tables couldn't be cleared and
+     *                             initialised.
      */
     public void resetStore() throws BlockStoreException {
         maybeConnect();
@@ -1430,7 +1423,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new RuntimeException(ex);
         }
     }
-    
+
     public void resetStore(DatabaseStoreCallback databaseStoreCallback) throws BlockStoreException {
         this.resetStore();
         try {
@@ -1440,21 +1433,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new RuntimeException(e);
         }
     }
-    
 
     /**
      * Deletes the store by deleting the tables within the database.
      * 
-     * @throws BlockStoreException
-     *             If tables couldn't be deleted.
+     * @throws BlockStoreException If tables couldn't be deleted.
      */
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
         try {
             /*
              * for (String sql : getDropIndexsSQL()) { Statement s =
-             * conn.get().createStatement(); try { log.info("drop index : " +
-             * sql); s.execute(sql); } finally { s.close(); } }
+             * conn.get().createStatement(); try { log.info("drop index : " + sql);
+             * s.execute(sql); } finally { s.close(); } }
              */
             for (String sql : getDropTablesSQL()) {
                 Statement s = conn.get().createStatement();
@@ -2759,7 +2750,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description,
                 token.getDomainName(), signnumber, tokentype, tokenstop, prevblockhash, tokenkeyvalues,
-                token.getRevoked(), token.getLanguage(), token.getClassification(), token.getDecimals(), token.getDomainPredecessorBlockHash());
+                token.getRevoked(), token.getLanguage(), token.getClassification(), token.getDecimals(),
+                token.getDomainPredecessorBlockHash());
     }
 
     public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
@@ -3486,29 +3478,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<TokenSerial> list = new ArrayList<TokenSerial>();
         return list;
         /*
-         * maybeConnect(); PreparedStatement preparedStatement = null; String
-         * sql = SELECT_SEARCH_TOKENSERIAL_ALL_SQL; if (addresses != null &&
-         * !addresses.isEmpty()) { String addressString = " AND address IN(";
-         * for (String address : addresses) { addressString += "'" + address +
-         * "',"; } addressString = addressString.substring(0,
-         * addressString.length() - 1) + ") "; sql += addressString; } if
-         * (tokenid != null && !tokenid.trim().isEmpty()) { sql +=
-         * " AND tokenid=?"; } sql += " ORDER BY tokenid,tokenindex";
+         * maybeConnect(); PreparedStatement preparedStatement = null; String sql =
+         * SELECT_SEARCH_TOKENSERIAL_ALL_SQL; if (addresses != null &&
+         * !addresses.isEmpty()) { String addressString = " AND address IN("; for
+         * (String address : addresses) { addressString += "'" + address + "',"; }
+         * addressString = addressString.substring(0, addressString.length() - 1) +
+         * ") "; sql += addressString; } if (tokenid != null &&
+         * !tokenid.trim().isEmpty()) { sql += " AND tokenid=?"; } sql +=
+         * " ORDER BY tokenid,tokenindex";
          * 
-         * try { preparedStatement = conn.get().prepareStatement(sql); if
-         * (tokenid != null && !tokenid.trim().isEmpty()) {
-         * preparedStatement.setString(1, tokenid); } ResultSet resultSet =
-         * preparedStatement.executeQuery(); while (resultSet.next()) { String
-         * tokenid0 = resultSet.getString("tokenid"); long tokenindex =
-         * resultSet.getLong("tokenindex"); long amount =
+         * try { preparedStatement = conn.get().prepareStatement(sql); if (tokenid !=
+         * null && !tokenid.trim().isEmpty()) { preparedStatement.setString(1, tokenid);
+         * } ResultSet resultSet = preparedStatement.executeQuery(); while
+         * (resultSet.next()) { String tokenid0 = resultSet.getString("tokenid"); long
+         * tokenindex = resultSet.getLong("tokenindex"); long amount =
          * resultSet.getLong("amount"); TokenSerial tokenSerial = new
-         * TokenSerial(tokenid0, tokenindex, amount,
-         * resultSet.getLong("signnumber"), resultSet.getLong("count"));
-         * list.add(tokenSerial); } return list; } catch (SQLException ex) {
-         * throw new BlockStoreException(ex); } finally { if (preparedStatement
-         * != null) { try { preparedStatement.close(); } catch (SQLException e)
-         * { throw new BlockStoreException("Failed to close PreparedStatement");
-         * } } }
+         * TokenSerial(tokenid0, tokenindex, amount, resultSet.getLong("signnumber"),
+         * resultSet.getLong("count")); list.add(tokenSerial); } return list; } catch
+         * (SQLException ex) { throw new BlockStoreException(ex); } finally { if
+         * (preparedStatement != null) { try { preparedStatement.close(); } catch
+         * (SQLException e) { throw new
+         * BlockStoreException("Failed to close PreparedStatement"); } } }
          */
     }
 
@@ -6550,6 +6540,34 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             } else {
                 return 0;
             }
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Token getTokensByDomainname(String domainname) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
+            preparedStatement.setString(1, domainname);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                Token tokens = new Token();
+                tokens.setBlockhash(resultSet.getString("blockhash"));
+                tokens.setTokenid(resultSet.getString("tokenid"));
+                return tokens;
+            }
+            return null;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

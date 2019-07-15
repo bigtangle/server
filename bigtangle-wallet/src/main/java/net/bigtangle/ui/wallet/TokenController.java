@@ -528,9 +528,11 @@ public class TokenController extends TokenBaseController {
             if (domainnametypeCheckBox.selectedProperty().get()) {
                 List<ECKey> walletKeys = new ArrayList<>();
                 walletKeys.add(outKey);
-                Main.walletAppKit.wallet().publishDomainName(walletKeys, tokenid.getValue().trim(),
-                        stockName.getText().trim(), stockUrl.getText().trim(), Main.getAesKey(),
-                        Integer.valueOf(stockAmount.getText()), stockDescription.getText().trim(), 1);
+                int amount = Integer.valueOf(stockAmount.getText());
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, 
+                        tokenid.getValue().trim(), 
+                        stockName.getText().trim(), 
+                        stockUrl.getText().trim(), Main.getAesKey(), amount, stockDescription.getText().trim());
             } else {
 
                 TokenInfo tokenInfo = new TokenInfo();
@@ -784,9 +786,15 @@ public class TokenController extends TokenBaseController {
                         walletKeys.add(ecKey);
                     }
                 }
-                Main.walletAppKit.wallet().publishDomainName(walletKeys, tokenid1.getValue().trim(),
-                        stockName1.getText().trim(), urlTF.getText().trim(), Main.getAesKey(),
-                        Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim(), 1);
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), 
+                        tokenid1.getValue().trim(), 
+                        stockName1.getText().trim(), 
+                        urlTF.getText().trim(), Main.getAesKey(), Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim());
+                
+                for (int i = 1; i < walletKeys.size(); i ++) {
+                    ECKey sighKey = walletKeys.get(i);
+                    Main.walletAppKit.wallet().multiSign(tokenid1.getValue().trim(), sighKey, Main.getAesKey());
+                }
             } else {
                 multiPublsih(issuedKeys);
             }

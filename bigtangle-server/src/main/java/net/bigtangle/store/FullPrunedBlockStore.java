@@ -525,4 +525,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     int getCountTokenByDomainnameNumber(String domainname) throws BlockStoreException;
 
+    Token getTokensByDomainname(String domainname) throws BlockStoreException;
+
 }

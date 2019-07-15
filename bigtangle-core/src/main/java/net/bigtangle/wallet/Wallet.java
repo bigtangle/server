@@ -85,6 +85,7 @@ import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
@@ -2709,8 +2710,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         return rollingBlock;
     }
+    
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname,
+            KeyParameter aesKey, int amount, String description) throws Exception {
+        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
+        String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
+        final int signnumber = walletKeys.size();
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey, amount, description, signnumber);
+    }
 
-    public Block publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname, String domainPredecessorBlockHash,
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname, String domainPredecessorBlockHash,
             KeyParameter aesKey, int amount, String description, int signnumber) throws Exception {
 
         Coin basecoin = Coin.valueOf(amount, tokenid);
@@ -2742,7 +2751,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         signnumber++;
         tokens.setSignnumber(signnumber);
-        return saveToken(tokenInfo, basecoin, signKey, aesKey);
+        
+        saveToken(tokenInfo, basecoin, signKey, aesKey);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2762,6 +2772,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
         return permissionedAddressesResponse;
+    }
+    
+    public GetDomainBlockHashResponse getGetDomainBlockHash(String domainname) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("domainname", domainname);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.findDomainPredecessorBlockHash.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetDomainBlockHashResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
+                GetDomainBlockHashResponse.class);
+        return getDomainBlockHashResponse;
     }
     
     public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {

@@ -426,6 +426,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case findDomainPredecessorBlockHash: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                final String domainname = (String) request.get("domainname");
+               AbstractResponse response = this.tokenDomainnameService
+                        .queryDomainnameTokenPredecessorBlockHash(domainname);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             default:
                 break;
