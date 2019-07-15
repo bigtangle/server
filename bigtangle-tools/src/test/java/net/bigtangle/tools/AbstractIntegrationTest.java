@@ -4,31 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.tools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
-
-import org.junit.Before;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -43,7 +26,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
-import net.bigtangle.core.http.server.resp.MultiSignResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -52,10 +34,23 @@ import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.utils.DomainnameUtil;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
+import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractIntegrationTest {
 
@@ -404,7 +399,7 @@ public abstract class AbstractIntegrationTest {
     }
 	 public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
 	        HashMap<String, String> requestParam = new HashMap<String, String>();
-	        requestParam.put("domainid", DomainnameUtil.matchParentDomainname(token.getDomainPredecessorBlockHash()));
+	        requestParam.put("domainPredecessorBlockHash", token.getDomainPredecessorBlockHash());
 	        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
 	                Json.jsonmapper().writeValueAsString(requestParam));
 	        PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
