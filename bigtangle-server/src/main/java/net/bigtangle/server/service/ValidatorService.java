@@ -2012,7 +2012,6 @@ public class ValidatorService {
         // Get permissioned addresses
         Token prevToken = null;
         List<MultiSignAddress> permissionedAddresses =  new ArrayList<MultiSignAddress>();
-        int signNumberCount = 0;
         // If not initial issuance, we check according to the previous token
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
@@ -2023,7 +2022,6 @@ public class ValidatorService {
                         return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
                     return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
                 }
-                signNumberCount = prevToken.getSignnumber();
 
                 // Compare members of previous and current issuance
                 if (!currentToken.getToken().getTokenid().equals(prevToken.getTokenid())) {
@@ -2072,16 +2070,15 @@ public class ValidatorService {
             permissionedAddresses = currentToken.getMultiSignAddresses();
             MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
                     currentToken.getToken().getTokenid());
-            //permissionedAddresses.add(firstTokenAddress);
-            
+            // permissionedAddresses.add(firstTokenAddress);
+
             // Any first time issuances also require the domain signatures
-            List<MultiSignAddress> prevDomainPermissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
-            		prevDomain.getTokenid(), prevDomain.getBlockhash());
-            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses, txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
+            List<MultiSignAddress> prevDomainPermissionedAddresses = store
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevDomain.getTokenid(), prevDomain.getBlockhash());
+            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
+                    txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
-            	return domainPermission;
-            
-            signNumberCount = currentToken.getToken().getSignnumber();
+                return domainPermission;
         }
 
         // Get permissioned pubkeys wrapped to check for bytearray equality

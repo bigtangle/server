@@ -1,5 +1,13 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -11,15 +19,6 @@ import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 @Service
 public class TokenDomainnameService {
@@ -30,8 +29,6 @@ public class TokenDomainnameService {
     private ServerConfiguration serverConfiguration;
     @Autowired
     private NetworkParameters networkParameters;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenDomainnameService.class);
 
     /**
      * query token type is domainname
@@ -77,16 +74,6 @@ public class TokenDomainnameService {
             List<MultiSignAddress> multiSignAddresses = this.store
                     .getMultiSignAddressListByTokenidAndBlockHashHex(tokenid, prevblockhash);
             return multiSignAddresses;
-        }
-    }
-
-    public boolean checkTokenDomainnameAlreadyExists(String domainname) {
-        try {
-            int count = this.store.getCountTokenByDomainnameNumber(domainname);
-            return count > 0;
-        } catch (Exception e) {
-            LOGGER.error("", e);
-            return true;
         }
     }
 

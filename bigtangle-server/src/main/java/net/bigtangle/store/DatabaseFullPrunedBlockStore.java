@@ -305,8 +305,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid FROM tokens WHERE domainname = ? AND tokentype = 3 limit 1";
 
-    protected final String COUNT_TOKENS_BY_DOMAINNAME_SQL = "SELECT count(1) as n FROM tokens WHERE domainname = ? AND tokentype = 3";
-
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
 
     protected final String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
@@ -6514,32 +6512,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return tokens;
             }
             return null;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public int getCountTokenByDomainnameNumber(String domainname) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(COUNT_TOKENS_BY_DOMAINNAME_SQL);
-            preparedStatement.setString(1, domainname);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getInt("n");
-            } else {
-                return 0;
-            }
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

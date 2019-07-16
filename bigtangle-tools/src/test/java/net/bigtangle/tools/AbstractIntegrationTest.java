@@ -28,7 +28,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -40,9 +39,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
-import net.bigtangle.core.http.server.resp.MultiSignResponse;
-import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
-import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
@@ -299,94 +295,16 @@ public abstract class AbstractIntegrationTest {
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
-        Coin basecoin = Coin.valueOf(amount, tokenid);
-
-        // TokenInfo tokenInfo = new TokenInfo();
-
-        HashMap<String, String> requestParam00 = new HashMap<String, String>();
-        requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
-                Json.jsonmapper().writeValueAsString(requestParam00));
-
-        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 1, tokenindex_, amount,
-                false, 0, networkParameters.getGenesisBlock().getHashAsString());
-        tokenInfo.setToken(tokens);
-
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-
-        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
-        PermissionedAddressesResponse permissionedAddressesResponse = this
-                .getPrevTokenMultiSignAddressList(tokenInfo.getToken());
-        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
-                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
-                final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
-            }
-        }
-
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, key, null);
+        List<ECKey> walletKeys = new ArrayList<ECKey>();
+        walletKeys.add(key);
+        
+        walletAppKit.wallet().setServerURL("http://localhost:8088/");
+        walletAppKit.wallet().publishDomainName(walletKeys, key, tokenid, tokename, "tianjin", networkParameters.getGenesisBlock().getHashAsString(), null, amount, "", 1);
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        this.pullBlockDoMultiSign(tokenid, genesiskey, null);
-
-    }
-
-    public Block pullBlockDoMultiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-
-        String address = outKey.toAddress(networkParameters).toBase58();
-        requestParam.put("address", address);
-        requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-        MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
-
-        byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
-        Block block0 = networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-        Transaction transaction = block0.getTransactions().get(0);
-
-        List<MultiSignBy> multiSignBies = null;
-        if (transaction.getDataSignature() == null) {
-            multiSignBies = new ArrayList<MultiSignBy>();
-        } else {
-            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
-                    MultiSignByRequest.class);
-            multiSignBies = multiSignByRequest.getMultiSignBies();
-        }
-        Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-
-        multiSignBy0.setTokenid(multiSign.getTokenid());
-        multiSignBy0.setTokenindex(multiSign.getTokenindex());
-        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
-        return block0;
-    }
-
-    public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainPredecessorBlockHash", token.getDomainPredecessorBlockHash());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
-                PermissionedAddressesResponse.class);
-        return permissionedAddressesResponse;
+        
+        walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
     }
 
     public void emptyBlocks(int number) throws JsonProcessingException, Exception {
