@@ -94,14 +94,15 @@ public class TokenDomainnameService {
             throws BlockStoreException {
         AbstractResponse response;
         if (StringUtils.isBlank(domainname)) {
-            throw new BlockStoreException("domainName empty");
+            String domainPredecessorBlockHash = networkParameters.getGenesisBlock().getHashAsString();
+            response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
+        } else {
+            Token token = this.store.getTokensByDomainname(domainname);
+            if (token == null) {
+                throw new BlockStoreException("token domain name not found : " + domainname);
+            }
+            String domainPredecessorBlockHash = token.getBlockhash();
+            response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
         }
-        Token token = this.store.getTokensByDomainname(domainname);
-        if (token == null) {
-            throw new BlockStoreException("domainName not found : " + domainname);
-        }
-        String domainPredecessorBlockHash = token.getBlockhash();
-        response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
-        return response;
     }
 }
