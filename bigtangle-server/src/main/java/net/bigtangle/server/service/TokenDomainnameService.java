@@ -104,5 +104,6 @@ public class TokenDomainnameService {
             String domainPredecessorBlockHash = token.getBlockhash();
             response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
         }
+        return response;
     }
 }
