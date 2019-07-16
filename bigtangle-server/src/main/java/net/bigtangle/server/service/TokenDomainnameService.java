@@ -1,15 +1,5 @@
 package net.bigtangle.server.service;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -21,7 +11,15 @@ import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.utils.DomainnameUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 @Service
 public class TokenDomainnameService {
@@ -94,20 +92,16 @@ public class TokenDomainnameService {
 
     public AbstractResponse queryDomainnameTokenPredecessorBlockHash(String domainname) 
             throws BlockStoreException {
-        domainname = DomainnameUtil.matchParentDomainname(domainname);
-
         AbstractResponse response;
         if (StringUtils.isBlank(domainname)) {
-            String domainPredecessorBlockHash = networkParameters.getGenesisBlock().getHashAsString();
-            response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
-        } else {
-            Token token = this.store.getTokensByDomainname(domainname);
-            if (token == null) {
-                throw new BlockStoreException("token domain name not found : " + domainname);
-            }
-            String domainPredecessorBlockHash = token.getBlockhash();
-            response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
+            throw new BlockStoreException("domainName empty");
         }
+        Token token = this.store.getTokensByDomainname(domainname);
+        if (token == null) {
+            throw new BlockStoreException("domainName not found : " + domainname);
+        }
+        String domainPredecessorBlockHash = token.getBlockhash();
+        response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
         return response;
     }
 }
