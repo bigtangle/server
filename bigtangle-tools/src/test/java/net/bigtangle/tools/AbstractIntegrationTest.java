@@ -76,9 +76,9 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-          System.setProperty("https.proxyHost",
-          "anwproxy.anwendungen.localnet.de");
-          System.setProperty("https.proxyPort", "3128");
+      //    System.setProperty("https.proxyHost",
+      //    "anwproxy.anwendungen.localnet.de");
+      //    System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();
@@ -300,7 +300,7 @@ public abstract class AbstractIntegrationTest {
         
         Coin basecoin = Coin.valueOf(amount, tokenid);
         
-        contextRoot = "http://localhost:8088/";
+      //  contextRoot = "http://localhost:8088/";
 
         // TokenInfo tokenInfo = new TokenInfo();
 
@@ -320,7 +320,7 @@ public abstract class AbstractIntegrationTest {
         
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
 
-        walletAppKit.wallet().setServerURL("http://localhost:8088/");
+        walletAppKit.wallet().setServerURL(contextRoot);
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, key, null);
          
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),

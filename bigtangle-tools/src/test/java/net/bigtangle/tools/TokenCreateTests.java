@@ -24,7 +24,7 @@ public class TokenCreateTests extends AbstractIntegrationTest {
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
 
     
-    @Test
+  //  @Test
     public void testYuanToken() throws JsonProcessingException, Exception {
         ECKey key =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
                 Utils.HEX.decode(yuanTokenPub));
