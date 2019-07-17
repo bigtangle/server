@@ -43,6 +43,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -2356,8 +2357,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return false;
     }
 
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-            throws JsonProcessingException, IOException {
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey) throws Exception {
+        final Token token = tokenInfo.getToken();
+
+        if (StringUtils.isBlank(token.getDomainPredecessorBlockHash())) {
+            final String domainname = token.getDomainName();
+            GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
+            String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
+            token.setDomainPredecessorBlockHash(domainPredecessorBlockHash);
+        }
+
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(token);
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                final String tokenid = token.getTokenid();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
+
+        token.setSignnumber(token.getSignnumber() + 1);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(serverurl + ReqCmd.getTip.name(),

@@ -39,6 +39,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
+import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
@@ -295,12 +297,32 @@ public abstract class AbstractIntegrationTest {
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
-        List<ECKey> walletKeys = new ArrayList<ECKey>();
-        walletKeys.add(key);
         
-        walletAppKit.wallet().setServerURL("http://localhost:8088/");
-        walletAppKit.wallet().publishDomainName(walletKeys, key, tokenid, tokename, "tianjin", networkParameters.getGenesisBlock().getHashAsString(), null, amount, "", 1);
+        Coin basecoin = Coin.valueOf(amount, tokenid);
+        
+        contextRoot = "http://localhost:8088/";
 
+        // TokenInfo tokenInfo = new TokenInfo();
+
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getCalTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
+        String prevblockhash = tokenIndexResponse.getBlockhash();
+
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, tokename, 1, tokenindex_, amount,
+                false, 0, networkParameters.getGenesisBlock().getHashAsString());
+        tokenInfo.setToken(tokens);
+
+        
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+
+        walletAppKit.wallet().setServerURL("http://localhost:8088/");
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, key, null);
+         
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         
