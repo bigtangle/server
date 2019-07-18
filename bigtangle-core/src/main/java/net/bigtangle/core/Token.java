@@ -230,7 +230,11 @@ public class Token implements java.io.Serializable {
     }
 
     public String getTokennameDisplay() {
-        return tokenname + "@" + domainName;
+        if (domainName == null || "null".equals(domainName))
+            return tokenname;
+        else {
+            return tokenname + "@" + domainName;
+        }
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
