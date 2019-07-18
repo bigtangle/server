@@ -529,10 +529,14 @@ public class TokenController extends TokenBaseController {
                 List<ECKey> walletKeys = new ArrayList<>();
                 walletKeys.add(outKey);
                 int amount = Integer.valueOf(stockAmount.getText());
-                Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, 
-                        tokenid.getValue().trim(), 
-                        stockName.getText().trim(), 
-                        stockUrl.getText().trim(), Main.getAesKey(), amount, stockDescription.getText().trim());
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, tokenid.getValue().trim(),
+                        stockName.getText().trim(), stockUrl.getText().trim(), Main.getAesKey(), amount,
+                        stockDescription.getText().trim());
+                GuiUtils.informationalAlert("", Main.getText("s_c_m"));
+                Main.instance.controller.initTableView();
+                checkGuiThread();
+                initTableView();
+                overlayUI.done();
             } else {
 
                 TokenInfo tokenInfo = new TokenInfo();
@@ -786,12 +790,11 @@ public class TokenController extends TokenBaseController {
                         walletKeys.add(ecKey);
                     }
                 }
-                Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), 
-                        tokenid1.getValue().trim(), 
-                        stockName1.getText().trim(), 
-                        urlTF.getText().trim(), Main.getAesKey(), Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim());
-                
-                for (int i = 1; i < walletKeys.size(); i ++) {
+                Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid1.getValue().trim(),
+                        stockName1.getText().trim(), urlTF.getText().trim(), Main.getAesKey(),
+                        Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim());
+
+                for (int i = 1; i < walletKeys.size(); i++) {
                     ECKey sighKey = walletKeys.get(i);
                     Main.walletAppKit.wallet().multiSign(tokenid1.getValue().trim(), sighKey, Main.getAesKey());
                 }
