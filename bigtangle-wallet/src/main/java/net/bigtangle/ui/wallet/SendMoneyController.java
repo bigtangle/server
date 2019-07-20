@@ -700,7 +700,7 @@ public class SendMoneyController {
 			}
 			Coin amount = Coin.parseCoin(amountEdit11.getText(), Utils.HEX.decode(tokeninfo11.getValue().toString()));
 
-			Main.walletAppKit.wallet().payMulti(null, keys, signnum, amount, "");
+			Main.walletAppKit.wallet().payMultiSignatures(null, keys, signnum, amount, "");
 
 			GuiUtils.informationalAlert("", Main.getText("alreadySend"), "");
 			overlayUI.done();

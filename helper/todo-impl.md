@@ -502,7 +502,7 @@ example
 
 ### fix from address for transaction
 
-### wallet buy order use the multiple TransactionInput
+### buy/sell order with multiple inputs, 1) pay all to itself or 2) multiple inputs
 
 ### version check in wallet
 
@@ -520,4 +520,5 @@ example
 ### reward block has different difficulty to form a blockchain. The server works switch to longest reward block, if it has received a reward block.  This switch to  branch of the reward blocks will trigger deepOrg from the branch point.
  example: server  has reward B1 B2 B3 reward blocks. The server receives B3a  B1<-B2a <-B3a
  Then the server has do reorg starting from B1
+ 
  

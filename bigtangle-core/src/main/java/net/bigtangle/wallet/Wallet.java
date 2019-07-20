@@ -2703,7 +2703,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
-    public Block payMulti(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
+    /*
+     * pay all small coins in a wallet to one destination. This destination can
+     * be in same wallet.
+     */
+    public Block payPartsToOne(KeyParameter aesKey, Address destination, byte[] tokenid, String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
+        
+        Coin summe = Coin.valueOf(0, tokenid);
+        for (UTXO u : l) {
+            if (Arrays.equals(u.getValue().getTokenid(), tokenid)) {
+                summe=  summe.add(u.getValue());
+            }
+        }
+        return pay(aesKey, destination, summe, memo);
+    }
+
+    public Block payMultiSignatures(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2731,17 +2749,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         return rollingBlock;
     }
-    
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname,
-            KeyParameter aesKey, int amount, String description) throws Exception {
+
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
+            String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey, amount, description, signnumber);
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+                amount, description, signnumber);
     }
 
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname, String domainname, String domainPredecessorBlockHash,
-            KeyParameter aesKey, int amount, String description, int signnumber) throws Exception {
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
+            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, int amount, String description,
+            int signnumber) throws Exception {
 
         Coin basecoin = Coin.valueOf(amount, tokenid);
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
@@ -2772,7 +2792,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         signnumber++;
         tokens.setSignnumber(signnumber);
-        
+
         saveToken(tokenInfo, basecoin, signKey, aesKey);
     }
 
@@ -2794,7 +2814,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 PermissionedAddressesResponse.class);
         return permissionedAddressesResponse;
     }
-    
+
     public GetDomainBlockHashResponse getGetDomainBlockHash(String domainname) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
@@ -2804,7 +2824,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 GetDomainBlockHashResponse.class);
         return getDomainBlockHashResponse;
     }
-    
+
     public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 

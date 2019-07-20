@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -91,6 +92,8 @@ public class BlockService {
     }
 
     public void saveBlock(Block block) throws Exception {
+        Context context = new Context(networkParameters);
+        Context.propagate(context);
         boolean added = blockgraph.add(block, false);
         if (added  ) {
                 broadcastBlock(block);

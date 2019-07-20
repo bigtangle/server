@@ -7,6 +7,7 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -185,6 +186,47 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+    }
+
+    @Test
+    // coins in wallet to one coin to address
+    public void testPartsToOne() throws Exception {
+
+        ECKey to = wallet1Keys.get(1);
+        Coin aCoin = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
+        testPartsToOne(aCoin, to);
+        checkBalance(aCoin, to);
+
+        testPartsToOne(aCoin, to);
+        testPartsToOne(aCoin, to);
+        List<TransactionOutput> uspent = walletAppKit1.wallet().calculateAllSpendCandidates(null, false);
+        assertTrue(uspent.size() == 3);
+        walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters), NetworkParameters.BIGTANGLE_TOKENID,
+                "0,3");
+        milestoneService.update();
+        ArrayList<ECKey> a = new ArrayList<ECKey>();
+        a.add(to);
+        List<UTXO> ulist = getBalance(false, a);
+        assertTrue(ulist.size() == 1);
+
+    }
+
+    public void testPartsToOne(Coin amount, ECKey to) throws Exception {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        SendRequest request = SendRequest.to(to.toAddress(networkParameters), amount);
+
+        walletAppKit.wallet().completeTx(request, null);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+
+        milestoneService.update();
     }
 
     private static String createDataSize(int msgSize) {

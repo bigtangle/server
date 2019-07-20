@@ -112,8 +112,15 @@ public class Context {
             log.error("This error has been corrected for, but doing this makes your app less robust.");
             log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
             log.error("Please refer to the user guide for more information about this.");
-            log.error("Thread name is {}.", Thread.currentThread().getName());
-            log.error(  Thread.currentThread().getStackTrace() .toString());
+            log.error("Thread name is {}.", 
+                    Thread.currentThread().getName());
+            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+            for (int i = 1; i < elements.length; i++) {
+              StackTraceElement s = elements[i];
+              log.error("\tat " + s.getClassName() + "." + s.getMethodName()
+                  + "(" + s.getFileName() + ":" + s.getLineNumber() + ")");
+            }
+            
             // TODO: Actually write the user guide section about this.
             // TODO: If the above TODO makes it past the 0.13 release, kick Mike and tell him he sucks.
             return lastConstructed;
