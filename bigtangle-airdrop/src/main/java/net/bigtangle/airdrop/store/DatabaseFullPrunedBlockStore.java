@@ -26,14 +26,11 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.bigtangle.airdrop.bean.Vm_deposit;
 import net.bigtangle.airdrop.bean.WechatInvite;
-import net.bigtangle.core.Address;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.params.MainNetParams;
 
 /**
  * <p>
@@ -216,104 +213,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
-        List<Vm_deposit> l = new ArrayList<Vm_deposit>();
-        String sql = "select userid , amount,  d.status, pubkey " + "from vm_deposit d "
-                + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
-
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(sql);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                Vm_deposit vm_deposit = new Vm_deposit();
-                vm_deposit.setStatus(resultSet.getString("status"));
-                vm_deposit.setUserid(resultSet.getLong("userid"));
-                vm_deposit.setAmount(resultSet.getBigDecimal("amount"));
-                vm_deposit.setPubkey(resultSet.getString("pubkey"));
-                // add only correct pub key to return list for transfer money
-                if (!"PAID".equalsIgnoreCase(vm_deposit.getStatus())
-                        && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus())) {
-                    boolean flag = true;
-                    String pubkey = resultSet.getString("pubkey");
-                    try {
-                        Address.fromBase58(MainNetParams.get(), pubkey);
-                    } catch (Exception e) {
-                        // logger.debug("", e);
-                        flag = false;
-                    }
-                    if (flag) {
-                        l.add(vm_deposit);
-                    }
-
-                }
-
-            }
-            return l;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    public void updateDepositStatus(Long id, String status) throws BlockStoreException {
-        String sql = "update vm_deposit set status = ? where userid = ? ";
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(sql);
-            s.setString(1, status);
-            s.setLong(2, id);
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    if (s.getConnection() != null)
-                        s.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-    }
-
-    public void resetDepositPaid() throws BlockStoreException {
-        String sql = "update vm_deposit set status = 'RESET' ";
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(sql);
-            s.executeUpdate();
-            s.close();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    if (s.getConnection() != null)
-                        s.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-    }
+  
+ 
 
     public List<WechatInvite> queryByUnfinishedWechatInvite() throws BlockStoreException {
         String sql = "select id, wechatId, wechatInviterId, createTime, status,pubkey  from wechatinvite where status = 0";

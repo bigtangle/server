@@ -2,15 +2,15 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.airdrop.config;
+package net.bigtangle.blockconfirm.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import net.bigtangle.airdrop.store.FullPrunedBlockStore;
-import net.bigtangle.airdrop.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
+import net.bigtangle.blockconfirm.store.MySQLFullPrunedBlockStore;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 

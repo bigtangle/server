@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.airdrop.store;
+package net.bigtangle.blockconfirm.store;
 
 import java.util.ArrayList;
 import java.util.Collections;

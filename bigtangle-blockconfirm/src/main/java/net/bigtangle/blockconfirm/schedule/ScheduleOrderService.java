@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.airdrop.schedule;
+package net.bigtangle.blockconfirm.schedule;
 
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +14,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import net.bigtangle.airdrop.bean.Vm_deposit;
-import net.bigtangle.airdrop.config.ScheduleConfiguration;
-import net.bigtangle.airdrop.store.FullPrunedBlockStore;
-import net.bigtangle.airdrop.utils.GiveMoneyUtils;
+import net.bigtangle.blockconfirm.bean.Vm_deposit;
+import net.bigtangle.blockconfirm.config.ScheduleConfiguration;
+import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
+import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;

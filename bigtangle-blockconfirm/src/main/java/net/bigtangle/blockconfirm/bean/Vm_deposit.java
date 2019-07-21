@@ -1,4 +1,4 @@
-package net.bigtangle.airdrop.bean;
+package net.bigtangle.blockconfirm.bean;
 
 import java.math.BigDecimal;
 

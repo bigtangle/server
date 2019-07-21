@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.airdrop.store;
+package net.bigtangle.blockconfirm.store;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.bigtangle.airdrop.bean.Vm_deposit;
+import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -84,21 +84,9 @@ public interface FullPrunedBlockStore {
      */
     NetworkParameters getParams();
 
-    
-    HashMap<String, String> queryByUWechatInvitePubKeyMapping(Set<String> keySet) throws BlockStoreException;
-
     List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException;
 
-    Map<String, HashMap<String, String>> queryByUWechatInvitePubKeyInviterIdMap(Collection<String> keySet)
-            throws BlockStoreException;
-
-    void updateWechatInviteStatus(String id, int status) throws BlockStoreException;
-
     void updateDepositStatus(Long id, String status) throws BlockStoreException;
-
-    void updateWechatInviteStatusByWechatId(String wechatId, int status) throws BlockStoreException;
-
-    void clearWechatInviteStatusZero() throws BlockStoreException;
 
     void resetDepositPaid() throws BlockStoreException;
 

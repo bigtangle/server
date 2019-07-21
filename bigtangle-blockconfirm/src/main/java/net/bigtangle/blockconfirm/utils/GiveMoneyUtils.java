@@ -1,4 +1,4 @@
-package net.bigtangle.airdrop.utils;
+package net.bigtangle.blockconfirm.utils;
 
 import java.util.HashMap;
 
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import net.bigtangle.airdrop.config.ServerConfiguration;
+import net.bigtangle.blockconfirm.config.ServerConfiguration;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;

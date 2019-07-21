@@ -16,12 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
 import net.bigtangle.airdrop.config.ScheduleConfiguration;
 import net.bigtangle.airdrop.store.FullPrunedBlockStore;
-import net.bigtangle.airdrop.utils.GiveMoneyUtils;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.params.MainNetParams;
@@ -37,14 +37,11 @@ public class ScheduleRewardService {
 
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
-
-    @Autowired
-    private GiveMoneyUtils giveMoneyUtils;
-
+ 
     @Autowired
     private FullPrunedBlockStore store;
 
-    // @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
+    @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() {
         if (scheduleConfiguration.isGiveMoneyServiceActive()) {
             try {

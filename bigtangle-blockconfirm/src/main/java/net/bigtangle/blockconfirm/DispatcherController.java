@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.airdrop;
+package net.bigtangle.blockconfirm;
 
 import javax.servlet.http.HttpServletResponse;
 
