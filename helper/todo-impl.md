@@ -520,5 +520,10 @@ example
 ### reward block has different difficulty to form a blockchain. The server works switch to longest reward block, if it has received a reward block.  This switch to  branch of the reward blocks will trigger deepOrg from the branch point.
  example: server  has reward B1 B2 B3 reward blocks. The server receives B3a  B1<-B2a <-B3a
  Then the server has do reorg starting from B1
- 
- 
+
+### add check confirmation of block to deposit send to bigtangle in project airdrop
+
+### three test systems test.bigtangle.org, test.bigtangle.info, test.bigtangle.de
+### product systems   bigtangle.org, bigtangle.info, bigtangle.de
+### build on branch using jenkin
+### aliyun setup

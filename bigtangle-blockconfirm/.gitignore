@@ -1,0 +1,5 @@
+/bin/
+/build/
+/.cache-main
+/.cache-tests
+/logs/
