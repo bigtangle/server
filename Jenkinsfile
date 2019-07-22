@@ -1,9 +1,9 @@
 def product = 'bigtangle-server'
 def default_recipients = 'thomas.strauss@pentasys.de, thst@strauss-it.de'
 // Check required build parameters
-assert env.jenkinsNode?.trim(): 'Parameter jenkinsNode must be defined!'
-assert env.sonarUrl?.trim(): 'Parameter sonarUrl must be defined!'
-assert env.mavenRepository?.trim(): 'Parameter mavenRepository must be defined!'
+//assert env.jenkinsNode?.trim(): 'Parameter jenkinsNode must be defined!'
+//assert env.sonarUrl?.trim(): 'Parameter sonarUrl must be defined!'
+//assert env.mavenRepository?.trim(): 'Parameter mavenRepository must be defined!'
 
 
 node(env.jenkinsNode) {
