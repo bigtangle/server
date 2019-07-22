@@ -43,8 +43,9 @@ public class ScheduleOrderService {
 
             logger.debug(" Start ScheduleGiveMoneyOrderService");
 
+            //select all order not Status=PAID and Status=CONFIRM
             List<Vm_deposit> deposits = sendFromOrder();
-
+                //if not paid then do transfer  and pay
             if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
 
                 // only update, if money is given for order
@@ -56,6 +57,13 @@ public class ScheduleOrderService {
 
                 }
             }
+            
+          //if  Status=PAID then check block valuation with rating > 75, set Status=CONFIRM
+           // searchBlockByBlockHash
+            
+           //otherwise do again the giveMoneyUtils.batchGiveMoneyToECKeyList, timeout = 60 minutes rating < 75
+            
+            
         }
     }
 
