@@ -9,12 +9,13 @@ public class MultiSignAddress implements java.io.Serializable {
 
     private static final long serialVersionUID = -2956933642847534834L;
 
-    private String blockhash;  // TODO must be inferred on insertion
-    private String tokenid; 
-    private String address;    
-    private String pubKeyHex;    
-    private int posIndex; 
-    
+    private String blockhash;
+    private String tokenid;
+    private String address;
+    private String pubKeyHex;
+    private int posIndex;
+    private int tokenHolder;
+
     public int getPosIndex() {
         return posIndex;
     }
@@ -46,7 +47,7 @@ public class MultiSignAddress implements java.io.Serializable {
     public void setAddress(String address) {
         this.address = address;
     }
-    
+
     public String getBlockhash() {
         return blockhash;
     }
@@ -55,10 +56,23 @@ public class MultiSignAddress implements java.io.Serializable {
         this.blockhash = blockhash;
     }
 
-    public MultiSignAddress(String tokenid, String address, String pubKeyHex) {
+    public int getTokenHolder() {
+        return tokenHolder;
+    }
+
+    public void setTokenHolder(int tokenHolder) {
+        this.tokenHolder = tokenHolder;
+    }
+
+    public MultiSignAddress(String tokenid, String address, String pubKeyHex, int tokenHolder) {
         this.tokenid = tokenid;
         this.address = address;
         this.pubKeyHex = pubKeyHex;
+        this.tokenHolder = tokenHolder;
+    }
+
+    public MultiSignAddress(String tokenid, String address, String pubKeyHex) {
+        this(tokenid, address, pubKeyHex, 1);
     }
 
     public MultiSignAddress() {

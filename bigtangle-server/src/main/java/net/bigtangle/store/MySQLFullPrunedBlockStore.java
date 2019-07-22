@@ -159,6 +159,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
+            + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
             + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n)";
 
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"

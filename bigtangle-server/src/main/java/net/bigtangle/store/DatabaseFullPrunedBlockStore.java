@@ -343,8 +343,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected abstract String getUpdateBlockevaluationUnmaintainAllSQL();
 
-    protected final String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
-    protected final String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex,blockhash) VALUES (?, ?, ?, ?,?)";
+    protected final String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubKeyHex, posIndex, tokenHolder FROM multisignaddress WHERE tokenid = ? AND blockhash = ?";
+    protected final String INSERT_MULTISIGNADDRESS_SQL = "INSERT INTO multisignaddress (tokenid, address, pubKeyHex, posIndex,blockhash,tokenHolder) VALUES (?, ?, ?, ?,?,?)";
     protected final String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = ? AND address = ?";
     protected final String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = ?";
     protected final String SELECT_MULTISIGNADDRESSINFO_SQL = "SELECT tokenid, address FROM multisignaddress WHERE tokenid = ? AND address = ?";
@@ -3227,6 +3227,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 MultiSignAddress multiSignAddress = new MultiSignAddress(tokenid0, address, pubKeyHex);
                 int posIndex = resultSet.getInt("posIndex");
                 multiSignAddress.setPosIndex(posIndex);
+                int tokenHolder = resultSet.getInt("tokenHolder");
+                multiSignAddress.setTokenHolder(tokenHolder);
                 list.add(multiSignAddress);
             }
             return list;
@@ -3254,6 +3256,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
             preparedStatement.setInt(4, multiSignAddress.getPosIndex());
             preparedStatement.setString(5, multiSignAddress.getBlockhash());
+            preparedStatement.setInt(6, multiSignAddress.getTokenHolder());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
