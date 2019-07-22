@@ -42,8 +42,6 @@ import net.bigtangle.params.MainNetParams;
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
 
-    
-
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     protected String VERSION_SETTING = "version";
@@ -64,8 +62,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         return this.conn;
     }
 
- 
- 
     public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
         String sql = "select userid , amount,  d.status, pubkey " + "from vm_deposit d "
@@ -119,14 +115,58 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void updateDepositStatus(Long id, String status) throws BlockStoreException {
-        String sql = "update vm_deposit set status = ? where userid = ? ";
+    public List<Vm_deposit> queryDepositByStatus(String status) throws BlockStoreException {
+        List<Vm_deposit> l = new ArrayList<Vm_deposit>();
+        String sql = "select userid ,useraccount, amount,  d.status, pubkey,blockhash,address " + "from vm_deposit d "
+                + "join Account a on d.userid=a.id "
+                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                Vm_deposit vm_deposit = new Vm_deposit();
+                vm_deposit.setStatus(resultSet.getString("status"));
+                vm_deposit.setUseraccount(resultSet.getString("useraccount"));
+                vm_deposit.setUserid(resultSet.getLong("userid"));
+                vm_deposit.setAmount(resultSet.getBigDecimal("amount"));
+                vm_deposit.setPubkey(resultSet.getString("pubkey"));
+                vm_deposit.setBlockhash(resultSet.getString("blockhash"));
+                vm_deposit.setAddress(resultSet.getString("address"));
+                if (status.equalsIgnoreCase(vm_deposit.getStatus())) {
+                    l.add(vm_deposit);
+                }
+
+            }
+            return l;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException {
+        String sql = "update vm_deposit set status = ? where userid = ? and useraccount=?";
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             s.setString(1, status);
             s.setLong(2, id);
+            s.setString(3, useraccount);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {

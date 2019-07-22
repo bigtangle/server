@@ -11,6 +11,8 @@ public class Vm_deposit {
     public String currency;
     public String status;
     public String pubkey;
+    public String blockhash;
+    public String address;
 
     public Long getUserid() {
         return userid;
@@ -74,6 +76,22 @@ public class Vm_deposit {
 
     public void setPubkey(String pubkey) {
         this.pubkey = pubkey;
+    }
+
+    public String getBlockhash() {
+        return blockhash;
+    }
+
+    public void setBlockhash(String blockhash) {
+        this.blockhash = blockhash;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
 }

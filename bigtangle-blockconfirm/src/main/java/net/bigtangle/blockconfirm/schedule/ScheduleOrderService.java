@@ -43,27 +43,31 @@ public class ScheduleOrderService {
 
             logger.debug(" Start ScheduleGiveMoneyOrderService");
 
-            //select all order not Status=PAID and Status=CONFIRM
+            // select all order not Status=PAID and Status=CONFIRM
             List<Vm_deposit> deposits = sendFromOrder();
-                //if not paid then do transfer  and pay
+            // if not paid then do transfer and pay
             if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
 
                 // only update, if money is given for order
 
                 for (Vm_deposit d : deposits) {
 
-                    this.store.updateDepositStatus(d.getUserid(), "PAID");
+                    this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID");
                     logger.info("  update deposit : " + d.getUserid() + ", success");
 
                 }
             }
-            
-          //if  Status=PAID then check block valuation with rating > 75, set Status=CONFIRM
-           // searchBlockByBlockHash
-            
-           //otherwise do again the giveMoneyUtils.batchGiveMoneyToECKeyList, timeout = 60 minutes rating < 75
-            
-            
+
+            // if Status=PAID then check block valuation with rating > 75, set
+            // Status=CONFIRM
+            // searchBlockByBlockHash
+            deposits = this.store.queryDepositByStatus("PAID");
+            for (Vm_deposit vm_deposit : deposits) {
+
+            }
+            // otherwise do again the giveMoneyUtils.batchGiveMoneyToECKeyList,
+            // timeout = 60 minutes rating < 75
+
         }
     }
 

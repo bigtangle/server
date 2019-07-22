@@ -6,10 +6,8 @@
 package net.bigtangle.blockconfirm.store;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.core.BlockStore;
@@ -86,7 +84,9 @@ public interface FullPrunedBlockStore {
 
     List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException;
 
-    void updateDepositStatus(Long id, String status) throws BlockStoreException;
+    List<Vm_deposit> queryDepositByStatus(String status) throws BlockStoreException;
+
+    void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException;
 
     void resetDepositPaid() throws BlockStoreException;
 
