@@ -6,6 +6,7 @@ package net.bigtangle.blockconfirm.schedule;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +19,14 @@ import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.blockconfirm.config.ScheduleConfiguration;
 import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
 import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
+import net.bigtangle.params.ReqCmd;
+import net.bigtangle.utils.OkHttp3Util;
 
 @Component
 @EnableAsync
@@ -62,11 +68,32 @@ public class ScheduleOrderService {
             // Status=CONFIRM
             // searchBlockByBlockHash
             deposits = this.store.queryDepositByStatus("PAID");
+
             for (Vm_deposit vm_deposit : deposits) {
+                if (vm_deposit.getBlockhash() == null || vm_deposit.getBlockhash().trim().isEmpty()) {
+                    continue;
+                }
+                Map<String, Object> requestParam = new HashMap<String, Object>();
+                requestParam.put("blockhash", vm_deposit.getBlockhash());
+                String response = OkHttp3Util.postString(
+                        "https://bigtangle.info/" + ReqCmd.searchBlockByBlockHash.name(),
+                        Json.jsonmapper().writeValueAsString(requestParam));
+                GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                        GetBlockEvaluationsResponse.class);
+                List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+                if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
+                    if (blockEvaluations.get(0).getRating() >= 75) {
+                        this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM");
+                    }
+                    // otherwise do again the
+                    // giveMoneyUtils.batchGiveMoneyToECKeyList,
+                    // timeout = 60 minutes rating < 75
+                    else {
+
+                    }
+                }
 
             }
-            // otherwise do again the giveMoneyUtils.batchGiveMoneyToECKeyList,
-            // timeout = 60 minutes rating < 75
 
         }
     }
