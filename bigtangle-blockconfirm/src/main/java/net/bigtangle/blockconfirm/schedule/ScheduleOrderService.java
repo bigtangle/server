@@ -4,10 +4,13 @@
  *******************************************************************************/
 package net.bigtangle.blockconfirm.schedule;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +71,7 @@ public class ScheduleOrderService {
             // Status=CONFIRM
             // searchBlockByBlockHash
             deposits = this.store.queryDepositByStatus("PAID");
-
+            List<Vm_deposit> subDeposits = new ArrayList<Vm_deposit>();
             for (Vm_deposit vm_deposit : deposits) {
                 if (vm_deposit.getBlockhash() == null || vm_deposit.getBlockhash().trim().isEmpty()) {
                     continue;
@@ -89,11 +92,15 @@ public class ScheduleOrderService {
                     // giveMoneyUtils.batchGiveMoneyToECKeyList,
                     // timeout = 60 minutes rating < 75
                     else {
-
+                        Date date = new Date(blockEvaluations.get(0).getInsertTime());
+                        if (DateUtils.addMinutes(date, 60).before(new Date())) {
+                            subDeposits.add(vm_deposit);
+                        }
                     }
                 }
 
             }
+            giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(subDeposits));
 
         }
     }
