@@ -14,6 +14,8 @@ public class ScheduleConfiguration {
 
     @Value("${giveMoneyService.active:true}")
     boolean giveMoneyServiceActive;
+    @Value("${server.serverURL:http://loalhost:8088}")
+    String serverURL;
 
     public boolean isGiveMoneyServiceActive() {
         return giveMoneyServiceActive;
@@ -21,5 +23,13 @@ public class ScheduleConfiguration {
 
     public void setGiveMoneyServiceActive(boolean giveMoneyServiceActive) {
         this.giveMoneyServiceActive = giveMoneyServiceActive;
+    }
+
+    public String getServerURL() {
+        return serverURL;
+    }
+
+    public void setServerURL(String serverURL) {
+        this.serverURL = serverURL;
     }
 }
