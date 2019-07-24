@@ -81,7 +81,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 vm_deposit.setPubkey(resultSet.getString("pubkey"));
                 // add only correct pub key to return list for transfer money
                 if (!"PAID".equalsIgnoreCase(vm_deposit.getStatus())
-                        && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus())) {
+                        && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus()) && !"CONFIRM".equalsIgnoreCase(vm_deposit.getStatus())) {
                     boolean flag = true;
                     String pubkey = resultSet.getString("pubkey");
                     try {
