@@ -2134,6 +2134,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
             for (UTXO output : getOutputsResponse.getOutputs()) {
+              if(!  checkSpendpending(output)) {
                 if (multisigns) {
                     candidates.add(output);
                 } else {
@@ -2141,6 +2142,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                         candidates.add(output);
                     }
                 }
+              } 
             }
             Collections.shuffle(candidates);
             return candidates;
@@ -2786,7 +2788,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
             for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
                 final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
             }
         }
 
