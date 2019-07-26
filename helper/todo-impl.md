@@ -527,3 +527,5 @@ example
 ### product systems   bigtangle.org, bigtangle.info, bigtangle.de
 ### build on branch using jenkin
 ### aliyun setup
+
+### reject conflict block from client, but not from other servers.
