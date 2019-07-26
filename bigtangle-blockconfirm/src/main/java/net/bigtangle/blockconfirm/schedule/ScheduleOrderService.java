@@ -113,8 +113,17 @@ public class ScheduleOrderService {
     private HashMap<String, Long> giveMoneyResult(List<Vm_deposit> l) throws BlockStoreException {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         for (Vm_deposit d : l) {
-            giveMoneyResult.put(d.getPubkey(),
-                    Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+            if (giveMoneyResult.containsKey(d.getPubkey())) {
+                long temp = giveMoneyResult.get(d.getPubkey()).longValue();
+
+                giveMoneyResult.put(d.getPubkey(),
+                        Coin.parseCoin(Long.valueOf(d.getAmount().longValue() + temp).toString(),
+                                NetworkParameters.BIGTANGLE_TOKENID).getValue());
+            } else {
+                giveMoneyResult.put(d.getPubkey(),
+                        Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+            }
+
         }
         return giveMoneyResult;
     }
