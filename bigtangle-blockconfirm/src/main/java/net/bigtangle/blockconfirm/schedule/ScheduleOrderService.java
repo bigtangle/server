@@ -48,7 +48,7 @@ public class ScheduleOrderService {
 
     @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() throws Exception {
-        if (scheduleConfiguration.isGiveMoneyServiceActive()) {
+      //  if (scheduleConfiguration.isGiveMoneyServiceActive()) {
 
             logger.debug(" Start ScheduleGiveMoneyOrderService");
 
@@ -102,7 +102,7 @@ public class ScheduleOrderService {
             }
             giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(subDeposits));
 
-        }
+        
     }
 
     private List<Vm_deposit> sendFromOrder() throws BlockStoreException {
