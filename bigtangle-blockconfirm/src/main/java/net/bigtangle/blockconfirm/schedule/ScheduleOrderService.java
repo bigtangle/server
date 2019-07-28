@@ -120,8 +120,11 @@ public class ScheduleOrderService {
                         Coin.parseCoin(Long.valueOf(d.getAmount().longValue() + temp).toString(),
                                 NetworkParameters.BIGTANGLE_TOKENID).getValue());
             } else {
-                giveMoneyResult.put(d.getPubkey(),
-                        Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+                // only positive value in
+                if (d.getAmount().signum() > 0) {
+                    giveMoneyResult.put(d.getPubkey(), Coin
+                            .parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+                }
             }
 
         }
