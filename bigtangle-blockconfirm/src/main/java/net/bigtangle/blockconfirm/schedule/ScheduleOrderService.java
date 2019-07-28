@@ -22,6 +22,7 @@ import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.blockconfirm.config.ScheduleConfiguration;
 import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
 import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
@@ -55,13 +56,13 @@ public class ScheduleOrderService {
         // select all order not Status=PAID and Status=CONFIRM
         List<Vm_deposit> deposits = sendFromOrder();
         // if not paid then do transfer and pay
-        if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
-
+       Block b= giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits));
+            if (b!=null) {
             // only update, if money is given for order
 
             for (Vm_deposit d : deposits) {
-
-                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID");
+               
+                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID",b.getHashAsString());
                 logger.info("  update deposit : " + d.getUserid() + ", success");
 
             }
@@ -86,7 +87,7 @@ public class ScheduleOrderService {
             List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
             if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
                 if (blockEvaluations.get(0).getRating() >= 75) {
-                    this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM");
+                    this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM",vm_deposit.getBlockhash());
                 }
                 // otherwise do again the
                 // giveMoneyUtils.batchGiveMoneyToECKeyList,
@@ -118,7 +119,7 @@ public class ScheduleOrderService {
                         .getValue();
                 giveMoneyResult.put(d.getPubkey(), my + temp);
             } else {
-
+                   
                 giveMoneyResult.put(d.getPubkey(),
                         Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
 

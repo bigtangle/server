@@ -86,7 +86,7 @@ public interface FullPrunedBlockStore {
 
     List<Vm_deposit> queryDepositByStatus(String status) throws BlockStoreException;
 
-    void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException;
+    void updateDepositStatus(Long id, String useraccount, String status, String blockhash) throws BlockStoreException;
 
     void resetDepositPaid() throws BlockStoreException;
 

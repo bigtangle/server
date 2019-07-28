@@ -160,15 +160,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException {
-        String sql = "update vm_deposit set status = ? where userid = ? and useraccount=?";
+    public void updateDepositStatus(Long id, String useraccount, String status, String blockhash) throws BlockStoreException {
+        String sql = "update vm_deposit set status = ?, blockhash = ? where userid = ? and useraccount=?";
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             s.setString(1, status);
-            s.setLong(2, id);
-            s.setString(3, useraccount);
+            s.setString(2, blockhash);
+            s.setLong(3, id);
+            s.setString(4, useraccount);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.blockconfirm.config.ServerConfiguration;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
@@ -35,17 +36,16 @@ public class GiveMoneyUtils {
     @Autowired
     private ServerConfiguration serverConfiguration;
  
-    public synchronized boolean batchGiveMoneyToECKeyList(HashMap<String, Long> giveMoneyResult) throws Exception {
+    public synchronized Block batchGiveMoneyToECKeyList(HashMap<String, Long> giveMoneyResult) throws Exception {
         if (giveMoneyResult.isEmpty()) {
-            return true;
+            return null;
         }
         LOGGER.info("  start giveMoneyResult : " + giveMoneyResult + " ");
 
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-      
-        return true;
+        return  payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+ 
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GiveMoneyUtils.class);
