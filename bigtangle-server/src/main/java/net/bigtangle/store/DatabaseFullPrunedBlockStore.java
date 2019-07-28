@@ -934,7 +934,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             //create domain name bc
             
-            Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "1",
+            Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "01",
                     NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, 1, true,
                     2, "bc", "");
             insertToken(params.getGenesisBlock().getHashAsString(), bc);
