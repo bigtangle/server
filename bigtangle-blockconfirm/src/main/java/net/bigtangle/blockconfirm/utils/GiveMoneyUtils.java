@@ -19,7 +19,6 @@ import net.bigtangle.wallet.Wallet;
 public class GiveMoneyUtils {
 
     @PostConstruct
-    @SuppressWarnings("deprecation")
     public void init() {
         String contextRoot = serverConfiguration.getServerURL();
         payWallet = new Wallet(networkParameters, contextRoot);
@@ -40,7 +39,8 @@ public class GiveMoneyUtils {
         if (giveMoneyResult.isEmpty()) {
             return true;
         }
-        @SuppressWarnings("deprecation")
+        LOGGER.info("  start giveMoneyResult : " + giveMoneyResult + " ");
+
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);

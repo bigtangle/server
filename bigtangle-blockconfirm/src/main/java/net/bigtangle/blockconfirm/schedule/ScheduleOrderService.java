@@ -55,7 +55,7 @@ public class ScheduleOrderService {
             // select all order not Status=PAID and Status=CONFIRM
             List<Vm_deposit> deposits = sendFromOrder();
             // if not paid then do transfer and pay
-            if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
+                      if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
 
                 // only update, if money is given for order
 
