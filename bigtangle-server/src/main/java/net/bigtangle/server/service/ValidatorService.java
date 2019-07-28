@@ -92,7 +92,7 @@ import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+ 
 
 @Service
 public class ValidatorService {
@@ -516,7 +516,7 @@ public class ValidatorService {
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
             return store.getTokenSpent(connectedDomainToken.getDomainPredecessorBlockHash());
         default:
-            throw new NotImplementedException();
+            throw new RuntimeException("Not Implemented");
         }
     }
 
@@ -547,7 +547,7 @@ public class ValidatorService {
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
             return store.getTokenConfirmed(connectedDomainToken.getDomainPredecessorBlockHash());
         default:
-            throw new NotImplementedException();
+            throw new RuntimeException("not implemented");
         }
     }
 
