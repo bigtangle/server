@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -42,10 +43,13 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
@@ -58,6 +62,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.MatchResult;
 import net.bigtangle.server.service.Eligibility;
@@ -927,20 +932,34 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
             updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
-            // Token output table
-            Token tokens = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true,
+            //create domain name bc
+            
+            Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, 1, true,
                     2, "bc", "");
-            insertToken(params.getGenesisBlock().getHashAsString(), tokens);
+            insertToken(params.getGenesisBlock().getHashAsString(), bc);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
             // Correctly insert additional data
             ECKey genesisTestKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                     Utils.HEX.decode(NetworkParameters.testPub));
             Address genesisAddress = genesisTestKey.toAddress(params);
-            MultiSignAddress permissionedAddress = new MultiSignAddress(tokens.getTokenid(), genesisAddress.toBase58(),
+            MultiSignAddress permissionedAddress = new MultiSignAddress(bc.getTokenid(), genesisAddress.toBase58(),
                     genesisTestKey.getPublicKeyAsHex());
             permissionedAddress.setBlockhash(params.getGenesisBlock().getHashAsString());
+            insertMultiSignAddress(permissionedAddress);
+  
+            // Token output table
+            Token bigtangle = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENNAME,
+                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true,
+                    2, params.getGenesisBlock().getHashAsString());
+            insertToken(bcBlockHash(params), bigtangle);
+            updateTokenConfirmed(bcBlockHash(params), true);
+
+            // Correctly insert additional data
+            permissionedAddress = new MultiSignAddress(bigtangle.getTokenid(), genesisAddress.toBase58(),
+                    genesisTestKey.getPublicKeyAsHex());
+            permissionedAddress.setBlockhash(bcBlockHash(params));
             insertMultiSignAddress(permissionedAddress);
 
             // Tip table
@@ -950,6 +969,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    public static  String bcBlockHash(NetworkParameters params) {
+        Block bcBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS,
+                Block.Type.BLOCKTYPE_TOKEN_CREATION.ordinal());
+        bcBlock.setTime(1532896109L);
+ 
+        BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+        bcBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
+ 
+        bcBlock.setNonce(0);
+        bcBlock.setHeigth(0);
+        // genesisBlock.solve();
+
+        return bcBlock.getHashAsString();
+
+    }
     public void saveGenesisTransactionOutput(Block block) throws BlockStoreException {
 
         for (TransactionOutput out : block.getTransactions().get(0).getOutputs()) {
