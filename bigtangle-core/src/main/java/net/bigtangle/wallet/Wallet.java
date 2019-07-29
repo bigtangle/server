@@ -2752,6 +2752,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
+    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
+            KeyParameter aesKey, int amount, String description) throws Exception {
+        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
+        String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
+
+        List<ECKey> walletKeys = new ArrayList<ECKey>();
+        walletKeys.add(signKey);
+
+        final int signnumber = walletKeys.size();
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+                amount, description, signnumber);
+    }
+    
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
             String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
@@ -2788,7 +2801,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
             for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
                 final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
         }
 

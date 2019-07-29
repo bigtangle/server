@@ -1,8 +1,7 @@
 package net.bigtangle.server;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,24 +17,63 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
     @Test
     public void testCreateDomainTokenBatch() throws Exception {
         store.resetStore();
-        this.initWalletKeysMapper();
 
-        Map<String, List<ECKey>> linkMap = new LinkedHashMap<String, List<ECKey>>();
-        linkMap.put("de", this.walletKeys);
-        linkMap.put("bigtangle.de", this.wallet1Keys);
-        linkMap.put("m.bigtangle.de", this.wallet2Keys);
+        wallet1();
+        wallet2();
 
-        int amount = 678900000;
-        int index = 0;
-        for (Map.Entry<String, List<ECKey>> entry : linkMap.entrySet()) {
-            System.out.println("domainname : " + entry.getKey() + ", values : " + entry.getValue().size());
-            List<ECKey> walletKeys = entry.getValue();
-            final String domainname = entry.getKey();
+        {
+            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(0));
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "de", "", aesKey,
+                    678900000, "");
 
-            String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-            this.createDomainToken(tokenid, "中央银行token - 00" + (++index), domainname, amount, walletKeys);
-            System.out.println(tokenid);
-            this.checkTokenAssertTrue(tokenid, domainname);
+            for (int i = 1; i < walletKeys.size(); i++) {
+                ECKey ecKey = walletKeys.get(i);
+                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+            }
+        }
+        
+        {
+            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(1));
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(2));
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "bund.de", "de", aesKey,
+                    678900000, "");
+
+            for (int i = 1; i < walletKeys.size(); i++) {
+                ECKey ecKey = walletKeys.get(i);
+                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+            }
+        }
+        
+        {
+            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(3));
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(4));
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "www.bund.de", "bund.de", aesKey,
+                    678900000, "");
+
+            for (int i = 1; i < walletKeys.size(); i++) {
+                ECKey ecKey = walletKeys.get(i);
+                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+            }
+        }
+        
+        {
+            List<ECKey> walletKeys = new ArrayList<ECKey>();
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(5));
+            walletKeys.add(walletAppKit1.wallet().walletKeys().get(6));
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "mmm.bund.de", "bund.de", aesKey,
+                    678900000, "");
+
+            for (int i = 1; i < walletKeys.size(); i++) {
+                ECKey ecKey = walletKeys.get(i);
+                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+            }
         }
     }
 
