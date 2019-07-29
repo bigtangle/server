@@ -6,7 +6,7 @@ server:
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
     
-  serverURL: ${SERVERURL:https://bigtangle.org/}
+  serverURL: ${SERVERURL:https://bigtangle.info/}
   reset: ${RESET:false}
 
 spring:
