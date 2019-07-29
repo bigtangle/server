@@ -19,12 +19,10 @@ public class TokenCreateTests extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(TokenCreateTests.class);
 
-    
-    public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
-    public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
+    //18TiXgUW913VFs3nqak6QAadTS7EYL6mGg
 
     
-  //  @Test
+    @Test
     public void testYuanToken() throws JsonProcessingException, Exception {
         ECKey key =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
                 Utils.HEX.decode(yuanTokenPub));
@@ -36,9 +34,9 @@ public class TokenCreateTests extends AbstractIntegrationTest {
       //  while (true) { 
        
         wallet1();
-        wallet2();
+     //   wallet2();
      //   createToken(walletAppKit1.wallet().walletKeys(null), "");
-        createToken(walletAppKit1.wallet().walletKeys(null), "test-1-");
+        createToken(walletAppKit1.wallet().walletKeys(null), "");
      //   createToken(walletAppKit2.wallet().walletKeys(null), "test-2-");
      //   }
     }
@@ -49,7 +47,7 @@ public class TokenCreateTests extends AbstractIntegrationTest {
         testCreateMultiSigToken(keys.get(2), pre + "BTC",8);
         testCreateMultiSigToken(keys.get(3), pre + "ETH",8);
         // testCreateMultiSigToken(keys.get(4), "CNY");
-        testCreateMultiSigToken(keys.get(7), pre + "人民币",2);
+     //   testCreateMultiSigToken(keys.get(7), pre + "人民币",2);
         testCreateMultiSigToken(keys.get(5), pre + "USD",2);
         testCreateMultiSigToken(keys.get(6), pre + "EUR",2);
     }
