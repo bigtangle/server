@@ -2460,7 +2460,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
-        Coin summe = Coin.ZERO;
+        Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
         multispent.setMemo(memo);
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {

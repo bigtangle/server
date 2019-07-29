@@ -1,5 +1,7 @@
 package net.bigtangle.tools;
 
+import static net.bigtangle.core.Utils.HEX;
+
 import java.util.HashMap;
 
 import org.junit.Test;
@@ -53,4 +55,17 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
     }
 
+    
+    @Test
+    public void payMoneyToWalletYuan() throws Exception {
+        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+        wallet1();
+        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 3333333L);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey, HEX.decode(yuanTokenPub), "");
+        log.debug("block " + b.toString());
+
+    }
+    
 }

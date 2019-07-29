@@ -529,3 +529,6 @@ example
 ### aliyun setup
 
 ### reject conflict block from client, but not from other servers.
+
+### fix problem of pay same address in wallet with only one key, remainder to other key.
+
