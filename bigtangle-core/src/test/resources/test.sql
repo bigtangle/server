@@ -37,3 +37,10 @@ ON openorders.blockhash=blocks.hash
 WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND openorders.spent = 0;
 
 select * from vm_deposit ;
+
+select * from wechatinvite ;
+delete from vm_deposit where amount <= 0
+select userid ,useraccount, amount,  d.status, pubkey from vm_deposit d
+             join Account a on d.userid=a.id
+             join wechatinvite w on a.email=w.wechatId and w.pubkey is not null;
+

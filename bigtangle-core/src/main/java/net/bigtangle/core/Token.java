@@ -312,5 +312,10 @@ public class Token implements java.io.Serializable {
                 + ", amount=" + amount + ", revoked=" + revoked + ", classification=" + classification + ", language="
                 + language + ", tokenKeyValues=" + tokenKeyValues + "]";
     }
-
+    
+    public static Token getBigTangleToken() {
+    return  Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
+            NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true,
+            2, "bc", "");
+    }
 }

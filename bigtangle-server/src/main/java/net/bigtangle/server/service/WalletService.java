@@ -205,6 +205,8 @@ public class WalletService {
         for (Token t : tokens) {
             re.put(t.getTokenid(), t);
         }
+        re.put(Token.getBigTangleToken().getTokenid(), Token.getBigTangleToken())  ;
+        
         return re;
     }
 }

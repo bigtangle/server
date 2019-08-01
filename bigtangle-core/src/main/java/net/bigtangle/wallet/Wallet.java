@@ -2134,6 +2134,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
             for (UTXO output : getOutputsResponse.getOutputs()) {
+              if(!  checkSpendpending(output)) {
                 if (multisigns) {
                     candidates.add(output);
                 } else {
@@ -2141,6 +2142,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                         candidates.add(output);
                     }
                 }
+              } 
             }
             Collections.shuffle(candidates);
             return candidates;
@@ -2474,7 +2476,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
-        Coin summe = Coin.ZERO;
+        Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
         multispent.setMemo(memo);
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
@@ -2766,6 +2768,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
+    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
+            KeyParameter aesKey, int amount, String description) throws Exception {
+        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
+        String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
+
+        List<ECKey> walletKeys = new ArrayList<ECKey>();
+        walletKeys.add(signKey);
+
+        final int signnumber = walletKeys.size();
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+                amount, description, signnumber);
+    }
+    
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
             String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);

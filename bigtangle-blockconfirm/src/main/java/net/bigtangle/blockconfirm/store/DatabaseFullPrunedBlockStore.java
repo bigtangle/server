@@ -64,7 +64,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
-        String sql = "select userid , amount,  d.status, pubkey " + "from vm_deposit d "
+        String sql = "select userid ,useraccount, amount,  d.status, pubkey " + "from vm_deposit d "
                 + "join Account a on d.userid=a.id "
                 + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
 
@@ -79,9 +79,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 vm_deposit.setUserid(resultSet.getLong("userid"));
                 vm_deposit.setAmount(resultSet.getBigDecimal("amount"));
                 vm_deposit.setPubkey(resultSet.getString("pubkey"));
+                vm_deposit.setUseraccount(resultSet.getString("useraccount"));
                 // add only correct pub key to return list for transfer money
                 if (!"PAID".equalsIgnoreCase(vm_deposit.getStatus())
-                        && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus()) && !"CONFIRM".equalsIgnoreCase(vm_deposit.getStatus())) {
+                    //    && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus())
+                        && !"CONFIRM".equalsIgnoreCase(vm_deposit.getStatus())) {
                     boolean flag = true;
                     String pubkey = resultSet.getString("pubkey");
                     try {
@@ -158,15 +160,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void updateDepositStatus(Long id, String useraccount, String status) throws BlockStoreException {
-        String sql = "update vm_deposit set status = ? where userid = ? and useraccount=?";
+    public void updateDepositStatus(Long id, String useraccount, String status, String blockhash) throws BlockStoreException {
+        String sql = "update vm_deposit set status = ?, blockhash = ? where userid = ? and useraccount=?";
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             s.setString(1, status);
-            s.setLong(2, id);
-            s.setString(3, useraccount);
+            s.setString(2, blockhash);
+            s.setLong(3, id);
+            s.setString(4, useraccount);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {

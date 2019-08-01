@@ -22,6 +22,7 @@ import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.blockconfirm.config.ScheduleConfiguration;
 import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
 import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
@@ -48,61 +49,60 @@ public class ScheduleOrderService {
 
     @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
     public void updateMilestoneService() throws Exception {
-        if (scheduleConfiguration.isGiveMoneyServiceActive()) {
+        // if (scheduleConfiguration.isGiveMoneyServiceActive()) {
 
-            logger.debug(" Start ScheduleGiveMoneyOrderService");
+        logger.debug(" Start ScheduleGiveMoneyOrderService");
 
-            // select all order not Status=PAID and Status=CONFIRM
-            List<Vm_deposit> deposits = sendFromOrder();
-            // if not paid then do transfer and pay
-            if (giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits))) {
+        // select all order not Status=PAID and Status=CONFIRM
+        List<Vm_deposit> deposits = sendFromOrder();
+        // if not paid then do transfer and pay
+       Block b= giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits));
+            if (b!=null) {
+            // only update, if money is given for order
 
-                // only update, if money is given for order
-
-                for (Vm_deposit d : deposits) {
-
-                    this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID");
-                    logger.info("  update deposit : " + d.getUserid() + ", success");
-
-                }
-            }
-
-            // if Status=PAID then check block valuation with rating > 75, set
-            // Status=CONFIRM
-            // searchBlockByBlockHash
-            deposits = this.store.queryDepositByStatus("PAID");
-            List<Vm_deposit> subDeposits = new ArrayList<Vm_deposit>();
-            for (Vm_deposit vm_deposit : deposits) {
-                if (vm_deposit.getBlockhash() == null || vm_deposit.getBlockhash().trim().isEmpty()) {
-                    continue;
-                }
-                Map<String, Object> requestParam = new HashMap<String, Object>();
-                requestParam.put("blockhash", vm_deposit.getBlockhash());
-                String response = OkHttp3Util.postString(
-                        scheduleConfiguration.getServerURL() + ReqCmd.searchBlockByBlockHash.name(),
-                        Json.jsonmapper().writeValueAsString(requestParam));
-                GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
-                        GetBlockEvaluationsResponse.class);
-                List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
-                if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
-                    if (blockEvaluations.get(0).getRating() >= 75) {
-                        this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM");
-                    }
-                    // otherwise do again the
-                    // giveMoneyUtils.batchGiveMoneyToECKeyList,
-                    // timeout = 60 minutes rating < 75
-                    else {
-                        Date date = new Date(blockEvaluations.get(0).getInsertTime());
-                        if (DateUtils.addMinutes(date, 60).before(new Date())) {
-                            subDeposits.add(vm_deposit);
-                        }
-                    }
-                }
+            for (Vm_deposit d : deposits) {
+               
+                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID",b.getHashAsString());
+                logger.info("  update deposit : " + d.getUserid() + ", success");
 
             }
-            giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(subDeposits));
+        }
+
+        // if Status=PAID then check block valuation with rating > 75, set
+        // Status=CONFIRM
+        // searchBlockByBlockHash
+        deposits = this.store.queryDepositByStatus("PAID");
+        List<Vm_deposit> subDeposits = new ArrayList<Vm_deposit>();
+        for (Vm_deposit vm_deposit : deposits) {
+            if (vm_deposit.getBlockhash() == null || vm_deposit.getBlockhash().trim().isEmpty()) {
+                continue;
+            }
+            Map<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("blockhash", vm_deposit.getBlockhash());
+            String response = OkHttp3Util.postString(
+                    scheduleConfiguration.getServerURL() + ReqCmd.searchBlockByBlockHash.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                    GetBlockEvaluationsResponse.class);
+            List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+            if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
+                if (blockEvaluations.get(0).getRating() >= 75) {
+                    this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM",vm_deposit.getBlockhash());
+                }
+                // otherwise do again the
+                // giveMoneyUtils.batchGiveMoneyToECKeyList,
+                // timeout = 60 minutes rating < 75
+                else {
+                    Date date = new Date(blockEvaluations.get(0).getInsertTime());
+                    if (DateUtils.addMinutes(date, 60).before(new Date())) {
+                        subDeposits.add(vm_deposit);
+                    }
+                }
+            }
 
         }
+        giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(subDeposits));
+
     }
 
     private List<Vm_deposit> sendFromOrder() throws BlockStoreException {
@@ -113,8 +113,18 @@ public class ScheduleOrderService {
     private HashMap<String, Long> giveMoneyResult(List<Vm_deposit> l) throws BlockStoreException {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         for (Vm_deposit d : l) {
-            giveMoneyResult.put(d.getPubkey(),
-                    Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+            if (giveMoneyResult.containsKey(d.getPubkey())) {
+                long temp = giveMoneyResult.get(d.getPubkey());
+                long my = Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID)
+                        .getValue();
+                giveMoneyResult.put(d.getPubkey(), my + temp);
+            } else {
+                   
+                giveMoneyResult.put(d.getPubkey(),
+                        Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+
+            }
+
         }
         return giveMoneyResult;
     }

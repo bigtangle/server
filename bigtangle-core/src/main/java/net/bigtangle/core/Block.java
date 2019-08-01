@@ -1202,8 +1202,10 @@ public class Block extends Message {
 
                 List<ECKey> keys = new ArrayList<ECKey>();
                 for (MultiSignAddress multiSignAddress : tokenInfo.getMultiSignAddresses()) {
-                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
-                    keys.add(ecKey);
+                    if (multiSignAddress.getTokenHolder() == 1) {
+                        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(multiSignAddress.getPubKeyHex()));
+                        keys.add(ecKey);
+                    }
                 }
                 if (signnumber <= 1 && keys.size() <= 1) {
                     coinbase.addOutput(new TransactionOutput(params, coinbase, value,
