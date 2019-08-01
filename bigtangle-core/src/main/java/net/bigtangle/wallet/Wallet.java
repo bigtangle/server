@@ -2166,7 +2166,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // immature coinbases and outputs
         // we don't have the keys for.
         List<TransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
-        completeTx(req, candidates, true);
+        completeTx(req, candidates, true, getAddresses(aesKey));
     }
 
     public void completeTx(SendRequest req, List<TransactionOutput> candidates, boolean sign)
@@ -2261,6 +2261,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             req.ensureMinRequiredFee = false;
             String tokenHex = entry.getKey();
             Address address = addressResult.get(tokenHex);
+            if(address==null) {
+                address=addressResult.entrySet().iterator().next().getValue();
+            }
             FeeCalculation feeCalculation = calculateFee(req, entry.getValue(), start, req.ensureMinRequiredFee,
                     candidates, address);
             bestCoinSelection = feeCalculation.bestCoinSelection;
@@ -2345,6 +2348,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return walletKeys(aesKey);
     }
 
+    public  HashMap<String, Address>  getAddresses(KeyParameter aesKey) {
+
+        HashMap<String, Address> addressResult = new HashMap<String, Address>();
+        
+        for (ECKey key : this.walletKeys(aesKey)) {
+            String n = key.toAddress(this.getNetworkParameters()).toString();
+            addressResult.put(n,key.toAddress(this.getNetworkParameters()) );
+        }
+
+        return addressResult;
+    }
+
+    
     public boolean calculatedAddressHit(KeyParameter aesKey, String address) {
 
         for (ECKey key : this.walletKeys(aesKey)) {
