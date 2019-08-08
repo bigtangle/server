@@ -1211,7 +1211,8 @@ public class Block extends Message {
                     coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                             ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
                 } else {
-                    Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) signnumber, keys);
+                    int n = keys.size();
+                    Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(n, keys);
                     coinbase.addOutput(new TransactionOutput(params, coinbase, value, scriptPubKey.getProgram()));
                 }
             }

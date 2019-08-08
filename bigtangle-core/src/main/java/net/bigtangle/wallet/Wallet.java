@@ -2768,7 +2768,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
-    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
+    public void publishDomainName(ECKey signKey, String tokenid, String domainname,
             KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
@@ -2777,16 +2777,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         walletKeys.add(signKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, domainname, domainname, domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
     
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid,
             String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, domainname, domainname, domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
 
@@ -2811,19 +2811,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         for (ECKey ecKey : walletKeys) {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
-
-        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokens);
-        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
-                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
-                final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
-            }
-        }
-
-        signnumber++;
-        tokens.setSignnumber(signnumber);
-
+        
         saveToken(tokenInfo, basecoin, signKey, aesKey);
     }
 

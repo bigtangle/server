@@ -2138,10 +2138,10 @@ public class ValidatorService {
     }
 
     private SolidityState checkDomainPermission(List<MultiSignAddress> permissionedAddresses,
-			List<MultiSignBy> multiSignBies, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
-    	
-    	// Make original list inaccessible by cloning list
-    	multiSignBies = new ArrayList<MultiSignBy>(multiSignBies);
+            List<MultiSignBy> multiSignBies, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
+
+        // Make original list inaccessible by cloning list
+        multiSignBies = new ArrayList<MultiSignBy>(multiSignBies);
 
         // Get permissioned pubkeys wrapped to check for bytearray equality
         Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();
@@ -2154,9 +2154,9 @@ public class ValidatorService {
         for (MultiSignBy multiSignBy : new ArrayList<MultiSignBy>(multiSignBies)) {
             ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
             if (!permissionedPubKeys.contains(pubKey)) {
-            	// If a pubkey is not from the list, drop it.
-            	multiSignBies.remove(multiSignBy);
-            	continue;
+                // If a pubkey is not from the list, drop it.
+                multiSignBies.remove(multiSignBy);
+                continue;
             } else {
                 // Otherwise the listed address is used. Cannot use same address multiple times.
                 permissionedPubKeys.remove(pubKey);
@@ -2171,7 +2171,7 @@ public class ValidatorService {
             byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
 
             if (ECKey.verify(data, signature, pubKey)) {
-				signatureCount++;
+                signatureCount++;
             } else {
                 if (throwExceptions)
                     throw new InvalidSignatureException();
@@ -2181,15 +2181,15 @@ public class ValidatorService {
 
         // Return whether sufficient signatures exist
         if (signatureCount >= requiredSignatures)
-        	return SolidityState.getSuccessState();
+            return SolidityState.getSuccessState();
         else {
             if (throwExceptions)
                 throw new VerificationException("Domain signatures are insufficient!");
             return SolidityState.getFailState();
         }
-	}
+    }
 
-	private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
+    private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
         if (currentToken.getToken() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("getToken is null");

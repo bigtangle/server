@@ -19,6 +19,7 @@ import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.DomainnameUtil;
 
 @Service
 public class TokenDomainnameService {
@@ -80,6 +81,7 @@ public class TokenDomainnameService {
     public AbstractResponse queryDomainnameTokenPredecessorBlockHash(String domainname) 
             throws BlockStoreException {
         AbstractResponse response;
+        domainname = DomainnameUtil.matchParentDomainname(domainname);
         if (StringUtils.isBlank(domainname)) {
             String domainPredecessorBlockHash = networkParameters.getGenesisBlock().getHashAsString();
             response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);

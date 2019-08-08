@@ -8,7 +8,10 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.google.common.collect.ImmutableList;
+
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -21,71 +24,46 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         wallet1();
         wallet2();
 
-        {
-            List<ECKey> walletKeys = new ArrayList<ECKey>();
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(0));
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "de", "", aesKey,
-                    678900000, "");
+        List<ECKey> walletKeys = wallet2Keys;
+        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
-            for (int i = 1; i < walletKeys.size(); i++) {
-                ECKey ecKey = walletKeys.get(i);
-                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+        {
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", aesKey, 678900000, "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
-        
-        {
-            List<ECKey> walletKeys = new ArrayList<ECKey>();
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(1));
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(2));
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "bund.de", "de", aesKey,
-                    678900000, "");
 
-            for (int i = 1; i < walletKeys.size(); i++) {
-                ECKey ecKey = walletKeys.get(i);
-                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+        {
+            final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "www.bigtangle.bc", aesKey, 678900000,
+                    "");
+            walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(walletKeys.get(0));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
-        
-        {
-            List<ECKey> walletKeys = new ArrayList<ECKey>();
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(3));
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(4));
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "www.bund.de", "bund.de", aesKey,
-                    678900000, "");
 
-            for (int i = 1; i < walletKeys.size(); i++) {
-                ECKey ecKey = walletKeys.get(i);
-                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
-            }
-        }
-        
         {
-            List<ECKey> walletKeys = new ArrayList<ECKey>();
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(5));
-            walletKeys.add(walletAppKit1.wallet().walletKeys().get(6));
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid, "mmm.bund.de", "bund.de", aesKey,
-                    678900000, "");
-
-            for (int i = 1; i < walletKeys.size(); i++) {
-                ECKey ecKey = walletKeys.get(i);
-                walletAppKit1.wallet().multiSign(tokenid, ecKey, aesKey);
+            final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(ImmutableList.of(walletKeys.get(2), walletKeys.get(3)),
+                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", aesKey, 678900000, "");
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(walletKeys.get(3));
+            keys.add(preKey);
+            keys.add(walletKeys.get(0));
+            keys.add(walletKeys.get(1));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
     }
-
-//    @Test
-//    public void testCreateDomainToken() throws Exception {
-//        store.resetStore();
-//        this.initWalletKeysMapper();
-//        String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-//        int amount = 678900000;
-//        final String domainname = "de";
-//        this.createDomainToken(tokenid, "中央银行token - 000", "de", amount, this.walletKeys);
-//        this.checkTokenAssertTrue(tokenid, domainname);
-//    }
-
 }
