@@ -532,3 +532,11 @@ example
 
 ### fix problem of pay same address in wallet with only one key, remainder to other key.
 
+### add payment request as result qr code  
+user create a qr request to ask payment via 
+https://m.bigtangle.net/pubic/qrpay.jsf?tokenid=bc&quantity=888&address=16nAV1cJSajuMo5XdtyMBMJBS4yj2d5rUQ&memo=人民币买别人的大网币
+output
+qrcode with url
+https://m.bigtangle.net/wallet/pay.jsf?tokenid=bc&quantity=888&address=16nAV1cJSajuMo5XdtyMBMJBS4yj2d5rUQ&memo=人民币买别人的大网币
+										
+
