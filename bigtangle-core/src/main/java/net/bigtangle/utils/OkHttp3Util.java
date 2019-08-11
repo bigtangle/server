@@ -40,7 +40,47 @@ public class OkHttp3Util {
     public static String signHex;
     public static String contentHex;
 
-    public static String post(String url, byte[] b) throws IOException   {
+    /*
+     * same method, but it will call next server, if last server failed to return
+     * result
+     */
+    public static String post(String[] url, byte[] b) throws IOException {
+        return post(url, b, 0);
+    }
+
+    public static String post(String[] url, byte[] b, int number) throws IOException {
+
+        if (number < url.length) {
+            try {
+                return post(url[number], b);
+            } catch (RuntimeException e) {
+                number += 1;
+                return post(url, b, number);
+            }
+        } else {
+            throw new RuntimeException("all servers are failed:  " + url);
+        }
+    }
+
+    public static byte[] post(String[] url, String b) throws IOException {
+        return post(url, b, 0);
+    }
+
+    public static byte[] post(String[] url, String b, int number) throws IOException {
+
+        if (number < url.length) {
+            try {
+                return post(url[number], b);
+            } catch (RuntimeException e) {
+                number += 1;
+                return post(url, b, number);
+            }
+        } else {
+            throw new RuntimeException("all servers are failed:  " + url);
+        }
+    }
+    
+    public static String post(String url, byte[] b) throws IOException {
         logger.debug(url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
@@ -84,7 +124,7 @@ public class OkHttp3Util {
         }
     }
 
-    public static String postString(String url, String s) throws IOException  {
+    public static String postString(String url, String s) throws IOException {
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
@@ -126,14 +166,15 @@ public class OkHttp3Util {
         return client;
 
     }
-/*
-    private static OkHttpClient getOkHttpClientSafe(String pubkey, String signHex, String contentHex) {
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
-                .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute, TimeUnit.MINUTES)
-                .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex)).build();
-        return client;
-    }
-*/
+
+    /*
+     * private static OkHttpClient getOkHttpClientSafe(String pubkey, String
+     * signHex, String contentHex) { OkHttpClient client = new
+     * OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
+     * .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute,
+     * TimeUnit.MINUTES) .addInterceptor(new BasicAuthInterceptor(pubkey,
+     * signHex, contentHex)).build(); return client; }
+     */
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {
 
@@ -166,7 +207,7 @@ public class OkHttp3Util {
                             return true;
                         }
                     }).connectTimeout(timeoutMinute, TimeUnit.MINUTES).writeTimeout(timeoutMinute, TimeUnit.MINUTES)
-                    .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex)) 
+                    .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex))
                     .readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
 
             return client;
