@@ -1976,18 +1976,10 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        // Domain name defining blocks additionally NEED a defined name
-        if (currentToken.getToken().getTokentype() == TokenType.domainname.ordinal()) {
-            if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
-                if (throwExceptions)
-                    throw new InvalidDependencyException("Domainname is empty");
-                return SolidityState.getFailState();
-            }
-        	
-        	// TODO put this somewhere else: conflict points: conflicting domain definition!
-//            final String domainname = currentToken.getToken().getDomainName();
-//            if (this.tokenDomainnameService.checkTokenDomainnameAlreadyExists(domainname))
-//                throw new InvalidDependencyException("Domainname already exists");
+        if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
+            if (throwExceptions)
+                throw new InvalidDependencyException("Domainname is empty");
+            return SolidityState.getFailState();
         }
 
         // Ensure signatures exist

@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
+import org.stringtemplate.v4.compiler.STParser.ifstat_return;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -1031,18 +1033,20 @@ public abstract class AbstractIntegrationTest {
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException, Exception {
         
-//        final String tokenid = tokenInfo.getToken().getTokenid();
-//        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
-//        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
-//        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
-//                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-//            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
-//                final String pubKeyHex = multiSignAddress.getPubKeyHex();
-//                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
-//            }
-//        }
-//        
-//        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
+        final String tokenid = tokenInfo.getToken().getTokenid();
+        List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
+                && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            if (StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
+                tokenInfo.getToken().setDomainName(permissionedAddressesResponse.getDomainName());
+            }
+            for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
+                final String pubKeyHex = multiSignAddress.getPubKeyHex();
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+            }
+        }
+        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
