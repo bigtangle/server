@@ -13,10 +13,13 @@ public class PermissionedAddressesResponse extends AbstractResponse {
 
     private List<MultiSignAddress> multiSignAddresses;
     
+    private String domainName;
+    
     private boolean isRootPermissioned;
 
-    public static AbstractResponse create(boolean isRootPermissioned, List<MultiSignAddress> multiSignAddresses) {
+    public static AbstractResponse create(String domainName, boolean isRootPermissioned, List<MultiSignAddress> multiSignAddresses) {
         PermissionedAddressesResponse res = new PermissionedAddressesResponse();
+        res.domainName = domainName;
         res.isRootPermissioned = isRootPermissioned;
         res.multiSignAddresses = multiSignAddresses;
         return res;
@@ -36,5 +39,13 @@ public class PermissionedAddressesResponse extends AbstractResponse {
 
     public void setRootPermissioned(boolean isRootPermissioned) {
         this.isRootPermissioned = isRootPermissioned;
+    }
+
+    public String getDomainName() {
+        return domainName;
+    }
+
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
     }
 }

@@ -52,6 +52,7 @@ public abstract class AbstractIntegrationTest {
     public static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
     public static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
     public static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
+    public static final String HTTPS_BIGTANGLE_LOCAL = "https://localhost:8088/";
     
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";

@@ -2389,6 +2389,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(token);
         if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
                 && !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
+            if (StringUtils.isBlank(token.getDomainName())) {
+                token.setDomainName(permissionedAddressesResponse.getDomainName());
+            }
+
             for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
                 final String pubKeyHex = multiSignAddress.getPubKeyHex();
                 final String tokenid = token.getTokenid();

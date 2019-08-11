@@ -40,10 +40,14 @@ public class TokenDomainnameService {
      */
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainPredecessorBlockHash)
             throws BlockStoreException {
+        Token token = this.store.getToken(domainPredecessorBlockHash);
+        final String domainName = token.getDomainName();
+
         List<MultiSignAddress> multiSignAddresses = this
                 .queryDomainnameTokenMultiSignAddresses(domainPredecessorBlockHash);
+
         PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
-                .create(false, multiSignAddresses);
+                .create(domainName, false, multiSignAddresses);
         return response;
     }
 
