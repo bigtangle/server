@@ -367,7 +367,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected final String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ?, sign = 0 WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected final String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
     protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected final String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";

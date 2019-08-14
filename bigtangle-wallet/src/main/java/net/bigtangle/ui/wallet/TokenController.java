@@ -544,8 +544,17 @@ public class TokenController extends TokenBaseController {
                 Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
                 long amount = basecoin.getValue();
 
-                Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid.getValue().trim(),
-                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, amount, true, 0, "de");
+                HashMap<String, String> requestParam00 = new HashMap<String, String>();
+                requestParam00.put("tokenid", tokenid.getValue().trim());
+                String resp2 = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getCalTokenIndex.name(),
+                        Json.jsonmapper().writeValueAsString(requestParam00));
+
+                TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+                long tokenindex_ = tokenIndexResponse.getTokenindex();
+                String prevblockhash = tokenIndexResponse.getBlockhash();
+                
+                Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenid.getValue().trim(),
+                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, amount, true, 0, null);
                 tokens.setDomainName(stockUrl.getText().trim());
                 tokenInfo.setToken(tokens);
 

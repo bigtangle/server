@@ -60,7 +60,7 @@ public class GiveMoneyUtils {
         String prevblockhash = tokenIndexResponse.getBlockhash();
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false,0,"de");
+                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false,0, Configure.PARAMS.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
