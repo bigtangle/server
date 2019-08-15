@@ -530,8 +530,7 @@ public class TokenController extends TokenBaseController {
                 walletKeys.add(outKey);
                 int amount = Integer.valueOf(stockAmount.getText());
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, tokenid.getValue().trim(),
-                        stockName.getText().trim(),
-                        stockUrl.getText().trim(), Main.getAesKey(), amount,
+                        stockName.getText().trim(), stockUrl.getText().trim(), Main.getAesKey(), amount,
                         stockDescription.getText().trim());
                 GuiUtils.informationalAlert("", Main.getText("s_c_m"));
                 Main.instance.controller.initTableView();
@@ -553,7 +552,7 @@ public class TokenController extends TokenBaseController {
                 TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
                 long tokenindex_ = tokenIndexResponse.getTokenindex();
                 String prevblockhash = tokenIndexResponse.getBlockhash();
-                
+
                 Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenid.getValue().trim(),
                         stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, amount, true, 0, null);
                 tokens.setDomainName(stockUrl.getText().trim());
@@ -800,8 +799,9 @@ public class TokenController extends TokenBaseController {
                         walletKeys.add(ecKey);
                     }
                 }
+
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid1.getValue().trim(),
-                        urlTF.getText().trim(), Main.getAesKey(),
+                        stockName1.getText().trim(), urlTF.getText().trim(), Main.getAesKey(),
                         Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim());
 
                 for (int i = 1; i < walletKeys.size(); i++) {
