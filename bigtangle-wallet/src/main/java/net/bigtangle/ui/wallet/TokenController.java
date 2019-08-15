@@ -530,6 +530,7 @@ public class TokenController extends TokenBaseController {
                 walletKeys.add(outKey);
                 int amount = Integer.valueOf(stockAmount.getText());
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, tokenid.getValue().trim(),
+                        stockName.getText().trim(),
                         stockUrl.getText().trim(), Main.getAesKey(), amount,
                         stockDescription.getText().trim());
                 GuiUtils.informationalAlert("", Main.getText("s_c_m"));

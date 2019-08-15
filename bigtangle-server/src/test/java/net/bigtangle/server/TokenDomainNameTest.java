@@ -29,7 +29,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", aesKey, 678900000, "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, tokenid + "@" + "domain",
+                    "bigtangle.bc", aesKey, 678900000, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -40,8 +41,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "www.bigtangle.bc", aesKey, 678900000,
-                    "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, tokenid + "@" + "domain",
+                    "www.bigtangle.bc", aesKey, 678900000, "");
             walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
 
             List<ECKey> keys = new ArrayList<ECKey>();
@@ -55,7 +56,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(ImmutableList.of(walletKeys.get(2), walletKeys.get(3)),
-                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", aesKey, 678900000, "");
+                    walletKeys.get(2), tokenid, tokenid + "@" + "domain", "info.www.bigtangle.bc", aesKey, 678900000,
+                    "");
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(walletKeys.get(3));
             keys.add(preKey);

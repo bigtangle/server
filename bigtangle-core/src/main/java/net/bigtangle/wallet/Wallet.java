@@ -43,20 +43,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.protobuf.ByteString;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -112,6 +98,20 @@ import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.protobuf.ByteString;
 
 /**
  * <p>
@@ -2772,7 +2772,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return rollingBlock;
     }
 
-    public void publishDomainName(ECKey signKey, String tokenid, String domainname,
+    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
             KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
@@ -2781,16 +2781,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         walletKeys.add(signKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, domainname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
     
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid,
+    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
             String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, domainname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
 
