@@ -420,7 +420,7 @@ public class Main extends Application {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         Map<String, String> map = new HashMap<String, String>();
         for (Token tokens : getTokensResponse.getTokens()) {
-            map.put(Main.getString(tokens.getTokenid()), Main.getString(tokens.getTokenname()));
+            map.put(Main.getString(tokens.getTokenid()), Main.getString(tokens.getTokennameDisplay()));
         }
         return map;
     }
