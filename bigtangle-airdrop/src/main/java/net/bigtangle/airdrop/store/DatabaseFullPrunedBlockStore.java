@@ -41,13 +41,22 @@ import net.bigtangle.core.exception.VerificationException;
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
 
-    public void clearWechatInviteStatusZero() throws BlockStoreException {
+    public void clearWechatInviteStatusZero() throws BlockStoreException { 
+        clearWechatInviteStatusZero1();
+        clearWechatInviteReward();
+    }
+
+    public void clearWechatInviteStatusZero1() throws BlockStoreException {
         String sql = "update wechatinvite set status = 0";
         maybeConnect();
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(sql);
             s.executeUpdate();
+            
+            s.executeUpdate();
+
+            
             s.close();
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
@@ -62,7 +71,34 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    public void clearWechatInviteReward() throws BlockStoreException {
+        String sql = "delete from wechatreward";
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(sql);
+            s.executeUpdate();
+            
+            s.executeUpdate();
 
+            
+            s.close();
+        } catch (SQLException e) {
+            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+                throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    if (s.getConnection() != null)
+                        s.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+    }
+    
+    
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
     protected String VERSION_SETTING = "version";
