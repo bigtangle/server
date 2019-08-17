@@ -24,9 +24,20 @@ package net.bigtangle.kits;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.CryptoException;
 
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
@@ -38,6 +49,9 @@ import net.bigtangle.wallet.WalletProtobufSerializer;
 
 public class WalletUtil {
     protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
+
+    private static final String ALGORITHM = "AES";
+    private static final String TRANSFORMATION = "AES";
 
     public static byte[] createWallet(NetworkParameters params) throws IOException {
 
@@ -76,6 +90,26 @@ public class WalletUtil {
             walletStream.close();
         }
         return wallet;
+    }
+
+    public static byte[]  doCrypto(int cipherMode, byte[] key, byte[] inputBytes )
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException,
+            BadPaddingException {
+
+        Key secretKey = new SecretKeySpec(key , ALGORITHM);
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        cipher.init(cipherMode, secretKey);
+        return  cipher.doFinal(inputBytes);
+    }
+
+    public static byte[] encrypt(byte[] key, byte[] inputBytes ) throws InvalidKeyException,
+            NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+       return  doCrypto(Cipher.ENCRYPT_MODE, key, inputBytes );
+    }
+
+    public static byte[] decrypt(byte[] key, byte[] inputBytes) throws InvalidKeyException,
+            NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+      return  doCrypto(Cipher.DECRYPT_MODE, key, inputBytes);
     }
 
 }

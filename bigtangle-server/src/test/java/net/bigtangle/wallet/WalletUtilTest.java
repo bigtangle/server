@@ -9,8 +9,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -46,6 +51,39 @@ public class WalletUtilTest {
 
     }
 
+    
+    
+ 
+
+    
+    @Test
+    public void walletCreateEncryptTest() throws Exception {
+
+     
+        byte[] salt = "salt".getBytes();
+      //  random.nextBytes(salt);
+
+        KeySpec spec = new PBEKeySpec("password".toCharArray(), salt, 65536, 256); // AES-256
+        SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        byte[] key = f.generateSecret(spec).getEncoded();
+        
+        byte[] a = WalletUtil.createWallet(MainNetParams.get());
+        
+    
+        byte[] b = WalletUtil.encrypt(key, a);
+        Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(WalletUtil.decrypt(key, b)), MainNetParams.get());
+
+        List<ECKey> issuedKeys = wallet.walletKeys(null);
+        assertTrue(issuedKeys.size() == 1);
+        for (ECKey ecKey : issuedKeys) {
+            log.debug(ecKey.getPublicKeyAsHex());
+            log.debug(ecKey.getPrivateKeyAsHex());
+            log.debug(ecKey.toAddress(MainNetParams.get()).toString());
+        }
+
+    }
+
+    
     @Test
     public void setPassword() throws Exception {
 
