@@ -539,4 +539,17 @@ output
 qrcode with url
 https://m.bigtangle.net/wallet/pay.jsf?tokenid=bc&quantity=888&address=16nAV1cJSajuMo5XdtyMBMJBS4yj2d5rUQ&memo=人民币买别人的大网币
 										
+### interface to ethereum
+https://sgitario.github.io/blockchain-using-java/
+GO client and spring boot web3j
+https://github.com/web3j/web3j
+
+target:
+user send token to special account address and then create new token in bigtangle with new amount and give the token to the user address. use the subtangle functionality.
+
+
+### name service based on domain name
+
+ENS eliminates the need to copy or type long addresses. With ENS, you'll be able to send money to your friend at 'aardvark.eth' instead of '0x4cbe58c50480...'
+
 
