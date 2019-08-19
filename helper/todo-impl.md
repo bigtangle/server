@@ -552,7 +552,18 @@ https://etherscan.io/address/0x5b614e4f17a1938da6248d116cc32f4f17c35f99
 target:
 user send token to special account address and then create new token in bigtangle with new amount and give the token to the user address. use the subtangle functionality.
 
-
+UI
+	Token: ETH   select list from predefined ETH Token id and bigtangle Token id, for example ETH
+	Amount: amount from ETH Network
+	From ETH Address: user input
+	To Bigtangle Address
+	
+    save the data in table Userpayoff  and track the status of the payment
+	
+	add function in blockconfirm to check the payment from and to ETH
+	if the payment is ok and then do the giveMoney with token in Bigtangle
+	add bank data for eth address
+	
 ### name service based on domain name
 
 ENS eliminates the need to copy or type long addresses. With ENS, you'll be able to send money to your friend at 'aardvark.eth' instead of '0x4cbe58c50480...'
