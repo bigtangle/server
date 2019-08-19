@@ -43,7 +43,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -99,16 +98,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectTokenUTXOs() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
         ;
         byte[] pubKey = walletKeys.get(0).getPubKey();
 
@@ -302,16 +292,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmTokenUTXOs() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -718,16 +699,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmRewardUTXOs() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
@@ -769,16 +741,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmTokenUTXOs() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -1358,16 +1321,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsToken() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 

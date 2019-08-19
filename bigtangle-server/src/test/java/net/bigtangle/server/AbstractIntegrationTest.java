@@ -1043,7 +1043,7 @@ public abstract class AbstractIntegrationTest {
             }
             for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {
                 final String pubKeyHex = multiSignAddress.getPubKeyHex();
-                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex));
+                multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
         }
         tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);

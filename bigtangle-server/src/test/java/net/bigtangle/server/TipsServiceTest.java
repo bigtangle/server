@@ -35,7 +35,6 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.store.DatabaseStoreCallback;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -285,16 +284,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -371,16 +361,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -454,16 +435,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenFirstIssuance() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -523,16 +495,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidFirstIssuance() throws Exception {
-        store.resetStore(new DatabaseStoreCallback() {
-            @Override
-            public void callback() {
-                try {
-                    testCreateDomainToken();
-                } catch (Exception e) {
-                    log.error("testCreateDomainToken", e);
-                }
-            }
-        });
+        store.resetStore();
 
         // Generate an issuance
         ECKey outKey = walletKeys.get(0);
