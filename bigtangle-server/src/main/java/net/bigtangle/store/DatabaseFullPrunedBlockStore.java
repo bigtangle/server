@@ -47,6 +47,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenSerial;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
@@ -2579,7 +2580,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_CONFIRMED_TOKENS_SQL + " AND tokentype=0 ";
+            String sql = SELECT_CONFIRMED_TOKENS_SQL ;
             if (tokenids != null && !tokenids.isEmpty()) {
                 sql += "  and tokenid in ( " + buildINList(tokenids) + " )";
             }
