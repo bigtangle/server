@@ -543,6 +543,7 @@ https://m.bigtangle.net/wallet/pay.jsf?tokenid=bc&quantity=888&address=16nAV1cJS
 https://sgitario.github.io/blockchain-using-java/
 GO client and spring boot web3j
 https://github.com/web3j/web3j
+https://etherscan.io/address/0x5b614e4f17a1938da6248d116cc32f4f17c35f99
 
 target:
 user send token to special account address and then create new token in bigtangle with new amount and give the token to the user address. use the subtangle functionality.
