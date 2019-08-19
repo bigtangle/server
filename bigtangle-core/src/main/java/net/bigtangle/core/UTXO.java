@@ -27,6 +27,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Locale;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 
@@ -84,7 +86,8 @@ public class UTXO {
     }
 
     public void setBlockHashHex(String blockHashHex) {
-        this.blockhash = Sha256Hash.wrap(blockHashHex);
+        if (StringUtils.isNotBlank(blockHashHex))
+            this.blockhash = Sha256Hash.wrap(blockHashHex);
     }
 
     public void setValue(Coin value) {

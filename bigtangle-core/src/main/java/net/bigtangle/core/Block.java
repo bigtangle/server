@@ -1207,6 +1207,10 @@ public class Block extends Message {
                         keys.add(ecKey);
                     }
                 }
+                if (keys.size() == 1) {
+                    signnumber =1;
+                    pubKeyTo = keys.get(0).getPubKey();
+                }
                 if (signnumber <= 1 && keys.size() <= 1) {
                     coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                             ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
