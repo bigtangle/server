@@ -44,8 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.asn1.ASN1InputStream;
 import org.spongycastle.asn1.ASN1Integer;
-import org.spongycastle.asn1.ASN1OctetString;
-import org.spongycastle.asn1.ASN1TaggedObject;
 import org.spongycastle.asn1.DERBitString;
 import org.spongycastle.asn1.DEROctetString;
 import org.spongycastle.asn1.DERSequenceGenerator;
@@ -261,13 +259,6 @@ public class ECKey implements EncryptableItem {
       return CURVE.getCurve().createPoint(x, y, compressed);
     }
 
-    /**
-     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by Bitcoin
-     * Core in its wallet. Note that this is slow because it requires an EC point multiply.
-     */
-    public static ECKey fromASN1(byte[] asn1privkey) {
-        return extractKeyFromASN1(asn1privkey);
-    }
 
     /**
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
@@ -362,41 +353,6 @@ public class ECKey implements EncryptableItem {
         return key;
     }
 
-    /**
-     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
-     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
-     * the public key already correctly matches the private key. If only the public key is supplied, this ECKey cannot
-     * be used for signing.
-     * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
-     */
-    @Deprecated
-    public ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
-        if (privKey == null && pubKey == null)
-            throw new IllegalArgumentException("ECKey requires at least private or public key");
-        this.priv = privKey;
-        if (pubKey == null) {
-            // Derive public from private.
-            ECPoint point = publicPointFromPrivate(privKey);
-            point = getPointWithCompression(point, compressed);
-            this.pub = new LazyECPoint(point);
-        } else {
-            // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
-            // a special marker byte.
-            // TODO: This is probably not a useful API and may be confusing.
-            this.pub = new LazyECPoint(CURVE.getCurve(), pubKey);
-        }
-    }
-
-    /**
-     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
-     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
-     * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
-     * be used for signing.
-     */
-    @Deprecated
-    private ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
-        this(privKey, pubKey, false);
-    }
 
     /**
      * Returns true if this key doesn't have unencrypted access to private key bytes. This may be because it was never
@@ -803,49 +759,6 @@ public class ECKey implements EncryptableItem {
         return true;
     }
 
-    private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
-        // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
-        // code in ec_asn1.c:
-        //
-        // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-        //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
-        //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
-        //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
-        //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-        // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-        //
-        try {
-            ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
-            DLSequence seq = (DLSequence) decoder.readObject();
-            checkArgument(decoder.readObject() == null, "Input contains extra bytes");
-            decoder.close();
-
-            checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
-
-            checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
-                    "Input is of wrong version");
-
-            byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
-            BigInteger privkey = new BigInteger(1, privbits);
-
-            ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
-            checkArgument(pubkey.getTagNo() == 1, "Input has 'publicKey' with bad tag number");
-            byte[] pubbits = ((DERBitString)pubkey.getObject()).getBytes();
-            checkArgument(pubbits.length == 33 || pubbits.length == 65, "Input has 'publicKey' with invalid length");
-            int encoding = pubbits[0] & 0xFF;
-            // Only allow compressed(2,3) and uncompressed(4), not infinity(0) or hybrid(6,7)
-            checkArgument(encoding >= 2 && encoding <= 4, "Input has 'publicKey' with invalid encoding");
-
-            // Now sanity check to ensure the pubkey bytes match the privkey.
-            boolean compressed = (pubbits.length == 33);
-            ECKey key = new ECKey(privkey, null, compressed);
-            if (!Arrays.equals(key.getPubKey(), pubbits))
-                throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
-            return key;
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
-        }
-    }
 
     /**
      * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
@@ -1203,9 +1116,19 @@ public class ECKey implements EncryptableItem {
     }
 
     public static class MissingPrivateKeyException extends RuntimeException {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
     }
 
     public static class KeyIsEncryptedException extends MissingPrivateKeyException {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
     }
 
     @Override
