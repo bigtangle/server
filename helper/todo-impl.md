@@ -554,8 +554,10 @@ user send token to special account address and then create new token in bigtangl
 
 UI
 	Token: ETH   select list from predefined ETH Token id and bigtangle Token id, for example ETH
+	TO ETH Address: display bigtangle ETH Address
 	Amount: amount from ETH Network
 	From ETH Address: user input
+	
 	To Bigtangle Address
 	
     save the data in table Userpayoff  and track the status of the payment
