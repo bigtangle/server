@@ -157,7 +157,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -216,7 +216,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance

@@ -1256,6 +1256,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        tokens.setDomainName("bc");
+        
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1291,6 +1293,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        tokens.setDomainName("bc");
+        
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -1328,10 +1332,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        tokens.setDomainName("bc");
+        
         tokenInfo0.setToken(tokens);
         tokenInfo0.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        tokens.setDomainName(networkParameters.getGenesisBlock().getHashAsString());
+        tokens.setDomainName("bc");
         
         TestCase[] executors = new TestCase[] { new TestCase() {
             @Override

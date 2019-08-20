@@ -100,7 +100,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     public void testConnectTokenUTXOs() throws Exception {
         store.resetStore();
         ;
-        byte[] pubKey = walletKeys.get(0).getPubKey();
+        byte[] pubKey = walletKeys.get(1).getPubKey();
+        System.out.println(Utils.HEX.encode(pubKey));
 
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
@@ -114,11 +115,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(1).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 =  saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0),null);
+            Block block1 =  saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(1),null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -140,12 +141,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(0).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(8).getPublicKeyAsHex()));
+            tokenInfo.getMultiSignAddresses()
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(9).getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(0), null);
+            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(8), null);
 
+            block1 = pullBlockDoMultiSign(tokens.getTokenid(), walletKeys.get(1), null);
             // Should exist now
             store.getTokenConfirmed(block1.getHash().toString()); // Fine as
                                                                   // long as it
@@ -1322,7 +1326,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsToken() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(8);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
