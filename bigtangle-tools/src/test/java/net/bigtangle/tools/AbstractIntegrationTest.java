@@ -49,20 +49,48 @@ import net.bigtangle.wallet.Wallet;
 
 public abstract class AbstractIntegrationTest {
 
-    public static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
-    public static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
-    public static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
+    public static   boolean testnet =true;
+    public static  String HTTPS_BIGTANGLE_DE = "https://" +  (testnet ? "test" : "") + ".bigtangle.de/";
+    public static  String HTTPS_BIGTANGLE_INFO = "https://" +  (testnet ? "test" : "")  
+            + ".bigtangle.info/";
+    public static String  HTTPS_BIGTANGLE_ORG = "https://"  +  (testnet ? "test" : "")  
+            + ".bigtangle.org/";
     public static final String HTTPS_BIGTANGLE_LOCAL = "https://localhost:8088/";
     
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
+
+    //1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5
+    public static String USDTokenPub = "02fbef0f3e1344f548abb7d4b6a799e372d2310ff13fe023b3ba0446f2e3f58e04";
+    public static String USDTokenPriv = "6fb4cb30d593536e3c54ac17bfaa311cb0e2bdf219c89483aa8d7185f6c5c3b7";
+ 
+    
+    //1FM6YGALJNTUmdoofxW6Rw5C2jW6AESEEs
+    public static String EURTokenPub = "03163532b12879ff2f52e84ec032662f5d0ee0eee33355d9c0a833d172d3d3e4cb";
+    public static String EURTokenPriv = "52bd881f650733448b20358ca4ab9bdbf394c150948c81eedc1b666c1c47f61f";
+
+    //1GZH9mf9w9K3nc58xR3dpTJUuJdiLnuwdW
+    public static String ETHTokenPub = "02b8b21c6341872dda1f3a4f26d0d887283ad99f342d1dc35552db39c830919722";
+    public static String ETHTokenPriv = "9eac170431a4c8cb188610cea2d40a3db5f656db5b52c0ac5aa9aa3a3fa8366f";
+
+    //1PttyezdBEgrfB8ZUg8YtQoqtHoYJyyadS
+    public static String BTCTokenPub = "0352ac6c7fe48bff55b6976e70718a5c37fe9ddf5541473284bff2c72f51fb60e2";
+    public static String BTCTokenPriv = "d82d565e4ad9e2c78610535cbe0a37d2e240192bf1d7f42f4276cd89351f45d0";
+
+    //1Q5ysrjmeEjJKFBrnEJBSAs6vBHYzsmN2H
+    public static String GOLDTokenPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
+    public static String GOLDTokenPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
+
+    //13YjgF6Wa3v4i6NQQqn94XCg6CX79NVgWe
+    public static String JPYTokenPub = "03e608ba3cbce11acc4a6b5e0b63b3381af7e9f50c1d43e6a6ce8cf16d3743891c";
+    public static String JPYTokenPriv = "7a62e210952b6d49d545edb6fe4c322d68605c1b97102448a3439158ba9acd5f";
 
     
     
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-    public String contextRoot = HTTPS_BIGTANGLE_ORG;
+    public String contextRoot = HTTPS_BIGTANGLE_DE;
     // "http://localhost:8088/";
 
     public List<ECKey> walletKeys;
@@ -289,10 +317,10 @@ public abstract class AbstractIntegrationTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals)
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname)
             throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals);
+            createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals,domainname);
         } catch (Exception e) {
             // TODO: handle exception
             log.warn("", e);
@@ -300,7 +328,7 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals)
+    protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals, String domainname)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
