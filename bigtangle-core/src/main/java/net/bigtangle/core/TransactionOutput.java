@@ -477,8 +477,8 @@ public class TransactionOutput extends ChildMessage {
      * structure pointing to this output. Requires that this output is not
      * detached.
      */
-    public TransactionOutPoint getOutPointFor() {
-        return new TransactionOutPoint(params, getIndex(), getParentTransaction());
+    public TransactionOutPoint getOutPointFor(Sha256Hash containingBlockHash) {
+        return new TransactionOutPoint(params, getIndex(), containingBlockHash, getParentTransaction());
     }
 
     /**

@@ -401,7 +401,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
 
-        transaction.addInput(multisigOutput);
+        transaction.addInput(yourutxo.getBlockHash(), multisigOutput);
 
         List<byte[]> sigs = new ArrayList<byte[]>();
         for (ECKey ecKey : signKeys) {

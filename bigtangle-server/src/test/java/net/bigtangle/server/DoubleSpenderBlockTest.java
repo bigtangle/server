@@ -188,7 +188,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
 //        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
 //        doublespent.addOutput(amount2, genesiskey);
-        TransactionInput input = doublespent.addInput(spendableOutput);
+        TransactionInput input = doublespent.addInput(output.getBlockHash(), spendableOutput);
         Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 

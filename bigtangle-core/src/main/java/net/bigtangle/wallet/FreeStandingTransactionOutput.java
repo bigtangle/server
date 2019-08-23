@@ -44,6 +44,6 @@ public class FreeStandingTransactionOutput extends TransactionOutput {
 
     @Override
     public Sha256Hash getParentTransactionHash() {
-        return output.getHash();
+        return output.getTxHash();
     }
 }

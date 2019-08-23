@@ -895,7 +895,7 @@ public class SendMoneyController {
 		Coin amount2 = multisigOutput.getValue().subtract(amount);
 		transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
 
-		transaction.addInput(multisigOutput);
+		transaction.addInput(utxo.getBlockHash(), multisigOutput);
 		transaction.setMemo(memoTF1.getText());
 
 		PayMultiSign payMultiSign = new PayMultiSign();
@@ -945,7 +945,7 @@ public class SendMoneyController {
 		Coin amount2 = multisigOutput.getValue().subtract(amount);
 		transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
 
-		transaction.addInput(multisigOutput);
+		transaction.addInput(utxo.getBlockHash(), multisigOutput);
 		transaction.setMemo(memoTF111.getText());
 
 		PayMultiSign payMultiSign = new PayMultiSign();

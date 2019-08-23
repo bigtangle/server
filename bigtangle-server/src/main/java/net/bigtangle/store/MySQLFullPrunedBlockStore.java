@@ -45,20 +45,24 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    reason bigint NOT NULL,\n" + "    missingdependency mediumblob NOT NULL,\n" + "    height bigint ,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
-    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" + "    hash varbinary(32) NOT NULL,\n"
-            + "    outputindex bigint NOT NULL,\n" + "    coinvalue bigint NOT NULL,\n"
-            + "    scriptbytes mediumblob NOT NULL,\n" + "    toaddress varchar(255),\n"
-            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    blockhash varbinary(32),\n" // confirming
-                                                                                                               // blockhash
-            + "    tokenid varchar(255),\n" + "    fromaddress varchar(255),\n" + "    memo MEDIUMTEXT,\n"
-            + "    spent boolean NOT NULL,\n" + "    confirmed boolean NOT NULL,\n"
-            + "    spendpending boolean NOT NULL,\n" // true if there exists a
-                                                     // transaction on the
-                                                     // Tangle that can spend
-                                                     // this output
+    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
+            + "    blockhash varbinary(32) NOT NULL,\n" 
+            + "    hash varbinary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n" 
+            + "    coinvalue bigint NOT NULL,\n"
+            + "    scriptbytes mediumblob NOT NULL,\n" 
+            + "    toaddress varchar(255),\n"
+            + "    addresstargetable bigint,\n" 
+            + "    coinbase boolean,\n" 
+            + "    tokenid varchar(255),\n" 
+            + "    fromaddress varchar(255),\n" 
+            + "    memo MEDIUMTEXT,\n"
+            + "    spent boolean NOT NULL,\n" 
+            + "    confirmed boolean NOT NULL,\n"
+            + "    spendpending boolean NOT NULL,\n" 
             + "    spendpendingtime bigint,\n" 
             + "    spenderblockhash  varbinary(32),\n" + "    time bigint NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex) USING BTREE \n" + ")\n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) USING BTREE \n" + ")\n";
 
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash varbinary(32) NOT NULL,\n" + "   toheight bigint NOT NULL,\n"

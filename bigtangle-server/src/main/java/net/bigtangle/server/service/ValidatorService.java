@@ -1187,7 +1187,7 @@ public class ValidatorService {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
+                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
                     if (prevOut == null) {
                         // Missing previous transaction output
                         return SolidityState.from(in.getOutpoint());
@@ -1222,7 +1222,7 @@ public class ValidatorService {
                 if (!isCoinBase) {
                     for (int index = 0; index < tx.getInputs().size(); index++) {
                         TransactionInput in = tx.getInputs().get(index);
-                        UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(),
+                        UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
                                 in.getOutpoint().getIndex());
                         if (prevOut == null) {
                             // Cannot happen due to solidity checks before
@@ -1609,7 +1609,7 @@ public class ValidatorService {
         for (final Transaction tx : block.getTransactions()) {
             for (int index = 0; index < tx.getInputs().size(); index++) {
                 TransactionInput in = tx.getInputs().get(index);
-                UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
+                UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
                 if (prevOut == null) {
                     // Cannot happen due to solidity checks before
                     throw new RuntimeException("Block attempts to spend a not yet existent output!");
@@ -2060,9 +2060,6 @@ public class ValidatorService {
         } else {
             // First time issuances must sign for the token id
             permissionedAddresses = currentToken.getMultiSignAddresses();
-            MultiSignAddress firstTokenAddress = new MultiSignAddress(currentToken.getToken().getTokenid(), "",
-                    currentToken.getToken().getTokenid());
-            // permissionedAddresses.add(firstTokenAddress);
 
             // Any first time issuances also require the domain signatures
             List<MultiSignAddress> prevDomainPermissionedAddresses = store

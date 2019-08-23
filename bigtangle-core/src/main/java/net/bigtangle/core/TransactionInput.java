@@ -20,16 +20,16 @@
  */
 package net.bigtangle.core;
 
-import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.Map;
 
 import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -75,7 +75,7 @@ public class TransactionInput extends ChildMessage {
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (Transaction) null));
+        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (Sha256Hash) null, (Transaction) null));
     }
 
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
@@ -97,13 +97,13 @@ public class TransactionInput extends ChildMessage {
     /**
      * Creates an UNSIGNED input that links to the given output
      */
-    TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
+    TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output, Sha256Hash blockHash) {
         super(params);
         long outputIndex = output.getIndex();
         if(output.getParentTransaction() != null ) {
-            outpoint = new TransactionOutPoint(params, outputIndex, output.getParentTransaction());
+            outpoint = new TransactionOutPoint(params, outputIndex, blockHash, output.getParentTransaction());
         } else {
-            outpoint = new TransactionOutPoint(params, output);
+            outpoint = new TransactionOutPoint(params, blockHash, output);
         }
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
@@ -275,27 +275,6 @@ public class TransactionInput extends ChildMessage {
         return value;
     }
 
-    public enum ConnectionResult {
-        NO_SUCH_TX,
-        ALREADY_SPENT,
-        SUCCESS
-    }
-
-    // TODO: Clean all this up once TransactionOutPoint disappears.
-
-    /**
-     * Locates the referenced output from the given pool of transactions.
-     *
-     * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
-     */
-    @Nullable
-    TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Transaction tx = transactions.get(outpoint.getHash());
-        if (tx == null)
-            return null;
-        return tx.getOutputs().get((int) outpoint.getIndex());
-    }
-
     /**
      * Alias for getOutpoint().getConnectedRedeemData(keyBag)
      * @see TransactionOutPoint#getConnectedRedeemData(net.bigtangle.wallet.KeyBag)
@@ -309,77 +288,6 @@ public class TransactionInput extends ChildMessage {
     public enum ConnectMode {
         DISCONNECT_ON_CONFLICT,
         ABORT_ON_CONFLICT
-    }
-
-    /**
-     * Connects this input to the relevant output of the referenced transaction if it's in the given map.
-     * Connecting means updating the internal pointers and spent flags. If the mode is to ABORT_ON_CONFLICT then
-     * the spent output won't be changed, but the outpoint.fromTx pointer will still be updated.
-     *
-     * @param transactions Map of txhash->transaction.
-     * @param mode   Whether to abort if there's a pre-existing connection or not.
-     * @return NO_SUCH_TX if the prevtx wasn't found, ALREADY_SPENT if there was a conflict, SUCCESS if not.
-     */
-    public ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
-        Transaction tx = transactions.get(outpoint.getHash());
-        if (tx == null) {
-            return TransactionInput.ConnectionResult.NO_SUCH_TX;
-        }
-        return connect(tx, mode);
-    }
-
-    /**
-     * Connects this input to the relevant output of the referenced transaction.
-     * Connecting means updating the internal pointers and spent flags. If the mode is to ABORT_ON_CONFLICT then
-     * the spent output won't be changed, but the outpoint.fromTx pointer will still be updated.
-     *
-     * @param transaction The transaction to try.
-     * @param mode   Whether to abort if there's a pre-existing connection or not.
-     * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
-     */
-    public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
-        if (!transaction.getHash().equals(outpoint.getHash()))
-            return ConnectionResult.NO_SUCH_TX;
-        checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
-        TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
-        if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
-                // Already connected.
-                return ConnectionResult.SUCCESS;
-            } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
-                out.markAsUnspent();
-            } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
-                outpoint.fromTx = out.getParentTransaction();
-                return TransactionInput.ConnectionResult.ALREADY_SPENT;
-            }
-        }
-        connect(out);
-        return TransactionInput.ConnectionResult.SUCCESS;
-    }
-
-    /** Internal use only: connects this TransactionInput to the given output (updates pointers and spent flags) */
-    public void connect(TransactionOutput out) {
-        outpoint.fromTx = out.getParentTransaction();
-        out.markAsSpent(this);
-        value = out.getValue();
-    }
-
-    /**
-     * If this input is connected, check the output is connected back to this input and release it if so, making
-     * it spendable once again.
-     *
-     * @return true if the disconnection took place, false if it was not connected.
-     */
-    public boolean disconnect() {
-        if (outpoint.fromTx == null) return false;
-        TransactionOutput output = outpoint.fromTx.getOutput((int) outpoint.getIndex());
-        if (output.getSpentBy() == this) {
-            output.markAsUnspent();
-            outpoint.fromTx = null;
-            return true;
-        } else {
-            return false;
-        }
     }
 
     /**
@@ -420,7 +328,8 @@ public class TransactionInput extends ChildMessage {
      */
     public void verify(TransactionOutput output) throws VerificationException {
         if (output.parent != null) {
-            if (!getOutpoint().getHash().equals(output.getParentTransaction().getHash()))
+            if (!getOutpoint().getHash().equals(Sha256Hash.of(ArrayUtils.addAll(
+                    output.getParentTransaction().getParentBlock().getHash().getBytes(), output.getParentTransaction().getHash().getBytes()))))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
             if (getOutpoint().getIndex() != output.getIndex())
                 throw new VerificationException("This input refers to a different output on the given tx.");

@@ -47,7 +47,7 @@ public class FilteringCoinSelector implements CoinSelector {
         Iterator<TransactionOutput> iter = candidates.iterator();
         while (iter.hasNext()) {
             TransactionOutput output = iter.next();
-            if (spent.contains(output.getOutPointFor())) iter.remove();
+            if (spent.contains(output.getOutPointFor(((FreeStandingTransactionOutput) output).getUTXO().getBlockHash()))) iter.remove();
         }
         return delegate.select(target, candidates);
     }

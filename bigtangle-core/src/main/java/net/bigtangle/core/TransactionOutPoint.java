@@ -29,6 +29,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.google.common.base.Objects;
 
 import net.bigtangle.core.exception.ProtocolException;
@@ -49,42 +51,47 @@ import net.bigtangle.wallet.RedeemData;
  */
 public class TransactionOutPoint extends ChildMessage {
 
-    static final int MESSAGE_LENGTH = 36;
+    static final int MESSAGE_LENGTH = 4 + 32 + 32;
 
+    /** Hash of the block to which we refer. */
+    private Sha256Hash blockHash;
     /** Hash of the transaction to which we refer. */
-    private Sha256Hash hash;
+    private Sha256Hash txHash;
     /** Which output of that transaction we are talking about. */
     private long index;
 
     // This is not part of bitcoin serialization. It points to the connected
     // transaction.
     Transaction fromTx;
-
+    
     // The connected output.
     public TransactionOutput connectedOutput = null;
 
-    public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
+    public TransactionOutPoint(NetworkParameters params, long index, @Nullable Sha256Hash blockHash, @Nullable Transaction fromTx) {
         super(params);
         this.index = index;
-        if (fromTx != null) {
-            this.hash = fromTx.getHash();
+        if (fromTx != null && blockHash != null) {
+            this.blockHash = blockHash;
+            this.txHash = fromTx.getHash();
             this.fromTx = fromTx;
         } else {
-            // This happens when constructing the genesis block.
-            hash = Sha256Hash.ZERO_HASH;
+            // This happens when constructing coinbase blocks.
+            this.blockHash = Sha256Hash.ZERO_HASH;
+            this.txHash = Sha256Hash.ZERO_HASH;
         }
-        length = MESSAGE_LENGTH;
+        this.length = MESSAGE_LENGTH;
     }
 
-    public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash hash) {
+    public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash blockHash, Sha256Hash transactionHash) {
         super(params);
         this.index = index;
-        this.hash = hash;
-        length = MESSAGE_LENGTH;
+        this.blockHash = blockHash;
+        this.txHash = transactionHash;
+        this.length = MESSAGE_LENGTH;
     }
 
-    public TransactionOutPoint(NetworkParameters params, TransactionOutput connectedOutput) {
-        this(params, connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+    public TransactionOutPoint(NetworkParameters params, @Nullable Sha256Hash blockHash, TransactionOutput connectedOutput) {
+        this(params, connectedOutput.getIndex(), blockHash, connectedOutput.getParentTransactionHash());
         this.connectedOutput = connectedOutput;
     }
 
@@ -115,7 +122,8 @@ public class TransactionOutPoint extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         length = MESSAGE_LENGTH;
-        hash = readHash();
+        blockHash = readHash();
+        txHash = readHash();
         index = readUint32();
         // length += 4;
         // if (readUint32() == 1) {
@@ -128,7 +136,8 @@ public class TransactionOutPoint extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(hash.getReversedBytes());
+        stream.write(blockHash.getReversedBytes());
+        stream.write(txHash.getReversedBytes());
         Utils.uint32ToByteStreamLE(index, stream);
         // Utils.uint32ToByteStreamLE(this.connectedOutput != null ? 1 : 0,
         // stream);
@@ -235,20 +244,23 @@ public class TransactionOutPoint extends ChildMessage {
 
     @Override
     public String toString() {
-        return hash + ":" + index;
+        return blockHash + " : " + txHash + " : " + index;
     }
 
     /**
-     * Returns the hash of the transaction this outpoint references/spends/is
-     * connected to.
+     * Returns the hash of the outpoint.
      */
     @Override
     public Sha256Hash getHash() {
-        return hash;
+        return Sha256Hash.of(ArrayUtils.addAll(blockHash.getBytes(), txHash.getBytes()));
     }
 
-    void setHash(Sha256Hash hash) {
-        this.hash = hash;
+    public Sha256Hash getTxHash() {
+        return txHash;
+    }
+
+    public Sha256Hash getBlockHash() {
+        return blockHash;
     }
 
     public long getIndex() {
@@ -264,17 +276,8 @@ public class TransactionOutPoint extends ChildMessage {
      * is such an outPoint, returns true.
      */
     public boolean isCoinBase() {
-        return getHash().equals(Sha256Hash.ZERO_HASH) && (getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL; // -1
-                                                                                                    // but
-                                                                                                    // all
-                                                                                                    // is
-                                                                                                    // serialized
-                                                                                                    // to
-                                                                                                    // the
-                                                                                                    // wire
-                                                                                                    // as
-                                                                                                    // unsigned
-                                                                                                    // int.
+        return getBlockHash().equals(Sha256Hash.ZERO_HASH) && getTxHash().equals(Sha256Hash.ZERO_HASH) 
+                && (getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL; 
     }
 
     @Override

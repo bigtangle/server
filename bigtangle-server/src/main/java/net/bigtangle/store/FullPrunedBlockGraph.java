@@ -247,7 +247,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Or it could be a missing transaction
         for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream())
                 .collect(Collectors.toList())) {
-            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor().bitcoinSerialize())) {
+            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor(block.getHash()).bitcoinSerialize())) {
                 try {
                     // Clear from waiting list
                     blockStore.deleteUnsolid(b.getHash());
@@ -413,7 +413,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void confirmBlock(Block block) throws BlockStoreException {
         // Update block's transactions in db
         for (final Transaction tx : block.getTransactions()) {
-            confirmTransaction(tx, block.getHash());
+            confirmTransaction(block, tx, block.getHash());
         }
 
         // type-specific updates
@@ -520,7 +520,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         insertVirtualUTXOs(block, matchingResult.getOutputTx());
 
         // Set virtual outputs confirmed
-        confirmTransaction(matchingResult.getOutputTx(), block.getHash());
+        confirmTransaction(block, matchingResult.getOutputTx(), block.getHash());
 
         // Finally, if the new orders have not been inserted yet, insert them
         insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
@@ -561,7 +561,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         insertVirtualUTXOs(block, tx);
 
         // Set virtual outputs confirmed
-        confirmTransaction(tx, block.getHash());
+        confirmTransaction(block, tx, block.getHash());
 
         // Insert dependencies
         blockStore.insertDependents(block.getHash(), info.getOrderBlockHash());
@@ -581,7 +581,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         insertVirtualUTXOs(block, tx);
 
         // Set virtual reward tx outputs confirmed
-        confirmTransaction(tx, block.getHash());
+        confirmTransaction(block, tx, block.getHash());
 
         // Set used other output spent
         blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getHash()), true, block.getHash());
@@ -604,7 +604,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
-            connectUTXOs(txs);
+            connectUTXOs(block, txs);
         } catch (BlockStoreException e) {
             // Expected after reorgs
             log.warn("Probably reinserting reward: ", e);
@@ -619,11 +619,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateTokenConfirmed(block.getHashAsString(), true);
     }
 
-    private void confirmTransaction(final Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
+    private void confirmTransaction(Block block, Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
         // Set used other outputs spent
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
-                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(), in.getOutpoint().getIndex());
+                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
 
                 // Sanity check
                 if (prevOut == null)
@@ -631,15 +631,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (prevOut.isSpent())
                     throw new RuntimeException("Attempted to spend an already spent output!");
 
-                blockStore.updateTransactionOutputSpent(prevOut.getHash(), prevOut.getIndex(), true, blockhash);
+                blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(), true, blockhash);
             }
         }
 
         // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
-            blockStore.updateTransactionOutputConfirmed(tx.getHash(), out.getIndex(), true);
-            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), out.getIndex(), blockhash);
-            blockStore.updateTransactionOutputSpent(tx.getHash(), out.getIndex(), false, null);
+            blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
+            // TODO unnecessary?
+//            blockStore.updateTransactionOutputSpent(block.getHash(), tx.getHash(), out.getIndex(), false, null);
         }
     }
 
@@ -708,10 +708,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Disconnect all transaction output dependents
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
-                UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+                UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
                 if (utxo.isSpent()) {
                     removeBlockFromMilestone(
-                            blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(),
+                            blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                             traversedBlockHashes);
                 }
             }
@@ -774,10 +774,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Disconnect all virtual transaction output dependents
         Transaction tx = matchingResult.getOutputTx();
         for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+            UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
                 removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(),
+                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -789,10 +789,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Disconnect all virtual transaction output dependents
         Transaction tx = generateReclaimTX(block);
         for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+            UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
                 removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(),
+                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -837,10 +837,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Disconnect all virtual transaction output dependents
         Transaction tx = generateVirtualMiningRewardTX(block);
         for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(tx.getHash(), txout.getIndex());
+            UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
                 removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(tx.getHash(), txout.getIndex()).getBlockHash(),
+                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -986,15 +986,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set used outputs as unspent
         if (!tx.isCoinBase()) {
             for (TransactionInput txin : tx.getInputs()) {
-                blockStore.updateTransactionOutputSpent(txin.getOutpoint().getHash(), txin.getOutpoint().getIndex(),
+                blockStore.updateTransactionOutputSpent(txin.getOutpoint().getBlockHash(), txin.getOutpoint().getTxHash(), txin.getOutpoint().getIndex(),
                         false, null);
             }
         }
 
         // Set own outputs unconfirmed
         for (TransactionOutput txout : tx.getOutputs()) {
-            blockStore.updateTransactionOutputConfirmingBlock(tx.getHash(), txout.getIndex(), null);
-            blockStore.updateTransactionOutputConfirmed(tx.getHash(), txout.getIndex(), false);
+            blockStore.updateTransactionOutputConfirmed(parentBlock.getHash(), tx.getHash(), txout.getIndex(), false);
         }
     }
 
@@ -1017,21 +1016,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     protected void connectUTXOs(Block block) throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();
-        connectUTXOs(transactions);
+        connectUTXOs(block, transactions);
     }
 
-    private void connectUTXOs(List<Transaction> transactions) throws BlockStoreException {
+    private void connectUTXOs(Block block, List<Transaction> transactions) throws BlockStoreException {
         for (final Transaction tx : transactions) {
             boolean isCoinBase = tx.isCoinBase();
             if (!isCoinBase) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
                             in.getOutpoint().getIndex());
-                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true, System.currentTimeMillis());
+                    blockStore.updateTransactionOutputSpendPending(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(), true, System.currentTimeMillis());
                 }
             }
-            Sha256Hash hash = tx.getHash();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
                 String fromAddress = ""; // TODO this just doesn't work if P2PK
@@ -1042,8 +1040,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (ScriptException e) {
                     // No address found.
                 }
-                UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
-                        getScriptAddress(script), null, fromAddress, tx.getMemo(),
+                UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
+                        getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0,0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
@@ -1051,7 +1049,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                     for (ECKey ecKey : script.getPubKeys()) {
                         String toaddress = ecKey.toAddress(params).toBase58();
-                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getHash(), toaddress, newOut.getIndex(),
+                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex(),
                                 minsignnumber);
                         this.blockStore.insertOutputsMulti(outputsMulti);
                     }

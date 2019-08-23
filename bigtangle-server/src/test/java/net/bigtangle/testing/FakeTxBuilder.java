@@ -51,13 +51,13 @@ public class FakeTxBuilder {
         Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, new ECKey().toAddress(params));
         Transaction tx = new Transaction(params);
         tx.addOutput(output);
-        tx.addInput(prevTx.getOutput(0));
+        tx.addInput(params.getGenesisBlock().getHash(), prevTx.getOutput(0));
         return tx;
     }
 
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
-        TransactionOutPoint outpoint = new TransactionOutPoint(params, -1, Sha256Hash.ZERO_HASH);
+        TransactionOutPoint outpoint = new TransactionOutPoint(params, -1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH);
         TransactionInput input = new TransactionInput(params, null, new byte[0], outpoint);
         Transaction tx = new Transaction(params);
         tx.addInput(input);
@@ -89,7 +89,7 @@ public class FakeTxBuilder {
         TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
-        t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.addInput(params.getGenesisBlock().getHash(), prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
         // Fake signature.
         // Serialize/deserialize to ensure internal state is stripped, as if it
         // had been read from the wire.
@@ -127,7 +127,7 @@ public class FakeTxBuilder {
                 Coin.valueOf(split, NetworkParameters.BIGTANGLE_TOKENID), to);
         prevTx1.addOutput(prevOut1);
         // Connect it.
-        t.addInput(prevOut1).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.addInput(params.getGenesisBlock().getHash(), prevOut1).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
         // Fake signature.
 
         // Do it again
@@ -135,7 +135,7 @@ public class FakeTxBuilder {
         TransactionOutput prevOut2 = new TransactionOutput(params, prevTx2,
                 Coin.valueOf(value.getValue() - split, NetworkParameters.BIGTANGLE_TOKENID), to);
         prevTx2.addOutput(prevOut2);
-        t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.addInput(params.getGenesisBlock().getHash(), prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
 
         // Serialize/deserialize to ensure internal state is stripped, as if it
         // had been read from the wire.
@@ -170,7 +170,7 @@ public class FakeTxBuilder {
         TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
-        t.addInput(prevOut);
+        t.addInput(params.getGenesisBlock().getHash(), prevOut);
         // Serialize/deserialize to ensure internal state is stripped, as if it
         // had been read from the wire.
         return roundTripTransaction(params, t);
@@ -203,8 +203,8 @@ public class FakeTxBuilder {
         prevTx.addOutput(prevOut);
 
         // Connect up the txes
-        prevTx.addInput(feederOut);
-        t.addInput(prevOut);
+        prevTx.addInput(params.getGenesisBlock().getHash(), feederOut);
+        t.addInput(params.getGenesisBlock().getHash(), prevOut);
 
         // roundtrip the tx so that they are just like they would be from the
         // wire
@@ -247,10 +247,10 @@ public class FakeTxBuilder {
         doubleSpends.t1 = new Transaction(params);
         TransactionOutput o1 = new TransactionOutput(params, doubleSpends.t1, value, to);
         doubleSpends.t1.addOutput(o1);
-        doubleSpends.t1.addInput(prevOut);
+        doubleSpends.t1.addInput(params.getGenesisBlock().getHash(), prevOut);
 
         doubleSpends.t2 = new Transaction(params);
-        doubleSpends.t2.addInput(prevOut);
+        doubleSpends.t2.addInput(params.getGenesisBlock().getHash(), prevOut);
         TransactionOutput o2 = new TransactionOutput(params, doubleSpends.t2, value, someBadGuy);
         doubleSpends.t2.addOutput(o2);
 

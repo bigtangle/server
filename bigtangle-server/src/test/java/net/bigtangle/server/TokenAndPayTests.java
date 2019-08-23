@@ -114,7 +114,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, outKey));
-        TransactionInput input = tx.addInput(transactionOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), transactionOutput);
         Sha256Hash sighash = tx.hashForSignature(0, transactionOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
         TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
                 false);
@@ -297,7 +297,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin amount2 = multisigOutput.getValue().subtract(amount);
         transaction.addOutput(amount2, scriptPubKey);
 
-        transaction.addInput(multisigOutput);
+        transaction.addInput(output.getBlockHash(), multisigOutput);
 
         PayMultiSign payMultiSign = createPayMultiSign(toKey, amount, output, transaction);
 

@@ -5,6 +5,7 @@
 package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -395,7 +396,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -484,7 +485,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -748,6 +749,97 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void testSolidityTXDoubleSpend() throws Exception {
+        store.resetStore();
+
+        // Create block with UTXOs
+        Transaction tx1 = createTestGenesisTransaction();
+        Block spenderBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), tx1);
+        Block spenderBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), tx1);
+
+        // Confirm 1
+        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>());
+
+        // 1 should be confirmed now
+        UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        assertTrue(utxo1.isConfirmed());
+        assertTrue(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // 2 should be unconfirmed 
+        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // Further manipulations on prev UTXOs
+        UTXO origUTXO = transactionService
+                .getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+        assertTrue(origUTXO.isConfirmed());
+        assertTrue(origUTXO.isSpent());
+        assertEquals(store.getTransactionOutputSpender(origUTXO.getBlockHash(), origUTXO.getTxHash(), origUTXO.getIndex()).getBlockHash(),
+                spenderBlock1.getHash());
+
+        // Unconfirm 1
+        blockGraph.unconfirm(spenderBlock1.getHash(), new HashSet<>());
+
+        // 1 should be confirmed now
+        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // 2 should be unconfirmed 
+        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // Further manipulations on prev UTXOs
+        origUTXO = transactionService
+                .getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+        assertTrue(origUTXO.isConfirmed());
+        assertFalse(origUTXO.isSpent());
+
+        // Confirm 2
+        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>());
+
+        // 2 should be confirmed now
+        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        assertTrue(utxo1.isConfirmed());
+        assertTrue(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // 1 should be unconfirmed 
+        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        assertFalse(utxo1.isConfirmed());
+        assertFalse(utxo2.isConfirmed());
+        assertFalse(utxo1.isSpent());
+        assertFalse(utxo2.isSpent());
+
+        // Further manipulations on prev UTXOs
+        origUTXO = transactionService
+                .getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+        assertTrue(origUTXO.isConfirmed());
+        assertTrue(origUTXO.isSpent());
+        assertEquals(store.getTransactionOutputSpender(origUTXO.getBlockHash(), origUTXO.getTxHash(), origUTXO.getIndex()).getBlockHash(),
+                spenderBlock2.getHash());
+    }
+
+    @Test
     public void testSolidityTXInputScriptsCorrect() throws Exception {
         store.resetStore();
 
@@ -793,7 +885,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
             tx2.addOutput(new TransactionOutput(networkParameters, tx2,
                     spendableOutput.getValue().subtract(amount).subtract(amount), testKey));
-            TransactionInput input = tx2.addInput(spendableOutput);
+            TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
             TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -816,7 +908,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount.add(amount), testKey));
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue(), testKey));
-            TransactionInput input = tx2.addInput(spendableOutput);
+            TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
             TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -846,7 +938,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
             tx2.addOutput(
                     new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().minus(amount), testKey));
-            TransactionInput input = tx2.addInput(spendableOutput);
+            TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
             TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -891,7 +983,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
             tx2.addOutput(
                     new TransactionOutput(networkParameters, tx2, spendableOutput.getValue().minus(amount), testKey));
-            TransactionInput input = tx2.addInput(spendableOutput);
+            TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 
             ScriptBuilder scriptBuilder = new ScriptBuilder();
             for (int i = 0; i < NetworkParameters.MAX_BLOCK_SIGOPS + 1; i++)
@@ -982,7 +1074,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -2624,7 +2716,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -2708,7 +2800,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
             TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -2727,7 +2819,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount2, testKey));
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput2.getValue().subtract(amount2),
                     testKey));
-            TransactionInput input2 = tx2.addInput(spendableOutput2);
+            TransactionInput input2 = tx2.addInput(outputs2.get(0).getBlockHash(), spendableOutput2);
             Sha256Hash sighash2 = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
             TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2), Transaction.SigHash.ALL,
@@ -2838,8 +2930,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput2.getValue().subtract(amount2),
                     testKey));
 
-            TransactionInput input = tx.addInput(spendableOutput);
-            TransactionInput input2 = tx.addInput(spendableOutput2);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
+            TransactionInput input2 = tx.addInput(outputs2.get(0).getBlockHash(), spendableOutput2);
 
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
@@ -2913,7 +3005,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput2.getValue().subtract(amount2),
                     testKey));
 
-            TransactionInput input2 = tx.addInput(spendableOutput2);
+            TransactionInput input2 = tx.addInput(outputs2.get(0).getBlockHash(), spendableOutput2);
 
             Sha256Hash sighash2 = tx.hashForSignature(0, spendableOutput2.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
@@ -2982,7 +3074,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3023,7 +3115,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3069,7 +3161,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3134,7 +3226,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3206,7 +3298,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3276,7 +3368,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3350,7 +3442,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
@@ -3435,7 +3527,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // amount, testKey));
             tx.addOutput(
                     new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(spendableOutput);
+            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 

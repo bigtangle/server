@@ -46,11 +46,11 @@ public class UTXO {
     private Coin value;
     @JsonIgnore
     private Script script;
+    private Sha256Hash blockhash;
     private Sha256Hash hash;
     private long index;
     private boolean coinbase;
     private String address;
-    private Sha256Hash blockhash;
     private String fromaddress;
     private String memo;
     private boolean spent;
@@ -62,10 +62,9 @@ public class UTXO {
   
     private long minimumsign;
 
-    
+    @Deprecated
     public UTXO() {
     }
-
  
     public long getSpendPendingTime() {
         return spendPendingTime;
@@ -225,7 +224,7 @@ public class UTXO {
 
     /** The hash of the transaction which holds this output. */
     @Transient
-    public Sha256Hash getHash() {
+    public Sha256Hash getTxHash() {
         return hash;
     }
 
@@ -258,7 +257,7 @@ public class UTXO {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getIndex(), getHash());
+        return Objects.hashCode(getIndex(), getTxHash());
     }
 
     @Override
@@ -268,7 +267,7 @@ public class UTXO {
         if (o == null || getClass() != o.getClass())
             return false;
         UTXO other = (UTXO) o;
-        return getIndex() == other.getIndex() && getHash().equals(other.getHash());
+        return getIndex() == other.getIndex() && getTxHash().equals(other.getTxHash());
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
@@ -293,7 +292,7 @@ public class UTXO {
     }
 
     @Transient
-    public Sha256Hash getBlockhash() {
+    public Sha256Hash getBlockHash() {
         return blockhash;
     }
 

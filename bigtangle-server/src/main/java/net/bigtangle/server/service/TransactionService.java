@@ -75,19 +75,19 @@ public class TransactionService {
     }
 
     public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
-        return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isSpent();
+        return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isSpent();
     }
 
     public boolean getUTXOConfirmed(TransactionOutPoint txout) throws BlockStoreException {
-        return store.getTransactionOutput(txout.getHash(), txout.getIndex()).isConfirmed();
+        return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isConfirmed();
     }
 
     public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) throws BlockStoreException {
-        return store.getTransactionOutputSpender(txout.getHash(), txout.getIndex());
+        return store.getTransactionOutputSpender(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
     }
 
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
-        return store.getTransactionOutput(out.getHash(), out.getIndex());
+        return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
     }
 
     /*

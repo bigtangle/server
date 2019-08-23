@@ -92,31 +92,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or null
      * if none is found
      */
-    UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException;
+    UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash txHash, long index) throws BlockStoreException;
 
     /**
      * Adds a {@link net.bigtangle.core.UTXO} to the list of unspent
      * TransactionOutputs
      */
     void addUnspentTransactionOutput(UTXO out) throws BlockStoreException;
-
-    /**
-     * Removes a {@link net.bigtangle.core.UTXO} from the list of unspent
-     * TransactionOutputs Note that the coinbase of the genesis block should NEVER
-     * be spendable and thus never in the list.
-     * 
-     * @throws BlockStoreException if there is an underlying storage issue, or out
-     *                             was not in the list.
-     */
-    void removeUnspentTransactionOutput(Sha256Hash prevTxHash, long index) throws BlockStoreException;
-
-    /**
-     * True if this store has any unspent outputs from a transaction with a hash
-     * equal to the first parameter
-     * 
-     * @param numOutputs the number of outputs the given transaction has
-     */
-    boolean hasUnspentOutputs(Sha256Hash hash) throws BlockStoreException;
 
     /**
      * <p>
@@ -169,7 +151,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
-    public BlockEvaluation getTransactionOutputSpender(Sha256Hash txHash, long index) throws BlockStoreException;
+    public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index) throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
 
@@ -207,12 +189,12 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateAllBlocksMaintained() throws BlockStoreException;
 
     /* TXOs */
-    public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, long index, boolean b, Sha256Hash spenderBlock)
+    public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash,  long index, boolean b, Sha256Hash spenderBlock)
             throws BlockStoreException;
 
-    public void updateTransactionOutputConfirmed(Sha256Hash hash, long index, boolean b) throws BlockStoreException;
+    public void updateTransactionOutputConfirmed(Sha256Hash blockHash, Sha256Hash txHash, long index, boolean b) throws BlockStoreException;
 
-    public void updateTransactionOutputSpendPending(Sha256Hash hash, long index, boolean b, long spendpendingtime) throws BlockStoreException;
+    public void updateTransactionOutputSpendPending(Sha256Hash blockHash, Sha256Hash txHash, long index, boolean b, long spendpendingtime) throws BlockStoreException;
 
     /* Orders */
     public boolean getOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
@@ -455,9 +437,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
 
-    void updateTransactionOutputConfirmingBlock(Sha256Hash hash, int index, Sha256Hash hash2)
-            throws BlockStoreException;
-
     byte[] getSettingValue(String name) throws BlockStoreException;
 
     public List<Block> getNonSolidBlocks() throws BlockStoreException;
@@ -494,8 +473,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
-
-    Sha256Hash getTransactionOutputConfirmingBlock(Sha256Hash hash, long index) throws BlockStoreException;
 
     List<OrderRecord> getMyClosedOrders(String address) throws BlockStoreException;
 

@@ -712,7 +712,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // amount, testKey));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
@@ -791,7 +791,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // amount, testKey));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);

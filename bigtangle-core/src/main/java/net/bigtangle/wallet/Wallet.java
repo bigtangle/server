@@ -1641,7 +1641,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         @Override
         public Sha256Hash getParentTransactionHash() {
-            return output.getHash();
+            return output.getTxHash();
         }
     }
 
@@ -1863,7 +1863,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             // Now add unsigned inputs for the selected coins.
             for (TransactionOutput output : selection.gathered) {
-                TransactionInput input = req.tx.addInput(output);
+                TransactionInput input = req.tx.addInput(((FreeStandingTransactionOutput) output).getUTXO().getBlockHash(), output); 
                 // If the scriptBytes don't default to none, our size
                 // calculations will be thrown off.
                 checkState(input.getScriptBytes().length == 0);
@@ -2272,7 +2272,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             bestChangeOutput = feeCalculation.bestChangeOutput;
 
             for (TransactionOutput output : bestCoinSelection.gathered) {
-                req.tx.addInput(output);
+                req.tx.addInput(((FreeStandingTransactionOutput) output).getUTXO().getBlockHash(), output);
                 start.addAll(req.tx.getInputs());
             }
 
@@ -2490,12 +2490,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             summe = summe.add(a);
         }
         Coin amount = summe;
+        UTXO spendableUTXO = getSpendableUTXO(aesKey, amount);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
-                getSpendableUTXO(aesKey, amount), 0);
+                spendableUTXO, 0);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
-        multispent.addInput(spendableOutput);
+        multispent.addInput(spendableUTXO.getBlockHash(), spendableOutput);
         signTransaction(multispent, aesKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2544,7 +2545,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         // BURN: amount and rest back to user
         tx.addOutput(spendableOutput.getValue().subtract(amount), beneficiary);
-        tx.addInput(spendableOutput);
+        tx.addInput(u.getBlockHash(), spendableOutput);
         signTransaction(tx, aesKey);
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2596,7 +2597,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        tx.addInput(spendableOutput);
+        tx.addInput(u.getBlockHash(), spendableOutput);
 
         signTransaction(tx, aesKey);
         // Create block with order
@@ -2662,7 +2663,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160());
 
-        TransactionInput input = transaction.addInput(spendableOutput);
+        TransactionInput input = transaction.addInput(findOutput.getBlockHash(), spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 

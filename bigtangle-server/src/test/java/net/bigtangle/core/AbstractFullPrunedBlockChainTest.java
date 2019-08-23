@@ -80,7 +80,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());
         Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
-        TransactionInput input = t.addInput(spendableOutput);
+        TransactionInput input = t.addInput(rollingBlock.getHash(), spendableOutput);
         // Invalid script.
         input.clearScriptBytes();
         rollingBlock.addTransaction(t);
@@ -113,7 +113,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0,
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, rollingBlock.getHash(),
                 rollingBlock.getTransactions().get(0).getHash());
         byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
@@ -122,7 +122,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
 
         WeakReference<UTXO> out = new WeakReference<UTXO>(
-                store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
+                store.getTransactionOutput(spendableOutput.getBlockHash(), spendableOutput.getTxHash(), spendableOutput.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());
 
         Transaction t = new Transaction(PARAMS);
@@ -157,7 +157,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, rollingBlock.getHash(), transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());

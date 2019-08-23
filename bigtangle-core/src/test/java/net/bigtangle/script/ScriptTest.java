@@ -151,7 +151,7 @@ public class ScriptTest {
         Address address = Address.fromBase58(PARAMS, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
-        spendTx.addInput(output);
+        spendTx.addInput(Sha256Hash.ZERO_HASH, output);
         Sha256Hash sighash = spendTx.hashForSignature(0, multisigScript, SigHash.ALL, false);
         ECKey.ECDSASignature party1Signature = key1.sign(sighash);
         ECKey.ECDSASignature party2Signature = key2.sign(sighash);
@@ -341,7 +341,7 @@ public class ScriptTest {
             int index = input.get(1).asInt();
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(HEX.decode(hash));
-            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, Sha256Hash.ZERO_HASH, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
     }

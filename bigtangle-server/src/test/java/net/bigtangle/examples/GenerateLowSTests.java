@@ -72,7 +72,7 @@ public class GenerateLowSTests {
         final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, key.toAddress(params));
 
         inputTransaction.addOutput(output);
-        outputTransaction.addInput(output);
+        outputTransaction.addInput(params.getGenesisBlock().getHash(), output);
         outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(params));
 
         addOutputs(outputTransaction, bag);
@@ -129,7 +129,7 @@ public class GenerateLowSTests {
             TransactionInput txIn = outputTransaction.getInput(i);
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             RedeemData redeemData = txIn.getConnectedRedeemData(bag);
-            checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
+            checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getTxHash());
             txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
         }
     }

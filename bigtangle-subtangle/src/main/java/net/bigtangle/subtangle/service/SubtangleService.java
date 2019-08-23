@@ -87,7 +87,7 @@ public class SubtangleService {
                 Utils.HEX.decode(subtangleConfiguration.getPubKeyHex1()));
         transaction.addOutput(amount, outKey);
 
-        TransactionInput input = transaction.addInput(spendableOutput);
+        TransactionInput input = transaction.addInput(output.getBlockHash(), spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 

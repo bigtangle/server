@@ -215,7 +215,7 @@ public class SendRequest {
         checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
 
         final Transaction tx = new Transaction(parentTransaction.getParams());
-        tx.addInput(outputToSpend);
+        tx.addInput(parentTransaction.getParentBlock().getHash(), outputToSpend);
         tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
         tx.setPurpose(Transaction.Purpose.RAISE_FEE);
         final SendRequest req = forTx(tx);

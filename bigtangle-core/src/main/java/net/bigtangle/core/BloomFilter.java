@@ -337,7 +337,7 @@ public class BloomFilter extends Message {
                 if (contains(chunk.data)) {
                     boolean isSendingToPubKeys = script.isSentToRawPubKey() || script.isSentToMultiSig();
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
-                        insert(output.getOutPointFor().unsafeBitcoinSerialize());
+                        insert(output.getOutPointFor(null).unsafeBitcoinSerialize());
                     found = true;
                 }
             }

@@ -109,7 +109,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         transaction.addOutput(coinbase, address);
         transaction.setToAddressInSubtangle(toAddressInSubtangle.getHash160());
 
-        TransactionInput input = transaction.addInput(spendableOutput);
+        TransactionInput input = transaction.addInput(findOutput.getBlockHash(), spendableOutput);
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 

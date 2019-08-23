@@ -139,7 +139,7 @@ public class GiveMoneyUtils {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, output_, 0);
         Coin amount2 = spendableOutput.getValue().subtract(coinbase);
         doublespent.addOutput(amount2, genesiskey);
-        TransactionInput input = doublespent.addInput(spendableOutput);
+        TransactionInput input = doublespent.addInput(output_.getBlockHash(), spendableOutput);
         Sha256Hash sighash = doublespent.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 

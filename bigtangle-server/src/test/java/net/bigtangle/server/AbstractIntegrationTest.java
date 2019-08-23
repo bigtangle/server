@@ -302,7 +302,7 @@ public abstract class AbstractIntegrationTest {
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), fromKey));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 
         // Sign
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
@@ -357,7 +357,7 @@ public abstract class AbstractIntegrationTest {
         // amount, testKey));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
@@ -413,7 +413,7 @@ public abstract class AbstractIntegrationTest {
         // amount, testKey));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
@@ -633,7 +633,7 @@ public abstract class AbstractIntegrationTest {
         if (spendableOutput.getValue().subtract(amount).getValue() != 0)
             tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount),
                     genesiskey));
-        TransactionInput input = tx.addInput(spendableOutput);
+        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
         TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,

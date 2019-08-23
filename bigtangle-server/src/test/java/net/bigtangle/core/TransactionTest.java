@@ -61,21 +61,21 @@ public class TransactionTest {
  
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() throws Exception {
-        tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
+        tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
         tx.verify();
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooSmall() throws Exception {
         tx.clearInputs();
-        tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
+        tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
         tx.verify();
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooLarge() throws Exception {
         tx.clearInputs();
-        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
                 new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
         tx.verify();
@@ -215,7 +215,7 @@ public class TransactionTest {
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
 
-        tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), script, key);
+        tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(Sha256Hash.ZERO_HASH), script, key);
     }
 
  

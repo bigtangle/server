@@ -137,7 +137,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
         transaction0.addOutput(amount2, scriptPubKey);
 
-        transaction0.addInput(multisigOutput);
+        transaction0.addInput(ulist.get(0).getBlockHash(), multisigOutput);
 
         Transaction transaction_ = networkParameters.getDefaultSerializer()
                 .makeTransaction(transaction0.bitcoinSerialize());
