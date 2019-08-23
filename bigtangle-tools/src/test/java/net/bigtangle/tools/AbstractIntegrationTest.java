@@ -50,11 +50,11 @@ import net.bigtangle.wallet.Wallet;
 public abstract class AbstractIntegrationTest {
 
     public static   boolean testnet =true;
-    public static  String HTTPS_BIGTANGLE_DE = "https://" +  (testnet ? "test" : "") + ".bigtangle.de/";
-    public static  String HTTPS_BIGTANGLE_INFO = "https://" +  (testnet ? "test" : "")  
-            + ".bigtangle.info/";
-    public static String  HTTPS_BIGTANGLE_ORG = "https://"  +  (testnet ? "test" : "")  
-            + ".bigtangle.org/";
+    public static  String HTTPS_BIGTANGLE_DE = "https://" +  (testnet ? "test." : "") + "bigtangle.de/";
+    public static  String HTTPS_BIGTANGLE_INFO = "https://" +  (testnet ? "test." : "")  
+            + "bigtangle.info/";
+    public static String  HTTPS_BIGTANGLE_ORG = "https://"  +  (testnet ? "test." : "")  
+            + "bigtangle.org/";
     public static final String HTTPS_BIGTANGLE_LOCAL = "https://localhost:8088/";
     
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
