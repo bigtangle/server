@@ -2061,10 +2061,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        tokens.setDomainName("bc");
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
+         
         // Make block including it
         Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);

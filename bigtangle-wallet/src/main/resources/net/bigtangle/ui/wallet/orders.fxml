@@ -17,6 +17,7 @@
 								<Button defaultButton="true" layoutX="384.0" layoutY="143.0" mnemonicParsing="false" onAction="#search" prefHeight="23.0" prefWidth="77.0" text="%search" />
 								<TableView fx:id="orderTable" editable="true" layoutX="6.0" layoutY="198.0" prefHeight="348.0" prefWidth="977.0">
 									<columns>
+                              <TableColumn fx:id="tokennameCol" prefWidth="175.0" text="%Token" />
 										<TableColumn fx:id="tokenidCol" prefWidth="175.0" text="%token_id" />
 										<TableColumn fx:id="priceCol" prefWidth="85.0" text="%price" />
 										<TableColumn fx:id="amountCol" prefWidth="101.0" text="%Quantity" />

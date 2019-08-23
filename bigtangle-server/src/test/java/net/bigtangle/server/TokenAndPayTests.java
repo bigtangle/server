@@ -976,21 +976,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void testCreateToken() throws JsonProcessingException, Exception {
-        // Setup transaction and signatures
-        testInitWallet();
-        wallet1();
-        wallet2();
 
-        List<ECKey> signKeys = new LinkedList<ECKey>();
-        signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
-        signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
-        signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
-        TokenInfo tokenInfo = new TokenInfo();
-
-        testCreateMultiSigToken(signKeys, tokenInfo);
-    }
 
     @Test
     public void testECKey() {

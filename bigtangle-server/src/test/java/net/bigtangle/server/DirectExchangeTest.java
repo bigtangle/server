@@ -163,7 +163,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    //TODO sometimes failed
     public void testGiveMoney() throws Exception {
         store.resetStore();
         testInitWallet();
@@ -172,17 +171,23 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-
+        List<UTXO> balance1 = getBalance(false, genesiskey);
+        log.info("balance1 : " + balance1); 
+        //two utxo to spent
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000* 1000l);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000000* 1000l);
         }
        walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
        milestoneService.update();
-        for (UTXO utxo : getBalance(false, genesiskey)) {
-            log.info("UTXO : " + utxo); 
-                assertTrue(utxo.getValue().getValue() == 999999993666667l);
+     
+       List<UTXO> balance = getBalance(false, genesiskey);
+       log.info("balance : " + balance); 
+        for (UTXO utxo : balance) {
+         
+                assertTrue(utxo.getValue().getValue() == 9996996666667l
+                       );
             
         }
     }
@@ -311,13 +316,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
        // req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
-
-        log.debug(myutxo.getAddress() + ", " + myutxo.getValue());
-        log.debug(yourutxo.getAddress() + ", " + amount);
-
-        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
-        ulist.addAll(utxos);
-        walletAppKit.wallet().completeTx(req, walletAppKit.wallet().transforSpendCandidates(ulist), false);
+ 
+        walletAppKit.wallet().completeTx(req,null);
        // walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
@@ -325,7 +325,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
         SendRequest request = SendRequest.forTx(transaction);
-        walletAppKit1.wallet().signTransaction(request);
+       // walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

@@ -2263,7 +2263,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             req.ensureMinRequiredFee = false;
             String tokenHex = entry.getKey();
             Address address = addressResult.get(tokenHex);
-            if(address==null) {
+            if(address==null && addressResult.entrySet().size()>0) {
                 address=addressResult.entrySet().iterator().next().getValue();
             }
             FeeCalculation feeCalculation = calculateFee(req, entry.getValue(), start, req.ensureMinRequiredFee,

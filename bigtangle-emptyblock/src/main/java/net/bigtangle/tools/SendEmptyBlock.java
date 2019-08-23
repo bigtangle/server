@@ -51,7 +51,7 @@ public class SendEmptyBlock {
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    public String CONTEXT_ROOT = HTTPS_BIGTANGLE_ORG;
+    public String CONTEXT_ROOT = "http://localhost:8088/";
 
     // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
