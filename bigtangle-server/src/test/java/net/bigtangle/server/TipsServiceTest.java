@@ -285,10 +285,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
-
-        // Generate an eligible issuance
+        
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         long amount = coinbase.getValue();
@@ -362,7 +361,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance

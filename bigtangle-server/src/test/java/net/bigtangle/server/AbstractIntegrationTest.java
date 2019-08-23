@@ -1014,14 +1014,14 @@ public abstract class AbstractIntegrationTest {
         Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         
-//        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
-//        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
-//        String pubKeyHex = multiSignAddress.getPubKeyHex();
-//        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
-//        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-//                Utils.HEX.decode(NetworkParameters.testPub));
-//        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), genesiskey, null);
-        // TODO not working
+        PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
+        MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
+        String pubKeyHex = multiSignAddress.getPubKeyHex();
+        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
+        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), genesiskey, null);
+
         return block;
     }
 
