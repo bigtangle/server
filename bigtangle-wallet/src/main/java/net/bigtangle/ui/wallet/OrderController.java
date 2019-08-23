@@ -22,7 +22,6 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,7 +57,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.OrderdataResponse;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -131,6 +129,8 @@ public class OrderController extends ExchangeController {
     @FXML
     public TableColumn<Map<String, Object>, String> beneficiaryAddressCol;
     @FXML
+    public TableColumn<Map<String, Object>, String> tokennameCol;
+    @FXML
     public TableColumn<Map<String, Object>, String> tokenidCol;
     @FXML
     public TableColumn<Map<String, Object>, String> typeCol;
@@ -182,7 +182,7 @@ public class OrderController extends ExchangeController {
             sellRadioButton1.setUserData("sell");
             stateRB1.setUserData("publish");
             stateRB2.setUserData("match");
-         //   stateRB3.setUserData("finish");
+            // stateRB3.setUserData("finish");
             mineCB.setSelected(true);
             Main.resetWachted();
             initMarketComboBox();
@@ -299,8 +299,7 @@ public class OrderController extends ExchangeController {
                 }
             });
             initComboBox(true);
-            // TODO auto initTable is quite slow and disabled now and click
-            // search to start initTable initTable(requestParam);
+
             super.initialize();
             new TextFieldValidator(fromTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
             new TextFieldValidator(toTimeTF, text -> !WTUtils.didThrow(() -> checkState(Main.isTime(text))));
@@ -336,8 +335,8 @@ public class OrderController extends ExchangeController {
         // beneficiaryAddressCol.setCellValueFactory(new
         // MapValueFactory("beneficiaryAddress"));
         tokenidCol.setCellValueFactory(new MapValueFactory("tokenId"));
+        tokennameCol.setCellValueFactory(new MapValueFactory("tokenname"));
         typeCol.setCellValueFactory(new MapValueFactory("type"));
-        // TODO
         validdatetoCol.setCellValueFactory(new MapValueFactory("validateTo"));
         validdatefromCol.setCellValueFactory(new MapValueFactory("validatefrom"));
         stateCol.setCellValueFactory(new MapValueFactory("state"));
@@ -369,7 +368,7 @@ public class OrderController extends ExchangeController {
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
-            String url ="https://"+ tokens.getDomainName();
+            String url = "https://" + tokens.getDomainName();
             try {
                 response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
                         Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -400,6 +399,8 @@ public class OrderController extends ExchangeController {
                 map.put("orderId", orderPublish.getOrderId());
                 map.put("address", orderPublish.getAddress());
                 map.put("tokenId", orderPublish.getTokenId());
+                // map.put("tokenId", getOrderResponse.getTokennames().get(
+                // orderPublish.getTokenId()).getTokennameDisplay());
                 map.put("validateTo", orderPublish.getValidateTo());
                 map.put("validateFrom", orderPublish.getValidateFrom());
                 map.put("market", orderPublish.getMarket());
@@ -416,7 +417,7 @@ public class OrderController extends ExchangeController {
             requestParam.put("spent", "publish".equals(stateStr) ? "false" : "true");
         }
         boolean ifMineOrder = mineCB.isSelected();
-      
+
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         List<String> address = new ArrayList<String>();
         if (ifMineOrder) {
@@ -438,11 +439,15 @@ public class OrderController extends ExchangeController {
                 map.put("type", Main.getText("BUY"));
                 map.put("amount", orderRecord.getTargetValue());
                 map.put("tokenId", orderRecord.getTargetTokenid());
+                map.put("tokenname",
+                        orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getTokennameDisplay());
                 map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
             } else {
                 map.put("type", Main.getText("SELL"));
                 map.put("amount", orderRecord.getOfferValue());
                 map.put("tokenId", orderRecord.getOfferTokenid());
+                map.put("tokenname",
+                        orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokennameDisplay());
                 map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
             map.put("orderId", orderRecord.getInitialBlockHashHex());
@@ -452,7 +457,8 @@ public class OrderController extends ExchangeController {
             map.put("address",
                     ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
             map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
-         //   map.put("state", Main.getText( (String) requestParam.get("state")));
+            // map.put("state", Main.getText( (String)
+            // requestParam.get("state")));
             orderData.add(map);
         }
     }
@@ -500,9 +506,10 @@ public class OrderController extends ExchangeController {
             for (Token p : Main.getWatched().getTokenList()) {
                 if (!isSystemCoin(p.getTokenid())) {
                     if (!tokenData.contains(p.getTokenname() + ":" + p.getTokenid())) {
-                 //       if (Main.getNoMultiTokens().contains(p.getTokenid())) {
-                            tokenData.add(p.getTokenname() + ":" + p.getTokenid());
-                  //      }
+                        // if (Main.getNoMultiTokens().contains(p.getTokenid()))
+                        // {
+                        tokenData.add(p.getTokenname() + ":" + p.getTokenid());
+                        // }
                     }
                 }
             }
@@ -553,7 +560,6 @@ public class OrderController extends ExchangeController {
         Sha256Hash hash = Sha256Hash.wrap(rowData.get("initialBlockHashHex").toString());
         ECKey legitimatingKey = null;
 
-      
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         for (ECKey ecKey : keys) {
             if (rowData.get("address").equals(ecKey.toAddress(Main.params).toString())) {
@@ -594,7 +600,6 @@ public class OrderController extends ExchangeController {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
-        // TODO time and null
         LocalDate to = validdateToDatePicker1.getValue();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String validdateTo = "";
@@ -618,7 +623,7 @@ public class OrderController extends ExchangeController {
 
         String ContextRoot = Main.getContextRoot();
         Main.walletAppKit.wallet().setServerURL(ContextRoot);
- 
+
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         ECKey beneficiary = null;
         for (ECKey ecKey : keys) {
@@ -629,11 +634,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(),  tokenid, price.getValue(), quantity,
-                    totime, fromtime);
+            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
+                    fromtime);
         } else {
-            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity,
-                    totime, fromtime);
+            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
+                    fromtime);
         }
 
         overlayUI.done();
@@ -700,7 +705,7 @@ public class OrderController extends ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         Token token_ = getTokensResponse.getTokens().get(0);
 
-        String url ="https://"+ token_.getDomainName();
+        String url = "https://" + token_.getDomainName();
         OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
