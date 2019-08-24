@@ -15,8 +15,7 @@ import net.bigtangle.utils.OkHttp3Util;
 
 public class CompareServerTest extends AbstractIntegrationTest {
 
-    // buy everthing in test
-
+   
     private static final String CHECHNUMBER = "2000";
 
     @Test

@@ -49,6 +49,7 @@ import net.bigtangle.wallet.Wallet;
 
 public abstract class AbstractIntegrationTest {
 
+     
     public static   boolean testnet =true;
     public static  String HTTPS_BIGTANGLE_DE = "https://" +  (testnet ? "test." : "") + "bigtangle.de/";
     public static  String HTTPS_BIGTANGLE_INFO = "https://" +  (testnet ? "test." : "")  
@@ -89,7 +90,7 @@ public abstract class AbstractIntegrationTest {
     
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
-    protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
+    public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot = HTTPS_BIGTANGLE_DE;
     // "http://localhost:8088/";
 
@@ -179,6 +180,22 @@ public abstract class AbstractIntegrationTest {
         walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
+    public void importKeys(Wallet w) throws Exception {
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        w.importKey(
+                ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+    }
     protected void wallet1() throws Exception {
         KeyParameter aesKey = null;
         // delete first

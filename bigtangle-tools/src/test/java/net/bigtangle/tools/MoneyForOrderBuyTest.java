@@ -1,23 +1,12 @@
 package net.bigtangle.tools;
 
-import static net.bigtangle.core.Utils.HEX;
-
 import java.util.HashMap;
 
 import org.junit.Test;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.server.resp.OrderdataResponse;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.params.ReqCmd;
-import net.bigtangle.utils.OkHttp3Util;
 
 public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
@@ -27,8 +16,10 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 333333333300L);
+        for(int i=0;i<100; i++) {
+        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333300L);
 
+        }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
 
@@ -39,33 +30,14 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet2();
-        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 333333333300l);
-
+        for(int i=0;i<100; i++) {
+        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 333300000l);
+        }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
 
     }
 
-    @Test
-    public void payMoneyToTestKey() throws Exception {
-    
-        wallet1();
-        walletAppKit1.wallet().pay(null, Address.fromBase58(MainNetParams.get(), "14a4YnkmSCBGUqcmN2PX3tzxFthrDmyDXE"),
-                Coin.valueOf(333333300l, NetworkParameters.BIGTANGLE_TOKENID_STRING), "大网充值");
-
-    }
-
-    
-    @Test
-    public void payMoneyToWalletYuan() throws Exception {
-        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        wallet1();
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 3333333L);
-
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey, HEX.decode(yuanTokenPub), "");
-        log.debug("block " + b.toString());
-
-    }
+ 
     
 }

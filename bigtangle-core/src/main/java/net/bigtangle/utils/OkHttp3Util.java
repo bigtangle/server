@@ -41,8 +41,8 @@ public class OkHttp3Util {
     public static String contentHex;
 
     /*
-     * same method, but it will call next server, if last server failed to return
-     * result
+     * same method, but it will call next server, if last server failed to
+     * return result
      */
     public static String post(String[] url, byte[] b) throws IOException {
         return post(url, b, 0);
@@ -79,7 +79,7 @@ public class OkHttp3Util {
             throw new RuntimeException("all servers are failed:  " + url);
         }
     }
-    
+
     public static String post(String url, byte[] b) throws IOException {
         logger.debug(url);
         OkHttpClient client = getOkHttpClient();
@@ -89,7 +89,7 @@ public class OkHttp3Util {
         try {
             String resp = response.body().string();
             // logger.debug(resp);
-            checkResponse(resp);
+            checkResponse(resp, url);
             return resp;
 
         } finally {
@@ -109,7 +109,7 @@ public class OkHttp3Util {
         try {
             // return response.body().bytes();
             String resp = response.body().string();
-            checkResponse(resp);
+            checkResponse(resp,url);
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
             if (dataHex != null) {
@@ -131,7 +131,7 @@ public class OkHttp3Util {
         Response response = client.newCall(request).execute();
         try {
             String resp = response.body().string();
-            checkResponse(resp);
+            checkResponse(resp,url);
             return resp;
         } finally {
             response.close();
@@ -139,11 +139,7 @@ public class OkHttp3Util {
         }
     }
 
-    public static void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
-        checkResponse(resp, 100);
-    }
-
-    public static void checkResponse(String resp, int code)
+    public static void checkResponse(String resp, String url)
             throws JsonParseException, JsonMappingException, IOException {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -151,10 +147,10 @@ public class OkHttp3Util {
             int error = (Integer) result2.get("errorcode");
             if (error > 0) {
                 if (result2.get("message") == null) {
-                    throw new RuntimeException("Server Error: " + error);
+                    throw new RuntimeException("Server:" + url + " Server Error: " + error);
                 } else {
 
-                    throw new RuntimeException("Server Error: " + result2.get("message"));
+                    throw new RuntimeException("Server:" + url + " Server Error: " + result2.get("message"));
                 }
             }
         }

@@ -5648,7 +5648,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sql += orderby;
         PreparedStatement s = null;
         try {
-            log.debug(sql);
+        //    log.debug(sql);
             s = conn.get().prepareStatement(sql);
             s.setBoolean(1, spent);
             if (address != null && !address.trim().isEmpty()) {
@@ -5710,7 +5710,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sql += orderby;
         PreparedStatement s = null;
         try {
-            log.debug(sql);
+         //   log.debug(sql);
             s = conn.get().prepareStatement(sql);
             int i = 1;
             s.setBoolean(i++, spent);
