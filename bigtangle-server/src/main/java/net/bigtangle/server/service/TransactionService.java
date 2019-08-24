@@ -103,7 +103,7 @@ public class TransactionService {
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
                 if (!added) {
-                    logger.debug(" unsolid block from kafka   Blockhash="
+                    logger.debug(" unsolid block  Blockhash="
                 + block.getHashAsString() + " height ="
                             + block.getHeigth()
                             + " block: " + block.toString() 

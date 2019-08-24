@@ -197,6 +197,8 @@ public class DispatcherController {
                 if (request.get("hashHex") != null) {
                     Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
                    if(block!=null) this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                }else {
+                    throw new NoBlockException();
                 }
             }
                 break;

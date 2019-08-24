@@ -5,8 +5,8 @@
 package net.bigtangle.kafka;
 
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +19,13 @@ public class BlockStreamHandler extends AbstractStreamHandler {
     TransactionService transactionService;
 
     @Override
-    public void run(KStreamBuilder streamBuilder) {
+    public void run(StreamsBuilder streamBuilder) {
  
             dorun(streamBuilder);
        
     }
 
-    public void dorun(KStreamBuilder streamBuilder) {
+    public void dorun(StreamsBuilder streamBuilder) {
 
         final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOutName());
 

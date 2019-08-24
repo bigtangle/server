@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +120,7 @@ public class BlockRequester {
                     requestParam.put("hashHex", b.getBlockHexStr());
                     byte[] data = OkHttp3Util.post(server2 + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    transactionService.addConnected(data, false);
+                   Optional<Block> block = transactionService.addConnected(data, true);
                 } catch (Exception e) {
                     // TODO: handle exception
                 }
