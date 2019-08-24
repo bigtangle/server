@@ -127,7 +127,7 @@ public class BlockRequester {
             }
         }
 
-        System.out.println(" finish difference check " + server2 + "  ");
+        log.debug(" finish difference check " + server2 + "  ");
     }
 
     private BlockEvaluationDisplay find(List<BlockEvaluationDisplay> l, BlockEvaluationDisplay b) throws Exception {
