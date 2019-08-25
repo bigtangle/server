@@ -148,18 +148,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public boolean add(Block block, boolean allowUnsolid) {
         return add(block, allowUnsolid, true);
     }
-
     /*
      * if block is saved to database, then return the StoredBlock otherwise null
      */
 
-    @Override
     public boolean add(Block block, boolean allowUnsolid, boolean checkSolidity) {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null)
-                return true;
+                return false;
 
             // Check the block is partly formally valid and fulfills PoW
             try {
@@ -172,16 +170,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw e;
             }
             checkState(lock.isHeldByCurrentThread());
-
             if (checkSolidity && !checkSolidity(block, allowUnsolid)) {
                 return false;
             }
+
             // Otherwise, all dependencies exist and the block has been
             // validated
-
-            blockStore.beginDatabaseBatchWrite();
-            connect(block);
-            blockStore.commitDatabaseBatchWrite();
             try {
                 blockStore.beginDatabaseBatchWrite();
                 connect(block);
@@ -197,7 +191,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw e;
             }
 
-        } catch (BlockStoreException e) {
+        } catch (
+
+        BlockStoreException e) {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
@@ -211,8 +207,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    public boolean checkSolidity(Block block, boolean allowUnsolid) throws BlockStoreException {
-
+    private boolean checkSolidity(Block block, boolean allowUnsolid) throws BlockStoreException {
         BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
         BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
 
@@ -230,8 +225,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // If dependency missing and allowing waiting list, add to
                 // list
                 if (allowUnsolid) {
-                    log.debug(" insertUnsolidBlock solidityState: " + solidityState.getState());
-
                     insertUnsolidBlock(block, solidityState);
                 } else
                     log.debug("Dropping unresolved block!");
@@ -252,7 +245,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                 // If going through or waiting for more dependencies, all is
                 // good
-                add(b, true, false);
+                add(b, true);
 
             } catch (VerificationException e) {
                 // If the block is deemed invalid, we do not propagate the error
@@ -271,7 +264,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     // If going through or waiting for more dependencies, all is
                     // good
-                    add(b, true, false);
+                    add(b, true);
 
                 } catch (VerificationException e) {
                     // If the block is deemed invalid, we do not propagate the
