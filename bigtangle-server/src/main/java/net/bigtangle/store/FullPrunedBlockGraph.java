@@ -187,6 +187,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // If dependency missing and allowing waiting list, add to
                     // list
                     if (allowUnsolid) {
+                        log.debug(" insertUnsolidBlock solidityState: " + solidityState.getState());
+
                         insertUnsolidBlock(block, solidityState);
                     } else
                         log.debug("Dropping unresolved block!");
@@ -196,8 +198,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Otherwise, all dependencies exist and the block has been
                 // validated
                 try {
-                    blockStore.beginDatabaseBatchWrite(); 
-                     connect(block);
+                    blockStore.beginDatabaseBatchWrite();
+                    connect(block);
                     blockStore.commitDatabaseBatchWrite();
                     try {
                         scanWaitingBlocks(block);
@@ -219,7 +221,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } catch (Exception e) {
             log.error("", e);
             throw e;
-        }finally {
+        } finally {
             lock.unlock();
         }
     }
@@ -815,14 +817,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (blockStore.getTokenSpent(block.getHashAsString())) {
             removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
         }
-        
-        // If applicable: Disconnect all domain definitions that were based on this domain
+
+        // If applicable: Disconnect all domain definitions that were based on
+        // this domain
         Token token = blockStore.getToken(block.getHashAsString());
-		if (token.getTokentype() == TokenType.domainname.ordinal()) {
-        	List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
-        	for (String b : dependents) {
+        if (token.getTokentype() == TokenType.domainname.ordinal()) {
+            List<String> dependents = blockStore
+                    .getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
+            for (String b : dependents) {
                 removeBlockFromMilestone(Sha256Hash.wrap(b), traversedBlockHashes);
-        	}
+            }
         }
     }
 
@@ -1028,7 +1032,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     TransactionInput in = tx.getInputs().get(index);
                     UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
                             in.getOutpoint().getIndex());
-                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true, System.currentTimeMillis());
+                    blockStore.updateTransactionOutputSpendPending(prevOut.getHash(), prevOut.getIndex(), true,
+                            System.currentTimeMillis());
                 }
             }
             Sha256Hash hash = tx.getHash();
@@ -1044,7 +1049,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), null, fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0,0);
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
@@ -1172,8 +1177,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (permissionedAddress == null)
                         continue;
                     // The primary key must be the correct block
-                    permissionedAddress.setBlockhash(block.getHashAsString()); 
-                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid()); 
+                    permissionedAddress.setBlockhash(block.getHashAsString());
+                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid());
                     if (permissionedAddress.getAddress() != null)
                         blockStore.insertMultiSignAddress(permissionedAddress);
                 }

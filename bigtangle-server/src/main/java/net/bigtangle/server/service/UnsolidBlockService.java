@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -55,7 +56,9 @@ public class UnsolidBlockService {
         try {
 
             logger.debug(" Start updateUnsolideServiceSingle: ");
-          
+            Context context = new Context(networkParameters);
+            Context.propagate(context);
+            
             deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
             blockRequester.diff();

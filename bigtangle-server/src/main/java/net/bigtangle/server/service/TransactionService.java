@@ -103,7 +103,7 @@ public class TransactionService {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
-                if (!added && blockTimeRange(block)) {
+                if (!added ) {
                     logger.debug(" unsolid block  Blockhash="
                 + block.getHashAsString() + " height ="
                             + block.getHeigth()
