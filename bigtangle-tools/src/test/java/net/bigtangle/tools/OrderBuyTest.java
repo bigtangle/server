@@ -7,6 +7,7 @@ import org.junit.Test;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
@@ -19,6 +20,9 @@ public class OrderBuyTest extends AbstractIntegrationTest {
     @Test
     public void buy() throws Exception {
 
+        importKeys(walletAppKit2.wallet());
+        importKeys(walletAppKit1.wallet());
+        importKeys(walletAppKit.wallet());
         while (true) {
 
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -29,6 +33,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
 
             int i = 0;
             for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+                try {
                 if (i % 2 == 0) {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
                         buy(HTTPS_BIGTANGLE_INFO, walletAppKit2.wallet(), orderRecord);
@@ -43,6 +48,12 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                     }
                 }
                 i += 1;
+                }catch (InsufficientMoneyException e) {
+                    Thread.sleep(4000);
+                }
+             catch ( Exception e) {
+                 log.debug("",e);
+            }
             }
 
         }

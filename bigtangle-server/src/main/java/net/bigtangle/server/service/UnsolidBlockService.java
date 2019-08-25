@@ -55,9 +55,10 @@ public class UnsolidBlockService {
         try {
 
             logger.debug(" Start updateUnsolideServiceSingle: ");
-            blockRequester.diff();
+          
             deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
+            blockRequester.diff();
             logger.debug(" end  updateUnsolideServiceSingle: ");
 
         } catch (Exception e) {

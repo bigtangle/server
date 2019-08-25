@@ -23,6 +23,9 @@ public class OrderSell2Test extends AbstractIntegrationTest {
     @Test
     public void sellThread() throws Exception {
 
+        importKeys(walletAppKit2.wallet());
+        importKeys(walletAppKit1.wallet());
+        importKeys(walletAppKit.wallet());
         while (true) {
             try {
                 sell(HTTPS_BIGTANGLE_INFO,walletAppKit2.wallet());

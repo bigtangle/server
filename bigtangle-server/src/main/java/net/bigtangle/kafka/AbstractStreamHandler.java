@@ -13,6 +13,7 @@ import javax.annotation.PreDestroy;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public abstract class AbstractStreamHandler {
         log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
         log.info("start stream {} handler", this.getClass().getSimpleName());
         Properties props = prepareConfiguration();
-        KStreamBuilder streamBuilder = new KStreamBuilder();
+        StreamsBuilder streamBuilder = new StreamsBuilder();
 
         try {
             run(streamBuilder);
@@ -47,7 +48,7 @@ public abstract class AbstractStreamHandler {
 
         }
 
-        streams = new KafkaStreams(streamBuilder, props);
+        streams = new KafkaStreams(streamBuilder.build(), props);
         streams.setUncaughtExceptionHandler((thread, exception) -> {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -59,7 +60,7 @@ public abstract class AbstractStreamHandler {
         streams.start();
     }
 
-    public abstract void run(final KStreamBuilder streamBuilder) throws Exception;
+    public abstract void run(final StreamsBuilder streamBuilder) throws Exception;
 
     private Properties prepareConfiguration() {
         Properties streamsConfiguration = new Properties();

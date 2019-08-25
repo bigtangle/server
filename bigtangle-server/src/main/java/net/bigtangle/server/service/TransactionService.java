@@ -94,6 +94,7 @@ public class TransactionService {
      * Block byte[] bytes
      */
     public Optional<Block> addConnected(byte[] bytes, boolean request) {
+        if(bytes ==null) return null;
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request);
     }
 
@@ -102,17 +103,17 @@ public class TransactionService {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
-                if (!added) {
-                    logger.debug(" unsolid block from kafka   Blockhash="
+                if (!added && blockTimeRange(block)) {
+                    logger.debug(" unsolid block  Blockhash="
                 + block.getHashAsString() + " height ="
                             + block.getHeigth()
                             + " block: " + block.toString() 
                             + " request remote: " + request);
-                    if (request)
-                        unsolidBlockService.requestPrev(block);
+                    return Optional.empty();
 
-                }
+                }else {
                 return Optional.of(block);
+                }
             } else {
                 // logger.debug("addConnected BlockExists " + block);
             }
@@ -124,6 +125,10 @@ public class TransactionService {
             return Optional.empty();
         }
         return Optional.empty();
+    }
+
+    private boolean blockTimeRange(Block block) {
+        return System.currentTimeMillis() - block.getTimeSeconds()*1000  < 8*3600*1000;
     }
 
     /*

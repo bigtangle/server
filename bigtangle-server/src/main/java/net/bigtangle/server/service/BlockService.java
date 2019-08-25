@@ -59,6 +59,7 @@ public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     @Cacheable("blocks")
+    //nullable
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
     }

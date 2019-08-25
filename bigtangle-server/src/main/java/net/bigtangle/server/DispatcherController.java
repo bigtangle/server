@@ -196,7 +196,9 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("hashHex") != null) {
                     Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
-                    this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                   if(block!=null) this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                }else {
+                    throw new NoBlockException();
                 }
             }
                 break;

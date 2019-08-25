@@ -155,7 +155,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null)
-                return false;
+                return true;
 
             // Check the block is partly formally valid and fulfills PoW
             try {
