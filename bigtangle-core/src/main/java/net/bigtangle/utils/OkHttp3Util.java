@@ -109,6 +109,7 @@ public class OkHttp3Util {
         try {
             // return response.body().bytes();
             String resp = response.body().string();
+            if("".equals(resp))     return null;
             checkResponse(resp,url);
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
@@ -141,8 +142,10 @@ public class OkHttp3Util {
 
     public static void checkResponse(String resp, String url)
             throws JsonParseException, JsonMappingException, IOException {
+    
+        if("".equals( resp)) return;
         @SuppressWarnings("unchecked")
-        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> result2 =  Json.jsonmapper().readValue(resp, HashMap.class);
         if (result2.get("errorcode") != null) {
             int error = (Integer) result2.get("errorcode");
             if (error > 0) {

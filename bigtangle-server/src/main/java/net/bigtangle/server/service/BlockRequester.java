@@ -92,7 +92,7 @@ public class BlockRequester {
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
         for (String s : re) {
-            diff(s);
+            diff(s.trim());
         }
     }
 
@@ -102,17 +102,17 @@ public class BlockRequester {
     public void diff(String server2) throws Exception {
         log.debug(" start difference check with " + server2);
 
-        List<BlockEvaluationDisplay> l1 = getBlockInfos(server2);
+        List<BlockEvaluationDisplay> remoteBlocks = getBlockInfos(server2);
             //sort increasing of height for add to connected 
-        Collections.sort(l1, new Comparator<BlockEvaluationDisplay>() {
+        Collections.sort(remoteBlocks, new Comparator<BlockEvaluationDisplay>() {
             public int compare(BlockEvaluationDisplay p1, BlockEvaluationDisplay p2) {
                 return p1.getHeight() < p2.getHeight() ? -1 : 1;
             }
         });
 
-        List<BlockEvaluationDisplay> l2 = getBlockInfos();
-        for (BlockEvaluationDisplay b : l1) {
-            BlockEvaluationDisplay s = find(l2, b);
+        List<BlockEvaluationDisplay> localblocks = getBlockInfos();
+        for (BlockEvaluationDisplay b : remoteBlocks) {
+            BlockEvaluationDisplay s = find(localblocks, b);
             if (s == null) {
                 // not found request
                 try {
@@ -121,6 +121,11 @@ public class BlockRequester {
                     byte[] data = OkHttp3Util.post(server2 + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
                    Optional<Block> block = transactionService.addConnected(data, true);
+                   //first can not be added and the stop do the rest
+//                   if(block.equals(Optional.empty())) {
+//                       break;
+//                   }
+                
                 } catch (Exception e) {
                     // TODO: handle exception
                 }
