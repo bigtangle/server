@@ -38,7 +38,7 @@ public class ServerConfiguration {
     private Boolean myserverblockOnly = false;
 
     private List<PermissionDomainname> permissionDomainname = ImmutableList
-            .of(new PermissionDomainname(NetworkParameters.testPub, NetworkParameters.testPriv));
+            .of(new PermissionDomainname(NetworkParameters.testPub, ""));
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;

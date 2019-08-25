@@ -39,10 +39,10 @@ public class PermissionDomainname {
     }
 
     public ECKey getOutKey() {
-        byte[] privKeyBytes = this.getPriKeyBuf();
+     //   byte[] privKeyBytes = this.getPriKeyBuf();
         byte[] pubKey = this.getPubKeyBuf();
 
-        ECKey outKey = ECKey.fromPrivateAndPrecalculatedPublic(privKeyBytes, pubKey);
+        ECKey outKey = ECKey.fromPublicOnly(  pubKey);
         return outKey;
     }
 }
