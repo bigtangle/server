@@ -185,11 +185,11 @@ public abstract class AbstractIntegrationTest {
             ECKey outKey = iterator.next();
             walletKeyData.put(outKey.getPublicKeyAsHex(), outKey);
         }
-        for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
-                .iterator(); iterator.hasNext();) {
-            ECKey outKey = iterator.next().getOutKey();
-            walletKeyData.put(outKey.getPublicKeyAsHex(), outKey);
-        }
+//        for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
+//                .iterator(); iterator.hasNext();) {
+//            ECKey outKey = iterator.next().getOutKey();
+//            walletKeyData.put(outKey.getPublicKeyAsHex(), outKey);
+//        }
     }
 
     @Before

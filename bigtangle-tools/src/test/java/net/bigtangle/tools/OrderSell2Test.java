@@ -35,6 +35,7 @@ public class OrderSell2Test extends AbstractIntegrationTest {
             } catch (Exception e) {
                 // TODO: handle exception
                 // Thread.sleep(3000);
+                log.debug("",e);
             }
         }
 

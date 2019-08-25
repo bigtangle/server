@@ -145,12 +145,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    public boolean add(Block block, boolean allowUnsolid) {
+        return add(block, allowUnsolid, true);
+    }
+
     /*
      * if block is saved to database, then return the StoredBlock otherwise null
      */
 
     @Override
-    public boolean add(Block block, boolean allowUnsolid) {
+    public boolean add(Block block, boolean allowUnsolid, boolean checkSolidity) {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
@@ -169,47 +173,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             checkState(lock.isHeldByCurrentThread());
 
-            BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
-            BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
-
-            // Check the block's solidity, if dependency missing, put on waiting
-            // list unless disallowed
-            // The class SolidityState is used for the Spark implementation and
-            // should stay.
-            SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch,
-                    true);
-            if (!(solidityState.getState() == State.Success)) {
-                if (solidityState.getState() == State.Unfixable) {
-                    // Drop if invalid
-                    log.debug("Dropping invalid block!");
-                    throw new GenericInvalidityException();
-                } else {
-                    // If dependency missing and allowing waiting list, add to
-                    // list
-                    if (allowUnsolid) {
-                        insertUnsolidBlock(block, solidityState);
-                    } else
-                        log.debug("Dropping unresolved block!");
-                    return false;
-                }
-            } else {
-                // Otherwise, all dependencies exist and the block has been
-                // validated
-                try {
-                    blockStore.beginDatabaseBatchWrite(); 
-                     connect(block);
-                    blockStore.commitDatabaseBatchWrite();
-                    try {
-                        scanWaitingBlocks(block);
-                    } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage());
-                    }
-                    return true;
-                } catch (BlockStoreException e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
-                }
+            if (checkSolidity && !checkSolidity(block, allowUnsolid)) {
+                return false;
             }
+            // Otherwise, all dependencies exist and the block has been
+            // validated
+
+            blockStore.beginDatabaseBatchWrite();
+            connect(block);
+            blockStore.commitDatabaseBatchWrite();
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                connect(block);
+                blockStore.commitDatabaseBatchWrite();
+                try {
+                    scanWaitingBlocks(block);
+                } catch (BlockStoreException | VerificationException e) {
+                    log.debug(e.getLocalizedMessage());
+                }
+                return true;
+            } catch (BlockStoreException e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            }
+
         } catch (BlockStoreException e) {
             log.error("", e);
             throw new VerificationException(e);
@@ -219,9 +206,39 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } catch (Exception e) {
             log.error("", e);
             throw e;
-        }finally {
+        } finally {
             lock.unlock();
         }
+    }
+
+    public boolean checkSolidity(Block block, boolean allowUnsolid) throws BlockStoreException {
+
+        BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
+        BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
+
+        // Check the block's solidity, if dependency missing, put on waiting
+        // list unless disallowed
+        // The class SolidityState is used for the Spark implementation and
+        // should stay.
+        SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, true);
+        if (!(solidityState.getState() == State.Success)) {
+            if (solidityState.getState() == State.Unfixable) {
+                // Drop if invalid
+                log.debug("Dropping invalid block!");
+                throw new GenericInvalidityException();
+            } else {
+                // If dependency missing and allowing waiting list, add to
+                // list
+                if (allowUnsolid) {
+                    log.debug(" insertUnsolidBlock solidityState: " + solidityState.getState());
+
+                    insertUnsolidBlock(block, solidityState);
+                } else
+                    log.debug("Dropping unresolved block!");
+                return false;
+            }
+        }
+        return true;
     }
 
     private void scanWaitingBlocks(Block block) throws BlockStoreException {
@@ -235,7 +252,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                 // If going through or waiting for more dependencies, all is
                 // good
-                add(b, true);
+                add(b, true, false);
 
             } catch (VerificationException e) {
                 // If the block is deemed invalid, we do not propagate the error
@@ -254,7 +271,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     // If going through or waiting for more dependencies, all is
                     // good
-                    add(b, true);
+                    add(b, true, false);
 
                 } catch (VerificationException e) {
                     // If the block is deemed invalid, we do not propagate the
@@ -623,7 +640,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set used other outputs spent
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
-                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
+                        in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
 
                 // Sanity check
                 if (prevOut == null)
@@ -631,7 +649,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (prevOut.isSpent())
                     throw new RuntimeException("Attempted to spend an already spent output!");
 
-                blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(), true, blockhash);
+                blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
+                        true, blockhash);
             }
         }
 
@@ -639,7 +658,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
             // TODO unnecessary?
-//            blockStore.updateTransactionOutputSpent(block.getHash(), tx.getHash(), out.getIndex(), false, null);
+            // blockStore.updateTransactionOutputSpent(block.getHash(),
+            // tx.getHash(), out.getIndex(), false, null);
         }
     }
 
@@ -711,7 +731,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
                 if (utxo.isSpent()) {
                     removeBlockFromMilestone(
-                            blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                            blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
+                                    .getBlockHash(),
                             traversedBlockHashes);
                 }
             }
@@ -776,8 +797,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                removeBlockFromMilestone(blockStore
+                        .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -791,8 +812,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                removeBlockFromMilestone(blockStore
+                        .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -815,14 +836,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (blockStore.getTokenSpent(block.getHashAsString())) {
             removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
         }
-        
-        // If applicable: Disconnect all domain definitions that were based on this domain
+
+        // If applicable: Disconnect all domain definitions that were based on
+        // this domain
         Token token = blockStore.getToken(block.getHashAsString());
-		if (token.getTokentype() == TokenType.domainname.ordinal()) {
-        	List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
-        	for (String b : dependents) {
+        if (token.getTokentype() == TokenType.domainname.ordinal()) {
+            List<String> dependents = blockStore
+                    .getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
+            for (String b : dependents) {
                 removeBlockFromMilestone(Sha256Hash.wrap(b), traversedBlockHashes);
-        	}
+            }
         }
     }
 
@@ -839,8 +862,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(
-                        blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                removeBlockFromMilestone(blockStore
+                        .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
         }
@@ -986,8 +1009,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set used outputs as unspent
         if (!tx.isCoinBase()) {
             for (TransactionInput txin : tx.getInputs()) {
-                blockStore.updateTransactionOutputSpent(txin.getOutpoint().getBlockHash(), txin.getOutpoint().getTxHash(), txin.getOutpoint().getIndex(),
-                        false, null);
+                blockStore.updateTransactionOutputSpent(txin.getOutpoint().getBlockHash(),
+                        txin.getOutpoint().getTxHash(), txin.getOutpoint().getIndex(), false, null);
             }
         }
 
@@ -1025,9 +1048,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (!isCoinBase) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
-                            in.getOutpoint().getIndex());
-                    blockStore.updateTransactionOutputSpendPending(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(), true, System.currentTimeMillis());
+                    UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
+                            in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                    blockStore.updateTransactionOutputSpendPending(prevOut.getBlockHash(), prevOut.getTxHash(),
+                            prevOut.getIndex(), true, System.currentTimeMillis());
                 }
             }
             for (TransactionOutput out : tx.getOutputs()) {
@@ -1042,7 +1066,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0,0);
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
@@ -1170,8 +1194,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (permissionedAddress == null)
                         continue;
                     // The primary key must be the correct block
-                    permissionedAddress.setBlockhash(block.getHashAsString()); 
-                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid()); 
+                    permissionedAddress.setBlockhash(block.getHashAsString());
+                    permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid());
                     if (permissionedAddress.getAddress() != null)
                         blockStore.insertMultiSignAddress(permissionedAddress);
                 }

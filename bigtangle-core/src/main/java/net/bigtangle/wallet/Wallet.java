@@ -2453,7 +2453,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
         } catch (InsufficientMoneyException e) {
-
+                log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
                 repeat -= 1;
                 try {

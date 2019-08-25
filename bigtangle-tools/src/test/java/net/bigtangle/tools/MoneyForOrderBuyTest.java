@@ -17,7 +17,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
         for(int i=0;i<100; i++) {
-        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), 33333300L);
+        giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size() ).toAddress(networkParameters).toString(), 333300L);
 
         }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
@@ -31,7 +31,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet2();
         for(int i=0;i<100; i++) {
-        giveMoneyResult.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), 333300000l);
+        giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(), 333300l);
         }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
