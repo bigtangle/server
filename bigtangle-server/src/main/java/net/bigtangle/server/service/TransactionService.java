@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,8 +46,7 @@ public class TransactionService {
     protected FullPrunedBlockGraph blockgraph;
     @Autowired
     private BlockService blockService;
-    @Autowired
-    private UnsolidBlockService unsolidBlockService;
+ 
     @Autowired
     protected TipsService tipService;
     @Autowired
@@ -93,26 +91,25 @@ public class TransactionService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnected(byte[] bytes, boolean request) {
-        if(bytes ==null) return null;
-        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request);
+    public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity) {
+        if (bytes == null)
+            return null;
+        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request,
+                checksolidity);
     }
 
-    private Optional<Block> addConnectedBlock(Block block, boolean request) {
+    private Optional<Block> addConnectedBlock(Block block, boolean request, boolean checksolidity) {
         try {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
-                if (!added ) {
-                    logger.debug(" unsolid block  Blockhash="
-                + block.getHashAsString() + " height ="
-                            + block.getHeigth()
-                            + " block: " + block.toString() 
-                            + " request remote: " + request);
+                if (!added) {
+                    logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
+                            + block.getHeigth() + " block: " + block.toString() + " request remote: " + request);
                     return Optional.empty();
 
-                }else {
-                return Optional.of(block);
+                } else {
+                    return Optional.of(block);
                 }
             } else {
                 // logger.debug("addConnected BlockExists " + block);
@@ -128,7 +125,7 @@ public class TransactionService {
     }
 
     private boolean blockTimeRange(Block block) {
-        return System.currentTimeMillis() - block.getTimeSeconds()*1000  < 8*3600*1000;
+        return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 * 3600 * 1000;
     }
 
     /*
@@ -157,6 +154,5 @@ public class TransactionService {
         }
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
-
 
 }

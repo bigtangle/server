@@ -123,8 +123,7 @@ public abstract class AbstractBlockGraph {
      *            The current solidity state of the block
      * @throws BlockStoreException
      */
-    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState )
-            throws BlockStoreException;
+    protected abstract void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException;
 
     /**
      * Processes a received block and tries to add it to the chain. If there's
@@ -142,5 +141,5 @@ public abstract class AbstractBlockGraph {
      * @throws VerificationException
      *             if the block cannot be added to the chain.
      */
-    public abstract boolean add(Block block, boolean allowUnsolid) throws VerificationException;
+    public abstract boolean add(Block block, boolean allowUnsolid, boolean checksolitity) throws VerificationException;
 }

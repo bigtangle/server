@@ -144,13 +144,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             this.tokenId2Events = tokenId2Events;
         }
     }
+    
+    
+    public boolean add(Block block, boolean allowUnsolid ) {
+        return add(block, allowUnsolid, true);
+    }
 
     /*
      * if block is saved to database, then return the StoredBlock otherwise null
      */
 
     @Override
-    public boolean add(Block block, boolean allowUnsolid) {
+    public boolean add(Block block, boolean allowUnsolid, boolean checkSolidity) {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
@@ -169,49 +174,26 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             checkState(lock.isHeldByCurrentThread());
 
-            BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
-            BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
-
-            // Check the block's solidity, if dependency missing, put on waiting
-            // list unless disallowed
-            // The class SolidityState is used for the Spark implementation and
-            // should stay.
-            SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch,
-                    true);
-            if (!(solidityState.getState() == State.Success)) {
-                if (solidityState.getState() == State.Unfixable) {
-                    // Drop if invalid
-                    log.debug("Dropping invalid block!");
-                    throw new GenericInvalidityException();
-                } else {
-                    // If dependency missing and allowing waiting list, add to
-                    // list
-                    if (allowUnsolid) {
-                        log.debug(" insertUnsolidBlock solidityState: " + solidityState.getState());
-
-                        insertUnsolidBlock(block, solidityState);
-                    } else
-                        log.debug("Dropping unresolved block!");
-                    return false;
-                }
-            } else {
-                // Otherwise, all dependencies exist and the block has been
-                // validated
-                try {
-                    blockStore.beginDatabaseBatchWrite();
-                    connect(block);
-                    blockStore.commitDatabaseBatchWrite();
-                    try {
-                        scanWaitingBlocks(block);
-                    } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage());
-                    }
-                    return true;
-                } catch (BlockStoreException e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
-                }
+            if (checkSolidity && !checkSolidity(block, allowUnsolid)) {
+                return false;
             }
+            // Otherwise, all dependencies exist and the block has been
+            // validated
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                connect(block);
+                blockStore.commitDatabaseBatchWrite();
+                try {
+                    scanWaitingBlocks(block);
+                } catch (BlockStoreException | VerificationException e) {
+                    log.debug(e.getLocalizedMessage());
+                }
+                return true;
+            } catch (BlockStoreException e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            }
+
         } catch (BlockStoreException e) {
             log.error("", e);
             throw new VerificationException(e);
@@ -226,6 +208,36 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    public boolean checkSolidity(Block block, boolean allowUnsolid) throws BlockStoreException {
+
+        BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
+        BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
+
+        // Check the block's solidity, if dependency missing, put on waiting
+        // list unless disallowed
+        // The class SolidityState is used for the Spark implementation and
+        // should stay.
+        SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, true);
+        if (!(solidityState.getState() == State.Success)) {
+            if (solidityState.getState() == State.Unfixable) {
+                // Drop if invalid
+                log.debug("Dropping invalid block!");
+                throw new GenericInvalidityException();
+            } else {
+                // If dependency missing and allowing waiting list, add to
+                // list
+                if (allowUnsolid) {
+                    log.debug(" insertUnsolidBlock solidityState: " + solidityState.getState());
+
+                    insertUnsolidBlock(block, solidityState);
+                } else
+                    log.debug("Dropping unresolved block!");
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void scanWaitingBlocks(Block block) throws BlockStoreException {
         // Finally, look in the solidity waiting queue for blocks that are still
         // waiting
@@ -237,7 +249,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                 // If going through or waiting for more dependencies, all is
                 // good
-                add(b, true);
+                add(b, true, false);
 
             } catch (VerificationException e) {
                 // If the block is deemed invalid, we do not propagate the error
@@ -256,7 +268,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     // If going through or waiting for more dependencies, all is
                     // good
-                    add(b, true);
+                    add(b, true, false);
 
                 } catch (VerificationException e) {
                     // If the block is deemed invalid, we do not propagate the
