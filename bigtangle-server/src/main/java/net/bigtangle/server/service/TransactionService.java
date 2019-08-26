@@ -103,7 +103,7 @@ public class TransactionService {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true,checksolidity);
-                if (!added && blockTimeRange(block)) {
+                if (!added  ) {
                     logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
                             + block.getHeigth() + " block: " + block.toString() + " request remote: " + request);
                     return Optional.empty();
@@ -115,10 +115,10 @@ public class TransactionService {
                 // logger.debug("addConnected BlockExists " + block);
             }
         } catch (VerificationException e) {
-            logger.debug("addConnected from kafka ", e);
+            logger.debug("addConnected   ", e);
             return Optional.empty();
         } catch (Exception e) {
-            logger.debug("addConnected from kafka ", e);
+            logger.debug("addConnected  ", e);
             return Optional.empty();
         }
         return Optional.empty();

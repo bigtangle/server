@@ -3036,7 +3036,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount)
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount, long heigth)
             throws BlockStoreException {
 
         String sql = "";
@@ -3045,17 +3045,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += "SELECT hash, rating, depth, cumulativeweight, "
                     + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype "
                     + "  FROM  blocks ";
+            sql += " where height >= " +heigth ;
             sql += " ORDER BY insertTime desc ";
-            Integer a = Integer.valueOf(lastestAmount);
-            if (a > 1000) {
-                a = 2000;
+            Long a = Long.valueOf(lastestAmount);
+            //TODO paging
+            if (a > NetworkParameters.ALLOWED_SEARCH_BLOCKS) {
+                a = NetworkParameters.ALLOWED_SEARCH_BLOCKS;
             }
             sql += " LIMIT " + a;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
                     + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype"
                     + " FROM outputs JOIN blocks " + "ON outputs.blockhash = blocks.hash  ";
-            sql += "WHERE outputs.toaddress in ";
+            sql += " where height >= " +heigth ;
+            sql += " and  outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");
             sql += "(" + stringBuffer.substring(1).toString() + ")";

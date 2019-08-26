@@ -178,7 +178,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // validated
             try {
                 blockStore.beginDatabaseBatchWrite();
-                connect(block);
+                connect(block,checkSolidity);
                 blockStore.commitDatabaseBatchWrite();
                 try {
                     scanWaitingBlocks(block);
@@ -285,10 +285,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      * @throws VerificationException
      */
-    private void connect(final Block block) throws BlockStoreException, VerificationException {
+    private void connect(final Block block,boolean checkSolidity) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         connectUTXOs(block);
-        connectTypeSpecificUTXOs(block);
+        connectTypeSpecificUTXOs(block,checkSolidity);
 
         blockStore.put(block);
         solidifyBlock(block);
@@ -1075,7 +1075,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectTypeSpecificUTXOs(Block block) throws BlockStoreException {
+    private void connectTypeSpecificUTXOs(Block block, boolean checkSolidity) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1107,7 +1107,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_RECLAIM:
             break;
         case BLOCKTYPE_ORDER_MATCHING:
-            connectOrderMatching(block);
+            connectOrderMatching(block,checkSolidity);
         default:
             break;
 
@@ -1134,9 +1134,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectOrderMatching(Block block) throws BlockStoreException {
+    private void connectOrderMatching(Block block,  boolean checkSolidity) throws BlockStoreException {
         // Check if eligible:
-        Eligibility eligiblity = validatorService.checkOrderMatchingEligibility(block);
+        Eligibility eligiblity =Eligibility.ELIGIBLE;
+        if(checkSolidity)
+            eligiblity=    validatorService.checkOrderMatchingEligibility(block);
 
         try {
             OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());

@@ -185,7 +185,8 @@ public class BlockService {
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount);
+        long heigth = request.get("heigth") == null ?  0l : Long.valueOf( request.get("heigth").toString());
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount,heigth);
         HashSet<String> hashSet = new HashSet<String>();
         // filter
         for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
