@@ -102,8 +102,8 @@ public class TransactionService {
         try {
 
             if (!checkBlockExists(block)) {
-                boolean added = blockgraph.add(block, true);
-                if (!added) {
+                boolean added = blockgraph.add(block, true,checksolidity);
+                if (!added && blockTimeRange(block)) {
                     logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
                             + block.getHeigth() + " block: " + block.toString() + " request remote: " + request);
                     return Optional.empty();
