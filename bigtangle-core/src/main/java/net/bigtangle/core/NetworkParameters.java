@@ -222,7 +222,7 @@ public abstract class NetworkParameters {
         add(params, testCoin + "," + testPub, coinbase);
         genesisBlock.addTransaction(coinbase);
         genesisBlock.setNonce(0);
-        genesisBlock.setHeigth(0);
+        genesisBlock.setHeight(0);
         // genesisBlock.solve();
 
         return genesisBlock;

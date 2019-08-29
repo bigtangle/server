@@ -105,7 +105,7 @@ public class TransactionService {
                 boolean added = blockgraph.add(block, true);
                 if (!added) {
                     logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
-                            + block.getHeigth() + " block: " + block.toString() + " request remote: " + request);
+                            + block.getHeight() + " block: " + block.toString() + " request remote: " + request);
                     return Optional.empty();
 
                 } else {

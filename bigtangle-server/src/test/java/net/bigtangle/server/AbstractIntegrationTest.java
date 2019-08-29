@@ -1036,7 +1036,6 @@ public abstract class AbstractIntegrationTest {
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException, Exception {
         
-        // TODO why is this happening? isn't it already handled separately?
         final String tokenid = tokenInfo.getToken().getTokenid();
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
@@ -1050,7 +1049,6 @@ public abstract class AbstractIntegrationTest {
                 multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
         }
-//        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
@@ -1063,7 +1061,7 @@ public abstract class AbstractIntegrationTest {
 
             block.setPrevBranchBlockHash(overrideHash2.getHash());
 
-            block.setHeigth(Math.max(overrideHash2.getHeigth(), overrideHash1.getHeigth()) + 1);
+            block.setHeight(Math.max(overrideHash2.getHeight(), overrideHash1.getHeight()) + 1);
         }
 
         block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);

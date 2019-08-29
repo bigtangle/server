@@ -45,6 +45,9 @@ public class BlockEvaluation implements Serializable {
     
     // 0: unknown. -1: unsolid. 1: solid
     private long solid;
+    
+    // If false, virtual TXOs have not been calculated yet.
+    private boolean calculated;
 
     public BlockEvaluation() {
     }
@@ -62,16 +65,17 @@ public class BlockEvaluation implements Serializable {
         setInsertTime(other.insertTime);
         setMaintained(other.maintained);
         setSolid(other.solid);
+        setCalculated(other.isCalculated());
     }
 
     public static BlockEvaluation buildInitial(Block block) {
         long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true, 0);
+        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true, 0, !block.getBlockType().needsCalculation());
     }
 
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
             long height, boolean milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained, long solid) {
+            boolean maintained, long solid, boolean calculated) {
         BlockEvaluation blockEvaluation = new BlockEvaluation();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -85,6 +89,7 @@ public class BlockEvaluation implements Serializable {
         blockEvaluation.setInsertTime(insertTime);
         blockEvaluation.setMaintained(maintained);
         blockEvaluation.setSolid(solid);
+        blockEvaluation.setCalculated(calculated);
 
         return blockEvaluation;
     }
@@ -185,12 +190,20 @@ public class BlockEvaluation implements Serializable {
         this.solid = solid;
     }
 
+    public boolean isCalculated() {
+        return calculated;
+    }
+
+    public void setCalculated(boolean calculated) {
+        this.calculated = calculated;
+    }
+
     @Override
     public String toString() {
         return "BlockEvaluation [blockHash=" + blockHash + ", rating=" + rating + ", depth=" + depth
                 + ", cumulativeWeight=" + cumulativeWeight + ", height=" + height + ", milestone=" + milestone
                 + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", milestoneDepth=" + milestoneDepth
-                + ", insertTime=" + insertTime + ", maintained=" + maintained + "]";
+                + ", insertTime=" + insertTime + ", maintained=" + maintained + ", solid=" + solid + ", calculated=" + calculated + "]";
     }
 
 }

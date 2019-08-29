@@ -412,20 +412,83 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             addBlockToMilestone(block.getPrevBranchBlockHash(), traversedBlockHashes);
 
         // Confirm the block
-        confirmBlock(block);
+        confirmBlock(blockWrap);
 
         // Keep track of confirmed blocks
         traversedBlockHashes.add(blockHash);
     }
+    
+    private Object calculateBlock(BlockWrap block) throws BlockStoreException {
+        
+        Transaction tx = null;
+        OrderMatchingResult matchingResult = null;
 
-    private void confirmBlock(Block block) throws BlockStoreException {
+        switch (block.getBlock().getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            tx = generateVirtualMiningRewardTX(block.getBlock());
+            insertVirtualUTXOs(block.getBlock(), tx);
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        case BLOCKTYPE_ORDER_OPEN:
+            break;
+        case BLOCKTYPE_ORDER_OP:
+            break;
+        case BLOCKTYPE_ORDER_RECLAIM:
+            tx = generateReclaimTX(block.getBlock());
+            insertVirtualUTXOs(block.getBlock(), tx);
+            break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            // Get list of consumed orders, virtual order matching tx and newly
+            // generated remaining order book
+            matchingResult = generateOrderMatching(block.getBlock());
+            tx = matchingResult.getOutputTx();
+            insertVirtualUTXOs(block.getBlock(), tx);
+            insertVirtualOrderRecords(block.getBlock(), matchingResult.getRemainingOrders());
+            break;
+        default:
+            throw new RuntimeException("Not Implemented");
+
+        }
+
+        // The block is now defined as calculated
+        blockStore.updateBlockEvaluationCalculated(block.getBlockHash(), true);
+        
+        // Return the computation result
+        return matchingResult;
+    }
+
+    private void confirmBlock(BlockWrap block) throws BlockStoreException {
+        
+        // Calculate the block outputs if needed
+        Object calculationResult = null;
+        if (!block.getBlockEvaluation().isCalculated()) {
+            calculationResult = calculateBlock(block);
+        }
+        
         // Update block's transactions in db
-        for (final Transaction tx : block.getTransactions()) {
-            confirmTransaction(block, tx, block.getHash());
+        for (final Transaction tx : block.getBlock().getTransactions()) {
+            confirmTransaction(block, tx);
         }
 
         // type-specific updates
-        switch (block.getBlockType()) {
+        switch (block.getBlock().getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
         case BLOCKTYPE_FILE:
@@ -461,7 +524,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             // Do order matching
-            confirmOrderMatching(block);
+            confirmOrderMatching(block, (OrderMatchingResult) calculationResult);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -469,8 +532,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmVOSOrUserData(Block block) {
-        Transaction tx = block.getTransactions().get(0);
+    private void confirmVOSOrUserData(BlockWrap block) {
+        Transaction tx = block.getBlock().getTransactions().get(0);
         if (tx.getData() != null && tx.getDataSignature() != null) {
             try {
                 @SuppressWarnings("unchecked")
@@ -484,16 +547,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (!success) {
                     throw new BlockStoreException("multisign signature error");
                 }
-                this.synchronizationUserData(block.getHash(), DataClassName.valueOf(tx.getDataClassName()),
-                        tx.getData(), (String) multiSignBy.get("publickey"), block.getBlockType().ordinal());
+                this.synchronizationUserData(block.getBlock().getHash(), DataClassName.valueOf(tx.getDataClassName()),
+                        tx.getData(), (String) multiSignBy.get("publickey"), block.getBlock().getBlockType().ordinal());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void confirmVOSExecute(Block block) {
-        Transaction tx1 = block.getTransactions().get(0);
+    private void confirmVOSExecute(BlockWrap block) {
+        Transaction tx1 = block.getBlock().getTransactions().get(0);
         if (tx1.getData() != null && tx1.getDataSignature() != null) {
             try {
                 @SuppressWarnings("unchecked")
@@ -514,45 +577,43 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmOrderMatching(Block block) throws BlockStoreException {
+    private void confirmOrderMatching(BlockWrap block, @Nullable OrderMatchingResult matchingResult) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
-        OrderMatchingResult matchingResult = generateOrderMatching(block);
+        if (matchingResult == null)
+            matchingResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
         for (OrderRecord o : matchingResult.getSpentOrders()) {
-            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true, block.getHash());
+            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true, block.getBlock().getHash());
         }
 
-        // If virtual outputs have not been inserted yet, insert them
-        insertVirtualUTXOs(block, matchingResult.getOutputTx());
-
         // Set virtual outputs confirmed
-        confirmTransaction(block, matchingResult.getOutputTx(), block.getHash());
-
-        // Finally, if the new orders have not been inserted yet, insert them
-        insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
+        confirmVirtualCoinbaseTransaction(block);
 
         // Set new orders confirmed
         for (OrderRecord o : matchingResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
 
         // Set used other output spent
-        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getHash()), true,
-                block.getHash());
+        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getBlock().getHash()), true,
+                block.getBlock().getHash());
 
         // Set own output confirmed
-        blockStore.updateOrderMatchingConfirmed(block.getHash(), true);
+        blockStore.updateOrderMatchingConfirmed(block.getBlock().getHash(), true);
 
         // Update the matching history in db
         tickerService.addMatchingEvents(matchingResult);
     }
 
-    private void confirmOrderReclaim(Block block) throws BlockStoreException {
+    private void confirmOrderReclaim(BlockWrap block) throws BlockStoreException {
+        // Set virtual outputs confirmed
+        confirmVirtualCoinbaseTransaction(block);
+        
         // Read the requested reclaim
         OrderReclaimInfo info = null;
         try {
-            info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
+            info = OrderReclaimInfo.parse(block.getBlock().getTransactions().get(0).getData());
         } catch (IOException e) {
             // Cannot happen.
             throw new RuntimeException(e);
@@ -560,42 +621,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set consumed order record to spent and set spender block to this
         // block's hash
-        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, true, block.getHash());
+        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, true, block.getBlock().getHash());        
 
-        // Get virtual reclaim tx
-        Transaction tx = generateReclaimTX(block);
-
-        // If virtual outputs have not been inserted yet, insert them
-        insertVirtualUTXOs(block, tx);
-
-        // Set virtual outputs confirmed
-        confirmTransaction(block, tx, block.getHash());
-
-        // Insert dependencies
-        blockStore.insertDependents(block.getHash(), info.getOrderBlockHash());
-        blockStore.insertDependents(block.getHash(), info.getNonConfirmingMatcherBlockHash());
+        // Insert helper dependencies
+        blockStore.insertDependents(block.getBlock().getHash(), info.getOrderBlockHash());
+        blockStore.insertDependents(block.getBlock().getHash(), info.getNonConfirmingMatcherBlockHash());
     }
 
-    private void confirmOrderOpen(Block block) throws BlockStoreException {
+    private void confirmOrderOpen(BlockWrap block) throws BlockStoreException {
         // Set own output confirmed
-        blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, true);
+        blockStore.updateOrderConfirmed(block.getBlock().getHash(), Sha256Hash.ZERO_HASH, true);
     }
 
-    private void confirmReward(Block block) throws BlockStoreException {
-        // Get virtual tx
-        Transaction tx = generateVirtualMiningRewardTX(block);
-
-        // If virtual reward tx outputs have not been inserted yet, insert them
-        insertVirtualUTXOs(block, tx);
-
+    private void confirmReward(BlockWrap block) throws BlockStoreException {
         // Set virtual reward tx outputs confirmed
-        confirmTransaction(block, tx, block.getHash());
+        confirmVirtualCoinbaseTransaction(block);
 
         // Set used other output spent
-        blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getHash()), true, block.getHash());
+        blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getBlock().getHash()), true, block.getBlock().getHash());
 
         // Set own output confirmed
-        blockStore.updateRewardConfirmed(block.getHash(), true);
+        blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
     }
 
     private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders) {
@@ -619,15 +665,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmToken(Block block) throws BlockStoreException {
+    private void confirmToken(BlockWrap block) throws BlockStoreException {
         // Set used other output spent
-        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHashAsString()), true, block.getHash());
+        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHashAsString()), true, block.getBlock().getHash());
 
         // Set own output confirmed
-        blockStore.updateTokenConfirmed(block.getHashAsString(), true);
+        blockStore.updateTokenConfirmed(block.getBlock().getHashAsString(), true);
     }
 
-    private void confirmTransaction(Block block, Transaction tx, Sha256Hash blockhash) throws BlockStoreException {
+    private void confirmTransaction(BlockWrap block, Transaction tx) throws BlockStoreException {
         // Set used other outputs spent
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
@@ -641,14 +687,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new RuntimeException("Attempted to spend an already spent output!");
 
                 blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
-                        true, blockhash);
+                        true, block.getBlockHash());
             }
         }
 
         // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
-            blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
+            blockStore.updateTransactionOutputConfirmed(block.getBlockHash(), tx.getHash(), out.getIndex(), true);
         }
+    }
+
+    private void confirmVirtualCoinbaseTransaction(BlockWrap block) throws BlockStoreException {
+        // Set own outputs confirmed
+        blockStore.updateAllTransactionOutputsConfirmed(block.getBlock().getHash(), true);
     }
 
     /**
@@ -922,7 +973,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Set virtual outputs unconfirmed
-        unconfirmTransaction(matchingResult.getOutputTx(), block);
+        unconfirmVirtualCoinbaseTransaction(block);
 
         // Set new orders unconfirmed
         for (OrderRecord o : matchingResult.getRemainingOrders())
@@ -951,11 +1002,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set consumed order record unspent
         blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, false, null);
 
-        // Get virtual reclaim tx
-        Transaction tx = generateReclaimTX(block);
-
         // Set virtual outputs unconfirmed
-        unconfirmTransaction(tx, block);
+        unconfirmVirtualCoinbaseTransaction(block);
     }
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
@@ -964,18 +1012,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void unconfirmReward(Block block) throws BlockStoreException {
-        // Get virtual tx
-        Transaction tx = generateVirtualMiningRewardTX(block);
-
         // Unconfirm virtual tx
-        unconfirmTransaction(tx, block);
+        unconfirmVirtualCoinbaseTransaction(block);
 
         // Set used other output unspent
         blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getHash()), false, null);
 
         // Set own output unconfirmed
         blockStore.updateRewardConfirmed(block.getHash(), false);
-
     }
 
     private void unconfirmToken(String blockhash) throws BlockStoreException {
@@ -1006,6 +1050,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(parentBlock.getHash(), tx.getHash(), txout.getIndex(), false);
         }
+    }
+    
+    private void unconfirmVirtualCoinbaseTransaction(Block parentBlock) throws BlockStoreException {
+        // Set own outputs unconfirmed
+        blockStore.updateAllTransactionOutputsConfirmed(parentBlock.getHash(), false);
     }
 
     public void solidifyBlock(Block block, SolidityState solidityState) throws BlockStoreException {

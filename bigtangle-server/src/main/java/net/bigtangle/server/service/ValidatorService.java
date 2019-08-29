@@ -1058,17 +1058,36 @@ public class ValidatorService {
     }
     
     private List<BlockWrap> getAllPredecessors(Block block) throws BlockStoreException {
-        List<Sha256Hash> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+        List<PredecessorRequirement> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
         List<BlockWrap> result = new ArrayList<>();
-        for (Sha256Hash hash : allPredecessorBlockHashes)
-            result.add(store.getBlockWrap(hash));
+        for (PredecessorRequirement pred : allPredecessorBlockHashes)
+            result.add(store.getBlockWrap(pred.predecessorHash));
         return result;
     }
     
-    private List<Sha256Hash> getAllPredecessorBlockHashes(Block block) {
-        List<Sha256Hash> predecessors = new ArrayList<>();
-        predecessors.add(block.getPrevBlockHash());
-        predecessors.add(block.getPrevBranchBlockHash());
+    class PredecessorRequirement {
+        Sha256Hash predecessorHash;
+        boolean requireCalculated;
+        
+        private PredecessorRequirement(Sha256Hash predecessorHash, boolean requireCalculated) {
+            super();
+            this.predecessorHash = predecessorHash;
+            this.requireCalculated = requireCalculated;
+        }
+
+        public Sha256Hash getPredecessorHash() {
+            return predecessorHash;
+        }
+
+        public boolean requiresCalculated() {
+            return requireCalculated;
+        }
+    }
+    
+    private List<PredecessorRequirement> getAllPredecessorBlockHashes(Block block) {
+        List<PredecessorRequirement> predecessors = new ArrayList<>();
+        predecessors.add(new PredecessorRequirement(block.getPrevBlockHash(), false));
+        predecessors.add(new PredecessorRequirement(block.getPrevBranchBlockHash(), false));
         
         // All used transaction outputs
         final List<Transaction> transactions = block.getTransactions();
@@ -1076,7 +1095,7 @@ public class ValidatorService {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    predecessors.add(in.getOutpoint().getBlockHash());
+                    predecessors.add(new PredecessorRequirement(in.getOutpoint().getBlockHash(), true));
                 }
             }
         }
@@ -1097,7 +1116,7 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(rewardInfo.getPrevRewardHash());
+            predecessors.add(new PredecessorRequirement(rewardInfo.getPrevRewardHash(), false)); 
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             TokenInfo currentToken = null;
@@ -1106,9 +1125,9 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
+            predecessors.add(new PredecessorRequirement(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()), false));
             if (!currentToken.getToken().getPrevblockhash().equals("")) 
-                predecessors.add(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                predecessors.add(new PredecessorRequirement(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()), false));
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -1127,7 +1146,7 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(opInfo.getInitialBlockHash());
+            predecessors.add(new PredecessorRequirement(opInfo.getInitialBlockHash(), false));
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             OrderReclaimInfo reclaimInfo = null;
@@ -1136,8 +1155,8 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(reclaimInfo.getOrderBlockHash());
-            predecessors.add(reclaimInfo.getNonConfirmingMatcherBlockHash());
+            predecessors.add(new PredecessorRequirement(reclaimInfo.getOrderBlockHash(), false));
+            predecessors.add(new PredecessorRequirement(reclaimInfo.getNonConfirmingMatcherBlockHash(), false));
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             OrderMatchingInfo matchingInfo = null;
@@ -1146,7 +1165,7 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(matchingInfo.getPrevHash());
+            predecessors.add(new PredecessorRequirement(matchingInfo.getPrevHash(), true));
             break;
         default:
             throw new RuntimeException("No Implementation");
@@ -1155,12 +1174,12 @@ public class ValidatorService {
         return predecessors;
     }
     
-    private SolidityState checkPredecessorsExist(Block block) throws BlockStoreException {
-        final List<Sha256Hash> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
-        for (Sha256Hash predecessorHash : allPredecessorBlockHashes) {
-            final BlockWrap pred = store.getBlockWrap(predecessorHash);
-            if (pred == null)
-                return SolidityState.from(predecessorHash);
+    private SolidityState checkPredecessorsExistAndCalculated(Block block) throws BlockStoreException {
+        final List<PredecessorRequirement> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+        for (PredecessorRequirement predecessorReq : allPredecessorBlockHashes) {
+            final BlockWrap pred = store.getBlockWrap(predecessorReq.predecessorHash);
+            if (pred == null || (!pred.getBlockEvaluation().isCalculated() && predecessorReq.requireCalculated))
+                return SolidityState.from(predecessorReq.predecessorHash);
         }
         return SolidityState.getSuccessState();
     }
@@ -1690,8 +1709,8 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-            if (block.getHeigth() != Math.max(storedPrev.getBlock().getHeigth(),
-                    storedPrevBranch.getBlock().getHeigth()) + 1) {
+            if (block.getHeight() != Math.max(storedPrev.getBlock().getHeight(),
+                    storedPrevBranch.getBlock().getHeight()) + 1) {
                 if (throwExceptions)
                     throw new VerificationException("Wrong height");
                 return SolidityState.getFailState();
@@ -2865,8 +2884,8 @@ public class ValidatorService {
             if (formalSolidityResult.isFailState())
                 return formalSolidityResult;
             
-            // Predecessors must exist
-            SolidityState predecessorsExist = checkPredecessorsExist(block);
+            // Predecessors must exist and have been calculated
+            SolidityState predecessorsExist = checkPredecessorsExistAndCalculated(block);
             if (!predecessorsExist.isSuccessState()) {
                 return predecessorsExist;            
             }

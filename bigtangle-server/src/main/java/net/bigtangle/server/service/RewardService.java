@@ -170,7 +170,7 @@ public class RewardService {
 
         Block block = new Block(networkParameters, r1, r2);
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
-        block.setHeigth( Math.max(r1.getHeigth(), r2.getHeigth()) + 1);
+        block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
  
         // Make the new block
         block.addTransaction(result.getTx());

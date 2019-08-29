@@ -85,7 +85,7 @@ public class Block extends Message {
     private long nonce;
     private byte[] minerAddress; // Utils.sha256hash160
     private Type blockType;
-    private long heigth;
+    private long height;
     // If NetworkParameters.USE_EQUIHASH, this field will contain the PoW
     // solution
     /** If null, it means this PoW was not solved yet. */
@@ -122,10 +122,10 @@ public class Block extends Message {
     public enum Type {
         // TODO implement all conditions for each block type in all switches
         // TODO add size multiplier to pow difficulty
-        BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE), // Genesis block
-        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default
+        BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE, false), // Genesis block
+        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Default
                                                                                    // block
-        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards
+        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true), // Rewards
                                                                                  // of
                                                                                  // mining
                                                                                  // //
@@ -133,46 +133,46 @@ public class Block extends Message {
                                                                                  // rename
                                                                                  // to
                                                                                  // consensus
-        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Custom
+        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Custom
                                                                                         // token
                                                                                         // issuance
-        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                                    // User-defined
                                                                                    // data
-        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                               // Smart
                                                                               // contracts
-        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                                      // Governance
                                                                                      // of
                                                                                      // software
-        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                                // User-defined
                                                                                // file
-        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                                       // VOS
                                                                                       // execution
                                                                                       // result
-        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // TODO
+        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
                                                                                       // transfer
                                                                                       // from
                                                                                       // mainnet
                                                                                       // to
                                                                                       // permissioned
-        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens
+        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Opens
                                                                                      // a
                                                                                      // new
                                                                                      // order
-        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues
+        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Issues
                                                                                    // a
                                                                                    // refresh/cancel
                                                                                    // of
                                                                                    // an
                                                                                    // order
-        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims
+        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true), // Reclaims
                                                                                         // lost
                                                                                         // orders
-        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform
+        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true); // Perform
                                                                                          // order
                                                                                          // matching
 
@@ -180,12 +180,14 @@ public class Block extends Message {
         private int powMultiplier; // TODO use in reward calcs
         private int rewardMultiplier; // TODO use in reward calcs
         private int maxSize;
+        private boolean needsCalculation;
 
-        private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize) {
+        private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize, boolean needsCalculation) {
             this.allowCoinbaseTransaction = allowCoinbaseTransaction;
             this.powMultiplier = powMultiplier;
             this.rewardMultiplier = rewardMultiplier;
             this.maxSize = maxSize;
+            this.needsCalculation = needsCalculation;
         }
 
         public boolean allowCoinbaseTransaction() {
@@ -202,6 +204,10 @@ public class Block extends Message {
 
         public int getMaxBlockSize() {
             return maxSize;
+        }
+
+        public boolean needsCalculation() {
+            return needsCalculation;
         }
     }
 
@@ -221,7 +227,7 @@ public class Block extends Message {
                 Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()),
                 r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
                         : r2.getDifficultyTarget(),
-                Math.max(r1.getHeigth(), r2.getHeigth()) + 1);
+                Math.max(r1.getHeight(), r2.getHeight()) + 1);
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
@@ -367,7 +373,7 @@ public class Block extends Message {
         nonce = readUint32();
         minerAddress = readBytes(20);
         blockType = Type.values()[(int) readUint32()];
-        heigth = readInt64();
+        height = readInt64();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
@@ -406,7 +412,7 @@ public class Block extends Message {
         Utils.uint32ToByteStreamLE(nonce, stream);
         stream.write(minerAddress);
         Utils.uint32ToByteStreamLE(blockType.ordinal(), stream);
-        Utils.int64ToByteStreamLE(heigth, stream);
+        Utils.int64ToByteStreamLE(height, stream);
     }
 
     void writePoW(OutputStream stream) throws IOException {
@@ -646,7 +652,7 @@ public class Block extends Message {
         }
         s.append("   version: ").append(version);
         s.append('\n');
-        s.append("   heigth: ").append(heigth).append("\n");
+        s.append("   heigth: ").append(height).append("\n");
         s.append("   previous: ").append(getPrevBlockHash()).append("\n");
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");
@@ -1269,7 +1275,7 @@ public class Block extends Message {
         b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget
                 : branchBlock.difficultyTarget);
 
-        b.setHeigth(Math.max(getHeigth(), branchBlock.getHeigth()) + 1);
+        b.setHeight(Math.max(getHeight(), branchBlock.getHeight()) + 1);
 
         // Don't let timestamp go backwards
         long currTime = System.currentTimeMillis() / 1000;
@@ -1352,13 +1358,13 @@ public class Block extends Message {
         this.lastMiningRewardBlock = lastMiningRewardBlock;
     }
 
-    public long getHeigth() {
-        return heigth;
+    public long getHeight() {
+        return height;
     }
 
-    public void setHeigth(long heigth) {
+    public void setHeight(long height) {
         unCacheHeader();
-        this.heigth = heigth;
+        this.height = height;
         this.hash = null;
 
     }

@@ -166,7 +166,7 @@ public class OrdermatchService {
 
         Block block = new Block(networkParameters, r1.getBlock(), r2.getBlock());
         block.setBlockType(Block.Type.BLOCKTYPE_ORDER_MATCHING);
-        block.setHeigth( Math.max(r1.getBlock().getHeigth(), r2.getBlock().getHeigth()) + 1);
+        block.setHeight( Math.max(r1.getBlock().getHeight(), r2.getBlock().getHeight()) + 1);
 
         OrderMatchingInfo info = new OrderMatchingInfo(
                 store.getOrderMatchingToHeight(prevHash) - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE,
