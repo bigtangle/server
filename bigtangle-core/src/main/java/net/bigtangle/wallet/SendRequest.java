@@ -39,7 +39,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.wallet.KeyChain.KeyPurpose;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 /**
@@ -197,31 +196,6 @@ public class SendRequest {
         return req;
     }
 
-    /**
-     * Construct a SendRequest for a CPFP (child-pays-for-parent) transaction. The resulting transaction is already
-     * completed, so you should directly proceed to signing and broadcasting/committing the transaction. CPFP is
-     * currently only supported by a few miners, so use with care.
-     */
-    public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise ) {
-        TransactionOutput outputToSpend = null;
-        for (final TransactionOutput output : parentTransaction.getOutputs()) {
-            if (output.isAvailableForSpending()
-                    && output.getValue().isGreaterThan(feeRaise)) {
-                outputToSpend = output;
-                break;
-            }
-        }
-        // TODO spend another confirmed output of own wallet if needed
-        checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
-
-        final Transaction tx = new Transaction(parentTransaction.getParams());
-        tx.addInput(parentTransaction.getParentBlock().getHash(), outputToSpend);
-        tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
-        tx.setPurpose(Transaction.Purpose.RAISE_FEE);
-        final SendRequest req = forTx(tx);
-        req.completed = true;
-        return req;
-    }
 
     public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
         long time = releaseTime.getTime() / 1000L;

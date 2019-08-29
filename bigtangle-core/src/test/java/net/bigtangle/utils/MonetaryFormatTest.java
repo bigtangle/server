@@ -36,8 +36,8 @@ public class MonetaryFormatTest {
 
     @Test
     public void testDecimalMark() throws Exception {
-        assertEquals("1", NO_CODE.format(Coin.COIN).toString());
-        assertEquals("1", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
+        assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
+        assertEquals("1,00", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
     }
 
   //  @Test

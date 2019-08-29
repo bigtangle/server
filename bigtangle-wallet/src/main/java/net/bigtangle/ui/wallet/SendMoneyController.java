@@ -617,11 +617,9 @@ public class SendMoneyController {
 		 
 		List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 		ECKey genesiskey = null;
-		if (walletAppKit.wallet().isEncrypted()) {
+		 
 			genesiskey = issuedKeys.get(0);
-		} else {
-			genesiskey = Main.walletAppKit.wallet().currentReceiveKey();
-		}
+ 
 		int index = tokeninfo1.getSelectionModel().getSelectedIndex();
 		String outputStr = this.subtangleHashHexList.get(index);
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();

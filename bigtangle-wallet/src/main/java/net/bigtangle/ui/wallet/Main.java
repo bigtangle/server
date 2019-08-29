@@ -198,11 +198,9 @@ public class Main extends Application {
         
         List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
-        if (Main.walletAppKit.wallet().isEncrypted()) {
+         
             pubKeyTo = issuedKeys.get(0);
-        } else {
-            pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+        
 
         Transaction coinbase = new Transaction(Main.params);
         UserSettingData userSettingData = new UserSettingData();
@@ -436,11 +434,9 @@ public class Main extends Application {
         List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
         ECKey pubKeyTo = null;
-        if (walletAppKit.wallet().isEncrypted()) {
+    
             pubKeyTo = issuedKeys.get(0);
-        } else {
-            pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+        
 
         Transaction coinbase = new Transaction(Main.params);
         Contact contact = new Contact();
@@ -935,11 +931,9 @@ public class Main extends Application {
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
             ECKey pubKeyTo = null;
-            if (walletAppKit.wallet().isEncrypted()) {
+         
                 pubKeyTo = issuedKeys.get(0);
-            } else {
-                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+           
 
             if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
                     || DataClassName.SERVERURL.name().equals(type)

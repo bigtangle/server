@@ -65,7 +65,6 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -174,16 +173,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         // assertArrayEquals(payMultiSign_.getBlockhash(), ecKey.getPubKey());
     }
 
-    @Test
-    public void testWalletWrapperECKey() {
-        Wallet wallet = new Wallet(networkParameters, contextRoot);
-        for (int i = 0; i < 10; i++) {
-            ECKey toKey = wallet.freshReceiveKey();
-            log.info("a->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
-            toKey = wallet.currentReceiveKey();
-            log.info("c->eckey pubKeyHash : " + Utils.HEX.encode(toKey.getPubKeyHash()));
-        }
-    }
+   
 
     @Test
     public void testGetTokenById() throws Exception {

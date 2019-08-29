@@ -115,9 +115,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         wallet1Keys_part.add(wallet1Keys.get(0));
         wallet1Keys_part.add(wallet1Keys.get(1));
         createMultiSigns(wallet1Keys_part);
-        multiSigns(walletAppKit.wallet().currentReceiveKey(), wallet1Keys_part);
-        multiSigns(walletAppKit2.wallet().currentReceiveKey(), wallet1Keys_part);
-        multiSigns(walletAppKit1.wallet().currentReceiveKey(), wallet1Keys_part);
+ 
     }
 
     public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception {

@@ -51,7 +51,7 @@ import net.bigtangle.core.Monetary;
 public final class MonetaryFormat {
 
     /** Standard format for the BTA denomination. */
-    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
+    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2);
 
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);

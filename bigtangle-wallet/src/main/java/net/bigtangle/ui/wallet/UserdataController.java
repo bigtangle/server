@@ -128,7 +128,7 @@ public class UserdataController {
     @FXML
     public void initialize() {
         try {
-            
+
             List<String> list = new ArrayList<String>();
             for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 list.add(ecKey.getPublicKeyAsHex());
@@ -179,7 +179,7 @@ public class UserdataController {
     public void saveOther(ActionEvent event) {
         String CONTEXT_ROOT = Main.getContextRoot();
         try {
-            
+
             List<String> list = new ArrayList<String>();
             for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 list.add(ecKey.getPublicKeyAsHex());
@@ -200,15 +200,12 @@ public class UserdataController {
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
-        
         List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
         ECKey pubKeyTo = null;
-        if (walletAppKit.wallet().isEncrypted()) {
-            pubKeyTo = issuedKeys.get(0);
-        } else {
-            pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+
+        pubKeyTo = issuedKeys.get(0);
+
         Transaction coinbase = new Transaction(Main.params);
         Contact contact = new Contact();
         contact.setName(nameTF.getText());
@@ -320,15 +317,12 @@ public class UserdataController {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
-            
+
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
-            if (walletAppKit.wallet().isEncrypted()) {
-                pubKeyTo = issuedKeys.get(0);
-            } else {
-                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+
+            pubKeyTo = issuedKeys.get(0);
 
             Transaction coinbase = new Transaction(Main.params);
             coinbase.setDataClassName(DataClassName.MYHOMEADDRESS.name());
@@ -397,15 +391,10 @@ public class UserdataController {
             coinbase.setDataClassName(DataClassName.CONTACTINFO.name());
             coinbase.setData(contactInfo.toByteArray());
 
-           
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
-            if (walletAppKit.wallet().isEncrypted()) {
-                pubKeyTo = issuedKeys.get(0);
-            } else {
-                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+            pubKeyTo = issuedKeys.get(0);
 
             Sha256Hash sighash = coinbase.getHash();
             ECKey.ECDSASignature party1Signature = pubKeyTo.sign(sighash, Main.getAesKey());
@@ -560,7 +549,7 @@ public class UserdataController {
         ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name());
         domianComboBox.setItems(userdata);
         try {
-           
+
             List<String> pubKeyList = new ArrayList<String>();
             for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
                 pubKeyList.add(ecKey.getPublicKeyAsHex());
@@ -630,7 +619,7 @@ public class UserdataController {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void initWatchedTokenTable() throws Exception {
-        
+
         List<String> pubKeyList = new ArrayList<String>();
         for (ECKey ecKey : Main.walletAppKit.wallet().walletKeys(Main.getAesKey())) {
             pubKeyList.add(ecKey.getPublicKeyAsHex());
@@ -700,15 +689,11 @@ public class UserdataController {
             Block block = Main.params.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
-           
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
-            if (walletAppKit.wallet().isEncrypted()) {
-                pubKeyTo = issuedKeys.get(0);
-            } else {
-                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+
+            pubKeyTo = issuedKeys.get(0);
 
             Transaction coinbase = new Transaction(Main.params);
             Uploadfile uploadfile = new Uploadfile();

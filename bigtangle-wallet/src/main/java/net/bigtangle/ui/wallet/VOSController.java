@@ -198,11 +198,9 @@ public class VOSController {
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
             ECKey pubKeyTo = null;
-            if (walletAppKit.wallet().isEncrypted()) {
+            
                 pubKeyTo = issuedKeys.get(0);
-            } else {
-                pubKeyTo = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+           
 
             Transaction coinbase = new Transaction(Main.params);
             coinbase.setDataClassName(DataClassName.VOS.name());

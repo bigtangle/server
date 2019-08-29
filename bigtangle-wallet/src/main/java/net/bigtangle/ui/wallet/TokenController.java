@@ -626,11 +626,7 @@ public class TokenController extends TokenBaseController {
 
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
-            if (Main.walletAppKit.wallet().isEncrypted()) {
-                outKey = issuedKeys.get(0);
-            } else {
-                outKey = Main.walletAppKit.wallet().currentReceiveKey();
-            }
+            outKey = issuedKeys.get(0);
 
             if (signnumberTF1.getText() == null || signnumberTF1.getText().trim().isEmpty()) {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
@@ -704,11 +700,7 @@ public class TokenController extends TokenBaseController {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         ECKey key1 = null;
 
-        if (Main.walletAppKit.wallet().isEncrypted()) {
-            key1 = keys.get(0);
-        } else {
-            key1 = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+        key1 = keys.get(0);
 
         signAddrChoiceBox1.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
@@ -822,11 +814,7 @@ public class TokenController extends TokenBaseController {
     private void multiPublsih(List<ECKey> issuedKeys) throws Exception {
         ECKey outKey = null;
 
-        if (Main.walletAppKit.wallet().isEncrypted()) {
-            outKey = issuedKeys.get(0);
-        } else {
-            outKey = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+        outKey = issuedKeys.get(0);
 
         byte[] pubKey = outKey.getPubKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -1000,11 +988,9 @@ public class TokenController extends TokenBaseController {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         ECKey key1 = null;
 
-        if (Main.walletAppKit.wallet().isEncrypted()) {
+        
             key1 = keys.get(0);
-        } else {
-            key1 = Main.walletAppKit.wallet().currentReceiveKey();
-        }
+        
 
         signAddrChoiceBox.getItems().add(key1.toAddress(Main.params).toBase58());
         List<ECKey> myEcKeys = new ArrayList<ECKey>();
