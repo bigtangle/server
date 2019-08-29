@@ -536,6 +536,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);

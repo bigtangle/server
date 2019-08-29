@@ -345,6 +345,7 @@ public abstract class AbstractIntegrationTest {
         OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), null, null, Side.SELL, beneficiary.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
@@ -400,6 +401,7 @@ public abstract class AbstractIntegrationTest {
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), null, null, Side.BUY,
                 beneficiary.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Burn BIG to buy
         Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
@@ -586,8 +588,9 @@ public abstract class AbstractIntegrationTest {
         store.resetStore();
         for (Block b : addedBlocks) {
             blockGraph.add(b, false);
-            if (blockConfirmed.get(b))
-                blockGraph.confirm(b.getHash(), new HashSet<>());
+            blockGraph.confirm(b.getHash(), new HashSet<>());
+            if (!blockConfirmed.get(b))
+                blockGraph.unconfirm(b.getHash(), new HashSet<>());
         }
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
@@ -1033,6 +1036,7 @@ public abstract class AbstractIntegrationTest {
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws JsonProcessingException, IOException, Exception {
         
+        // TODO why is this happening? isn't it already handled separately?
         final String tokenid = tokenInfo.getToken().getTokenid();
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
@@ -1046,7 +1050,7 @@ public abstract class AbstractIntegrationTest {
                 multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
         }
-        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
+//        tokenInfo.getToken().setSignnumber(tokenInfo.getToken().getSignnumber() + 1);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),

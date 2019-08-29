@@ -2542,6 +2542,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
                 Side.BUY, beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // BURN: amount and rest back to user
         tx.addOutput(spendableOutput.getValue().subtract(amount), beneficiary);
@@ -2593,6 +2594,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));

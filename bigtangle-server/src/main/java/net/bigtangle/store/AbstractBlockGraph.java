@@ -141,5 +141,5 @@ public abstract class AbstractBlockGraph {
      * @throws VerificationException
      *             if the block cannot be added to the chain.
      */
-    public abstract boolean add(Block block, boolean allowUnsolid, boolean checksolitity) throws VerificationException;
+    public abstract boolean add(Block block, boolean allowUnsolid) throws VerificationException;
 }

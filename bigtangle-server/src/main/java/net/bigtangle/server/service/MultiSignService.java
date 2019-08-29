@@ -275,7 +275,7 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
-        if (validatorService.checkTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
+        if (validatorService.checkFullTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
             this.saveMultiSign(block);
             blockService.saveBlock(block);
         } else {

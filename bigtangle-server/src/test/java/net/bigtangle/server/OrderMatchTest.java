@@ -700,6 +700,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL,
                 testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, testTokenId);
@@ -779,6 +780,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL,
                 testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, testTokenId);

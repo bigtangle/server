@@ -42,6 +42,9 @@ public class BlockEvaluation implements Serializable {
     
     // If false, this block has no influence on MCMC
     private boolean maintained;
+    
+    // 0: unknown. -1: unsolid. 1: solid
+    private long solid;
 
     public BlockEvaluation() {
     }
@@ -58,16 +61,17 @@ public class BlockEvaluation implements Serializable {
         setMilestoneDepth(other.milestoneDepth);
         setInsertTime(other.insertTime);
         setMaintained(other.maintained);
+        setSolid(other.solid);
     }
 
     public static BlockEvaluation buildInitial(Block block) {
         long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true);
+        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true, 0);
     }
 
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
             long height, boolean milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained) {
+            boolean maintained, long solid) {
         BlockEvaluation blockEvaluation = new BlockEvaluation();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -80,6 +84,7 @@ public class BlockEvaluation implements Serializable {
         blockEvaluation.setMilestoneDepth(milestoneDepth);
         blockEvaluation.setInsertTime(insertTime);
         blockEvaluation.setMaintained(maintained);
+        blockEvaluation.setSolid(solid);
 
         return blockEvaluation;
     }
@@ -170,6 +175,14 @@ public class BlockEvaluation implements Serializable {
 
     public void setMaintained(boolean maintained) {
         this.maintained = maintained;
+    }
+
+    public long getSolid() {
+        return solid;
+    }
+
+    public void setSolid(long solid) {
+        this.solid = solid;
     }
 
     @Override

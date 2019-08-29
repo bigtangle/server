@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1055,17 +1056,622 @@ public class ValidatorService {
             }
         });
     }
+    
+    private List<BlockWrap> getAllPredecessors(Block block) throws BlockStoreException {
+        List<Sha256Hash> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+        List<BlockWrap> result = new ArrayList<>();
+        for (Sha256Hash hash : allPredecessorBlockHashes)
+            result.add(store.getBlockWrap(hash));
+        return result;
+    }
+    
+    private List<Sha256Hash> getAllPredecessorBlockHashes(Block block) {
+        List<Sha256Hash> predecessors = new ArrayList<>();
+        predecessors.add(block.getPrevBlockHash());
+        predecessors.add(block.getPrevBranchBlockHash());
+        
+        // All used transaction outputs
+        final List<Transaction> transactions = block.getTransactions();
+        for (final Transaction tx : transactions) {
+            if (!tx.isCoinBase()) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+                    predecessors.add(in.getOutpoint().getBlockHash());
+                }
+            }
+        }
+        
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            RewardInfo rewardInfo = null;
+            try {
+                rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(rewardInfo.getPrevRewardHash());
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            TokenInfo currentToken = null;
+            try {
+                currentToken = TokenInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
+            if (!currentToken.getToken().getPrevblockhash().equals("")) 
+                predecessors.add(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        case BLOCKTYPE_ORDER_OPEN:
+            break;
+        case BLOCKTYPE_ORDER_OP:
+            OrderOpInfo opInfo = null;
+            try {
+                opInfo = OrderOpInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(opInfo.getInitialBlockHash());
+            break;
+        case BLOCKTYPE_ORDER_RECLAIM:
+            OrderReclaimInfo reclaimInfo = null;
+            try {
+                reclaimInfo = OrderReclaimInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(reclaimInfo.getOrderBlockHash());
+            predecessors.add(reclaimInfo.getNonConfirmingMatcherBlockHash());
+            break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            OrderMatchingInfo matchingInfo = null;
+            try {
+                matchingInfo = OrderMatchingInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(matchingInfo.getPrevHash());
+            break;
+        default:
+            throw new RuntimeException("No Implementation");
+        }
+        
+        return predecessors;
+    }
+    
+    private SolidityState checkPredecessorsExist(Block block) throws BlockStoreException {
+        final List<Sha256Hash> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+        for (Sha256Hash predecessorHash : allPredecessorBlockHashes) {
+            final BlockWrap pred = store.getBlockWrap(predecessorHash);
+            if (pred == null)
+                return SolidityState.from(predecessorHash);
+        }
+        return SolidityState.getSuccessState();
+    }
+    
+    private SolidityState getMinPredecessorSolidity(Block block) throws BlockStoreException {
+        final List<BlockWrap> allPredecessors = getAllPredecessors(block);
+        SolidityState missingDependency = null;
+        for (BlockWrap predecessor : allPredecessors) {
+            if (predecessor.getBlockEvaluation().getSolid() == 1) {
+                continue;
+            } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
+                missingDependency = SolidityState.from(predecessor.getBlockHash());
+            } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
+                return SolidityState.getFailState();
+            } else {
+                throw new NotImplementedException("not implemented");
+            }
+        }
+        return missingDependency == null ? SolidityState.getSuccessState() : missingDependency;
+    }
 
     /*
-     * Checks if the block has all of its dependencies to fully determine its
-     * validity. Then checks if the block is valid based on its dependencies. If
+     * Checks if the block is formally correct without relying on predecessors
+     */
+    private SolidityState checkFormalBlockSolidity(Block block, boolean throwExceptions) {
+        try {
+            if (block.getHash() == Sha256Hash.ZERO_HASH) {
+                if (throwExceptions)
+                    throw new VerificationException("Lucky zeros not allowed");
+                return SolidityState.getFailState();
+            }
+            
+            if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
+                if (throwExceptions)
+                    throw new GenesisBlockDisallowedException();
+                return SolidityState.getFailState();
+            }
+
+            // Disallow someone burning other people's orders
+            if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
+                for (Transaction tx : block.getTransactions())
+                    if (tx.getDataClassName() != null && tx.getDataClassName().equals("OrderOpen")) {
+                        if (throwExceptions)
+                            throw new MalformedTransactionDataException();
+                        return SolidityState.getFailState();
+                    }
+            }
+
+            // Check transaction solidity
+            SolidityState transactionalSolidityState = checkFormalTransactionalSolidity(block, throwExceptions);
+            if (!(transactionalSolidityState.getState() == State.Success)) {
+                return transactionalSolidityState;
+            }
+
+            // Check type-specific solidity
+            SolidityState typeSpecificSolidityState = checkFormalTypeSpecificSolidity(block, throwExceptions);
+            if (!(typeSpecificSolidityState.getState() == State.Success)) {
+                return typeSpecificSolidityState;
+            }
+
+            return SolidityState.getSuccessState();
+        } catch (VerificationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unhandled exception in checkSolidity: ", e);
+            if (throwExceptions)
+                throw new VerificationException(e);
+            return SolidityState.getFailState();
+        }
+    }
+
+    private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        try {
+            long sigOps = 0;
+
+            for (Transaction tx : block.getTransactions()) {
+                sigOps += tx.getSigOpCount();
+            }
+
+            for (final Transaction tx : block.getTransactions()) {
+                Map<String, Coin> valueOut = new HashMap<String, Coin>();
+                for (TransactionOutput out : tx.getOutputs()) {
+                    if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
+                                valueOut.get(Utils.HEX.encode(out.getValue().getTokenid())).add(out.getValue()));
+                    } else {
+                        valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
+                    }
+                }
+                if (!checkOutputSigns(valueOut)) {
+                    throw new InvalidTransactionException("Transaction output value negative");
+                }
+
+                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
+                if (verifyFlags.contains(VerifyFlag.P2SH)) {
+                    if (sigOps > NetworkParameters.MAX_BLOCK_SIGOPS)
+                        throw new SigOpsException();
+                }
+            }
+            
+        } catch (VerificationException e) {
+            scriptVerificationExecutor.shutdownNow();
+            logger.info("", e);
+            if (throwExceptions)
+                throw e;
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalTypeSpecificSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            // Check rewards are solid
+            SolidityState rewardSolidityState = checkFormalRewardSolidity(block, throwExceptions);
+            if (!(rewardSolidityState.getState() == State.Success)) {
+                return rewardSolidityState;
+            }
+
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            // Check token issuances are solid
+            SolidityState tokenSolidityState = checkFormalTokenSolidity(block, throwExceptions);
+            if (!(tokenSolidityState.getState() == State.Success)) {
+                return tokenSolidityState;
+            }
+
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        case BLOCKTYPE_ORDER_OPEN:
+            SolidityState openSolidityState = checkFormalOrderOpenSolidity(block, throwExceptions);
+            if (!(openSolidityState.getState() == State.Success)) {
+                return openSolidityState;
+            }
+            break;
+        case BLOCKTYPE_ORDER_OP:
+            SolidityState opSolidityState = checkFormalOrderOpSolidity(block, throwExceptions);
+            if (!(opSolidityState.getState() == State.Success)) {
+                return opSolidityState;
+            }
+            break;
+        case BLOCKTYPE_ORDER_RECLAIM:
+            SolidityState recSolidityState = checkFormalOrderReclaimSolidity(block, throwExceptions);
+            if (!(recSolidityState.getState() == State.Success)) {
+                return recSolidityState;
+            }
+            break;
+        case BLOCKTYPE_ORDER_MATCHING:
+            // Check rewards are solid
+            SolidityState matchingSolidityState = checkFormalOrderMatchingSolidity(block, throwExceptions);
+            if (!(matchingSolidityState.getState() == State.Success)) {
+                return matchingSolidityState;
+            }
+            break;
+        default:
+            throw new RuntimeException("No Implementation");
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalOrderReclaimSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
+        if (block.getTransactions().size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState();
+        }
+
+        Transaction tx = block.getTransactions().get(0);
+        if (tx.getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        OrderReclaimInfo info = null;
+        try {
+            info = OrderReclaimInfo.parse(tx.getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (info.getOrderBlockHash() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target txhash");
+            return SolidityState.getFailState();
+        }
+        if (info.getNonConfirmingMatcherBlockHash() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target matcher hash");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalOrderOpenSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Check that the tx has correct data
+        OrderOpenInfo orderInfo;
+        try {
+            orderInfo = OrderOpenInfo.parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        if (!transactions.get(0).getDataClassName().equals("OrderOpen")) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (orderInfo.getTargetTokenid() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target tokenid");
+            return SolidityState.getFailState();
+        }
+
+        // Check bounds for target coin values
+        // TODO after changing the values to 256 bit, remove the value
+        // limitations!
+        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target value");
+            return SolidityState.getFailState();
+        }
+
+        if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(),
+                NetworkParameters.ORDER_TIMEOUT_MAX)) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The given order's timeout is too long.");
+            return SolidityState.getFailState();
+        }
+
+        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
+                .equals(orderInfo.getBeneficiaryAddress())) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The address does not match with the given pubkey.");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalOrderOpSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
+        if (block.getTransactions().size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState();
+        }
+
+        Transaction tx = block.getTransactions().get(0);
+        if (tx.getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        OrderOpInfo info = null;
+        try {
+            info = OrderOpInfo.parse(tx.getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (info.getInitialBlockHash() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target txhash");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalOrderMatchingSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!transactions.get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState();
+        }
+
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Check that the tx has correct data
+        OrderMatchingInfo info;
+        try {
+            info = OrderMatchingInfo.parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (info.getPrevHash() == null) {
+            if (throwExceptions)
+                throw new MissingDependencyException();
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private SolidityState checkFormalRewardSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        // No output creation
+        if (!transactions.get(0).getOutputs().isEmpty()) {
+            if (throwExceptions)
+                throw new TransactionOutputsDisallowedException();
+            return SolidityState.getFailState();
+        }
+
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Check that the tx has correct data
+        RewardInfo rewardInfo;
+        try {
+            rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (rewardInfo.getPrevRewardHash() == null) {
+            if (throwExceptions)
+                throw new MissingDependencyException();
+            return SolidityState.getFailState();
+        }
+
+        // Ensure heights follow the rules
+        if (Math.subtractExact(rewardInfo.getToHeight(),
+                rewardInfo.getFromHeight()) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid heights");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    public SolidityState checkFormalTokenSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        if (block.getTransactions().size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        if (!block.getTransactions().get(0).isCoinBase()) {
+            if (throwExceptions)
+                throw new NotCoinbaseException();
+            return SolidityState.getFailState();
+        }
+
+        Transaction tx = block.getTransactions().get(0);
+        if (tx.getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        TokenInfo currentToken = null;
+        try {
+            currentToken = TokenInfo.parse(tx.getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
+            return SolidityState.getFailState();
+
+        // Check field correctness: amount
+        if (currentToken.getToken().getAmount() != block.getTransactions().get(0).getOutputSum()) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Incorrect amount field");
+            return SolidityState.getFailState();
+        }
+
+        // Check all token issuance transaction outputs are actually of the
+        // given token
+        for (Transaction tx1 : block.getTransactions()) {
+            for (TransactionOutput out : tx1.getOutputs()) {
+                if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())) {
+                    if (throwExceptions)
+                        throw new InvalidTokenOutputException();
+                    return SolidityState.getFailState();
+                }
+            }
+        }
+
+        // Must define enough permissioned addresses
+        if (currentToken.getToken().getSignnumber() > currentToken.getMultiSignAddresses().size()) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException(
+                        "Cannot fulfill required sign number from multisign address list");
+            return SolidityState.getFailState();
+        }
+
+        // Ensure signatures exist
+        if (tx.getDataSignature() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Get signatures from transaction
+        String jsonStr = new String(tx.getDataSignature());
+        try {
+            Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+        
+        return SolidityState.getSuccessState();
+    }
+
+    /*
+     * Checks if the block is valid based on itself and its dependencies. Rechecks formal criteria too. If
      * SolidityState.getSuccessState() is returned, the block is valid. If
      * SolidityState.getFailState() is returned, the block is invalid. Otherwise,
      * appropriate solidity states are returned to imply missing dependencies.
      */
-    public SolidityState checkBlockSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
-            boolean throwExceptions) {
+    private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions) {
         try {
+            BlockWrap storedPrev = store.getBlockWrap(block.getPrevBlockHash());
+            BlockWrap storedPrevBranch = store.getBlockWrap(block.getPrevBranchBlockHash());
+            
             if (block.getHash() == Sha256Hash.ZERO_HASH) {
                 if (throwExceptions)
                     throw new VerificationException("Lucky zeros not allowed");
@@ -1091,18 +1697,13 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-            // TODO different block type transactions should include their block
-            // type in the transaction hash
-            // for now, we must disallow someone burning other people's orders
+            // Disallow someone burning other people's orders
             if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
                 for (Transaction tx : block.getTransactions())
-                    try {
-                        OrderOpenInfo.parse(tx.getData());
+                    if (tx.getDataClassName() != null && tx.getDataClassName().equals("OrderOpen")) {
                         if (throwExceptions)
                             throw new MalformedTransactionDataException();
                         return SolidityState.getFailState();
-                    } catch (Exception e) {
-                        // Expected
                     }
             }
 
@@ -1146,13 +1747,13 @@ public class ValidatorService {
                     storedPrevBranch.getBlockEvaluation().getHeight()) + 1;
 
             // Check transactions are solid
-            SolidityState transactionalSolidityState = checkTransactionalSolidity(block, height, throwExceptions);
+            SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, height, throwExceptions);
             if (!(transactionalSolidityState.getState() == State.Success)) {
                 return transactionalSolidityState;
             }
 
             // Check type-specific solidity
-            SolidityState typeSpecificSolidityState = checkTypeSpecificSolidity(block, storedPrev, storedPrevBranch,
+            SolidityState typeSpecificSolidityState = checkFullTypeSpecificSolidity(block, storedPrev, storedPrevBranch,
                     height, throwExceptions);
             if (!(typeSpecificSolidityState.getState() == State.Success)) {
                 return typeSpecificSolidityState;
@@ -1169,18 +1770,9 @@ public class ValidatorService {
         }
     }
 
-    private SolidityState checkTransactionalSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkFullTransactionalSolidity(Block block, long height, boolean throwExceptions)
             throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
-
-        // Coinbase allowance (already checked in Block.verifyTransactions
-        // for (Transaction tx : transactions) {
-        // if (tx.isCoinBase() && !block.allowCoinbaseTransaction()) {
-        // if (throwExceptions)
-        // throw new CoinbaseDisallowedException();
-        // return SolidityState.getFailState();
-        // }
-        // }
 
         // All used transaction outputs must exist
         for (final Transaction tx : transactions) {
@@ -1199,7 +1791,6 @@ public class ValidatorService {
         // Transaction validation
         try {
             LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
-//            LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
             long sigOps = 0;
 
             if (scriptVerificationExecutor.isShutdown())
@@ -1254,21 +1845,6 @@ public class ValidatorService {
                     } else {
                         valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
                     }
-                    // For each output, add it to the set of unspent outputs so
-                    // it can be consumed
-                    // in future.
-//                    Script script = getScript(out.getScriptBytes());
-//                    UTXO newOut = new UTXO(hash, out.getIndex(), out.getValue(), isCoinBase, script,
-//                            getScriptAddress(script), block.getHash(), out.getFromaddress(), tx.getMemo(),
-//                            Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0);
-//
-//                    txOutsCreated.add(newOut);
-
-                    // Filter zero UTXOs
-                    // if (newOut.getValue().isZero()) {
-                    // throw new InvalidTransactionException("Transaction output
-                    // value is zero");
-                    // }
                 }
                 if (!checkOutputSigns(valueOut))
                     throw new InvalidTransactionException("Transaction output value negative");
@@ -1344,7 +1920,7 @@ public class ValidatorService {
         return true;
     }
 
-    private SolidityState checkTypeSpecificSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
+    private SolidityState checkFullTypeSpecificSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
             long height, boolean throwExceptions) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
@@ -1357,7 +1933,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_REWARD:
             // Check rewards are solid
-            SolidityState rewardSolidityState = checkRewardSolidity(block, storedPrev, storedPrevBranch, height,
+            SolidityState rewardSolidityState = checkFullRewardSolidity(block, storedPrev, storedPrevBranch, height,
                     throwExceptions);
             if (!(rewardSolidityState.getState() == State.Success)) {
                 return rewardSolidityState;
@@ -1366,7 +1942,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Check token issuances are solid
-            SolidityState tokenSolidityState = checkTokenSolidity(block, height, throwExceptions);
+            SolidityState tokenSolidityState = checkFullTokenSolidity(block, height, throwExceptions);
             if (!(tokenSolidityState.getState() == State.Success)) {
                 return tokenSolidityState;
             }
@@ -1381,26 +1957,26 @@ public class ValidatorService {
         case BLOCKTYPE_VOS_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
-            SolidityState openSolidityState = checkOrderOpenSolidity(block, height, throwExceptions);
+            SolidityState openSolidityState = checkFullOrderOpenSolidity(block, height, throwExceptions);
             if (!(openSolidityState.getState() == State.Success)) {
                 return openSolidityState;
             }
             break;
         case BLOCKTYPE_ORDER_OP:
-            SolidityState opSolidityState = checkOrderOpSolidity(block, height, throwExceptions);
+            SolidityState opSolidityState = checkFullOrderOpSolidity(block, height, throwExceptions);
             if (!(opSolidityState.getState() == State.Success)) {
                 return opSolidityState;
             }
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
-            SolidityState recSolidityState = checkOrderReclaimSolidity(block, height, throwExceptions);
+            SolidityState recSolidityState = checkFullOrderReclaimSolidity(block, height, throwExceptions);
             if (!(recSolidityState.getState() == State.Success)) {
                 return recSolidityState;
             }
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             // Check rewards are solid
-            SolidityState matchingSolidityState = checkOrderMatchingSolidity(block, storedPrev, storedPrevBranch,
+            SolidityState matchingSolidityState = checkFullOrderMatchingSolidity(block, storedPrev, storedPrevBranch,
                     height, throwExceptions);
             if (!(matchingSolidityState.getState() == State.Success)) {
                 return matchingSolidityState;
@@ -1413,7 +1989,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkOrderReclaimSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkFullOrderReclaimSolidity(Block block, long height, boolean throwExceptions)
             throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
@@ -1495,7 +2071,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkOrderOpenSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkFullOrderOpenSolidity(Block block, long height, boolean throwExceptions)
             throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
@@ -1516,6 +2092,12 @@ public class ValidatorService {
         try {
             orderInfo = OrderOpenInfo.parse(transactions.get(0).getData());
         } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        if (!transactions.get(0).getDataClassName().equals("OrderOpen")) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
             return SolidityState.getFailState();
@@ -1638,7 +2220,7 @@ public class ValidatorService {
         return burnedCoins;
     }
 
-    private SolidityState checkOrderOpSolidity(Block block, long height, boolean throwExceptions)
+    private SolidityState checkFullOrderOpSolidity(Block block, long height, boolean throwExceptions)
             throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
@@ -1696,7 +2278,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkOrderMatchingSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
+    private SolidityState checkFullOrderMatchingSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
             long height, boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
@@ -1776,7 +2358,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkRewardSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
+    private SolidityState checkFullRewardSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
             long height, boolean throwExceptions) throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
 
@@ -1887,7 +2469,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkTokenSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
+    public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1966,8 +2548,8 @@ public class ValidatorService {
         Token prevDomain = store.getToken(currentToken.getToken().getDomainPredecessorBlockHash());
         if (prevDomain == null) {
             if (throwExceptions)
-                return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                throw new MissingDependencyException();
+            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
         }
         
         if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
@@ -2263,5 +2845,47 @@ public class ValidatorService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    /**
+     * Checks if the block has all of its dependencies to fully determine its
+     * validity. Then checks if the block is valid based on its dependencies. If
+     * SolidityState.getSuccessState() is returned, the block is valid. If
+     * SolidityState.getFailState() is returned, the block is invalid. Otherwise,
+     * appropriate solidity states are returned to imply missing dependencies.
+     *
+     * @param block
+     * @return SolidityState
+     * @throws BlockStoreException 
+     */
+    public SolidityState checkSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+        try {
+            // Check formal correctness of the block
+            SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
+            if (formalSolidityResult.isFailState())
+                return formalSolidityResult;
+            
+            // Predecessors must exist
+            SolidityState predecessorsExist = checkPredecessorsExist(block);
+            if (!predecessorsExist.isSuccessState()) {
+                return predecessorsExist;            
+            }
+            
+            // Inherit solidity from predecessors if they are not solid
+            SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block);
+            switch (minPredecessorSolidity.getState()) {
+            case Invalid:
+                return minPredecessorSolidity;            
+            case MissingPredecessor:
+                return minPredecessorSolidity;
+            case Success:
+                break;
+            }
+        } catch (IllegalArgumentException e) {
+            throw new VerificationException(e);
+        }
+        
+        // Otherwise, the solidity of the block itself is checked
+        return checkFullBlockSolidity(block, throwExceptions);
     }
 }

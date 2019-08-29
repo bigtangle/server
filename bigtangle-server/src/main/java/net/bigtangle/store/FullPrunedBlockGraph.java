@@ -67,6 +67,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
@@ -146,20 +147,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public boolean add(Block block, boolean allowUnsolid) {
-        return add(block, allowUnsolid, true);
-    }
-    /*
-     * if block is saved to database, then return the StoredBlock otherwise null
-     */
-
-    public boolean add(Block block, boolean allowUnsolid, boolean checkSolidity) {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
-            if (blockStore.getBlockEvaluation(block.getHash()) != null)
+            if (blockStore.getBlockEvaluation(block.getHash()) != null) 
                 return false;
 
-            // Check the block is partly formally valid and fulfills PoW
+            // Check the block is partially formally valid and fulfills PoW
             try {
                 block.verifyHeader();
                 block.verifyTransactions();
@@ -170,15 +164,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw e;
             }
             checkState(lock.isHeldByCurrentThread());
-            if (checkSolidity && !checkSolidity(block, allowUnsolid)) {
-                return false;
-            }
 
-            // Otherwise, all dependencies exist and the block has been
-            // validated
+            SolidityState solidityState = validatorService.checkSolidity(block, true);
+
+            // If explicitly wanted (e.g. new block from local clients), this block must strictly be solid now.
+            if (!allowUnsolid) {
+                switch (solidityState.getState()) {
+                case MissingPredecessor:
+                    solidityState = validatorService.checkSolidity(block, false);
+                    throw new UnsolidException();
+                case Success:
+                    break;
+                case Invalid:
+                    throw new GenericInvalidityException();
+                }
+            } 
+            
+            // We can always choose not to take blocks that are generally invalid. 
+            if (solidityState.isFailState())
+                throw new GenericInvalidityException();
+
+            // Else accept the block
             try {
                 blockStore.beginDatabaseBatchWrite();
-                connect(block);
+                connect(block, solidityState);
                 blockStore.commitDatabaseBatchWrite();
                 try {
                     scanWaitingBlocks(block);
@@ -191,9 +200,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw e;
             }
 
-        } catch (
-
-        BlockStoreException e) {
+        } catch (BlockStoreException e) {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
@@ -207,37 +214,51 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private boolean checkSolidity(Block block, boolean allowUnsolid) throws BlockStoreException {
-        BlockWrap storedPrev = blockStore.getBlockWrap(block.getPrevBlockHash());
-        BlockWrap storedPrevBranch = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
-
-        // Check the block's solidity, if dependency missing, put on waiting
-        // list unless disallowed
-        // The class SolidityState is used for the Spark implementation and
-        // should stay.
-        SolidityState solidityState = validatorService.checkBlockSolidity(block, storedPrev, storedPrevBranch, true);
-        if (!(solidityState.getState() == State.Success)) {
-            if (solidityState.getState() == State.Unfixable) {
-                // Drop if invalid
-                log.debug("Dropping invalid block!");
+    public boolean solidifyWaiting(Block block) {
+        lock.lock();
+        try {
+            SolidityState solidityState = validatorService.checkSolidity(block, true);
+            
+            switch (solidityState.getState()) {
+            case MissingPredecessor:
+                break;
+            case Success:
+                try {
+                    blockStore.beginDatabaseBatchWrite();
+                    solidifyBlock(block, solidityState);
+                    blockStore.commitDatabaseBatchWrite();
+                    try {
+                        scanWaitingBlocks(block);
+                    } catch (BlockStoreException | VerificationException e) {
+                        log.debug(e.getLocalizedMessage());
+                    }
+                    return true;
+                } catch (BlockStoreException e) {
+                    blockStore.abortDatabaseBatchWrite();
+                    throw e;
+                }
+            case Invalid:
                 throw new GenericInvalidityException();
-            } else {
-                // If dependency missing and allowing waiting list, add to
-                // list
-                if (allowUnsolid) {
-                    insertUnsolidBlock(block, solidityState);
-                } else
-                    log.debug("Dropping unresolved block!");
-                return false;
             }
+
+        } catch (BlockStoreException e) {
+            log.error("", e);
+            throw new VerificationException(e);
+        } catch (VerificationException e) {
+            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString());
+            throw e;
+        } catch (Exception e) {
+            log.error("", e);
+            throw e;
+        } finally {
+            lock.unlock();
         }
-        return true;
+        return false;
     }
 
     private void scanWaitingBlocks(Block block) throws BlockStoreException {
         // Finally, look in the solidity waiting queue for blocks that are still
         // waiting
-        // It could be a missing block...
         for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
             try {
                 // Clear from waiting list
@@ -245,32 +266,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                 // If going through or waiting for more dependencies, all is
                 // good
-                add(b, true);
+                solidifyWaiting(b);
 
             } catch (VerificationException e) {
                 // If the block is deemed invalid, we do not propagate the error
                 // upwards
-                log.debug(e.getLocalizedMessage());
-            }
-        }
-
-        // Or it could be a missing transaction
-        for (TransactionOutput txout : block.getTransactions().stream().flatMap(t -> t.getOutputs().stream())
-                .collect(Collectors.toList())) {
-            for (Block b : blockStore.getUnsolidBlocks(txout.getOutPointFor(block.getHash()).bitcoinSerialize())) {
-                try {
-                    // Clear from waiting list
-                    blockStore.deleteUnsolid(b.getHash());
-
-                    // If going through or waiting for more dependencies, all is
-                    // good
-                    add(b, true);
-
-                } catch (VerificationException e) {
-                    // If the block is deemed invalid, we do not propagate the
-                    // error upwards
-                    log.debug(e.getLocalizedMessage());
-                }
+                log.debug(e.getMessage());
             }
         }
     }
@@ -280,19 +281,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * 
      * @param block
      *            the block
+     * @param solidityState 
      * @param height
      *            the block's height
      * @throws BlockStoreException
      * @throws VerificationException
      */
-    private void connect(final Block block) throws BlockStoreException, VerificationException {
+    private void connect(final Block block, SolidityState solidityState) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
-        connectUTXOs(block);
-        connectTypeSpecificUTXOs(block);
-
         blockStore.put(block);
-        solidifyBlock(block);
-
+        solidifyBlock(block, solidityState);
     }
 
     /**
@@ -650,9 +648,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set own outputs confirmed
         for (TransactionOutput out : tx.getOutputs()) {
             blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
-            // TODO unnecessary?
-            // blockStore.updateTransactionOutputSpent(block.getHash(),
-            // tx.getHash(), out.getIndex(), false, null);
         }
     }
 
@@ -1013,17 +1008,38 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    protected void solidifyBlock(Block block) throws BlockStoreException {
-        // Update tips table
-        blockStore.deleteTip(block.getPrevBlockHash());
-        blockStore.deleteTip(block.getPrevBranchBlockHash());
-        blockStore.deleteTip(block.getHash());
-        blockStore.insertTip(block.getHash());
+    public void solidifyBlock(Block block, SolidityState solidityState) throws BlockStoreException {
+        switch (solidityState.getState()) {
+        case MissingPredecessor:
+            blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
+            
+            // Insert into waiting list
+            insertUnsolidBlock(block, solidityState);
+            break;
+        case Success:
+            connectUTXOs(block);
+            connectTypeSpecificUTXOs(block);
+            
+            blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
+            
+            // Update tips table
+            blockStore.deleteTip(block.getPrevBlockHash());
+            blockStore.deleteTip(block.getPrevBranchBlockHash());
+            blockStore.deleteTip(block.getHash());
+            blockStore.insertTip(block.getHash());
+            break;
+        case Invalid:
+            blockStore.updateBlockEvaluationSolid(block.getHash(), -1);  
+            break;
+        }
     }
 
+    // TODO full implementation
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
-        if (solidityState.getState() == State.Success || solidityState.getState() == State.Unfixable)
+        if (solidityState.getState() == State.Success || solidityState.getState() == State.Invalid) {
+            log.warn("Block should not be inserted into waiting list");
             return;
+        }
 
         // Insert waiting into solidity waiting queue until dependency is
         // resolved
@@ -1049,7 +1065,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
-                String fromAddress = ""; // TODO this just doesn't work if P2PK
+                String fromAddress = ""; 
                 try {
                     if (!isCoinBase) {
                         fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();

@@ -138,6 +138,12 @@ public class VerificationException extends RuntimeException {
         }
     }
 
+    public static class UnsolidException extends VerificationException {
+        public UnsolidException() {
+            super("Not solid. Not allowed in this case.");
+        }
+    }
+
     public static class InvalidDependencyException extends VerificationException {
         public InvalidDependencyException(String msg) {
             super(msg);

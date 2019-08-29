@@ -7,7 +7,6 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -68,6 +67,7 @@ import net.bigtangle.core.exception.VerificationException.SigOpsException;
 import net.bigtangle.core.exception.VerificationException.TimeReversionException;
 import net.bigtangle.core.exception.VerificationException.TimeTravelerException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -131,7 +131,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         System.out.println(block.getHashAsString());
 
         // Send over kafka method to allow unsolids
-        transactionService.addConnected(block.bitcoinSerialize(),false,true);
+        transactionService.addConnected(block.bitcoinSerialize(), false, true);
     }
 
     @Test 
@@ -147,7 +147,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         System.out.println(block.getHashAsString());
 
         // Send over API method to disallow unsolids
-        blockService.saveBlock(block);
+        try {
+            blockService.saveBlock(block);
+            fail();
+        } catch (VerificationException e) {
+            // Expected
+        }
 
         // Should not be added since insolid
         assertNull(store.get(block.getHash()));
@@ -158,24 +163,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-
-        Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        block.setPrevBlockHash(sha256Hash);
-        block.setPrevBranchBlockHash(sha256Hash);
-        block.solve();
-        System.out.println(block.getHashAsString());
+        Block block = depBlock.createNextBlock(depBlock);
         transactionService.addConnected(block.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-         store.get(block.getHash()) ;
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(depBlock);
 
-        // After adding the missing dependency, should be added
-         store.get(block.getHash());
-         store.get(depBlock.getHash());
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test  
@@ -183,24 +182,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-
-        Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        block.setPrevBlockHash(sha256Hash);
-        block.setPrevBranchBlockHash(networkParameters.getGenesisBlock().getHash());
-        block.solve();
-        System.out.println(block.getHashAsString());
+        Block block = depBlock.createNextBlock(networkParameters.getGenesisBlock());
         transactionService.addConnected(block.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-        store.get(block.getHash());
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(depBlock);
 
-        // After adding the missing dependency, should be added
-       store.get(block.getHash());
-        store.get(depBlock.getHash());
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test 
@@ -208,24 +201,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block block = networkParameters.getGenesisBlock().createNextBlock(depBlock);
+        transactionService.addConnected(block.bitcoinSerialize(), false, true);
 
-        Sha256Hash sha256Hash = depBlock.getHash();
-        Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        block.setPrevBlockHash(networkParameters.getGenesisBlock().getHash());
-        block.setPrevBranchBlockHash(sha256Hash);
-        block.solve();
-        System.out.println(block.getHashAsString());
-        transactionService.addConnected(block.bitcoinSerialize(),false,true);
-
-        // Should not be added since insolid
-        assertNull(store.get(block.getHash()));
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(depBlock);
 
-        // After adding the missing dependency, should be added
-     //   assertNotNull(store.get(block.getHash()));
-        assertNotNull(store.get(depBlock.getHash()));
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test 
@@ -249,15 +236,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Add block allowing unsolids
         transactionService.addConnected(block.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-        assertNull(store.get(block.getHash()));
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(depBlock);
 
-        // After adding the missing dependency, should be added
-        assertNotNull(store.get(block.getHash()));
-        assertNotNull(store.get(depBlock.getHash()));
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test 
@@ -316,15 +303,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Add block allowing unsolids
         transactionService.addConnected(rewardBlock2.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-        assertNull(store.get(rewardBlock2.getHash()));
+        // Should not be solid
+        assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
 
-        // After adding the missing dependency, should be added
-        assertNotNull(store.get(rewardBlock1.getHash()));
-        assertNotNull(store.get(rewardBlock2.getHash()));
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test 
@@ -361,15 +348,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Add block allowing unsolids
         transactionService.addConnected(block.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-        store.get(block.getHash());
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(depBlock);
 
-        // After adding the missing dependency, should be added
-       store.get(block.getHash());
-        store.get(depBlock.getHash());
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test  
@@ -386,6 +373,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -449,16 +437,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Add block allowing unsolids
         transactionService.addConnected(block2.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-          store.get(block2.getHash() ) ;
-       
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
 
-        // After adding the missing dependency, should be added
-        store.get(block2.getHash());
-        store.get(rewardBlock1.getHash());
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test
@@ -475,6 +462,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -529,27 +517,27 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
-            this.blockGraph.add(block2, false);
+            transactionService.addConnected(block2.bitcoinSerialize(), false, true);
         }
 
         // Now reset and readd all but dependency and unsolid block
         store.resetStore();
         for (Block b : premiseBlocks) {
-            blockGraph.add(b, false);
+            transactionService.addConnected(b.bitcoinSerialize(), false, true);
         }
 
         // Add block allowing unsolids
         transactionService.addConnected(block2.bitcoinSerialize(),false,true);
 
-        // Should not be added since insolid
-        assertNull(store.get(block2.getHash()));
+        // Should not be solid
+        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
         blockService.saveBlock(block1);
 
-        // After adding the missing dependency, should be added
-        assertNotNull(store.get(block2.getHash()));
-        assertNotNull(store.get(block1.getHash()));
+        // After adding the missing dependency, should be solid
+        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 1);
+        assertTrue(store.getBlockWrap(block1.getHash()).getBlockEvaluation().getSolid() == 1);
     }
 
     @Test
@@ -636,7 +624,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // The consensus number should now be equal to the previous number + 1
         assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
 
             // The difficulty should be equal to the previous difficulty
@@ -1236,8 +1224,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             fail();
         } catch (MissingDependencyException e) {
         }
-        if (blockGraph.add(testBlock3, false) )
+        try {
+            blockGraph.add(testBlock3, false);
             fail();
+        } catch (UnsolidException e) {
+        }
         try {
             blockGraph.add(testBlock4, false);
             fail();
@@ -1959,7 +1950,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) { // 45
-        		// TODO these tokenids are useless as they are overwritten anyways
                 tokenInfo5.getMultiSignAddresses().get(0).setTokenid("test");
             }
 
@@ -2043,7 +2033,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 }
             } else {
                 if (! blockGraph.add(block, false) )
-                    //TODO 
                     fail("Number " + i + " failed");
             }
         }
@@ -2707,6 +2696,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -2788,6 +2778,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey).stream()
@@ -2857,6 +2848,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create block with order
             block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -2905,6 +2897,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey).stream()
@@ -2993,6 +2986,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test2", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 "test"
             List<UTXO> outputs2 = getBalance(false, testKey).stream().filter(
@@ -3062,6 +3056,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(4, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey).stream()
@@ -3104,6 +3099,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(1, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 "test"s
             List<UTXO> outputs = getBalance(false, testKey).stream().filter(
@@ -3152,6 +3148,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -3217,6 +3214,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -3289,6 +3287,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -3359,6 +3358,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -3433,6 +3433,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -3518,6 +3519,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);

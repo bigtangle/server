@@ -135,6 +135,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /* Blocks */
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
+    public List<BlockWrap> getApproverBlocks(Sha256Hash hash) throws BlockStoreException;
+
     public List<BlockWrap> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth) throws BlockStoreException;
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
@@ -154,6 +156,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index) throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
+
+    public PriorityQueue<BlockWrap> getMaintainedBlocksDescending() throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException;
 
@@ -179,6 +183,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean relevant) throws BlockStoreException;
+
+    public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
 
     public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 

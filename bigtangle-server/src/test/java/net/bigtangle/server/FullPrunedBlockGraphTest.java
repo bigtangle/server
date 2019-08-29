@@ -167,6 +167,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.SELL,
                 testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Give it the legitimation of an order opening tx by finally signing
         // the hash
@@ -320,6 +321,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                 testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Create burning 2 BIG
         List<UTXO> outputs = getBalance(false, testKey);
@@ -366,6 +368,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -453,6 +456,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -523,6 +527,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey(), null,
                     null, Side.BUY, testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -575,6 +580,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey(),
                     null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 "test"
             List<UTXO> outputs = getBalance(false, testKey).stream().filter(
@@ -769,6 +775,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                 testKey.toAddress(networkParameters).toBase58());
         tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
 
         // Create burning 2 BIG
         List<UTXO> outputs = getBalance(false, testKey);
@@ -816,6 +823,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -905,6 +913,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
                     testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -979,6 +988,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey(), null,
                     null, Side.BUY, testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
@@ -1031,6 +1041,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey(),
                     null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
             tx.setData(info.toByteArray());
+            tx.setDataClassName("OrderOpen");
 
             // Create burning 2 "test"
             List<UTXO> outputs = getBalance(false, testKey).stream().filter(

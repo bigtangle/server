@@ -31,18 +31,34 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     // TODO lower the sizes of stuff to their exact size limitations! use
     // NetworkParameters!
-    private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" + "    hash varbinary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
-            + "    wasundoable boolean NOT NULL,\n" + "    prevblockhash  varbinary(32) NOT NULL,\n"
-            + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" + "    mineraddress varbinary(255),\n"
-            + "    tokenid varbinary(255),\n" + "    blocktype bigint NOT NULL,\n" + "    rating bigint ,\n"
-            + "    depth bigint,\n" + "    cumulativeweight  bigint ,\n" + "    milestone boolean,\n"
-            + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n" + "    inserttime bigint,\n"
-            + "    maintained boolean,\n" + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+    private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" 
+    + "    hash varbinary(32) NOT NULL,\n"
+            + "    height bigint NOT NULL,\n" 
+            + "    block mediumblob NOT NULL,\n"
+            + "    wasundoable boolean NOT NULL,\n" 
+            + "    prevblockhash  varbinary(32) NOT NULL,\n"
+            + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" 
+            + "    mineraddress varbinary(255),\n"
+            + "    tokenid varbinary(255),\n" 
+            + "    blocktype bigint NOT NULL,\n" 
+            + "    rating bigint ,\n"
+            + "    depth bigint,\n" 
+            + "    cumulativeweight  bigint ,\n" 
+            + "    milestone boolean,\n"
+            + "    milestonelastupdate bigint,\n" 
+            + "    milestonedepth bigint,\n" 
+            + "    inserttime bigint,\n"
+            + "    maintained boolean,\n" 
+            + "    solid bigint,\n"
+            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
-            + "    hash varbinary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    reason bigint NOT NULL,\n" + "    missingdependency mediumblob NOT NULL,\n" + "    height bigint ,\n"
+            + "    hash varbinary(32) NOT NULL,\n" 
+            + "    block mediumblob NOT NULL,\n" 
+            + "    inserttime bigint,\n"
+            + "    reason bigint NOT NULL,\n" 
+            + "    missingdependency mediumblob NOT NULL,\n" 
+            + "    height bigint ,\n"
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 

@@ -255,8 +255,8 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
     private void updateWeightAndDepth() throws BlockStoreException {
-        // Begin from the highest solid height tips and go backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+        // Begin from the highest maintained height blocks and go backwards from there
+        PriorityQueue<BlockWrap> blockQueue = store.getMaintainedBlocksDescending();
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
@@ -494,9 +494,11 @@ public class MilestoneService {
         while ((currentBlock = blocks.poll()) != null) {
             blocksToTraverse.remove(currentBlock);
             traversedBlockHashes.add(currentBlock.getBlockHash());
-            List<BlockWrap> solidApproverBlocks = store.getSolidApproverBlocks(currentBlock.getBlockHash());
+            List<BlockWrap> solidApproverBlocks = store.getApproverBlocks(currentBlock.getBlockHash());
             for (BlockWrap b : solidApproverBlocks) {
                 if (blocksToTraverse.contains(b))
+                    continue;
+                if (b.getBlockEvaluation().getSolid() < 0)
                     continue;
 
                 blocks.add(b);
