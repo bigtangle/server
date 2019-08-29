@@ -152,6 +152,13 @@ public abstract class NetworkParameters {
      */
     public static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
+    
+    /**
+     * The maximum returned search blocks to the request.
+     */
+    public static final long ALLOWED_SEARCH_BLOCKS = 10000;
+
+    
     /**
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
