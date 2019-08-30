@@ -268,9 +268,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(-this.value, this.tokenid);
     }
 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 2)
-            .noCode();
-
+    
     /**
      * <p>
      * Returns the value as a plain string. The result is unformatted with no
@@ -279,7 +277,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public String toPlainString() {
         if (isBIG()) {
-            return PLAIN_FORMAT.format(this,2).toString();
+            return MonetaryFormat.FIAT.format(this,2).toString();
         } else {
             return String.valueOf(this.value);
         }
@@ -287,7 +285,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     public static String toPlainString(long value) {
         Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
-        return PLAIN_FORMAT.format(coin,2).toString();
+        return MonetaryFormat.FIAT.format(coin,2).toString();
 
     }
 

@@ -52,7 +52,7 @@ public final class MonetaryFormat {
 
      
     /** Standard format for fiat amounts. */
-    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2);
+    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(0).repeatOptionalDecimals(1, 2);
    
   
     public static final int MAX_DECIMALS = 2;

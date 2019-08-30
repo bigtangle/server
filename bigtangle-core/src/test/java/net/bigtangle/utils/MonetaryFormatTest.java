@@ -23,10 +23,10 @@ public class MonetaryFormatTest {
 
     @Test
     public void testSigns() throws Exception {
-        assertEquals("-1.00", NO_CODE.format(Coin.COIN.negate()).toString());
-        assertEquals("@1.00", NO_CODE.negativeSign('@').format(Coin.COIN.negate()).toString());
-        assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
-        assertEquals("+1.00", NO_CODE.positiveSign('+').format(Coin.COIN).toString());
+        assertEquals("-1", NO_CODE.format(Coin.COIN.negate()).toString());
+        assertEquals("@0.01", NO_CODE.negativeSign('@').format(Coin.CENT.negate()).toString());
+        assertEquals("1", NO_CODE.format(Coin.COIN).toString());
+        assertEquals("+1", NO_CODE.positiveSign('+').format(Coin.COIN).toString());
     }
 
    //@Test
@@ -36,8 +36,8 @@ public class MonetaryFormatTest {
 
     @Test
     public void testDecimalMark() throws Exception {
-        assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
-        assertEquals("1,00", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
+        assertEquals("1", NO_CODE.format(Coin.COIN).toString());
+        assertEquals("0,01", NO_CODE.decimalMark(',').format(Coin.CENT).toString());
     }
 
   //  @Test
@@ -172,6 +172,7 @@ public class MonetaryFormatTest {
     public void withLocale() throws Exception {
         final Coin value = Coin.valueOf(-123456789l,NetworkParameters.BIGTANGLE_TOKENID);
         assertEquals("-1234567.89", NO_CODE.withLocale(Locale.US).format(value).toString());
+        assertEquals("-1234567.89", NO_CODE.withLocale(Locale.CHINA).format(value).toString());
         assertEquals("-1234567,89", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
       //  assertEquals("-१२.३४५६७८९०", NO_CODE.withLocale(new Locale("hi", "IN")).format(value).toString()); // Devanagari
     }
