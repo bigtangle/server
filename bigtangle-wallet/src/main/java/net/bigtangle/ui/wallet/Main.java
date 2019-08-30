@@ -131,7 +131,8 @@ public class Main extends Application {
     public static List<String> userdataList = new ArrayList<String>();
     // TODO as instance variable, not static
     private static WatchedInfo watchedtokenInfo;
-
+    private static  KeyParameter aesKey;
+    
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -471,10 +472,11 @@ public class Main extends Application {
     }
 
     public static KeyParameter getAesKey() {
-        KeyParameter aesKey = null;
+        if( aesKey == null) {
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
         if (!"".equals(Main.password.trim())) {
             aesKey = keyCrypter.deriveKey(Main.password);
+        }
         }
         return aesKey;
     }
