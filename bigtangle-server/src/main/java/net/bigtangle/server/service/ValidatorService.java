@@ -1095,7 +1095,8 @@ public class ValidatorService {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    predecessors.add(new PredecessorRequirement(in.getOutpoint().getBlockHash(), true));
+                    // due to virtual txs from order/reward
+                    predecessors.add(new PredecessorRequirement(in.getOutpoint().getBlockHash(), true)); 
                 }
             }
         }
@@ -1165,7 +1166,8 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(new PredecessorRequirement(matchingInfo.getPrevHash(), true));
+            // due to virtual txs from order/reward
+            predecessors.add(new PredecessorRequirement(matchingInfo.getPrevHash(), false));
             break;
         default:
             throw new RuntimeException("No Implementation");
