@@ -13,7 +13,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -34,20 +33,19 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.PayOTCOrder;
@@ -640,7 +638,7 @@ public class ExchangeController {
 
     public Coin getCoin(String toAmount, String toTokenHex, boolean decimal) {
         if (decimal) {
-            return Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
+            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex));
         } else {
             return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
         }

@@ -23,6 +23,11 @@ package net.bigtangle.wallet;
  * internally inconsistent or appears to be from the future.
  */
 public class UnreadableWalletException extends Exception {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public UnreadableWalletException(String s) {
         super(s);
     }
@@ -32,16 +37,31 @@ public class UnreadableWalletException extends Exception {
     }
 
     public static class BadPassword extends UnreadableWalletException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public BadPassword() {
             super("Password incorrect");
         }
     }
 
     public static class FutureVersion extends UnreadableWalletException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public FutureVersion() { super("Unknown wallet version from the future."); }
     }
 
     public static class WrongNetwork extends UnreadableWalletException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public WrongNetwork() {
             super("Mismatched network ID");
         }

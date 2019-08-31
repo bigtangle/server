@@ -12,8 +12,7 @@ import net.bigtangle.core.UTXO;
 public class FreeStandingTransactionOutput extends TransactionOutput {
     
     private UTXO output;
-    private int chainHeight;
-
+    
     /**
      * Construct a free standing Transaction Output.
      * 
@@ -22,10 +21,10 @@ public class FreeStandingTransactionOutput extends TransactionOutput {
      * @param output
      *            The stored output (free standing).
      */
-    public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
+    public FreeStandingTransactionOutput(NetworkParameters params, UTXO output ) {
         super(params, null, output.getValue(), output.getScript().getProgram());
         this.output = output;
-        this.chainHeight = chainHeight;
+       
     }
 
     /**

@@ -79,10 +79,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate two conflicting blocks
-        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
@@ -171,7 +170,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
-        
+
         Block conflictBlock1, conflictBlock2;
         {
             TokenInfo tokenInfo2 = new TokenInfo();
@@ -238,7 +237,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block conflictBlock1 =saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        Block conflictBlock1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
 
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -288,8 +287,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
-      //  Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 =saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
 
@@ -336,7 +335,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-      //  Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
+        // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
@@ -402,13 +401,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
         store.resetStore();
-        
-        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
         List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
@@ -461,7 +460,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Make another conflicting issuance that goes through
         Block genHash = networkParameters.getGenesisBlock();
-        Block block2 =  saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
 
@@ -493,10 +492,10 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward blocks
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
         createAndAddNextBlock(rewardBlock1, rewardBlock2);
 
         // One of them shall win
@@ -526,8 +525,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testUpdateConflictingReclaimMilestoneCandidates() throws Exception {
         store.resetStore();
-        
-        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -541,7 +540,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -591,7 +590,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block2, false) );
+        assertTrue(this.blockGraph.add(block2, false));
 
         // Try order reclaim 2
         Block block3 = null;
@@ -608,7 +607,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block3, false)  );
+        assertTrue(this.blockGraph.add(block3, false));
 
         // But only the first shall win
         milestoneService.update();
@@ -628,13 +627,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isMilestone());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isMilestone());
 
-        
-        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
         List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
@@ -900,18 +898,20 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // New Tangle is not in milestone since unmaintained
         assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
         assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
-//        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained()); // unless pruned
+        // assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained());
+        // // unless pruned
         assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
-        
+
         // Perform reorg
         milestoneService.triggerDeepReorg(1, TimeUnit.DAYS);
 
         // New Tangle is now in milestone instead of old
-//        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained()); // unless pruned
+        // assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
+        // // unless pruned
         assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained());
         assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
-        
+
     }
 
     @Test
@@ -960,7 +960,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
         assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMilestone());
         assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMilestone());
-        
+
         // Find correct height to reorg from
         assertEquals(6, milestoneService.findDeepReorgHeight(1, TimeUnit.DAYS));
     }
@@ -1034,8 +1034,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         blockGraph.add(fusingBlock, true);
 
         // Generate ineligible mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
         // Mining reward block should usually not go through since not
@@ -1044,10 +1044,10 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
 
         // Generate eligible mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), fusingBlock.getHash(), rollingBlock1.getHash());
-        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(
-                networkParameters.getGenesisBlock().getHash(), fusingBlock.getHash(), rollingBlock1.getHash());
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                fusingBlock.getHash(), rollingBlock1.getHash());
+        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                fusingBlock.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
         // Second mining reward block should now go through since everything is
@@ -1094,11 +1094,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate two conflicting blocks where the second block approves the
         // first
-        
-        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
         doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));

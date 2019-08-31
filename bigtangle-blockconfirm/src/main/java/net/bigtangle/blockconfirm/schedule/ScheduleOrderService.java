@@ -24,12 +24,12 @@ import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
 import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @Component
@@ -115,13 +115,13 @@ public class ScheduleOrderService {
         for (Vm_deposit d : l) {
             if (giveMoneyResult.containsKey(d.getPubkey())) {
                 long temp = giveMoneyResult.get(d.getPubkey());
-                long my = Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID)
+                long my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID)
                         .getValue();
                 giveMoneyResult.put(d.getPubkey(), my + temp);
             } else {
                    
                 giveMoneyResult.put(d.getPubkey(),
-                        Coin.parseCoin(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
 
             }
 

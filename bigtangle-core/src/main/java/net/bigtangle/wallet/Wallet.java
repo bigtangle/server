@@ -37,11 +37,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -80,7 +90,6 @@ import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.crypto.ChildNumber;
-import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
@@ -96,22 +105,7 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
-import net.bigtangle.wallet.listeners.KeyChainEventListener;
 import net.jcip.annotations.GuardedBy;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.protobuf.ByteString;
 
 /**
  * <p>
@@ -182,11 +176,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // do not know how to deal with).
     private int version;
 
-    // Stores objects that know how to serialize/unserialize themselves to byte
-    // streams and whether they're mandatory
-    // or not. The string key comes from the extension itself.
-    private final HashMap<String, WalletExtension> extensions;
-
     // Objects that perform transaction signing. Applied subsequently one after
     // another
     @GuardedBy("lock")
@@ -230,32 +219,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * rooted by the given watching key. A watching key corresponds to account
      * zero in the recommended BIP32 key hierarchy.
      */
-    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        return new Wallet(params, new KeyChainGroup(params, watchKey));
-    }
-
-    /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy
-     * rooted by the given watching key. A watching key corresponds to account
-     * zero in the recommended BIP32 key hierarchy. The key is specified in
-     * base58 notation and the creation time of the key. If you don't know the
-     * creation time, you can pass
-     * {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
-     */
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
-        final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
-        watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey);
-    }
-
-    /**
-     * Creates a wallet containing a given set of keys. All further keys will be
-     * derived from the oldest key.
-     */
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
         for (ECKey key : keys)
             checkArgument(!(key instanceof DeterministicKey));
 
+        KeyChainGroup group = new KeyChainGroup(params);
+        group.importKeys(keys);
+        return new Wallet(params, group);
+    }
+
+    /*
+     * Creates a wallet containing a given set of keys. All further keys will be
+     * derived from the oldest key.
+     */
+    public static Wallet fromKeys(NetworkParameters params, ECKey key) {
+
+        checkArgument(!(key instanceof DeterministicKey));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(key);
         KeyChainGroup group = new KeyChainGroup(params);
         group.importKeys(keys);
         return new Wallet(params, group);
@@ -282,10 +263,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (this.keyChainGroup.numKeys() == 0)
             this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
-
-        extensions = new HashMap<String, WalletExtension>();
-        // Use a linked hash map to ensure ordering of event listeners is
-        // correct.
 
         signers = new ArrayList<TransactionSigner>();
         addTransactionSigner(new LocalTransactionSigner());
@@ -342,163 +319,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // region Key Management
 
     /**
-     * Returns a key that hasn't been seen in a transaction yet, and which is
-     * suitable for displaying in a wallet user interface as "a convenient key
-     * to receive funds on" when the purpose parameter is
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS}. The
-     * returned key is stable until it's actually seen in a pending or confirmed
-     * transaction, at which point this method will start returning a different
-     * key (for each purpose independently).
-     */
-    public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.currentKey(purpose);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * An alias for calling
-     * {@link #currentKey(net.bigtangle.wallet.KeyChain.KeyPurpose)} with
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the
-     * parameter.
-     */
-    public DeterministicKey currentReceiveKey() {
-        return currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-    }
-
-    /**
-     * Returns address for a
-     * {@link #currentKey(net.bigtangle.wallet.KeyChain.KeyPurpose)}
-     */
-    public Address currentAddress(KeyChain.KeyPurpose purpose) {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.currentAddress(purpose);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * An alias for calling
-     * {@link #currentAddress(net.bigtangle.wallet.KeyChain.KeyPurpose)} with
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the
-     * parameter.
-     */
-    public Address currentReceiveAddress() {
-        return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-    }
-
-    /**
-     * Returns a key that has not been returned by this method before (fresh).
-     * You can think of this as being a newly created key, although the notion
-     * of "create" is not really valid for a
-     * {@link net.bigtangle.wallet.DeterministicKeyChain}. When the parameter is
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the
-     * returned key is suitable for being put into a receive coins wizard type
-     * UI. You should use this when the user is definitely going to hand this
-     * key out to someone who wishes to send money.
-     */
-    public DeterministicKey freshKey(KeyChain.KeyPurpose purpose) {
-        return freshKeys(purpose, 1).get(0);
-    }
-
-    /**
-     * Returns a key/s that has not been returned by this method before (fresh).
-     * You can think of this as being a newly created key/s, although the notion
-     * of "create" is not really valid for a
-     * {@link net.bigtangle.wallet.DeterministicKeyChain}. When the parameter is
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} the
-     * returned key is suitable for being put into a receive coins wizard type
-     * UI. You should use this when the user is definitely going to hand this
-     * key/s out to someone who wishes to send money.
-     */
-    public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
-        List<DeterministicKey> keys;
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            keys = keyChainGroup.freshKeys(purpose, numberOfKeys);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-        // Do we really need an immediate hard save? Arguably all this is doing
-        // is saving the 'current' key
-        // and that's not quite so important, so we could coalesce for more
-        // performance.
-        saveNow();
-        return keys;
-    }
-
-    /**
-     * An alias for calling
-     * {@link #freshKey(net.bigtangle.wallet.KeyChain.KeyPurpose)} with
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the
-     * parameter.
-     */
-    public DeterministicKey freshReceiveKey() {
-        return freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-    }
-
-    /**
-     * Returns address for a
-     * {@link #freshKey(net.bigtangle.wallet.KeyChain.KeyPurpose)}
-     */
-    public Address freshAddress(KeyChain.KeyPurpose purpose) {
-        Address key;
-        keyChainGroupLock.lock();
-        try {
-            key = keyChainGroup.freshAddress(purpose);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-        saveNow();
-        return key;
-    }
-
-    /**
-     * An alias for calling
-     * {@link #freshAddress(net.bigtangle.wallet.KeyChain.KeyPurpose)} with
-     * {@link net.bigtangle.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the
-     * parameter.
-     */
-    public Address freshReceiveAddress() {
-        return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-    }
-
-    /**
-     * Returns only the keys that have been issued by
-     * {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
-     * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
-     */
-    public List<ECKey> getIssuedReceiveKeys() {
-        keyChainGroupLock.lock();
-        try {
-            return keyChainGroup.getActiveKeyChain().getIssuedReceiveKeys();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * Returns only the addresses that have been issued by
-     * {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
-     * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
-     */
-    public List<Address> getIssuedReceiveAddresses() {
-        final List<ECKey> keys = getIssuedReceiveKeys();
-        List<Address> addresses = new ArrayList<Address>(keys.size());
-        for (ECKey key : keys)
-            addresses.add(key.toAddress(getParams()));
-        return addresses;
-    }
-
-    /**
      * Upgrades the wallet to be deterministic (BIP32). You should call this,
      * possibly providing the users encryption key, after loading a wallet
      * produced by previous versions of bitcoinj. If the wallet is encrypted the
@@ -552,18 +372,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /**
-     * Returns a snapshot of the watched scripts. This view is not live.
-     */
-    public List<Script> getWatchedScripts() {
-        keyChainGroupLock.lock();
-        try {
-            return new ArrayList<Script>(watchedScripts);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
      * Removes the given key from the basicKeyChain. Be very careful with this -
      * losing a private key <b>destroys the money associated with it</b>.
      * 
@@ -612,14 +420,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         } finally {
             keyChainGroupLock.unlock();
         }
-    }
-
-    /**
-     * Returns the address used for change outputs. Note: this will probably go
-     * away in future.
-     */
-    public Address currentChangeAddress() {
-        return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
 
     /**
@@ -700,25 +500,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /**
-     * Add a pre-configured keychain to the wallet. Useful for setting up a
-     * complex keychain, such as for a married wallet. For example:
-     * 
-     * <pre>
-     * MarriedKeyChain chain = MarriedKeyChain.builder() .random(new
-     * SecureRandom()) .followingKeys(followingKeys) .threshold(2).build();
-     * wallet.addAndActivateHDChain(chain);
-     * </p>
-     */
-    public void addAndActivateHDChain(DeterministicKeyChain chain) {
-        keyChainGroupLock.lock();
-        try {
-            keyChainGroup.addAndActivateHDChain(chain);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
      * See
      * {@link net.bigtangle.wallet.DeterministicKeyChain#setLookaheadSize(int)}
      * for more info on this.
@@ -771,42 +552,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             maybeUpgradeToHD();
             return keyChainGroup.getLookaheadThreshold();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * Returns a public-only DeterministicKey that can be used to set up a
-     * watching wallet: that is, a wallet that can import transactions from the
-     * block chain just as the normal wallet can, but which cannot spend.
-     * Watching wallets are very useful for things like web servers that accept
-     * payments. This key corresponds to the account zero key in the recommended
-     * BIP32 hierarchy.
-     */
-    public DeterministicKey getWatchingKey() {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.getActiveKeyChain().getWatchingKey();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * Returns whether this wallet consists entirely of watching keys
-     * (unencrypted keys with no private part). Mixed wallets are forbidden.
-     * 
-     * @throws IllegalStateException
-     *             if there are no keys, or if there is a mix between watching
-     *             and non-watching keys.
-     */
-    public boolean isWatching() {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.isWatching();
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1319,59 +1064,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return context;
     }
 
-    // region Event listeners
-
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * keys are added. The listener is executed in the user thread.
-     */
-    public void addKeyChainEventListener(KeyChainEventListener listener) {
-        keyChainGroup.addEventListener(listener, Threading.USER_THREAD);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when
-     * keys are added. The listener is executed by the given executor.
-     */
-    public void addKeyChainEventListener(Executor executor, KeyChainEventListener listener) {
-        keyChainGroup.addEventListener(listener, executor);
-    }
-
-    // endregion
-
-    /**
-     * Returns the earliest creation time of keys or watched scripts in this
-     * wallet, in seconds since the epoch, ie the min of
-     * {@link net.bigtangle.core.ECKey#getCreationTimeSeconds()}. This can
-     * return zero if at least one key does not have that data (was created
-     * before key timestamping was implemented).
-     * <p>
-     *
-     * This method is most often used in conjunction with
-     * {@link PeerGroup#setFastCatchupTimeSecs(long)} in order to optimize chain
-     * download for new users of wallet apps. Backwards compatibility notice: if
-     * you get zero from this method, you can instead use the time of the first
-     * release of your software, as it's guaranteed no users will have wallets
-     * pre-dating this time.
-     * <p>
-     *
-     * If there are no keys in the wallet, the current time is returned.
-     */
-
-    public long getEarliestKeyCreationTime() {
-        keyChainGroupLock.lock();
-        try {
-            long earliestTime = keyChainGroup.getEarliestKeyCreationTime();
-            for (Script script : watchedScripts)
-                earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
-            if (earliestTime == Long.MAX_VALUE)
-                return Utils.currentTimeSeconds();
-            return earliestTime;
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
     /**
      * Get the version of the Wallet. This is an int you can use to indicate
      * which versions of wallets your code understands, and which come from the
@@ -1516,21 +1208,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /**
-     * Reduce the value of the first output of a transaction to pay the given
-     * feePerKb as appropriate for its size.
-     */
-    protected boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
-            boolean ensureMinRequiredFee) {
-        final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
-        Coin fee = feePerKb.multiply(size).divide(1000);
-        if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-            fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
-        TransactionOutput output = tx.getOutput(0);
-        output.setValue(output.getValue().subtract(fee));
-        return !output.isDust();
-    }
-
-    /**
      * Returns true if this wallet has at least one of the private keys needed
      * to sign for this scriptPubKey. Returns false if the form of the script is
      * not known or if the script is OP_RETURN.
@@ -1647,113 +1324,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     /******************************************************************************************************************/
 
-    /******************************************************************************************************************/
-
-    // region Extensions to the wallet format.
-
-    /**
-     * By providing an object implementing the {@link WalletExtension}
-     * interface, you can save and load arbitrary additional data that will be
-     * stored with the wallet. Each extension is identified by an ID, so
-     * attempting to add the same extension twice (or two different objects that
-     * use the same ID) will throw an IllegalStateException.
-     */
-    public void addExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
-        lock.lock();
-        try {
-            if (extensions.containsKey(id))
-                throw new IllegalStateException("Cannot add two extensions with the same ID: " + id);
-            extensions.put(id, extension);
-            saveNow();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Atomically adds extension or returns an existing extension if there is
-     * one with the same id already present.
-     */
-    public WalletExtension addOrGetExistingExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
-        lock.lock();
-        try {
-            WalletExtension previousExtension = extensions.get(id);
-            if (previousExtension != null)
-                return previousExtension;
-            extensions.put(id, extension);
-            saveNow();
-            return extension;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Either adds extension as a new extension or replaces the existing
-     * extension if one already exists with the same id. This also triggers
-     * wallet auto-saving, so may be useful even when called with the same
-     * extension as is already present.
-     */
-    public void addOrUpdateExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
-        lock.lock();
-        try {
-            extensions.put(id, extension);
-            saveNow();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns a snapshot of all registered extension objects. The extensions
-     * themselves are not copied.
-     */
-    public Map<String, WalletExtension> getExtensions() {
-        lock.lock();
-        try {
-            return ImmutableMap.copyOf(extensions);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Deserialize the wallet extension with the supplied data and then install
-     * it, replacing any existing extension that may have existed with the same
-     * ID. If an exception is thrown then the extension is removed from the
-     * wallet, if already present.
-     */
-    public void deserializeExtension(WalletExtension extension, byte[] data) {
-        lock.lock();
-        keyChainGroupLock.lock();
-        try {
-            // This method exists partly to establish a lock ordering of wallet
-            // > extension.
-            extension.deserializeWalletExtension(this, data);
-            extensions.put(extension.getWalletExtensionID(), extension);
-        } catch (Throwable throwable) {
-            log.error("Error during extension deserialization", throwable);
-            extensions.remove(extension.getWalletExtensionID());
-            Throwables.propagate(throwable);
-        } finally {
-            keyChainGroupLock.unlock();
-            lock.unlock();
-        }
-    }
-
-    @Override
-    public void setTag(String tag, ByteString value) {
-        super.setTag(tag, value);
-        saveNow();
-    }
-
-    // endregion
-
-    /******************************************************************************************************************/
-
     protected static class FeeCalculation {
         public CoinSelection bestCoinSelection;
         public TransactionOutput bestChangeOutput;
@@ -1835,7 +1405,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 // currentChangeAddress() as a default.
                 // Address changeAddress = req.changeAddress;
                 if (changeAddress == null)
-                    changeAddress = currentChangeAddress();
+                    throw new RuntimeException(" no changeAddress");
                 changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                 // If the change output would result in this transaction
                 // being
@@ -1863,7 +1433,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             // Now add unsigned inputs for the selected coins.
             for (TransactionOutput output : selection.gathered) {
-                TransactionInput input = req.tx.addInput(((FreeStandingTransactionOutput) output).getUTXO().getBlockHash(), output); 
+                TransactionInput input = req.tx
+                        .addInput(((FreeStandingTransactionOutput) output).getUTXO().getBlockHash(), output);
                 // If the scriptBytes don't default to none, our size
                 // calculations will be thrown off.
                 checkState(input.getScriptBytes().length == 0);
@@ -2134,15 +1705,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
             for (UTXO output : getOutputsResponse.getOutputs()) {
-              if(!  checkSpendpending(output)) {
-                if (multisigns) {
-                    candidates.add(output);
-                } else {
-                    if (!output.isMultiSig()) {
+                if (!checkSpendpending(output)) {
+                    if (multisigns) {
                         candidates.add(output);
+                    } else {
+                        if (!output.isMultiSig()) {
+                            candidates.add(output);
+                        }
                     }
                 }
-              } 
             }
             Collections.shuffle(candidates);
             return candidates;
@@ -2263,8 +1834,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             req.ensureMinRequiredFee = false;
             String tokenHex = entry.getKey();
             Address address = addressResult.get(tokenHex);
-            if(address==null && addressResult.entrySet().size()>0) {
-                address=addressResult.entrySet().iterator().next().getValue();
+            if (address == null && addressResult.entrySet().size() > 0) {
+                address = addressResult.entrySet().iterator().next().getValue();
             }
             FeeCalculation feeCalculation = calculateFee(req, entry.getValue(), start, req.ensureMinRequiredFee,
                     candidates, address);
@@ -2350,19 +1921,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return walletKeys(aesKey);
     }
 
-    public  HashMap<String, Address>  getAddresses(KeyParameter aesKey) {
+    public HashMap<String, Address> getAddresses(KeyParameter aesKey) {
 
         HashMap<String, Address> addressResult = new HashMap<String, Address>();
-        
+
         for (ECKey key : this.walletKeys(aesKey)) {
             String n = key.toAddress(this.getNetworkParameters()).toString();
-            addressResult.put(n,key.toAddress(this.getNetworkParameters()) );
+            addressResult.put(n, key.toAddress(this.getNetworkParameters()));
         }
 
         return addressResult;
     }
 
-    
     public boolean calculatedAddressHit(KeyParameter aesKey, String address) {
 
         for (ECKey key : this.walletKeys(aesKey)) {
@@ -2427,9 +1997,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        if (allowClientMining && clientMiningAddress != null) {
-            block.setMinerAddress(clientMiningAddress);
-        }
         // save block
         block.solve();
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
@@ -2453,7 +2020,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
         } catch (InsufficientMoneyException e) {
-                log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
+            log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
                 repeat -= 1;
                 try {
@@ -2491,8 +2058,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe;
         UTXO spendableUTXO = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params,
-                spendableUTXO, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO, 0);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
@@ -2504,9 +2070,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
 
-        if (allowClientMining && clientMiningAddress != null) {
-            rollingBlock.setMinerAddress(clientMiningAddress);
-        }
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -2639,9 +2202,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
 
-        if (allowClientMining && clientMiningAddress != null) {
-            block.setMinerAddress(clientMiningAddress);
-        }
         block.solve();
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         return block;
@@ -2679,9 +2239,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
 
-        if (allowClientMining && clientMiningAddress != null) {
-            rollingBlock.setMinerAddress(clientMiningAddress);
-        }
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -2716,12 +2273,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
 
-        if (allowClientMining && clientMiningAddress != null) {
-            rollingBlock.setMinerAddress(clientMiningAddress);
-            // log.debug(rollingBlock.toString());
-        }
-        //
-
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -2736,11 +2287,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
-        
+
         Coin summe = Coin.valueOf(0, tokenid);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), tokenid)) {
-                summe=  summe.add(u.getValue());
+                summe = summe.add(u.getValue());
             }
         }
         return pay(aesKey, destination, summe, memo);
@@ -2766,9 +2317,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         completeTx(request, aesKey);
 
         rollingBlock.addTransaction(request.tx);
-        if (allowClientMining && clientMiningAddress != null) {
-            rollingBlock.setMinerAddress(clientMiningAddress);
-        }
+
         rollingBlock.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
@@ -2787,7 +2336,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
-    
+
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
             String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
@@ -2818,7 +2367,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         for (ECKey ecKey : walletKeys) {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
-        
+
         saveToken(tokenInfo, basecoin, signKey, aesKey);
     }
 

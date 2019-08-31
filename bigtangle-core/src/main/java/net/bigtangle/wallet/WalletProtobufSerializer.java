@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright   2018  Inasset GmbH. 
+	 *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
 /*
@@ -24,7 +24,6 @@ package net.bigtangle.wallet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -84,8 +83,7 @@ public class WalletProtobufSerializer {
     // 1 MB
     private static final int WALLET_SIZE_LIMIT =  1024 * 1024;
 
-    private boolean requireMandatoryExtensions = true;
-
+   
     public interface WalletFactory {
         Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
     }
@@ -112,16 +110,7 @@ public class WalletProtobufSerializer {
         this.keyChainFactory = keyChainFactory;
     }
 
-    /**
-     * If this property is set to false, then unknown mandatory extensions will
-     * be ignored instead of causing load errors. You should only use this if
-     * you know exactly what you are doing, as the extension data will NOT be
-     * round-tripped, possibly resulting in a corrupted wallet if you save it
-     * back out again.
-     */
-    public void setRequireMandatoryExtensions(boolean value) {
-        requireMandatoryExtensions = value;
-    }
+
 
     /**
      * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
@@ -341,13 +330,7 @@ public class WalletProtobufSerializer {
         Wallet wallet = factory.create(params, keyChainGroup);
 
       
-
-        loadExtensions(wallet, extensions != null ? extensions : new WalletExtension[0], walletProto);
-
-        for (Protos.Tag tag : walletProto.getTagsList()) {
-            wallet.setTag(tag.getTag(), tag.getData());
-        }
-
+ 
         if (walletProto.hasVersion()) {
             wallet.setVersion(walletProto.getVersion());
         }
@@ -355,38 +338,7 @@ public class WalletProtobufSerializer {
         return wallet;
     }
 
-    private void loadExtensions(Wallet wallet, WalletExtension[] extensionsList, Protos.Wallet walletProto)
-            throws UnreadableWalletException {
-        final Map<String, WalletExtension> extensions = new HashMap<String, WalletExtension>();
-        for (WalletExtension e : extensionsList)
-            extensions.put(e.getWalletExtensionID(), e);
-        // The Wallet object, if subclassed, might have added some extensions to
-        // itself already. In that case, don't
-        // expect them to be passed in, just fetch them here and don't re-add.
-        extensions.putAll(wallet.getExtensions());
-        for (Protos.Extension extProto : walletProto.getExtensionList()) {
-            String id = extProto.getId();
-            WalletExtension extension = extensions.get(id);
-            if (extension == null) {
-                if (extProto.getMandatory()) {
-                    if (requireMandatoryExtensions)
-                        throw new UnreadableWalletException("Unknown mandatory extension in wallet: " + id);
-                    else
-                        log.error("Unknown extension in wallet {}, ignoring", id);
-                }
-            } else {
-                log.info("Loading wallet extension {}", id);
-                try {
-                    wallet.deserializeExtension(extension, extProto.getData().toByteArray());
-                } catch (Exception e) {
-                    if (extProto.getMandatory() && requireMandatoryExtensions) {
-                        log.error("Error whilst reading mandatory extension {}, failing to read wallet", id);
-                        throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
-                    }
-                }
-            }
-        }
-    }
+
 
     /**
      * Returns the loaded protocol buffer from the given byte stream. You

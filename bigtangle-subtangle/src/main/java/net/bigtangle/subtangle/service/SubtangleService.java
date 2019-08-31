@@ -80,7 +80,7 @@ public class SubtangleService {
 
     @SuppressWarnings("deprecation")
     private void giveRemoteMoney(ECKey signKey, Coin amount, UTXO output) throws Exception {
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output);
         Transaction transaction = new Transaction(networkParameters);
 
         ECKey outKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(subtangleConfiguration.getPriKeyHex1()),
@@ -113,7 +113,7 @@ public class SubtangleService {
         if (utxolist.isEmpty()) {
             return;
         }
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, utxolist.get(0), 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, utxolist.get(0));
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, address);
         transaction.addOutput(spendableOutput.getValue().subtract(amount), signKey);

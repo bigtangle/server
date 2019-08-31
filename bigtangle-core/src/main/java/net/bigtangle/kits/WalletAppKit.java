@@ -298,10 +298,7 @@ public class WalletAppKit extends AbstractIdleService {
             wallet = loadWallet(shouldReplayWallet);
         } else {
             wallet = createWallet();
-            wallet.freshReceiveKey();
-            for (WalletExtension e : provideWalletExtensions()) {
-                wallet.addExtension(e);
-            }
+        
 
             // Currently the only way we can be sure that an extension is aware
             // of its containing wallet is by

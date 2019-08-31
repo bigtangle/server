@@ -1,6 +1,8 @@
 package net.bigtangle.blockconfirm.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -22,9 +24,11 @@ public class GiveMoneyUtils {
     @PostConstruct
     public void init() {
         String contextRoot = serverConfiguration.getServerURL();
-        payWallet = new Wallet(networkParameters, contextRoot);
-        payWallet.importKey(
-                  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub)));
+
+        payWallet = Wallet.fromKeys(networkParameters, keys);
         payWallet.setServerURL(contextRoot);
     }
 
@@ -35,17 +39,17 @@ public class GiveMoneyUtils {
 
     @Autowired
     private ServerConfiguration serverConfiguration;
- 
+
     public synchronized Block batchGiveMoneyToECKeyList(HashMap<String, Long> giveMoneyResult) throws Exception {
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
         LOGGER.info("  start giveMoneyResult : " + giveMoneyResult + " ");
 
-        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic( Utils.HEX.decode(NetworkParameters.testPriv),
+        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
-        return  payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
- 
+        return payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GiveMoneyUtils.class);

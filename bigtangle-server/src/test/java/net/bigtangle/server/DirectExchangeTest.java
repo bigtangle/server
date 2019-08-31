@@ -28,8 +28,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Contact;
-import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -58,16 +56,12 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DirectExchangeTest extends AbstractIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
-    
-    @Autowired
-    private ServerConfiguration serverConfiguration;
+    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class); 
 
     @Test
     public void testBatchBlock() throws Exception {
@@ -166,49 +160,48 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     public void testGiveMoney() throws Exception {
         store.resetStore();
         testInitWallet();
- 
-        
-        
-        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> balance1 = getBalance(false, genesiskey);
-        log.info("balance1 : " + balance1); 
-        //two utxo to spent
+        log.info("balance1 : " + balance1);
+        // two utxo to spent
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000000* 1000l);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000000 * 1000l);
         }
-       walletAppKit.wallet().payMoneyToECKeyList(null,giveMoneyResult, genesiskey);
-       milestoneService.update();
-     
-       List<UTXO> balance = getBalance(false, genesiskey);
-       log.info("balance : " + balance); 
+        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, genesiskey);
+        milestoneService.update();
+
+        List<UTXO> balance = getBalance(false, genesiskey);
+        log.info("balance : " + balance);
         for (UTXO utxo : balance) {
-         
-                assertTrue(utxo.getValue().getValue() == 9996996666667l
-                       );
-            
+
+            assertTrue(utxo.getValue().getValue() == 9996996666667l);
+
         }
     }
 
     @Test
-    
+
     public void testWalletImportKeyGiveMoney() throws Exception {
-        Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
-        coinbaseWallet.importKey(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub)));
+
+        Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
 
         ECKey outKey = new ECKey();
 
         for (int i = 0; i < 3; i++) {
             Transaction transaction = new Transaction(this.networkParameters);
-            Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
 
             SendRequest request = SendRequest.forTx(transaction);
-            coinbaseWallet.completeTx(request,null);
+            coinbaseWallet.completeTx(request, null);
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
@@ -231,22 +224,24 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    
+
     public void testWalletBatchGiveMoney() throws Exception {
-        Wallet coinbaseWallet = new Wallet(networkParameters, contextRoot);
-        coinbaseWallet.importKey(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv), Utils.HEX.decode(NetworkParameters.testPub)));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub)));
+
+        Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
 
         Transaction transaction = new Transaction(this.networkParameters);
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            Coin amount = Coin.parseCoin("3", NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(300, NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
         }
 
         SendRequest request = SendRequest.forTx(transaction);
-        coinbaseWallet.completeTx(request,null);
+        coinbaseWallet.completeTx(request, null);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
@@ -256,7 +251,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null,false);
+        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
         for (TransactionOutput transactionOutput : candidates) {
             log.info("UTXO : " + transactionOutput);
         }
@@ -265,7 +260,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
          * { log.info("UTXO : logtput); }
          */
     }
-
 
     @Test
     public void searchBlock() throws Exception {
@@ -284,21 +278,20 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
-    
     @Test
     public void exchangeToken() throws Exception {
         testInitWallet();
         wallet1();
         wallet2();
-        
-        //create token
+
+        // create token
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
         testCreateToken();
-        
+
         milestoneService.update();
-        
+
         payToken(yourKey);
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);
@@ -315,17 +308,18 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
-       // req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
- 
-        walletAppKit.wallet().completeTx(req,null);
-       // walletAppKit.wallet().signTransaction(req);
+        // req.tx.addOutput(myutxo.getValue(), new Address(networkParameters,
+        // yourutxo.getAddress()));
+
+        walletAppKit.wallet().completeTx(req, null);
+        // walletAppKit.wallet().signTransaction(req);
 
         byte[] a = req.tx.bitcoinSerialize();
 
         Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
 
         SendRequest request = SendRequest.forTx(transaction);
-       // walletAppKit1.wallet().signTransaction(request);
+        // walletAppKit1.wallet().signTransaction(request);
         exchangeTokenComplete(request.tx);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -338,8 +332,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.info("getExchange resp : " + requestParam);
     }
 
-
-   //TODO @Test
+    // TODO @Test
     public void testExchangeTokenMulti() throws Exception {
         testInitWallet();
         wallet1();
@@ -393,7 +386,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         signKeys.add(keys.get(1));
         signKeys.add(keys.get(2));
 
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo);
 
         transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
 
@@ -405,7 +398,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         List<byte[]> sigs = new ArrayList<byte[]>();
         for (ECKey ecKey : signKeys) {
-            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
+            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo);
             Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
             Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
@@ -435,7 +428,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
         amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
         req = SendRequest.to(destination, amount);
-        walletAppKit.wallet().completeTx(req,null);
+        walletAppKit.wallet().completeTx(req, null);
         walletAppKit.wallet().signTransaction(req);
 
         exchangeTokenComplete(req.tx);
@@ -463,7 +456,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         }
         assertEquals(multitemp.getValue().getValue() - 10000, multitemp1.getValue().getValue());
         assertEquals(1000, systemcoin1.getValue().getValue());
-        assertEquals( 10000, mymultitemp1.getValue().getValue());
+        assertEquals(10000, mymultitemp1.getValue().getValue());
         assertEquals(mysystemcoin.getValue().getValue() - 1000, mysystemcoin1.getValue().getValue());
     }
 
@@ -489,7 +482,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // get other tokenid from wallet
         UTXO utxo = null;
         List<UTXO> ulist = getBalance();
-        
+
         for (UTXO u : ulist) {
             if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
@@ -500,10 +493,10 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // utxo.getValue().getTokenid()));
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
-        
-        Coin coinbase = Coin.parseCoin("1", utxo.getValue().getTokenid());
+
+        Coin coinbase = Coin.valueOf(100, utxo.getValue().getTokenid());
         SendRequest request = SendRequest.to(destination, coinbase);
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -534,7 +527,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
         SendRequest request = SendRequest.to(destination, utxo.getValue());
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
@@ -678,8 +671,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
     }
 
-
-
     @Test
     public void createTransaction() throws Exception {
         testInitWallet();
@@ -694,10 +685,10 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
 
-        Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
-        walletAppKit.wallet().completeTx(request,null);
+        walletAppKit.wallet().completeTx(request, null);
         // request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);

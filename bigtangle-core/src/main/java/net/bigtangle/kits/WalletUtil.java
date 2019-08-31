@@ -55,7 +55,7 @@ public class WalletUtil {
 
     public static byte[] createWallet(NetworkParameters params) throws IOException {
 
-        return createWallet(params, 0);
+        return createWallet(params, 1);
 
     }
 
@@ -67,7 +67,6 @@ public class WalletUtil {
         Context.propagate(context);
         Wallet wallet = new Wallet(params, kcg); // default
 
-        wallet.freshReceiveKey();
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         new WalletProtobufSerializer().writeWallet(wallet, outStream);
         return outStream.toByteArray();

@@ -20,20 +20,23 @@
  */
 package net.bigtangle.wallet;
 
-import org.slf4j.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nonnull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
-import net.bigtangle.core.*;
-import net.bigtangle.utils.*;
-
-import javax.annotation.*;
-import java.io.*;
-import java.util.Date;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static com.google.common.base.Preconditions.*;
+import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 /**
  * A class that handles atomic and optionally delayed writing of the wallet file to disk. In future: backups too.

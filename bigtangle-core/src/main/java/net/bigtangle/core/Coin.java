@@ -21,7 +21,6 @@ package net.bigtangle.core;
 
 import java.beans.Transient;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Arrays;
 
 import com.google.common.math.LongMath;
@@ -51,7 +50,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * One .
      */
-    public static final Coin COIN = Coin.valueOf(100, NetworkParameters.BIGTANGLE_TOKENID,2);
+    public static final Coin COIN = Coin.valueOf(100, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
      * 0.01 . This unit is not really used much.
@@ -60,36 +59,29 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * A satoshi is the smallest unit that can be transferred.
      */
-    public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID,2);
+    public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
     public static final Coin FIFTY_COINS = COIN.multiply(50);
 
     /**
      * Represents a monetary value of minus one satoshi.
      */
-    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID,2);
+    public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
 
     /**
      * The number of satoshis of this monetary value.
      */
     private long value;
     private byte[] tokenid;
-    private int decimals = 0;
+     
 
-    private Coin(final long satoshis, final byte[] tokenid, int decimals) {
-        this.value = satoshis;
-        this.tokenid = tokenid;
-        this.decimals = decimals;
-    }
-
+ 
     private Coin(final long satoshis, final byte[] tokenid) {
         this.value = satoshis;
         this.tokenid = tokenid;
     }
 
-    public static Coin valueOf(final long satoshis, byte[] tokenid, int decimals) {
-        return new Coin(satoshis, tokenid,decimals);
-    }
+    
     
     public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
@@ -100,10 +92,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(satoshis, buf);
     }
 
-    @Override
-    public int smallestUnitExponent() {
-        return decimals;
-    }
+
 
     /**
      * Returns the number of satoshis of this monetary value.
@@ -123,31 +112,6 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         }
         String hexStr = Utils.HEX.encode(this.tokenid);
         return hexStr;
-    }
-
-    /**
-     * Parses an amount expressed in the way humans are used to.
-     * <p>
-     * <p/>
-     * This takes string in a format understood by
-     * {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     *
-     * @throws IllegalArgumentException
-     *             if you try to specify fractional, or a value out of range.
-     */
-    public static Coin parseCoin(final String str, byte[] tokenid) {
-        try {
-            if (Arrays.equals(tokenid, NetworkParameters.BIGTANGLE_TOKENID)) {
-                long satoshis = new BigDecimal(str).movePointRight(2).toBigIntegerExact()
-                        .longValue();
-                return Coin.valueOf(satoshis, tokenid);
-            } else {
-                return Coin.valueOf(Long.valueOf(str), tokenid);
-            }
-        } catch (ArithmeticException e) {
-            throw new IllegalArgumentException(e); // Repackage exception to
-                                                   // honor method contract
-        }
     }
 
     public Coin add(final Coin value) {
@@ -278,9 +242,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(-this.value, this.tokenid);
     }
 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.FIAT.minDecimals(0).repeatOptionalDecimals(1, 2)
-            .noCode();
-
+    
     /**
      * <p>
      * Returns the value as a plain string. The result is unformatted with no
@@ -289,8 +251,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public String toPlainString() {
         if (isBIG()) {
-            this.decimals=2;
-            return PLAIN_FORMAT.format(this).toString();
+            return MonetaryFormat.FIAT.format(this,NetworkParameters.BIGTANGLE_DECIMAL).toString();
         } else {
             return String.valueOf(this.value);
         }
@@ -298,14 +259,13 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     public static String toPlainString(long value) {
         Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
-        coin.setDecimals(2);
-        return PLAIN_FORMAT.format(coin).toString();
+        return MonetaryFormat.FIAT.format(coin,NetworkParameters.BIGTANGLE_DECIMAL).toString();
 
     }
 
     @Override
     public String toString() {
-        return "[" + toPlainString() + " :" + getTokenHex() + "]";
+        return "[" + toPlainString() + ":" + getTokenHex() + "]";
     }
 
     @Override
@@ -332,13 +292,5 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public byte[] getTokenid() {
         return tokenid;
     }
-
-    public int getDecimals() {
-        return decimals;
-    }
-
-    public void setDecimals(int decimals) {
-        this.decimals = decimals;
-    }
-
+ 
 }

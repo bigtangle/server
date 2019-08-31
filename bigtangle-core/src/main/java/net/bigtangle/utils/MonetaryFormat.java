@@ -34,6 +34,7 @@ import java.util.Locale;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Monetary;
+import net.bigtangle.core.NetworkParameters;
 
 /**
  * <p>
@@ -50,11 +51,9 @@ import net.bigtangle.core.Monetary;
  */
 public final class MonetaryFormat {
 
-    /** Standard format for the BTA denomination. */
-    public static final MonetaryFormat BTA = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
-
+     
     /** Standard format for fiat amounts. */
-    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(1, 1);
+    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(0).repeatOptionalDecimals(1, 2);
    
   
     public static final int MAX_DECIMALS = 2;
@@ -343,13 +342,19 @@ public final class MonetaryFormat {
     /**
      * Format the given monetary value to a human readable form.
      */
-    public CharSequence format(Monetary monetary) {
+    public CharSequence format(Monetary monetary ) {
+       return format(monetary, 2);
+    }
+    /**
+     * Format the given monetary value to a human readable form.
+     */
+    public CharSequence format(Monetary monetary, int smallestUnitExponent) {
         // preparation
         int maxDecimals = minDecimals;
         if (decimalGroups != null)
             for (int group : decimalGroups)
                 maxDecimals += group;
-        int smallestUnitExponent = monetary.smallestUnitExponent();
+       // int smallestUnitExponent = monetary.smallestUnitExponent();
         //checkState(maxDecimals < smallestUnitExponent,
          //       "The maximum possible number of decimals (%s) cannot exceed %s.", maxDecimals, smallestUnitExponent);
 
@@ -416,7 +421,7 @@ public final class MonetaryFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str, byte[] tokenid) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, 2), tokenid);
+        return Coin.valueOf(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), tokenid);
     }
 
   

@@ -707,8 +707,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<UTXO> outputs = getBalance(false, testKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
                 .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(
@@ -787,8 +786,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<UTXO> outputs = getBalance(false, testKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
                 .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(

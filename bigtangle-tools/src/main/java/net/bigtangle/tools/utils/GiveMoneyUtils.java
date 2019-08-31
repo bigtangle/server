@@ -136,7 +136,7 @@ public class GiveMoneyUtils {
             }
         }
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, output_, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(Configure.PARAMS, output_);
         Coin amount2 = spendableOutput.getValue().subtract(coinbase);
         doublespent.addOutput(amount2, genesiskey);
         TransactionInput input = doublespent.addInput(output_.getBlockHash(), spendableOutput);
