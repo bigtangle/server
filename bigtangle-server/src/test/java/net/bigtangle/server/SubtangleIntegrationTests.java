@@ -101,7 +101,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         }
         assertTrue(findOutput != null);
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, findOutput);
         Transaction transaction = new Transaction(networkParameters);
         Coin coinbase = Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = outKey.toAddress(this.networkParameters);

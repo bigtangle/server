@@ -197,7 +197,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 3; i++) {
             Transaction transaction = new Transaction(this.networkParameters);
-            Coin amount = Coin.parseCoin("10000", NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
 
             SendRequest request = SendRequest.forTx(transaction);
@@ -236,7 +236,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Transaction transaction = new Transaction(this.networkParameters);
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            Coin amount = Coin.parseCoin("3", NetworkParameters.BIGTANGLE_TOKENID);
+            Coin amount = Coin.valueOf(300, NetworkParameters.BIGTANGLE_TOKENID);
             transaction.addOutput(amount, outKey);
         }
 
@@ -386,7 +386,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         signKeys.add(keys.get(1));
         signKeys.add(keys.get(2));
 
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo, 0);
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo);
 
         transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
 
@@ -398,7 +398,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         List<byte[]> sigs = new ArrayList<byte[]>();
         for (ECKey ecKey : signKeys) {
-            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo, 0);
+            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo);
             Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
             Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
@@ -494,7 +494,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
 
-        Coin coinbase = Coin.parseCoin("1", utxo.getValue().getTokenid());
+        Coin coinbase = Coin.valueOf(100, utxo.getValue().getTokenid());
         SendRequest request = SendRequest.to(destination, coinbase);
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
@@ -685,7 +685,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
 
-        Coin amount = Coin.parseCoin("0.02", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
         request.tx.setMemo("memo");
         walletAppKit.wallet().completeTx(request, null);

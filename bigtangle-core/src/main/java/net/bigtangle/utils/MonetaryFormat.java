@@ -34,6 +34,7 @@ import java.util.Locale;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Monetary;
+import net.bigtangle.core.NetworkParameters;
 
 /**
  * <p>
@@ -420,7 +421,7 @@ public final class MonetaryFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str, byte[] tokenid) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, 2), tokenid);
+        return Coin.valueOf(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), tokenid);
     }
 
   

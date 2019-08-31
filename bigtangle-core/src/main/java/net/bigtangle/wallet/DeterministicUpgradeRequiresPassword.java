@@ -23,4 +23,9 @@ package net.bigtangle.wallet;
  * users password. This is required because HD wallets are upgraded from random using the private key bytes of
  * the oldest non-rotating key, in order to make the upgrade process itself deterministic.
  */
-public class DeterministicUpgradeRequiresPassword extends RuntimeException {}
+public class DeterministicUpgradeRequiresPassword extends RuntimeException {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;}

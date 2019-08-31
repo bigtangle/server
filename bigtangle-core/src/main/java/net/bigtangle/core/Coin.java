@@ -21,7 +21,6 @@ package net.bigtangle.core;
 
 import java.beans.Transient;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Arrays;
 
 import com.google.common.math.LongMath;
@@ -113,31 +112,6 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         }
         String hexStr = Utils.HEX.encode(this.tokenid);
         return hexStr;
-    }
-
-    /**
-     * Parses an amount expressed in the way humans are used to.
-     * <p>
-     * <p/>
-     * This takes string in a format understood by
-     * {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     *
-     * @throws IllegalArgumentException
-     *             if you try to specify fractional, or a value out of range.
-     */
-    public static Coin parseCoin(final String str, byte[] tokenid) {
-        try {
-            if (Arrays.equals(tokenid, NetworkParameters.BIGTANGLE_TOKENID)) {
-                long satoshis = new BigDecimal(str).movePointRight(2).toBigIntegerExact()
-                        .longValue();
-                return Coin.valueOf(satoshis, tokenid);
-            } else {
-                return Coin.valueOf(Long.valueOf(str), tokenid);
-            }
-        } catch (ArithmeticException e) {
-            throw new IllegalArgumentException(e); // Repackage exception to
-                                                   // honor method contract
-        }
     }
 
     public Coin add(final Coin value) {
@@ -277,7 +251,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public String toPlainString() {
         if (isBIG()) {
-            return MonetaryFormat.FIAT.format(this,2).toString();
+            return MonetaryFormat.FIAT.format(this,NetworkParameters.BIGTANGLE_DECIMAL).toString();
         } else {
             return String.valueOf(this.value);
         }
@@ -285,7 +259,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     public static String toPlainString(long value) {
         Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
-        return MonetaryFormat.FIAT.format(coin,2).toString();
+        return MonetaryFormat.FIAT.format(coin,NetworkParameters.BIGTANGLE_DECIMAL).toString();
 
     }
 

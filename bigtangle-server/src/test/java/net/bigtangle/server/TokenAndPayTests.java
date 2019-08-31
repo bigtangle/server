@@ -108,8 +108,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(NetworkParameters.testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, outKey));
@@ -225,7 +224,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         ECKey toKey = walletKeys.get(1);
 
         String tokenid = tokenInfo.getToken().getTokenid();
-        Coin amount = Coin.parseCoin("12", Utils.HEX.decode(tokenid));
+        Coin amount = Coin.valueOf(1200, Utils.HEX.decode(tokenid));
         // pay to address toKey, remainder return to signKeys with multi signs
         PayMultiSign payMultiSign = launchPayMultiSign(toKey, signKeys, tokenInfo, amount);
 
@@ -234,7 +233,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         checkBalance(amount, toKey);
 
         // repeat the multi signs
-        Coin amount1 = Coin.parseCoin("11", Utils.HEX.decode(tokenid));
+        Coin amount1 = Coin.valueOf(1100, Utils.HEX.decode(tokenid));
         PayMultiSign payMultiSign1 = launchPayMultiSign(toKey, signKeys, tokenInfo, amount1);
 
         paymultisign(signKeys, payMultiSign1);
@@ -279,7 +278,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         UTXO output = getBalance(amount.getTokenHex(), false, ecKeys);
         log.debug(output.toString());
         // filter
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, output);
         Transaction transaction = new Transaction(networkParameters);
         transaction.addOutput(amount, toKey);
         // remainder of utxo goes here with multisign keys ecKeys
@@ -333,7 +332,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO u = outputsDetailsResponse.getOutputs();
 
-        TransactionOutput multisigOutput_1 = new FreeStandingTransactionOutput(networkParameters, u, 0);
+        TransactionOutput multisigOutput_1 = new FreeStandingTransactionOutput(networkParameters, u);
         Script multisigScript_1 = multisigOutput_1.getScriptPubKey();
 
         byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.getBlockhashHex());

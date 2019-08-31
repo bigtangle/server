@@ -24,6 +24,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.params.AbstractBitcoinNetParams;
+import net.bigtangle.utils.MonetaryFormat;
 
 import javax.annotation.Nullable;
 
@@ -246,7 +247,7 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to
                 // 8dp).
                 try {
-                    Coin amount = Coin.parseCoin(valueToken, NetworkParameters.BIGTANGLE_TOKENID);
+                    Coin amount = MonetaryFormat.FIAT.noCode().parse(valueToken, NetworkParameters.BIGTANGLE_TOKENID);
 //                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
 //                        throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)

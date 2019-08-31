@@ -87,7 +87,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
 
-        Coin amount0 = Coin.parseCoin("0.15", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount0 = Coin.valueOf(15, NetworkParameters.BIGTANGLE_TOKENID);
         multiSigTransaction.addOutput(amount0, scriptPubKey);
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -122,10 +122,10 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         List<UTXO> ulist = getBalance(false, wallet1Keys_part);
 
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0), 0);
+        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0));
         Script multisigScript1 = multisigOutput.getScriptPubKey();
 
-        Coin amount1 = Coin.parseCoin("0.03", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount1 = Coin.valueOf(3, NetworkParameters.BIGTANGLE_TOKENID);
 
         Coin amount2 = multisigOutput.getValue().subtract(amount1);
 
@@ -176,7 +176,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Coin amount = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
         request.tx.setMemo(createDataSize(5000));
         walletAppKit.wallet().completeTx(request, null);
@@ -191,7 +191,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
     public void testPartsToOne() throws Exception {
 
         ECKey to = wallet1Keys.get(1);
-        Coin aCoin = Coin.parseCoin("0.01", NetworkParameters.BIGTANGLE_TOKENID);
+        Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         testPartsToOne(aCoin, to);
         checkBalance(aCoin, to);
 

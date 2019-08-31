@@ -62,6 +62,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
 
@@ -591,7 +592,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField1.getText());
-        Coin price = Coin.parseCoin(this.limitTextField1.getText(), NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText(), NetworkParameters.BIGTANGLE_TOKENID);
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();
@@ -655,7 +656,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField.getText());
-        Coin price = Coin.parseCoin(this.limitTextField.getText(), NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText(), NetworkParameters.BIGTANGLE_TOKENID);
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();

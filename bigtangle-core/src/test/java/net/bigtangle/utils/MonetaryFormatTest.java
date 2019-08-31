@@ -42,12 +42,12 @@ public class MonetaryFormatTest {
 
   //  @Test
     public void testGrouping() throws Exception {
-        assertEquals("0.1", format(Coin.parseCoin("0.1",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.010", format(Coin.parseCoin("0.01",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.001", format(Coin.parseCoin("0.001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000100", format(Coin.parseCoin("0.0001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000010", format(Coin.parseCoin("0.00001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000001", format(Coin.parseCoin("0.000001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.1", format(NO_CODE.parse("0.1",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.010", format(NO_CODE.parse("0.01",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.001", format(NO_CODE.parse("0.001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000100", format(NO_CODE.parse("0.0001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000010", format(NO_CODE.parse("0.00001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.000001", format(NO_CODE.parse("0.000001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
     }
 
     @Test

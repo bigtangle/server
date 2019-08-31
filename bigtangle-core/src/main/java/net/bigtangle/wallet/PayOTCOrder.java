@@ -40,6 +40,7 @@ import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
@@ -131,7 +132,7 @@ public class PayOTCOrder {
                             if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
                                     && utxo.getValue().getValue() >= Long.parseLong(this.exchange.getFromAmount())) {
                                 TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(wallet.params,
-                                        utxo, 0);
+                                        utxo);
                                 Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
                                 byte[] buf = Utils.HEX.decode(dataHex);
@@ -346,11 +347,9 @@ public class PayOTCOrder {
     }
 
     private Coin parseCoinValue(String toAmount, String toTokenHex, boolean decimal) {
-        if (decimal) {
-            return Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
-        } else {
-            return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
-        }
+        
+            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex));
+         
     }
 
     private List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
@@ -514,7 +513,7 @@ public class PayOTCOrder {
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO u = outputsDetailsResponse.getOutputs();
 
-        TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
+        TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u);
         Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
         byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.getBlockhashHex());

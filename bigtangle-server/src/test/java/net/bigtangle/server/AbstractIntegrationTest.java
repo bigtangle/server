@@ -138,8 +138,7 @@ public abstract class AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
     @Autowired
     protected TipsService tipsService;
-    @Autowired
-    private ServerConfiguration serverConfiguration;
+ 
 
     @Autowired
     protected void prepareContextRoot(@Value("${local.server.port}") int port) {
@@ -297,8 +296,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> outputs = getBalance(false, fromKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
                 .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
         tx.addOutput(
                 new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), fromKey));
@@ -351,8 +349,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> outputs = getBalance(false, beneficiary).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
                 .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(
@@ -407,8 +404,7 @@ public abstract class AbstractIntegrationTest {
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
                         .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
                 .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
         tx.addOutput(
@@ -625,8 +621,7 @@ public abstract class AbstractIntegrationTest {
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));

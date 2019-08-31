@@ -58,6 +58,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
@@ -541,7 +542,7 @@ public class TokenController extends TokenBaseController {
 
                 TokenInfo tokenInfo = new TokenInfo();
 
-                Coin basecoin = Coin.parseCoin(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
+                Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount.getText(), Utils.HEX.decode(tokenid.getValue()));
                 long amount = basecoin.getValue();
 
                 HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -612,7 +613,7 @@ public class TokenController extends TokenBaseController {
             tokenInfo.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-            Coin basecoin = Coin.parseCoin("0", Utils.HEX.decode(marketid.getValue()));
+            Coin basecoin = MonetaryFormat.FIAT.noCode().parse("0", Utils.HEX.decode(marketid.getValue()));
             saveToken(tokenInfo, basecoin, outKey);
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -648,7 +649,7 @@ public class TokenController extends TokenBaseController {
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
             // requestParam.put("amount",
-            // Coin.parseCoin(stockAmount11.getText(),
+            // MonetaryFormat.FIAT.noCode().parse(stockAmount11.getText(),
             // Utils.HEX.decode(tokenid11.getValue())).getValue());
             requestParam.put("tokenname", stockName11.getText());
             requestParam.put("url", urlTF1.getText());
@@ -820,7 +821,7 @@ public class TokenController extends TokenBaseController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
         requestParam.put("amount",
-                Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue());
+                MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue());
         requestParam.put("tokenname", stockName1.getText());
         requestParam.put("url", urlTF.getText());
         requestParam.put("signnumber", signnumberTF.getText());
@@ -843,7 +844,7 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo();
         Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(), stockName1.getText().trim(),
                 stockDescription1.getText().trim(), 1, 0,
-                Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(), true, 0,
+                MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue(), true, 0,
                 "de");
         tokens.setDomainName(urlTF.getText().trim());
         tokenInfo.setToken(tokens);
@@ -855,7 +856,7 @@ public class TokenController extends TokenBaseController {
         }
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", mykey.getPublicKeyAsHex()));
-        Coin basecoin = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()));
+        Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()));
 
         Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
         GuiUtils.informationalAlert("", Main.getText("s_c_m"));
@@ -963,7 +964,7 @@ public class TokenController extends TokenBaseController {
         Long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        long amount = Coin.parseCoin(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
+        long amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue())).getValue();
         Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
 
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),

@@ -91,11 +91,11 @@ public class WalletService {
             boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            int chainHeight = 10;
+           
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
-                candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+                candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
 
             }
         } catch (UTXOProviderException e) {
@@ -108,11 +108,10 @@ public class WalletService {
             byte[] tokenid, boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            int chainHeight = 10;
-            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
+             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
-                candidates.add(new FreeStandingTransactionOutput(networkParameters, output, chainHeight));
+                candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
             }
         } catch (
 

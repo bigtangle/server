@@ -390,7 +390,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -479,7 +479,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -879,7 +879,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                     outputs.get(0));
             Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
@@ -903,7 +903,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount.add(amount), testKey));
@@ -932,7 +932,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(-1, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
@@ -977,7 +977,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx2 = new Transaction(networkParameters);
             tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount, testKey));
@@ -1068,8 +1068,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
         tx.addOutput(
@@ -2711,7 +2710,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -2795,7 +2794,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                             .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -2814,7 +2813,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput2 = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs2.get(0), 0);
+                    outputs2.get(0));
             Coin amount2 = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount2, testKey));
@@ -2912,7 +2911,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                             .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -2924,7 +2923,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput2 = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs2.get(0), 0);
+                    outputs2.get(0));
             Coin amount2 = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount2, testKey));
@@ -2999,7 +2998,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput2 = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs2.get(0), 0);
+                    outputs2.get(0));
             Coin amount2 = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount2, testKey));
@@ -3069,7 +3068,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                             .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3110,7 +3109,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3156,7 +3155,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3221,7 +3220,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3293,7 +3292,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3363,7 +3362,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3437,7 +3436,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -3522,7 +3521,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));

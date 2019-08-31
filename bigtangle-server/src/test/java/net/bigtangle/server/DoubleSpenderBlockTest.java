@@ -185,7 +185,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         Transaction doublespent = new Transaction(this.networkParameters);
         doublespent.addOutput(new TransactionOutput(this.networkParameters, doublespent, coinbase, outKey));
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output);
 //        Coin amount2 = spendableOutput.getValue().subtract(coinbase);
 //        doublespent.addOutput(amount2, genesiskey);
         TransactionInput input = doublespent.addInput(output.getBlockHash(), spendableOutput);

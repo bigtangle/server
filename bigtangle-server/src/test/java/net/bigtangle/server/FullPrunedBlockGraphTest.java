@@ -176,8 +176,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Create burning 2 BIG
         List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -323,8 +322,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Create burning 2 BIG
         List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -370,7 +368,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -457,7 +455,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -527,7 +525,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -581,7 +579,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -772,8 +770,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Create burning 2 BIG
         List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -820,7 +817,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -909,7 +906,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -983,7 +980,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Create burning 2 BIG
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -1037,7 +1034,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                     out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(Utils.HEX.encode(testKey.getPubKey())))
                     .collect(Collectors.toList());
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0), 0);
+                    outputs.get(0));
             Coin amount = Coin.valueOf(2, testKey.getPubKey());
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
@@ -1246,8 +1243,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     
         List<UTXO> outputs = getBalance(false, testKey);
         outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.testCoin);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0),
-                0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));

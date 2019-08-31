@@ -34,7 +34,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -69,7 +68,6 @@ import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.PayMultiSignExt;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserSettingData;
@@ -82,7 +80,6 @@ import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -91,10 +88,10 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
 @SuppressWarnings({ "rawtypes", "unused" })
@@ -396,9 +393,9 @@ public class SendMoneyController {
 		addressComboBox2.setItems(addressData);
 		// new BitcoinAddressValidator(Main.params, addressComboBox, sendBtn);
 		new TextFieldValidator(amountEdit, text -> !WTUtils
-				.didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
+				.didThrow(() -> checkState(MonetaryFormat.FIAT.noCode().parse(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
 		new TextFieldValidator(amountEdit1, text -> !WTUtils
-				.didThrow(() -> checkState(Coin.parseCoin(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
+				.didThrow(() -> checkState(MonetaryFormat.FIAT.noCode().parse(text, NetworkParameters.BIGTANGLE_TOKENID).isPositive())));
 		tabPane.getSelectionModel().selectedIndexProperty().addListener((ov, t, t1) -> {
 			int index = t1.intValue();
 			switch (index) {
@@ -595,7 +592,7 @@ public class SendMoneyController {
 
 	public Coin getCoin(String toAmount, String toTokenHex, boolean decimal) {
 		if (decimal) {
-			return Coin.parseCoin(toAmount, Utils.HEX.decode(toTokenHex));
+			return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex));
 		} else {
 			return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
 		}
@@ -652,7 +649,7 @@ public class SendMoneyController {
 			Wallet wallet = Main.walletAppKit.wallet();
 			wallet.setServerURL(CONTEXT_ROOT);
 
-			Coin amount = Coin.parseCoin(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
+			Coin amount = MonetaryFormat.FIAT.noCode().parse(amountEdit.getText(), Utils.HEX.decode(tokeninfo.getValue().toString()));
 			// long factor =
 			// Long.valueOf(unitToggleGroup.getSelectedToggle().getUserData().toString()).longValue();
 			long factor = 1;
@@ -696,7 +693,7 @@ public class SendMoneyController {
 			for (String keyString : addressChoiceBox.getItems()) {
 				keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(keyString)));
 			}
-			Coin amount = Coin.parseCoin(amountEdit11.getText(), Utils.HEX.decode(tokeninfo11.getValue().toString()));
+			Coin amount = MonetaryFormat.FIAT.noCode().parse(amountEdit11.getText(), Utils.HEX.decode(tokeninfo11.getValue().toString()));
 
 			Main.walletAppKit.wallet().payMultiSignatures(null, keys, signnum, amount, "");
 
@@ -880,10 +877,10 @@ public class SendMoneyController {
 		OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
 		UTXO utxo = outputsDetailsResponse.getOutputs();
 
-		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
+		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo);
 		Transaction transaction = new Transaction(Main.params);
 
-		Coin amount = Coin.parseCoin(amountEdit1.getText(), utxo.getValue().getTokenid());
+		Coin amount = MonetaryFormat.FIAT.noCode().parse(amountEdit1.getText(), utxo.getValue().getTokenid());
 
 		Address address = Address.fromBase58(networkParameters,
 				!addressComboBox1.getValue().contains(",") ? addressComboBox1.getValue()
@@ -927,10 +924,10 @@ public class SendMoneyController {
 		OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
 		UTXO utxo = outputsDetailsResponse.getOutputs();
 
-		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo, 0);
+		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(networkParameters, utxo);
 		Transaction transaction = new Transaction(Main.params);
 
-		Coin amount = Coin.parseCoin(amountEdit12.getText(), utxo.getValue().getTokenid());
+		Coin amount = MonetaryFormat.FIAT.noCode().parse(amountEdit12.getText(), utxo.getValue().getTokenid());
 
 		List<ECKey> keys = new ArrayList<ECKey>();
 		for (String keyString : addressChoiceBox1.getItems()) {
@@ -1035,7 +1032,7 @@ public class SendMoneyController {
 		OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
 		UTXO u = outputsDetailsResponse.getOutputs();
 
-		TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u, 0);
+		TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, u);
 		Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
 		byte[] payloadBytes = Utils.HEX.decode((String) payMultiSign_.getBlockhashHex());
