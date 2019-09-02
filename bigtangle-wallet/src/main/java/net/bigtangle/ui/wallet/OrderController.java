@@ -395,8 +395,8 @@ public class OrderController extends ExchangeController {
                 }
                 Coin fromAmount = Coin.valueOf(orderPublish.getPrice(), tokenid);
                 Coin toAmount = Coin.valueOf(orderPublish.getAmount(), tokenid);
-                map.put("price", fromAmount.toPlainString());
-                map.put("amount", toAmount.toPlainString());
+                map.put("price", fromAmount);
+                map.put("amount", toAmount);
                 map.put("orderId", orderPublish.getOrderId());
                 map.put("address", orderPublish.getAddress());
                 map.put("tokenId", orderPublish.getTokenId());
@@ -433,23 +433,27 @@ public class OrderController extends ExchangeController {
         log.debug(response0);
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
 
+        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
+
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             HashMap<String, Object> map = new HashMap<String, Object>();
 
             if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
                 map.put("type", Main.getText("BUY"));
-                map.put("amount", orderRecord.getTargetValue());
+                map.put("amount", mf.format(orderRecord.getTargetValue(),
+                        orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
                 map.put("tokenname",
                         orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getTokennameDisplay());
-                map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
+                map.put("price", mf.format(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
             } else {
                 map.put("type", Main.getText("SELL"));
-                map.put("amount", orderRecord.getOfferValue());
+                map.put("amount", mf.format(orderRecord.getOfferValue(),
+                        orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("tokenname",
                         orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokennameDisplay());
-                map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
+                map.put("price", mf.format(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
             }
             map.put("orderId", orderRecord.getInitialBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");

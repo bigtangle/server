@@ -65,7 +65,7 @@ public class ExchangeController {
 
     @FXML
     public TextField fromAmountTextField;
-    
+
     @FXML
     public TextField fromDecimalsTF;
     @FXML
@@ -135,7 +135,6 @@ public class ExchangeController {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
 
         ObservableList<Map<String, Object>> exchangeData = FXCollections.observableArrayList();
-        
 
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         List<String> addressList = new ArrayList<String>();
@@ -148,7 +147,7 @@ public class ExchangeController {
             if (tokens.getTokentype() != TokenType.market.ordinal()) {
                 continue;
             }
-            String url ="https://"+ tokens.getDomainName();
+            String url = "https://" + tokens.getDomainName();
             log.debug(url);
             if (url == null || url.isEmpty()) {
                 continue;
@@ -185,9 +184,9 @@ public class ExchangeController {
                     Coin toAmount = Coin.valueOf(Long.parseLong((String) map.get("toAmount")),
                             Utils.HEX.decode((String) map.get("toTokenHex")));
 
-                    map.put("fromAmount", fromAmount.toPlainString());
+                    map.put("fromAmount", fromAmount);
 
-                    map.put("toAmount", toAmount.toPlainString());
+                    map.put("toAmount", toAmount);
                     exchangeData.add(map);
                 }
             } catch (Exception e) {
@@ -226,16 +225,15 @@ public class ExchangeController {
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
             String tokenname = tokens.getTokenname();
-        //    if (Main.getNoMultiTokens().contains(tokenHex)) {
-                tokenData.add(tokenname + " : " + tokenHex);
-          //  }
+            // if (Main.getNoMultiTokens().contains(tokenHex)) {
+            tokenData.add(tokenname + " : " + tokenHex);
+            // }
 
         }
 
         toTokenHexComboBox.setItems(tokenData);
         fromTokenHexComboBox.setItems(tokenData);
 
-        
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         ObservableList<String> addresses = FXCollections.observableArrayList();
         for (ECKey key : keys) {
@@ -303,8 +301,10 @@ public class ExchangeController {
             } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
                 signtype = "from";
             }
-            byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()),true), toAddress,
-                    getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()),false), mTransaction.bitcoinSerialize());
+            byte[] buf = this.makeSignTransactionBuffer(fromAddress,
+                    getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()), true), toAddress,
+                    getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()), false),
+                    mTransaction.bitcoinSerialize());
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             String orderid = stringValueOf(mOrderid);
             requestParam.put("orderid", orderid);
@@ -397,8 +397,9 @@ public class ExchangeController {
 
         this.mOrderid = UUIDUtil.randomUUID();
         // this.mTokenid = fromTokenHex;
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()),true), toAddress,
-                getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()),false));
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress,
+                getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()), true), toAddress,
+                getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()), false));
         if (buf == null) {
             return;
         }
@@ -523,7 +524,7 @@ public class ExchangeController {
         this.mOrderid = stringValueOf(rowData.get("orderid"));
         String toAddress = stringValueOf(rowData.get("toAddress"));
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        
+
         List<ECKey> list = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         boolean flag = false;
         for (ECKey ecKey : list) {
@@ -534,7 +535,8 @@ public class ExchangeController {
         }
         try {
 
-            PayOTCOrder payOrder = new PayOTCOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/", marketURL + "/");
+            PayOTCOrder payOrder = new PayOTCOrder(Main.walletAppKit.wallet(), this.mOrderid, ContextRoot + "/",
+                    marketURL + "/");
             payOrder.setAesKey(Main.getAesKey());
             payOrder.setSellFlag(flag);
             payOrder.sign();
@@ -546,7 +548,7 @@ public class ExchangeController {
     }
 
     public boolean calculatedAddressHit(String address) throws Exception {
-        
+
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         for (ECKey key : keys) {
             String n = key.toAddress(Main.params).toString();
@@ -560,16 +562,16 @@ public class ExchangeController {
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin,
             byte[] buf) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
-                + fromCoin.getTokenHex().getBytes().length + 4 + fromCoin.toPlainString().getBytes().length + 4
+                + fromCoin.getTokenHex().getBytes().length + 4 + (fromCoin.getValue() + "").getBytes().length + 4
                 + toAddress.getBytes().length + 4 + toCoin.getTokenHex().getBytes().length + 4
-                + toCoin.toPlainString().getBytes().length + 4 + this.mOrderid.getBytes().length + 4);
+                + (toCoin.getValue() + "").getBytes().length + 4 + this.mOrderid.getBytes().length + 4);
 
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
         byteBuffer.putInt(fromCoin.getTokenHex().getBytes().length).put(fromCoin.getTokenHex().getBytes());
-        byteBuffer.putInt(fromCoin.toPlainString().getBytes().length).put(fromCoin.toPlainString().getBytes());
+        byteBuffer.putInt((fromCoin.getValue() + "").getBytes().length).put((fromCoin.getValue() + "").getBytes());
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
         byteBuffer.putInt(toCoin.getTokenHex().getBytes().length).put(toCoin.getTokenHex().getBytes());
-        byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
+        byteBuffer.putInt((toCoin.getValue() + "").getBytes().length).put((toCoin.getValue() + "").getBytes());
         byteBuffer.putInt(this.mOrderid.getBytes().length).put(this.mOrderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
         // log.debug("tx len : " + buf.length);
@@ -587,12 +589,13 @@ public class ExchangeController {
         String ContextRoot = Main.getContextRoot();
         Address fromAddress00 = new Address(Main.params, fromAddress);
         Address toAddress00 = new Address(Main.params, toAddress);
-        
+
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
             outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(Main.getAesKey()), toCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(Main.getAesKey()),
+                    toCoin.getTokenHex()));
 
             SendRequest req = SendRequest.to(toAddress00, toCoin);
             req.tx.addOutput(fromCoin, fromAddress00);
@@ -641,15 +644,15 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    public Coin getCoin(String toAmount, String toTokenHex, boolean decimal,boolean fromflag) {
+    public Coin getCoin(String toAmount, String toTokenHex, boolean decimal, boolean fromflag) {
         if (decimal) {
-            int d=0;
+            int d = 0;
             if (fromflag) {
-               d=Integer.parseInt(fromDecimalsTF.getText()) ;
-            }else {
-                d=Integer.parseInt(toDecimalsTF.getText()) ;
+                d = Integer.parseInt(fromDecimalsTF.getText());
+            } else {
+                d = Integer.parseInt(toDecimalsTF.getText());
             }
-            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex),d);
+            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex), d);
         } else {
             return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
         }

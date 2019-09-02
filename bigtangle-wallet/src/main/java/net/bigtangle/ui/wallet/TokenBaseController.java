@@ -201,7 +201,7 @@ public class TokenBaseController {
                 if (amountMap.containsKey(map.get("tokenid"))) {
                     long count = Long.parseLong(amountMap.get((String) map.get("tokenid")).toString());
                     Coin fromAmount = Coin.valueOf(count, (String) map.get("tokenid"));
-                    String amountString = fromAmount.toPlainString();
+                    String amountString = MonetaryFormat.FIAT.noCode().format(fromAmount, (int) map.get("decimals"));
                     if (amountString.startsWith("0"))
                         amountString = "";
                     map.put("amount", amountString);

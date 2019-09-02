@@ -18,8 +18,8 @@
 
 package net.bigtangle.ui.wallet;
 
-import static net.bigtangle.ui.wallet.Main.walletAppKit;
 import static net.bigtangle.ui.wallet.Main.params;
+import static net.bigtangle.ui.wallet.Main.walletAppKit;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
@@ -58,11 +57,11 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.SettingResponse;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.controls.ClickableBitcoinAddress;
@@ -71,6 +70,7 @@ import net.bigtangle.ui.wallet.utils.BlockFormat;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.easing.EasingMode;
 import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 /**
@@ -215,20 +215,23 @@ public class MainController {
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-        Map<String, String> hashNameMap = Main.getTokenHexNameMap();
+     
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
         Main.validAddressSet.clear();
 
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
+          Token t=  getBalancesResponse.getTokennames().get(
+                    Utils.HEX.encode(c.getTokenid()));
             if (c.isZero()) {
                 continue;
             }
-            String balance = c.toPlainString();
+            String balance = MonetaryFormat.FIAT.noCode().format(
+                    c.getValue(), t.getDecimals());
             byte[] tokenid = c.getTokenid();
             String address = utxo.getAddress();
-            String tokenname = Main.getString(hashNameMap.get(Utils.HEX.encode(tokenid)));
+            String tokenname = t.getTokenname();
             String memo = utxo.getMemo();
             String minimumsign = Main.getString(utxo.getMinimumsign()).trim();
             String hashHex = utxo.getBlockHashHex();
@@ -237,7 +240,7 @@ public class MainController {
             String key = Utils.HEX.encode(tokenid);
             int signnum = Integer.parseInt(minimumsign);
             if (!utxo.isMultiSig()) {
-                Main.validTokenSet.add(Main.getString(hashNameMap.get(key)) + ":" + key);
+                Main.validTokenSet.add(Main.getString(t.getTokenname()+ ":" + key));
             }
 
             if (Main.validTokenMap.get(key) == null) {
@@ -272,13 +275,18 @@ public class MainController {
 
         for (Coin coin : getBalancesResponse.getBalance()) {
             if (!coin.isZero()) {
+                Token t=  getBalancesResponse.getTokennames().get(
+                        Utils.HEX.encode(coin.getTokenid()));
+                
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
-                    Main.instance.getCoinData().add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
+                    Main.instance.getCoinData().add(new CoinModel(MonetaryFormat.FIAT.noCode().format(
+                            coin.getValue(), t.getDecimals()) , coin.getTokenid(),
+                            t.getTokenname()));
 
                 } else {
-                    subcoins.add(new CoinModel(coin.toPlainString(), coin.getTokenid(),
-                            Main.getString(hashNameMap.get(Utils.HEX.encode(coin.getTokenid())))));
+                    subcoins.add(new CoinModel(MonetaryFormat.FIAT.noCode().format(
+                            coin.getValue(), t.getDecimals()) , coin.getTokenid(),
+                            t.getTokenname()));
                 }
             }
         }

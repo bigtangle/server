@@ -1043,6 +1043,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     TransactionInput in = tx.getInputs().get(index);
                     UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
                             in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                    if(prevOut!=null)
                     blockStore.updateTransactionOutputSpendPending(prevOut.getBlockHash(), prevOut.getTxHash(),
                             prevOut.getIndex(), true, System.currentTimeMillis());
                 }

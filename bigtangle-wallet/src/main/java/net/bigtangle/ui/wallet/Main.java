@@ -410,20 +410,7 @@ public class Main extends Application {
 
     }
 
-    public static Map<String, String> getTokenHexNameMap() throws Exception {
-        String CONTEXT_ROOT = Main.IpAddress + "/"; // Main.getContextRoot();
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-        Map<String, String> map = new HashMap<String, String>();
-        for (Token tokens : getTokensResponse.getTokens()) {
-            map.put(Main.getString(tokens.getTokenid()), Main.getString(tokens.getTokennameDisplay()));
-        }
-        return map;
-    }
-
+    
     public static void addAddress2block(String name, String address) throws Exception {
         String CONTEXT_ROOT = getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();

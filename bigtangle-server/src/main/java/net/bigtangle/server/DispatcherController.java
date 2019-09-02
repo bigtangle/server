@@ -41,17 +41,18 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
+import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
@@ -145,7 +146,7 @@ public class DispatcherController {
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokensList((String) request.get("name"));
+                GetTokensResponse response = tokensService.getTokensList((String) request.get("name"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

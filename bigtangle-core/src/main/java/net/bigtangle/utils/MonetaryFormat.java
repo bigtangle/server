@@ -53,7 +53,7 @@ import net.bigtangle.core.NetworkParameters;
 public final class MonetaryFormat {
 
     /** Standard format for fiat amounts. */
-    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(0).repeatOptionalDecimals(1, 2);
+    public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(0);
 
     public static final int MAX_DECIMALS = 2;
 
@@ -334,36 +334,32 @@ public final class MonetaryFormat {
     /**
      * Format the given monetary value to a human readable form.
      */
-    public CharSequence format(Monetary monetary) {
+    public String format(Monetary monetary) {
         return format(monetary, NetworkParameters.BIGTANGLE_DECIMAL);
     }
 
+    public String format(long  value) {
+        return format(value, NetworkParameters.BIGTANGLE_DECIMAL);
+    }
     /**
      * Format the given monetary value to a human readable form.
      */
     public String format(Monetary monetary, int smallestUnitExponent) {
-        // preparation
-        int maxDecimals = minDecimals;
-        if (decimalGroups != null)
-            for (int group : decimalGroups)
-                maxDecimals += group;
-        // int smallestUnitExponent = monetary.smallestUnitExponent();
-        // checkState(maxDecimals < smallestUnitExponent,
-        // "The maximum possible number of decimals (%s) cannot exceed %s.",
-        // maxDecimals, smallestUnitExponent);
-
+        return format(monetary.getValue(), smallestUnitExponent);
+    }
+    public String format(long value  , int smallestUnitExponent) { 
         // rounding
-        long satoshis = Math.abs(monetary.getValue());
-        long precisionDivisor = checkedPow(10, smallestUnitExponent - shift - maxDecimals);
-        satoshis = checkedMultiply(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
-
+        long satoshis = Math.abs(value);
+       
         // shifting
         long shiftDivisor = checkedPow(10, smallestUnitExponent - shift);
         long numbers = satoshis / shiftDivisor;
         long decimals = satoshis % shiftDivisor;
-
+        String decimalsStr="";
+        if(decimals >0) {
         // formatting
-        String decimalsStr = String.format(Locale.US, "%0" + (smallestUnitExponent - shift) + "d", decimals);
+            decimalsStr = String.format(Locale.US, "%0" + (smallestUnitExponent - shift) + "d", decimals);
+        }
         StringBuilder str = new StringBuilder(decimalsStr);
         while (str.length() > minDecimals && str.charAt(str.length() - 1) == '0')
             str.setLength(str.length() - 1); // trim trailing zero
@@ -381,7 +377,7 @@ public final class MonetaryFormat {
         if (str.length() > 0)
             str.insert(0, decimalMark);
         str.insert(0, numbers);
-        if (monetary.getValue() < 0)
+        if (value< 0)
             str.insert(0, negativeSign);
         else if (positiveSign != 0)
             str.insert(0, positiveSign);

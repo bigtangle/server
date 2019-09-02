@@ -7,8 +7,8 @@ package net.bigtangle.core.http.server.resp;
 import java.util.List;
 import java.util.Map;
 
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.http.AbstractResponse;
 
 public class GetTokensResponse extends AbstractResponse {
@@ -17,20 +17,20 @@ public class GetTokensResponse extends AbstractResponse {
     private List<TokenSerial> tokenSerials;
     private Map<String, Long> amountMap;
 
-    public static AbstractResponse createTokenSerial(List<TokenSerial> tokenSerials) {
+    public static GetTokensResponse createTokenSerial(List<TokenSerial> tokenSerials) {
         GetTokensResponse res = new GetTokensResponse();
         res.tokenSerials = tokenSerials;
         return res;
     }
  
 
-    public static AbstractResponse create(List<Token> tokens) {
+    public static GetTokensResponse create(List<Token> tokens) {
         GetTokensResponse res = new GetTokensResponse();
         res.tokens = tokens;
         return res;
     }
 
-    public static AbstractResponse create(List<Token> tokens, Map<String, Long> amountMap) {
+    public static GetTokensResponse create(List<Token> tokens, Map<String, Long> amountMap) {
         GetTokensResponse res = new GetTokensResponse();
         res.tokens = tokens;
         res.amountMap = amountMap;

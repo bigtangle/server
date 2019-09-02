@@ -505,6 +505,7 @@ public class SendMoneyController {
         GetOutputsResponse response = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         List<UTXO> utxos = response.getOutputs();
 
+        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
         ObservableList<Map> signData = FXCollections.observableArrayList();
         for (UTXO utxo : utxos) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -513,7 +514,8 @@ public class SendMoneyController {
             map.put("toaddress", utxo.getAddress());
             map.put("fromaddress", utxo.getFromaddress());
             map.put("time", utxo.getTime());
-            map.put("amount", utxo.getValue().toPlainString());
+            map.put("amount",
+                    mf.format(utxo.getValue(), response.getTokennames().get(utxo.getTokenId()).getDecimals()));
 
             signData.add(map);
         }
