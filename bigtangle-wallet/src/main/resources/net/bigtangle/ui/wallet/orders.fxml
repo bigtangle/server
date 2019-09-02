@@ -124,21 +124,25 @@
 							<children>
 								<ComboBox fx:id="toAddressComboBox" editable="true" layoutX="225.0" layoutY="25.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" />
 								<Label layoutX="25.0" layoutY="244.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Address" GridPane.rowIndex="3" />
-								<TextField fx:id="fromAmountTextField" layoutX="225.0" layoutY="382.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+								<TextField fx:id="fromAmountTextField" layoutX="225.0" layoutY="325.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 								<Label layoutX="25.0" layoutY="29.0" maxWidth="300.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%to_Address" />
 								<Button cancelButton="true" layoutX="571.0" layoutY="433.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="2" GridPane.rowIndex="6" />
-								<ComboBox fx:id="fromTokenHexComboBox" editable="true" layoutX="225.0" layoutY="311.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<ComboBox fx:id="fromTokenHexComboBox" editable="true" layoutX="225.0" layoutY="278.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 								<ComboBox fx:id="fromAddressComboBox" editable="true" layoutX="225.0" layoutY="240.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								<Label layoutX="25.0" layoutY="101.0" maxWidth="300.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%to_tokenid" GridPane.rowIndex="1" />
-								<TextField fx:id="toAmountTextField" layoutX="225.0" layoutY="169.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-								<Label layoutX="25.0" layoutY="173.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%to_tokenAmount" GridPane.rowIndex="2" />
-								<ComboBox fx:id="toTokenHexComboBox" editable="true" layoutX="225.0" layoutY="97.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-								<Label layoutX="25.0" layoutY="386.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Amount" GridPane.rowIndex="5" />
-								<Label layoutX="25.0" layoutY="315.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Tokenid" GridPane.rowIndex="4" />
+								<Label layoutX="25.0" layoutY="74.0" maxWidth="300.0" minWidth="150.0" prefHeight="15.0" prefWidth="150.0" text="%to_tokenid" GridPane.rowIndex="1" />
+								<TextField fx:id="toAmountTextField" layoutX="225.0" layoutY="120.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<Label layoutX="25.0" layoutY="124.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%to_tokenAmount" GridPane.rowIndex="2" />
+								<ComboBox fx:id="toTokenHexComboBox" editable="true" layoutX="225.0" layoutY="70.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+								<Label layoutX="25.0" layoutY="329.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Amount" GridPane.rowIndex="5" />
+								<Label layoutX="25.0" layoutY="282.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%from_Tokenid" GridPane.rowIndex="4" />
 								<Button defaultButton="true" layoutX="225.0" layoutY="433.0" mnemonicParsing="false" onAction="#exchangeCoin" text="%Exchange" />
 								<Button defaultButton="true" layoutX="406.0" layoutY="433.0" mnemonicParsing="false" onAction="#exportBlock" text="%export" GridPane.columnIndex="2" />
 								<Button defaultButton="true" layoutX="324.0" layoutY="433.0" mnemonicParsing="false" onAction="#importBlock" text="%import" GridPane.columnIndex="1" />
 								<Button defaultButton="true" layoutX="495.0" layoutY="433.0" mnemonicParsing="false" onAction="#refund" text="%refund" GridPane.columnIndex="3" />
+                        <TextField fx:id="toDecimalsTF" layoutX="225.0" layoutY="178.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" />
+                        <TextField fx:id="fromDecimalsTF" layoutX="225.0" layoutY="382.0" maxWidth="400.0" minWidth="400.0" prefHeight="23.0" prefWidth="400.0" />
+                        <Label layoutX="25.0" layoutY="182.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%decimals" />
+                        <Label layoutX="25.0" layoutY="386.0" maxWidth="300.0" minWidth="150.0" prefWidth="150.0" text="%decimals" />
 							</children>
 						</AnchorPane>
 					</content>
