@@ -130,5 +130,17 @@ public class WalletUtilTest {
         Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
         assertEquals(wallet.walletKeys().size(), 1) ;
     }
+    @Test(expected = ArithmeticException.class)
+    public void checkDecimal() throws Exception {
+
+        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(from);
+        Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
+        
+        wallet.totalAmount(1, 1000, 6);
+        
+    }
 
 }

@@ -748,7 +748,7 @@ public abstract class AbstractIntegrationTest {
     protected void testInitTransferWallet() throws Exception {
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 3333333l);
+        giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 33333*Coin.COIN.getValue());
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 

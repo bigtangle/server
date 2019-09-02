@@ -592,7 +592,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField1.getText());
-        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText(), NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();
@@ -656,7 +656,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField.getText());
-        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText(), NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();

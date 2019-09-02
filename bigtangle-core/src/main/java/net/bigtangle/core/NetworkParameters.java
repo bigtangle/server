@@ -32,6 +32,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Objects;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.equihash.EquihashProof;
 import net.bigtangle.params.MainNetParams;
@@ -114,7 +115,7 @@ public abstract class NetworkParameters {
     public static final String BIGTANGLE_TOKENID_STRING = "bc";
     public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);
     public static final String BIGTANGLE_TOKENNAME = "BIG";
-    public static final int BIGTANGLE_DECIMAL = 2;
+    public static final int BIGTANGLE_DECIMAL = 6;
     // Use Equihash
     public static final boolean USE_EQUIHASH = false;
     protected int equihashN;
@@ -204,9 +205,12 @@ public abstract class NetworkParameters {
 
     public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-    // 100 billions with decimals 2
-    public static long testCoin = 10000000000000l;
-    public static final long TARGET_YEARLY_MINING_PAYOUT = testCoin / 1000;
+    
+    public static String genesisPub =testPub;
+    
+    // 100 billions  as Value
+    public static long BigtangleCoinTotal = LongMath.pow(10, 11+BIGTANGLE_DECIMAL);
+    public static final long TARGET_YEARLY_MINING_PAYOUT = BigtangleCoinTotal / 1000;
 
     protected NetworkParameters() {
     }
@@ -227,7 +231,7 @@ public abstract class NetworkParameters {
         RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH);
 
         coinbase.setData(rewardInfo.toByteArray());
-        add(params, testCoin + "," + testPub, coinbase);
+        add(params, BigtangleCoinTotal  ,  genesisPub, coinbase);
         genesisBlock.addTransaction(coinbase);
         genesisBlock.setNonce(0);
         genesisBlock.setHeigth(0);
@@ -237,12 +241,12 @@ public abstract class NetworkParameters {
 
     }
 
-    public static void add(NetworkParameters params, String account, Transaction coinbase) {
-        // account space seperate lis with amount, many public keys
+    public static void add(NetworkParameters params, long amount, String account, Transaction coinbase) {
+        //  amount, many public keys
         String[] list = account.split(",");
-        Coin base = Coin.valueOf(Long.valueOf(list[0]), BIGTANGLE_TOKENID);
+        Coin base = Coin.valueOf(amount, BIGTANGLE_TOKENID);
         List<ECKey> keys = new ArrayList<ECKey>();
-        for (int i = 1; i < list.length; i++) {
+        for (int i = 0; i < list.length; i++) {
             keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));
         }
         if (keys.size() <= 1) {

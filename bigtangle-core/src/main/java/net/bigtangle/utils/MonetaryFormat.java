@@ -25,6 +25,7 @@ import static com.google.common.math.LongMath.checkedMultiply;
 import static com.google.common.math.LongMath.checkedPow;
 import static com.google.common.math.LongMath.divide;
 
+import java.io.StringWriter;
 import java.math.RoundingMode;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -51,11 +52,9 @@ import net.bigtangle.core.NetworkParameters;
  */
 public final class MonetaryFormat {
 
-     
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(0).repeatOptionalDecimals(1, 2);
-   
-  
+
     public static final int MAX_DECIMALS = 2;
 
     private final char negativeSign;
@@ -69,13 +68,6 @@ public final class MonetaryFormat {
     private final String[] codes;
     private final char codeSeparator;
     private final boolean codePrefixed;
-
-    private static final String DECIMALS_PADDING = "00000000000"; // a few
-                                                                       // more
-                                                                       // than
-                                                                       // necessary
-                                                                       // for
-                                                                       // Bitcoin
 
     /**
      * Set character to prefix negative values.
@@ -318,7 +310,7 @@ public final class MonetaryFormat {
         this.roundingMode = RoundingMode.HALF_UP;
         this.codes = new String[MAX_DECIMALS];
         this.codes[0] = "";// CODE_BTC;
-  
+
         this.codeSeparator = ' ';
         this.codePrefixed = true;
     }
@@ -342,9 +334,10 @@ public final class MonetaryFormat {
     /**
      * Format the given monetary value to a human readable form.
      */
-    public CharSequence format(Monetary monetary ) {
-       return format(monetary, 2);
+    public CharSequence format(Monetary monetary) {
+        return format(monetary, NetworkParameters.BIGTANGLE_DECIMAL);
     }
+
     /**
      * Format the given monetary value to a human readable form.
      */
@@ -354,9 +347,10 @@ public final class MonetaryFormat {
         if (decimalGroups != null)
             for (int group : decimalGroups)
                 maxDecimals += group;
-       // int smallestUnitExponent = monetary.smallestUnitExponent();
-        //checkState(maxDecimals < smallestUnitExponent,
-         //       "The maximum possible number of decimals (%s) cannot exceed %s.", maxDecimals, smallestUnitExponent);
+        // int smallestUnitExponent = monetary.smallestUnitExponent();
+        // checkState(maxDecimals < smallestUnitExponent,
+        // "The maximum possible number of decimals (%s) cannot exceed %s.",
+        // maxDecimals, smallestUnitExponent);
 
         // rounding
         long satoshis = Math.abs(monetary.getValue());
@@ -420,13 +414,28 @@ public final class MonetaryFormat {
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason
      */
-    public Coin parse(String str, byte[] tokenid) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), tokenid);
+    public Coin parse(String str) throws NumberFormatException {
+        return Coin.valueOf(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), NetworkParameters.BIGTANGLE_TOKENID);
     }
 
-  
+    /**
+     * Parse a human readable coin value to a {@link net.bigtangle.core.Coin}
+     * instance.
+     * 
+     * @throws NumberFormatException
+     *             if the string cannot be parsed for some reason
+     */
+    public Coin parse(String str, byte[] tokenid, int decimal) throws NumberFormatException {
+        return Coin.valueOf(parseValue(str, decimal), tokenid);
+    }
+
     private long parseValue(String str, int smallestUnitExponent) {
-        checkState(DECIMALS_PADDING.length() >= smallestUnitExponent);
+        StringWriter s = new StringWriter();
+        for (int i = 0; i < smallestUnitExponent; i++) {
+            s.append("0");
+        }
+        String DECIMALS_PADDING = s.toString();
+
         if (str.isEmpty())
             throw new NumberFormatException("empty string");
         char first = str.charAt(0);
@@ -438,11 +447,19 @@ public final class MonetaryFormat {
         if (decimalMarkIndex != -1) {
             numbers = str.substring(0, decimalMarkIndex);
             decimals = (str + DECIMALS_PADDING).substring(decimalMarkIndex + 1);
+            //
             if (decimals.indexOf(decimalMark) != -1)
                 throw new NumberFormatException("more than one decimal mark");
         } else {
             numbers = str;
             decimals = DECIMALS_PADDING;
+        }
+        if (decimals.length() > smallestUnitExponent - shift) {
+            String sub = decimals.substring(  smallestUnitExponent - shift);
+            long valueSub = Long.parseLong(sub);
+            if(valueSub >0 )
+            throw new NumberFormatException(
+                    "there is value in string  " + str + " after decimals:" + smallestUnitExponent);
         }
         String satoshis = numbers + decimals.substring(0, smallestUnitExponent - shift);
         for (char c : satoshis.toCharArray())

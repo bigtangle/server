@@ -5,6 +5,7 @@
 
 package net.bigtangle.wallet;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.spongycastle.crypto.params.KeyParameter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -24,13 +27,16 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
 import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
@@ -212,11 +218,11 @@ public class PayOTCOrder {
         String signtype = "to";
         if (toSign == 0 && this.wallet().calculatedAddressHit(aesKey, toAddress)) {
             signtype = "to";
-        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
+        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey, fromAddress)) {
             signtype = "from";
         }
-        buf = this.makeSignTransactionBuffer(fromAddress, parseCoinValue(fromAmount, fromTokenHex, true), toAddress,
-                parseCoinValue(toAmount, toTokenHex, true), transaction.bitcoinSerialize());
+        buf = this.makeSignTransactionBuffer(fromAddress, parseCoinValue(fromAmount, fromTokenHex), toAddress,
+                parseCoinValue(toAmount, toTokenHex), transaction.bitcoinSerialize());
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String orderid = stringValueOf(this.orderid);
         requestParam.put("orderid", orderid);
@@ -233,18 +239,19 @@ public class PayOTCOrder {
         String fromTokenHex = stringValueOf(this.exchange.getFromTokenHex());
         String toAmount = stringValueOf(this.exchange.getToAmount());
         String fromAmount = stringValueOf(this.exchange.getFromAmount());
+
         byte[] buf = this.makeSignTransactionBufferCheckSwap(fromAddress,
-                parseCoinValue(fromAmount, fromTokenHex, false), toAddress,
-                parseCoinValue(toAmount, toTokenHex, false));
+                parseCoinValue(fromAmount, fromTokenHex), toAddress,
+                parseCoinValue(toAmount, toTokenHex));
         if (buf == null) {
             return;
         }
         int toSign = this.exchange.getToSign();
         int fromSign = this.exchange.getFromSign();
         String signtype = "";
-        if (toSign == 0 && this.wallet().calculatedAddressHit(aesKey,toAddress)) {
+        if (toSign == 0 && this.wallet().calculatedAddressHit(aesKey, toAddress)) {
             signtype = "to";
-        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
+        } else if (fromSign == 0 && this.wallet().calculatedAddressHit(aesKey, fromAddress)) {
             signtype = "from";
         }
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -259,7 +266,7 @@ public class PayOTCOrder {
             throws Exception {
         String fromAddress00, toAddress00;
         Coin fromCoin00, toCoin00;
-        if (this.wallet().calculatedAddressHit(aesKey,fromAddress)) {
+        if (this.wallet().calculatedAddressHit(aesKey, fromAddress)) {
             fromAddress00 = fromAddress;
             toAddress00 = toAddress;
             fromCoin00 = fromCoin;
@@ -346,10 +353,24 @@ public class PayOTCOrder {
         }
     }
 
-    private Coin parseCoinValue(String toAmount, String toTokenHex, boolean decimal) {
-        
-            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex));
-         
+    private Coin parseCoinValue(String toAmount, String toTokenHex)
+            throws JsonProcessingException, IOException, NoTokenException {
+        Token t = checkTokenId(toTokenHex);
+        return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex), t.getDecimals());
+
+    }
+
+    public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(this.serverURL + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        if (token.getTokens() == null || token.getTokens().isEmpty()) {
+            throw new NoTokenException();
+        }
+        return token.getTokens().get(0);
     }
 
     private List<UTXO> getUTXOWithPubKeyHash(byte[] pubKeyHash, byte[] tokenid) throws Exception {
@@ -470,7 +491,6 @@ public class PayOTCOrder {
                 PayMultiSignAddressListResponse.class);
         List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse.getPayMultiSignAddresses();
 
-        
         ECKey currentECKey = null;
 
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses) {

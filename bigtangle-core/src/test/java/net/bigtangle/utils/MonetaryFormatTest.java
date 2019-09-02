@@ -5,7 +5,6 @@
 
 package net.bigtangle.utils;
 
-import static net.bigtangle.core.Coin.CENT;
 import static net.bigtangle.core.Coin.COIN;
 import static net.bigtangle.core.Coin.ZERO;
 import static org.junit.Assert.assertEquals;
@@ -13,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.Locale;
 
 import org.junit.Test;
+
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
@@ -24,32 +25,38 @@ public class MonetaryFormatTest {
     @Test
     public void testSigns() throws Exception {
         assertEquals("-1", NO_CODE.format(Coin.COIN.negate()).toString());
-        assertEquals("@0.01", NO_CODE.negativeSign('@').format(Coin.CENT.negate()).toString());
+        assertEquals("@0.01", NO_CODE.negativeSign('@').format(Coin.COIN.divide(100).negate()).toString());
         assertEquals("1", NO_CODE.format(Coin.COIN).toString());
         assertEquals("+1", NO_CODE.positiveSign('+').format(Coin.COIN).toString());
     }
 
    //@Test
     public void testDigits() throws Exception {
-        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l,NetworkParameters.BIGTANGLE_TOKENID)).toString());
+        assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l)).toString());
     }
 
     @Test
     public void testDecimalMark() throws Exception {
         assertEquals("1", NO_CODE.format(Coin.COIN).toString());
-        assertEquals("0,01", NO_CODE.decimalMark(',').format(Coin.CENT).toString());
+        assertEquals("0,01", NO_CODE.decimalMark(',').format(Coin.COIN.divide(100)).toString());
     }
 
-  //  @Test
+    @Test
     public void testGrouping() throws Exception {
-        assertEquals("0.1", format(NO_CODE.parse("0.1",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.010", format(NO_CODE.parse("0.01",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.001", format(NO_CODE.parse("0.001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000100", format(NO_CODE.parse("0.0001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000010", format(NO_CODE.parse("0.00001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
-        assertEquals("0.000001", format(NO_CODE.parse("0.000001",NetworkParameters.BIGTANGLE_TOKENID), 0, 1, 2, 3));
+        assertEquals("0.1", format(NO_CODE.parse("0.1"), 0, 1, 2, 3));
+        assertEquals("0.010", format(NO_CODE.parse("0.01"), 0, 1, 2, 3));
+        assertEquals("0.001", format(NO_CODE.parse("0.001"), 0, 1, 2, 3));
+        assertEquals("0.000100", format(NO_CODE.parse("0.0001"), 0, 1, 2, 3));
+        assertEquals("0.000010", format(NO_CODE.parse("0.00001"), 0, 1, 2, 3));
+        assertEquals("0.000001", format(NO_CODE.parse("0.000001"), 0, 1, 2, 3));
     }
 
+    @Test(expected = NumberFormatException.class)
+    public void testTooSmall() throws Exception {
+        assertEquals("0.0000001", format(NO_CODE.parse("0.0000001"), 0, 1, 2, 3));
+    }
+
+    
     @Test
     public void btcRounding() throws Exception {
         assertEquals("0", format(ZERO, 0, 0));
@@ -73,7 +80,7 @@ public class MonetaryFormatTest {
      //   assertEquals("1.00000005", format(pivot, 0, 7, 1));
      //   assertEquals("1.0000001", format(pivot, 0, 7));
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l);
       //  assertEquals("112233445566778", format(value, 0, 0));
       // assertEquals("112233445566.7", format(value, 0, 1));
       //  assertEquals("11223344.5567", format(value, 0, 2, 2));
@@ -98,7 +105,7 @@ public class MonetaryFormatTest {
  
     
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l);
         assertEquals("11223344557", format(value, 3, 0));
         assertEquals("11223344556.7", format(value, 3, 1));
         assertEquals("11223344556.68", format(value, 3, 2));
@@ -119,7 +126,7 @@ public class MonetaryFormatTest {
 
       
 
-        final Coin value = Coin.valueOf(1122334455667788l,NetworkParameters.BIGTANGLE_TOKENID);
+        final Coin value = Coin.valueOf(1122334455667788l);
         assertEquals("11223344556678", format(value, 6, 0));
         assertEquals("11223344556677.88", format(value, 6, 2));
         assertEquals("11223344556677.9", format(value, 6, 1));
@@ -133,15 +140,15 @@ public class MonetaryFormatTest {
   //  @Test
     public void repeatOptionalDecimals() {
 
-        assertEquals("0.01", formatRepeat(CENT, 2, 4));
-        assertEquals("0.10", formatRepeat(CENT.multiply(10), 2, 4));
+        assertEquals("0.01", formatRepeat(Coin.COIN.divide(100), 2, 4));
+        assertEquals("0.10", formatRepeat(Coin.COIN.divide(100).multiply(10), 2, 4));
 
  
-        assertEquals("0.01", formatRepeat(CENT, 2, 2));
-        assertEquals("0.10", formatRepeat(CENT.multiply(10), 2, 2));
+        assertEquals("0.01", formatRepeat(Coin.COIN.divide(100), 2, 2));
+        assertEquals("0.10", formatRepeat(Coin.COIN.divide(100).multiply(10), 2, 2));
 
-        assertEquals("0", formatRepeat(CENT, 2, 0));
-        assertEquals("0", formatRepeat(CENT.multiply(10), 2, 0));
+        assertEquals("0", formatRepeat(Coin.COIN.divide(100), 2, 0));
+        assertEquals("0", formatRepeat(Coin.COIN.divide(100).multiply(10), 2, 0));
     }
 
     private String formatRepeat(Coin coin, int decimals, int repetitions) {
@@ -170,7 +177,7 @@ public class MonetaryFormatTest {
  
     @Test
     public void withLocale() throws Exception {
-        final Coin value = Coin.valueOf(-123456789l,NetworkParameters.BIGTANGLE_TOKENID);
+        final Coin value = Coin.valueOf(-123456789*LongMath.pow(10, NetworkParameters.BIGTANGLE_DECIMAL -2));
         assertEquals("-1234567.89", NO_CODE.withLocale(Locale.US).format(value).toString());
         assertEquals("-1234567.89", NO_CODE.withLocale(Locale.CHINA).format(value).toString());
         assertEquals("-1234567,89", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
@@ -179,69 +186,69 @@ public class MonetaryFormatTest {
 
     @Test
     public void parse() throws Exception {
-        assertEquals(Coin.COIN, NO_CODE.parse("1",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("1.",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("1.0",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.decimalMark(',').parse("1,0",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.parse("01.0000000000",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN, NO_CODE.positiveSign('+').parse("+1.0",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1",NetworkParameters.BIGTANGLE_TOKENID));
-        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1.0",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN, NO_CODE.parse("1"));
+        assertEquals(Coin.COIN, NO_CODE.parse("1."));
+        assertEquals(Coin.COIN, NO_CODE.parse("1.0"));
+        assertEquals(Coin.COIN, NO_CODE.decimalMark(',').parse("1,0"));
+        assertEquals(Coin.COIN, NO_CODE.parse("01.0000000000"));
+        assertEquals(Coin.COIN, NO_CODE.positiveSign('+').parse("+1.0"));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1"));
+        assertEquals(Coin.COIN.negate(), NO_CODE.parse("-1.0"));
 
-        assertEquals(Coin.CENT, NO_CODE.parse(".01",NetworkParameters.BIGTANGLE_TOKENID));
+        assertEquals(Coin.COIN.divide(100), NO_CODE.parse(".01"));
  
       
-        assertEquals(Coin.CENT, NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१",NetworkParameters.BIGTANGLE_TOKENID)); // Devanagari
+        assertEquals(Coin.COIN.divide(100), NO_CODE.withLocale(new Locale("hi", "IN")).parse(".०१")); // Devanagari
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidEmpty() throws Exception {
-        NO_CODE.parse("",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceBefore() throws Exception {
-        NO_CODE.parse(" 1",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse(" 1");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceSign() throws Exception {
-        NO_CODE.parse("- 1",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("- 1");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidWhitespaceAfter() throws Exception {
-        NO_CODE.parse("1 ",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("1 ");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidMultipleDecimalMarks() throws Exception {
-        NO_CODE.parse("1.0.0",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("1.0.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidDecimalMark() throws Exception {
-        NO_CODE.decimalMark(',').parse("1.0",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.decimalMark(',').parse("1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidPositiveSign() throws Exception {
-        NO_CODE.positiveSign('@').parse("+1.0",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.positiveSign('@').parse("+1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidNegativeSign() throws Exception {
-        NO_CODE.negativeSign('@').parse("-1.0",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.negativeSign('@').parse("-1.0");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNumber() throws Exception {
-        NO_CODE.parse("99999999999999999999",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("99999999999999999999");
     }
 
     @Test(expected = NumberFormatException.class)
     public void parseInvalidHugeNegativeNumber() throws Exception {
-        NO_CODE.parse("-99999999999999999999",NetworkParameters.BIGTANGLE_TOKENID);
+        NO_CODE.parse("-99999999999999999999");
     }
 
   

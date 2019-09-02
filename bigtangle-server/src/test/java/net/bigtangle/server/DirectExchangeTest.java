@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.google.common.math.LongMath;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
@@ -61,7 +63,7 @@ import net.bigtangle.wallet.Wallet;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DirectExchangeTest extends AbstractIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class); 
+    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
 
     @Test
     public void testBatchBlock() throws Exception {
@@ -159,7 +161,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
         store.resetStore();
-        testInitWallet();
+        
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
@@ -169,7 +171,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), 1000000 * 1000l);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() * 1000);
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, genesiskey);
         milestoneService.update();
@@ -178,7 +180,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("balance : " + balance);
         for (UTXO utxo : balance) {
 
-            assertTrue(utxo.getValue().getValue() == 9996996666667l);
+            assertTrue(utxo.getValue().getValue() == (NetworkParameters.BigtangleCoinTotal
+                    - Coin.COIN.getValue() * 1000 * 3));
 
         }
     }

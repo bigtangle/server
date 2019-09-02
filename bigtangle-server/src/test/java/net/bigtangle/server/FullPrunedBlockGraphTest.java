@@ -1242,7 +1242,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate spending block
     
         List<UTXO> outputs = getBalance(false, testKey);
-        outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.testCoin);
+        outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.BigtangleCoinTotal);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);

@@ -5,7 +5,6 @@
 
 package net.bigtangle.core;
 
-import static net.bigtangle.core.Coin.FIFTY_COINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -79,7 +78,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());
         Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
+        t.addOutput(new TransactionOutput(PARAMS, t, Coin.COIN.multiply(50), new byte[] {}));
         TransactionInput input = t.addInput(rollingBlock.getHash(), spendableOutput);
         // Invalid script.
         input.clearScriptBytes();
@@ -127,7 +126,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
-        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
+        t.addOutput(new TransactionOutput(PARAMS, t, Coin.COIN.multiply(50), new byte[] {}));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();

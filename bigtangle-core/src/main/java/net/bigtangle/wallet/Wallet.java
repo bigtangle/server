@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,6 +53,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -1296,7 +1298,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
          * @param output
          *            The stored output (free standing).
          */
-        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, long chainHeight) {
+        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output) {
             super(params, null, output.getValue(), output.getScript().getProgram());
             this.output = output;
 
@@ -1664,10 +1666,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
             for (UTXO output : getOutputsResponse.getOutputs()) {
                 if (multisigns) {
-                    candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+                    candidates.add(new FreeStandingTransactionOutput(this.params, output));
                 } else {
                     if (!output.isMultiSig()) {
-                        candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+                        candidates.add(new FreeStandingTransactionOutput(this.params, output));
                     }
                 }
             }
@@ -1725,7 +1727,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
         List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
         for (UTXO output : outputs) {
-            candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+            candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
         return candidates;
     }
@@ -2058,7 +2060,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe;
         UTXO spendableUTXO = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
@@ -2078,7 +2080,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // check the token id is on the server
     // throw NoTokenException
-    public void checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
+    public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenById.name(),
@@ -2088,6 +2090,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (token.getTokens() == null || token.getTokens().isEmpty()) {
             throw new NoTokenException();
         }
+        return token.getTokens().get(0);
+    }
+
+    /*
+     * totalAmount must be an integer in BIG
+     */
+
+    public long totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
+            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+
+        return LongMath.divide(buyPrice * buyAmount, LongMath.checkedPow(10, tokenDecimal), RoundingMode.UNNECESSARY);
 
     }
 
@@ -2095,11 +2108,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException,
             UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
-        checkTokenId(tokenId);
+        Token t = checkTokenId(tokenId);
         // Burn BIG to buy
-        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.valueOf(totalAmount(buyPrice, buyAmount, t.getDecimals()),
+                NetworkParameters.BIGTANGLE_TOKENID);
         UTXO u = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
         ECKey beneficiary = getECKey(aesKey, u.getAddress());
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
@@ -2142,17 +2156,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
-            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException {
-
+            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        Token t = checkTokenId(tokenId);
+        long total = totalAmount(sellPrice, sellAmount, t.getDecimals()) ;
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
 
         UTXO u = getSpendableUTXO(aesKey, amount);
         ECKey beneficiary = getECKey(aesKey, u.getAddress());
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
         Transaction tx = new Transaction(params);
-        OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+        OrderOpenInfo info = new OrderOpenInfo(total, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
@@ -2216,7 +2231,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO findOutput = outputsDetailsResponse.getOutputs();
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput);
         Transaction transaction = new Transaction(params);
 
         transaction.addOutput(coin, address);
