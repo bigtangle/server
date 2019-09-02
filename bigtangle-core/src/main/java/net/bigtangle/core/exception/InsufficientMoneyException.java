@@ -19,11 +19,7 @@
  */
 package net.bigtangle.core.exception;
 
-import javax.annotation.Nullable;
-
-import net.bigtangle.core.Coin;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+ 
 
 /**
  * Thrown to indicate that you don't have enough money available to perform the requested operation.
@@ -31,20 +27,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class InsufficientMoneyException extends Exception {
     private static final long serialVersionUID = 1L;
     
-    /** Contains the number of satoshis that would have been required to complete the operation. */
-    @Nullable
-    public final Coin missing;
-
+   
     protected InsufficientMoneyException() {
-        this.missing = null;
+         
     }
-
-    public InsufficientMoneyException(Coin missing) {
-        this(missing, "Insufficient money,  missing " + missing.toPlainString() + " " + missing.getTokenHex());
-    }
-
-    public InsufficientMoneyException(Coin missing, String message) {
+ 
+    public InsufficientMoneyException( String message) {
         super(message);
-        this.missing = checkNotNull(missing);
+     
     }
 }

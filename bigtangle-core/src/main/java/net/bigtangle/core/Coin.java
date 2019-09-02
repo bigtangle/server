@@ -238,30 +238,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(-this.value, this.tokenid);
     }
 
-    
-    /**
-     * <p>
-     * Returns the value as a plain string. The result is unformatted with no
-     * trailing zeroes.
-     * </p>
-     */
-    public String toPlainString() {
-        if (isBIG()) {
-            return MonetaryFormat.FIAT.format(this,NetworkParameters.BIGTANGLE_DECIMAL).toString();
-        } else {
-            return String.valueOf(this.value);
-        }
-    }
-
-    public static String toPlainString(long value) {
-        Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
-        return MonetaryFormat.FIAT.format(coin,NetworkParameters.BIGTANGLE_DECIMAL).toString();
-
-    }
-
+  
     @Override
     public String toString() {
-        return "[" + toPlainString() + ":" + getTokenHex() + "]";
+        return "[" + value + ":" + getTokenHex() + "]";
     }
 
     @Override

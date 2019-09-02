@@ -274,7 +274,9 @@ public class TokenController extends TokenBaseController {
         tabPane.getSelectionModel().clearAndSelect(3);
         stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenid1.setValue(tokenid);
-        String amountString = Coin.valueOf(tokenInfo.getToken().getAmount(), tokenid).toPlainString();
+        String amountString = MonetaryFormat.FIAT.noCode()
+                .format(Coin.valueOf(tokenInfo.getToken().getAmount(), tokenid), tokenInfo.getToken().getDecimals())
+                .toString();
         stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
         urlTF.setText(Main.getString(tokenInfo.getToken().getDomainName()).trim());

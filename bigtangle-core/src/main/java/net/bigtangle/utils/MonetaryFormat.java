@@ -341,7 +341,7 @@ public final class MonetaryFormat {
     /**
      * Format the given monetary value to a human readable form.
      */
-    public CharSequence format(Monetary monetary, int smallestUnitExponent) {
+    public String format(Monetary monetary, int smallestUnitExponent) {
         // preparation
         int maxDecimals = minDecimals;
         if (decimalGroups != null)
@@ -404,7 +404,7 @@ public final class MonetaryFormat {
                     str.setCharAt(d, (char) (c + offset));
             }
         }
-        return str;
+        return str.toString();
     }
 
     /**

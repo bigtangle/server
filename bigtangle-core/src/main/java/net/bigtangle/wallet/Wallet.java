@@ -1502,7 +1502,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (selection3 == null && selection2 == null && selection1 == null) {
             checkNotNull(valueMissing);
             log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
-            throw new InsufficientMoneyException(valueMissing);
+            throw new InsufficientMoneyException(valueMissing.toString());
         }
 
         Coin lowestFee = null;
@@ -2152,7 +2152,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 return u;
             }
         }
-        throw new InsufficientMoneyException(amount);
+        throw new InsufficientMoneyException(amount.toString());
     }
 
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,

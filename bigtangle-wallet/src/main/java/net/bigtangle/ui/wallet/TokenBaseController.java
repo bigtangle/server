@@ -25,12 +25,14 @@ import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
@@ -116,7 +118,7 @@ public class TokenBaseController {
     @SuppressWarnings("unchecked")
     @Deprecated
     public void initSerialTableView() throws Exception {
-        
+
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 
@@ -137,7 +139,8 @@ public class TokenBaseController {
                 Coin fromAmount = Coin.valueOf(tokenSerial.getAmount(), tokenSerial.getTokenid());
 
                 HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("amount", fromAmount.toPlainString());
+                map.put("amount", MonetaryFormat.FIAT.noCode().format(fromAmount,
+                        getToken(getTokensResponse.getTokens(), tokenSerial.getTokenid()).getDecimals()));
                 map.put("tokenid", tokenSerial.getTokenid());
                 map.put("tokenindex", tokenSerial.getTokenindex());
                 map.put("signnumber", tokenSerial.getSignnumber());
@@ -152,6 +155,14 @@ public class TokenBaseController {
         signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
         realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
         tokenserialTable.setItems(tokenData);
+    }
+
+    public Token getToken(List<Token> tokens, String tokenid) throws Exception {
+        for (Token t : tokens) {
+            if (t.getTokenid().equals(tokenid))
+                return t;
+        }
+        return null;
     }
 
     @SuppressWarnings({ "unchecked" })
@@ -171,8 +182,10 @@ public class TokenBaseController {
         Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
         if (list != null) {
             for (Map<String, Object> map : list) {
-               // multiMap.put((String) map.get("tokenid"), (boolean) map.get("multiserial"));
-            //    String temp = ((boolean) map.get("multiserial")) ? Main.getText("yes") : Main.getText("no");
+                // multiMap.put((String) map.get("tokenid"), (boolean)
+                // map.get("multiserial"));
+                // String temp = ((boolean) map.get("multiserial")) ?
+                // Main.getText("yes") : Main.getText("no");
                 int tokentype = (int) map.get("tokentype");
                 String temp1 = Main.getText("Token");
                 if (tokentype == 1) {
@@ -182,7 +195,7 @@ public class TokenBaseController {
                     temp1 = Main.getText("subtangle");
                 }
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
-             //   map.put("multiserial", temp);
+                // map.put("multiserial", temp);
                 map.put("asmarket", temp1);
                 map.put("tokenstop", temp2);
                 if (amountMap.containsKey(map.get("tokenid"))) {
@@ -216,7 +229,7 @@ public class TokenBaseController {
 
     @SuppressWarnings({ "unchecked" })
     public void initMultisignTableView() throws Exception {
-        
+
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<Map> tokenData = FXCollections.observableArrayList();
 

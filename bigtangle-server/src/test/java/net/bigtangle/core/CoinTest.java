@@ -92,29 +92,30 @@ public class CoinTest {
      */
    // @Test
     public void testToPlainString() {
-        assertEquals("0.15", Coin.valueOf(150000, NetworkParameters.BIGTANGLE_TOKENID).toPlainString());
-        assertEquals("1.23", MonetaryFormat.FIAT.noCode().parse("1.23").toPlainString());
+        MonetaryFormat  format= MonetaryFormat.FIAT.noCode();
+        assertEquals("0.15",format.format( Coin.valueOf(150000, NetworkParameters.BIGTANGLE_TOKENID)));
+        assertEquals("1.23",format.format( format.parse("1.23")));
 
-        assertEquals("0.1", MonetaryFormat.FIAT.noCode().parse("0.1").toPlainString());
-        assertEquals("1.1", MonetaryFormat.FIAT.noCode().parse("1.1").toPlainString());
-        assertEquals("21.12", MonetaryFormat.FIAT.noCode().parse("21.12").toPlainString());
-        assertEquals("321.123", MonetaryFormat.FIAT.noCode().parse("321.123").toPlainString());
-        assertEquals("4321.1234", MonetaryFormat.FIAT.noCode().parse("4321.1234").toPlainString());
-        assertEquals("54321.12345", MonetaryFormat.FIAT.noCode().parse("54321.12345").toPlainString());
-        assertEquals("654321.123456", MonetaryFormat.FIAT.noCode().parse("654321.123456").toPlainString());
+        assertEquals("0.1", format.format( format.parse("0.1")));
+        assertEquals("1.1",format.format( format.parse("1.1")));
+        assertEquals("21.12",format.format( format.parse("21.12")));
+        assertEquals("321.123",format.format( format.parse("321.123")));
+        assertEquals("4321.1234",format.format( format.parse("4321.1234")));
+        assertEquals("54321.12345",format.format( format.parse("54321.12345")));
+        assertEquals("654321.123456",format.format( format.parse("654321.123456")));
         assertEquals("7654321.1234567",
-                MonetaryFormat.FIAT.noCode().parse("7654321.1234567").toPlainString());
+               format.format( format.parse("7654321.1234567")));
         assertEquals("87654321.12345678",
-                MonetaryFormat.FIAT.noCode().parse("87654321.12345678").toPlainString());
+               format.format( format.parse("87654321.12345678")));
 
         // check there are no trailing zeros
-        assertEquals("1", MonetaryFormat.FIAT.noCode().parse("1.0").toPlainString());
-        assertEquals("2", MonetaryFormat.FIAT.noCode().parse("2.00").toPlainString());
-        assertEquals("3", MonetaryFormat.FIAT.noCode().parse("3.000").toPlainString());
-        assertEquals("4", MonetaryFormat.FIAT.noCode().parse("4.0000").toPlainString());
-        assertEquals("5", MonetaryFormat.FIAT.noCode().parse("5.00000").toPlainString());
-        assertEquals("6", MonetaryFormat.FIAT.noCode().parse("6.000000").toPlainString());
-        assertEquals("7", MonetaryFormat.FIAT.noCode().parse("7.0000000").toPlainString());
-        assertEquals("8", MonetaryFormat.FIAT.noCode().parse("8.00000000").toPlainString());
+        assertEquals("1",format.format( format.parse("1.0")));
+        assertEquals("2",format.format( format.parse("2.00")));
+        assertEquals("3",format.format( format.parse("3.000")));
+        assertEquals("4",format.format( format.parse("4.0000")));
+        assertEquals("5",format.format( format.parse("5.00000")));
+        assertEquals("6",format.format( format.parse("6.000000")));
+        assertEquals("7",format.format( format.parse("7.0000000")));
+        assertEquals("8",format.format( format.parse("8.00000000")));
     }
 }

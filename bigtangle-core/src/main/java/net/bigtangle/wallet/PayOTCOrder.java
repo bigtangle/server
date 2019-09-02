@@ -329,16 +329,16 @@ public class PayOTCOrder {
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin,
             byte[] buf) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(buf.length + 4 + fromAddress.getBytes().length + 4
-                + fromCoin.getTokenHex().getBytes().length + 4 + fromCoin.toPlainString().getBytes().length + 4
+                + fromCoin.getTokenHex().getBytes().length + 4 + fromCoin.toString().getBytes().length + 4
                 + toAddress.getBytes().length + 4 + toCoin.getTokenHex().getBytes().length + 4
-                + toCoin.toPlainString().getBytes().length + 4 + this.orderid.getBytes().length + 4);
+                + toCoin.toString().getBytes().length + 4 + this.orderid.getBytes().length + 4);
 
         byteBuffer.putInt(fromAddress.getBytes().length).put(fromAddress.getBytes());
         byteBuffer.putInt(fromCoin.getTokenHex().getBytes().length).put(fromCoin.getTokenHex().getBytes());
-        byteBuffer.putInt(fromCoin.toPlainString().getBytes().length).put(fromCoin.toPlainString().getBytes());
+        byteBuffer.putInt(fromCoin.toString().getBytes().length).put(fromCoin.toString().getBytes());
         byteBuffer.putInt(toAddress.getBytes().length).put(toAddress.getBytes());
         byteBuffer.putInt(toCoin.getTokenHex().getBytes().length).put(toCoin.getTokenHex().getBytes());
-        byteBuffer.putInt(toCoin.toPlainString().getBytes().length).put(toCoin.toPlainString().getBytes());
+        byteBuffer.putInt(toCoin.toString().getBytes().length).put(toCoin.toString().getBytes());
         byteBuffer.putInt(this.orderid.getBytes().length).put(this.orderid.getBytes());
         byteBuffer.putInt(buf.length).put(buf);
         // System.out.println("tx len : " + buf.length);
