@@ -131,8 +131,8 @@ public class Main extends Application {
     public static List<String> userdataList = new ArrayList<String>();
     // TODO as instance variable, not static
     private static WatchedInfo watchedtokenInfo;
-    private static  KeyParameter aesKey;
-    
+    private static KeyParameter aesKey;
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
@@ -196,12 +196,9 @@ public class Main extends Application {
         block.setBlockType(blocktype);
         ECKey pubKeyTo = null;
 
-        
         List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
-         
-            pubKeyTo = issuedKeys.get(0);
-        
+        pubKeyTo = issuedKeys.get(0);
 
         Transaction coinbase = new Transaction(Main.params);
         UserSettingData userSettingData = new UserSettingData();
@@ -369,7 +366,6 @@ public class Main extends Application {
                 IpAddress = "https://bigtangle.org";
 
         }
-  
 
         mainUI = loader.load();
         controller = loader.getController();
@@ -410,7 +406,6 @@ public class Main extends Application {
 
     }
 
-    
     public static void addAddress2block(String name, String address) throws Exception {
         String CONTEXT_ROOT = getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -418,13 +413,12 @@ public class Main extends Application {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
-  
+
         List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
         ECKey pubKeyTo = null;
-    
-            pubKeyTo = issuedKeys.get(0);
-        
+
+        pubKeyTo = issuedKeys.get(0);
 
         Transaction coinbase = new Transaction(Main.params);
         Contact contact = new Contact();
@@ -459,11 +453,11 @@ public class Main extends Application {
     }
 
     public static KeyParameter getAesKey() {
-        if( aesKey == null) {
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
-        if (!"".equals(Main.password.trim())) {
-            aesKey = keyCrypter.deriveKey(Main.password);
-        }
+        if (aesKey == null) {
+            final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.walletAppKit.wallet().getKeyCrypter();
+            if (!"".equals(Main.password.trim())) {
+                aesKey = keyCrypter.deriveKey(Main.password);
+            }
         }
         return aesKey;
     }
@@ -555,6 +549,18 @@ public class Main extends Application {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         return Json.jsonmapper().readValue(response, GetTokensResponse.class);
+
+    }
+
+    public static Token getTokenById(String tokenid) throws Exception {
+
+        String ContextRoot = Main.getContextRoot();
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam0));
+
+        return Json.jsonmapper().readValue(resp, GetTokensResponse.class).getTokens().get(0);
 
     }
 
@@ -755,10 +761,10 @@ public class Main extends Application {
     }
 
     public static void addUsersettingData() throws Exception {
-        
-            addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
-            addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
-       
+
+        addToken(getContextRoot(), lang, DataClassName.LANG.name(), DataClassName.LANG.name());
+        addToken(getContextRoot(), IpAddress, DataClassName.SERVERURL.name(), DataClassName.SERVERURL.name());
+
     }
 
     public ObservableList<CoinModel> getCoinData() {
@@ -916,13 +922,11 @@ public class Main extends Application {
             // + ":" + Main.port + "/";
             HashMap<String, String> requestParam = new HashMap<String, String>();
 
-             
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
             ECKey pubKeyTo = null;
-         
-                pubKeyTo = issuedKeys.get(0);
-           
+
+            pubKeyTo = issuedKeys.get(0);
 
             if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
                     || DataClassName.SERVERURL.name().equals(type)

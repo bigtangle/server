@@ -440,23 +440,21 @@ public class OrderController extends ExchangeController {
             HashMap<String, Object> map = new HashMap<String, Object>();
 
             if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-                Token t= orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
                 map.put("type", Main.getText("BUY"));
-                map.put("amount", mf.format(orderRecord.getTargetValue(),
-                        t.getDecimals()));
+                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("tokenname",
-                        t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())/ orderRecord.getTargetValue()));
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getTargetValue()));
             } else {
-               Token t= orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
                 map.put("type", Main.getText("SELL"));
-                map.put("amount", mf.format(orderRecord.getOfferValue(),
-                      t .getDecimals()));
+                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("tokenname",
-                        t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals()) / orderRecord.getOfferValue()));
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getOfferValue()));
             }
             map.put("orderId", orderRecord.getInitialBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -598,16 +596,12 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long quantity = Long.valueOf(this.quantityTextField1.getText());
+        Token t = Main.getTokenById(tokenid);
+        Coin quantity = MonetaryFormat.FIAT.noCode().parse(this.quantityTextField1.getText(), Utils.HEX.decode(tokenid),
+                t.getDecimals());
+
         Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText());
-        long amount = quantity;
-        if (!typeStr.equals("sell")) {
-            amount = quantity * price.getValue();
-        }
-        if (coin.getValue() < amount) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
-            return;
-        }
+
         LocalDate to = validdateToDatePicker1.getValue();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String validdateTo = "";
@@ -642,11 +636,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
+                    totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
+                    totime, fromtime);
         }
 
         overlayUI.done();
