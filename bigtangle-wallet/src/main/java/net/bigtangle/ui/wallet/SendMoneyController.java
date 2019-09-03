@@ -62,6 +62,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -897,7 +898,7 @@ public class SendMoneyController {
         transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
 
         transaction.addInput(utxo.getBlockHash(), multisigOutput);
-        transaction.setMemo(memoTF1.getText());
+        transaction.setMemo(new MemoInfo(memoTF1.getText()) );
 
         PayMultiSign payMultiSign = new PayMultiSign();
         payMultiSign.setOutputindex(utxo.getIndex());
@@ -952,7 +953,7 @@ public class SendMoneyController {
         transaction.addOutput(amount2, multisigOutput.getScriptPubKey());
 
         transaction.addInput(utxo.getBlockHash(), multisigOutput);
-        transaction.setMemo(memoTF111.getText());
+        transaction.setMemo(new MemoInfo(memoTF111.getText()) );
 
         PayMultiSign payMultiSign = new PayMultiSign();
         payMultiSign.setOrderid(UUIDUtil.randomUUID());

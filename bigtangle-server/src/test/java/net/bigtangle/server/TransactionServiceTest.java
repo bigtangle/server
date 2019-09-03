@@ -26,6 +26,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
@@ -178,7 +179,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        request.tx.setMemo(createDataSize(5000));
+        request.tx.setMemo(  new MemoInfo(createDataSize(5000)));
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();

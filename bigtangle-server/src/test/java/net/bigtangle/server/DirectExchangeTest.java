@@ -33,6 +33,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -690,7 +691,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(destination, amount);
-        request.tx.setMemo("memo");
+        request.tx.setMemo(new MemoInfo("memo"));
         walletAppKit.wallet().completeTx(request, null);
         // request.tx.setDataclassname(DataClassName.USERDATA.name());
 

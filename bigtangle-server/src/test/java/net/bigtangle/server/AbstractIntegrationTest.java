@@ -210,7 +210,11 @@ public abstract class AbstractIntegrationTest {
 //        });
     }
 
-    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
+    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks )
+            throws JsonProcessingException, Exception, BlockStoreException {
+        return resetAndMakeTestToken(testKey, addedBlocks, 0);
+    }
+    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks, int decimal)
             throws JsonProcessingException, Exception, BlockStoreException {
         store.resetStore();
 
@@ -221,7 +225,7 @@ public abstract class AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         long amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()

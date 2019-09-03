@@ -62,6 +62,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -2051,7 +2052,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
-        multispent.setMemo(memo);
+        multispent.setMemo(new MemoInfo(memo));
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
             Coin a = Coin.valueOf(entry.getValue(), tokenid);
             Address address = Address.fromBase58(params, entry.getKey());
@@ -2282,7 +2283,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
-        request.tx.setMemo(memo);
+     
+        request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
 
@@ -2326,7 +2328,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         request.aesKey = aesKey;
-        request.tx.setMemo(memo);
+        request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
 
         rollingBlock.addTransaction(request.tx);

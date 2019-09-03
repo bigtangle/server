@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
@@ -1484,15 +1485,20 @@ public class Transaction extends ChildMessage {
         return memo;
     }
 
+  
     /**
      * Set the transaction {@link #memo}. It can be used to record the memo of
      * the payment request that initiated the transaction.
+     * 
      */
-    public void setMemo(String memo) {
-        this.memo = memo;
+    public void setMemo(MemoInfo memoInfo) {
+        try {
+            this.memo = memoInfo.toJson();
+        } catch (JsonProcessingException e) { 
+        }
         unCache();
     }
-
+    
     public byte[] getData() {
         return data;
     }
