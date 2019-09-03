@@ -927,7 +927,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             
             Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "01",
                     NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, 1, true,
-                    2, "bc", "");
+                    0, "bc", "");
             insertToken(params.getGenesisBlock().getHashAsString(), bc);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -943,7 +943,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Token output table
             Token bigtangle = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
                     NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.BigtangleCoinTotal, true,
-                    2, params.getGenesisBlock().getHashAsString());
+                    NetworkParameters.BIGTANGLE_DECIMAL, params.getGenesisBlock().getHashAsString());
             insertToken(bcBlockHash(params), bigtangle);
             updateTokenConfirmed(bcBlockHash(params), true);
 
