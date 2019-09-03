@@ -347,18 +347,18 @@ public final class MonetaryFormat {
     public String format(Monetary monetary, int smallestUnitExponent) {
         return format(monetary.getValue(), smallestUnitExponent);
     }
-    public String format(long value  , int smallestUnitExponent) { 
+    public String format(long value  , int decimal) { 
         // rounding
         long satoshis = Math.abs(value);
        
         // shifting
-        long shiftDivisor = checkedPow(10, smallestUnitExponent - shift);
+        long shiftDivisor = checkedPow(10, decimal - shift);
         long numbers = satoshis / shiftDivisor;
         long decimals = satoshis % shiftDivisor;
         String decimalsStr="";
         if(decimals >0) {
         // formatting
-            decimalsStr = String.format(Locale.US, "%0" + (smallestUnitExponent - shift) + "d", decimals);
+            decimalsStr = String.format(Locale.US, "%0" + (decimal - shift) + "d", decimals);
         }
         StringBuilder str = new StringBuilder(decimalsStr);
         while (str.length() > minDecimals && str.charAt(str.length() - 1) == '0')
