@@ -2031,6 +2031,11 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token name");
                     return SolidityState.getFailState();
                 }
+                if (currentToken.getToken().getDecimals() !=prevToken.getDecimals()) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token decimal");
+                    return SolidityState.getFailState();
+                }
                 if (currentToken.getToken().getTokentype() != prevToken.getTokentype()) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token type");
@@ -2250,6 +2255,18 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
+        if (currentToken.getToken().getDecimals()  >= NetworkParameters.TOKEN_MAX_DECIMAL  || currentToken.getToken().getDecimals()  < 0) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("decimals must be bewteen 0 and 18 ");
+            return SolidityState.getFailState();
+        }
+        
+        if ( (currentToken.getToken().getAmount()+""). length()+   currentToken.getToken().getDecimals()  >  NetworkParameters.TOKEN_MAX_DECIMAL ) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("amount with decimal must be bewteen 0 and 10**19 ");
+            return SolidityState.getFailState();
+        }
+        
         if (currentToken.getToken().getDomainName() != null
                 && currentToken.getToken().getDomainName().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)

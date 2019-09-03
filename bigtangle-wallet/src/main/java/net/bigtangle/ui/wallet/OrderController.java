@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.math.LongMath;
 
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -439,21 +440,23 @@ public class OrderController extends ExchangeController {
             HashMap<String, Object> map = new HashMap<String, Object>();
 
             if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+                Token t= orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
                 map.put("type", Main.getText("BUY"));
                 map.put("amount", mf.format(orderRecord.getTargetValue(),
-                        orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getDecimals()));
+                        t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
                 map.put("tokenname",
-                        orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
+                        t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())/ orderRecord.getTargetValue()));
             } else {
+               Token t= orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
                 map.put("type", Main.getText("SELL"));
                 map.put("amount", mf.format(orderRecord.getOfferValue(),
-                        orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getDecimals()));
+                      t .getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("tokenname",
-                        orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
+                        t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals()) / orderRecord.getOfferValue()));
             }
             map.put("orderId", orderRecord.getInitialBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
