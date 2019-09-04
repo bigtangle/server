@@ -250,7 +250,7 @@ public class MilestoneService {
   
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
-     * Update depth: the longest chain of blocks to a tip
+     * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks too.
      * 
      * @throws BlockStoreException
      */
@@ -373,7 +373,7 @@ public class MilestoneService {
 
     /**
      * Update rating: the percentage of times that tips selected by MCMC approve
-     * a block
+     * a block. Allows unsolid blocks too.
      * 
      * @throws BlockStoreException
      */
@@ -423,9 +423,10 @@ public class MilestoneService {
             Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
             subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
 
-            // Update your rating
-            store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
-                    approvers.get(currentBlock.getBlockHash()).size());
+            // Update your rating if solid
+            if (currentBlock.getBlockEvaluation().getSolid() == 1) 
+                store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
+                        approvers.get(currentBlock.getBlockHash()).size());
             approvers.remove(currentBlock.getBlockHash());
         }
     }
@@ -457,7 +458,7 @@ public class MilestoneService {
             blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
         for (int i = 0; i < numberUpdates; i++) {
-            // Now try to find blocks that can be added to the milestone
+            // Now try to find blocks that can be added to the milestone. DISALLOWS UNSOLID
             HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm();
 
             // VALIDITY CHECKS

@@ -32,6 +32,7 @@ import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.ValidatorService.PredecessorRequirement;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -45,6 +46,8 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
+    @Autowired
+    private ValidatorService validatorService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -149,37 +152,31 @@ public class BlockService {
     /**
      * Recursively adds the specified block and its approved blocks to the
      * collection if the blocks are not in the current milestone and not in the
-     * collection.
+     * collection. if a block is missing somewhere, returns false.
      * 
      * @param evaluations
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    // TODO rename all to unconfirmed
-    public void addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) {
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) throws BlockStoreException {
         if (block == null)
-            return;
+            return false;
 
         if (block.getBlockEvaluation().isConfirmed() || evaluations.contains(block))
-            return;
+            return true;
 
-        // Add this block and add all of its approved non-milestone blocks
+        // Add this block and add all of its required unconfirmed blocks
         evaluations.add(block);
-
-        BlockWrap prevTrunk, prevBranch;
-        try {
-            prevTrunk = store.getBlockWrap(block.getBlock().getPrevBlockHash());
-            prevBranch = store.getBlockWrap(block.getBlock().getPrevBranchBlockHash());
-        } catch (BlockStoreException e) {
-            // Cannot happen
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        
+        List<PredecessorRequirement> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
+        for (PredecessorRequirement req : allRequiredBlockHashes) {
+            BlockWrap pred = store.getBlockWrap(req.predecessorHash);
+            if (pred == null)
+                return false;
+            if (!addRequiredUnconfirmedBlocksTo(evaluations, pred))
+                return false;
         }
-
-        if (prevTrunk != null)
-            addRequiredUnconfirmedBlocksTo(evaluations, prevTrunk);
-        if (prevBranch != null)
-            addRequiredUnconfirmedBlocksTo(evaluations, prevBranch);
+        return true;
     }
 
     @SuppressWarnings("unchecked")

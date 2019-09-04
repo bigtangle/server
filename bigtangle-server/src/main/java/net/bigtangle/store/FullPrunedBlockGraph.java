@@ -217,17 +217,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public boolean solidifyWaiting(Block block) {
         lock.lock();
         try {
-            SolidityState solidityState = validatorService.checkSolidity(block, true);
+            SolidityState solidityState = validatorService.checkSolidity(block, false);
             
             switch (solidityState.getState()) {
             case MissingPredecessor:
                 break;
             case Success:
+            case Invalid:
                 try {
                     blockStore.beginDatabaseBatchWrite();
                     solidifyBlock(block, solidityState);
                     blockStore.commitDatabaseBatchWrite();
                     try {
+                        // TODO this is recursive and may blow the stack
                         scanWaitingBlocks(block);
                     } catch (BlockStoreException | VerificationException e) {
                         log.debug(e.getLocalizedMessage());
@@ -237,8 +239,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     blockStore.abortDatabaseBatchWrite();
                     throw e;
                 }
-            case Invalid:
-                throw new GenericInvalidityException();
             }
 
         } catch (BlockStoreException e) {

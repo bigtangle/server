@@ -72,7 +72,7 @@ public class TipsService {
      * Performs MCMC without walker restrictions. Note: We cannot disallow
      * blocks conflicting with the milestone, since reorgs must be allowed to
      * happen. We cannot check if given blocks are eligible without the
-     * milestone since that is not efficiently computable.
+     * milestone since that is not efficiently computable. Hence allows unsolid blocks.
      * 
      * @param count
      *            The number of rating tips.
@@ -110,7 +110,7 @@ public class TipsService {
     }
 
     /**
-     * Selects two blocks to approve via MCMC
+     * Selects two blocks to approve via MCMC. Disallows unsolid blocks.
      * 
      * @return Two blockhashes selected via MCMC
      * @throws BlockStoreException
@@ -125,17 +125,18 @@ public class TipsService {
      * itself
      * 
      * @param prototype
-     *            Invalid block that uses the contents of the
+     *            Existing solid block that is considered when walking
      * @return Two blockhashes selected via MCMC
      * @throws VerificationException
      *             if the given prototype is not compatible with the current
      *             milestone
      */
-    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithPrototype(Block prototype)
+    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithExisting(Block prototype)
             throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
-                store.getBlockWrap(prototype.getHash()));
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, 
+                store.getBlockWrap(prototype.getHash())))
+            throw new InfeasiblePrototypeException("The given prototype is insolid");
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
     }
 
@@ -154,8 +155,9 @@ public class TipsService {
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairStartingFrom(BlockWrap prototype)
             throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
-                store.getBlockWrap(prototype.getBlockHash()));
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, 
+                store.getBlockWrap(prototype.getBlockHash())))
+            throw new InfeasiblePrototypeException("The given prototype is insolid");
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, prototype);
     }
 
@@ -179,8 +181,10 @@ public class TipsService {
         Stopwatch watch = Stopwatch.createStarted();
 
         // Initialize approved blocks
-        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
-        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
 
         // Necessary: Initial test if the prototype's
         // currentApprovedNonMilestoneBlocks are actually valid
@@ -197,7 +201,8 @@ public class TipsService {
             if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
                 // Go left
                 left = nextLeft;
-                blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
                 nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
@@ -205,7 +210,8 @@ public class TipsService {
             } else {
                 // Go right
                 right = nextRight;
-                blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
                 nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
@@ -216,12 +222,14 @@ public class TipsService {
         // Go forward on the remaining paths
         while (nextLeft != left) {
             left = nextLeft;
-            blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
             nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
         }
         while (nextRight != right) {
             right = nextRight;
-            blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
             nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
         }
 

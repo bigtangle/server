@@ -68,6 +68,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
+import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.exception.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
@@ -459,7 +460,7 @@ public class ValidatorService {
      * Checks if the given block is eligible to be walked to during local approval
      * tip selection given the current set of non-milestone blocks to include. This
      * is the case if the block + the set is compatible with the current milestone.
-     * It must disallow spent prev UTXOs / unconfirmed prev UTXOs
+     * It must disallow spent prev UTXOs / unconfirmed prev UTXOs or unsolid blocks.
      * 
      * @param block                             The block to check for eligibility.
      * @param currentApprovedNonMilestoneBlocks The set of all currently approved
@@ -473,13 +474,18 @@ public class ValidatorService {
         // Any confirmed blocks are always compatible with the current milestone
         if (block.getBlockEvaluation().isConfirmed())
             return true;
+        
+        // Unsolid blocks are not allowed
+        if (block.getBlockEvaluation().getSolid() != 1)
+            return false;
 
         // Get sets of all / all new non-milestone blocks when approving the
         // specified block in combination with the currently included blocks
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks
                 .clone();
-        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNonMilestoneBlocks, block);
+        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedNonMilestoneBlocks, block))
+            throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
 
         // If this set of blocks is eligible, all is fine
         return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
@@ -794,7 +800,8 @@ public class ValidatorService {
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
         for (BlockWrap winningBlock : initialBlocks) {
-            blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock);
+            if (!blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock))
+                throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
             blockService.addConfirmedApproversTo(winningBlocks, winningBlock);
         }
         HashSet<BlockWrap> losingBlocks = new HashSet<>(winningBlocks);
@@ -1002,8 +1009,8 @@ public class ValidatorService {
         });
     }
     
-    private List<BlockWrap> getAllPredecessors(Block block) throws BlockStoreException {
-        List<PredecessorRequirement> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+    private List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
+        List<PredecessorRequirement> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         List<BlockWrap> result = new ArrayList<>();
         for (PredecessorRequirement pred : allPredecessorBlockHashes)
             result.add(store.getBlockWrap(pred.predecessorHash));
@@ -1029,7 +1036,12 @@ public class ValidatorService {
         }
     }
     
-    private List<PredecessorRequirement> getAllPredecessorBlockHashes(Block block) {
+    /**
+     * Returns all blocks that must be confirmed if this block is confirmed.
+     * @param block
+     * @return
+     */
+    public List<PredecessorRequirement> getAllRequiredBlockHashes(Block block) {
         List<PredecessorRequirement> predecessors = new ArrayList<>();
         predecessors.add(new PredecessorRequirement(block.getPrevBlockHash(), false));
         predecessors.add(new PredecessorRequirement(block.getPrevBranchBlockHash(), false));
@@ -1121,7 +1133,7 @@ public class ValidatorService {
     }
     
     private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions) throws BlockStoreException {
-        final List<PredecessorRequirement> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
+        final List<PredecessorRequirement> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         for (PredecessorRequirement predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq.predecessorHash);
             if (pred == null)
@@ -1138,7 +1150,7 @@ public class ValidatorService {
     }
     
     private SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
-        final List<BlockWrap> allPredecessors = getAllPredecessors(block);
+        final List<BlockWrap> allPredecessors = getAllRequirements(block);
         SolidityState missingDependency = null;
         for (BlockWrap predecessor : allPredecessors) {
             if (predecessor.getBlockEvaluation().getSolid() == 1) {

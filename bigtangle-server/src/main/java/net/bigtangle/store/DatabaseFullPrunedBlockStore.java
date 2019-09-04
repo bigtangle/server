@@ -203,7 +203,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"
-            + " milestonedepth, inserttime, maintained, block, solid, calculated, confirmed " + "FROM blocks WHERE milestone = -1 AND confirmed = false AND rating >= "
+            + " milestonedepth, inserttime, maintained, block, solid, calculated, confirmed " + "FROM blocks WHERE solid=1 AND milestone = -1 AND confirmed = false AND rating >= "
             + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
     protected final String SELECT_MAINTAINED_BLOCK_HASHES_SQL = "SELECT hash " + "FROM blocks WHERE maintained = true"
             + afterSelect();
@@ -218,11 +218,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT hash, rating, depth, "
             + "cumulativeweight,  height, milestone, milestonelastupdate," 
             + " milestonedepth, inserttime, maintained, solid, calculated, confirmed "
-            + " FROM blocks WHERE milestone = -1 AND confirmed = true AND rating <= " + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD
+            + " FROM blocks WHERE solid=1 AND milestone = -1 AND confirmed = true AND rating <= " + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD
             + afterSelect();
     protected final String SELECT_SOLID_TIPS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
             + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, block, solid, calculated, confirmed FROM blocks "
-            + " WHERE solid=1 " + afterSelect();
+            + "INNER JOIN tips ON tips.hash=blocks.hash" + afterSelect();
     protected final String SELECT_SOLID_BLOCKS_OF_HEIGHT_SQL = "SELECT hash, rating, depth, "
             + "cumulativeweight, height, milestone, milestonelastupdate, " 
             + "milestonedepth, inserttime, maintained, solid, calculated, confirmed "
