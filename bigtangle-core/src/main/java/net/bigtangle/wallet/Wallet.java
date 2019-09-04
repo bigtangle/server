@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -70,6 +74,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
@@ -89,6 +94,7 @@ import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
@@ -105,6 +111,7 @@ import net.bigtangle.signers.LocalTransactionSigner;
 import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -2454,6 +2461,54 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+    }
+
+    
+
+    public void getOrderMap( boolean matched,  List<String> address,  List<Map<String, Object>> orderData,
+             String buytext, String sellText) throws IOException, JsonProcessingException, JsonParseException, JsonMappingException {
+     
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("spent", matched  ? "false" : "true");
+        requestParam.put("addresses", address);
+        String response0 = OkHttp3Util.post(serverurl + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+      
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
+
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+
+            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
+                map.put("type", buytext);
+                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
+                map.put("tokenId", orderRecord.getTargetTokenid());
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getTargetValue()));
+            } else {
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
+                map.put("type",sellText);
+                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
+                map.put("tokenId", orderRecord.getOfferTokenid());
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getOfferValue()));
+            }
+            map.put("orderId", orderRecord.getInitialBlockHashHex());
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
+            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
+            map.put("address",
+                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
+            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
+            // map.put("state", Main.getText( (String)
+            // requestParam.get("state")));
+            orderData.add(map);
+        }
     }
 
     public boolean isAllowClientMining() {

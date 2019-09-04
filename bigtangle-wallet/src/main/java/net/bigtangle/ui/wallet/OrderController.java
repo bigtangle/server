@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.google.common.math.LongMath;
 
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -50,14 +48,12 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
-import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -324,12 +320,33 @@ public class OrderController extends ExchangeController {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void initTable(Map<String, Object> requestParam) throws Exception {
+    public void initTable() throws Exception {
 
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        // requestParam.put("orderid", orderid4searchTextField.getText());
+        requestParam.put("address", address4searchTextField.getText());
+        // requestParam.put("market", market4searchTextField.getText());
+
+        requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
+        
+     boolean  matched= "publish".equals(stateTG.getSelectedToggle().getUserData().toString()) ;
+        
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
         String CONTEXT_ROOT = Main.getContextRoot();
-        getOrder(requestParam, orderData, CONTEXT_ROOT);
+        Main.walletAppKit.wallet().setServerURL(CONTEXT_ROOT);
+        boolean ifMineOrder = mineCB.isSelected();
+
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
+        List<String> address = new ArrayList<String>();
+        if (ifMineOrder) {
+            for (ECKey ecKey : keys) {
+                address.add(ecKey.toAddress(Main.params).toString());
+            }
+            requestParam.put("addresses", address);
+        }
+        
+        Main.walletAppKit.wallet(). getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
 
         getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
         orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
@@ -410,64 +427,8 @@ public class OrderController extends ExchangeController {
             }
         }
     }
-
-    private void getOrder(Map<String, Object> requestParam, ObservableList<Map<String, Object>> orderData,
-            String CONTEXT_ROOT)
-            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
-        if (requestParam.containsKey("state")) {
-            String stateStr = (String) requestParam.get("state");
-            requestParam.put("spent", "publish".equals(stateStr) ? "false" : "true");
-        }
-        boolean ifMineOrder = mineCB.isSelected();
-
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
-        List<String> address = new ArrayList<String>();
-        if (ifMineOrder) {
-            for (ECKey ecKey : keys) {
-                address.add(ecKey.toAddress(Main.params).toString());
-            }
-            requestParam.put("addresses", address);
-        }
-
-        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        log.debug(response0);
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-
-        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
-
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            HashMap<String, Object> map = new HashMap<String, Object>();
-
-            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
-                map.put("type", Main.getText("BUY"));
-                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getTargetValue()));
-            } else {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
-                map.put("type", Main.getText("SELL"));
-                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getOfferValue()));
-            }
-            map.put("orderId", orderRecord.getInitialBlockHashHex());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
-            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
-            map.put("address",
-                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
-            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
-            // map.put("state", Main.getText( (String)
-            // requestParam.get("state")));
-            orderData.add(map);
-        }
-    }
+ 
+ 
 
     public void initMarketComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -714,14 +675,9 @@ public class OrderController extends ExchangeController {
     }
 
     public void search(ActionEvent event) {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        // requestParam.put("orderid", orderid4searchTextField.getText());
-        requestParam.put("address", address4searchTextField.getText());
-        // requestParam.put("market", market4searchTextField.getText());
-
-        requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
+    
         try {
-            initTable(requestParam);
+            initTable();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
