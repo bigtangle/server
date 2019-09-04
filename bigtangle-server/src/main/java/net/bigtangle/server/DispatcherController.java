@@ -46,6 +46,8 @@ import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ExchangeService;
+import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -97,6 +99,8 @@ public class DispatcherController {
     protected FullPrunedBlockStore store;
     @Autowired
     private TokenDomainnameService tokenDomainnameService;
+    @Autowired
+    private ExchangeService exchangeService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -435,6 +439,31 @@ public class DispatcherController {
                 final String domainname = (String) request.get("domainname");
                AbstractResponse response = this.tokenDomainnameService
                         .queryDomainnameTokenPredecessorBlockHash(domainname);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case exchangeSignTransaction: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.signTransaction(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case exchangeMultiSignTransaction: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.signMultiTransaction(request);
+
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
+            case exchangeInfo: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
