@@ -273,7 +273,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<Sha256Hash>());
 
         // Mining reward block should go through
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isMilestone());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
         // Make more for next reward interval
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL

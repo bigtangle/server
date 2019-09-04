@@ -369,7 +369,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Adds the specified block and all approved blocks to the milestone. This
+     * Adds the specified block and all approved blocks to the confirmed set. This
      * will connect all transactions of the block by marking used UTXOs spent
      * and adding new UTXOs to the db.
      * 
@@ -380,7 +380,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            addBlockToMilestone(blockHash, traversedBlockHashes);
+            confirmUntil(blockHash, traversedBlockHashes);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -388,7 +388,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void addBlockToMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
+    private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
@@ -399,17 +399,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Block block = blockWrap.getBlock();
 
         // If already confirmed, return
-        if (blockEvaluation.isMilestone())
+        if (blockEvaluation.isConfirmed())
             return;
 
-        // Set milestone true and update latestMilestoneUpdateTime
-        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), true);
+        // Set confirmed
+        blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
 
         // Connect all approved blocks first if not traversed already
         if (!traversedBlockHashes.contains(block.getPrevBlockHash()))
-            addBlockToMilestone(block.getPrevBlockHash(), traversedBlockHashes);
+            confirmUntil(block.getPrevBlockHash(), traversedBlockHashes);
         if (!traversedBlockHashes.contains(block.getPrevBranchBlockHash()))
-            addBlockToMilestone(block.getPrevBranchBlockHash(), traversedBlockHashes);
+            confirmUntil(block.getPrevBranchBlockHash(), traversedBlockHashes);
 
         // Confirm the block
         confirmBlock(blockWrap);
@@ -713,7 +713,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     /**
-     * Adds the specified block and all approved blocks to the milestone. This
+     * Confirms the specified block and all approved blocks. This
      * will connect all transactions of the block by marking used UTXOs spent
      * and adding new UTXOs to the db.
      * 
@@ -724,7 +724,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Write to DB
         try {
             blockStore.beginDatabaseBatchWrite();
-            removeBlockFromMilestone(blockHash, traversedBlockHashes);
+            unconfirmFrom(blockHash, traversedBlockHashes);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -732,7 +732,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void removeBlockFromMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
+    private void unconfirmFrom(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
@@ -743,7 +743,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Block block = blockWrap.getBlock();
 
         // If already unconfirmed, return
-        if (!blockEvaluation.isMilestone())
+        if (!blockEvaluation.isConfirmed())
             return;
 
         // Unconfirm all dependents
@@ -752,9 +752,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Then unconfirm the block itself
         unconfirmBlock(block);
 
-        // Set milestone false and reset milestonedepth
-        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), false);
-        blockStore.updateBlockEvaluationMilestoneDepth(blockEvaluation.getBlockHash(), -1);
+        // Set unconfirmed
+        blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
 
         // Keep track of unconfirmed blocks
         traversedBlockHashes.add(blockHash);
@@ -763,12 +762,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
-            removeBlockFromMilestone(approver, traversedBlockHashes);
+            unconfirmFrom(approver, traversedBlockHashes);
         }
 
-        // Unconfirm all dependents
+        // Unconfirm all helper dependents
         for (Sha256Hash dependent : blockStore.getDependents(block.getHash())) {
-            removeBlockFromMilestone(dependent, traversedBlockHashes);
+            unconfirmFrom(dependent, traversedBlockHashes);
         }
 
         // Then clear own dependencies since no longer confirmed
@@ -779,7 +778,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
                 if (utxo.isSpent()) {
-                    removeBlockFromMilestone(
+                    unconfirmFrom(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
                             traversedBlockHashes);
@@ -838,7 +837,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect matching record spender
         if (blockStore.getOrderMatchingSpent(block.getHash())) {
-            removeBlockFromMilestone(blockStore.getOrderMatchingSpender(block.getHash()), traversedBlockHashes);
+            unconfirmFrom(blockStore.getOrderMatchingSpender(block.getHash()), traversedBlockHashes);
         }
 
         // Disconnect all virtual transaction output dependents
@@ -846,7 +845,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(blockStore
+                unconfirmFrom(blockStore
                         .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
@@ -861,7 +860,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(blockStore
+                unconfirmFrom(blockStore
                         .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }
@@ -873,7 +872,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect order record spender
         if (blockStore.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH)) {
-            removeBlockFromMilestone(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH),
+            unconfirmFrom(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH),
                     traversedBlockHashes);
         }
     }
@@ -883,7 +882,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect token record spender
         if (blockStore.getTokenSpent(block.getHashAsString())) {
-            removeBlockFromMilestone(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
+            unconfirmFrom(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
         }
 
         // If applicable: Disconnect all domain definitions that were based on
@@ -893,7 +892,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             List<String> dependents = blockStore
                     .getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
             for (String b : dependents) {
-                removeBlockFromMilestone(Sha256Hash.wrap(b), traversedBlockHashes);
+                unconfirmFrom(Sha256Hash.wrap(b), traversedBlockHashes);
             }
         }
     }
@@ -903,7 +902,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect reward record spender
         if (blockStore.getRewardSpent(block.getHash())) {
-            removeBlockFromMilestone(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+            unconfirmFrom(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
         }
 
         // Disconnect all virtual transaction output dependents
@@ -911,7 +910,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo.isSpent()) {
-                removeBlockFromMilestone(blockStore
+                unconfirmFrom(blockStore
                         .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
                         traversedBlockHashes);
             }

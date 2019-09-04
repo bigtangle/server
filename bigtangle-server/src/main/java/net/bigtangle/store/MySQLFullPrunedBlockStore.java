@@ -44,13 +44,14 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    rating bigint ,\n"
             + "    depth bigint,\n" 
             + "    cumulativeweight  bigint ,\n" 
-            + "    milestone boolean,\n"
+            + "    milestone bigint,\n"
             + "    milestonelastupdate bigint,\n" 
             + "    milestonedepth bigint,\n" 
             + "    inserttime bigint,\n"
             + "    maintained boolean,\n" 
             + "    solid bigint,\n"
             + "    calculated boolean,\n" 
+            + "    confirmed boolean,\n"
             + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"

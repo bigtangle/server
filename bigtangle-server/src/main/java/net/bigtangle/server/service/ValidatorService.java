@@ -283,11 +283,7 @@ public class ValidatorService {
             return new RewardBuilderResult(Eligibility.INVALID, tx, difficulty, perTxReward);
 
         // Ensure enough blocks are approved to be eligible
-        if (totalRewardCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight)
-                * NetworkParameters.REWARD_MIN_MILESTONE_PERCENTAGE / 100)
-            return new RewardBuilderResult(Eligibility.ELIGIBLE, tx, difficulty, perTxReward);
-        else
-            return new RewardBuilderResult(Eligibility.INELIGIBLE, tx, difficulty, perTxReward);
+        return new RewardBuilderResult(Eligibility.ELIGIBLE, tx, difficulty, perTxReward);
     }
 
     /**
@@ -356,11 +352,7 @@ public class ValidatorService {
         }
 
         // Ensure enough blocks are approved to be eligible
-        if (totalBlockCount >= store.getCountMilestoneBlocksInInterval(fromHeight, toHeight)
-                * NetworkParameters.ORDER_MATCHING_MIN_MILESTONE_PERCENTAGE / 100)
-            return Eligibility.ELIGIBLE;
-        else
-            return Eligibility.INELIGIBLE;
+        return Eligibility.ELIGIBLE;
     }
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
@@ -478,8 +470,8 @@ public class ValidatorService {
      */
     public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
             throws BlockStoreException {
-        // Any milestone blocks are always compatible with the current milestone
-        if (block.getBlockEvaluation().isMilestone())
+        // Any confirmed blocks are always compatible with the current milestone
+        if (block.getBlockEvaluation().isConfirmed())
             return true;
 
         // Get sets of all / all new non-milestone blocks when approving the
@@ -487,7 +479,7 @@ public class ValidatorService {
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks
                 .clone();
-        blockService.addApprovedNonMilestoneBlocksTo(allApprovedNonMilestoneBlocks, block);
+        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNonMilestoneBlocks, block);
 
         // If this set of blocks is eligible, all is fine
         return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
@@ -541,7 +533,7 @@ public class ValidatorService {
             // To reclaim, not only must the order record be confirmed unspent,
             // but the non-collecting issuing block must be confirmed too
             return store.getOrderConfirmed(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH)
-                    && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isMilestone();
+                    && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isConfirmed();
         case ORDERMATCH:
             return store.getOrderMatchingConfirmed(c.getConflictPoint().getConnectedOrderMatching().getPrevHash());
         case DOMAINISSUANCE:
@@ -583,7 +575,7 @@ public class ValidatorService {
      *                                  prioritized over non-milestone candidates.
      * @throws BlockStoreException
      */
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
         // Remove currently ineligible blocks
         // i.e. for reward blocks: invalid never, ineligible overrule, eligible
@@ -598,11 +590,11 @@ public class ValidatorService {
         // Resolve conflicting block combinations:
         // Disallow conflicts with unmaintained/pruned milestone blocks,
         // i.e. remove those whose input is already spent by such blocks
-        resolvePrunedConflicts(blocksToAdd);
+        resolveMilestoneConflicts(blocksToAdd);
 
         // Then resolve conflicts between maintained milestone + new candidates
         // This may trigger reorgs, i.e. unconfirming current milestones!
-        resolveUndoableConflicts(blocksToAdd, unconfirmLosingMilestones);
+        resolveTemporaryConflicts(blocksToAdd);
 
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
@@ -644,7 +636,7 @@ public class ValidatorService {
                             return false;
                         case INELIGIBLE:
                             // Overruled?
-                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.CONFIRMATION_UPPER_THRESHOLD
                                     && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()
                                             - NetworkParameters.REWARD_OVERRULE_TIME_MS));
                         case INVALID:
@@ -673,7 +665,7 @@ public class ValidatorService {
                             return false;
                         case INELIGIBLE:
                             // Overruled?
-                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.MILESTONE_UPPER_THRESHOLD
+                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.CONFIRMATION_UPPER_THRESHOLD
                                     && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()
                                             - NetworkParameters.REWARD_OVERRULE_TIME_MS));
                         case INVALID:
@@ -706,7 +698,7 @@ public class ValidatorService {
      */
     private void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
         // Milestone blocks are always ok
-        new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isMilestone())
+        new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isConfirmed())
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
                     try {
                         return !hasConfirmedDependencies(c); // Any candidates where used
@@ -727,7 +719,7 @@ public class ValidatorService {
                 });
     }
 
-    private void resolvePrunedConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+    private void resolveMilestoneConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
         // Find all conflict candidates in blocks to add
         List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream()).collect(Collectors.toList());
@@ -741,6 +733,7 @@ public class ValidatorService {
             BlockWrap milestoneBlock = getSpendingBlock(c);
 
             // If it is pruned or not maintained, we drop the blocks and warn
+            //TODO|| milestoneBlock.getBlockEvaluation().isMiles 
             if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained()) {
                 blockService.removeBlockAndApproversFrom(blocksToAdd, c.getBlock());
                 logger.warn("Dropping would-be blocks due to pruning. Reorg not possible!");
@@ -756,7 +749,7 @@ public class ValidatorService {
      * @param unconfirmLosingMilestones
      * @throws BlockStoreException
      */
-    private void resolveUndoableConflicts(Set<BlockWrap> blocksToAdd, boolean unconfirmLosingMilestones)
+    private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
         HashSet<BlockWrap> conflictingMilestoneBlocks = new HashSet<BlockWrap>();
@@ -766,21 +759,13 @@ public class ValidatorService {
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
-        HashSet<BlockWrap> losingBlocks = resolveConflicts(conflictingOutPoints, unconfirmLosingMilestones,
-                blocksToAdd);
+        HashSet<BlockWrap> losingBlocks = resolveTemporaryConflicts(conflictingOutPoints, blocksToAdd);
 
         // For milestone blocks that have been eliminated call disconnect
         // procedure
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockWrap b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
-            if (!unconfirmLosingMilestones) {
-                // Cannot happen since milestones are preferred during conflict
-                // sorting
-                logger.error("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
-                throw new RuntimeException("Cannot unconfirm milestone blocks when not allowing unconfirmation!");
-            }
-
             blockGraph.unconfirm(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms);
         }
 
@@ -802,21 +787,20 @@ public class ValidatorService {
      *         resolution
      * @throws BlockStoreException
      */
-    private HashSet<BlockWrap> resolveConflicts(Set<ConflictCandidate> conflictingOutPoints,
-            boolean unconfirmLosingMilestones, Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+    private HashSet<BlockWrap> resolveTemporaryConflicts(Set<ConflictCandidate> conflictingOutPoints,
+            Set<BlockWrap> blocksToAdd) throws BlockStoreException {
         // Initialize blocks that will/will not survive the conflict resolution
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
         for (BlockWrap winningBlock : initialBlocks) {
-            blockService.addApprovedNonMilestoneBlocksTo(winningBlocks, winningBlock);
-            blockService.addMilestoneApproversTo(winningBlocks, winningBlock);
+            blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock);
+            blockService.addConfirmedApproversTo(winningBlocks, winningBlock);
         }
         HashSet<BlockWrap> losingBlocks = new HashSet<>(winningBlocks);
 
-        // Sort conflicts internally by descending rating, then cumulative
-        // weight. If not unconfirming, prefer milestones first.
-        Comparator<ConflictCandidate> byDescendingRating = getConflictComparator(unconfirmLosingMilestones)
+        // Sort conflicts internally by descending rating, then cumulative weight. 
+        Comparator<ConflictCandidate> byDescendingRating = getConflictComparator()
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getRating())
                 .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
@@ -828,10 +812,8 @@ public class ValidatorService {
         Map<Object, TreeSet<ConflictCandidate>> conflicts = conflictingOutPoints.stream().collect(
                 Collectors.groupingBy(i -> i.getConflictPoint(), Collectors.toCollection(conflictTreeSetSupplier)));
 
-        // Sort conflicts among each other by descending max(rating). If not
-        // unconfirming, prefer milestones first.
-        Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator(
-                unconfirmLosingMilestones)
+        // Sort conflicts among each other by descending max(rating). If not unconfirming, prefer milestones first.
+        Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
                         .thenComparingLong(
                                 (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
                         .thenComparingLong((TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation()
@@ -876,59 +858,22 @@ public class ValidatorService {
         return losingBlocks;
     }
 
-    private Comparator<TreeSet<ConflictCandidate>> getConflictSetComparator(boolean unconfirmLosingMilestones) {
-        if (!unconfirmLosingMilestones)
-            return new Comparator<TreeSet<ConflictCandidate>>() {
-                @Override
-                public int compare(TreeSet<ConflictCandidate> o1, TreeSet<ConflictCandidate> o2) {
-                    if (o1.first().getBlock().getBlockEvaluation().isMilestone()
-                            && o2.first().getBlock().getBlockEvaluation().isMilestone())
-                        return 0;
-                    if (o1.first().getBlock().getBlockEvaluation().isMilestone())
-                        return 1;
-                    if (o2.first().getBlock().getBlockEvaluation().isMilestone())
-                        return -1;
-                    return 0;
-                }
-            };
-        else
-            return new Comparator<TreeSet<ConflictCandidate>>() {
-                @Override
-                public int compare(TreeSet<ConflictCandidate> o1, TreeSet<ConflictCandidate> o2) {
-                    return 0;
-                }
-            };
+    private Comparator<TreeSet<ConflictCandidate>> getConflictSetComparator() {
+        return new Comparator<TreeSet<ConflictCandidate>>() {
+            @Override
+            public int compare(TreeSet<ConflictCandidate> o1, TreeSet<ConflictCandidate> o2) {
+                return 0;
+            }
+        };
     }
 
-    private Comparator<ConflictCandidate> getConflictComparator(boolean unconfirmLosingMilestones) {
-        if (!unconfirmLosingMilestones)
-            return new Comparator<ConflictCandidate>() {
-                @Override
-                public int compare(ConflictCandidate o1, ConflictCandidate o2) {
-                    if (o1.getBlock().getBlockEvaluation().isMilestone()
-                            && o2.getBlock().getBlockEvaluation().isMilestone()) {
-                        if (o1.equals(o2))
-                            return 0;
-                        else {
-                            logger.warn("Inconsistent Milestone: Conflicting blocks in milestone" + ": \n"
-                                    + o1.getBlock().getBlock().getHash() + "\n" + o2.getBlock().getBlock().getHash());
-                            return 0;
-                        }
-                    }
-                    if (o1.getBlock().getBlockEvaluation().isMilestone())
-                        return 1;
-                    if (o2.getBlock().getBlockEvaluation().isMilestone())
-                        return -1;
-                    return 0;
-                }
-            };
-        else
-            return new Comparator<ConflictCandidate>() {
-                @Override
-                public int compare(ConflictCandidate o1, ConflictCandidate o2) {
-                    return 0;
-                }
-            };
+    private Comparator<ConflictCandidate> getConflictComparator() {
+        return new Comparator<ConflictCandidate>() {
+            @Override
+            public int compare(ConflictCandidate o1, ConflictCandidate o2) {
+                return 0;
+            }
+        };
     }
 
     /**

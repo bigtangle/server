@@ -652,7 +652,7 @@ public class Block extends Message {
         }
         s.append("   version: ").append(version);
         s.append('\n');
-        s.append("   heigth: ").append(height).append("\n");
+        s.append("   height: ").append(height).append("\n");
         s.append("   previous: ").append(getPrevBlockHash()).append("\n");
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");

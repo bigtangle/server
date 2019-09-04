@@ -161,9 +161,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException;
 
-    public HashSet<BlockEvaluation> getBlocksToRemoveFromMilestone() throws BlockStoreException;
+    public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
-    public HashSet<BlockWrap> getBlocksToAddToMilestone() throws BlockStoreException;
+    public HashSet<BlockWrap> getBlocksToConfirm() throws BlockStoreException;
 
     public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 
@@ -177,7 +177,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationRating(Sha256Hash blockhash, long rating) throws BlockStoreException;
 
-    public void updateBlockEvaluationMilestone(Sha256Hash blockhash, boolean isMilestone) throws BlockStoreException;
+    public void updateBlockEvaluationConfirmed(Sha256Hash blockhash, boolean confirmed) throws BlockStoreException;
+
+    public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException;
 
     public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long milestoneDepth)
             throws BlockStoreException;
@@ -191,8 +193,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 
     public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
-
-    public long getCountMilestoneBlocksInInterval(long fromHeight, long toHeight) throws BlockStoreException;
 
     public void updateAllBlocksMaintained() throws BlockStoreException;
 

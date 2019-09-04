@@ -28,8 +28,8 @@ public class BlockEvaluation implements Serializable {
     // Longest path to genesis block
     private long height;
 
-    // If true, this block is considered locally confirmed, e.g. sufficient rating etc.
-    private boolean milestone;
+    // If true, this block is considered locally confirmed, i.e. approved by chain consensus
+    private long milestone;
 
     // Timestamp for entry into milestone as true, reset if flip to false
     private long milestoneLastUpdateTime;
@@ -40,7 +40,7 @@ public class BlockEvaluation implements Serializable {
     // Timestamp for entry into evaluations/reception time
     private long insertTime;
     
-    // If false, this block has no influence on MCMC
+    // If false, this block has no influence on MCMC transitions
     private boolean maintained;
     
     // 0: unknown. -1: unsolid. 1: solid
@@ -48,6 +48,9 @@ public class BlockEvaluation implements Serializable {
     
     // If false, virtual TXOs have not been calculated yet.
     private boolean calculated;
+    
+    // If true, this block is confirmed temporarily or by milestone
+    private boolean confirmed;
 
     public BlockEvaluation() {
     }
@@ -66,16 +69,17 @@ public class BlockEvaluation implements Serializable {
         setMaintained(other.maintained);
         setSolid(other.solid);
         setCalculated(other.isCalculated());
+        setConfirmed(other.confirmed);
     }
 
     public static BlockEvaluation buildInitial(Block block) {
         long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, false, currentTimeMillis, 0, currentTimeMillis, true, 0, !block.getBlockType().needsCalculation());
+        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, -1, currentTimeMillis, 0, currentTimeMillis, true, 0, !block.getBlockType().needsCalculation(), false);
     }
 
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
-            long height, boolean milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained, long solid, boolean calculated) {
+            long height, long milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
+            boolean maintained, long solid, boolean calculated, boolean confirmed) {
         BlockEvaluation blockEvaluation = new BlockEvaluation();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -90,6 +94,7 @@ public class BlockEvaluation implements Serializable {
         blockEvaluation.setMaintained(maintained);
         blockEvaluation.setSolid(solid);
         blockEvaluation.setCalculated(calculated);
+        blockEvaluation.setConfirmed(confirmed);
 
         return blockEvaluation;
     }
@@ -142,11 +147,11 @@ public class BlockEvaluation implements Serializable {
         this.height = height;
     }
 
-    public boolean isMilestone() {
+    public long getMilestone() {
         return milestone;
     }
 
-    public void setMilestone(boolean milestone) {
+    public void setMilestone(long milestone) {
         this.milestone = milestone;
     }
 
@@ -196,6 +201,14 @@ public class BlockEvaluation implements Serializable {
 
     public void setCalculated(boolean calculated) {
         this.calculated = calculated;
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
     }
 
     @Override

@@ -1123,8 +1123,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(block2.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getBlockEvaluation(block1.getHash()).isMilestone());
-        assertTrue(store.getBlockEvaluation(block2.getHash()).isMilestone());
+        assertTrue(store.getBlockEvaluation(block1.getHash()).isConfirmed());
+        assertTrue(store.getBlockEvaluation(block2.getHash()).isConfirmed());
         UTXO utxo11 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
         UTXO utxo21 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()));
         assertNotNull(utxo11);
@@ -1142,8 +1142,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(block1.getHash(), new HashSet<>());
 
         // Both should be unconfirmed now
-        assertFalse(store.getBlockEvaluation(block1.getHash()).isMilestone());
-        assertFalse(store.getBlockEvaluation(block2.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(block1.getHash()).isConfirmed());
+        assertFalse(store.getBlockEvaluation(block2.getHash()).isConfirmed());
 
         final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
         assertNotNull(utxo1);
@@ -1401,7 +1401,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
 
         // Verify the dependent spending block is unconfirmed too
-        assertFalse(store.getBlockEvaluation(utxoSpendingBlock.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(utxoSpendingBlock.getHash()).isConfirmed());
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
@@ -1439,7 +1439,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
 
         // Verify the dependent reclaim block is unconfirmed too
-        assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isConfirmed());
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
@@ -1448,7 +1448,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(rewardBlock.getHash(), new HashSet<>());
         blockGraph.confirm(reclaimBlock.getHash(), new HashSet<>());
         blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
-        assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(reclaimBlock.getHash()).isConfirmed());
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
@@ -1484,7 +1484,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(reclaimBlock.getHash(), new HashSet<>());
 
         // Verify the dependent spender block is unconfirmed too
-        assertFalse(store.getBlockEvaluation(reclaimSpender.getHash()).isMilestone());
+        assertFalse(store.getBlockEvaluation(reclaimSpender.getHash()).isConfirmed());
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);

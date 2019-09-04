@@ -104,8 +104,8 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     // Consensus settings
-    public static final int MILESTONE_UPPER_THRESHOLD = 70;
-    public static final int MILESTONE_LOWER_THRESHOLD = 67;
+    public static final int CONFIRMATION_UPPER_THRESHOLD = 70;
+    public static final int CONFIRMATION_LOWER_THRESHOLD = 67;
     public static final int NUMBER_RATING_TIPS = 100;
     public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
     public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;

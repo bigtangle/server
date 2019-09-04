@@ -133,16 +133,16 @@ public class BlockService {
      * @param evaluation
      * @throws BlockStoreException
      */
-    public void addMilestoneApproversTo(Collection<BlockWrap> evaluations, BlockWrap evaluation)
+    public void addConfirmedApproversTo(Collection<BlockWrap> evaluations, BlockWrap evaluation)
             throws BlockStoreException {
-        if (!evaluation.getBlockEvaluation().isMilestone() || evaluations.contains(evaluation))
+        if (!evaluation.getBlockEvaluation().isConfirmed() || evaluations.contains(evaluation))
             return;
 
         // Add this block and add all of its milestone approvers
         evaluations.add(evaluation);
         for (Sha256Hash approverHash : store
                 .getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
-            addMilestoneApproversTo(evaluations, store.getBlockWrap(approverHash));
+            addConfirmedApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
     }
 
@@ -155,11 +155,12 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public void addApprovedNonMilestoneBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) {
+    // TODO rename all to unconfirmed
+    public void addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) {
         if (block == null)
             return;
 
-        if (block.getBlockEvaluation().isMilestone() || evaluations.contains(block))
+        if (block.getBlockEvaluation().isConfirmed() || evaluations.contains(block))
             return;
 
         // Add this block and add all of its approved non-milestone blocks
@@ -176,9 +177,9 @@ public class BlockService {
         }
 
         if (prevTrunk != null)
-            addApprovedNonMilestoneBlocksTo(evaluations, prevTrunk);
+            addRequiredUnconfirmedBlocksTo(evaluations, prevTrunk);
         if (prevBranch != null)
-            addApprovedNonMilestoneBlocksTo(evaluations, prevBranch);
+            addRequiredUnconfirmedBlocksTo(evaluations, prevBranch);
     }
 
     @SuppressWarnings("unchecked")
@@ -223,7 +224,7 @@ public class BlockService {
     }
 
     public List<BlockWrap> getValidationEntryPointCandidates() throws BlockStoreException {
-        return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF);
+        return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
     }
 
     public void broadcastBlock(Block block) {

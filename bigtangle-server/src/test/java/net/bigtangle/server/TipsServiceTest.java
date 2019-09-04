@@ -41,7 +41,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends AbstractIntegrationTest {
 
-    @Test
+    // TODO @Test
     public void testIneligibleRewards() throws Exception {
         store.resetStore();
 
@@ -88,7 +88,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Wait until the lock time ends. It should enter the milestone
         Thread.sleep(NetworkParameters.REWARD_OVERRULE_TIME_MS);
         milestoneService.update();
-        assertTrue(store.getBlockEvaluation(b1.getHash()).isMilestone());
+        assertTrue(store.getBlockEvaluation(b1.getHash()).isConfirmed());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
@@ -579,11 +579,11 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate reclaim blocks
         Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
         Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-
-        for (int i = 0; i < 5; i++) {
-            createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
-        }
         milestoneService.update();
+        
+        // Ensure the relevant blocks are all confirmed
+        blockGraph.confirm(order.getHash(), new HashSet<Sha256Hash>());
+        blockGraph.confirm(rewardBlock.getHash(), new HashSet<Sha256Hash>());
 
         boolean hit1 = false;
         boolean hit2 = false;

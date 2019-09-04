@@ -134,7 +134,7 @@ public class TipsService {
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithPrototype(Block prototype)
             throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks,
+        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
                 store.getBlockWrap(prototype.getHash()));
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
     }
@@ -154,7 +154,7 @@ public class TipsService {
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairStartingFrom(BlockWrap prototype)
             throws BlockStoreException {
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
-        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks,
+        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
                 store.getBlockWrap(prototype.getBlockHash()));
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, prototype);
     }
@@ -179,8 +179,8 @@ public class TipsService {
         Stopwatch watch = Stopwatch.createStarted();
 
         // Initialize approved blocks
-        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
-        blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
+        blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
 
         // Necessary: Initial test if the prototype's
         // currentApprovedNonMilestoneBlocks are actually valid
@@ -197,7 +197,7 @@ public class TipsService {
             if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
                 // Go left
                 left = nextLeft;
-                blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+                blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
 
                 // Perform next steps
                 nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
@@ -205,7 +205,7 @@ public class TipsService {
             } else {
                 // Go right
                 right = nextRight;
-                blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+                blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
 
                 // Perform next steps
                 nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
@@ -216,12 +216,12 @@ public class TipsService {
         // Go forward on the remaining paths
         while (nextLeft != left) {
             left = nextLeft;
-            blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, left);
+            blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left);
             nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
         }
         while (nextRight != right) {
             right = nextRight;
-            blockService.addApprovedNonMilestoneBlocksTo(currentApprovedNonMilestoneBlocks, right);
+            blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right);
             nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
         }
 

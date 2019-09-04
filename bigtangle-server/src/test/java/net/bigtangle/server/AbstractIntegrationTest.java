@@ -598,7 +598,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
         Map<Block, Boolean> blockConfirmed = new HashMap<>();
         for (Block b : addedBlocks) {
-            blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isMilestone());
+            blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isConfirmed());
         }
 
         // Redo and assert snapshot equal to new state

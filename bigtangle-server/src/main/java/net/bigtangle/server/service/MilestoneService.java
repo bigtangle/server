@@ -108,7 +108,7 @@ public class MilestoneService {
 
             // Stop if sufficient approval rate and confirmed
             if (approvers.get(currentBlock.getBlockHash()).size() >= requiredApprovals
-                    && currentBlock.getBlockEvaluation().isMilestone())
+                    && currentBlock.getBlockEvaluation().isConfirmed())
                 break;
 
             // Add all current references to both approved blocks
@@ -220,7 +220,7 @@ public class MilestoneService {
 
             watch.stop();
             watch = Stopwatch.createStarted();
-            updateMilestone(numberUpdates);
+            updateConfirmed(numberUpdates);
             log.trace("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
@@ -335,7 +335,7 @@ public class MilestoneService {
 
             // If depth is set to -1 and we are milestone, set to 0
             if (milestoneDepths.get(currentBlock.getBlockHash()) == -1L
-                    && currentBlock.getBlockEvaluation().isMilestone())
+                    && currentBlock.getBlockEvaluation().getMilestone() != -1)
                 milestoneDepths.put(currentBlock.getBlockHash(), 0L);
 
             // Add all current references to both approved blocks
@@ -354,7 +354,7 @@ public class MilestoneService {
 
     private void subUpdateMilestoneDepth(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, Long> milestoneDepths,
             BlockWrap currentBlock, Sha256Hash approvedBlock) throws BlockStoreException {
-        boolean isMilestone = currentBlock.getBlockEvaluation().isMilestone();
+        boolean isMilestone = currentBlock.getBlockEvaluation().getMilestone() != -1;
         long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
         long newMilestoneDepth = Math.min(milestoneDepth + 1,
                 NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 1);
@@ -405,8 +405,8 @@ public class MilestoneService {
 
         BlockWrap currentBlock = null;
         while ((currentBlock = blockQueue.poll()) != null) {
-            // Abort if unmaintained and in milestone only (for now)
-            if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isMilestone())
+            // Abort if unmaintained and confirmed only (for now) TODO
+            if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isConfirmed())
                 continue;
 
             // Add your own hashes as reference if current block is one of the
@@ -444,24 +444,24 @@ public class MilestoneService {
     }
 
     /**
-     * Updates milestone field in block evaluation and changes output table
+     * Updates confirmed field in block evaluation and changes output table
      * correspondingly
      * 
      * @throws BlockStoreException
      */
-    private void updateMilestone(int numberUpdates) throws BlockStoreException {
+    private void updateConfirmed(int numberUpdates) throws BlockStoreException {
         // First remove any blocks that should no longer be in the milestone
-        HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToRemoveFromMilestone();
+        HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockEvaluation block : blocksToRemove)
             blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
         for (int i = 0; i < numberUpdates; i++) {
             // Now try to find blocks that can be added to the milestone
-            HashSet<BlockWrap> blocksToAdd = store.getBlocksToAddToMilestone();
+            HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm();
 
             // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, true);
+            validatorService.resolveAllConflicts(blocksToAdd);
 
             // Finally add the resolved new milestone blocks to the milestone
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
