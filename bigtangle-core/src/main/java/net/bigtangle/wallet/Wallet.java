@@ -1970,6 +1970,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
 
+        // TODO why?
         token.setSignnumber(token.getSignnumber() + 1);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();

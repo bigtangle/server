@@ -1116,9 +1116,10 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
         blockGraph.confirm(block1.getHash(), new HashSet<>());
+        Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock());
         Transaction tx2 = createTestGenesisTransaction();
-        Block block2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx2);
+        Block block2 = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
         blockGraph.confirm(block2.getHash(), new HashSet<>());
 
         // Should be confirmed now
@@ -1251,6 +1252,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getRewardSpent(rewardBlock.getHash()));
 
         // Generate spending block
+        Block betweenBlock = createAndAddNextBlock(rollingBlock, rollingBlock);
     
         List<UTXO> outputs = getBalance(false, testKey);
         outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.testCoin);
@@ -1266,8 +1268,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
         Script inputScript = ScriptBuilder.createInputScript(sig, testKey);
         input.setScriptSig(inputScript);
-        Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx);
+        Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx);
 
         // Confirm
         blockGraph.confirm(spenderBlock.getHash(), new HashSet<>());
@@ -1392,8 +1393,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks);
 
         // Generate spending block
+        Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
         Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, walletKeys.get(8), testTokenId, 50, addedBlocks,
-                addedBlocks.get(addedBlocks.size() - 2));
+                betweenBlock);
 
         // Unconfirm order matching
         blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
@@ -1430,7 +1432,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
 
         // Generate reclaim block
-        Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order);
+        Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
+        Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, betweenBlock);
 
         // Unconfirm order matching
         blockGraph.unconfirm(rewardBlock.getHash(), new HashSet<>());
@@ -1470,11 +1473,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
 
         // Generate reclaim block
-        Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order);
+        Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
+        Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, betweenBlock);
 
         // Generate reclaim-dependent transaction
         Block reclaimSpender = makeAndConfirmTransaction(testKey, testKey, testTokenId, 77776, addedBlocks,
-                rewardBlock);
+                reclaimBlock);
 
         // Unconfirm reclaim
         blockGraph.unconfirm(reclaimBlock.getHash(), new HashSet<>());

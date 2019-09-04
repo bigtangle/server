@@ -55,13 +55,15 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
 
         // Create block with dependency
+        Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock());
         Transaction tx2 = createTestGenesisTransaction();
-        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx2);
+        Block block = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
 
         store.resetStore();
 
         blockGraph.add(depBlock, false);
+        blockGraph.add(betweenBlock, false);
         blockGraph.add(block, false);
 
         Block b1 = createAndAddNextBlock(depBlock, block);

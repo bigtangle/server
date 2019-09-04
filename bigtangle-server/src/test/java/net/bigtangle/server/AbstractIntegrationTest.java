@@ -34,7 +34,6 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
-import org.stringtemplate.v4.compiler.STParser.ifstat_return;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -56,7 +55,6 @@ import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.PermissionDomainname;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
@@ -80,7 +78,6 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
@@ -317,6 +314,30 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm and return
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
+
+    protected Block makeAndConfirmBlock(List<Block> addedBlocks, Block predecessor) throws Exception {
+        Block block = null;
+
+        // Create and add block
+        block = predecessor.createNextBlock(predecessor);
+        block.solve();
+        this.blockGraph.add(block, true);
+        addedBlocks.add(block);
+
+        // Confirm and return
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        return block;
+    }
+
+    protected Block makeAndAddBlock(Block predecessor) throws Exception {
+        Block block = null;
+
+        // Create and add block
+        block = predecessor.createNextBlock(predecessor);
+        block.solve();
+        this.blockGraph.add(block, true);
         return block;
     }
 
@@ -584,9 +605,9 @@ public abstract class AbstractIntegrationTest {
         store.resetStore();
         for (Block b : addedBlocks) {
             blockGraph.add(b, false);
-            blockGraph.confirm(b.getHash(), new HashSet<>());
-            if (!blockConfirmed.get(b))
-                blockGraph.unconfirm(b.getHash(), new HashSet<>());
+            blockGraph.calculateBlock(blockService.getBlockWrap(b.getHash()));
+            if (blockConfirmed.get(b))
+                blockGraph.confirm(b.getHash(), new HashSet<>());
         }
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();

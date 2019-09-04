@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -171,7 +172,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (!allowUnsolid) {
                 switch (solidityState.getState()) {
                 case MissingPredecessor:
-                    solidityState = validatorService.checkSolidity(block, false);
                     throw new UnsolidException();
                 case Success:
                     break;
@@ -418,7 +418,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         traversedBlockHashes.add(blockHash);
     }
     
-    private Object calculateBlock(BlockWrap block) throws BlockStoreException {
+    /**
+     * Calculates and inserts any virtual transaction outputs so dependees can become solid
+     * 
+     * @param block
+     * @return
+     * @throws BlockStoreException
+     */
+    public Optional<OrderMatchingResult> calculateBlock(BlockWrap block) throws BlockStoreException {
         
         Transaction tx = null;
         OrderMatchingResult matchingResult = null;
@@ -471,13 +478,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationCalculated(block.getBlockHash(), true);
         
         // Return the computation result
-        return matchingResult;
+        return Optional.ofNullable(matchingResult);
     }
 
     private void confirmBlock(BlockWrap block) throws BlockStoreException {
         
         // Calculate the block outputs if needed
-        Object calculationResult = null;
+        Optional<OrderMatchingResult> calculationResult = Optional.empty();
         if (!block.getBlockEvaluation().isCalculated()) {
             calculationResult = calculateBlock(block);
         }
@@ -524,7 +531,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             // Do order matching
-            confirmOrderMatching(block, (OrderMatchingResult) calculationResult);
+            confirmOrderMatching(block, calculationResult);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -577,14 +584,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmOrderMatching(BlockWrap block, @Nullable OrderMatchingResult matchingResult) throws BlockStoreException {
+    private void confirmOrderMatching(BlockWrap block, Optional<OrderMatchingResult> calculationResult) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
-        if (matchingResult == null)
-            matchingResult = generateOrderMatching(block.getBlock());
+        OrderMatchingResult actualCalculationResult = null;
+        if (calculationResult.isPresent())
+            actualCalculationResult = calculationResult.get();
+        else
+            actualCalculationResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
-        for (OrderRecord o : matchingResult.getSpentOrders()) {
+        for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
             blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true, block.getBlock().getHash());
         }
 
@@ -592,7 +602,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         confirmVirtualCoinbaseTransaction(block);
 
         // Set new orders confirmed
-        for (OrderRecord o : matchingResult.getRemainingOrders())
+        for (OrderRecord o : actualCalculationResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
 
         // Set used other output spent
@@ -603,7 +613,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateOrderMatchingConfirmed(block.getBlock().getHash(), true);
 
         // Update the matching history in db
-        tickerService.addMatchingEvents(matchingResult);
+        tickerService.addMatchingEvents(actualCalculationResult);
     }
 
     private void confirmOrderReclaim(BlockWrap block) throws BlockStoreException {

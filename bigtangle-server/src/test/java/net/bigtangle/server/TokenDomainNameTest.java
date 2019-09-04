@@ -52,6 +52,8 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
+        
+        blockGraph.add(transactionService.askTransactionBlock(), false);
 
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();

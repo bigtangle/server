@@ -1166,7 +1166,6 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            // due to virtual txs from order/reward
             predecessors.add(new PredecessorRequirement(matchingInfo.getPrevHash(), false));
             break;
         default:
@@ -1176,17 +1175,24 @@ public class ValidatorService {
         return predecessors;
     }
     
-    private SolidityState checkPredecessorsExistAndCalculated(Block block) throws BlockStoreException {
+    private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions) throws BlockStoreException {
         final List<PredecessorRequirement> allPredecessorBlockHashes = getAllPredecessorBlockHashes(block);
         for (PredecessorRequirement predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq.predecessorHash);
-            if (pred == null || (!pred.getBlockEvaluation().isCalculated() && predecessorReq.requireCalculated))
+            if (pred == null)
                 return SolidityState.from(predecessorReq.predecessorHash);
+            if ((!pred.getBlockEvaluation().isCalculated() && predecessorReq.requireCalculated))
+                return SolidityState.from(predecessorReq.predecessorHash);
+            if (pred.getBlock().getHeight() >= block.getHeight()) {
+                if (throwExceptions)
+                    throw new VerificationException("Height of used blocks must be lower than height of this block.");
+                return SolidityState.getFailState();
+            }
         }
         return SolidityState.getSuccessState();
     }
     
-    private SolidityState getMinPredecessorSolidity(Block block) throws BlockStoreException {
+    private SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
         final List<BlockWrap> allPredecessors = getAllPredecessors(block);
         SolidityState missingDependency = null;
         for (BlockWrap predecessor : allPredecessors) {
@@ -1195,6 +1201,8 @@ public class ValidatorService {
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
                 missingDependency = SolidityState.from(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
+                if (throwExceptions)
+                    throw new VerificationException("The used blocks are invalid.");
                 return SolidityState.getFailState();
             } else {
                 throw new NotImplementedException("not implemented");
@@ -1711,6 +1719,7 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
+            // Check height
             if (block.getHeight() != Math.max(storedPrev.getBlock().getHeight(),
                     storedPrevBranch.getBlock().getHeight()) + 1) {
                 if (throwExceptions)
@@ -1764,18 +1773,15 @@ public class ValidatorService {
                 }
             }
 
-            long height = Math.max(storedPrev.getBlockEvaluation().getHeight(),
-                    storedPrevBranch.getBlockEvaluation().getHeight()) + 1;
-
             // Check transactions are solid
-            SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, height, throwExceptions);
+            SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(), throwExceptions);
             if (!(transactionalSolidityState.getState() == State.Success)) {
                 return transactionalSolidityState;
             }
 
             // Check type-specific solidity
             SolidityState typeSpecificSolidityState = checkFullTypeSpecificSolidity(block, storedPrev, storedPrevBranch,
-                    height, throwExceptions);
+                    block.getHeight(), throwExceptions);
             if (!(typeSpecificSolidityState.getState() == State.Success)) {
                 return typeSpecificSolidityState;
             }
@@ -2886,14 +2892,14 @@ public class ValidatorService {
             if (formalSolidityResult.isFailState())
                 return formalSolidityResult;
             
-            // Predecessors must exist and have been calculated
-            SolidityState predecessorsExist = checkPredecessorsExistAndCalculated(block);
+            // Predecessors must exist and be ok
+            SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions);
             if (!predecessorsExist.isSuccessState()) {
                 return predecessorsExist;            
             }
             
             // Inherit solidity from predecessors if they are not solid
-            SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block);
+            SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions);
             switch (minPredecessorSolidity.getState()) {
             case Invalid:
                 return minPredecessorSolidity;            

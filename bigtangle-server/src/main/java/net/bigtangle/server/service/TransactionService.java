@@ -124,9 +124,9 @@ public class TransactionService {
         return Optional.empty();
     }
 
-    private boolean blockTimeRange(Block block) {
-        return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 * 3600 * 1000;
-    }
+//    private boolean blockTimeRange(Block block) {
+//        return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 * 3600 * 1000;
+//    }
 
     /*
      * check before add Block from kafka , the block can be already exists.

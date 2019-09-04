@@ -227,13 +227,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(depBlock.getHash(), new HashSet<>());
 
         // Create block with dependency
+        Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         Transaction tx2 = createTestGenesisTransaction();
-        Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx2);
+        Block block = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
 
         store.resetStore();
 
         // Add block allowing unsolids
+        transactionService.addConnected(betweenBlock.bitcoinSerialize(),false,true);
         transactionService.addConnected(block.bitcoinSerialize(),false,true);
 
         // Should not be solid
@@ -421,7 +422,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block2 = rewardBlock1.createNextBlock(rewardBlock1);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
@@ -513,7 +514,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block2 = block1.createNextBlock(rewardBlock1);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
@@ -2939,7 +2940,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             input2.setScriptSig(inputScript2);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = tokenBlock.createNextBlock(tokenBlock);
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -3009,7 +3010,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             input2.setScriptSig(inputScript2);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = tokenBlock.createNextBlock(tokenBlock);
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -3078,7 +3079,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = tokenBlock.createNextBlock(tokenBlock);
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -3120,7 +3121,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block2 = tokenBlock.createNextBlock(tokenBlock);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block2.solve();
@@ -3190,7 +3191,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             tx.setDataSignature(buf1);
 
             // Create block with order
-            block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block2 = block1.createNextBlock(block1);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_OP);
             block2.solve();

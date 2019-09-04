@@ -140,7 +140,7 @@ public class VerificationException extends RuntimeException {
 
     public static class UnsolidException extends VerificationException {
         public UnsolidException() {
-            super("Not solid. Not allowed in this case.");
+            super("Not solid. Server disallows unsolid blocks.");
         }
     }
 
