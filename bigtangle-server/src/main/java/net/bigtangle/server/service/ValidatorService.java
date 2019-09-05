@@ -1531,7 +1531,7 @@ public class ValidatorService {
         // Check bounds for target coin values
         // TODO after changing the values to 256 bit, remove the value
         // limitations!
-        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
+        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Long.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target value");
             return SolidityState.getFailState();
@@ -1546,7 +1546,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (burnedCoins.getValue() > Integer.MAX_VALUE) {
+        if (burnedCoins.getValue() > Long.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidOrderException("The order is too large.");
             return SolidityState.getFailState();

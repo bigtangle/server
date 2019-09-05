@@ -6,6 +6,7 @@ package net.bigtangle.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +48,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
-import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -493,7 +493,10 @@ public class DispatcherController {
             logger.error("", exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create(100);
-            resp.setMessage(exception.getLocalizedMessage());
+            StringWriter sw = new StringWriter();
+            exception.printStackTrace(new PrintWriter(sw));
+ 
+            resp.setMessage(sw.toString());
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }

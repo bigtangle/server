@@ -215,20 +215,17 @@ public class MainController {
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-     
         ObservableList<UTXOModel> subutxos = FXCollections.observableArrayList();
         Main.validTokenMap.clear();
         Main.validAddressSet.clear();
 
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
-          Token t=  getBalancesResponse.getTokennames().get(
-                    Utils.HEX.encode(c.getTokenid()));
+            Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(c.getTokenid()));
             if (c.isZero()) {
                 continue;
             }
-            String balance = MonetaryFormat.FIAT.noCode().format(
-                    c.getValue(), t.getDecimals());
+            String balance = MonetaryFormat.FIAT.noCode().format(c.getValue(), t.getDecimals());
             byte[] tokenid = c.getTokenid();
             String address = utxo.getAddress();
             String tokenname = t.getTokenname();
@@ -240,7 +237,7 @@ public class MainController {
             String key = Utils.HEX.encode(tokenid);
             int signnum = Integer.parseInt(minimumsign);
             if (!utxo.isMultiSig()) {
-                Main.validTokenSet.add(Main.getString(t.getTokenname()+ ":" + key));
+                Main.validTokenSet.add(Main.getString(t.getTokenname() + ":" + key));
             }
 
             if (Main.validTokenMap.get(key) == null) {
@@ -275,18 +272,16 @@ public class MainController {
 
         for (Coin coin : getBalancesResponse.getBalance()) {
             if (!coin.isZero()) {
-                Token t=  getBalancesResponse.getTokennames().get(
-                        Utils.HEX.encode(coin.getTokenid()));
-                
+                Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(coin.getTokenid()));
+
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
-                    Main.instance.getCoinData().add(new CoinModel(MonetaryFormat.FIAT.noCode().format(
-                            coin.getValue(), t.getDecimals()) , coin.getTokenid(),
-                            t.getTokenname()));
+                    Main.instance.getCoinData()
+                            .add(new CoinModel(MonetaryFormat.FIAT.noCode().format(coin.getValue(), t.getDecimals()),
+                                    coin.getTokenid(), t.getTokenname()));
 
                 } else {
-                    subcoins.add(new CoinModel(MonetaryFormat.FIAT.noCode().format(
-                            coin.getValue(), t.getDecimals()) , coin.getTokenid(),
-                            t.getTokenname()));
+                    subcoins.add(new CoinModel(MonetaryFormat.FIAT.noCode().format(coin.getValue(), t.getDecimals()),
+                            coin.getTokenid(), t.getTokenname()));
                 }
             }
         }
@@ -295,8 +290,11 @@ public class MainController {
 
     public void initTableView() {
         try {
-
-            initTable(addressTextField.getText());
+            try {
+                initTable(addressTextField.getText());
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
             utxoTable.setItems(Main.instance.getUtxoData());
             coinTable.setItems(Main.instance.getCoinData());
 
