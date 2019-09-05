@@ -222,7 +222,7 @@ public class MainController {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
             Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(c.getTokenid()));
-            if (c.isZero()) {
+            if (c.isZero() || t==null) {
                 continue;
             }
             String balance = MonetaryFormat.FIAT.noCode().format(c.getValue(), t.getDecimals());
@@ -271,9 +271,10 @@ public class MainController {
         ObservableList<CoinModel> subcoins = FXCollections.observableArrayList();
 
         for (Coin coin : getBalancesResponse.getBalance()) {
-            if (!coin.isZero()) {
-                Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(coin.getTokenid()));
+            Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(coin.getTokenid()));
 
+            if (!coin.isZero() && t!=null) {
+            
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
                     Main.instance.getCoinData()
                             .add(new CoinModel(MonetaryFormat.FIAT.noCode().format(coin.getValue(), t.getDecimals()),
@@ -290,11 +291,9 @@ public class MainController {
 
     public void initTableView() {
         try {
-            try {
+            
                 initTable(addressTextField.getText());
-            } catch (Exception e) {
-                // TODO: handle exception
-            }
+         
             utxoTable.setItems(Main.instance.getUtxoData());
             coinTable.setItems(Main.instance.getCoinData());
 
