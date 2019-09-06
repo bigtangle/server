@@ -68,7 +68,6 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
-import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.exception.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
@@ -358,26 +357,47 @@ public class ValidatorService {
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
             BlockWrap prevRewardBlock, long totalRewardCount) {
-        // The following equals current time by consensus rules
-        long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds());
+
+        // The following is used as current time by consensus rules
+        long currentTime = prevTrunkBlock.getBlock().getTimeSeconds();
+        int timespan = (int) Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+
+        // Limit the adjustment step.
+        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
+        if (timespan < targetTimespan / 4)
+            timespan = targetTimespan / 4;
+        if (timespan > targetTimespan * 4)
+            timespan = targetTimespan * 4;
+
+        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
+        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
+
+        if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
+            logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            newTarget = NetworkParameters.MAX_TARGET;
+        }
+
+        return Utils.encodeCompactBits(newTarget);
+    }
+
+    private long calculateNextTxDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
+            BlockWrap prevRewardBlock, long totalRewardCount) {
+        
+        // The following is used as current time by consensus rules
+        long currentTime = prevTrunkBlock.getBlock().getTimeSeconds();
         long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
 
-        BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
-        BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(NetworkParameters.TARGET_MAX_TPS));
+        // Limit the adjustment step.
+        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
+        if (timespan < targetTimespan / 4)
+            timespan = targetTimespan / 4;
+        if (timespan > targetTimespan * 4)
+            timespan = targetTimespan * 4;
+
+        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(totalRewardCount));
-
-        BigInteger maxNewTarget = prevTarget.multiply(BigInteger.valueOf(4));
-        BigInteger minNewTarget = prevTarget.divide(BigInteger.valueOf(4));
-
-        if (newTarget.compareTo(maxNewTarget) > 0) {
-            newTarget = maxNewTarget;
-        }
-
-        if (newTarget.compareTo(minNewTarget) < 0) {
-            newTarget = minNewTarget;
-        }
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
         if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
             logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
