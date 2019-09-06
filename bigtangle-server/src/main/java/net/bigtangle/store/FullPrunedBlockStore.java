@@ -17,9 +17,11 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockStore;
+import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
@@ -509,5 +511,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     Token queryDomainnameToken(String domainPredecessorBlockHash) throws BlockStoreException;
 
     Token getTokensByDomainname(String domainname) throws BlockStoreException;
+    
+    Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
+
+    void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
+
+    void saveExchange(Exchange exchange) throws BlockStoreException;
+
+    public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
 }

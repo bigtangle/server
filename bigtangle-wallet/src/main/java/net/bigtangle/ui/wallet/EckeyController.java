@@ -88,8 +88,7 @@ public class EckeyController {
 
 
     public void addKey(String password) {
-        ECKey newKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(newPrivateKeyTextField.getText()),
-                Utils.HEX.decode(newPubkeyTextField.getText()));
+        ECKey newKey = ECKey.fromPrivate(Utils.HEX.decode(newPrivateKeyTextField.getText()));
         if ("".equals(password)) {
             walletAppKit.wallet().importKey(newKey);
         } else {

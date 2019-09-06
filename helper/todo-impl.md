@@ -571,3 +571,7 @@ UI
 ENS eliminates the need to copy or type long addresses. With ENS, you'll be able to send money to your friend at 'aardvark.eth' instead of '0x4cbe58c50480...'
 
 
+### add image in token as key value
+
+https://medium.com/tech-and-the-city/from-image-to-bytes-and-back-again-563abc5c1412
+

@@ -247,7 +247,7 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to
                 // 8dp).
                 try {
-                    Coin amount = MonetaryFormat.FIAT.noCode().parse(valueToken, NetworkParameters.BIGTANGLE_TOKENID);
+                    Coin amount = MonetaryFormat.FIAT.noCode().parse(valueToken);
 //                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
 //                        throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)
@@ -433,7 +433,7 @@ public class BitcoinURI {
 
         if (amount != null) {
             builder.append(QUESTION_MARK_SEPARATOR).append(FIELD_AMOUNT).append("=");
-            builder.append(amount.toPlainString());
+            builder.append(amount);
             questionMarkHasBeenOutput = true;
         }
 

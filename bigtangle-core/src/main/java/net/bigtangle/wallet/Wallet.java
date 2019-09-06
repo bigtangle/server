@@ -28,6 +28,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,11 +50,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -60,6 +66,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -67,6 +74,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
@@ -86,6 +94,7 @@ import net.bigtangle.core.http.server.resp.GetDomainBlockHashResponse;
 import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
+import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.core.http.server.resp.OutputsDetailsResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
@@ -102,6 +111,7 @@ import net.bigtangle.signers.LocalTransactionSigner;
 import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -1296,7 +1306,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
          * @param output
          *            The stored output (free standing).
          */
-        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, long chainHeight) {
+        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output) {
             super(params, null, output.getValue(), output.getScript().getProgram());
             this.output = output;
 
@@ -1500,7 +1510,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (selection3 == null && selection2 == null && selection1 == null) {
             checkNotNull(valueMissing);
             log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
-            throw new InsufficientMoneyException(valueMissing);
+            throw new InsufficientMoneyException(valueMissing.toString());
         }
 
         Coin lowestFee = null;
@@ -1664,10 +1674,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
             for (UTXO output : getOutputsResponse.getOutputs()) {
                 if (multisigns) {
-                    candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+                    candidates.add(new FreeStandingTransactionOutput(this.params, output));
                 } else {
                     if (!output.isMultiSig()) {
-                        candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+                        candidates.add(new FreeStandingTransactionOutput(this.params, output));
                     }
                 }
             }
@@ -1725,7 +1735,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
         List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
         for (UTXO output : outputs) {
-            candidates.add(new FreeStandingTransactionOutput(this.params, output, 0));
+            candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
         return candidates;
     }
@@ -2050,7 +2060,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
-        multispent.setMemo(memo);
+        multispent.setMemo(new MemoInfo(memo));
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
             Coin a = Coin.valueOf(entry.getValue(), tokenid);
             Address address = Address.fromBase58(params, entry.getKey());
@@ -2059,7 +2069,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe;
         UTXO spendableUTXO = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO);
 
         // rest to itself
         multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
@@ -2079,7 +2089,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // check the token id is on the server
     // throw NoTokenException
-    public void checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
+    public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenById.name(),
@@ -2089,6 +2099,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (token.getTokens() == null || token.getTokens().isEmpty()) {
             throw new NoTokenException();
         }
+        return token.getTokens().get(0);
+    }
+
+    /*
+     * totalAmount must be an integer in BIG
+     */
+
+    public long totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
+            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+
+        return LongMath.divide(buyPrice * buyAmount, LongMath.checkedPow(10, tokenDecimal), RoundingMode.UNNECESSARY);
 
     }
 
@@ -2096,11 +2117,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException,
             UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
-        checkTokenId(tokenId);
+        Token t = checkTokenId(tokenId);
         // Burn BIG to buy
-        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
+        Coin amount = Coin.valueOf(totalAmount(buyPrice, buyAmount, t.getDecimals()),
+                NetworkParameters.BIGTANGLE_TOKENID);
         UTXO u = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
         ECKey beneficiary = getECKey(aesKey, u.getAddress());
         Transaction tx = new Transaction(params);
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
@@ -2140,21 +2162,22 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 return u;
             }
         }
-        throw new InsufficientMoneyException(amount);
+        throw new InsufficientMoneyException(amount.toString());
     }
 
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
-            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException {
-
+            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        Token t = checkTokenId(tokenId);
+        long total = totalAmount(sellPrice, sellAmount, t.getDecimals()) ;
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
 
         UTXO u = getSpendableUTXO(aesKey, amount);
         ECKey beneficiary = getECKey(aesKey, u.getAddress());
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
         Transaction tx = new Transaction(params);
-        OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+        OrderOpenInfo info = new OrderOpenInfo(total, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
@@ -2219,7 +2242,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO findOutput = outputsDetailsResponse.getOutputs();
 
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput, 0);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(params, findOutput);
         Transaction transaction = new Transaction(params);
 
         transaction.addOutput(coin, address);
@@ -2270,7 +2293,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
-        request.tx.setMemo(memo);
+     
+        request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
 
@@ -2314,7 +2338,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         request.aesKey = aesKey;
-        request.tx.setMemo(memo);
+        request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
 
         rollingBlock.addTransaction(request.tx);
@@ -2440,6 +2464,54 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+    }
+
+    
+
+    public void getOrderMap( boolean matched,  List<String> address,  List<Map<String, Object>> orderData,
+             String buytext, String sellText) throws IOException, JsonProcessingException, JsonParseException, JsonMappingException {
+     
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("spent", matched  ? "false" : "true");
+        requestParam.put("addresses", address);
+        String response0 = OkHttp3Util.post(serverurl + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+      
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
+
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+
+            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
+                map.put("type", buytext);
+                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
+                map.put("tokenId", orderRecord.getTargetTokenid());
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getTargetValue()));
+            } else {
+                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
+                map.put("type",sellText);
+                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
+                map.put("tokenId", orderRecord.getOfferTokenid());
+                map.put("tokenname", t.getTokennameDisplay());
+                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
+                        / orderRecord.getOfferValue()));
+            }
+            map.put("orderId", orderRecord.getInitialBlockHashHex());
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
+            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
+            map.put("address",
+                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
+            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
+            // map.put("state", Main.getText( (String)
+            // requestParam.get("state")));
+            orderData.add(map);
+        }
     }
 
     public boolean isAllowClientMining() {

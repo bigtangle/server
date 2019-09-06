@@ -41,19 +41,21 @@
 					<content>
 						<AnchorPane maxHeight="569.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="569.0" prefWidth="990.0" style="-fx-background-color: white;">
 							<children>
-								<Label layoutX="24.0" layoutY="99.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
-								<Label layoutX="24.0" layoutY="167.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
+								<Label layoutX="24.0" layoutY="82.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
+								<Label layoutX="24.0" layoutY="130.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
 								<TextArea fx:id="stockDescription" layoutX="279.0" layoutY="291.0" maxWidth="500.0" minWidth="500.0" prefHeight="200.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-								<TextField fx:id="stockAmount" layoutX="279.0" layoutY="163.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+								<TextField fx:id="stockAmount" layoutX="279.0" layoutY="126.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 								<Button fx:id="save" alignment="CENTER" defaultButton="true" layoutX="627.0" layoutY="510.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
 								<Button fx:id="closeButton" cancelButton="true" layoutX="725.0" layoutY="510.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 								<Label contentDisplay="CENTER" layoutX="24.0" layoutY="291.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
-								<ComboBox fx:id="tokenid" editable="true" layoutX="279.0" layoutY="95.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<ComboBox fx:id="tokenid" editable="true" layoutX="279.0" layoutY="78.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="36.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
 								<TextField fx:id="stockName" layoutX="279.0" layoutY="32.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label layoutX="24.0" layoutY="252.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
                         <TextField fx:id="stockUrl" layoutX="279.0" layoutY="248.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
                         <CheckBox fx:id="domainnametypeCheckBox" layoutX="279.0" layoutY="208.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="204.0" text="%domainnametype" />
+                        <TextField fx:id="decimalsTF" layoutX="279.0" layoutY="165.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="169.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%decimals" />
 							</children>
 						</AnchorPane>
 					</content>
@@ -65,17 +67,17 @@
 							<children>
 								<Label layoutX="24.0" layoutY="97.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="138.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
-								<TextArea fx:id="stockDescription1" layoutX="279.0" layoutY="260.0" maxHeight="100.0" maxWidth="500.0" minHeight="100.0" minWidth="500.0" prefHeight="100.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<TextArea fx:id="stockDescription1" layoutX="279.0" layoutY="303.0" maxHeight="100.0" maxWidth="500.0" minHeight="57.0" minWidth="500.0" prefHeight="57.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 								<TextField fx:id="stockAmount1" layoutX="279.0" layoutY="134.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 								<Button fx:id="save1" alignment="CENTER" defaultButton="true" layoutX="628.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveMultiToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
 								<Button fx:id="closeButton1" cancelButton="true" layoutX="726.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-								<Label contentDisplay="CENTER" layoutX="24.0" layoutY="252.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
+								<Label contentDisplay="CENTER" layoutX="24.0" layoutY="303.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
 								<ComboBox fx:id="tokenid1" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
 								<TextField fx:id="stockName1" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-								<CheckBox fx:id="tokenstopCheckBox" layoutX="280.0" layoutY="174.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="203.0" text="%tokenstop" />
-								<TextField fx:id="urlTF" layoutX="279.0" layoutY="209.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-								<Label layoutX="24.0" layoutY="213.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
+								<CheckBox fx:id="tokenstopCheckBox" layoutX="280.0" layoutY="215.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="203.0" text="%tokenstop" />
+								<TextField fx:id="urlTF" layoutX="279.0" layoutY="250.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+								<Label layoutX="24.0" layoutY="254.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
 								<Label layoutX="24.0" layoutY="381.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
 								<TextField fx:id="signnumberTF" layoutX="279.0" layoutY="377.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="1" />
 								<Button defaultButton="true" layoutX="524.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSIgnAddress" prefWidth="120.0" text="%addSignPubkey" />
@@ -83,7 +85,9 @@
                         <Label layoutX="24.0" layoutY="415.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
                         <Button defaultButton="true" layoutX="662.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddress" prefWidth="120.0" text="%removePubkey" />
                         <TextField fx:id="signPubkeyTF" layoutX="279.0" layoutY="411.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <CheckBox fx:id="domainnametypeCheckBox1" layoutX="490.0" layoutY="174.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="241.0" text="%domainnametype" />
+                        <CheckBox fx:id="domainnametypeCheckBox1" layoutX="490.0" layoutY="215.0" mnemonicParsing="false" prefHeight="16.0" prefWidth="241.0" text="%domainnametype" />
+                        <TextField fx:id="decimalsTF1" layoutX="279.0" layoutY="176.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="180.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%decimals" />
 							</children>
 						</AnchorPane>
 					</content>

@@ -50,19 +50,13 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * One .
      */
-    public static final Coin COIN = Coin.valueOf(100, NetworkParameters.BIGTANGLE_TOKENID);
-
-    /**
-     * 0.01 . This unit is not really used much.
-     */
-    public static final Coin CENT = COIN.divide(100);
+    public static final Coin COIN = Coin.valueOf(LongMath.pow(10,NetworkParameters.BIGTANGLE_DECIMAL), NetworkParameters.BIGTANGLE_TOKENID);
+ 
     /**
      * A satoshi is the smallest unit that can be transferred.
      */
     public static final Coin SATOSHI = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
-
-    public static final Coin FIFTY_COINS = COIN.multiply(50);
-
+ 
     /**
      * Represents a monetary value of minus one satoshi.
      */
@@ -81,7 +75,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         this.tokenid = tokenid;
     }
 
-    
+    public static Coin valueOf(final long satoshis ) {
+        return new Coin(satoshis, NetworkParameters.BIGTANGLE_TOKENID);
+    }
     
     public static Coin valueOf(final long satoshis, byte[] tokenid) {
         return new Coin(satoshis, tokenid);
@@ -242,30 +238,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(-this.value, this.tokenid);
     }
 
-    
-    /**
-     * <p>
-     * Returns the value as a plain string. The result is unformatted with no
-     * trailing zeroes.
-     * </p>
-     */
-    public String toPlainString() {
-        if (isBIG()) {
-            return MonetaryFormat.FIAT.format(this,NetworkParameters.BIGTANGLE_DECIMAL).toString();
-        } else {
-            return String.valueOf(this.value);
-        }
-    }
-
-    public static String toPlainString(long value) {
-        Coin coin = Coin.valueOf(value, NetworkParameters.BIGTANGLE_TOKENID);
-        return MonetaryFormat.FIAT.format(coin,NetworkParameters.BIGTANGLE_DECIMAL).toString();
-
-    }
-
+  
     @Override
     public String toString() {
-        return "[" + toPlainString() + ":" + getTokenHex() + "]";
+        return "[" + value + ":" + getTokenHex() + "]";
     }
 
     @Override

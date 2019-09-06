@@ -6,6 +6,7 @@ package net.bigtangle.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,17 +42,19 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
+import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.TokenDomainnameService;
+import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
+import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
@@ -96,6 +99,8 @@ public class DispatcherController {
     protected FullPrunedBlockStore store;
     @Autowired
     private TokenDomainnameService tokenDomainnameService;
+    @Autowired
+    private ExchangeService exchangeService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -145,7 +150,7 @@ public class DispatcherController {
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokensList((String) request.get("name"));
+                GetTokensResponse response = tokensService.getTokensList((String) request.get("name"));
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -437,6 +442,31 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case exchangeSignTransaction: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.signTransaction(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case exchangeMultiSignTransaction: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.signMultiTransaction(request);
+
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
+            case exchangeInfo: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String orderid = (String) request.get("orderid");
+                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             default:
                 break;
@@ -463,7 +493,10 @@ public class DispatcherController {
             logger.error("", exception);
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
             AbstractResponse resp = ErrorResponse.create(100);
-            resp.setMessage(exception.getLocalizedMessage());
+            StringWriter sw = new StringWriter();
+            exception.printStackTrace(new PrintWriter(sw));
+ 
+            resp.setMessage(sw.toString());
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }
