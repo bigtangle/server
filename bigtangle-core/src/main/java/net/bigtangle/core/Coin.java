@@ -21,12 +21,10 @@ package net.bigtangle.core;
 
 import java.beans.Transient;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.google.common.math.LongMath;
-import com.google.common.primitives.Longs;
-
-import net.bigtangle.utils.MonetaryFormat;
 
 /**
  * Represents a token as Coin value. This class is immutable. Only the  bitangle coin has 2
@@ -65,14 +63,24 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * The number of satoshis of this monetary value.
      */
-    private long value;
+    private BigInteger value;
     private byte[] tokenid;
      
 
  
-    private Coin(final long satoshis, final byte[] tokenid) {
+
+    public Coin(final long satoshis, final byte[] tokenid) {
+        this.value = BigInteger.valueOf(satoshis);
+        this.tokenid = tokenid;
+    }
+
+    public Coin(final BigInteger satoshis, final byte[] tokenid) {
         this.value = satoshis;
         this.tokenid = tokenid;
+    }
+    public Coin(final BigInteger satoshis, final String tokenid) {
+        this.value = satoshis;
+        this.tokenid =  Utils.HEX.decode(tokenid);;
     }
 
     public static Coin valueOf(final long satoshis ) {
@@ -94,11 +102,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * Returns the number of satoshis of this monetary value.
      */
     @Override
-    public long getValue() {
+    public BigInteger getValue() {
         return value;
     }
 
-    public void setValue(long value) {
+    public void setValue(BigInteger value) {
         this.value = value;
     }
 
@@ -114,7 +122,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("!this.tokenid.equals( value.tokenid)");
         }
-        return new Coin(LongMath.checkedAdd(this.value, value.value), value.tokenid);
+        return new Coin(this.value.add( value.value), value.tokenid);
     }
 
     /** Alias for add */
@@ -126,16 +134,17 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         if (!Arrays.equals(this.tokenid, value.tokenid)) {
             throw new IllegalArgumentException("");
         }
-        return new Coin(LongMath.checkedSubtract(this.value, value.value), value.tokenid);
+        return new Coin(this.value.subtract(value.value), value.tokenid);
     }
 
     /** Alias for subtract */
     public Coin minus(final Coin value) {
         return subtract(value);
     }
+  
 
     public Coin multiply(final long factor) {
-        return new Coin(LongMath.checkedMultiply(this.value, factor), this.tokenid);
+        return new Coin(this.value.multiply(BigInteger.valueOf(factor)), this.tokenid);
     }
 
     /** Alias for multiply */
@@ -147,30 +156,13 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     public Coin times(final int factor) {
         return multiply(factor);
     }
-
+ 
+    public BigInteger divide(final Coin divisor) {
+        return this.value .divide(divisor.value);
+    }
     public Coin divide(final long divisor) {
-        return new Coin(this.value / divisor, this.tokenid);
+        return new Coin( this.value .divide(BigInteger.valueOf(divisor) ), this.tokenid);
     }
-
-    /** Alias for divide */
-    public Coin div(final long divisor) {
-        return divide(divisor);
-    }
-
-    /** Alias for divide */
-    public Coin div(final int divisor) {
-        return divide(divisor);
-    }
-
-    public Coin[] divideAndRemainder(final long divisor) {
-        return new Coin[] { new Coin(this.value / divisor, this.tokenid),
-                new Coin(this.value % divisor, this.tokenid) };
-    }
-
-    public long divide(final Coin divisor) {
-        return this.value / divisor.value;
-    }
-
     /**
      * Returns true if and only if this instance represents a monetary value
      * greater than zero, otherwise false.
@@ -219,29 +211,30 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return compareTo(other) < 0;
     }
 
-    public Coin shiftLeft(final int n) {
-        return new Coin(this.value << n, this.tokenid);
-    }
-
-    public Coin shiftRight(final int n) {
-        return new Coin(this.value >> n, this.tokenid);
-    }
-
+   
     @Override
     public int signum() {
-        if (this.value == 0)
-            return 0;
-        return this.value < 0 ? -1 : 1;
+      return  this.value.signum();
     }
 
     public Coin negate() {
-        return new Coin(-this.value, this.tokenid);
+        return new Coin( this.value.negate(), this.tokenid);
     }
 
   
     @Override
     public String toString() {
         return "[" + value + ":" + getTokenHex() + "]";
+    }
+
+ 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(tokenid);
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        return result;
     }
 
     @Override
@@ -253,16 +246,19 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         if (getClass() != obj.getClass())
             return false;
         Coin other = (Coin) obj;
-        if (tokenid != other.tokenid)
+        if (!Arrays.equals(tokenid, other.tokenid))
             return false;
-        if (value != other.value)
+        if (value == null) {
+            if (other.value != null)
+                return false;
+        } else if (!value.equals(other.value))
             return false;
         return true;
     }
 
     @Override
     public int compareTo(final Coin other) {
-        return Longs.compare(this.value, other.value);
+        return   this.value.compareTo(  other.value);
     }
 
     public byte[] getTokenid() {

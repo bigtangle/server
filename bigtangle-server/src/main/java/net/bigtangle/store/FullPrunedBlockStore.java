@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +22,6 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
@@ -337,7 +337,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Token> getTokensList(String name) throws BlockStoreException;
 
-    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException;
+    public Map<String, BigInteger> getTokenAmountMap(String name) throws BlockStoreException;
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 

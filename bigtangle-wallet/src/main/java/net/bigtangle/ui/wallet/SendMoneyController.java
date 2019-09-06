@@ -462,7 +462,7 @@ public class SendMoneyController {
             map.put("toaddress", payMultiSign.getToaddress());
             map.put("minsignnumber", payMultiSign.getMinsignnumber());
             map.put("sign", payMultiSign.getSign());
-            map.put("amount", payMultiSign.getAmount() / 1000);
+            map.put("amount", payMultiSign.getAmount() );
             map.put("realSignnumber", payMultiSign.getRealSignnumber());
             map.put("orderid", payMultiSign.getOrderid());
             map.put("isSignAll",

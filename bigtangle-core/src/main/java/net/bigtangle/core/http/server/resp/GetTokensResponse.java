@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.core.http.server.resp;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class GetTokensResponse extends AbstractResponse {
   
     private List<Token> tokens;
     private List<TokenSerial> tokenSerials;
-    private Map<String, Long> amountMap;
+    private Map<String, BigInteger> amountMap;
 
     public static GetTokensResponse createTokenSerial(List<TokenSerial> tokenSerials) {
         GetTokensResponse res = new GetTokensResponse();
@@ -30,7 +31,7 @@ public class GetTokensResponse extends AbstractResponse {
         return res;
     }
 
-    public static GetTokensResponse create(List<Token> tokens, Map<String, Long> amountMap) {
+    public static GetTokensResponse create(List<Token> tokens, Map<String, BigInteger> amountMap) {
         GetTokensResponse res = new GetTokensResponse();
         res.tokens = tokens;
         res.amountMap = amountMap;
@@ -41,7 +42,7 @@ public class GetTokensResponse extends AbstractResponse {
         return tokens;
     }
 
-    public Map<String, Long> getAmountMap() {
+    public Map<String, BigInteger> getAmountMap() {
         return amountMap;
     }
 

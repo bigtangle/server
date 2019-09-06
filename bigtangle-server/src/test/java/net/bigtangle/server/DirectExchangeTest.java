@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -175,7 +176,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() * 1000);
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() .longValue() );
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, genesiskey);
         milestoneService.update();
@@ -184,8 +185,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("balance : " + balance);
         for (UTXO utxo : balance) {
 
-            assertTrue(utxo.getValue().getValue() == (NetworkParameters.BigtangleCoinTotal
-                    - Coin.COIN.getValue() * 1000 * 3));
+            assertTrue(utxo.getValue().getValue().equals(NetworkParameters.BigtangleCoinTotal
+                    . subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf( 3)))));
 
         }
     }
@@ -461,10 +462,10 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             }
             log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
         }
-        assertEquals(multitemp.getValue().getValue() - 10000, multitemp1.getValue().getValue());
+        assertEquals(multitemp.getValue().getValue().longValue() - 10000, multitemp1.getValue().getValue());
         assertEquals(1000, systemcoin1.getValue().getValue());
         assertEquals(10000, mymultitemp1.getValue().getValue());
-        assertEquals(mysystemcoin.getValue().getValue() - 1000, mysystemcoin1.getValue().getValue());
+        assertEquals(mysystemcoin.getValue().getValue().longValue() - 1000, mysystemcoin1.getValue().getValue());
     }
 
     public void exchangeTokenComplete(Transaction tx) throws Exception {

@@ -1540,13 +1540,13 @@ public class ValidatorService {
         // Check that the tx inputs only burn one type of tokens
         Coin burnedCoins = countBurnedToken(block);
 
-        if (burnedCoins == null || burnedCoins.getValue() == 0) {
+        if (burnedCoins == null || burnedCoins.getValue().longValue() == 0) {
             if (throwExceptions)
                 throw new InvalidOrderException("No tokens were offered.");
             return SolidityState.getFailState();
         }
 
-        if (burnedCoins.getValue() > Long.MAX_VALUE) {
+        if (burnedCoins.getValue().longValue() > Long.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidOrderException("The order is too large.");
             return SolidityState.getFailState();
@@ -1564,15 +1564,15 @@ public class ValidatorService {
 
         // Check that we have a correct price given in full BIGs
         if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (burnedCoins.getValue() % orderInfo.getTargetValue() != 0
-                    || burnedCoins.getValue() / orderInfo.getTargetValue() <= 0) {
+            if (burnedCoins.getValue().longValue() % orderInfo.getTargetValue() != 0
+                    || burnedCoins.getValue().longValue() / orderInfo.getTargetValue() <= 0) {
                 if (throwExceptions)
                     throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();
             }
         } else {
-            if (orderInfo.getTargetValue() % burnedCoins.getValue() != 0
-                    || orderInfo.getTargetValue() / burnedCoins.getValue() <= 0) {
+            if (orderInfo.getTargetValue() % burnedCoins.getValue().longValue() != 0
+                    || orderInfo.getTargetValue() / burnedCoins.getValue().longValue() <= 0) {
                 if (throwExceptions)
                     throw new InvalidOrderException("The given order's price is not integer.");
                 return SolidityState.getFailState();
@@ -1920,7 +1920,8 @@ public class ValidatorService {
             return SolidityState.getFailState();
 
         // Check field correctness: amount
-        if (currentToken.getToken().getAmount() != block.getTransactions().get(0).getOutputSum()) {
+        if (!currentToken.getToken().getAmount().equals(block.getTransactions().get(0).getOutputSum())) {
+            logger.debug("Incorrect amount field" +  currentToken.getToken().getAmount() + " !="+ block.getTransactions().get(0).getOutputSum());
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect amount field");
             return SolidityState.getFailState();
@@ -2214,11 +2215,7 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too many token issuances");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getAmount() > Long.MAX_VALUE / NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too many tokens issued");
-            return SolidityState.getFailState();
-        }
+  
         if (currentToken.getToken().getDescription() != null
                 && currentToken.getToken().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
             if (throwExceptions)

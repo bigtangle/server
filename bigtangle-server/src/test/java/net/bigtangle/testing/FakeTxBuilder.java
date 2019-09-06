@@ -80,7 +80,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN.getValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), changeOutput);
+                valueOf(Coin.COIN.getValue().longValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -115,7 +115,7 @@ public class FakeTxBuilder {
         if (split == 0) {
             split = 15;
         }
-        while (split > value.getValue()) {
+        while (split > value.getValue().longValue()) {
             split /= 2;
         }
 
@@ -133,7 +133,7 @@ public class FakeTxBuilder {
         // Do it again
         Transaction prevTx2 = new Transaction(params);
         TransactionOutput prevOut2 = new TransactionOutput(params, prevTx2,
-                Coin.valueOf(value.getValue() - split, NetworkParameters.BIGTANGLE_TOKENID), to);
+                Coin.valueOf(value.getValue().longValue() - split, NetworkParameters.BIGTANGLE_TOKENID), to);
         prevTx2.addOutput(prevOut2);
         t.addInput(params.getGenesisBlock().getHash(), prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
 
@@ -161,7 +161,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN.getValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey());
+                valueOf(Coin.COIN.getValue().longValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx
         // is not really valid but it doesn't
@@ -188,7 +188,7 @@ public class FakeTxBuilder {
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(params, t,
-                valueOf(Coin.COIN.getValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey().toAddress(params));
+                valueOf(Coin.COIN.getValue().longValue() * 1 + 11, NetworkParameters.BIGTANGLE_TOKENID), new ECKey().toAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This
         // feeder tx is not really valid but it doesn't

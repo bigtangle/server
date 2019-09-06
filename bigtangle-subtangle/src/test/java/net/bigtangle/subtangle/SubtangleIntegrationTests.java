@@ -163,7 +163,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         Coin coinbase = getBalanceCoin(subtangleKey, NetworkParameters.BIGTANGLE_TOKENID);
         logger.info("get balance coin : " + coinbase);
 
-        assertTrue(amount == coinbase.getValue());
+        assertTrue(amount == coinbase.getValue().longValue());
     }
 
     @Test

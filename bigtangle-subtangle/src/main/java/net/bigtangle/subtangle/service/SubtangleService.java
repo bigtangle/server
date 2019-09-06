@@ -108,7 +108,7 @@ public class SubtangleService {
         List<UTXO> utxolist = getBalancesUTOXList(false, signKey, amount.getTokenid()).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
                         .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo(amount.getValue())>0 ).collect(Collectors.toList());
 
         if (utxolist.isEmpty()) {
             return;
@@ -134,7 +134,7 @@ public class SubtangleService {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (withZero) {
                 listUTXO.add(utxo);
-            } else if (utxo.getValue().getValue() > 0) {
+            } else if (utxo.getValue().getValue().signum() > 0) {
                 listUTXO.add(utxo);
             }
         }
@@ -173,7 +173,7 @@ public class SubtangleService {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (withZero) {
                 listUTXO.add(utxo);
-            } else if (utxo.getValue().getValue() > 0) {
+            } else if (utxo.getValue().getValue() .signum()> 0) {
                 listUTXO.add(utxo);
             }
         }

@@ -5,6 +5,8 @@
 
 package net.bigtangle.core;
 
+import java.math.BigInteger;
+
 public class PayMultiSign implements java.io.Serializable {
 
     private static final long serialVersionUID = 8438153762231442643L;
@@ -20,7 +22,7 @@ public class PayMultiSign implements java.io.Serializable {
 
     private byte[] blockhash;
 
-    private long amount;
+    private BigInteger amount;
 
     private long minsignnumber;
 
@@ -71,11 +73,11 @@ public class PayMultiSign implements java.io.Serializable {
         this.toaddress = toaddress;
     }
 
-    public long getAmount() {
+    public BigInteger getAmount() {
         return amount;
     }
 
-    public void setAmount(long amount) {
+    public void setAmount(BigInteger amount) {
         this.amount = amount;
     }
 

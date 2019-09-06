@@ -136,7 +136,7 @@ public class PayOTCOrder {
 
                         for (UTXO utxo : utxos) {
                             if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
-                                    && utxo.getValue().getValue() >= Long.parseLong(this.exchange.getFromAmount())) {
+                                    && utxo.getValue().getValue().longValue() >= Long.parseLong(this.exchange.getFromAmount())) {
                                 TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(wallet.params,
                                         utxo);
                                 Script multisigScript_ = multisigOutput_.getScriptPubKey();
@@ -384,7 +384,7 @@ public class PayOTCOrder {
             if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }
-            if (utxo.getValue().getValue() > 0) {
+            if (utxo.getValue().getValue() .signum() > 0) {
                 listUTXO.add(utxo);
             }
         }
@@ -404,7 +404,7 @@ public class PayOTCOrder {
             if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }
-            if (utxo.getValue().getValue() > 0) {
+            if (utxo.getValue().getValue().signum() > 0) {
                 listUTXO.add(utxo);
             }
         }

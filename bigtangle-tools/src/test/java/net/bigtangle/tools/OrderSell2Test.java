@@ -57,7 +57,7 @@ public class OrderSell2Test extends AbstractIntegrationTest {
         Collections.shuffle(utxos);
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
-                    && utxo.getValue().getValue() > 0) {
+                    && utxo.getValue().getValue().signum() > 0) {
                 wallet .setServerURL(url);
                 wallet.sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
 

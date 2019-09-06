@@ -154,7 +154,7 @@ public abstract class AbstractIntegrationTest {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (withZero) {
                 listUTXO.add(utxo);
-            } else if (utxo.getValue().getValue() > 0) {
+            } else if (utxo.getValue().getValue() .signum()> 0) {
                 listUTXO.add(utxo);
             }
         }
