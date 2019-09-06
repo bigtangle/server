@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.junit.Test;
@@ -51,12 +52,14 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.PayOTCOrder;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
@@ -711,4 +714,21 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("transaction, datatype : " + transaction.getDataClassName());
     }
 
+    @SuppressWarnings({ "unchecked" })
+   // @Test
+    public void exchangeSign(String orderid) throws Exception {
+
+    
+     
+        String serverURL = "http://localhost:8090";
+        String marketURL = "http://localhost:8090";
+       // String orderid = (String) exchangemap.get("orderid");
+
+        PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit.wallet(), orderid, serverURL, serverURL);
+        payOrder1.sign();
+
+        PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit1.wallet(), orderid, serverURL, serverURL);
+        payOrder2.sign();
+       
+    }
 }
