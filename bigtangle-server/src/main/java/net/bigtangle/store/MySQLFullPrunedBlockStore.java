@@ -243,6 +243,31 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
             + "    prevhash varbinary(32) NOT NULL,\n" + " hash varbinary(32) NOT NULL,\n" + "    inserttime bigint,\n"
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ")";
+    
+    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
+            + "   orderid varchar(255) NOT NULL,\n" 
+            + "   fromAddress varchar(255),\n"
+            + "   fromTokenHex varchar(255),\n" 
+            + "   fromAmount varchar(255),\n" 
+            + "   toAddress varchar(255),\n"
+            + "   toTokenHex varchar(255),\n" 
+            + "   toAmount varchar(255),\n" 
+            + "   data varbinary(5000) NOT NULL,\n"
+            + "   toSign boolean,\n" 
+            + "   fromSign integer,\n" 
+            + "   toOrderId varchar(255),\n"
+            + "   fromOrderId varchar(255),\n" 
+            + "   market varchar(255),\n" 
+            + "   signInputData varbinary(5000),\n"
+            + "   PRIMARY KEY (orderid) )";
+    
+    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
+//          + "   id varchar(255) NOT NULL,\n"
+          + "   orderid varchar(255) ,\n" 
+          + "   pubkey varchar(255),\n"
+          + "   signInputData varbinary(5000),\n"
+          + "   sign integer\n"
+          + "    )";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
@@ -252,6 +277,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
+    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
+    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
@@ -292,6 +319,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_CONFIRMATION_DEPENDENCY_TABLE);
         sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
         sqlStatements.add(CREATE_SETTINGS_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
         return sqlStatements;
     }
 
@@ -304,6 +333,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         return sqlStatements;
     }
 

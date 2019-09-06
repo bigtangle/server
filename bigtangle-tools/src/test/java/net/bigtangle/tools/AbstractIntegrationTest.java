@@ -52,8 +52,9 @@ public abstract class AbstractIntegrationTest {
     public static final String HTTPS_BIGTANGLE_LOCAL = "http://localhost:8088/";
     public static   boolean testnet =true;
     public static  String HTTPS_BIGTANGLE_DE = "https://" +  (testnet ? "test." : "") + "bigtangle.de/";
-    public static  String HTTPS_BIGTANGLE_INFO = HTTPS_BIGTANGLE_LOCAL;
-          //  "https://" +  (testnet ? "test." : "")  + "bigtangle.info/";
+    public static  String HTTPS_BIGTANGLE_INFO = 
+            //HTTPS_BIGTANGLE_LOCAL;
+            "https://" +  (testnet ? "test." : "")  + "bigtangle.info/";
     public static String  HTTPS_BIGTANGLE_ORG = "https://"  +  (testnet ? "test." : "")  
             + "bigtangle.org/";
 
@@ -112,9 +113,9 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-      //    System.setProperty("https.proxyHost",
-      //    "anwproxy.anwendungen.localnet.de");
-      //    System.setProperty("https.proxyPort", "3128");
+           System.setProperty("https.proxyHost",
+           "anwproxy.anwendungen.localnet.de");
+          System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();

@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,14 +48,12 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
-import net.bigtangle.core.http.server.resp.OrderdataResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -323,12 +320,33 @@ public class OrderController extends ExchangeController {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void initTable(Map<String, Object> requestParam) throws Exception {
+    public void initTable() throws Exception {
 
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        // requestParam.put("orderid", orderid4searchTextField.getText());
+        requestParam.put("address", address4searchTextField.getText());
+        // requestParam.put("market", market4searchTextField.getText());
+
+        requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
+        
+     boolean  matched= "publish".equals(stateTG.getSelectedToggle().getUserData().toString()) ;
+        
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
         String CONTEXT_ROOT = Main.getContextRoot();
-        getOrder(requestParam, orderData, CONTEXT_ROOT);
+        Main.walletAppKit.wallet().setServerURL(CONTEXT_ROOT);
+        boolean ifMineOrder = mineCB.isSelected();
+
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
+        List<String> address = new ArrayList<String>();
+        if (ifMineOrder) {
+            for (ECKey ecKey : keys) {
+                address.add(ecKey.toAddress(Main.params).toString());
+            }
+            requestParam.put("addresses", address);
+        }
+        
+        Main.walletAppKit.wallet(). getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
 
         getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
         orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
@@ -395,8 +413,8 @@ public class OrderController extends ExchangeController {
                 }
                 Coin fromAmount = Coin.valueOf(orderPublish.getPrice(), tokenid);
                 Coin toAmount = Coin.valueOf(orderPublish.getAmount(), tokenid);
-                map.put("price", fromAmount.toPlainString());
-                map.put("amount", toAmount.toPlainString());
+                map.put("price", fromAmount);
+                map.put("amount", toAmount);
                 map.put("orderId", orderPublish.getOrderId());
                 map.put("address", orderPublish.getAddress());
                 map.put("tokenId", orderPublish.getTokenId());
@@ -409,60 +427,8 @@ public class OrderController extends ExchangeController {
             }
         }
     }
-
-    private void getOrder(Map<String, Object> requestParam, ObservableList<Map<String, Object>> orderData,
-            String CONTEXT_ROOT)
-            throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
-        if (requestParam.containsKey("state")) {
-            String stateStr = (String) requestParam.get("state");
-            requestParam.put("spent", "publish".equals(stateStr) ? "false" : "true");
-        }
-        boolean ifMineOrder = mineCB.isSelected();
-
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
-        List<String> address = new ArrayList<String>();
-        if (ifMineOrder) {
-            for (ECKey ecKey : keys) {
-                address.add(ecKey.toAddress(Main.params).toString());
-            }
-            requestParam.put("addresses", address);
-        }
-
-        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        log.debug(response0);
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            HashMap<String, Object> map = new HashMap<String, Object>();
-
-            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-                map.put("type", Main.getText("BUY"));
-                map.put("amount", orderRecord.getTargetValue());
-                map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("tokenname",
-                        orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()).getTokennameDisplay());
-                map.put("price", Coin.toPlainString(orderRecord.getOfferValue() / orderRecord.getTargetValue()));
-            } else {
-                map.put("type", Main.getText("SELL"));
-                map.put("amount", orderRecord.getOfferValue());
-                map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("tokenname",
-                        orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokennameDisplay());
-                map.put("price", Coin.toPlainString(orderRecord.getTargetValue() / orderRecord.getOfferValue()));
-            }
-            map.put("orderId", orderRecord.getInitialBlockHashHex());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
-            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
-            map.put("address",
-                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(Main.params).toString());
-            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
-            // map.put("state", Main.getText( (String)
-            // requestParam.get("state")));
-            orderData.add(map);
-        }
-    }
+ 
+ 
 
     public void initMarketComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -591,16 +557,12 @@ public class OrderController extends ExchangeController {
 
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        long quantity = Long.valueOf(this.quantityTextField1.getText());
-        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText(), NetworkParameters.BIGTANGLE_TOKENID);
-        long amount = quantity;
-        if (!typeStr.equals("sell")) {
-            amount = quantity * price.getValue();
-        }
-        if (coin.getValue() < amount) {
-            GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
-            return;
-        }
+        Token t = Main.getTokenById(tokenid);
+        Coin quantity = MonetaryFormat.FIAT.noCode().parse(this.quantityTextField1.getText(), Utils.HEX.decode(tokenid),
+                t.getDecimals());
+
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField1.getText());
+
         LocalDate to = validdateToDatePicker1.getValue();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String validdateTo = "";
@@ -635,11 +597,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
+                    totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity, totime,
-                    fromtime);
+            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
+                    totime, fromtime);
         }
 
         overlayUI.done();
@@ -656,7 +618,7 @@ public class OrderController extends ExchangeController {
         Coin coin = Main.calculateTotalUTXOList(pubKeyHash,
                 typeStr.equals("sell") ? tokenid : NetworkParameters.BIGTANGLE_TOKENID_STRING);
         long quantity = Long.valueOf(this.quantityTextField.getText());
-        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText(), NetworkParameters.BIGTANGLE_TOKENID);
+        Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
             amount = quantity * price.getValue();
@@ -713,14 +675,9 @@ public class OrderController extends ExchangeController {
     }
 
     public void search(ActionEvent event) {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        // requestParam.put("orderid", orderid4searchTextField.getText());
-        requestParam.put("address", address4searchTextField.getText());
-        // requestParam.put("market", market4searchTextField.getText());
-
-        requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
+    
         try {
-            initTable(requestParam);
+            initTable();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }

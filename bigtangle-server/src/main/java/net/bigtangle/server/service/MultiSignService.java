@@ -85,7 +85,7 @@ public class MultiSignService {
             map.put("tokenname", tokenInfo.getToken().getTokenname());
 
             Coin fromAmount = Coin.valueOf(tokenInfo.getToken().getAmount(), multiSign.getTokenid());
-            map.put("amount", fromAmount.toPlainString());
+            map.put("amount", fromAmount);
             int signcount = 0;
             if (transaction.getDataSignature() == null) {
                 signcount = 0;

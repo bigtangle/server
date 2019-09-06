@@ -115,13 +115,13 @@ public class ScheduleOrderService {
         for (Vm_deposit d : l) {
             if (giveMoneyResult.containsKey(d.getPubkey())) {
                 long temp = giveMoneyResult.get(d.getPubkey());
-                long my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID)
+                long my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "" )
                         .getValue();
                 giveMoneyResult.put(d.getPubkey(), my + temp);
             } else {
                    
                 giveMoneyResult.put(d.getPubkey(),
-                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "", NetworkParameters.BIGTANGLE_TOKENID).getValue());
+                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "" ).getValue());
 
             }
 

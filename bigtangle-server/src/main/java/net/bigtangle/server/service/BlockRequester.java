@@ -90,6 +90,7 @@ public class BlockRequester {
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
         for (String s : re) {
+            if(s!=null && !"".equals(s))
             diff(s.trim());
         }
     }

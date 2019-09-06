@@ -45,7 +45,7 @@ public class TokensService {
         return GetTokensResponse.create(list);
     }
 
-    public AbstractResponse getTokensList(String name) throws BlockStoreException {
+    public GetTokensResponse getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         list.addAll(store.getTokensList(name));
         Map<String, Long> map = store.getTokenAmountMap(name);

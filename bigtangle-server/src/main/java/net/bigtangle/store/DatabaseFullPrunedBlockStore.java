@@ -35,6 +35,8 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Exchange;
+import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -103,6 +105,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_ORDER_MATCHING_TABLE = "DROP TABLE IF EXISTS ordermatching";
     public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
     public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
+    public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
+    public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -504,7 +508,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, hash, outputindex "
             + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
+    
+    protected String INSERT_EXCHANGE_SQL = getInsert()
+            + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
+            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
+            + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
+            + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,signInputData FROM exchange WHERE orderid = ?";
 
+    protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
+            + "  INTO exchange_multisign (orderid, pubkey,sign) VALUES (?, ?,?)";
+    
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected LinkedBlockingQueue<Connection> allConnections;
@@ -685,6 +700,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_ORDER_MATCHING_TABLE);
         sqlStatements.add(DROP_CONFIRMATION_DEPENDENCY_TABLE);
         sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
+        sqlStatements.add(DROP_EXCHANGE_TABLE);
+        sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
         return sqlStatements;
     }
 
@@ -948,7 +965,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             //create domain name bc
             Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "01",
                     NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, 1, true,
-                    2, "bc", "");
+                    0, "bc", "");
             insertToken(params.getGenesisBlock().getHashAsString(), bc);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -963,8 +980,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
   
             // Token output table
             Token bigtangle = Token.buildSimpleTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.testCoin, true,
-                    2, params.getGenesisBlock().getHashAsString());
+                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.BigtangleCoinTotal, true,
+                    NetworkParameters.BIGTANGLE_DECIMAL, params.getGenesisBlock().getHashAsString());
             insertToken(bcBlockHash(params), bigtangle);
             updateTokenConfirmed(bcBlockHash(params), true);
 
@@ -6643,6 +6660,145 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return tokens;
             }
             return null;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        PreparedStatement sub_preparedStatement = null;
+        String sql = "SELECT orderid,pubkey,sign,signInputData FROM exchange_multisign WHERE orderid=?";
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
+            preparedStatement.setString(1, orderid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+            Exchange exchange = new Exchange();
+            exchange.setOrderid(resultSet.getString("orderid"));
+            exchange.setFromAddress(resultSet.getString("fromAddress"));
+            exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
+            exchange.setFromAmount(resultSet.getString("fromAmount"));
+            exchange.setToAddress(resultSet.getString("toAddress"));
+            exchange.setToTokenHex(resultSet.getString("toTokenHex"));
+            exchange.setToAmount(resultSet.getString("toAmount"));
+            exchange.setData(resultSet.getBytes("data"));
+            exchange.setToSign(resultSet.getInt("toSign"));
+            exchange.setFromSign(resultSet.getInt("fromSign"));
+            exchange.setToOrderId(resultSet.getString("toOrderId"));
+            exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+            exchange.setMarket(resultSet.getString("market"));
+
+            exchange.getSigs().add(resultSet.getBytes("signInputData"));
+            sub_preparedStatement = conn.get().prepareStatement(sql);
+            sub_preparedStatement.setString(1, exchange.getToOrderId());
+            ResultSet sub_resultSet = preparedStatement.executeQuery();
+            List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
+
+            while (sub_resultSet.next()) {
+                exchange.getSigs().add(sub_resultSet.getBytes("signInputData"));
+                list.add(new ExchangeMulti(exchange.getToOrderId(), sub_resultSet.getString("pubkey"),
+                        sub_resultSet.getBytes("signInputData"), sub_resultSet.getInt("sign")));
+            }
+            exchange.setExchangeMultis(list);
+            return exchange;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "";
+            if (signtype.equals("to")) {
+                sql = "UPDATE exchange SET toSign = 1, data = ? WHERE orderid = ?";
+            } else {
+                sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
+            }
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setBytes(1, data);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void saveExchange(Exchange exchange) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
+            preparedStatement.setString(1, exchange.getOrderid());
+            preparedStatement.setString(2, exchange.getFromAddress());
+            preparedStatement.setString(3, exchange.getFromTokenHex());
+            preparedStatement.setString(4, exchange.getFromAmount());
+            preparedStatement.setString(5, exchange.getToAddress());
+            preparedStatement.setString(6, exchange.getToTokenHex());
+            preparedStatement.setString(7, exchange.getToAmount());
+            preparedStatement.setBytes(8, exchange.getData());
+            preparedStatement.setInt(9, exchange.getToSign());
+            preparedStatement.setInt(10, exchange.getFromSign());
+            preparedStatement.setString(11, exchange.getToOrderId());
+            preparedStatement.setString(12, exchange.getFromOrderId());
+            preparedStatement.setString(13, exchange.getMarket());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = "UPDATE exchange SET toSign = 1, signInputData = ? WHERE orderid = ?";
+
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(2, orderid);
+            preparedStatement.setBytes(1, data);
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
