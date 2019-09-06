@@ -312,8 +312,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
-        // req.tx.addOutput(myutxo.getValue(), new Address(networkParameters,
-        // yourutxo.getAddress()));
+        req.tx.addOutput(myutxo.getValue(), new Address(networkParameters,
+         yourutxo.getAddress()));
 
         walletAppKit.wallet().completeTx(req, null);
         // walletAppKit.wallet().signTransaction(req);
