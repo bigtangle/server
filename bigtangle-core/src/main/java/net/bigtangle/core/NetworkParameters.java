@@ -177,20 +177,6 @@ public abstract class NetworkParameters {
     // Transaction setting
     public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
 
-    // Reward and Difficulty Synchronization
-    public static final long REWARD_INITIAL_TX_REWARD = 10L;
-    public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10;
-    public static final long REWARD_MIN_MILESTONE_PERCENTAGE = 97;
-    public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
-
-    public static final int TARGET_TIMESPAN = 24 * 60 * 60;  // 1 day per difficulty cycle
-    public static final int TARGET_SPACING = 15;  // 15 seconds per block.
-    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-
-    public static final int TARGET_MAX_TPS = 100;
-    public static final long REWARD_OVERRULE_TIME_MS = 1000;
-
     // Order Matching Settings
     public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10;
     public static final long ORDER_MATCHING_OVERLAP_SIZE = 7;
@@ -216,6 +202,27 @@ public abstract class NetworkParameters {
     // 100 billions  as Value
     public static long BigtangleCoinTotal = LongMath.pow(10, 11+BIGTANGLE_DECIMAL);
     public static final long TARGET_YEARLY_MINING_PAYOUT = BigtangleCoinTotal / 1000;
+
+    // Reward and Difficulty Synchronization
+    public static final long REWARD_INITIAL_TX_REWARD = 10L;
+    public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
+    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10;
+    public static final long REWARD_MIN_MILESTONE_PERCENTAGE = 97;
+    public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
+
+    public static final int TARGET_TIMESPAN = 24 * 60 * 60;  // 1 day per difficulty cycle
+    public static final int TARGET_SPACING = 15;  // 15 seconds per block.
+    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
+    
+    public static final int TARGET_MAX_TPS = 100;
+    public static final long REWARD_OVERRULE_TIME_MS = 1000;
+
+    // per interval of length target_spacing, the reward is:
+    public static final long TARGET_INTERVAL_REWARD = TARGET_YEARLY_MINING_PAYOUT * TARGET_SPACING / 31536000;  
+    // a third always comes directly from the consensus blocks:
+    public static final long CONSENSUS_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3; 
+    // the other two thirds are for each inclusion into consensus and each block itself:
+    public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD * 2 / 3 / TARGET_MAX_TPS / TARGET_SPACING; 
 
     protected NetworkParameters() {
     }
