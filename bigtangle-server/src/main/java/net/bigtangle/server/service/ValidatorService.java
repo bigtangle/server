@@ -1158,8 +1158,6 @@ public class ValidatorService {
             final BlockWrap pred = store.getBlockWrap(predecessorReq.predecessorHash);
             if (pred == null)
                 return SolidityState.from(predecessorReq.predecessorHash);
-            if ((!pred.getBlockEvaluation().isCalculated() && predecessorReq.requireCalculated))
-                return SolidityState.from(predecessorReq.predecessorHash);
             if (pred.getBlock().getHeight() >= block.getHeight()) {
                 if (throwExceptions)
                     throw new VerificationException("Height of used blocks must be lower than height of this block.");

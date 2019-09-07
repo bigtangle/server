@@ -608,7 +608,6 @@ public abstract class AbstractIntegrationTest {
         store.resetStore();
         for (Block b : addedBlocks) {
             blockGraph.add(b, false);
-            blockGraph.calculateBlock(blockService.getBlockWrap(b.getHash()));
             if (blockConfirmed.get(b))
                 blockGraph.confirm(b.getHash(), new HashSet<>());
         }

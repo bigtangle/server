@@ -46,9 +46,6 @@ public class BlockEvaluation implements Serializable {
     // 0: unknown. -1: unsolid. 1: solid
     private long solid;
     
-    // If false, virtual TXOs have not been calculated yet.
-    private boolean calculated;
-    
     // If true, this block is confirmed temporarily or by milestone
     private boolean confirmed;
 
@@ -68,18 +65,17 @@ public class BlockEvaluation implements Serializable {
         setInsertTime(other.insertTime);
         setMaintained(other.maintained);
         setSolid(other.solid);
-        setCalculated(other.isCalculated());
         setConfirmed(other.confirmed);
     }
 
     public static BlockEvaluation buildInitial(Block block) {
         long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, -1, currentTimeMillis, 0, currentTimeMillis, true, 0, !block.getBlockType().needsCalculation(), false);
+        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, -1, currentTimeMillis, 0, currentTimeMillis, true, 0, false);
     }
 
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
             long height, long milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained, long solid, boolean calculated, boolean confirmed) {
+            boolean maintained, long solid, boolean confirmed) {
         BlockEvaluation blockEvaluation = new BlockEvaluation();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -93,7 +89,6 @@ public class BlockEvaluation implements Serializable {
         blockEvaluation.setInsertTime(insertTime);
         blockEvaluation.setMaintained(maintained);
         blockEvaluation.setSolid(solid);
-        blockEvaluation.setCalculated(calculated);
         blockEvaluation.setConfirmed(confirmed);
 
         return blockEvaluation;
@@ -195,14 +190,6 @@ public class BlockEvaluation implements Serializable {
         this.solid = solid;
     }
 
-    public boolean isCalculated() {
-        return calculated;
-    }
-
-    public void setCalculated(boolean calculated) {
-        this.calculated = calculated;
-    }
-
     public boolean isConfirmed() {
         return confirmed;
     }
@@ -216,7 +203,7 @@ public class BlockEvaluation implements Serializable {
         return "BlockEvaluation [blockHash=" + blockHash + ", rating=" + rating + ", depth=" + depth
                 + ", cumulativeWeight=" + cumulativeWeight + ", height=" + height + ", milestone=" + milestone
                 + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", milestoneDepth=" + milestoneDepth
-                + ", insertTime=" + insertTime + ", maintained=" + maintained + ", solid=" + solid + ", calculated=" + calculated + "]";
+                + ", insertTime=" + insertTime + ", maintained=" + maintained + ", solid=" + solid + "]";
     }
 
 }

@@ -425,12 +425,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return
      * @throws BlockStoreException
      */
-    public Optional<OrderMatchingResult> calculateBlock(BlockWrap block) throws BlockStoreException {
+    public Optional<OrderMatchingResult> calculateBlock(Block block) throws BlockStoreException {
         
         Transaction tx = null;
         OrderMatchingResult matchingResult = null;
 
-        switch (block.getBlock().getBlockType()) {
+        switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
         case BLOCKTYPE_FILE:
@@ -440,8 +440,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            tx = generateVirtualMiningRewardTX(block.getBlock());
-            insertVirtualUTXOs(block.getBlock(), tx);
+            tx = generateVirtualMiningRewardTX(block);
+            insertVirtualUTXOs(block, tx);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             break;
@@ -458,36 +458,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_OP:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
-            tx = generateReclaimTX(block.getBlock());
-            insertVirtualUTXOs(block.getBlock(), tx);
+            tx = generateReclaimTX(block);
+            insertVirtualUTXOs(block, tx);
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             // Get list of consumed orders, virtual order matching tx and newly
             // generated remaining order book
-            matchingResult = generateOrderMatching(block.getBlock());
+            matchingResult = generateOrderMatching(block);
             tx = matchingResult.getOutputTx();
-            insertVirtualUTXOs(block.getBlock(), tx);
-            insertVirtualOrderRecords(block.getBlock(), matchingResult.getRemainingOrders());
+            insertVirtualUTXOs(block, tx);
+            insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
             break;
         default:
             throw new RuntimeException("Not Implemented");
 
         }
-
-        // The block is now defined as calculated
-        blockStore.updateBlockEvaluationCalculated(block.getBlockHash(), true);
         
         // Return the computation result
         return Optional.ofNullable(matchingResult);
     }
 
     private void confirmBlock(BlockWrap block) throws BlockStoreException {
-        
-        // Calculate the block outputs if needed
-        Optional<OrderMatchingResult> calculationResult = Optional.empty();
-        if (!block.getBlockEvaluation().isCalculated()) {
-            calculationResult = calculateBlock(block);
-        }
         
         // Update block's transactions in db
         for (final Transaction tx : block.getBlock().getTransactions()) {
@@ -531,7 +522,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_MATCHING:
             // Do order matching
-            confirmOrderMatching(block, calculationResult);
+            confirmOrderMatching(block);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -584,14 +575,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmOrderMatching(BlockWrap block, Optional<OrderMatchingResult> calculationResult) throws BlockStoreException {
+    private void confirmOrderMatching(BlockWrap block) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
-        OrderMatchingResult actualCalculationResult = null;
-        if (calculationResult.isPresent())
-            actualCalculationResult = calculationResult.get();
-        else
-            actualCalculationResult = generateOrderMatching(block.getBlock());
+        OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
         for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
@@ -1077,6 +1064,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case Success:
             connectUTXOs(block);
             connectTypeSpecificUTXOs(block);
+            calculateBlock(block);
             
             blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             

@@ -120,94 +120,51 @@ public class Block extends Message {
      * switches
      */
     public enum Type {
-        // TODO implement all conditions for each block type in all switches
-        // TODO add size multiplier to pow difficulty
-        BLOCKTYPE_INITIAL(false, 0, 0, Integer.MAX_VALUE, false), // Genesis block
-        BLOCKTYPE_TRANSFER(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Default
-                                                                                   // block
-        BLOCKTYPE_REWARD(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true), // Rewards
-                                                                                 // of
-                                                                                 // mining
-                                                                                 // //
-                                                                                 // TODO
-                                                                                 // rename
-                                                                                 // to
-                                                                                 // consensus
-        BLOCKTYPE_TOKEN_CREATION(true, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Custom
-                                                                                        // token
-                                                                                        // issuance
-        BLOCKTYPE_USERDATA(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                                   // User-defined
-                                                                                   // data
-        BLOCKTYPE_VOS(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                              // Smart
-                                                                              // contracts
-        BLOCKTYPE_GOVERNANCE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                                     // Governance
-                                                                                     // of
-                                                                                     // software
-        BLOCKTYPE_FILE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                               // User-defined
-                                                                               // file
-        BLOCKTYPE_VOS_EXECUTE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                                      // VOS
-                                                                                      // execution
-                                                                                      // result
-        BLOCKTYPE_CROSSTANGLE(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // TODO
-                                                                                      // transfer
+        BLOCKTYPE_INITIAL(false, Integer.MAX_VALUE), // Genesis block
+        BLOCKTYPE_TRANSFER(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default
+        BLOCKTYPE_REWARD(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards
+        BLOCKTYPE_TOKEN_CREATION(true, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // tokenissuance
+        BLOCKTYPE_USERDATA(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // User-defined-data
+        BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Smart-contracts
+        BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Governance
+        BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // User-defined-file
+        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), 
+        BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // transfer
                                                                                       // from
                                                                                       // mainnet
                                                                                       // to
                                                                                       // permissioned
-        BLOCKTYPE_ORDER_OPEN(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Opens
+        BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens
                                                                                      // a
                                                                                      // new
                                                                                      // order
-        BLOCKTYPE_ORDER_OP(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Issues
+        BLOCKTYPE_ORDER_OP(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues
                                                                                    // a
                                                                                    // refresh/cancel
                                                                                    // of
                                                                                    // an
                                                                                    // order
-        BLOCKTYPE_ORDER_RECLAIM(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true), // Reclaims
+        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims
                                                                                         // lost
                                                                                         // orders
-        BLOCKTYPE_ORDER_MATCHING(false, 1, 1, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, true); // Perform
+        BLOCKTYPE_ORDER_MATCHING(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform
                                                                                          // order
                                                                                          // matching
 
         private boolean allowCoinbaseTransaction;
-        private int powMultiplier; // TODO use in reward calcs
-        private int rewardMultiplier; // TODO use in reward calcs
         private int maxSize;
-        private boolean needsCalculation;
 
-        private Type(boolean allowCoinbaseTransaction, int powMultiplier, int rewardMultiplier, int maxSize, boolean needsCalculation) {
+        private Type(boolean allowCoinbaseTransaction, int maxSize) {
             this.allowCoinbaseTransaction = allowCoinbaseTransaction;
-            this.powMultiplier = powMultiplier;
-            this.rewardMultiplier = rewardMultiplier;
             this.maxSize = maxSize;
-            this.needsCalculation = needsCalculation;
         }
 
         public boolean allowCoinbaseTransaction() {
             return allowCoinbaseTransaction;
         }
 
-        public int getPowMultiplier() {
-            return powMultiplier;
-        }
-
-        public int getRewardMultiplier() {
-            return rewardMultiplier;
-        }
-
         public int getMaxBlockSize() {
             return maxSize;
-        }
-
-        public boolean needsCalculation() {
-            return needsCalculation;
         }
     }
 

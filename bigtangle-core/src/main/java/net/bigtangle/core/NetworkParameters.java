@@ -187,7 +187,7 @@ public abstract class NetworkParameters {
     public static final int TARGET_TIMESPAN = 24 * 60 * 60;  // 1 day per difficulty cycle
     public static final int TARGET_SPACING = 15;  // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-    
+
     public static final int TARGET_MAX_TPS = 100;
     public static final long REWARD_OVERRULE_TIME_MS = 1000;
 

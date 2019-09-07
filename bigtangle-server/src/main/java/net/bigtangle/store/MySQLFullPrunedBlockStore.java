@@ -50,7 +50,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    inserttime bigint,\n"
             + "    maintained boolean,\n" 
             + "    solid bigint,\n"
-            + "    calculated boolean,\n" 
             + "    confirmed boolean,\n"
             + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
 
