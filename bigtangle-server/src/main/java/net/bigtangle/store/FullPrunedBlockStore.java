@@ -241,7 +241,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash) throws BlockStoreException;
+    public long getRewardChainLength(Sha256Hash hash) throws BlockStoreException;
+
+    public long getRewardDifficulty(Sha256Hash hash) throws BlockStoreException;
+
+    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash, long difficulty, long chainLength) throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
 
@@ -508,5 +512,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void saveExchange(Exchange exchange) throws BlockStoreException;
 
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
+
+    List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
+
+    void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException;
+
+    void updateAllConfirmedToMilestone(long milestoneNumber) throws BlockStoreException;
 
 }

@@ -32,7 +32,6 @@ import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.ValidatorService.PredecessorRequirement;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -168,9 +167,9 @@ public class BlockService {
         // Add this block and add all of its required unconfirmed blocks
         evaluations.add(block);
         
-        List<PredecessorRequirement> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
-        for (PredecessorRequirement req : allRequiredBlockHashes) {
-            BlockWrap pred = store.getBlockWrap(req.predecessorHash);
+        List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
+        for (Sha256Hash req : allRequiredBlockHashes) {
+            BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
             if (!addRequiredUnconfirmedBlocksTo(evaluations, pred))

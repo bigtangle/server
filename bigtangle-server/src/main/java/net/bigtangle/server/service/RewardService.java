@@ -80,46 +80,13 @@ public class RewardService {
     }
 
     /**
-     * Runs the reward voting logic: push existing best eligible reward if
-     * exists or make a new eligible reward now
+     * Runs the reward making logic
      * 
      * @return the new block or block voted on
      * @throws Exception
      */
     public Block performRewardVoting() throws Exception {
-        // Find eligible rewards building on top of the newest reward
-        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
-        List<Sha256Hash> candidateHashes = store.getRewardBlocksWithPrevHash(prevRewardHash);
-
-        // TODO this isn't required soon anymore
-//        candidateHashes.removeIf(c -> {
-//            try {
-//                return store.getRewardEligible(c) != Eligibility.ELIGIBLE;
-//            } catch (BlockStoreException e) {
-//                // Cannot happen
-//                throw new RuntimeException();
-//            }
-//        });
-        
-        // Sort by rating
-        List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
-        candidates.sort(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating()));
-        
-        // If exists, push that one, else make new one
-        while (!candidates.isEmpty()) {
-            BlockWrap votingTarget = candidates.get(candidates.size()-1);
-            candidates.remove(candidates.size()-1);
-            try {
-                Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
-                Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-                Block r2 = blockService.getBlock(tipsToApprove.getRight());
-                blockService.saveBlock(r1.createNextBlock(r2));
-                return votingTarget.getBlock();
-            } catch (InfeasiblePrototypeException e) {
-                continue;
-            }
-        }
-    
+        // Make new one
         return createAndAddMiningRewardBlock();
     }
 
@@ -159,7 +126,7 @@ public class RewardService {
             boolean override) throws BlockStoreException, NoBlockException {
         RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
 
-        // TODO no need
+        // TODO we do need to make sure that it is at least that far ahead, else it would not be possible to reward correctly.
 //        if (result.getEligibility() != Eligibility.ELIGIBLE) {
 //            if (!override) {
 //                logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");

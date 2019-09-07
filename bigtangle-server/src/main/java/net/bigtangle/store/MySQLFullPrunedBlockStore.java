@@ -88,6 +88,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash varbinary(32),\n" 
             + "   prevblockhash varbinary(32) NOT NULL,\n" 
+            + "   difficulty bigint NOT NULL,\n" 
+            + "   chainlength bigint NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
 
     private static final String CREATE_ORDER_MATCHING_TABLE = "CREATE TABLE ordermatching (\n"

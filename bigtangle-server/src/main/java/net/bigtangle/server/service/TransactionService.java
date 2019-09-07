@@ -132,12 +132,7 @@ public class TransactionService {
      * check before add Block from kafka , the block can be already exists.
      */
     public boolean checkBlockExists(Block block) throws BlockStoreException, NoBlockException {
-        try {
-            return store.get(block.getHash()) != null;
-        } catch (NoBlockException e) {
-            return false;
-        }
-
+        return store.get(block.getHash()) != null;
     }
 
     public void streamBlocks(Long heightstart) throws BlockStoreException {

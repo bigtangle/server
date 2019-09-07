@@ -9,7 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -364,7 +363,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block txBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
-        // Generate blocks until first ones become unmaintained
+        // Generate blocks 
         Block rollingBlock = txBlock1.createNextBlock(txBlock1);
         blockGraph.add(rollingBlock, true);
 
@@ -372,7 +371,10 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-        milestoneService.update();
+        
+        // Generate mining reward block
+        rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
         milestoneService.update();
 
         // First block is no longer maintained, while newest one is maintained
@@ -384,19 +386,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isConfirmed());
 
         // Create conflicting block with UTXO
-        Block txBlock2 = createAndAddNextBlockWithTransaction(rollingBlock, rollingBlock, tx1);
+        Block txBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
+        rollingBlock = rollingBlock.createNextBlock(txBlock2);
+        blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
-        milestoneService.update();
-
-        // No change in maintenance
-        assertFalse(blockService.getBlockEvaluation(txBlock1.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(txBlock2.getHash()).isMaintained());
 
         // Confirmation should stay true except for conflict
         assertTrue(blockService.getBlockEvaluation(txBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(txBlock2.getHash()).isConfirmed());
     }
 
@@ -824,13 +821,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(1, blockService.getBlockEvaluation(b8weight4.getHash()).getCumulativeWeight());
 
         // Make consensus block
+        Block rollingBlock = b8link;
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock = createAndAddNextBlock(rollingBlock, rollingBlock);
+        }
         rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                b8link.getHash(), b8link.getHash());
-        createAndAddNextBlock(b8link, b8link);
-        createAndAddNextBlock(b8link, b8link);
-        createAndAddNextBlock(b8link, b8link);
-        createAndAddNextBlock(b8link, b8link);
-
+                rollingBlock.getHash(), rollingBlock.getHash());
+        
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(b5.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isConfirmed());
@@ -840,133 +837,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isConfirmed());
 
         // TODO Check milestone depths (handmade tests)
-        assertEquals(5,
+        assertEquals(16,
                 blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getMilestoneDepth());
-        assertEquals(4, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
-        assertEquals(4, blockService.getBlockEvaluation(b2.getHash()).getMilestoneDepth());
-        assertEquals(3, blockService.getBlockEvaluation(b3.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b5.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b5link.getHash()).getMilestoneDepth());
-        assertEquals(2, blockService.getBlockEvaluation(b6.getHash()).getMilestoneDepth());
-        assertEquals(2, blockService.getBlockEvaluation(b7.getHash()).getMilestoneDepth());
-        assertEquals(1, blockService.getBlockEvaluation(b8.getHash()).getMilestoneDepth());
-        assertEquals(0, blockService.getBlockEvaluation(b8link.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b9.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b10.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b11.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b12.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b13.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b14.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(bOrphan1.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(bOrphan5.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b8weight1.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b8weight2.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b8weight3.getHash()).getMilestoneDepth());
-        assertEquals(-1, blockService.getBlockEvaluation(b8weight4.getHash()).getMilestoneDepth());
-    }
-
-    @Test
-    public void testDeepReorg() throws Exception {
-        store.resetStore();
-
-        // Generate blocks until first ones become unmaintained
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true);
-
-        Block oldTangleBlock = rollingBlock;
-
-        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-        milestoneService.update();
-
-        // Genesis block is no longer maintained, while newest one is maintained
-        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isConfirmed());
-
-        // Generate longer new Tangle
-        rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true);
-
-        Block newTangleBlock = rollingBlock;
-
-        for (int i = 0; i < 3 * (NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5); i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-
-        // New Tangle is not in milestone since unmaintained
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained());
-        // // unless pruned
-        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isConfirmed());
-
-        // Perform reorg
-        milestoneService.triggerDeepReorg(1, TimeUnit.DAYS);
-
-        // New Tangle is now in milestone instead of old
-        // assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        // // unless pruned
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(newTangleBlock.getHash()).isConfirmed());
-
-    }
-
-    @Test
-    public void testFindDeepReorg() throws Exception {
-        store.resetStore();
-
-        // Generate blocks until first ones become unmaintained
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock();
-        blockGraph.add(rollingBlock, true);
-
-        for (int i = 0; i < 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-
-        Block splitBlock = rollingBlock;
-        rollingBlock = rollingBlock.createNextBlock();
-        blockGraph.add(rollingBlock, true);
-        Block oldTangleBlock = rollingBlock;
-
-        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-        milestoneService.update();
-
-        // block is no longer maintained, while newest one is maintained
-        assertFalse(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isMaintained());
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isConfirmed());
-
-        // Generate longer new Tangle
-        rollingBlock = splitBlock.createNextBlock();
-        blockGraph.add(rollingBlock, true);
-
-        Block newTangleBlock = rollingBlock;
-
-        for (int i = 0; i < 3 * (NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5); i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-
-        // New Tangle is not in milestone since unmaintained
-        assertFalse(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(oldTangleBlock.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(newTangleBlock.getHash()).isConfirmed());
-
-        // Find correct height to reorg from
-        assertEquals(6, milestoneService.findDeepReorgHeight(1, TimeUnit.DAYS));
+        assertEquals(15, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
+        assertEquals(15, blockService.getBlockEvaluation(b2.getHash()).getMilestoneDepth());
+        assertEquals(1, blockService.getBlockEvaluation(rollingBlock.getHash()).getMilestoneDepth());
     }
 
     @Test
@@ -1037,42 +912,40 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
         blockGraph.add(fusingBlock, true);
 
-        // Generate ineligible mining reward block
+        // Generate mining reward block
         Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
-        // Mining reward block should usually not go through since not
-        // sufficiently approved
+        // Mining reward block should go through
         milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
-        // Generate eligible mining reward blocks
+        // Generate more mining reward blocks
         Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
         Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
         milestoneService.update();
 
-        // Second mining reward block should now go through since everything is
-        // updated
-        rollingBlock = rewardBlock2;
-        for (int i = 1; i < 30; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
+        // No change
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
         milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
 
-        // Third mining reward block should now instead go through since
-        // everything is updated
+        // Third mining reward block should now instead go through since longer
         rollingBlock = rewardBlock3;
-        for (int i = 1; i < 60; i++) {
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
+        rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());

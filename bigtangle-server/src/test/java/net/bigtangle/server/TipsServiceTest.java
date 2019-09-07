@@ -222,7 +222,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
     }
 
-    @Test
+    // Deprecated @Test
     public void testConflictEligibleReward() throws Exception {
         store.resetStore();
 

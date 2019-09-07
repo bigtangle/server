@@ -94,7 +94,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testOrderReclaimSchedule() throws Exception {
-        @SuppressWarnings({ "deprecation", "unused" })
+        @SuppressWarnings({ "unused" })
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
@@ -192,10 +192,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens
-        Block s1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         
         // Open buy order for test tokens
-        Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
         
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);

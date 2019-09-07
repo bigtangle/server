@@ -46,7 +46,7 @@ import net.bigtangle.wallet.SendRequest;
 public class TransactionServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
 
-    @Test
+    // Deprecated @Test
     public void testRewardVoting() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();

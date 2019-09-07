@@ -120,43 +120,29 @@ public class Block extends Message {
      * switches
      */
     public enum Type {
-        BLOCKTYPE_INITIAL(false, Integer.MAX_VALUE), // Genesis block
-        BLOCKTYPE_TRANSFER(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Default
-        BLOCKTYPE_REWARD(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Rewards
-        BLOCKTYPE_TOKEN_CREATION(true, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // tokenissuance
-        BLOCKTYPE_USERDATA(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // User-defined-data
-        BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Smart-contracts
-        BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Governance
-        BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // User-defined-file
-        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), 
-        BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // transfer
-                                                                                      // from
-                                                                                      // mainnet
-                                                                                      // to
-                                                                                      // permissioned
-        BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Opens
-                                                                                     // a
-                                                                                     // new
-                                                                                     // order
-        BLOCKTYPE_ORDER_OP(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Issues
-                                                                                   // a
-                                                                                   // refresh/cancel
-                                                                                   // of
-                                                                                   // an
-                                                                                   // order
-        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE), // Reclaims
-                                                                                        // lost
-                                                                                        // orders
-        BLOCKTYPE_ORDER_MATCHING(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE); // Perform
-                                                                                         // order
-                                                                                         // matching
+        BLOCKTYPE_INITIAL(false, Integer.MAX_VALUE, false), // Genesis block
+        BLOCKTYPE_TRANSFER(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Default
+        BLOCKTYPE_REWARD(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Rewards
+        BLOCKTYPE_TOKEN_CREATION(true, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // tokenissuance
+        BLOCKTYPE_USERDATA(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-data
+        BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts
+        BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Governance
+        BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-file
+        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), 
+        BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
+        BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
+        BLOCKTYPE_ORDER_OP(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // refresh/cancel-order
+        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Reclaim-orders
+        BLOCKTYPE_ORDER_MATCHING(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Perform-matching // TODO delete
 
         private boolean allowCoinbaseTransaction;
         private int maxSize;
+        private boolean requiresCalculation;
 
-        private Type(boolean allowCoinbaseTransaction, int maxSize) {
+        private Type(boolean allowCoinbaseTransaction, int maxSize, boolean requiresCalculation) {
             this.allowCoinbaseTransaction = allowCoinbaseTransaction;
             this.maxSize = maxSize;
+            this.requiresCalculation = requiresCalculation;
         }
 
         public boolean allowCoinbaseTransaction() {
@@ -165,6 +151,10 @@ public class Block extends Message {
 
         public int getMaxBlockSize() {
             return maxSize;
+        }
+        
+        public boolean requiresCalculation() {
+            return requiresCalculation;
         }
     }
 
@@ -669,7 +659,14 @@ public class Block extends Message {
     /**
      * Returns true if the PoW of the block is OK
      */
-    protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+    public boolean checkProofOfWork(boolean throwException) throws VerificationException {
+        return checkProofOfWork(throwException, getDifficultyTargetAsInteger());
+    }
+
+    /**
+     * Returns true if the PoW of the block is OK
+     */
+    public boolean checkProofOfWork(boolean throwException, BigInteger target) throws VerificationException {
         // No PoW for genesis block
         if (getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
             return true;
@@ -700,7 +697,6 @@ public class Block extends Message {
                     return false;
             }
         } else {
-            BigInteger target = getDifficultyTargetAsInteger();
             BigInteger h = calculatePoWHash().toBigInteger();
 
             if (h.compareTo(target) > 0) {

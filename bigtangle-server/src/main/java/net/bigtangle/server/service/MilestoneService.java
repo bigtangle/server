@@ -48,101 +48,6 @@ public class MilestoneService {
     private ValidatorService validatorService;
 
     /**
-     * Triggers a deep reorg calculation which may be very expensive.
-     * 
-     * @throws BlockStoreException
-     */
-    public void triggerDeepReorg(long timeUnits, TimeUnit unit) throws BlockStoreException {
-        // Find reorganize entry point
-        long height = findDeepReorgHeight(timeUnits, unit);
-
-        // Use reorganize entry point height to reorganize
-        triggerDeepReorg(height);
-    }
-
-    /**
-     * Find height where blocks exist that have most of the recent blocks as
-     * approver
-     * 
-     * @return height where blocks exist that have most of the recent blocks as
-     *         approver
-     * @throws BlockStoreException
-     */
-    public long findDeepReorgHeight(long timeUnits, TimeUnit timeUnit) throws BlockStoreException {
-        final long currTime = System.currentTimeMillis() / 1000;
-        final long fromTime = currTime - timeUnit.toSeconds(timeUnits);
-        List<Sha256Hash> blocks = store.getBlocksOfTimeHigherThan(fromTime);
-
-        // Set target approval rate to complement of percentage required for
-        // confirmation
-        final long requiredApprovals = blocks.size() * 50 / 100;
-
-        // Select #tipCount solid tips via MCMC
-        HashMap<Sha256Hash, HashSet<UUID>> approverCountInits = new HashMap<Sha256Hash, HashSet<UUID>>(blocks.size());
-
-        // Initialize all approvers as UUID
-        for (Sha256Hash b : blocks) {
-            UUID randomUUID = UUID.randomUUID();
-            if (approverCountInits.containsKey(b)) {
-                HashSet<UUID> result = approverCountInits.get(b);
-                result.add(randomUUID);
-            } else {
-                HashSet<UUID> result = new HashSet<>();
-                result.add(randomUUID);
-                approverCountInits.put(b, result);
-            }
-        }
-
-        // Begin from the highest solid height tips and go backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
-        HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
-        for (BlockWrap tip : blockQueue) {
-            approvers.put(tip.getBlock().getHash(), new HashSet<>());
-        }
-
-        BlockWrap currentBlock = null;
-        while ((currentBlock = blockQueue.poll()) != null) {
-            // Add your own hash if block is selected block
-            if (approverCountInits.containsKey(currentBlock.getBlockHash()))
-                approvers.get(currentBlock.getBlockHash()).addAll(approverCountInits.get(currentBlock.getBlockHash()));
-
-            // Stop if sufficient approval rate and confirmed
-            if (approvers.get(currentBlock.getBlockHash()).size() >= requiredApprovals
-                    && currentBlock.getBlockEvaluation().isConfirmed())
-                break;
-
-            // Add all current references to both approved blocks
-            Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            propagateToPredecessors(blockQueue, approvers, currentBlock, prevTrunk);
-
-            Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            propagateToPredecessors(blockQueue, approvers, currentBlock, prevBranch);
-
-            // Housekeeping
-            approvers.remove(currentBlock.getBlockHash());
-        }
-
-        if (currentBlock != null)
-            return Math.max(1, currentBlock.getBlockEvaluation().getHeight());
-        else
-            return 1;
-    }
-
-    private void propagateToPredecessors(PriorityQueue<BlockWrap> blockQueue,
-            HashMap<Sha256Hash, HashSet<UUID>> approvers, BlockWrap currentBlock, Sha256Hash prevTrunk)
-            throws BlockStoreException {
-        if (!approvers.containsKey(prevTrunk)) {
-            BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
-            if (prevBlock != null) {
-                blockQueue.add(prevBlock);
-                approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));
-            }
-        } else {
-            approvers.get(prevTrunk).addAll(approvers.get(currentBlock.getBlockHash()));
-        }
-    }
-
-    /**
      * Triggers a deep reorg calculation from the specified height which may be
      * very expensive.
      * 
@@ -210,6 +115,11 @@ public class MilestoneService {
 
             watch.stop();
             watch = Stopwatch.createStarted();
+            updateMilestoneDepth();
+            log.trace("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+            watch.stop();
+            watch = Stopwatch.createStarted();
             updateWeightAndDepth();
             log.trace("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
@@ -221,12 +131,7 @@ public class MilestoneService {
             watch.stop();
             watch = Stopwatch.createStarted();
             updateConfirmed(numberUpdates);
-            log.trace("Milestone update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
-            updateMilestoneDepth();
-            log.trace("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            log.trace("Confirmation update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
             watch = Stopwatch.createStarted();
@@ -424,7 +329,7 @@ public class MilestoneService {
             subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
 
             // Update your rating if solid
-            if (currentBlock.getBlockEvaluation().getSolid() == 1) 
+            if (currentBlock.getBlockEvaluation().getSolid() == 2) 
                 store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
                         approvers.get(currentBlock.getBlockHash()).size());
             approvers.remove(currentBlock.getBlockHash());

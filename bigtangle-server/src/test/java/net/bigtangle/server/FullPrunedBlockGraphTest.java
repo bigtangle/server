@@ -89,7 +89,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Should exist now
-        assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
+        assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
     }
 

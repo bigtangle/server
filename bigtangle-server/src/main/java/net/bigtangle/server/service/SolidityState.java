@@ -6,7 +6,7 @@ import net.bigtangle.core.TransactionOutPoint;
 public class SolidityState {
 
     public enum State {
-        Success, Invalid, MissingPredecessor, 
+        Success, Invalid, MissingPredecessor, MissingCalculation
     }
 
     private static final SolidityState successState = new SolidityState(State.Success, null);
@@ -43,6 +43,10 @@ public class SolidityState {
 
     public static SolidityState getFailState() {
         return failState;
+    }
+
+    public static SolidityState fromMissingCalculation(Sha256Hash prevBlockHash) {
+        return new SolidityState(State.MissingCalculation, prevBlockHash);
     }
 
     public static SolidityState from(Sha256Hash prevBlockHash) {
