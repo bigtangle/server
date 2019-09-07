@@ -123,6 +123,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_BLOCKS_HEIGHT_SQL = "SELECT block, height FROM blocks WHERE height >= ?"
             + afterSelect() + " order by height asc ";
+    protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
+            + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + "   block, solid, calculated, confirmed FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?) AND solid >= 0 " + afterSelect();
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
             + "   block, solid, calculated, confirmed FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?) AND solid = 1 " + afterSelect();
@@ -1199,6 +1202,46 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement(SELECT_APPROVER_BLOCKS_SQL);
+            s.setBytes(1, hash.getBytes());
+            s.setBytes(2, hash.getBytes());
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) {
+                BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                        resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
+                        resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(9),
+                        resultSet.getBoolean(10), resultSet.getLong(12), resultSet.getBoolean(13), resultSet.getBoolean(14));
+
+                Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes(11));
+                block.verifyHeader();
+                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
+            }
+            return storedBlocks;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } catch (ProtocolException e) {
+            // Corrupted database.
+            throw new BlockStoreException(e);
+        } catch (VerificationException e) {
+            // Should not be able to happen unless the database contains bad
+            // blocks.
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
+        List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();

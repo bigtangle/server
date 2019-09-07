@@ -501,6 +501,8 @@ public class MilestoneService {
                     continue;
                 if (b.getBlockEvaluation().getSolid() < 0)
                     continue;
+                if (b.getBlock().getHeight() <= currentBlock.getBlock().getHeight())
+                    continue;
 
                 blocks.add(b);
                 blocksToTraverse.add(b);

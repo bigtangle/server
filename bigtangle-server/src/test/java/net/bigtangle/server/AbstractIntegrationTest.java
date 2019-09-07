@@ -230,7 +230,6 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        milestoneService.update();
         blockGraph.confirm(block.getHash(), new HashSet<>());
 
         return block;

@@ -21,7 +21,6 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.OrderPublish;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
@@ -135,6 +134,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public long getMaxImportTime() throws BlockStoreException;
 
     /* Blocks */
+    public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
+    
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
     public List<BlockWrap> getApproverBlocks(Sha256Hash hash) throws BlockStoreException;

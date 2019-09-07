@@ -265,13 +265,13 @@ public class TipsService {
 
     private BlockWrap getRatingTip(BlockWrap currentBlock, long maxTime) throws BlockStoreException {
         // Repeatedly perform transitions until the final tip is found
-        List<BlockWrap> approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
+        List<BlockWrap> approvers = store.getNotInvalidApproverBlocks(currentBlock.getBlock().getHash());
         approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
         BlockWrap nextBlock = performTransition(currentBlock, approvers);
 
         while (currentBlock != nextBlock) {
             currentBlock = nextBlock;
-            approvers = store.getSolidApproverBlocks(currentBlock.getBlock().getHash());
+            approvers = store.getNotInvalidApproverBlocks(currentBlock.getBlock().getHash());
             approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
             nextBlock = performTransition(currentBlock, approvers);
         }
