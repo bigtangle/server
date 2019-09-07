@@ -222,7 +222,7 @@ public abstract class NetworkParameters {
     // a third always comes directly from the consensus blocks:
     public static final long CONSENSUS_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3; 
     // the other two thirds are for each inclusion into consensus and each block itself:
-    public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD * 2 / 3 / TARGET_MAX_TPS / TARGET_SPACING; 
+    public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING; 
 
     protected NetworkParameters() {
     }
