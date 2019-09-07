@@ -90,14 +90,16 @@ public class RewardService {
         // Find eligible rewards building on top of the newest reward
         Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
         List<Sha256Hash> candidateHashes = store.getRewardBlocksWithPrevHash(prevRewardHash);
-        candidateHashes.removeIf(c -> {
-            try {
-                return store.getRewardEligible(c) != Eligibility.ELIGIBLE;
-            } catch (BlockStoreException e) {
-                // Cannot happen
-                throw new RuntimeException();
-            }
-        });
+
+        // TODO this isn't required soon anymore
+//        candidateHashes.removeIf(c -> {
+//            try {
+//                return store.getRewardEligible(c) != Eligibility.ELIGIBLE;
+//            } catch (BlockStoreException e) {
+//                // Cannot happen
+//                throw new RuntimeException();
+//            }
+//        });
         
         // Sort by rating
         List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
@@ -157,13 +159,14 @@ public class RewardService {
             boolean override) throws BlockStoreException, NoBlockException {
         RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
 
-        if (result.getEligibility() != Eligibility.ELIGIBLE) {
-            if (!override) {
-                logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
-                return null;
-            }
-            logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
-        }
+        // TODO no need
+//        if (result.getEligibility() != Eligibility.ELIGIBLE) {
+//            if (!override) {
+//                logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
+//                return null;
+//            }
+//            logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
+//        }
 
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);

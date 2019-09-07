@@ -36,7 +36,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.MatchResult;
-import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -236,24 +235,17 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
 
-    public Eligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException;
-
-    public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException;
-
     public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException;
 
     public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
 
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash,
-            long nextTxReward) throws BlockStoreException;
+    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash) throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
 
     public void updateRewardSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
-
-    public void updateRewardNextTxReward(Sha256Hash hash, long nextTxReward) throws BlockStoreException;
 
     public Sha256Hash getRewardSpender(Sha256Hash hash) throws BlockStoreException;
 
@@ -264,8 +256,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Sha256Hash> getOrderMatchingBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
 
-    public Eligibility getOrderMatchingEligible(Sha256Hash hash) throws BlockStoreException;
-
     public long getOrderMatchingToHeight(Sha256Hash blockHash) throws BlockStoreException;
 
     public long getOrderMatchingFromHeight(Sha256Hash blockHash) throws BlockStoreException;
@@ -274,7 +264,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash)
+    public void insertOrderMatching(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash)
             throws BlockStoreException;
 
     public void updateOrderMatchingConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;

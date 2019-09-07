@@ -74,12 +74,10 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
-import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
-import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.server.utils.OrderBook;
 
 /**
@@ -1198,15 +1196,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void connectOrderMatching(Block block) throws BlockStoreException {
-        // Check if eligible:
-        Eligibility eligiblity = validatorService.checkOrderMatchingEligibility(block);
-
         try {
             OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevHash = info.getPrevHash();
             long toHeight = info.getToHeight();
 
-            blockStore.insertOrderMatching(block.getHash(), toHeight, eligiblity, prevHash);
+            blockStore.insertOrderMatching(block.getHash(), toHeight, prevHash);
         } catch (IOException e) {
             // Cannot happen when connecting
             e.printStackTrace();
@@ -1215,16 +1210,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void connectReward(Block block) throws BlockStoreException {
-        // Check if eligible when connecting (prototype):
-        RewardBuilderResult reward = validatorService.checkRewardEligibility(block);
-
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
             long toHeight = rewardInfo.getToHeight();
 
-            blockStore.insertReward(block.getHash(), toHeight, reward.getEligibility(), prevRewardHash,
-                    reward.getPerTxReward());
+            blockStore.insertReward(block.getHash(), toHeight, prevRewardHash);
         } catch (IOException e) {
             // Cannot happen when connecting
             e.printStackTrace();
@@ -1698,13 +1689,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Read previous reward block's data
         BlockWrap prevRewardBlock = blockStore.getBlockWrap(prevRewardHash);
-        long prevToHeight = 0, perTxReward = 0;
+        long prevToHeight = 0;
         try {
             RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-
             prevToHeight = rewardInfo.getToHeight();
-            perTxReward = blockStore.getRewardNextTxReward(prevRewardHash);
-
         } catch (IOException e) {
             // Cannot happen since checked before
             e.printStackTrace();
@@ -1720,6 +1708,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Map<BlockWrap, Set<Sha256Hash>> snapshotWeights = new HashMap<>();
         Map<Address, Long> finalRewardCount = new HashMap<>();
         BlockWrap currentBlock = null, approvedBlock = null;
+        Address consensusBlockMiner = new Address(networkParameters, block.getMinerAddress());
         long currentHeight = Long.MAX_VALUE;
         long totalRewardCount = 0;
 
@@ -1792,9 +1781,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Build transaction outputs sorted by addresses
         Transaction tx = new Transaction(networkParameters);
+        
+        // Reward the consensus block with the static reward
+        tx.addOutput(Coin.SATOSHI.times(NetworkParameters.CONSENSUS_BLOCK_REWARD), consensusBlockMiner);
+
+        // Reward twice: once the consensus block, once the normal block maker of good quantiles
         for (Entry<Address, Long> entry : finalRewardCount.entrySet().stream()
-                .sorted(Comparator.comparing((Entry<Address, Long> e) -> e.getKey())).collect(Collectors.toList()))
-            tx.addOutput(Coin.SATOSHI.times(entry.getValue() * perTxReward), entry.getKey());
+                .sorted(Comparator.comparing((Entry<Address, Long> e) -> e.getKey())).collect(Collectors.toList())) {
+            tx.addOutput(Coin.SATOSHI.times(entry.getValue() * NetworkParameters.PER_BLOCK_REWARD), consensusBlockMiner);
+            tx.addOutput(Coin.SATOSHI.times(entry.getValue() * NetworkParameters.PER_BLOCK_REWARD), entry.getKey());
+        }
 
         // The input does not really need to be a valid signature, as long
         // as it has the right general form and is slightly different for

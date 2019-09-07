@@ -56,7 +56,7 @@ import net.bigtangle.utils.MonetaryFormat;
  */
 public abstract class NetworkParameters {
 
-    // TODO Mainnet release
+    // TODO Mainnet parameters: higher difficulty
 
     /**
      * The string returned by getId() for the main, production network where
@@ -215,7 +215,6 @@ public abstract class NetworkParameters {
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
     
     public static final int TARGET_MAX_TPS = 100;
-    public static final long REWARD_OVERRULE_TIME_MS = 1000;
 
     // per interval of length target_spacing, the reward is:
     public static final long TARGET_INTERVAL_REWARD = TARGET_YEARLY_MINING_PAYOUT * TARGET_SPACING / 31536000;  

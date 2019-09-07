@@ -146,19 +146,14 @@ public class ValidatorService {
     }
 
     public static class RewardBuilderResult {
-        Eligibility eligibility;
         Transaction tx;
-        long difficulty, perTxReward;
+        long difficulty;
+        // TODO
+        long blockDifficulty;
 
-        public RewardBuilderResult(Eligibility eligibility, Transaction tx, long difficulty, long perTxReward) {
-            this.eligibility = eligibility;
+        public RewardBuilderResult(Transaction tx, long difficulty) {
             this.tx = tx;
             this.difficulty = difficulty;
-            this.perTxReward = perTxReward;
-        }
-
-        public Eligibility getEligibility() {
-            return eligibility;
         }
 
         public Transaction getTx() {
@@ -167,10 +162,6 @@ public class ValidatorService {
 
         public long getDifficulty() {
             return difficulty;
-        }
-
-        public long getPerTxReward() {
-            return perTxReward;
         }
     }
 
@@ -274,85 +265,7 @@ public class ValidatorService {
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash);
         tx.setData(rewardInfo.toByteArray());
 
-        // New rewards
-        long perTxReward = calculateNextTxReward(prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                store.getRewardNextTxReward(prevRewardHash), totalRewardCount, difficulty, prevDifficulty);
-
-        // Invalid if not fulfilling consensus rules
-        if (Math.subtractExact(toHeight, fromHeight) < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL - 1)
-            return new RewardBuilderResult(Eligibility.INVALID, tx, difficulty, perTxReward);
-
-        // Ensure enough blocks are approved to be eligible
-        return new RewardBuilderResult(Eligibility.ELIGIBLE, tx, difficulty, perTxReward);
-    }
-
-    /**
-     * NOTE: The block is assumed to having successfully gone through checkSolidity
-     * beforehand! For connecting purposes, checks if the given matching block is
-     * eligible NOW. In Spark, this would be calculated delayed and more or less
-     * free.
-     * 
-     * @param block
-     * @return eligibility
-     * @throws BlockStoreException
-     */
-    public Eligibility checkOrderMatchingEligibility(Block block) throws BlockStoreException {
-        long toHeight = 0;
-        long fromHeight = 0;
-        try {
-            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
-            toHeight = info.getToHeight();
-            fromHeight = info.getFromHeight();
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
-        // Count how many blocks from miners in the reward interval are approved
-        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = store.getBlockWrap(block.getPrevBlockHash());
-        BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
-        // Initialize
-        BlockWrap currentBlock = null, approvedBlock = null;
-        long currentHeight = Long.MAX_VALUE;
-        long totalBlockCount = 0;
-
-        // Go backwards by height
-        while ((currentBlock = blockQueue.poll()) != null) {
-            currentHeight = currentBlock.getBlockEvaluation().getHeight();
-
-            // Stop criterion: Block height lower than approved interval height
-            if (currentHeight < fromHeight)
-                break;
-
-            // If in relevant reward height interval, count it
-            if (currentHeight <= toHeight) {
-                totalBlockCount++;
-            }
-
-            // Continue with both approved blocks
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-        }
-
-        // Ensure enough blocks are approved to be eligible
-        return Eligibility.ELIGIBLE;
+        return new RewardBuilderResult(tx, difficulty);
     }
 
     private long calculateNextDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
@@ -379,54 +292,6 @@ public class ValidatorService {
         }
 
         return Utils.encodeCompactBits(newTarget);
-    }
-
-    private long calculateNextTxDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
-            BlockWrap prevRewardBlock, long totalRewardCount) {
-        
-        // The following is used as current time by consensus rules
-        long currentTime = prevTrunkBlock.getBlock().getTimeSeconds();
-        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-
-        // Limit the adjustment step.
-        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
-
-        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
-
-        if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
-            logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = NetworkParameters.MAX_TARGET;
-        }
-
-        return Utils.encodeCompactBits(newTarget);
-    }
-
-    private long calculateNextTxReward(BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock, BlockWrap prevRewardBlock,
-            long currPerTxReward, long totalRewardCount, long difficulty, long prevDifficulty) {
-        // The previous time max is equal to the block time by consensus rules
-        long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds());
-        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-        long nextPerTxRewardUnnormalized = NetworkParameters.TARGET_YEARLY_MINING_PAYOUT * timespan / 31536000L
-                / totalRewardCount;
-
-        // Include result from difficulty adjustment to stay on target better
-        BigInteger target = Utils.decodeCompactBits(difficulty);
-        BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
-        BigInteger nextPerTxRewardBigInteger = prevTarget.divide(target)
-                .multiply(BigInteger.valueOf(nextPerTxRewardUnnormalized));
-        long nextPerTxReward = nextPerTxRewardBigInteger.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
-
-        nextPerTxReward = Math.max(nextPerTxReward, currPerTxReward / 4);
-        nextPerTxReward = Math.min(nextPerTxReward, currPerTxReward * 4);
-        nextPerTxReward = Math.max(nextPerTxReward, 1);
-        return nextPerTxReward;
     }
 
     /**
@@ -653,65 +518,10 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        Set<BlockWrap> result = blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
-                .filter(b -> {
-                    try {
-                        switch (store.getRewardEligible(b.getBlock().getHash())) {
-                        case ELIGIBLE:
-                            // OK
-                            return false;
-                        case INELIGIBLE:
-                            // Overruled?
-                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.CONFIRMATION_UPPER_THRESHOLD
-                                    && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()
-                                            - NetworkParameters.REWARD_OVERRULE_TIME_MS));
-                        case INVALID:
-                            // Cannot happen in non-Spark implementation.
-                            return true;
-                        case UNKNOWN:
-                            // Cannot happen in non-Spark implementation.
-                            return true;
-                        default:
-                            throw new RuntimeException("No Implementation");
-
-                        }
-                    } catch (BlockStoreException e) {
-                        // Cannot happen.
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                }).collect(Collectors.toSet());
-
-        result.addAll(blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_MATCHING)
-                .filter(b -> {
-                    try {
-                        switch (store.getOrderMatchingEligible(b.getBlock().getHash())) {
-                        case ELIGIBLE:
-                            // OK
-                            return false;
-                        case INELIGIBLE:
-                            // Overruled?
-                            return (!(b.getBlockEvaluation().getRating() > NetworkParameters.CONFIRMATION_UPPER_THRESHOLD
-                                    && b.getBlockEvaluation().getInsertTime() < System.currentTimeMillis()
-                                            - NetworkParameters.REWARD_OVERRULE_TIME_MS));
-                        case INVALID:
-                            // Cannot happen in non-Spark implementation.
-                            return true;
-                        case UNKNOWN:
-                            // Cannot happen in non-Spark implementation.
-                            return true;
-                        default:
-                            throw new RuntimeException("No Implementation");
-
-                        }
-                    } catch (BlockStoreException e) {
-                        // Cannot happen.
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                }).collect(Collectors.toSet()));
-
-        return result;
+        // TODO
+        return new HashSet<>();
+//        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_MATCHING 
+//                || b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD).collect(Collectors.toSet());
     }
 
     /**

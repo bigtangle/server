@@ -6,7 +6,6 @@ package net.bigtangle.server.service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -26,7 +25,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
-import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -96,14 +94,16 @@ public class OrdermatchService {
         // matching
         Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
         List<Sha256Hash> candidateHashes = store.getOrderMatchingBlocksWithPrevHash(prevHash);
-        candidateHashes.removeIf(c -> {
-            try {
-                return store.getOrderMatchingEligible(c) != Eligibility.ELIGIBLE;
-            } catch (BlockStoreException e) {
-                // Cannot happen
-                throw new RuntimeException();
-            }
-        });
+        
+        // TODO this isn't required soon anymore
+//        candidateHashes.removeIf(c -> {
+//            try {
+//                return store.getOrderMatchingEligible(c) != Eligibility.ELIGIBLE;
+//            } catch (BlockStoreException e) {
+//                // Cannot happen
+//                throw new RuntimeException();
+//            }
+//        });
 
         // Sort by rating
         List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);

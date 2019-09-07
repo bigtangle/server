@@ -63,7 +63,6 @@ import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.MatchResult;
-import net.bigtangle.server.service.Eligibility;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -395,8 +394,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /* REWARD BLOCKS */
     protected final String INSERT_TX_REWARD_SQL = getInsert()
-            + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash, nexttxreward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    protected final String SELECT_TX_REWARD_NEXT_TX_REWARD_SQL = "SELECT nexttxreward FROM txreward WHERE blockhash = ?";
+            + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash FROM txreward WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM txreward WHERE confirmed=1)";
     protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
@@ -410,17 +408,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "FROM txreward WHERE prevblockhash = ?";
     protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
-    protected final String UPDATE_TX_REWARD_NEXT_TX_REWARD_SQL = "UPDATE txreward SET nexttxreward = ? WHERE blockhash = ?";
 
     /* ORDER MATCHING BLOCKS */
     protected final String INSERT_ORDER_MATCHING_SQL = getInsert()
-            + "  INTO ordermatching (blockhash, toheight, confirmed, spent, spenderblockhash, eligibility, prevblockhash) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            + "  INTO ordermatching (blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String SELECT_ORDER_MATCHING_TOHEIGHT_SQL = "SELECT toheight FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_FROMHEIGHT_SQL = "SELECT fromheight FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_MAX_CONFIRMED_SQL = "SELECT blockhash FROM ordermatching WHERE confirmed = 1 AND toheight=(SELECT MAX(toheight) FROM ordermatching WHERE confirmed=1)";
     protected final String SELECT_ORDER_MATCHING_CONFIRMED_SQL = "SELECT confirmed "
-            + "FROM ordermatching WHERE blockhash = ?";
-    protected final String SELECT_ORDER_MATCHING_ELIGIBLE_SQL = "SELECT eligibility "
             + "FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_SPENT_SQL = "SELECT spent " + "FROM ordermatching WHERE blockhash = ?";
     protected final String SELECT_ORDER_MATCHING_SPENDER_SQL = "SELECT spenderblockhash "
@@ -431,7 +426,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "FROM ordermatching WHERE prevblockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_CONFIRMED_SQL = "UPDATE ordermatching SET confirmed = ? WHERE blockhash = ?";
     protected final String UPDATE_ORDER_MATCHING_SPENT_SQL = "UPDATE ordermatching SET spent = ?, spenderblockhash = ? WHERE blockhash = ?";
-    protected final String UPDATE_ORDER_MATCHING_NEXT_TX_REWARD_SQL = "UPDATE ordermatching SET nexttxreward = ? WHERE blockhash = ?";
 
     /* MATCHING EVENTS */
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
@@ -956,9 +950,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertReward(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE, Sha256Hash.ZERO_HASH,
-                    NetworkParameters.REWARD_INITIAL_TX_REWARD);
-            insertOrderMatching(params.getGenesisBlock().getHash(), 0, Eligibility.ELIGIBLE, Sha256Hash.ZERO_HASH);
+            insertReward(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH);
+            insertOrderMatching(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
             updateOrderMatchingConfirmed(params.getGenesisBlock().getHash(), true);
 
@@ -4110,29 +4103,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Eligibility getRewardEligible(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_ELIGIBLE_SQL);
-            preparedStatement.setBytes(1, hash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return Eligibility.values()[resultSet.getInt(1)];
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -4250,8 +4220,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash,
-            long nextTxReward) throws BlockStoreException {
+    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -4261,31 +4230,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBoolean(3, false);
             preparedStatement.setBoolean(4, false);
             preparedStatement.setBytes(5, null);
-            preparedStatement.setInt(6, eligibility.ordinal());
-            preparedStatement.setBytes(7, prevBlockHash.getBytes());
-            preparedStatement.setLong(8, nextTxReward);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateRewardNextTxReward(Sha256Hash hash, long nextTxReward) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_TX_REWARD_NEXT_TX_REWARD_SQL);
-            preparedStatement.setLong(1, nextTxReward);
-            preparedStatement.setBytes(2, hash.getBytes());
+            preparedStatement.setBytes(6, prevBlockHash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -4341,29 +4286,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public long getRewardNextTxReward(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_NEXT_TX_REWARD_SQL);
-            preparedStatement.setBytes(1, blockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getLong(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }
@@ -6181,29 +6103,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Eligibility getOrderMatchingEligible(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_MATCHING_ELIGIBLE_SQL);
-            preparedStatement.setBytes(1, hash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return Eligibility.values()[resultSet.getInt(1)];
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -6344,7 +6243,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertOrderMatching(Sha256Hash hash, long toHeight, Eligibility eligibility, Sha256Hash prevBlockHash)
+    public void insertOrderMatching(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -6355,8 +6254,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBoolean(3, false);
             preparedStatement.setBoolean(4, false);
             preparedStatement.setBytes(5, null);
-            preparedStatement.setInt(6, eligibility.ordinal());
-            preparedStatement.setBytes(7, prevBlockHash.getBytes());
+            preparedStatement.setBytes(6, prevBlockHash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

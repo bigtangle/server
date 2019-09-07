@@ -86,7 +86,6 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
 
         // Wait until the lock time ends. It should enter the milestone
-        Thread.sleep(NetworkParameters.REWARD_OVERRULE_TIME_MS);
         milestoneService.update();
         assertTrue(store.getBlockEvaluation(b1.getHash()).isConfirmed());
 
