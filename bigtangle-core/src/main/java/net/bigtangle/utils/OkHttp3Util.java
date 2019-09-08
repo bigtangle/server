@@ -4,11 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -25,11 +28,15 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.BufferedSink;
+import okio.GzipSink;
+import okio.Okio;
 
 public class OkHttp3Util {
 
@@ -87,7 +94,7 @@ public class OkHttp3Util {
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
         try {
-            String resp = response.body().string();
+            String resp = decompress( response.body().bytes());
             // logger.debug(resp);
             checkResponse(resp, url);
             return resp;
@@ -108,9 +115,10 @@ public class OkHttp3Util {
         Response response = client.newCall(request).execute();
         try {
             // return response.body().bytes();
-            String resp = response.body().string();
-            if("".equals(resp))     return null;
-            checkResponse(resp,url);
+            String resp =decompress( response.body().bytes());
+            if ("".equals(resp))
+                return null;
+            checkResponse(resp, url);
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
             if (dataHex != null) {
@@ -131,8 +139,8 @@ public class OkHttp3Util {
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
         try {
-            String resp = response.body().string();
-            checkResponse(resp,url);
+            String resp = decompress( response.body().bytes());
+            checkResponse(resp, url);
             return resp;
         } finally {
             response.close();
@@ -142,10 +150,11 @@ public class OkHttp3Util {
 
     public static void checkResponse(String resp, String url)
             throws JsonParseException, JsonMappingException, IOException {
-    
-        if("".equals( resp)) return;
+
+        if ("".equals(resp))
+            return;
         @SuppressWarnings("unchecked")
-        HashMap<String, Object> result2 =  Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         if (result2.get("errorcode") != null) {
             int error = (Integer) result2.get("errorcode");
             if (error > 0) {
@@ -207,12 +216,67 @@ public class OkHttp3Util {
                         }
                     }).connectTimeout(timeoutMinute, TimeUnit.MINUTES).writeTimeout(timeoutMinute, TimeUnit.MINUTES)
                     .addInterceptor(new BasicAuthInterceptor(pubkey, signHex, contentHex))
-                    .readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
+                    .addInterceptor(new GzipRequestInterceptor()).readTimeout(timeoutMinute, TimeUnit.MINUTES).build();
 
             return client;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * This interceptor compresses the HTTP request body. Many webservers can't
+     * handle this!
+     */
+    static class GzipRequestInterceptor implements Interceptor {
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            Request originalRequest = chain.request();
+            if (originalRequest.body() == null || originalRequest.header("Content-Encoding") != null) {
+                return chain.proceed(originalRequest);
+            }
+
+            Request compressedRequest = originalRequest.newBuilder().header("Content-Encoding", "gzip")
+                    .method(originalRequest.method(), gzip(originalRequest.body())).build();
+            return chain.proceed(compressedRequest);
+        }
+
+        private RequestBody gzip(final RequestBody body) {
+            return new RequestBody() {
+                @Override
+                public MediaType contentType() {
+                    return body.contentType();
+                }
+
+                @Override
+                public long contentLength() {
+                    return -1; // We don't know the compressed length in
+                               // advance!
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                    BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
+                    body.writeTo(gzipSink);
+                    gzipSink.close();
+                }
+            };
+        }
+    }
+
+    public static String decompress(byte[] contentBytes) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(contentBytes));
+        byte[] buffer = new byte[1024];
+        int length;
+
+        // Read from the compressed source file and write the
+        // decompress file.
+        while ((length = gzis.read(buffer)) > 0) {
+            out.write(buffer, 0, length);
+        }
+        return out.toString();
     }
 
 }
