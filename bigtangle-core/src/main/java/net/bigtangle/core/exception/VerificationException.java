@@ -70,7 +70,6 @@ public class VerificationException extends RuntimeException {
         }
     }
 
-    // TODO use this
     public static class BlockVersionOutOfDate extends VerificationException {
         public BlockVersionOutOfDate(final long version) {
             super("Block version #"

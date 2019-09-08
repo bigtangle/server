@@ -836,7 +836,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isConfirmed());
 
-        // TODO Check milestone depths (handmade tests)
+        // Check milestone depths (handmade tests)
         assertEquals(16,
                 blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getMilestoneDepth());
         assertEquals(15, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());

@@ -48,40 +48,6 @@ public class MilestoneService {
     private ValidatorService validatorService;
 
     /**
-     * Triggers a deep reorg calculation from the specified height which may be
-     * very expensive.
-     * 
-     * @param height
-     * @throws BlockStoreException
-     */
-    public void triggerDeepReorg(long height) throws BlockStoreException {
-        synchronized (this) {
-            if (height <= 0)
-                throw new IllegalArgumentException();
-
-            // Unconfirm all blocks above specified height
-            // TODO not allowed if pruned data after this height.
-            unconfirmFromHeight(height);
-
-            // Reset maintenance
-            store.updateAllBlocksMaintained();
-
-            // Recompute milestone depths
-            updateMilestoneDepth();
-
-            // Now just do a normal update
-            update(Integer.MAX_VALUE);
-        }
-    }
-
-    private void unconfirmFromHeight(long height) throws BlockStoreException {
-        List<Sha256Hash> blocksToRemove = store.getConfirmedBlocksOfHeightHigherThan(height);
-        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (Sha256Hash block : blocksToRemove)
-            blockGraph.unconfirm(block, traversedUnconfirms);
-    }
-
-    /**
      * Scheduled update function that updates the Tangle
      * 
      * @throws BlockStoreException
@@ -310,8 +276,8 @@ public class MilestoneService {
 
         BlockWrap currentBlock = null;
         while ((currentBlock = blockQueue.poll()) != null) {
-            // Abort if unmaintained and confirmed only (for now) TODO
-            if (!currentBlock.getBlockEvaluation().isMaintained() && currentBlock.getBlockEvaluation().isConfirmed())
+            // Abort if unmaintained
+            if (!currentBlock.getBlockEvaluation().isMaintained())
                 continue;
 
             // Add your own hashes as reference if current block is one of the

@@ -41,66 +41,6 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TipsServiceTest extends AbstractIntegrationTest {
 
-    // TODO @Test
-    public void testIneligibleRewards() throws Exception {
-        store.resetStore();
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        Block rollingBlock1 = rollingBlock;
-        blockGraph.add(rollingBlock, false);
-
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, false);
-        }
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, false);
-        }
-        blockGraph.confirm(rollingBlock.getHash(), new HashSet<>());
-        blockGraph.confirm(rollingBlock1.getHash(), new HashSet<>());
-
-        // Generate ineligible mining reward blocks
-        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash(), true);
-        rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash(), true);
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
-
-            // Do not hit the ineligible mining reward blocks
-            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) || tips.getLeft().equals(rollingBlock1.getHash()))
-                    && (tips.getRight().equals(rollingBlock.getHash())
-                            || tips.getRight().equals(rollingBlock1.getHash())));
-        }
-
-        // After overruling one of them, that one should be eligible
-        rollingBlock = b1;
-        for (int i = 0; i < 150; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, false);
-        }
-
-        // Wait until the lock time ends. It should enter the milestone
-        milestoneService.update();
-        assertTrue(store.getBlockEvaluation(b1.getHash()).isConfirmed());
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
-
-            // Do not hit the ineligible mining reward block b2 but do go
-            // through b1
-            assertTrue((tips.getLeft().equals(rollingBlock.getHash()) && tips.getRight().equals(rollingBlock.getHash()))
-                    || (tips.getLeft().equals(rollingBlock1.getHash())
-                            && tips.getRight().equals(rollingBlock1.getHash())));
-        }
-
-    }
-
     @Test
     public void testPrototypeTransactional() throws Exception {
         store.resetStore();
