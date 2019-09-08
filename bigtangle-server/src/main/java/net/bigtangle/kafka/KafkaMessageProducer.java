@@ -5,7 +5,6 @@
 package net.bigtangle.kafka;
 
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -17,6 +16,8 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.bigtangle.server.DispatcherController;
 
 public class KafkaMessageProducer {
 
@@ -50,7 +51,7 @@ public class KafkaMessageProducer {
         final String key = serveraddress;//UUID.randomUUID().toString();
         KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig());
         ProducerRecord<String, byte[]> producerRecord = null;
-        producerRecord = new ProducerRecord<String, byte[]>(topic, key, data);
+        producerRecord = new ProducerRecord<String, byte[]>(topic, key,DispatcherController.compress(data));
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
          log.trace(" sendMessage " + key);

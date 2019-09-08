@@ -554,7 +554,8 @@ https://etherscan.io/address/0x5b614e4f17a1938da6248d116cc32f4f17c35f99
 
 
 61.181.128.230:8545
- docker run -d --name ethereum-dev -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*"
+docker rm -f ethereum
+docker run -d --name ethereum -p 8545:8545 -p 30303:30303 -v /data/vm/ethereum/root/.ethereum:/root/.ethereum  ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*"
  
  
  

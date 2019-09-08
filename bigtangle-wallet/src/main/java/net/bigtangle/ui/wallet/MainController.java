@@ -198,7 +198,6 @@ public class MainController {
         Main.instance.getUtxoData().clear();
         Main.instance.getCoinData().clear();
         String CONTEXT_ROOT = Main.getContextRoot();
-        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
 
         List<String> keyStrHex000 = new ArrayList<String>();
         if (addressString == null || "".equals(addressString.trim())) {
@@ -222,7 +221,7 @@ public class MainController {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             Coin c = utxo.getValue();
             Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(c.getTokenid()));
-            if (c.isZero() || t==null) {
+            if (c.isZero() || t == null) {
                 continue;
             }
             String balance = MonetaryFormat.FIAT.noCode().format(c.getValue(), t.getDecimals());
@@ -273,8 +272,8 @@ public class MainController {
         for (Coin coin : getBalancesResponse.getBalance()) {
             Token t = getBalancesResponse.getTokennames().get(Utils.HEX.encode(coin.getTokenid()));
 
-            if (!coin.isZero() && t!=null) {
-            
+            if (!coin.isZero() && t != null) {
+
                 if (Main.isTokenInWatched(Utils.HEX.encode(coin.getTokenid()))) {
                     Main.instance.getCoinData()
                             .add(new CoinModel(MonetaryFormat.FIAT.noCode().format(coin.getValue(), t.getDecimals()),
@@ -290,45 +289,51 @@ public class MainController {
     }
 
     public void initTableView() {
-        try {
-            
-                initTable(addressTextField.getText());
-         
-            utxoTable.setItems(Main.instance.getUtxoData());
-            coinTable.setItems(Main.instance.getCoinData());
+        walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
 
-            balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
-            tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
-            addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
-            memoColumn.setCellValueFactory(cellData -> cellData.getValue().memo());
-            spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
-            addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
-            minimumsignColumn.setCellValueFactory(cellData -> cellData.getValue().minimumsign());
+        if (walletAppKit.wallet().isEncrypted() && Main.getAesKey() ==null) {
+            searchPane.setVisible(false);
+            serverPane.setVisible(false);
+            buttonHBox.setVisible(false);
+            passwordHBox.setVisible(true);
+        } else {
+            try {
 
-            valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
-            tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
-            searchPane.setVisible(true);
-            serverPane.setVisible(true);
-            buttonHBox.setVisible(true);
-            passwordHBox.setVisible(false);
-            // walletAppKit.wallet().isEncrypted()
-            // if (!passwordHBox.isVisible()) {
-            // utxoTable.setLayoutY(utxoTable.getLayoutY() -
-            // passwordHBox.getHeight());
-            // coinTable.setLayoutY(coinTable.getLayoutY() -
-            // passwordHBox.getHeight());
-            // }
-        } catch (Exception e) {
-            if (e instanceof ECKey.KeyIsEncryptedException) {
-                searchPane.setVisible(false);
-                serverPane.setVisible(false);
-                buttonHBox.setVisible(false);
-                passwordHBox.setVisible(true);
+                try {
+                    initTable(addressTextField.getText());
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
 
-            } else {
+                utxoTable.setItems(Main.instance.getUtxoData());
+                coinTable.setItems(Main.instance.getCoinData());
+
+                balanceColumn.setCellValueFactory(cellData -> cellData.getValue().balance());
+                tokentypeColumnA.setCellValueFactory(cellData -> cellData.getValue().tokenid());
+                addressColumn.setCellValueFactory(cellData -> cellData.getValue().address());
+                memoColumn.setCellValueFactory(cellData -> cellData.getValue().memo());
+                spendPendingColumn.setCellValueFactory(cellData -> cellData.getValue().spendPending());
+                addressColumn.setCellFactory(TextFieldTableCell.<UTXOModel>forTableColumn());
+                minimumsignColumn.setCellValueFactory(cellData -> cellData.getValue().minimumsign());
+
+                valueColumn.setCellValueFactory(cellData -> cellData.getValue().value());
+                tokentypeColumn.setCellValueFactory(cellData -> cellData.getValue().tokenid());
+                searchPane.setVisible(true);
+                serverPane.setVisible(true);
+                buttonHBox.setVisible(true);
+                passwordHBox.setVisible(false);
+                // walletAppKit.wallet().isEncrypted()
+                // if (!passwordHBox.isVisible()) {
+                // utxoTable.setLayoutY(utxoTable.getLayoutY() -
+                // passwordHBox.getHeight());
+                // coinTable.setLayoutY(coinTable.getLayoutY() -
+                // passwordHBox.getHeight());
+                // }
+            } catch (Exception e) {
+
                 GuiUtils.crashAlert(e);
-            }
 
+            }
         }
 
     }
