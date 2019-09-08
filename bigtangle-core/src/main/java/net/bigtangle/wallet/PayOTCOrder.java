@@ -101,11 +101,11 @@ public class PayOTCOrder {
                 flag = 1;
             }
 
-            int size = exchangeMultis.size();
-            int signCount = 0;
+      //      int size = exchangeMultis.size();
+           int signCount = 0;
             int fromsign = this.exchange.getFromSign();
             int tosign = this.exchange.getToSign();
-            int othersign = 0;
+           int othersign = 0;
             for (ExchangeMulti exchangeMulti : exchangeMultis) {
                 if (myaddresses.contains(exchangeMulti.getPubkey())) {
                     flag = 2;

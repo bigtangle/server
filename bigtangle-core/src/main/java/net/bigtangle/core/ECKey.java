@@ -250,6 +250,7 @@ public class ECKey implements EncryptableItem {
         return !point.isCompressed() ? point : new LazyECPoint(decompressPoint(point.get()));
     }
 
+    @SuppressWarnings("deprecation")
     private static ECPoint getPointWithCompression(ECPoint point, boolean compressed) {
       if (point.isCompressed() == compressed)
           return point;

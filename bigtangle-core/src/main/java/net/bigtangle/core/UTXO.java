@@ -23,8 +23,6 @@ import java.beans.Transient;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;

@@ -20,6 +20,11 @@
 package net.bigtangle.core.exception;
 
 public class UTXOProviderException extends Exception {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public UTXOProviderException() {
         super();
     }

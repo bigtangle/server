@@ -46,6 +46,11 @@ public class NativeSecp256k1Util {
     }
 
     public static class AssertFailException extends Exception {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public AssertFailException(String message) {
             super(message);
         }

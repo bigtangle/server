@@ -39,6 +39,10 @@ import net.bigtangle.core.exception.AddressFormatException;
  * dumpprivkey command.</p>
  */
 public class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     protected final int version;
     protected byte[] bytes;
 
