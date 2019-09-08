@@ -153,26 +153,26 @@ public class BlockService {
      * collection if the blocks are not in the current milestone and not in the
      * collection. if a block is missing somewhere, returns false.
      * 
-     * @param evaluations
+     * @param blocks
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> evaluations, BlockWrap block) throws BlockStoreException {
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block) throws BlockStoreException {
         if (block == null)
             return false;
 
-        if (block.getBlockEvaluation().isConfirmed() || evaluations.contains(block))
+        if (block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
             return true;
 
         // Add this block and add all of its required unconfirmed blocks
-        evaluations.add(block);
+        blocks.add(block);
         
         List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
         for (Sha256Hash req : allRequiredBlockHashes) {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredUnconfirmedBlocksTo(evaluations, pred))
+            if (!addRequiredUnconfirmedBlocksTo(blocks, pred))
                 return false;
         }
         return true;

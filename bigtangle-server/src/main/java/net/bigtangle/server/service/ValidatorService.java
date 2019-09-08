@@ -380,7 +380,7 @@ public class ValidatorService {
         return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
     }
 
-    private boolean hasSpentDependencies(ConflictCandidate c) throws BlockStoreException {
+    public boolean hasSpentDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             return transactionService.getUTXOSpent(c.getConflictPoint().getConnectedOutpoint());
@@ -406,7 +406,7 @@ public class ValidatorService {
         }
     }
 
-    private boolean hasConfirmedDependencies(ConflictCandidate c) throws BlockStoreException {
+    public boolean hasConfirmedDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             return transactionService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint());
@@ -472,7 +472,7 @@ public class ValidatorService {
         // i.e. for reward blocks: invalid never, ineligible overrule, eligible
         // ok
         // If ineligible, overrule by sufficient age and milestone rating range
-        removeWhereCurrentlyIneligible(blocksToAdd);
+        removeWhereIneligible(blocksToAdd);
 
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
@@ -499,7 +499,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    private void removeWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
+    public void removeWhereIneligible(Set<BlockWrap> blocksToAdd) {
         findWhereCurrentlyIneligible(blocksToAdd).forEach(b -> {
             try {
                 blockService.removeBlockAndApproversFrom(blocksToAdd, b);
@@ -518,10 +518,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        // TODO
-        return new HashSet<>();
-//        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_MATCHING 
-//                || b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD).collect(Collectors.toSet());
+        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD).collect(Collectors.toSet());
     }
 
     /**
@@ -532,7 +529,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    private void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+    public void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
         // Milestone blocks are always ok
         new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isConfirmed())
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
@@ -723,7 +720,7 @@ public class ValidatorService {
     private void findFixableConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
             Set<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
 
-        findUndoableMilestoneConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        findUndoableConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
         findCandidateConflicts(blocksToAdd, conflictingOutPoints);
     }
 
@@ -749,34 +746,33 @@ public class ValidatorService {
     }
 
     /**
-     * Finds conflicts between current milestone and blocksToAdd
+     * Finds conflicts between current confirmed and blocksToAdd
      * 
      * @param blocksToAdd
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
-    private void findUndoableMilestoneConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
-            Set<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
+    private void findUndoableConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
+            Set<BlockWrap> conflictingConfirmedBlocks) throws BlockStoreException {
         // Find all conflict candidates in blocks to add
         List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream()).collect(Collectors.toList());
 
-        // Find only those that are spent in milestone
+        // Find only those that are spent in confirmed
         filterSpent(conflicts);
 
-        // Add the conflicting candidates and milestone blocks to given set
+        // Add the conflicting candidates and confirmed blocks to given set
         for (ConflictCandidate c : conflicts) {
             // Find the spending block we are competing with
-            BlockWrap milestoneBlock = getSpendingBlock(c);
+            BlockWrap confirmedBlock = getSpendingBlock(c);
 
-            // Only go through if the milestone block is maintained, i.e.
-            // undoable
-            if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained())
+            // Only go through if the milestone block is undoable, i.e. not milestone
+            if (confirmedBlock == null || confirmedBlock.getBlockEvaluation().getMilestone() != -1)
                 continue;
 
-            // Add milestone block
-            conflictingOutPoints.add(ConflictCandidate.fromConflictPoint(milestoneBlock, c.getConflictPoint()));
-            conflictingMilestoneBlocks.add(milestoneBlock);
+            // Add confirmed block
+            conflictingOutPoints.add(ConflictCandidate.fromConflictPoint(confirmedBlock, c.getConflictPoint()));
+            conflictingConfirmedBlocks.add(confirmedBlock);
 
             // Then add corresponding new block
             conflictingOutPoints.add(c);

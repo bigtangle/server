@@ -503,22 +503,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 && blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-
-        // Let block 1 win
-        for (int i = 0; i < 15; i++) {
-            createAndAddNextBlock(rewardBlock1, rewardBlock1);
-        }
-        milestoneService.update();
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-
-        // Reorg to block 2
-        for (int i = 0; i < 30; i++) {
-            createAndAddNextBlock(rewardBlock2, rewardBlock2);
-        }
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
     }
 
     @Test

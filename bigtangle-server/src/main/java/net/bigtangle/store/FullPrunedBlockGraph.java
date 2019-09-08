@@ -75,6 +75,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
 import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
+import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -107,6 +108,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
+    @Autowired
+    private BlockService blockService;
     @Autowired
     private OrderTickerService tickerService;
 
@@ -211,15 +214,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (maxChainLength < currChainLength) {
                 
                 // Find block to which to rollback (if at all) and all new chain blocks
-                List<Block> newMilestoneBlocks = new ArrayList<>();
-                newMilestoneBlocks.add(block);
-                Block splitPoint = null;
+                List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
+                newMilestoneBlocks.add(blockStore.getBlockWrap(block.getHash()));
+                BlockWrap splitPoint = null;
                 Sha256Hash prevHash = prevRewardHash;
                 for (int i = 0; i < currChainLength; i++) {
-                    splitPoint = blockStore.get(prevHash);
+                    splitPoint = blockStore.getBlockWrap(prevHash);
                     prevHash = blockStore.getRewardPrevBlockHash(prevHash);
                     
-                    if (blockStore.getRewardConfirmed(splitPoint.getHash()))
+                    if (blockStore.getRewardConfirmed(splitPoint.getBlockHash()))
                         break;
 
                     newMilestoneBlocks.add(splitPoint);
@@ -234,7 +237,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 // Rollback to split point
                 Sha256Hash maxConfirmedRewardBlockHash;
-                while (!(maxConfirmedRewardBlockHash = blockStore.getMaxConfirmedRewardBlockHash()).equals(splitPoint.getHash())) {
+                while (!(maxConfirmedRewardBlockHash = blockStore.getMaxConfirmedRewardBlockHash()).equals(splitPoint.getBlockHash())) {
                     
                     // Unset the milestone of this one (where milestone = maxConfRewardblock.chainLength)
                     long milestoneNumber = blockStore.getRewardChainLength(maxConfirmedRewardBlockHash);
@@ -248,10 +251,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
 
                 // Build milestone forwards. 
-                for (Block newMilestoneBlock : newMilestoneBlocks) {
+                for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
+                    
+                    boolean rerunConsensusLogic = newMilestoneBlocks.indexOf(newMilestoneBlock) == newMilestoneBlocks.size() - 1;
                     
                     // Sanity check: if my predecessors are still not fully solid or invalid, there must be something wrong.
-                    List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(newMilestoneBlock);
+                    List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
                     for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
                         if (blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != 2 
                                 && blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != -1) {
@@ -261,33 +266,88 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     }
 
                     // Sanity check: At this point, predecessors cannot be missing
-                    SolidityState solidityState = validatorService.checkSolidity(newMilestoneBlock, false);
+                    SolidityState solidityState = validatorService.checkSolidity(newMilestoneBlock.getBlock(), false);
                     if (!solidityState.isSuccessState() && !solidityState.isFailState()) {
                         log.error("The block is not failing or successful. This should not happen.");
                         throw new RuntimeException("The block is not failing or successful. This should not happen.");
                     }
                     
-                    // Check: If all is ok, confirm this milestone.
+                    // Check: If all is ok, try confirming this milestone.
                     if (solidityState.isSuccessState()) {
-                        // Just confirm all dependencies!
-                        // TODO we first need to check if all of these are conflict-free
-                        // TODO this should then be recursive until all is confirmed, since there could be recursive requirements
-                        // -> use milestoneservice logic repeatedly. checking for conflicts each time
-                        // if the toconfirm set does not change anymore, something went wrong.
-                        confirmMilestone(newMilestoneBlock.getHash(), new HashSet<>());
+                        
+                        // Find conflicts in the dependency set
+                        HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
+                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock);
+                        
+                        // If anything is already spent, no-go
+                        boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                                .flatMap(i -> i.stream()).anyMatch(c -> {
+                                    try {
+                                        return validatorService.hasSpentDependencies(c);
+                                    } catch (BlockStoreException e) {
+                                        e.printStackTrace();
+                                        return true;
+                                    }
+                                });
+                        
+                        // If any conflicts exist between the current set of blocks, no-go
+                        boolean anyCandidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                                .flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
+                                .anyMatch(l -> l.size() > 1);
+                        
+                        // Did we fail? Then we stop now and rerun consensus logic on the new longest chain.
+                        if (anySpentInputs || anyCandidateConflicts) {
+                            solidityState = SolidityState.getFailState();
+                            
+                            // Solidification forward with failState
+                            try {
+                                blockStore.beginDatabaseBatchWrite();
+                                solidifyBlock(block, solidityState, false);
+                                blockStore.commitDatabaseBatchWrite();
+                                try {
+                                    scanWaitingBlocks(block, false);
+                                } catch (BlockStoreException | VerificationException e) {
+                                    log.debug(e.getLocalizedMessage());
+                                }
+                            } catch (BlockStoreException e) {
+                                blockStore.abortDatabaseBatchWrite();
+                                throw e;
+                            }
+                            
+                            runConsensusLogic(blockStore.get(oldLongestChainEnd));
+                            return;
+                        }
+                        
+                        // Otherwise, all predecessors exist and were at least solid > 0, 
+                        // so we should be able to confirm all of the predecessors.
+                        while (!allApprovedNewBlocks.isEmpty()) {
+                            @SuppressWarnings("unchecked")
+                            HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
+                            validatorService.removeWhereIneligible(nowApprovedBlocks);
+                            validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
+                            // Only here the current milestone block is eligible, so readd it:
+                            nowApprovedBlocks.add(newMilestoneBlock);
+
+                            // Confirm the addable blocks and remove them from the list
+                            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+                            for (BlockWrap approvedBlock : nowApprovedBlocks)
+                                confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms);
+                            
+                            allApprovedNewBlocks.removeAll(nowApprovedBlocks);
+                        }
                         
                         // Set the milestone on all confirmed non-milestone blocks
-                        long milestoneNumber = blockStore.getRewardChainLength(newMilestoneBlock.getHash());
+                        long milestoneNumber = blockStore.getRewardChainLength(newMilestoneBlock.getBlockHash());
                         blockStore.updateAllConfirmedToMilestone(milestoneNumber);
                     }
                     
                     // Solidification forward
                     try {
                         blockStore.beginDatabaseBatchWrite();
-                        solidifyBlock(block, solidityState, false);
+                        solidifyBlock(block, solidityState, rerunConsensusLogic);
                         blockStore.commitDatabaseBatchWrite();
                         try {
-                            scanWaitingBlocks(block, false);
+                            scanWaitingBlocks(block, rerunConsensusLogic);
                         } catch (BlockStoreException | VerificationException e) {
                             log.debug(e.getLocalizedMessage());
                         }
@@ -295,16 +355,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         blockStore.abortDatabaseBatchWrite();
                         throw e;
                     }
-                    
-                    // Did we fail? Then we stop now and rerun consensus logic on the new longest chain.
-                    if (solidityState.isFailState()) {
-                        runConsensusLogic(blockStore.get(oldLongestChainEnd));
-                        return;
-                    }
                 }
             }
-            
-            // Then recursively call this thing again at the end if we broke;
             
         } catch (IOException e) {
             // Cannot happen when connecting
@@ -559,26 +611,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    /**
-     * Adds the specified block and all dependencies recursively to the confirmed set. This
-     * will connect all transactions of the block by marking used UTXOs spent
-     * and adding new UTXOs to the db.
-     * 
-     * @param blockHash
-     * @throws BlockStoreException
-     */
-    private void confirmMilestone(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
-        // Write to DB
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            confirmMilestoneUntil(blockHash, traversedBlockHashes);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (BlockStoreException e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        }
-    }
-
     private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
         // If already confirmed, return
@@ -601,36 +633,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             confirmUntil(block.getPrevBlockHash(), traversedBlockHashes);
         if (!traversedBlockHashes.contains(block.getPrevBranchBlockHash()))
             confirmUntil(block.getPrevBranchBlockHash(), traversedBlockHashes);
-
-        // Confirm the block
-        confirmBlock(blockWrap);
-
-        // Keep track of confirmed blocks
-        traversedBlockHashes.add(blockHash);
-    }
-
-    private void confirmMilestoneUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
-        // If already confirmed, return
-        if (traversedBlockHashes.contains(blockHash))
-            return;
-
-        BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
-        BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
-        Block block = blockWrap.getBlock();
-
-        // If already confirmed, return
-        if (blockEvaluation.isConfirmed())
-            return;
-
-        // Set confirmed
-        blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
-
-        // Connect all approved blocks first if not traversed already
-        final List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block);
-        for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) 
-            if (!traversedBlockHashes.contains(requiredBlockHash))
-                confirmMilestoneUntil(requiredBlockHash, traversedBlockHashes);
 
         // Confirm the block
         confirmBlock(blockWrap);

@@ -1,4 +1,5 @@
 select * from blocks   ;
+select * from unsolidblocks;
 select * from openorders   ;
 select count( *) from blocks   ;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
