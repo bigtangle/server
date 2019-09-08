@@ -404,7 +404,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             premiseBlocks.add(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -492,7 +492,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             premiseBlocks.add(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
@@ -992,8 +992,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
-        // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+        // Generate blocks 
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_REWARDED_HEIGHT_INTERVAL; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -3316,7 +3316,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -3387,7 +3387,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -3462,7 +3462,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -3503,7 +3503,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }

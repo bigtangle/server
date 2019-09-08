@@ -46,7 +46,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderOpInfo;
 import net.bigtangle.core.OrderOpInfo.OrderOp;
 import net.bigtangle.core.OrderOpenInfo;
@@ -273,7 +272,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     
                     // Check: If all is ok, confirm this milestone.
                     if (solidityState.isSuccessState()) {
-                        // Cannot use normal confirm logic, must confirm all dependencies!
+                        // Just confirm all dependencies!
+                        // TODO we first need to check if all of these are conflict-free
+                        // TODO this should then be recursive until all is confirmed, since there could be recursive requirements
+                        // -> use milestoneservice logic repeatedly. checking for conflicts each time
+                        // if the toconfirm set does not change anymore, something went wrong.
                         confirmMilestone(newMilestoneBlock.getHash(), new HashSet<>());
                         
                         // Set the milestone on all confirmed non-milestone blocks
@@ -698,6 +701,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             tx = generateVirtualMiningRewardTX(block);
             insertVirtualUTXOs(block, tx);
+            
+            // Get list of consumed orders, virtual order matching tx and newly
+            // generated remaining order book
+            matchingResult = generateOrderMatching(block);
+            tx = matchingResult.getOutputTx();
+            insertVirtualUTXOs(block, tx);
+            insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             break;
@@ -716,14 +726,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_RECLAIM:
             tx = generateReclaimTX(block);
             insertVirtualUTXOs(block, tx);
-            break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            // Get list of consumed orders, virtual order matching tx and newly
-            // generated remaining order book
-            matchingResult = generateOrderMatching(block);
-            tx = matchingResult.getOutputTx();
-            insertVirtualUTXOs(block, tx);
-            insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -754,6 +756,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             // For rewards, update reward to be confirmed now
             confirmReward(block);
+            confirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // For token creations, update token db
@@ -775,10 +778,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             confirmOrderReclaim(block);
-            break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            // Do order matching
-            confirmOrderMatching(block);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -834,6 +833,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void confirmOrderMatching(BlockWrap block) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
+        // TODO don't calculate again, it should already have been calculated before
         OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
@@ -847,13 +847,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set new orders confirmed
         for (OrderRecord o : actualCalculationResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
-
-        // Set used other output spent
-        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getBlock().getHash()), true,
-                block.getBlock().getHash());
-
-        // Set own output confirmed
-        blockStore.updateOrderMatchingConfirmed(block.getBlock().getHash(), true);
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult);
@@ -1042,6 +1035,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             // Unconfirm dependents
             unconfirmRewardDependents(block, traversedBlockHashes);
+            unconfirmOrderMatchingDependents(block, traversedBlockHashes);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
@@ -1063,9 +1057,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_RECLAIM:
             unconfirmOrderReclaimDependents(block, traversedBlockHashes);
             break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            unconfirmOrderMatchingDependents(block, traversedBlockHashes);
-            break;
         default:
             throw new RuntimeException("Not Implemented");
 
@@ -1077,11 +1068,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
         OrderMatchingResult matchingResult = generateOrderMatching(block);
-
-        // Disconnect matching record spender
-        if (blockStore.getOrderMatchingSpent(block.getHash())) {
-            unconfirmFrom(blockStore.getOrderMatchingSpender(block.getHash()), traversedBlockHashes);
-        }
 
         // Disconnect all virtual transaction output dependents
         Transaction tx = matchingResult.getOutputTx();
@@ -1185,6 +1171,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_REWARD:
             unconfirmReward(block);
+            unconfirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             unconfirmToken(block.getHashAsString());
@@ -1204,9 +1191,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             unconfirmOrderReclaim(block);
-            break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            unconfirmOrderMatching(block);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -1230,12 +1214,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set new orders unconfirmed
         for (OrderRecord o : matchingResult.getRemainingOrders())
             blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false);
-
-        // Set used other output unspent
-        blockStore.updateOrderMatchingSpent(blockStore.getOrderMatchingPrevBlockHash(block.getHash()), false, null);
-
-        // Set own output unconfirmed
-        blockStore.updateOrderMatchingConfirmed(block.getHash(), false);
 
         // Update the matching history in db
         tickerService.removeMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
@@ -1447,10 +1425,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            // TODO merge
-            connectOrderMatching(block);
-            break;
         default:
             break;
 
@@ -1470,20 +1444,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     side.name(), reqInfo.getBeneficiaryAddress());
 
             blockStore.insertOrder(record);
-        } catch (IOException e) {
-            // Cannot happen when connecting
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void connectOrderMatching(Block block) throws BlockStoreException {
-        try {
-            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
-            Sha256Hash prevHash = info.getPrevHash();
-            long toHeight = info.getToHeight();
-
-            blockStore.insertOrderMatching(block.getHash(), toHeight, prevHash);
         } catch (IOException e) {
             // Cannot happen when connecting
             e.printStackTrace();
@@ -1560,8 +1520,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         long fromHeight = 0;
         long toHeight = 0;
         try {
-            OrderMatchingInfo info = OrderMatchingInfo.parse(block.getTransactions().get(0).getData());
-            prevHash = info.getPrevHash();
+            RewardInfo info = RewardInfo.parse(block.getTransactions().get(0).getData());
+            prevHash = info.getPrevRewardHash();
             fromHeight = info.getFromHeight();
             toHeight = info.getToHeight();
         } catch (IOException e) {
@@ -1658,7 +1618,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // From all orders and ops, begin order matching algorithm by filling
         // order books
-        // TODO use txhash as order ID?
         int orderId = 0;
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
         TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();

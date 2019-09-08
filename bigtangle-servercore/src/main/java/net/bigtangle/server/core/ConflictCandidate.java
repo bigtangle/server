@@ -8,7 +8,6 @@ package net.bigtangle.server.core;
 import com.google.common.base.Objects;
 
 import net.bigtangle.core.ConflictPoint;
-import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Token;
@@ -39,10 +38,6 @@ public class ConflictCandidate {
 
     public static ConflictCandidate fromOrder(BlockWrap block, OrderReclaimInfo order) {
         return new ConflictCandidate(block, ConflictPoint.fromOrder(order));
-    }
-
-    public static ConflictCandidate fromOrderMatching(BlockWrap block, OrderMatchingInfo order) {
-        return new ConflictCandidate(block, ConflictPoint.fromOrderMatching(order));
     }
 
     public static ConflictCandidate fromConflictPoint(BlockWrap block, ConflictPoint conflictPoint) {

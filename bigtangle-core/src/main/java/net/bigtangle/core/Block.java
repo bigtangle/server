@@ -132,8 +132,7 @@ public class Block extends Message {
         BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
         BLOCKTYPE_ORDER_OP(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // refresh/cancel-order
-        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Reclaim-orders
-        BLOCKTYPE_ORDER_MATCHING(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Perform-matching // TODO delete
+        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Reclaim-orders
 
         private boolean allowCoinbaseTransaction;
         private int maxSize;

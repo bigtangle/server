@@ -563,7 +563,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }

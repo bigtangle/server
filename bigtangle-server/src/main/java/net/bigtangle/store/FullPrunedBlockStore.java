@@ -255,30 +255,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
 
-    /* Order Matching TXOs */
-    public Sha256Hash getMaxConfirmedOrderMatchingBlockHash() throws BlockStoreException;
-
-    public List<Sha256Hash> getOrderMatchingBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
-
-    public long getOrderMatchingToHeight(Sha256Hash blockHash) throws BlockStoreException;
-
-    public long getOrderMatchingFromHeight(Sha256Hash blockHash) throws BlockStoreException;
-
-    public boolean getOrderMatchingConfirmed(Sha256Hash hash) throws BlockStoreException;
-
-    public boolean getOrderMatchingSpent(Sha256Hash hash) throws BlockStoreException;
-
-    public void insertOrderMatching(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash)
-            throws BlockStoreException;
-
-    public void updateOrderMatchingConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
-
-    public void updateOrderMatchingSpent(Sha256Hash hash, boolean b, Sha256Hash spenderHash) throws BlockStoreException;
-
-    public Sha256Hash getOrderMatchingSpender(Sha256Hash hash) throws BlockStoreException;
-
-    public Sha256Hash getOrderMatchingPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
-
     /* Token TXOs */
     public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
 

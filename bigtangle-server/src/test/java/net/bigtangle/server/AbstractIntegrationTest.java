@@ -498,8 +498,8 @@ public abstract class AbstractIntegrationTest {
         // Generate blocks until passing interval
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
-        long currMilestoneHeight = store.getOrderMatchingToHeight(store.getMaxConfirmedOrderMatchingBlockHash());
-        long targetHeight = currMilestoneHeight + NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL;
+        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedRewardBlockHash());
+        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
@@ -507,7 +507,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedOrderMatchingBlockHash(),
+        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedRewardBlockHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 
@@ -518,7 +518,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
-        assertCurrentTokenAmountEquals(origTokenAmounts, false);
+        assertCurrentTokenAmountEquals(origTokenAmounts, true);
     }
 
     protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts, boolean skipBig)
@@ -610,13 +610,13 @@ public abstract class AbstractIntegrationTest {
             blockGraph.add(b, false);
             if (blockConfirmed.get(b))
                 blockGraph.confirm(b.getHash(), new HashSet<>());
+            else
+                blockGraph.unconfirm(b.getHash(), new HashSet<>());
         }
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
-        assertEquals(allOrdersSorted2.toString(), allOrdersSorted.toString()); // Works
-                                                                               // for
-                                                                               // now
-        assertEquals(allUTXOsSorted2.toString(), allUTXOsSorted.toString());
+        assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
+        assertEquals(allUTXOsSorted.toString(), allUTXOsSorted2.toString());
     }
 
     protected Sha256Hash getRandomSha256Hash() {

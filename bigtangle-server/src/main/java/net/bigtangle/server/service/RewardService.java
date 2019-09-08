@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,8 +21,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
-import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -125,15 +121,6 @@ public class RewardService {
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException {
         RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
-
-        // TODO we do need to make sure that it is at least that far ahead, else it would not be possible to reward correctly.
-//        if (result.getEligibility() != Eligibility.ELIGIBLE) {
-//            if (!override) {
-//                logger.warn("Generated reward block is deemed ineligible! Try again somewhere else?");
-//                return null;
-//            }
-//            logger.warn("Generated reward block is deemed ineligible! Overriding.. ");
-//        }
 
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);

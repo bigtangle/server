@@ -13,7 +13,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -145,18 +144,6 @@ public class BlockWrap {
                 throw new RuntimeException(e);
             }
             break;
-        case BLOCKTYPE_ORDER_MATCHING:
-            // Dynamic conflicts: require the previous matching
-            try {
-                OrderMatchingInfo info = OrderMatchingInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromOrderMatching(this, info));
-            } catch (IOException e) {
-                // Cannot happen since any blocks added already were checked.
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-            break;
-
         default:
             throw new NotImplementedException("Blocktype not implemented!");
 

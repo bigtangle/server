@@ -24,45 +24,37 @@ public class ConflictPoint {
     @Nullable
     private OrderReclaimInfo connectedOrder;
     @Nullable
-    private OrderMatchingInfo connectedOrderMatch;
-    @Nullable
     private Token connectedDomainToken;
 
     private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-            Token connectedToken, OrderReclaimInfo connectedOrder, OrderMatchingInfo connectedOrderMatch,
-            Token connectedDomainToken) {
+            Token connectedToken, OrderReclaimInfo connectedOrder, Token connectedDomainToken) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
         this.connectedReward = reward;
         this.connectedToken = connectedToken;
         this.connectedOrder = connectedOrder;
-        this.connectedOrderMatch = connectedOrderMatch;
         this.connectedDomainToken = connectedDomainToken;
     }
 
     public static ConflictPoint fromTransactionOutpoint(TransactionOutPoint connectedOutpoint) {
-        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null, null, null);
+        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null, null);
     }
 
     public static ConflictPoint fromReward(RewardInfo reward) {
-        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null, null, null);
+        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null, null);
     }
 
     public static ConflictPoint fromToken(Token token) {
-        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null, null, null);
+        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null, null);
     }
 
     public static ConflictPoint fromOrder(OrderReclaimInfo connectedOrder) {
-        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder, null, null);
-    }
-
-    public static ConflictPoint fromOrderMatching(OrderMatchingInfo match) {
-        return new ConflictPoint(ConflictType.ORDERMATCH, null, null, null, null, match, null);
+        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder, null);
     }
 
     public static ConflictPoint fromDomainToken(Token token) {
-        return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, null, null, token);
+        return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, null, token);
     }
     
     @Override
@@ -87,8 +79,6 @@ public class ConflictPoint {
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
 			return getConnectedOrder().getOrderBlockHash().equals(other.getConnectedOrder().getOrderBlockHash());
-        case ORDERMATCH:
-            return getConnectedOrderMatching().getPrevHash().equals(other.getConnectedOrderMatching().getPrevHash());
         case DOMAINISSUANCE:
             return getConnectedDomainToken().getDomainPredecessorBlockHash().equals(other.getConnectedDomainToken().getDomainPredecessorBlockHash())
                     && getConnectedDomainToken().getDomainName().equals(other.getConnectedDomainToken().getDomainName());
@@ -108,8 +98,6 @@ public class ConflictPoint {
             return Objects.hashCode(type, getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
 		case ORDERRECLAIM:
             return Objects.hashCode(type, getConnectedOrder().getOrderBlockHash());
-        case ORDERMATCH:
-            return Objects.hashCode(type, getConnectedOrderMatching().getPrevHash());
         case DOMAINISSUANCE:
             return Objects.hashCode(type, getConnectedDomainToken().getDomainPredecessorBlockHash(), getConnectedDomainToken().getDomainName());
 		default:
@@ -118,7 +106,7 @@ public class ConflictPoint {
     }
 
     public enum ConflictType {
-        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM, ORDERMATCH, DOMAINISSUANCE
+        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM, DOMAINISSUANCE
     }
 
     public ConflictType getType() {
@@ -139,10 +127,6 @@ public class ConflictPoint {
 
     public OrderReclaimInfo getConnectedOrder() {
         return connectedOrder;
-    }
-
-    public OrderMatchingInfo getConnectedOrderMatching() {
-        return connectedOrderMatch;
     }
 
     public Token getConnectedDomainToken() {

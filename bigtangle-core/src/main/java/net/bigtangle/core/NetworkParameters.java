@@ -177,11 +177,6 @@ public abstract class NetworkParameters {
     // Transaction setting
     public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
 
-    // Order Matching Settings
-    public static final long ORDER_MATCHING_MIN_HEIGHT_INTERVAL = 10;
-    public static final long ORDER_MATCHING_OVERLAP_SIZE = 7;
-    public static final long ORDER_MATCHING_MIN_MILESTONE_PERCENTAGE = 97;
-
     // Token config
     public static final long TOKEN_MAX_ISSUANCE_NUMBER = Integer.MAX_VALUE;
     public static final int TOKEN_MAX_NAME_LENGTH = 60;
@@ -206,8 +201,8 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final int REWARD_MIN_HEIGHT_INTERVAL = 10;
-    public static final long REWARD_MIN_MILESTONE_PERCENTAGE = 97;
+    public static final long REWARD_MIN_HEIGHT_INTERVAL = 10;
+    public static final long REWARD_MIN_REWARDED_HEIGHT_INTERVAL = REWARD_MIN_HEIGHT_INTERVAL - REWARD_MIN_HEIGHT_DIFFERENCE;
     public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
 
     public static final int TARGET_TIMESPAN = 24 * 60 * 60;  // 1 day per difficulty cycle

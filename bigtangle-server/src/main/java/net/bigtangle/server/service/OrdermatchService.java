@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,13 +17,10 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderMatchingInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
-import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -49,6 +44,8 @@ public class OrdermatchService {
     private BlockService blockService;
     @Autowired
     protected TipsService tipService;
+    @Autowired
+    private RewardService rewardService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -90,46 +87,13 @@ public class OrdermatchService {
      * @throws Exception
      */
     public Block performOrderMatchingVoting() throws Exception {
-        // Find eligible order matchings building on top of the newest order
-        // matching
-        Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
-        List<Sha256Hash> candidateHashes = store.getOrderMatchingBlocksWithPrevHash(prevHash);
-        
-        // TODO this isn't required soon anymore
-//        candidateHashes.removeIf(c -> {
-//            try {
-//                return store.getOrderMatchingEligible(c) != Eligibility.ELIGIBLE;
-//            } catch (BlockStoreException e) {
-//                // Cannot happen
-//                throw new RuntimeException();
-//            }
-//        });
-
-        // Sort by rating
-        List<BlockWrap> candidates = blockService.getBlockWraps(candidateHashes);
-        candidates.sort(Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getRating()));
-        
-        // If exists, push that one, else make new one
-        while (!candidates.isEmpty()) {
-            BlockWrap votingTarget = candidates.get(candidates.size()-1);
-            candidates.remove(candidates.size()-1);
-            try {
-                Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPairStartingFrom(votingTarget);
-                Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-                Block r2 = blockService.getBlock(tipsToApprove.getRight());
-                blockService.saveBlock(r1.createNextBlock(r2));
-                return votingTarget.getBlock();
-            } catch (InfeasiblePrototypeException e) {
-                continue;
-            }
-        }
-    
-        return createAndAddOrderMatchingBlock();
+        // Merged with reward service
+        return null;
     }
 
     public Block createAndAddOrderMatchingBlock() throws Exception {
 
-        Sha256Hash prevHash = store.getMaxConfirmedOrderMatchingBlockHash();
+        Sha256Hash prevHash = store.getMaxConfirmedRewardBlockHash();
         return createAndAddOrderMatchingBlock(prevHash);
 
     }
@@ -154,39 +118,14 @@ public class OrdermatchService {
     }
 
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws BlockStoreException {
+            throws BlockStoreException, NoBlockException {
         return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
     }
 
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException {
-
-        BlockWrap r1 = blockService.getBlockWrap(prevTrunk);
-        BlockWrap r2 = blockService.getBlockWrap(prevBranch);
-
-        Block block = new Block(networkParameters, r1.getBlock(), r2.getBlock());
-        block.setBlockType(Block.Type.BLOCKTYPE_ORDER_MATCHING);
-        block.setHeight( Math.max(r1.getBlock().getHeight(), r2.getBlock().getHeight()) + 1);
-
-        OrderMatchingInfo info = new OrderMatchingInfo(
-                store.getOrderMatchingToHeight(prevHash) - NetworkParameters.ORDER_MATCHING_OVERLAP_SIZE,
-                Math.max(r1.getBlockEvaluation().getHeight(), r2.getBlockEvaluation().getHeight()) + 1, prevHash);
-
-        // Add the data
-        Transaction tx = new Transaction(networkParameters);
-        tx.setData(info.toByteArray());
-        block.addTransaction(tx);
+            boolean override) throws BlockStoreException, NoBlockException {
         
-        // If infeasible currently, return no new block
-        if (Math.subtractExact(info.getToHeight(), store
-                .getOrderMatchingToHeight(prevHash)) < NetworkParameters.ORDER_MATCHING_MIN_HEIGHT_INTERVAL - 1) {
-            logger.warn("Generated ordermatching block is deemed ineligible! Try again somewhere else?");
-            return null;
-        }
-
-        // Else return the new block
-        block.solve();
-        return block;
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
     }
 
 }
