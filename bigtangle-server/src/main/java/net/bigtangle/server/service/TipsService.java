@@ -176,24 +176,24 @@ public class TipsService {
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, left, right);
     }
 
-    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
+    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
             BlockWrap left, BlockWrap right) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
 
         // Initialize approved blocks
-        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
 
         // Necessary: Initial test if the prototype's
         // currentApprovedNonMilestoneBlocks are actually valid
-        if (!validatorService.isEligibleForApprovalSelection(currentApprovedNonMilestoneBlocks))
+        if (!validatorService.isEligibleForApprovalSelection(currentApprovedUnconfirmedBlocks))
             throw new InfeasiblePrototypeException("The given prototype is invalid under the current milestone");
 
         // Perform next steps
-        BlockWrap nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-        BlockWrap nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
+        BlockWrap nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
+        BlockWrap nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
 
         // Repeat: Proceed on path to be included first (highest rating else
         // random)
@@ -201,36 +201,36 @@ public class TipsService {
             if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
                 // Go left
                 left = nextLeft;
-                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
-                nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
-                nextRight = validateOrPerformValidatedStep(right, currentApprovedNonMilestoneBlocks, nextRight);
+                nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
+                nextRight = validateOrPerformValidatedStep(right, currentApprovedUnconfirmedBlocks, nextRight);
             } else {
                 // Go right
                 right = nextRight;
-                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
-                nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
-                nextLeft = validateOrPerformValidatedStep(left, currentApprovedNonMilestoneBlocks, nextLeft);
+                nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
+                nextLeft = validateOrPerformValidatedStep(left, currentApprovedUnconfirmedBlocks, nextLeft);
             }
         }
 
         // Go forward on the remaining paths
         while (nextLeft != left) {
             left = nextLeft;
-            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, left))
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
-            nextLeft = performValidatedStep(left, currentApprovedNonMilestoneBlocks);
+            nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
         }
         while (nextRight != right) {
             right = nextRight;
-            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, right))
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
-            nextRight = performValidatedStep(right, currentApprovedNonMilestoneBlocks);
+            nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
         }
 
         watch.stop();

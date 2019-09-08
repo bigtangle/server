@@ -147,8 +147,6 @@ public class ValidatorService {
     public static class RewardBuilderResult {
         Transaction tx;
         long difficulty;
-        // TODO
-        long blockDifficulty;
 
         public RewardBuilderResult(Transaction tx, long difficulty) {
             this.tx = tx;
@@ -161,29 +159,6 @@ public class ValidatorService {
 
         public long getDifficulty() {
             return difficulty;
-        }
-    }
-
-    /**
-     * NOTE: The reward block is assumed to having successfully gone through
-     * checkRewardSolidity beforehand! For connecting purposes, checks if the given
-     * rewardBlock is eligible NOW. In Spark, this would be calculated delayed and
-     * free.
-     * 
-     * @param rewardBlock
-     * @return eligibility of rewards + new perTxReward)
-     * @throws BlockStoreException
-     */
-    public RewardBuilderResult checkRewardEligibility(Block rewardBlock) throws BlockStoreException {
-        try {
-            RewardInfo rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-            return makeReward(rewardBlock.getPrevBlockHash(), rewardBlock.getPrevBranchBlockHash(),
-                    rewardInfo.getPrevRewardHash());
-
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
     }
 
@@ -300,67 +275,55 @@ public class ValidatorService {
 
     /**
      * Checks if the given set is eligible to be walked to during local approval tip
-     * selection given the current set of non-milestone blocks to include. This is
+     * selection given the current set of non-confirmed blocks to include. This is
      * the case if the set is compatible with the current milestone. It must
      * disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
-     * @param currentApprovedNonMilestoneBlocks The set of all currently approved
-     *                                          non-milestone blocks.
+     * @param currentApprovedUnconfirmedBlocks The set of all currently approved
+     *                                          unconfirmed blocks.
      * @return true if the given set is eligible
      * @throws BlockStoreException
      */
-    public boolean isEligibleForApprovalSelection(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
+    public boolean isEligibleForApprovalSelection(HashSet<BlockWrap> currentApprovedUnconfirmedBlocks)
             throws BlockStoreException {
         // Currently ineligible blocks are not ineligible. If we find one, we
         // must stop
-        if (!findWhereCurrentlyIneligible(currentApprovedNonMilestoneBlocks).isEmpty())
+        if (!findWhereCurrentlyIneligible(currentApprovedUnconfirmedBlocks).isEmpty())
             return false;
 
         // If there exists a new block whose dependency is already spent
-        // (conflicting with milestone) or not confirmed yet (missing other
-        // milestones), we fail to
-        // approve this block since the current milestone takes precedence /
-        // doesn't allow for the addition of these blocks
-        if (findBlockWithSpentOrUnconfirmedInputs(currentApprovedNonMilestoneBlocks))
+        // or not confirmed yet, we fail to approve this block since the 
+        // current set of confirmed blocks takes precedence 
+        if (findBlockWithSpentOrUnconfirmedInputs(currentApprovedUnconfirmedBlocks))
             return false;
 
-        // If conflicts among the approved non-milestone blocks exist, cannot
-        // approve
+        // If conflicts among the approved blocks exist, cannot approve
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<>();
-        findCandidateConflicts(currentApprovedNonMilestoneBlocks, conflictingOutPoints);
+        findCandidateConflicts(currentApprovedUnconfirmedBlocks, conflictingOutPoints);
         if (!conflictingOutPoints.isEmpty())
             return false;
 
         // Otherwise, the new approved block set is compatible with current
-        // milestone
+        // confirmation set
         return true;
     }
 
-    // Difference between isEligibleForApprovalSelection(HashSet<BlockWrap>)
-    // here and
-    // resolveAllConflicts(Set<BlockWrap>, boolean) below is that
-    // the approval check disallows conflicts completely, while
-    // the milestone resolveAllConflicts(Set<BlockWrap>, boolean)
-    // takes candidate conflicts + conflicts with maintained milestone and
-    // resolves them
-    // Both disallow where usedoutput unconfirmed or ineligible for other
-    // reasons.
     /**
      * Checks if the given block is eligible to be walked to during local approval
-     * tip selection given the current set of non-milestone blocks to include. This
-     * is the case if the block + the set is compatible with the current milestone.
+     * tip selection given the current set of unconfirmed blocks to include. This
+     * is the case if the block + the set is compatible with the current confirmeds.
      * It must disallow spent prev UTXOs / unconfirmed prev UTXOs or unsolid blocks.
      * 
      * @param block                             The block to check for eligibility.
-     * @param currentApprovedNonMilestoneBlocks The set of all currently approved
-     *                                          non-milestone blocks.
+     * @param currentApprovedUnconfirmedBlocks The set of all currently approved
+     *                                          unconfirmed blocks.
      * @return true if the given block is eligible to be walked to during approval
      *         tip selection.
      * @throws BlockStoreException
      */
-    public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
+    public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedUnconfirmedBlocks)
             throws BlockStoreException {
-        // Any confirmed blocks are always compatible with the current milestone
+        // Any confirmed blocks are always compatible with the current confirmeds
         if (block.getBlockEvaluation().isConfirmed())
             return true;
         
@@ -368,16 +331,16 @@ public class ValidatorService {
         if (block.getBlockEvaluation().getSolid() < 2)
             return false;
 
-        // Get sets of all / all new non-milestone blocks when approving the
+        // Get sets of all / all new unconfirmed blocks when approving the
         // specified block in combination with the currently included blocks
         @SuppressWarnings("unchecked")
-        HashSet<BlockWrap> allApprovedNonMilestoneBlocks = (HashSet<BlockWrap>) currentApprovedNonMilestoneBlocks
+        HashSet<BlockWrap> allApprovedUnconfirmedBlocks = (HashSet<BlockWrap>) currentApprovedUnconfirmedBlocks
                 .clone();
-        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedNonMilestoneBlocks, block))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block))
             throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
 
         // If this set of blocks is eligible, all is fine
-        return isEligibleForApprovalSelection(allApprovedNonMilestoneBlocks);
+        return isEligibleForApprovalSelection(allApprovedUnconfirmedBlocks);
     }
 
     public boolean hasSpentDependencies(ConflictCandidate c) throws BlockStoreException {
@@ -435,9 +398,9 @@ public class ValidatorService {
         }
     }
 
-    private boolean findBlockWithSpentOrUnconfirmedInputs(HashSet<BlockWrap> newApprovedNonMilestoneBlocks) {
+    private boolean findBlockWithSpentOrUnconfirmedInputs(HashSet<BlockWrap> blocks) {
         // Get all conflict candidates in blocks
-        Stream<ConflictCandidate> candidates = newApprovedNonMilestoneBlocks.stream().map(b -> b.toConflictCandidates())
+        Stream<ConflictCandidate> candidates = blocks.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream());
 
         // Find conflict candidates whose used outputs are already spent or
@@ -455,23 +418,17 @@ public class ValidatorService {
     // disallow unconfirmed prev UTXOs and spent UTXOs if
     // unmaintained (unundoable) spend
     /**
-     * Resolves all conflicts such that the milestone is compatible with all blocks
-     * remaining in the set of blocks. If not allowing unconfirming losing
-     * milestones, the milestones are always prioritized over non-milestone
-     * candidates.
+     * Resolves all conflicts such that the confirmed set is compatible with all blocks
+     * remaining in the set of blocks. 
      * 
      * @param blocksToAdd               the set of blocks to add to the current
      *                                  milestone
-     * @param unconfirmLosingMilestones if false, the milestones are always
-     *                                  prioritized over non-milestone candidates.
      * @throws BlockStoreException
      */
     public void resolveAllConflicts(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
-        // Remove currently ineligible blocks
-        // i.e. for reward blocks: invalid never, ineligible overrule, eligible
-        // ok
-        // If ineligible, overrule by sufficient age and milestone rating range
+        // Remove ineligible blocks, i.e. only reward blocks 
+        // since they follow a different logic
         removeWhereIneligible(blocksToAdd);
 
         // Remove blocks and their approvers that have at least one input
@@ -479,17 +436,15 @@ public class ValidatorService {
         removeWhereUsedOutputsUnconfirmed(blocksToAdd);
 
         // Resolve conflicting block combinations:
-        // Disallow conflicts with unmaintained/pruned milestone blocks,
+        // Disallow conflicts with milestone blocks,
         // i.e. remove those whose input is already spent by such blocks
         resolveMilestoneConflicts(blocksToAdd);
 
-        // Then resolve conflicts between maintained milestone + new candidates
-        // This may trigger reorgs, i.e. unconfirming current milestones!
+        // Then resolve conflicts between non-milestone + new candidates
         resolveTemporaryConflicts(blocksToAdd);
 
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output not confirmed yet
-        // This is needed since reorgs could have been triggered
         removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
@@ -530,7 +485,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void removeWhereUsedOutputsUnconfirmed(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
-        // Milestone blocks are always ok
+        // Confirmed blocks are always ok
         new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isConfirmed())
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
                     try {
@@ -557,47 +512,43 @@ public class ValidatorService {
         List<ConflictCandidate> conflicts = blocksToAdd.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream()).collect(Collectors.toList());
 
-        // Find only those that are spent in milestone
+        // Find only those that are spent
         filterSpent(conflicts);
 
-        // Add the conflicting candidates and milestone blocks to given set
+        // Drop any spent by milestone
         for (ConflictCandidate c : conflicts) {
             // Find the spending block we are competing with
             BlockWrap milestoneBlock = getSpendingBlock(c);
 
-            // If it is pruned or not maintained, we drop the blocks and warn
-            //TODO|| milestoneBlock.getBlockEvaluation().isMiles 
-            if (milestoneBlock == null || !milestoneBlock.getBlockEvaluation().isMaintained()) {
+            // If it is pruned or a milestone, we drop the blocks
+            if (milestoneBlock == null || milestoneBlock.getBlockEvaluation().getMilestone() != -1) {
                 blockService.removeBlockAndApproversFrom(blocksToAdd, c.getBlock());
-                logger.warn("Dropping would-be blocks due to pruning. Reorg not possible!");
             }
         }
     }
 
     /**
-     * Resolves conflicts between milestone blocks and milestone candidates as well
-     * as conflicts among milestone candidates.
+     * Resolves conflicts between non-milestone blocks and candidates
      * 
      * @param blocksToAdd
-     * @param unconfirmLosingMilestones
      * @throws BlockStoreException
      */
     private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd)
             throws BlockStoreException {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
-        HashSet<BlockWrap> conflictingMilestoneBlocks = new HashSet<BlockWrap>();
+        HashSet<BlockWrap> conflictingConfirmedBlocks = new HashSet<BlockWrap>();
 
-        // Find all conflicts in the new blocks + maintained milestone blocks
-        findFixableConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        // Find all conflicts in the new blocks + confirmed blocks
+        findFixableConflicts(blocksToAdd, conflictingOutPoints, conflictingConfirmedBlocks);
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
         HashSet<BlockWrap> losingBlocks = resolveTemporaryConflicts(conflictingOutPoints, blocksToAdd);
 
-        // For milestone blocks that have been eliminated call disconnect
+        // For confirmed blocks that have been eliminated call disconnect
         // procedure
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (BlockWrap b : conflictingMilestoneBlocks.stream().filter(b -> losingBlocks.contains(b))
+        for (BlockWrap b : conflictingConfirmedBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
             blockGraph.unconfirm(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms);
         }
@@ -612,10 +563,7 @@ public class ValidatorService {
     /**
      * Resolve all conflicts by grouping by UTXO ordered by descending rating.
      * 
-     * @param blockEvaluationsToAdd
      * @param conflictingOutPoints
-     * @param unconfirmLosingMilestones
-     * @param conflictingMilestoneBlocks
      * @return losingBlocks: blocks that have been removed due to conflict
      *         resolution
      * @throws BlockStoreException
@@ -646,7 +594,7 @@ public class ValidatorService {
         Map<Object, TreeSet<ConflictCandidate>> conflicts = conflictingOutPoints.stream().collect(
                 Collectors.groupingBy(i -> i.getConflictPoint(), Collectors.toCollection(conflictTreeSetSupplier)));
 
-        // Sort conflicts among each other by descending max(rating). If not unconfirming, prefer milestones first.
+        // Sort conflicts among each other by descending max(rating). 
         Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
                         .thenComparingLong(
                                 (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
@@ -711,16 +659,16 @@ public class ValidatorService {
     }
 
     /**
-     * Finds conflicts in blocksToAdd itself and with the milestone.
+     * Finds conflicts in blocksToAdd itself and with the confirmed blocks.
      * 
      * @param blocksToAdd
      * @param conflictingOutPoints
      * @throws BlockStoreException
      */
     private void findFixableConflicts(Set<BlockWrap> blocksToAdd, Set<ConflictCandidate> conflictingOutPoints,
-            Set<BlockWrap> conflictingMilestoneBlocks) throws BlockStoreException {
+            Set<BlockWrap> conflictingConfirmedBlocks) throws BlockStoreException {
 
-        findUndoableConflicts(blocksToAdd, conflictingOutPoints, conflictingMilestoneBlocks);
+        findUndoableConflicts(blocksToAdd, conflictingOutPoints, conflictingConfirmedBlocks);
         findCandidateConflicts(blocksToAdd, conflictingOutPoints);
     }
 
@@ -766,7 +714,7 @@ public class ValidatorService {
             // Find the spending block we are competing with
             BlockWrap confirmedBlock = getSpendingBlock(c);
 
-            // Only go through if the milestone block is undoable, i.e. not milestone
+            // Only go through if the block is undoable, i.e. not milestone
             if (confirmedBlock == null || confirmedBlock.getBlockEvaluation().getMilestone() != -1)
                 continue;
 
