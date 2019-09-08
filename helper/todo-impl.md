@@ -542,13 +542,22 @@ https://m.bigtangle.net/wallet/pay.jsf?tokenid=bc&quantity=888&address=16nAV1cJS
 ### interface to ethereum
 https://sgitario.github.io/blockchain-using-java/
 GO client and spring boot web3j
+https://github.com/ethereum/go-ethereum
 https://github.com/web3j/web3j
 https://etherscan.io/address/0x5b614e4f17a1938da6248d116cc32f4f17c35f99
 
 
- docker run -d --name ethereum -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*" --dev
+ docker run -d --name ethereum-dev -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*" --dev
 
 
+61.181.128.236:8545
+
+
+61.181.128.230:8545
+ docker run -d --name ethereum-dev -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*"
+ 
+ 
+ 
 target:
 user send token to special account address and then create new token in bigtangle with new amount and give the token to the user address. use the subtangle functionality.
 
@@ -575,3 +584,4 @@ ENS eliminates the need to copy or type long addresses. With ENS, you'll be able
 
 https://medium.com/tech-and-the-city/from-image-to-bytes-and-back-again-563abc5c1412
 
+### compress of block data for API (gzip)
