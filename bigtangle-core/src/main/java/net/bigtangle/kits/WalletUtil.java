@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.CryptoException;
 
 import net.bigtangle.core.Context;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
@@ -55,7 +56,11 @@ public class WalletUtil {
 
     public static byte[] createWallet(NetworkParameters params) throws IOException {
 
-        return createWallet(params, 1);
+        Wallet wallet =   Wallet.fromKeys(params, new ECKey()); // default
+
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(wallet, outStream);
+        return outStream.toByteArray();
 
     }
 
