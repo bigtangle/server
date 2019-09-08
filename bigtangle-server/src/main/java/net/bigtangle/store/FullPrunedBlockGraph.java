@@ -226,9 +226,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 Collections.reverse(newMilestoneBlocks);
                 
-                // TODO Check PoW on all the new blocks. As soon as one of them
-                // fails the test, solidifyInvalid(-1)
-                
                 // Unconfirm anything not confirmed by milestone
                 List<Sha256Hash> wipeBlocks = blockStore.getWhereConfirmedNotMilestone();
                 HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
@@ -353,41 +350,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Sanity check: This should not happen.
             if (solidityState.isFailState())
                 throw new GenericInvalidityException();
-            
-            // Consensus blocks follow a different logic.
-            if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                try {
-                    RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-                    Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-                    
-                    // Consensus blocks have their own waiting queue because:
-                    // Must check PoW immediately
-                    // Actually this is wrong. 
-                    // TODO revert this back to connect, check PoW before wiping in consensuslogic 
-
-                    // Get difficulty from predecessors
-                    BigInteger target = Utils.decodeCompactBits(blockStore.getRewardDifficulty(prevRewardHash));
-                    
-                    // Check PoW 
-                    try {
-                        block.checkProofOfWork(true, target);
-                    } catch (VerificationException e) {
-                        log.warn("Failed to verify block: ", e);
-                        log.warn(block.getHashAsString());
-                        throw e;
-                    }
-
-                    // Add already for next consensus blocks
-                    checkState(lock.isHeldByCurrentThread());
-                    blockStore.put(block);
-                    addReward(block);
-                    
-                } catch (IOException e) {
-                    // Cannot happen
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-            } 
 
             // Accept the block
             try {
@@ -1293,6 +1255,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
+                // Add already for next consensus blocks
+                addReward(block);
+                
                 runConsensusLogic(block);
                 return;
             }
@@ -1312,7 +1277,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 return;
             
             connectUTXOs(block);
-            connectTypeSpecificUTXOs(block); // TODO readd connectreward here...
+            connectTypeSpecificUTXOs(block); 
             calculateBlock(block);
             
             blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
@@ -1325,6 +1290,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // If new reward block, run the consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
+                // Add already for next consensus blocks
+                addReward(block);
+                
                 runConsensusLogic(block);
                 return;
             }
@@ -1404,8 +1372,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            // TODO here we should do the consensus logic?
-//            connectReward(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             connectToken(block);

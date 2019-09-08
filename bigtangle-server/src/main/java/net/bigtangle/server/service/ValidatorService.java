@@ -1211,8 +1211,6 @@ public class ValidatorService {
         }
 
         // Check bounds for target coin values
-        // TODO after changing the values to 256 bit, remove the value
-        // limitations!
         if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target value");
@@ -2117,9 +2115,6 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Incorrect Transaction");
             return SolidityState.getFailState();
         }
-        
-        // TODO Check PoW on all the new blocks. As soon as one of them
-        // fails the test, solidifyInvalid(-1)
 
         return SolidityState.getSuccessState();
     }
@@ -2519,6 +2514,37 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
+    // Consensus blocks must check PoW immediately
+    private SolidityState checkConsensusBlockPow(Block block, boolean throwExceptions) throws BlockStoreException {
+        try {
+            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+
+            // Get difficulty from predecessors
+            BigInteger target = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
+            
+            // Check PoW 
+            boolean allOk = false;
+            try {
+                allOk = block.checkProofOfWork(throwExceptions, target);
+            } catch (VerificationException e) {
+                logger.warn("Failed to verify block: ", e);
+                logger.warn(block.getHashAsString());
+                throw e;
+            }
+            
+            if (!allOk)
+                return SolidityState.getFailState();
+            else
+                return SolidityState.getSuccessState();
+            
+        } catch (IOException e) {
+            // Cannot happen
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Checks if the block has all of its dependencies to fully determine its
      * validity. Then checks if the block is valid based on its dependencies. If
@@ -2545,6 +2571,21 @@ public class ValidatorService {
             
             // Inherit solidity from predecessors if they are not solid
             SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions);
+            
+            // For consensus blocks, it works as follows:
+            // If solid == 1 or solid == 2, we also check for PoW now 
+            // since it is possible to do so
+            if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+                if (minPredecessorSolidity.getState() == State.MissingCalculation 
+                        || minPredecessorSolidity.getState() == State.Success) {
+                    SolidityState state = checkConsensusBlockPow(block, throwExceptions);
+                    if (!state.isSuccessState()) {
+                        return state;            
+                    }
+                }
+            }
+
+            // Inherit solidity from predecessors if they are not solid
             switch (minPredecessorSolidity.getState()) {
             case MissingCalculation:
             case Invalid:   
