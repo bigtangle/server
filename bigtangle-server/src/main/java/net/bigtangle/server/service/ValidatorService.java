@@ -2519,6 +2519,15 @@ public class ValidatorService {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+            
+            // Check if the prev block is reward block
+            BlockWrap dependency = store.getBlockWrap(prevRewardHash);
+            if (dependency.getBlock().getBlockType() != Type.BLOCKTYPE_INITIAL
+                    && dependency.getBlock().getBlockType() != Type.BLOCKTYPE_REWARD) {
+                if (throwExceptions)
+                    throw new InvalidDependencyException("Predecessor is not reward or genesis");
+                return SolidityState.getFailState();
+            }
 
             // Get difficulty from predecessors
             BigInteger target = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
