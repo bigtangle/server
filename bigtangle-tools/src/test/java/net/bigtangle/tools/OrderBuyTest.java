@@ -36,9 +36,9 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 try {
                 if (i % 2 == 0) {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy(HTTPS_BIGTANGLE_INFO, walletAppKit2.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit2.wallet(), orderRecord);
                     } else {
-                        buy(HTTPS_BIGTANGLE_INFO, walletAppKit1.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit1.wallet(), orderRecord);
                     }
                 } else {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {

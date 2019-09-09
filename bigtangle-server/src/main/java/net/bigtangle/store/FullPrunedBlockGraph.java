@@ -366,6 +366,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public boolean add(Block block, boolean allowUnsolid) {
+        // TODO lock from milestoneService
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
@@ -1268,6 +1269,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             insertUnsolidBlock(block, solidityState);
             break;
         case MissingPredecessor:
+            if (block.getBlockType() == Type.BLOCKTYPE_INITIAL 
+            && blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() > 0) {
+                throw new RuntimeException("Should not happen");
+            }
+            
             blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
             
             // Insert into waiting list
