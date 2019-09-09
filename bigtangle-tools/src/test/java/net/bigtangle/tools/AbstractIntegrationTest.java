@@ -108,8 +108,8 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-        System.setProperty("https.proxyPort", "3128");
+     //   System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+     //   System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();

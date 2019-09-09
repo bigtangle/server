@@ -88,8 +88,8 @@ public class BlockRequester {
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
         for (String s : re) {
-            if(s!=null && !"".equals(s))
-            diff(s.trim());
+            if (s != null && !"".equals(s))
+                diff(s.trim());
         }
     }
 
@@ -102,12 +102,12 @@ public class BlockRequester {
         List<BlockEvaluationDisplay> remoteBlocks = getBlockInfos(server2);
 
         // sort increasing of insert time, not height for add to connected
-        Collections.sort(remoteBlocks, new Comparator<BlockEvaluationDisplay>() {
-            public int compare(BlockEvaluationDisplay p1, BlockEvaluationDisplay p2) {
-                return p1.getMilestoneLastUpdateTime() < p2.getMilestoneLastUpdateTime() ? -1 : 1;
-            }
-        });
-
+        /*
+         * Collections.sort(remoteBlocks, new
+         * Comparator<BlockEvaluationDisplay>() { public int
+         * compare(BlockEvaluationDisplay p1, BlockEvaluationDisplay p2) {
+         * return p1.getHeight() < p2.getHeight() ? -1 : 1; } });
+         */
         List<BlockEvaluationDisplay> localblocks = getBlockInfos();
         for (BlockEvaluationDisplay b : remoteBlocks) {
             BlockEvaluationDisplay s = find(localblocks, b);
@@ -118,8 +118,8 @@ public class BlockRequester {
                     requestParam.put("hashHex", b.getBlockHexStr());
                     byte[] data = OkHttp3Util.post(server2 + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                   // Optional<Block> block = 
-                            transactionService.addConnected(data, true, false);
+                    // Optional<Block> block =
+                    transactionService.addConnected(data, true, false);
                     // first can not be added and the stop do the rest
                     // if(block.equals(Optional.empty())) {
                     // break;
