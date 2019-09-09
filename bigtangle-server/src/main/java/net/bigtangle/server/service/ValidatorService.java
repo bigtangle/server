@@ -444,7 +444,7 @@ public class ValidatorService {
         resolveTemporaryConflicts(blocksToAdd);
 
         // Remove blocks and their approvers that have at least one input
-        // with its corresponding output not confirmed yet
+        // with its corresponding output no longer confirmed
         removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
@@ -988,7 +988,7 @@ public class ValidatorService {
                         valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
                     }
                 }
-                if (!checkOutputSigns(valueOut)) {
+                if (!checkTxOutputSigns(valueOut)) {
                     throw new InvalidTransactionException("Transaction output value negative");
                 }
 
@@ -1298,7 +1298,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
+        if (checkFormalTokenFields(throwExceptions, currentToken) == SolidityState.getFailState())
             return SolidityState.getFailState();
 
         // Check field correctness: amount
@@ -1531,12 +1531,12 @@ public class ValidatorService {
                         valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()), out.getValue());
                     }
                 }
-                if (!checkOutputSigns(valueOut))
+                if (!checkTxOutputSigns(valueOut))
                     throw new InvalidTransactionException("Transaction output value negative");
                 if (isCoinBase) {
                     // coinbaseValue = valueOut;
                 } else {
-                    if (!checkInputOutput(valueIn, valueOut))
+                    if (!checkTxInputOutput(valueIn, valueOut))
                         throw new InvalidTransactionException("Transaction input and output values do not match");
                     // totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
@@ -1583,7 +1583,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private boolean checkOutputSigns(Map<String, Coin> valueOut) {
+    private boolean checkTxOutputSigns(Map<String, Coin> valueOut) {
         for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
             // System.out.println(entry.getKey() + "/" + entry.getValue());
             if (entry.getValue().signum() < 0) {
@@ -1593,7 +1593,7 @@ public class ValidatorService {
         return true;
     }
 
-    private boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
+    private boolean checkTxInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
         for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
             if (!valueInput.containsKey(entry.getKey())) {
                 return false;
@@ -2092,7 +2092,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (checkTokenField(throwExceptions, currentToken) == SolidityState.getFailState())
+        if (checkFormalTokenFields(throwExceptions, currentToken) == SolidityState.getFailState())
             return SolidityState.getFailState();
 
         // Check field correctness: amount
@@ -2359,7 +2359,7 @@ public class ValidatorService {
         }
     }
 
-    private SolidityState checkTokenField(boolean throwExceptions, TokenInfo currentToken) {
+    private SolidityState checkFormalTokenFields(boolean throwExceptions, TokenInfo currentToken) {
         if (currentToken.getToken() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("getToken is null");
