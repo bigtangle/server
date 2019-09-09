@@ -6,7 +6,7 @@ package net.bigtangle.params;
 
 public enum ReqCmd {
 
-    getTip, saveBlock, getOutputs, getBalances, searchBlock, searchBlockByBlockHash, getBlock,blocksFromHeight, streamBlocks, getOutputsHistory,
+    getTip, saveBlock, getOutputs, getBalances, searchBlock, searchBlockByBlockHash, getBlock, blocksFromHeight, streamBlocks, getOutputsHistory,
 
     getTokens, getTokensAmount, getTokenById, getTokenSerials, getCalTokenIndex, updateTokenInfo,
 
@@ -20,7 +20,7 @@ public enum ReqCmd {
 
     regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
 
-    getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, findDomainPredecessorBlockHash, 
-    
-    exchangeSignTransaction, exchangeInfo, exchangeMultiSignTransaction;
+    getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, findDomainPredecessorBlockHash,
+
+    exchangeSignTransaction, exchangeInfo, exchangeMultiSignTransaction, saveExchange;
 }
