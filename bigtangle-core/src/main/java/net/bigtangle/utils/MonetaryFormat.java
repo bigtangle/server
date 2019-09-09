@@ -20,12 +20,10 @@
 package net.bigtangle.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.math.LongMath.checkedMultiply;
 import static com.google.common.math.LongMath.checkedPow;
-import static com.google.common.math.LongMath.divide;
 
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -348,15 +346,18 @@ public final class MonetaryFormat {
         return format(monetary.getValue(), smallestUnitExponent);
     }
     public String format(long value  , int decimal) { 
+       return  format(BigInteger.valueOf(value), decimal);
+    }
+    public String format(BigInteger value  , int decimal) { 
         // rounding
-        long satoshis = Math.abs(value);
+        BigInteger satoshis =  value.abs();
        
         // shifting
         long shiftDivisor = checkedPow(10, decimal - shift);
-        long numbers = satoshis / shiftDivisor;
-        long decimals = satoshis % shiftDivisor;
+        BigInteger numbers = satoshis .divide(BigInteger.valueOf(shiftDivisor));
+        BigInteger decimals = satoshis .remainder(BigInteger.valueOf( shiftDivisor));
         String decimalsStr="";
-        if(decimals >0) {
+        if(decimals.signum() >0) {
         // formatting
             decimalsStr = String.format(Locale.US, "%0" + (decimal - shift) + "d", decimals);
         }
@@ -377,7 +378,7 @@ public final class MonetaryFormat {
         if (str.length() > 0)
             str.insert(0, decimalMark);
         str.insert(0, numbers);
-        if (value< 0)
+        if (value.signum()< 0)
             str.insert(0, negativeSign);
         else if (positiveSign != 0)
             str.insert(0, positiveSign);
@@ -411,7 +412,7 @@ public final class MonetaryFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), NetworkParameters.BIGTANGLE_TOKENID);
+        return new Coin(parseValue(str, NetworkParameters.BIGTANGLE_DECIMAL), NetworkParameters.BIGTANGLE_TOKENID);
     }
 
     /**
@@ -422,10 +423,10 @@ public final class MonetaryFormat {
      *             if the string cannot be parsed for some reason
      */
     public Coin parse(String str, byte[] tokenid, int decimal) throws NumberFormatException {
-        return Coin.valueOf(parseValue(str, decimal), tokenid);
+        return new  Coin(parseValue(str, decimal), tokenid);
     }
 
-    private long parseValue(String str, int smallestUnitExponent) {
+    private BigInteger parseValue(String str, int smallestUnitExponent) {
         StringWriter s = new StringWriter();
         for (int i = 0; i < smallestUnitExponent; i++) {
             s.append("0");
@@ -461,10 +462,10 @@ public final class MonetaryFormat {
         for (char c : satoshis.toCharArray())
             if (!Character.isDigit(c))
                 throw new NumberFormatException("illegal character: " + c);
-        long value = Long.parseLong(satoshis); // Non-arabic digits allowed
+        BigInteger value = new BigInteger(satoshis); // Non-arabic digits allowed
                                                // here.
         if (first == negativeSign)
-            value = -value;
+            value =  value.negate();
         return value;
     }
 

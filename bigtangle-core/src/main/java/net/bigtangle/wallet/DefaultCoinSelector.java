@@ -18,6 +18,7 @@
 
 package net.bigtangle.wallet;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,32 +46,28 @@ public class DefaultCoinSelector implements CoinSelector {
         // TODO: Take in network parameters when instanatiated, and then test
         // against the current network. Or just have a boolean parameter for
         // "give me everything"
-      //  if (!target.equals(NetworkParameters.MAX_MONEY)) {
-         //   sortOutputs(sortedOutputs);
-      //  }
+        // if (!target.equals(NetworkParameters.MAX_MONEY)) {
+        // sortOutputs(sortedOutputs);
+        // }
         // Now iterate over the sorted outputs until we have got as close to the
         // target as possible or a little
         // bit over (excessive value will be change).
-        long total = 0;
+        BigInteger total = BigInteger.ZERO;
         for (TransactionOutput output : sortedOutputs) {
-            if (total >= target.getValue())
+            if (total.compareTo(target.getValue()) > 0)
                 break;
             // Only pick chain-included transactions, or transactions that are
             // ours and pending.
-             
+
             if (Arrays.equals(target.getTokenid(), output.getValue().getTokenid())) {
                 selected.add(output);
-                total += output.getValue().getValue();
+                total = total.add(output.getValue().getValue());
             }
         }
         // Total may be lower than target here, if the given candidates were
         // insufficient to create to requested
         // transaction.
-        return new CoinSelection(Coin.valueOf(total, target.getTokenid()), selected);
+        return new CoinSelection( new Coin (total, target.getTokenid()), selected);
     }
- 
 
- 
-
-   
 }

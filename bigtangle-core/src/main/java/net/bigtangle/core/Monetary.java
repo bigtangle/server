@@ -20,6 +20,7 @@
 package net.bigtangle.core;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 /**
  * Classes implementing this interface represent a monetary value, such as a Bitcoin or fiat amount.
@@ -30,7 +31,7 @@ public interface Monetary extends Serializable {
     /**
      * Returns the number of "smallest units" of this monetary value. For Bitcoin, this would be the number of satoshis.
      */
-    long getValue();
+   BigInteger getValue();
 
     int signum();
 }

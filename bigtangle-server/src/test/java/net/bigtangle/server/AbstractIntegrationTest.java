@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,6 +88,7 @@ import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -220,7 +222,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-        long amount = coinbase.getValue();
+        BigInteger amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
                 amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -295,7 +297,7 @@ public abstract class AbstractIntegrationTest {
         Coin amount = Coin.valueOf(sellAmount, tokenId);
         List<UTXO> outputs = getBalance(false, fromKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo( amount.getValue())> 0).collect(Collectors.toList());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, beneficiary));
         tx.addOutput(
@@ -373,7 +375,7 @@ public abstract class AbstractIntegrationTest {
         Coin amount = Coin.valueOf(sellAmount, tokenId);
         List<UTXO> outputs = getBalance(false, beneficiary).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo( amount.getValue())>0).collect(Collectors.toList());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -429,7 +431,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> outputs = getBalance(false, beneficiary).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
                         .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-                .filter(out -> out.getValue().getValue() >= amount.getValue()).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo( amount.getValue())>0).collect(Collectors.toList());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -550,7 +552,7 @@ public abstract class AbstractIntegrationTest {
             String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
             if (!hashMap.containsKey(tokenId))
                 hashMap.put(tokenId, 0L);
-            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
+            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue().longValue());
         }
 
         assertEquals(amount == 0 ? null : amount, hashMap.get(tokenId_));
@@ -582,7 +584,7 @@ public abstract class AbstractIntegrationTest {
             String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
             if (!hashMap.containsKey(tokenId))
                 hashMap.put(tokenId, 0L);
-            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue());
+            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue().longValue());
         }
     }
 
@@ -651,7 +653,7 @@ public abstract class AbstractIntegrationTest {
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction tx = new Transaction(networkParameters);
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-        if (spendableOutput.getValue().subtract(amount).getValue() != 0)
+        if (spendableOutput.getValue().subtract(amount).getValue().signum() != 0)
             tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount),
                     genesiskey));
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
@@ -740,7 +742,7 @@ public abstract class AbstractIntegrationTest {
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (withZero) {
                 listUTXO.add(utxo);
-            } else if (utxo.getValue().getValue() > 0) {
+            } else if (utxo.getValue().getValue().signum() > 0) {
                 listUTXO.add(utxo);
             }
         }
@@ -774,7 +776,7 @@ public abstract class AbstractIntegrationTest {
     protected void testInitTransferWallet() throws Exception {
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), 33333*Coin.COIN.getValue());
+        giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(), MonetaryFormat.FIAT.noCode().parse("33333").getValue().longValue());
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
@@ -786,7 +788,7 @@ public abstract class AbstractIntegrationTest {
         String tokenid = Utils.HEX.encode(pubKey);
 
         Coin basecoin = Coin.valueOf(77777L, pubKey);
-        long amount = basecoin.getValue();
+        BigInteger amount = basecoin.getValue();
 
         Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -852,7 +854,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
-            if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue() == u.getValue().getValue()) {
+            if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue() .equals( u.getValue().getValue())) {
                 myutxo = u;
                 break;
             }
@@ -874,8 +876,8 @@ public abstract class AbstractIntegrationTest {
 
         milestoneService.update();
 
-        int amount = 2000000;
-        Coin basecoin = Coin.valueOf(amount, tokenid);
+        BigInteger amount = new BigInteger("200000");
+        Coin basecoin = new Coin(amount, tokenid);
 
         // TokenInfo tokenInfo = new TokenInfo();
 
@@ -986,8 +988,7 @@ public abstract class AbstractIntegrationTest {
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = keys.get(1).getPublicKeyAsHex();
 
-        int amount = 678900000;
-        Coin basecoin = Coin.valueOf(amount, tokenid);
+        Coin basecoin = MonetaryFormat.FIAT.noCode().parse("678900000");
 
         // TokenInfo tokenInfo = new TokenInfo();
 
@@ -1000,7 +1001,7 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, basecoin.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
@@ -1133,7 +1134,7 @@ public abstract class AbstractIntegrationTest {
 
         // TODO domainname create token 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, amount, false, 0, domainname, networkParameters.getGenesisBlock().getHashAsString());
+                signnumber, tokenindex_, basecoin.getValue(), false, 0, domainname, networkParameters.getGenesisBlock().getHashAsString());
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 

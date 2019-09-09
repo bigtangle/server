@@ -11,6 +11,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -106,7 +107,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -132,7 +133,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -292,7 +293,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
+        BigInteger amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -558,7 +559,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -738,7 +739,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
+        BigInteger amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -1018,7 +1019,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -1318,7 +1319,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -1338,7 +1339,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
-            long amount = coinbase.getValue();
+            BigInteger amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
@@ -1467,7 +1468,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         String testTokenId = testKey.getPublicKeyAsHex();
 
         // Open sell order for test tokens
-        Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 77777, addedBlocks);
+        Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 7, addedBlocks);
 
         // Execute order matching
         Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
@@ -1477,7 +1478,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block reclaimBlock = makeAndConfirmReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, betweenBlock);
 
         // Generate reclaim-dependent transaction
-        Block reclaimSpender = makeAndConfirmTransaction(testKey, testKey, testTokenId, 77776, addedBlocks,
+        Block reclaimSpender = makeAndConfirmTransaction(testKey, testKey, testTokenId, 6, addedBlocks,
                 reclaimBlock);
 
         // Unconfirm reclaim

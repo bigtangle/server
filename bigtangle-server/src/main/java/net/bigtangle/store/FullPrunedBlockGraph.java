@@ -1406,7 +1406,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             Coin offer = validatorService.countBurnedToken(block);
             Side side = offer.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
 
-            OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue(),
+            OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
                     offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
                     reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0, reqInfo.getValidFromTime(),
                     side.name(), reqInfo.getBeneficiaryAddress());

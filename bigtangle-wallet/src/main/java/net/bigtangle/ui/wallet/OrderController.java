@@ -328,9 +328,9 @@ public class OrderController extends ExchangeController {
         // requestParam.put("market", market4searchTextField.getText());
 
         requestParam.put("state", stateTG.getSelectedToggle().getUserData().toString());
-        
-     boolean  matched= "publish".equals(stateTG.getSelectedToggle().getUserData().toString()) ;
-        
+
+        boolean matched = "publish".equals(stateTG.getSelectedToggle().getUserData().toString());
+
         ObservableList<Map<String, Object>> orderData = FXCollections.observableArrayList();
 
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -345,8 +345,8 @@ public class OrderController extends ExchangeController {
             }
             requestParam.put("addresses", address);
         }
-        
-        Main.walletAppKit.wallet(). getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
+
+        Main.walletAppKit.wallet().getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
 
         getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
         orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
@@ -427,8 +427,6 @@ public class OrderController extends ExchangeController {
             }
         }
     }
- 
- 
 
     public void initMarketComboBox() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
@@ -597,11 +595,11 @@ public class OrderController extends ExchangeController {
         }
 
         if (typeStr.equals("sell")) {
-            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
-                    totime, fromtime);
+            Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue().longValue(),
+                    quantity.getValue().longValue(), totime, fromtime);
         } else {
-            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue(), quantity.getValue(),
-                    totime, fromtime);
+            Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue().longValue(),
+                    quantity.getValue().longValue(), totime, fromtime);
         }
 
         overlayUI.done();
@@ -621,9 +619,9 @@ public class OrderController extends ExchangeController {
         Coin price = MonetaryFormat.FIAT.noCode().parse(this.limitTextField.getText());
         long amount = quantity;
         if (!typeStr.equals("sell")) {
-            amount = quantity * price.getValue();
+            amount = quantity * price.getValue().longValue();
         }
-        if (coin.getValue() < amount) {
+        if (coin.getValue().longValue() < amount) {
             GuiUtils.informationalAlert(Main.getText("ex_c_m"), Main.getText("o_c_d"));
             return;
         }
@@ -675,7 +673,7 @@ public class OrderController extends ExchangeController {
     }
 
     public void search(ActionEvent event) {
-    
+
         try {
             initTable();
         } catch (Exception e) {

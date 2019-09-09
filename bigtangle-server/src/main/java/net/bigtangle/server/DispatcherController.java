@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -13,11 +15,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,12 +109,15 @@ public class DispatcherController {
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
-    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] bodyByte,
+    public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
+        byte[] bodyByte = new byte[0];
         try {
 
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
-                    bodyByte.length);
+                    contentBytes.length);
+
+            bodyByte = decompress(contentBytes);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             if (serverConfiguration.getPermissioned())
                 checkPermission(httpServletResponse, httprequest);
@@ -201,8 +209,9 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("hashHex") != null) {
                     Block block = this.blockService.getBlock(Sha256Hash.wrap(request.get("hashHex").toString()));
-                   if(block!=null) this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
-                }else {
+                    if (block != null)
+                        this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+                } else {
                     throw new NoBlockException();
                 }
             }
@@ -437,7 +446,7 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 final String domainname = (String) request.get("domainname");
-               AbstractResponse response = this.tokenDomainnameService
+                AbstractResponse response = this.tokenDomainnameService
                         .queryDomainnameTokenPredecessorBlockHash(domainname);
                 this.outPrintJSONString(httpServletResponse, response);
             }
@@ -449,7 +458,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case exchangeMultiSignTransaction: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -464,6 +473,14 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case saveExchange: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.saveExchange(request);
+
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -495,7 +512,7 @@ public class DispatcherController {
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
             exception.printStackTrace(new PrintWriter(sw));
- 
+
             resp.setMessage(sw.toString());
             this.outPrintJSONString(httpServletResponse, resp);
         }
@@ -620,29 +637,29 @@ public class DispatcherController {
 
     }
 
+    public void gzipBinary(HttpServletResponse httpServletResponse, AbstractResponse response) throws Exception {
+        GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
+
+        servletOutputStream.write(Json.jsonmapper().writeValueAsBytes(response));
+        servletOutputStream.flush();
+        servletOutputStream.close();
+    }
+
     public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
         httpServletResponse.setCharacterEncoding("UTF-8");
-        // ServletOutputStream servletOutputStream =
-        // httpServletResponse.getOutputStream();
+
         HashMap<String, Object> result = new HashMap<String, Object>();
         result.put("dataHex", Utils.HEX.encode(data));
-        /*
-         * servletOutputStream.write(data); servletOutputStream.flush();
-         * servletOutputStream.close();
-         */
-        PrintWriter printWriter = httpServletResponse.getWriter();
-        printWriter.append(Json.jsonmapper().writeValueAsString(result));
-        printWriter.flush();
-        printWriter.close();
+        GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
+
+        servletOutputStream.write(Json.jsonmapper().writeValueAsBytes(result));
+        servletOutputStream.flush();
+        servletOutputStream.close();
     }
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
             throws Exception {
-        httpServletResponse.setCharacterEncoding("UTF-8");
-        PrintWriter printWriter = httpServletResponse.getWriter();
-        printWriter.append(Json.jsonmapper().writeValueAsString(response));
-        printWriter.flush();
-        printWriter.close();
+        gzipBinary(httpServletResponse, response);
     }
 
     // server may accept only block from his server
@@ -655,5 +672,29 @@ public class DispatcherController {
         if (serverConfiguration.getMyserverblockOnly()) {
             blockService.deleteMyserverblocks(block.getPrevBlockHash());
         }
+    }
+
+    public static byte[] decompress(byte[] contentBytes) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
+    }
+
+    public static byte[] compress(byte[] contentBytes) {
+        ByteArrayInputStream in = new ByteArrayInputStream(contentBytes);
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            GZIPOutputStream gis = new GZIPOutputStream(out);
+
+            IOUtils.copy(in, gis);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

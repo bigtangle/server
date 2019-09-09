@@ -7,6 +7,7 @@ package net.bigtangle.ui.wallet;
 import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -275,7 +276,7 @@ public class TokenController extends TokenBaseController {
         stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenid1.setValue(tokenid);
         String amountString = MonetaryFormat.FIAT.noCode()
-                .format(Coin.valueOf(tokenInfo.getToken().getAmount(), tokenid), tokenInfo.getToken().getDecimals())
+                .format( new Coin(tokenInfo.getToken().getAmount(), tokenid), tokenInfo.getToken().getDecimals())
                 .toString();
         stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
@@ -534,7 +535,7 @@ public class TokenController extends TokenBaseController {
             if (domainnametypeCheckBox.selectedProperty().get()) {
                 List<ECKey> walletKeys = new ArrayList<>();
                 walletKeys.add(outKey);
-                int amount = Integer.valueOf(stockAmount.getText());
+                BigInteger amount = new BigInteger(stockAmount.getText());
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, tokenid.getValue().trim(),
                         stockName.getText().trim(), stockUrl.getText().trim(), Main.getAesKey(), amount,
                         stockDescription.getText().trim());
@@ -549,7 +550,7 @@ public class TokenController extends TokenBaseController {
 
                 Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount.getText(),
                         Utils.HEX.decode(tokenid.getValue()), Integer.parseInt(decimalsTF.getText()));
-                long amount = basecoin.getValue();
+                
 
                 HashMap<String, String> requestParam00 = new HashMap<String, String>();
                 requestParam00.put("tokenid", tokenid.getValue().trim());
@@ -561,7 +562,7 @@ public class TokenController extends TokenBaseController {
                 String prevblockhash = tokenIndexResponse.getBlockhash();
 
                 Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenid.getValue().trim(),
-                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, amount, true,
+                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, basecoin.getValue(), true,
                         Integer.parseInt(decimalsTF.getText()), null);
                 tokens.setDomainName(stockUrl.getText().trim());
                 tokenInfo.setToken(tokens);
@@ -803,7 +804,7 @@ public class TokenController extends TokenBaseController {
 
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid1.getValue().trim(),
                         stockName1.getText().trim(), urlTF.getText().trim(), Main.getAesKey(),
-                        Integer.valueOf(stockAmount1.getText()), stockDescription1.getText().trim());
+                        new BigInteger(stockAmount1.getText()), stockDescription1.getText().trim());
 
                 for (int i = 1; i < walletKeys.size(); i++) {
                     ECKey sighKey = walletKeys.get(i);
@@ -976,9 +977,9 @@ public class TokenController extends TokenBaseController {
         Long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        long amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()),
+          BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()),
                 Integer.parseInt(decimalsTF.getText())).getValue();
-        Coin basecoin = Coin.valueOf(amount, Main.getString(map.get("tokenHex")).trim());
+        Coin basecoin = new Coin(amount, Main.getString(map.get("tokenHex")).trim());
 
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),

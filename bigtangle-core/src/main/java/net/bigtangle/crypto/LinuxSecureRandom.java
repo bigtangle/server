@@ -31,9 +31,18 @@ import java.security.*;
  * non-seed bytes, they are all from the same source.
  */
 public class LinuxSecureRandom extends SecureRandomSpi {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final FileInputStream urandom;
 
     private static class LinuxSecureRandomProvider extends Provider {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public LinuxSecureRandomProvider() {
             super("LinuxSecureRandom", 1.0, "A Linux specific random number provider that uses /dev/urandom");
             put("SecureRandom.LinuxSecureRandom", LinuxSecureRandom.class.getName());

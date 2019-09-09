@@ -29,6 +29,10 @@ import net.bigtangle.core.Transaction;
  * some peers may never do so.
  */
 public class RejectedTransactionException extends Exception {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private Transaction tx;
     private RejectMessage rejectMessage;
 

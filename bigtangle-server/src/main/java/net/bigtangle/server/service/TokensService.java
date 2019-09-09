@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +49,7 @@ public class TokensService {
     public GetTokensResponse getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         list.addAll(store.getTokensList(name));
-        Map<String, Long> map = store.getTokenAmountMap(name);
+        Map<String, BigInteger> map = store.getTokenAmountMap(name);
         return GetTokensResponse.create(list, map);
     }
 

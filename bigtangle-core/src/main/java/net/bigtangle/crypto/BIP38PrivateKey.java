@@ -47,6 +47,10 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public transient NetworkParameters params;
     public final boolean ecMultiply;
     public final boolean compressed;
@@ -55,6 +59,11 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     public final byte[] content;
 
     public static final class BadPassphraseException extends Exception {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
     }
 
     /**

@@ -4,12 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.core;
 
+import java.math.BigInteger;
+
 public class Token implements java.io.Serializable {
 
     private static final long serialVersionUID = 6992138619113601243L;
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, int signnumber, long tokenindex, long amount, boolean tokenstop, int decimals,
+            String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop, int decimals,
             String predecessingDomainBlockHash) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
@@ -18,7 +20,7 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
+            String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             int decimals, String domainname, String predecessingDomainBlockHash) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
@@ -60,7 +62,7 @@ public class Token implements java.io.Serializable {
     private String prevblockhash;
 
     private String blockhash;
-    private long amount;
+    private BigInteger amount;
     private int decimals = 0; // number of decimals for the token, default
                               // integer
     // classification of a token, can be null, optional for query only
@@ -117,11 +119,11 @@ public class Token implements java.io.Serializable {
         this.tokenindex = tokenindex;
     }
 
-    public long getAmount() {
+    public BigInteger getAmount() {
         return amount;
     }
 
-    public void setAmount(long amount) {
+    public void setAmount(BigInteger amount) {
         this.amount = amount;
     }
 
@@ -238,7 +240,7 @@ public class Token implements java.io.Serializable {
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
-            String description, int signnumber, long tokenindex, long amount, boolean tokenstop,
+            String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
             int decimals, final String domainName, final String domainPredecessorBlockHash) {
         Token tokens = new Token();
@@ -273,7 +275,7 @@ public class Token implements java.io.Serializable {
 
         tokens.tokentype = TokenType.market.ordinal();
         tokens.signnumber = 1;
-        tokens.amount = 0;
+        tokens.amount = BigInteger.ZERO;
         tokens.tokenindex = 0;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;
@@ -293,7 +295,7 @@ public class Token implements java.io.Serializable {
         tokens.tokenstop = true;
         tokens.tokentype = TokenType.subtangle.ordinal();
         tokens.signnumber = 1;
-        tokens.amount = 0;
+        tokens.amount = BigInteger.ZERO;
         tokens.tokenindex = 1;
         tokens.confirmed = confirmed;
         tokens.prevblockhash = prevblockhash;

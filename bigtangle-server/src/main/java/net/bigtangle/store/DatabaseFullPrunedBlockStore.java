@@ -964,7 +964,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             //create domain name bc
             Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "01",
-                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, 1, true,
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, BigInteger.valueOf(1), true,
                     0, "bc", "");
             insertToken(params.getGenesisBlock().getHashAsString(), bc);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
@@ -1360,7 +1360,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-            Coin coinvalue = Coin.valueOf(results.getLong(1), results.getString(7));
+            Coin coinvalue = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString(7));
             byte[] scriptBytes = results.getBytes(2);
             boolean coinbase = results.getBoolean(3);
             String address = results.getString(4);
@@ -1398,7 +1398,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(1, out.getTxHash().getBytes());
             // index is actually an unsigned int
             s.setLong(2, out.getIndex());
-            s.setLong(3, out.getValue().getValue());
+            s.setBytes(3, out.getValue().getValue().toByteArray());
             s.setBytes(4, out.getScript().getProgram());
             s.setString(5, out.getAddress());
             s.setLong(6, out.getScript().getScriptType().ordinal());
@@ -1550,7 +1550,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(9));
+                    Coin amount = new Coin(new BigInteger(rs.getBytes("coinvalue")), rs.getString(9));
                     byte[] scriptBytes = rs.getBytes(3);
                     int index = rs.getInt(4);
                     boolean coinbase = rs.getBoolean(5);
@@ -1601,7 +1601,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-                    Coin amount = Coin.valueOf(rs.getLong(2), rs.getString(9));
+                    Coin amount = new Coin(new BigInteger(rs.getBytes("coinvalue")), rs.getString("tokenid"));
                     byte[] scriptBytes = rs.getBytes(3);
                     int index = rs.getInt(4);
                     boolean coinbase = rs.getBoolean(5);
@@ -1790,7 +1790,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 Sha256Hash hash = Sha256Hash.wrap(rs.getBytes("hash"));
-                Coin amount = Coin.valueOf(rs.getLong("coinvalue"), rs.getString("tokenid"));
+                Coin amount = new Coin(new BigInteger(rs.getBytes("coinvalue")), rs.getString("tokenid"));
                 byte[] scriptBytes = rs.getBytes("scriptbytes");
                 int index = rs.getInt("outputindex");
                 boolean coinbase = rs.getBoolean("coinbase");
@@ -2770,7 +2770,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
                 tokens.setTokenindex(resultSet.getInt("tokenindex"));
-                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setAmount( new BigInteger(resultSet.getBytes("amount")));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setDomainName(resultSet.getString("domainname"));
@@ -2819,7 +2819,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
                 tokens.setTokenindex(resultSet.getInt("tokenindex"));
-                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setAmount( new BigInteger(resultSet.getBytes("amount")));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
                 tokens.setDomainName(resultSet.getString("domainname"));
@@ -2853,8 +2853,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException {
-        Map<String, Long> map = new HashMap<String, Long>();
+    public Map<String, BigInteger> getTokenAmountMap(String name) throws BlockStoreException {
+        Map<String, BigInteger> map = new HashMap<String, BigInteger>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2863,7 +2863,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
-                map.put(resultSet.getString("tokenid"), resultSet.getLong("amount"));
+                map.put(resultSet.getString("tokenid"), new BigInteger(resultSet.getBytes("amount")));
 
             }
             return map;
@@ -2899,7 +2899,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
                 tokens.setTokenindex(resultSet.getInt("tokenindex"));
-                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setAmount(new BigInteger(resultSet.getBytes("amount")));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
 
@@ -2940,7 +2940,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         boolean confirmed = false;
         String tokenid = token.getTokenid();
         long tokenindex = token.getTokenindex();
-        long amount = token.getAmount();
+         ;
         String tokenname = token.getTokenname();
         String description = token.getDescription();
 
@@ -2953,13 +2953,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (token.getTokenKeyValues() != null) {
             tokenkeyvalues = token.getTokenKeyValues().toByteArray();
         }
-        this.insertToken(blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description,
+        this.insertToken(blockhash, confirmed, tokenid, tokenindex,  token.getAmount(), tokenname, description,
                 token.getDomainName(), signnumber, tokentype, tokenstop, prevblockhash, tokenkeyvalues,
                 token.getRevoked(), token.getLanguage(), token.getClassification(), token.getDecimals(),
                 token.getDomainPredecessorBlockHash());
     }
 
-    public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, long amount,
+    public void insertToken(String blockhash, boolean confirmed, String tokenid, long tokenindex, BigInteger amount,
             String tokenname, String description, String domainname, int signnumber, int tokentype, boolean tokenstop,
             String prevblockhash, byte[] tokenkeyvalues, Boolean revoked, String language, String classification,
             int decimals, String domainPredecessorBlockHash) throws BlockStoreException {
@@ -2972,7 +2972,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBoolean(2, confirmed);
             preparedStatement.setString(3, tokenid);
             preparedStatement.setLong(4, tokenindex);
-            preparedStatement.setLong(5, amount);
+            preparedStatement.setBytes(5, amount.toByteArray());
             preparedStatement.setString(6, tokenname);
             preparedStatement.setString(7, description);
             preparedStatement.setString(8, domainname);
@@ -3599,7 +3599,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
                 tokens.setTokenindex(resultSet.getInt("tokenindex"));
-                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setAmount(new BigInteger(resultSet.getBytes("amount")));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
 
@@ -3646,7 +3646,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 tokens.setConfirmed(resultSet.getBoolean("confirmed"));
                 tokens.setTokenid(resultSet.getString("tokenid"));
                 tokens.setTokenindex(resultSet.getInt("tokenindex"));
-                tokens.setAmount(resultSet.getLong("amount"));
+                tokens.setAmount(new BigInteger(resultSet.getBytes("amount")));
                 tokens.setTokenname(resultSet.getString("tokenname"));
                 tokens.setDescription(resultSet.getString("description"));
 
@@ -4691,7 +4691,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(2, payMultiSign.getTokenid());
             preparedStatement.setString(3, payMultiSign.getToaddress());
             preparedStatement.setBytes(4, payMultiSign.getBlockhash());
-            preparedStatement.setLong(5, payMultiSign.getAmount());
+            preparedStatement.setBytes(5, payMultiSign.getAmount().toByteArray());
             preparedStatement.setLong(6, payMultiSign.getMinsignnumber());
             preparedStatement.setString(7, payMultiSign.getOutputHashHex());
             preparedStatement.setLong(8, payMultiSign.getOutputindex());
@@ -4798,7 +4798,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             PayMultiSign payMultiSign = new PayMultiSign();
-            payMultiSign.setAmount(resultSet.getLong("amount"));
+            payMultiSign.setAmount(new BigInteger(resultSet.getBytes("amount")));
             payMultiSign.setBlockhash(resultSet.getBytes("blockhash"));
             payMultiSign.setMinsignnumber(resultSet.getLong("minsignnumber"));
             payMultiSign.setOrderid(resultSet.getString("orderid"));
@@ -4898,7 +4898,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             List<PayMultiSign> list = new ArrayList<PayMultiSign>();
             while (resultSet.next()) {
                 PayMultiSign payMultiSign = new PayMultiSign();
-                payMultiSign.setAmount(resultSet.getLong("amount"));
+                payMultiSign.setAmount(new BigInteger(resultSet.getBytes("amount")));
                 payMultiSign.setBlockhash(resultSet.getBytes("blockhash"));
                 payMultiSign.setMinsignnumber(resultSet.getLong("minsignnumber"));
                 payMultiSign.setOrderid(resultSet.getString("orderid"));
@@ -4968,7 +4968,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 return null;
             }
             // Parse it.
-            Coin coinvalue = Coin.valueOf(results.getLong(1), results.getString(7));
+            Coin amount = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString("tokenid"));
             byte[] scriptBytes = results.getBytes(2);
             boolean coinbase = results.getBoolean(3);
             String address = results.getString(4);
@@ -4983,7 +4983,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // long outputindex = results.getLong("outputindex");
 
-            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, coinvalue, coinbase, new Script(scriptBytes),
+            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, amount, coinbase, new Script(scriptBytes),
                     address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
                     results.getLong("spendpendingtime"));
             return utxo;
@@ -5679,7 +5679,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 // Parse it.
-                Coin coinvalue = Coin.valueOf(resultSet.getLong(1), resultSet.getString(7));
+                Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), resultSet.getString("tokenid"));
+                
                 byte[] scriptBytes = resultSet.getBytes(2);
                 boolean coinbase = resultSet.getBoolean(3);
                 String address = resultSet.getString(4);
@@ -5693,7 +5694,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 String tokenid = resultSet.getString("tokenid");
                 byte[] hash = resultSet.getBytes("hash");
                 long index = resultSet.getLong("outputindex");
-                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes),
+                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, amount, coinbase, new Script(scriptBytes),
                         address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
                         resultSet.getLong("spendpendingtime"));
                 result.add(txout);
@@ -6092,7 +6093,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 // Parse it.
-                Coin coinvalue = Coin.valueOf(resultSet.getLong(1), resultSet.getString(7));
+                Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), resultSet.getString("tokenid"));
+                
                 byte[] scriptBytes = resultSet.getBytes(2);
                 boolean coinbase = resultSet.getBoolean(3);
                 String address = resultSet.getString(4);
@@ -6106,7 +6108,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 String tokenid = resultSet.getString("tokenid");
                 byte[] hash = resultSet.getBytes("hash");
                 long index = resultSet.getLong("outputindex");
-                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, coinvalue, coinbase, new Script(scriptBytes),
+                UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, amount, coinbase, new Script(scriptBytes),
                         address, blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
                         resultSet.getLong("spendpendingtime"));
                 result.add(txout);

@@ -1,5 +1,6 @@
 package net.bigtangle.server;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class WalletDomainNameTest extends AbstractIntegrationTest {
         // don't use the first key which is in the wallet
         ECKey signKey = this.walletKeys.get(3);
         this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, domainname,
-                domainPredecessorBlockHash, aesKey, 6789000, "", 3);
+                domainPredecessorBlockHash, aesKey, BigInteger.valueOf(6789000), "", 3);
 
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(2), aesKey);

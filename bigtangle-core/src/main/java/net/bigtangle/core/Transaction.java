@@ -388,11 +388,11 @@ public class Transaction extends ChildMessage {
      * 
      * @return the sum of the outputs regardless of who owns them.
      */
-    public long getOutputSum() {
-        long totalOut = 0;
+    public BigInteger getOutputSum() {
+        BigInteger totalOut = BigInteger.ZERO;
 
         for (TransactionOutput output : outputs) {
-            totalOut = totalOut + output.getValue().getValue();
+            totalOut = totalOut .add(  output.getValue().getValue());
         }
 
         return totalOut;
@@ -556,10 +556,12 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            long t = readVarInt(8);
-            long scriptLen = readVarInt((int) t);
-            optimalEncodingMessageSize += 8 + 8 + 8 + VarInt.sizeOf(scriptLen) + scriptLen + VarInt.sizeOf(t) + t;
-            cursor += scriptLen;
+//            long t = readVarInt(8);
+//            long scriptLen = readVarInt((int) t);
+//            optimalEncodingMessageSize += 8 + 8 + 8 + VarInt.sizeOf(scriptLen) + scriptLen + VarInt.sizeOf(t) + t;
+//            cursor += scriptLen;
+            cursor += output.length;
+            optimalEncodingMessageSize += output.length;
         }
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;

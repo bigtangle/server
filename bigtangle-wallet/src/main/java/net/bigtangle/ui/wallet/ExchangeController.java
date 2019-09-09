@@ -301,10 +301,16 @@ public class ExchangeController {
             } else if (fromSign == 0 && calculatedAddressHit(fromAddress)) {
                 signtype = "from";
             }
-            byte[] buf = this.makeSignTransactionBuffer(fromAddress,
-                    getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()), true), toAddress,
-                    getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()), false),
-                    mTransaction.bitcoinSerialize());
+            int fromDecimals = 0;
+            int toDecimals = 0;
+            try {
+                fromDecimals = Main.getTokenById(fromTokenHex).getDecimals();
+                toDecimals = Main.getTokenById(toTokenHex).getDecimals();
+            } catch (Exception e) {
+
+            }
+            byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, fromDecimals),
+                    toAddress, getCoin(toAmount, toTokenHex, toDecimals), mTransaction.bitcoinSerialize());
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             String orderid = stringValueOf(mOrderid);
             requestParam.put("orderid", orderid);
@@ -396,10 +402,17 @@ public class ExchangeController {
         String toAmount = toAmountTextField.getText();
 
         this.mOrderid = UUIDUtil.randomUUID();
+        int fromDecimals = 0;
+        int toDecimals = 0;
+        try {
+            fromDecimals = Main.getTokenById(fromTokenHex).getDecimals();
+            toDecimals = Main.getTokenById(toTokenHex).getDecimals();
+        } catch (Exception e) {
+
+        }
         // this.mTokenid = fromTokenHex;
-        byte[] buf = this.makeSignTransactionBuffer(fromAddress,
-                getCoin(fromAmount, fromTokenHex, !"0".equals(fromDecimalsTF.getText()), true), toAddress,
-                getCoin(toAmount, toTokenHex, !"0".equals(toDecimalsTF.getText()), false));
+        byte[] buf = this.makeSignTransactionBuffer(fromAddress, getCoin(fromAmount, fromTokenHex, fromDecimals),
+                toAddress, getCoin(toAmount, toTokenHex, toDecimals));
         if (buf == null) {
             return;
         }
@@ -644,15 +657,9 @@ public class ExchangeController {
         overlayUI.done();
     }
 
-    public Coin getCoin(String toAmount, String toTokenHex, boolean decimal, boolean fromflag) {
-        if (decimal) {
-            int d = 0;
-            if (fromflag) {
-                d = Integer.parseInt(fromDecimalsTF.getText());
-            } else {
-                d = Integer.parseInt(toDecimalsTF.getText());
-            }
-            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex), d);
+    public Coin getCoin(String toAmount, String toTokenHex, int decimal) {
+        if (decimal > 0) {
+            return MonetaryFormat.FIAT.noCode().parse(toAmount, Utils.HEX.decode(toTokenHex), decimal);
         } else {
             return Coin.valueOf(Long.parseLong(toAmount), Utils.HEX.decode(toTokenHex));
         }

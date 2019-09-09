@@ -27,6 +27,10 @@ import java.util.Arrays;
  * different chains, an operation that is guaranteed to destroy the money.
  */
 public class WrongNetworkException extends AddressFormatException {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     /** The version code that was provided in the address. */
     public int verCode;
     /** The list of acceptable versions that were expected given the addresses network parameters. */

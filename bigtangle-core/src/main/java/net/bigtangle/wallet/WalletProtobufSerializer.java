@@ -28,9 +28,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.TextFormat;
@@ -74,7 +71,7 @@ import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
  * @author Andreas Schildbach
  */
 public class WalletProtobufSerializer {
-    private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
+   // private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
     /**
      * Current version used for serializing wallets. A version higher than this
      * is considered from the future.

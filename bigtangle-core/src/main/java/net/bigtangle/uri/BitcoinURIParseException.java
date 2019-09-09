@@ -29,6 +29,11 @@ package net.bigtangle.uri;
  * to the user other than as part of a "general failure to parse" response.</p>
  */
 public class BitcoinURIParseException extends Exception {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public BitcoinURIParseException(String s) {
         super(s);
     }

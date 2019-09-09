@@ -10,14 +10,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
@@ -120,7 +118,8 @@ public class BlockRequester {
                     requestParam.put("hashHex", b.getBlockHexStr());
                     byte[] data = OkHttp3Util.post(server2 + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    Optional<Block> block = transactionService.addConnected(data, true, false);
+                   // Optional<Block> block = 
+                            transactionService.addConnected(data, true, false);
                     // first can not be added and the stop do the rest
                     // if(block.equals(Optional.empty())) {
                     // break;

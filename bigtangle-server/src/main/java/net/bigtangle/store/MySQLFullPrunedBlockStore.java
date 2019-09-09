@@ -66,7 +66,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    blockhash varbinary(32) NOT NULL,\n" 
             + "    hash varbinary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
-            + "    coinvalue bigint NOT NULL,\n"
+            + "    coinvalue mediumblob NOT NULL,\n"
             + "    scriptbytes mediumblob NOT NULL,\n" 
             + "    toaddress varchar(255),\n"
             + "    addresstargetable bigint,\n" 
@@ -169,7 +169,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     		+ "    confirmed boolean NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" 
     		+ "    tokenindex bigint NOT NULL   ,\n"
-            + "    amount bigint(20) ,\n" 
+            + "    amount mediumblob ,\n" 
             + "    tokenname varchar(60) ,\n" 
             + "    description varchar(500) ,\n"
             + "    domainname varchar(100) ,\n" 
@@ -205,7 +205,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    toaddress varchar(255) NOT NULL,\n" + "    blockhash mediumblob NOT NULL,\n"
-            + "    amount bigint(20) ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
+            + "    amount mediumblob ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
             + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n)";
 
     private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"

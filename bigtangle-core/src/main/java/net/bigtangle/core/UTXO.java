@@ -23,8 +23,6 @@ import java.beans.Transient;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
@@ -269,28 +267,7 @@ public class UTXO {
         UTXO other = (UTXO) o;
         return getIndex() == other.getIndex() && getTxHash().equals(other.getTxHash());
     }
-
-    public void serializeToStream(OutputStream bos) throws IOException {
-        Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.getValue()), bos);
-
-        byte[] scriptBytes = script.getProgram();
-        bos.write(0xFF & scriptBytes.length);
-        bos.write(0xFF & scriptBytes.length >> 8);
-        bos.write(0xFF & (scriptBytes.length >> 16));
-        bos.write(0xFF & (scriptBytes.length >> 24));
-        bos.write(scriptBytes);
-
-        bos.write(hash.getBytes());
-        Utils.uint32ToByteStreamLE(index, bos);
-
-//        bos.write((int) (0xFF & (height)));
-//        bos.write((int) (0xFF & (height >> 8)));
-//        bos.write((int) (0xFF & (height >> 16)));
-//        bos.write((int) (0xFF & (height >> 24)));
-
-        bos.write(new byte[] { (byte) (coinbase ? 1 : 0) });
-    }
-
+ 
     @Transient
     public Sha256Hash getBlockHash() {
         return blockhash;

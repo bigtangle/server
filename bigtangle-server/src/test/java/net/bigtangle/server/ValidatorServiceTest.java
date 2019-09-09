@@ -11,6 +11,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -323,10 +324,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
+ 
 
         TokenInfo tokenInfo = new TokenInfo();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -337,7 +338,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();
         Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount, false, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 1, coinbase.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -903,7 +904,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
-            tx2.getOutput(0).getValue().setValue(tx2.getOutput(0).getValue().getValue() + 1);
+            tx2.getOutput(0).getValue().setValue(tx2.getOutput(0).getValue().getValue().add(BigInteger.valueOf(1)));
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), tx2);
             fail();
@@ -1266,8 +1267,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1301,8 +1302,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -1336,8 +1337,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens.setDomainName("bc");
         
@@ -1373,8 +1374,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens.setDomainName("bc");
         
@@ -1412,8 +1413,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo0 = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens.setDomainName("bc");
         
@@ -1445,7 +1446,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }, new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setAmount(-1);
+                tokenInfo5.getToken().setAmount(new BigInteger("-1"));
             }
 
             @Override
@@ -2047,8 +2048,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens.setDomainName("bc");
         tokenInfo.setToken(tokens);
@@ -2330,8 +2331,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2384,8 +2385,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2461,8 +2462,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2473,9 +2474,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey2 = walletKeys.get(8).getPubKey();
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey2);
-        long amount2 = coinbase2.getValue();
+   
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey2), "Test",
-                "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", walletKeys.get(8).getPublicKeyAsHex()));
@@ -2497,8 +2498,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate an eligible issuance
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2508,9 +2509,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate a subsequent issuance that does not work
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
-        long amount2 = coinbase2.getValue();
+   
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 2, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 2, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2532,8 +2533,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate an eligible issuance
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2543,9 +2544,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate a subsequent issuance that does not work
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
-        long amount2 = coinbase2.getValue();
+ 
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2567,8 +2568,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate an eligible issuance
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2578,9 +2579,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate a subsequent issuance that does not work
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
-        long amount2 = coinbase2.getValue();
+ 
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens2.setTokentype(123);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
@@ -2603,8 +2604,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate an eligible issuance
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2614,9 +2615,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate a subsequent issuance that does not work
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
-        long amount2 = coinbase2.getValue();
+ 
         Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test2",
-                "Test", 1, 1, amount2, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2638,8 +2639,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
-        long amount = coinbase.getValue() + 2;
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -2758,9 +2759,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
+     
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                    1, 0, coinbase.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -2877,9 +2878,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
+         
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                    1, 0, coinbase.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -2966,9 +2967,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
+   
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                    1, 0, coinbase.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
@@ -3036,9 +3037,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo = new TokenInfo();
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-            long amount = coinbase.getValue();
             Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
-                    1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
+                    1, 0, coinbase.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()

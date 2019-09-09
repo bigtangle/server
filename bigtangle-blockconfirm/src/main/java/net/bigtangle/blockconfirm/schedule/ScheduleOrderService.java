@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.blockconfirm.schedule;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,13 +57,13 @@ public class ScheduleOrderService {
         // select all order not Status=PAID and Status=CONFIRM
         List<Vm_deposit> deposits = sendFromOrder();
         // if not paid then do transfer and pay
-       Block b= giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits));
-            if (b!=null) {
+        Block b = giveMoneyUtils.batchGiveMoneyToECKeyList(giveMoneyResult(deposits));
+        if (b != null) {
             // only update, if money is given for order
 
             for (Vm_deposit d : deposits) {
-               
-                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID",b.getHashAsString());
+
+                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID", b.getHashAsString());
                 logger.info("  update deposit : " + d.getUserid() + ", success");
 
             }
@@ -87,7 +88,8 @@ public class ScheduleOrderService {
             List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
             if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
                 if (blockEvaluations.get(0).getRating() >= 75) {
-                    this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM",vm_deposit.getBlockhash());
+                    this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM",
+                            vm_deposit.getBlockhash());
                 }
                 // otherwise do again the
                 // giveMoneyUtils.batchGiveMoneyToECKeyList,
@@ -115,13 +117,12 @@ public class ScheduleOrderService {
         for (Vm_deposit d : l) {
             if (giveMoneyResult.containsKey(d.getPubkey())) {
                 long temp = giveMoneyResult.get(d.getPubkey());
-                long my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "" )
-                        .getValue();
-                giveMoneyResult.put(d.getPubkey(), my + temp);
+                BigInteger my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue();
+                giveMoneyResult.put(d.getPubkey(), my.longValue() + temp);
             } else {
-                   
+
                 giveMoneyResult.put(d.getPubkey(),
-                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "" ).getValue());
+                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue().longValue());
 
             }
 

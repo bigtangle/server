@@ -60,7 +60,7 @@ public class GiveMoneyUtils {
         String prevblockhash = tokenIndexResponse.getBlockhash();
         
         Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, amount,  false,0, Configure.PARAMS.getGenesisBlock().getHashAsString());
+                UUID.randomUUID().toString(), ecKeys.size(), tokenindex, basecoin.getValue(),  false,0, Configure.PARAMS.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -167,7 +167,7 @@ public class GiveMoneyUtils {
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
-            if (utxo.getValue().getValue() > 0) {
+            if (utxo.getValue().getValue() .signum()> 0) {
                 listUTXO.add(utxo);
             }
         }
@@ -183,10 +183,10 @@ public class GiveMoneyUtils {
                 .add(new MultiSignAddress(tokenId, "", outKey.getPublicKeyAsHex()));
 
         Coin basecoin = Coin.valueOf(10000000L, pubKey);
-        long amount = basecoin.getValue();
+        
         
         Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
-                UUID.randomUUID().toString(), "", 1, 0, amount, true,0, "de");//networkParameters.getGenesisBlock().getHashAsString());
+                UUID.randomUUID().toString(), "", 1, 0, basecoin.getValue(), true,0, "de");//networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         
         HashMap<String, String> requestParam = new HashMap<String, String>();

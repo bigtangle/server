@@ -34,13 +34,14 @@ public class OrderTickerService {
 
     public void addMatchingEvents(OrderMatchingResult orderMatchingResult) throws BlockStoreException {
         // collect the spend order volumn and ticker to write to database
-        Map<String, MatchResult> matchResultList = new HashMap<String, MatchResult>();
+        // Map<String, MatchResult> matchResultList = new HashMap<String,
+        // MatchResult>();
         for (Entry<String, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
             for (Event event : entry.getValue()) {
                 if (event instanceof Match) {
                     MatchResult f = new MatchResult(orderMatchingResult.getOutputTx().getHashAsString(), entry.getKey(),
                             ((OrderBookEvents.Match) event).price, ((OrderBookEvents.Match) event).executedQuantity,
-                            System.currentTimeMillis()); 
+                            System.currentTimeMillis());
                     store.insertMatchingEvent(f);
                 }
             }
@@ -90,11 +91,6 @@ public class OrderTickerService {
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
-    }
-
-    private List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException {
-
-        return store.getLastMatchingEvents(tokenId, MAXCOUNT);
     }
 
     public Map<String, Token> getTokename(List<MatchResult> res) throws BlockStoreException {

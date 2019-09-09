@@ -195,8 +195,8 @@ public abstract class NetworkParameters {
     public static String genesisPub =testPub;
     
     // 100 billions  as Value
-    public static long BigtangleCoinTotal = LongMath.pow(10, 11+BIGTANGLE_DECIMAL);
-    public static final long TARGET_YEARLY_MINING_PAYOUT = BigtangleCoinTotal / 1000;
+    public static BigInteger BigtangleCoinTotal = BigInteger.valueOf(LongMath.pow(10, 11+BIGTANGLE_DECIMAL));
+    public static final long TARGET_YEARLY_MINING_PAYOUT = BigtangleCoinTotal.longValue() / 1000;
 
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
@@ -247,10 +247,10 @@ public abstract class NetworkParameters {
 
     }
 
-    public static void add(NetworkParameters params, long amount, String account, Transaction coinbase) {
+    public static void add(NetworkParameters params, BigInteger amount, String account, Transaction coinbase) {
         //  amount, many public keys
         String[] list = account.split(",");
-        Coin base = Coin.valueOf(amount, BIGTANGLE_TOKENID);
+        Coin base = new Coin(amount, BIGTANGLE_TOKENID);
         List<ECKey> keys = new ArrayList<ECKey>();
         for (int i = 0; i < list.length; i++) {
             keys.add(ECKey.fromPublicOnly(Utils.HEX.decode(list[i].trim())));

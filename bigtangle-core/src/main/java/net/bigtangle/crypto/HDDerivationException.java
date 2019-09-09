@@ -20,6 +20,11 @@
 package net.bigtangle.crypto;
 
 public class HDDerivationException extends RuntimeException {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public HDDerivationException(String message) {
         super(message);
     }

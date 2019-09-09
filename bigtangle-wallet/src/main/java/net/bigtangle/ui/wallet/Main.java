@@ -843,7 +843,7 @@ public class Main extends Application {
             if (!utxo.getTokenId().equals(tokenid)) {
                 continue;
             }
-            if (utxo.getValue().getValue() > 0) {
+            if (utxo.getValue().getValue(). signum()> 0) {
                 listUTXO.add(utxo);
             }
         }

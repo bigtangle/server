@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -1420,18 +1421,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 // If the change output would result in this transaction
                 // being
                 // rejected as dust, just drop the change and make it a fee
-                if (req.ensureMinRequiredFee && changeOutput.isDust()) {
-                    // This solution definitely fits in category 3
-                    isCategory3 = true;
-                    additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
-                            .add(changeOutput.getMinNonDustValue());
-                } else {
+             
                     size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size())
                             - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
                     // This solution is either category 1 or 2
                     if (!eitherCategory2Or3) // must be category 1
                         additionalValueForNextCategory = null;
-                }
+                 
             } else {
                 if (eitherCategory2Or3) {
                     // This solution definitely fits in category 3 (we threw
@@ -2158,7 +2154,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
-                    && u.getValue().getValue() >= amount.getValue()) {
+                    && u.getValue().getValue() .compareTo( amount.getValue() )>0 ) {
                 return u;
             }
         }
@@ -2350,7 +2346,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
-            KeyParameter aesKey, int amount, String description) throws Exception {
+            KeyParameter aesKey, BigInteger amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
 
@@ -2363,7 +2359,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-            String domainname, KeyParameter aesKey, int amount, String description) throws Exception {
+            String domainname, KeyParameter aesKey, BigInteger amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
         final int signnumber = walletKeys.size();
@@ -2372,10 +2368,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, int amount, String description,
+            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, BigInteger amount, String description,
             int signnumber) throws Exception {
 
-        Coin basecoin = Coin.valueOf(amount, tokenid);
+        Coin basecoin = new Coin(amount, tokenid);
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
         long tokenindex_ = tokenIndexResponse.getTokenindex();

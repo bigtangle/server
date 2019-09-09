@@ -24,7 +24,6 @@ package net.bigtangle.kits;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -37,9 +36,9 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.CryptoException;
 
 import net.bigtangle.core.Context;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
@@ -55,7 +54,11 @@ public class WalletUtil {
 
     public static byte[] createWallet(NetworkParameters params) throws IOException {
 
-        return createWallet(params, 1);
+        Wallet wallet =   Wallet.fromKeys(params, new ECKey()); // default
+
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        new WalletProtobufSerializer().writeWallet(wallet, outStream);
+        return outStream.toByteArray();
 
     }
 

@@ -61,6 +61,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class KeyCrypterScrypt implements KeyCrypter {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class);
 
     /**

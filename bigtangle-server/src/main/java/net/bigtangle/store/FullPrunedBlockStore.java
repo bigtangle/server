@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -316,7 +317,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Token> getTokensList(String name) throws BlockStoreException;
 
-    public Map<String, Long> getTokenAmountMap(String name) throws BlockStoreException;
+    public Map<String, BigInteger> getTokenAmountMap(String name) throws BlockStoreException;
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 

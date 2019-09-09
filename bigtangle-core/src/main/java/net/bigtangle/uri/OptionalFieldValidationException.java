@@ -31,6 +31,11 @@ package net.bigtangle.uri;
  */
 public class OptionalFieldValidationException extends BitcoinURIParseException {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public OptionalFieldValidationException(String s) {
         super(s);
     }

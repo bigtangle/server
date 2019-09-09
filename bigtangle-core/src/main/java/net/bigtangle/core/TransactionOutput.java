@@ -20,20 +20,28 @@
  */
 package net.bigtangle.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Objects;
 
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.ScriptException;
-import net.bigtangle.script.*;
+import net.bigtangle.script.Script;
+import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.wallet.Wallet;
-
-import org.slf4j.*;
-
-import javax.annotation.*;
-import java.io.*;
-import java.util.*;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>
@@ -145,8 +153,9 @@ public class TransactionOutput extends ChildMessage {
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
-        length = 8 + this.value.getTokenid().length + VarInt.sizeOf(this.value.getTokenid().length)
-                + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        length =  this.value.getTokenid().length + VarInt.sizeOf(this.value.getTokenid().length)
+                + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length
+                +VarInt.sizeOf(this.value.getValue().toByteArray().length) + this.value.getValue().toByteArray().length;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -209,13 +218,14 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        long v = readInt64();
+            int vlen = (int) readVarInt();
+            byte[] v = readBytes(vlen);
         tokenLen = (int) readVarInt();
-        value = Coin.valueOf(v, readBytes(tokenLen));
+        value = new Coin(new BigInteger(v), readBytes(tokenLen));
+        
         scriptLen = (int) readVarInt();
-        length = cursor - offset + scriptLen;
-
         scriptBytes = readBytes(scriptLen);
+        length = cursor - offset;
 
     }
 
@@ -223,7 +233,10 @@ public class TransactionOutput extends ChildMessage {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
 
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value.getValue(), stream);
+        byte[] valuebytes = value.getValue().toByteArray();
+         stream.write(new VarInt(valuebytes.length).encode()); 
+         stream.write(valuebytes); 
+
         stream.write(new VarInt(value.getTokenid().length).encode());
         stream.write(value.getTokenid());
         stream.write(new VarInt(scriptBytes.length).encode());
@@ -262,63 +275,7 @@ public class TransactionOutput extends ChildMessage {
         throw new IllegalStateException("Output linked to wrong parent transaction?");
     }
 
-    /**
-     * Will this transaction be relayable and mined by default miners?
-     */
-    public boolean isDust() {
-        // Transactions that are OP_RETURN can't be dust regardless of their
-        // value.
-        if (getScriptPubKey().isOpReturn())
-            return false;
-        return getValue().isLessThan(getMinNonDustValue());
-    }
-
-    /**
-     * <p>
-     * Gets the minimum value for a txout of this size to be considered non-dust
-     * by Bitcoin Core (and thus relayed). See: CTxOut::IsDust() in Bitcoin
-     * Core. The assumption is that any output that would consume more than a
-     * third of its value in fees is not something the Bitcoin system wants to
-     * deal with right now, so we call them "dust outputs" and they're made non
-     * standard. The choice of one third is somewhat arbitrary and may change in
-     * future.
-     * </p>
-     *
-     * <p>
-     * You probably should use
-     * {@link net.bigtangle.core.TransactionOutput#getMinNonDustValue()} which
-     * uses a safe fee-per-kb by default.
-     * </p>
-     *
-     * @param feePerKb
-     *            The fee required per kilobyte. Note that this is the same as
-     *            Bitcoin Core's -minrelaytxfee * 3
-     */
-    public Coin getMinNonDustValue(Coin feePerKb) {
-        // A typical output is 33 bytes (pubkey hash + opcodes) and requires an
-        // input of 148 bytes to spend so we add
-        // that together to find out the total amount of data used to transfer
-        // this amount of value. Note that this
-        // formula is wrong for anything that's not a pay-to-address output,
-        // unfortunately, we must follow Bitcoin Core's
-        // wrongness in order to ensure we're considered standard. A better
-        // formula would either estimate the
-        // size of data needed to satisfy all different script types, or just
-        // hard code 33 below.
-        final long size = this.unsafeBitcoinSerialize().length + 148;
-        return feePerKb.multiply(size).divide(1000);
-    }
-
-    /**
-     * Returns the minimum value for this output to be considered "not dust",
-     * i.e. the transaction will be relayable and mined by default miners. For
-     * normal pay to address outputs, this is 2730 satoshis, the same as
-     * {@link Transaction#MIN_NONDUST_OUTPUT}.
-     */
-    public Coin getMinNonDustValue() {
-        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3));
-    }
-
+ 
     /**
      * Sets this objects availableForSpending flag to false and the spentBy
      * pointer to the given input. If the input is null, it means this output
