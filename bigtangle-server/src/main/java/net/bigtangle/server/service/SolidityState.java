@@ -56,4 +56,9 @@ public class SolidityState {
     public static SolidityState from(TransactionOutPoint outpoint) {
         return new SolidityState(State.MissingPredecessor, outpoint.getBlockHash());
     }
+    
+    @Override
+    public String toString() {
+        return "Solidity [state=" + state + ", missingDependency=" + missingDependency + "]";
+    }
 }

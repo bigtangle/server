@@ -267,8 +267,11 @@ public class MilestoneService {
             }
         }
 
-        // Begin from the highest solid height tips and go backwards from there
+        // Begin from the highest solid height tips plus selected tips and go backwards from there
         PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+        HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
+        selectedTipSet.removeAll(blockQueue);
+        blockQueue.addAll(selectedTipSet);
         HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
         for (BlockWrap tip : blockQueue) {
             approvers.put(tip.getBlock().getHash(), new HashSet<>());

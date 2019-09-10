@@ -23,7 +23,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -166,111 +165,6 @@ public class MultiSignService {
         } catch (Exception e) {
             log.error("", e);
             this.store.abortDatabaseBatchWrite();
-        }
-    }
-
-    public boolean checkMultiSignPre(Block block, boolean allowConflicts) throws BlockStoreException, Exception {
-        try {
-            
-            // TODO delete this method, replace calls with validatorService.checkTokenSolidity
-            
-            if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
-                throw new BlockStoreException("block transaction is empty");
-            }
-            Transaction transaction = block.getTransactions().get(0);
-            if (transaction.getData() == null) {
-                throw new BlockStoreException("block transaction data is null");
-            }
-            byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = TokenInfo.parse(buf);
-            final Token tokens = tokenInfo.getToken();
-            if (tokens == null) {
-                throw new BlockStoreException("tokeninfo is null");
-            }
-            Token tokens0 = store.getToken(tokens.getBlockhash());
-            if (!allowConflicts && tokens0 != null && tokens0.isTokenstop()) {
-                throw new BlockStoreException("tokeninfo can not reissue");
-            }
-
-            if (tokens.getSignnumber() <= 0) {
-                throw new BlockStoreException("signnumber value <= 0");
-            }
-            // as conflict
-            if (!allowConflicts && (tokens0 != null && tokens0.isConfirmed() && tokens.getTokenindex() <= 1L)) {
-                throw new BlockStoreException("tokens already exist");
-            }
-            
-            if (StringUtils.isBlank(tokens.getDomainName())) {
-                throw new BlockStoreException("tokens domainname empty");
-            }
-            
-            List<MultiSignAddress> multiSignAddresses;
-            if (tokens.getTokentype() == TokenType.domainname.ordinal()) {
-                multiSignAddresses = tokenInfo.getMultiSignAddresses();
-            } else {
-                String prevblockhash = tokens.getPrevblockhash();
-                multiSignAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(tokens.getTokenid(),
-                        prevblockhash);
-            }
-
-            if (multiSignAddresses.size() == 0) {
-                multiSignAddresses = tokenInfo.getMultiSignAddresses();
-            }
-            if (multiSignAddresses.size() == 0) {
-                throw new BlockStoreException("multisignaddresse list size = 0");
-            }
-            for (MultiSignAddress multiSignAddress : multiSignAddresses) {
-                byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
-                multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
-            }
-            if (tokenInfo.getToken().getSignnumber() > multiSignAddresses.size()) {
-                throw new BlockStoreException("signnumber multisignaddresse list size not eq");
-            }
-
-            HashMap<String, MultiSignAddress> multiSignAddressRes = new HashMap<String, MultiSignAddress>();
-            for (MultiSignAddress multiSignAddress : multiSignAddresses) {
-                multiSignAddressRes.put(multiSignAddress.getAddress(), multiSignAddress);
-            }
-            int signCount = 0;
-            if (transaction.getDataSignature() != null) {
-                String jsonStr = new String(transaction.getDataSignature());
-                MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(jsonStr, MultiSignByRequest.class);
-                for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
-                    String address = multiSignBy.getAddress();
-                    if (!multiSignAddressRes.containsKey(address)) {
-                        throw new BlockStoreException("multisignby address not in address list");
-                    }
-                }
-                HashMap<String, MultiSignBy> multiSignBiesRes = new HashMap<String, MultiSignBy>();
-                for (MultiSignBy multiSignBy : multiSignByRequest.getMultiSignBies()) {
-                    String address = multiSignBy.getAddress();
-                    multiSignBiesRes.put(address, multiSignBy);
-                }
-                for (MultiSignBy multiSignBy : multiSignBiesRes.values()) {
-                    byte[] pubKey = Utils.HEX.decode(multiSignBy.getPublickey());
-                    byte[] data = transaction.getHash().getBytes();
-                    byte[] signature = Utils.HEX.decode(multiSignBy.getSignature());
-                    boolean success = ECKey.verify(data, signature, pubKey);
-                    if (success) {
-                        signCount++;
-                    } else {
-                        throw new BlockStoreException("multisign signature error");
-                    }
-                }
-
-                /*for (MultiSignAddress multiSignAddress : multiSignAddressRes.values()) {
-                    String address = multiSignAddress.getAddress();
-                    if (!multiSignBiesRes.containsKey(address)) {
-                        signCount = 0;
-                        break;
-                    }
-                }*/
-            }
-            int signnumber = (int) (tokens0 == null ? tokens.getSignnumber() : tokens0.getSignnumber());
-            return signCount >= signnumber;
-        } catch (Exception e) {
-            log.error(" error", e);
-            throw new BlockStoreException("multisign error");
         }
     }
 

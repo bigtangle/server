@@ -202,9 +202,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void runConsensusLogic(Block block) throws BlockStoreException {
+    private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
         try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
             long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
             
@@ -215,7 +215,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 // Find block to which to rollback (if at all) and all new chain blocks
                 List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
-                newMilestoneBlocks.add(blockStore.getBlockWrap(block.getHash()));
+                newMilestoneBlocks.add(blockStore.getBlockWrap(newestBlock.getHash()));
                 BlockWrap splitPoint = null;
                 Sha256Hash prevHash = prevRewardHash;
                 for (int i = 0; i < currChainLength; i++) {
@@ -258,10 +258,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Sanity check: if my predecessors are still not fully solid or invalid, there must be something wrong.
                     List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
                     for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
-                        if (blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != 2 
-                                && blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != -1) {
-                            log.error("Predecessors are missing stuff. This should not happen.");
-                            throw new RuntimeException("Predecessors are missing stuff. This should not happen.");
+                        if (blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {
+                            log.error("Predecessors are not solidified. This should not happen.");
+                            throw new RuntimeException("Predecessors are not solidified. This should not happen.");
                         }
                     }
 
@@ -302,10 +301,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             // Solidification forward with failState
                             try {
                                 blockStore.beginDatabaseBatchWrite();
-                                solidifyBlock(block, solidityState, false);
+                                solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false, false);
                                 blockStore.commitDatabaseBatchWrite();
                                 try {
-                                    scanWaitingBlocks(block, false);
+                                    scanWaitingBlocks(newMilestoneBlock.getBlock(), false);
                                 } catch (BlockStoreException | VerificationException e) {
                                     log.debug(e.getLocalizedMessage());
                                 }
@@ -344,10 +343,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Solidification forward
                     try {
                         blockStore.beginDatabaseBatchWrite();
-                        solidifyBlock(block, solidityState, rerunConsensusLogic);
+                        solidifyBlock(newMilestoneBlock.getBlock(), solidityState, rerunConsensusLogic, true);
                         blockStore.commitDatabaseBatchWrite();
                         try {
-                            scanWaitingBlocks(block, rerunConsensusLogic);
+                            scanWaitingBlocks(newMilestoneBlock.getBlock(), rerunConsensusLogic);
                         } catch (BlockStoreException | VerificationException e) {
                             log.debug(e.getLocalizedMessage());
                         }
@@ -390,9 +389,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // If explicitly wanted (e.g. new block from local clients), this block must strictly be solid now.
             if (!allowUnsolid) {
                 switch (solidityState.getState()) {
-                case MissingCalculation:
                 case MissingPredecessor:
                     throw new UnsolidException();
+                case MissingCalculation:
                 case Success:
                     break;
                 case Invalid:
@@ -400,7 +399,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             } 
             
-            // Sanity check: This should not happen.
+            // Sanity check: This should not happen because it should throw first.
             if (solidityState.isFailState())
                 throw new GenericInvalidityException();
 
@@ -439,30 +438,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             SolidityState solidityState = validatorService.checkSolidity(block, false);
             
-            switch (solidityState.getState()) {
-            case MissingPredecessor:
-                break;
-            case MissingCalculation:
-                break;
-            case Success:
-                if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !runConsensusLogic)
-                    break;
-            case Invalid:
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                solidifyBlock(block, solidityState, runConsensusLogic, false);
+                blockStore.commitDatabaseBatchWrite();
                 try {
-                    blockStore.beginDatabaseBatchWrite();
-                    solidifyBlock(block, solidityState, runConsensusLogic);
-                    blockStore.commitDatabaseBatchWrite();
-                    try {
-                        // TODO this is recursive and may blow the stack
-                        scanWaitingBlocks(block, runConsensusLogic);
-                    } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage());
-                    }
-                    return true;
-                } catch (BlockStoreException e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
+                    // TODO this is recursive and may blow the stack
+                    scanWaitingBlocks(block, runConsensusLogic);
+                } catch (BlockStoreException | VerificationException e) {
+                    log.debug(e.getLocalizedMessage());
                 }
+                return true;
+            } catch (BlockStoreException e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
             }
 
         } catch (BlockStoreException e) {
@@ -477,7 +466,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } finally {
             lock.unlock();
         }
-        return false;
     }
 
     private void scanWaitingBlocks(Block block, boolean runConsensusLogic) throws BlockStoreException {
@@ -514,7 +502,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void connect(final Block block, SolidityState solidityState) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         blockStore.put(block);
-        solidifyBlock(block, solidityState, true);
+        solidifyBlock(block, solidityState, true, false);
     }
 
     /**
@@ -1252,20 +1240,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateAllTransactionOutputsConfirmed(parentBlock.getHash(), false);
     }
 
-    public void solidifyBlock(Block block, SolidityState solidityState, boolean runConsensusLogic) throws BlockStoreException {
+    public void solidifyBlock(Block block, SolidityState solidityState, boolean runConsensusLogic, boolean setMilestoneSuccess) throws BlockStoreException {
+        // Sanity check:
+        if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2 && !solidityState.isSuccessState())
+            throw new RuntimeException("Shouldn't happen");
+        
         switch (solidityState.getState()) {
-        case MissingCalculation:
+        case MissingCalculation:            
             blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             
+            // Reward blocks follow different logic: If this is new, run consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
-                // Add already for next consensus blocks
-                addReward(block);
-                
+                addReward(block);                
                 runConsensusLogic(block);
                 return;
             }
             
-            // Insert into waiting list
+            // Insert other blocks into waiting list
             insertUnsolidBlock(block, solidityState);
             break;
         case MissingPredecessor:
@@ -1280,27 +1271,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             insertUnsolidBlock(block, solidityState);
             break;
         case Success:
-            // If already solid, nothing to do here...
+            // If already set, nothing to do here...
             if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
                 return;
-            
+
+            // TODO don't calculate again, it may already have been calculated before
             connectUTXOs(block);
             connectTypeSpecificUTXOs(block); 
-            calculateBlock(block);
-            
-            blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
-            
-            // Update tips table
-            blockStore.deleteTip(block.getPrevBlockHash());
-            blockStore.deleteTip(block.getPrevBranchBlockHash());
-            blockStore.deleteTip(block.getHash());
-            blockStore.insertTip(block.getHash());
+            calculateBlock(block); 
 
-            // If new reward block, run the consensus logic
-            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
-                // Add already for next consensus blocks
-                addReward(block);
+            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
+                // If we don't want to set the milestone success, initialize as missing calc
+                blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
+            } else {
+                // Else normal update
+                blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
                 
+                // Update tips table
+                blockStore.deleteTip(block.getPrevBlockHash());
+                blockStore.deleteTip(block.getPrevBranchBlockHash());
+                blockStore.deleteTip(block.getHash());
+                blockStore.insertTip(block.getHash());
+            }
+            
+            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
+                addReward(block);                
                 runConsensusLogic(block);
                 return;
             }

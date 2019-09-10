@@ -26,45 +26,47 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://"; // "jdbc:log4jdbc:mysql://";
 
     // create table SQL
-    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) NOT NULL,\n"
-            + "    settingvalue blob,\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" 
+            + "    name varchar(32) NOT NULL,\n"
+            + "    settingvalue blob,\n" 
+            + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" 
+            + ")\n";
 
     // TODO lower the sizes of stuff to their exact size limitations! use
     // NetworkParameters!
     private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" 
-    + "    hash varbinary(32) NOT NULL,\n"
+            + "    hash binary(32) NOT NULL,\n"
             + "    height bigint NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n"
             + "    wasundoable boolean NOT NULL,\n" 
-            + "    prevblockhash  varbinary(32) NOT NULL,\n"
-            + "    prevbranchblockhash  varbinary(32) NOT NULL,\n" 
-            + "    mineraddress varbinary(255),\n"
-            + "    tokenid varbinary(255),\n" 
+            + "    prevblockhash  binary(32) NOT NULL,\n"
+            + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
+            + "    mineraddress binary(20) NOT NULL,\n"
             + "    blocktype bigint NOT NULL,\n" 
-            + "    rating bigint ,\n"
-            + "    depth bigint,\n" 
-            + "    cumulativeweight  bigint ,\n" 
-            + "    milestone bigint,\n"
-            + "    milestonelastupdate bigint,\n" 
-            + "    milestonedepth bigint,\n" 
-            + "    inserttime bigint,\n"
-            + "    maintained boolean,\n" 
-            + "    solid bigint,\n"
-            + "    confirmed boolean,\n"
-            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+            + "    rating bigint NOT NULL,\n"
+            + "    depth bigint NOT NULL,\n" 
+            + "    cumulativeweight bigint NOT NULL,\n" 
+            + "    milestone bigint NOT NULL,\n"
+            + "    milestonelastupdate bigint NOT NULL,\n" 
+            + "    milestonedepth bigint NOT NULL,\n" 
+            + "    inserttime bigint NOT NULL,\n"
+            + "    maintained boolean NOT NULL,\n" 
+            + "    solid bigint NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n"
+            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ")";
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
-            + "    hash varbinary(32) NOT NULL,\n" 
+            + "    hash binary(32) NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n" 
-            + "    inserttime bigint,\n"
+            + "    inserttime bigint NOT NULL,\n"
             + "    reason bigint NOT NULL,\n" 
             + "    missingdependency mediumblob NOT NULL,\n" 
             + "    height bigint ,\n"
-            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) USING BTREE \n" + ")";
+            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
-            + "    blockhash varbinary(32) NOT NULL,\n" 
-            + "    hash varbinary(32) NOT NULL,\n"
+            + "    blockhash binary(32) NOT NULL,\n" 
+            + "    hash binary(32) NOT NULL,\n"
             + "    outputindex bigint NOT NULL,\n" 
             + "    coinvalue mediumblob NOT NULL,\n"
             + "    scriptbytes mediumblob NOT NULL,\n" 
@@ -78,49 +80,51 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    confirmed boolean NOT NULL,\n"
             + "    spendpending boolean NOT NULL,\n" 
             + "    spendpendingtime bigint,\n" 
-            + "    spenderblockhash  varbinary(32),\n" 
+            + "    spenderblockhash  binary(32),\n" 
             + "    time bigint NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) USING BTREE \n" + ")\n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + ")\n";
 
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
-            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   blockhash binary(32) NOT NULL,\n" 
             + "   toheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
-            + "   spenderblockhash varbinary(32),\n" 
-            + "   prevblockhash varbinary(32) NOT NULL,\n" 
+            + "   spenderblockhash binary(32),\n" 
+            + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   difficulty bigint NOT NULL,\n" 
             + "   chainlength bigint NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
 
     private static final String CREATE_ORDER_MATCHING_TABLE = "CREATE TABLE ordermatching (\n"
-            + "   blockhash varbinary(32) NOT NULL,\n" 
+            + "   blockhash binary(32) NOT NULL,\n" 
             + "   toheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
-            + "   spenderblockhash varbinary(32),\n" 
-            + "   prevblockhash varbinary(32) NOT NULL,\n" 
+            + "   spenderblockhash binary(32),\n" 
+            + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) )";
 
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
-            + "    hash varbinary(32) NOT NULL,\n" 
+            + "    hash binary(32) NOT NULL,\n" 
             + "    outputindex bigint NOT NULL,\n"
             + "    toaddress varchar(255) NOT NULL,\n" 
             + "    minimumsign bigint NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) USING BTREE \n" + ")\n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ")\n";
 
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" + "    hash varbinary(32) NOT NULL,\n"
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING BTREE \n" + ")\n";
+    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
+            + "    hash binary(32) NOT NULL,\n"
+            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ")\n";
 
     private static final String CREATE_CONFIRMATION_DEPENDENCY_TABLE = "CREATE TABLE confirmationdependency (\n"
-            + "    blockhash binary(32) NOT NULL,\n" + "    dependencyblockhash binary(32) NOT NULL,\n"
-            + "    CONSTRAINT confirmationdependency_pk PRIMARY KEY (blockhash, dependencyblockhash) USING BTREE \n"
+            + "    blockhash binary(32) NOT NULL,\n" 
+            + "    dependencyblockhash binary(32) NOT NULL,\n"
+            + "    CONSTRAINT confirmationdependency_pk PRIMARY KEY (blockhash, dependencyblockhash) \n"
             + ")";
 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n" // initial issuing block
+            + "    blockhash binary(32) NOT NULL,\n" // initial issuing block
                                                         // hash
-            + "    collectinghash varbinary(32) NOT NULL,\n" // ZEROHASH if
+            + "    collectinghash binary(32) NOT NULL,\n" // ZEROHASH if
                                                              // confirmed by
                                                              // order blocks,
                                                              // issuing
@@ -138,7 +142,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                                               // ordermatch block (either
                                               // returned or used for another
                                               // orderoutput/output)
-            + "    spenderblockhash  varbinary(32),\n" // if confirmed, this is
+            + "    spenderblockhash  binary(32),\n" // if confirmed, this is
                                                        // the consuming
                                                        // ordermatch blockhash,
                                                        // else null
@@ -156,7 +160,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    validFromTime bigint,\n" // order is valid after this time
             + "    side varchar(255),\n" // buy or sell
             + "    beneficiaryaddress varchar(255),\n" // public addressl
-            + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING BTREE \n" + ")\n";
+            + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING HASH \n" + ")\n";
 
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
@@ -178,7 +182,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenstop boolean,\n" 
             + "    prevblockhash varchar(255) NOT NULL,\n"
             + "    spent boolean NOT NULL,\n" 
-            + "    spenderblockhash  varbinary(32),\n"
+            + "    spenderblockhash  binary(32),\n"
             + "    tokenkeyvalues  mediumblob,\n" 
             + "    revoked boolean   ,\n" 
             + "    language char(2)   ,\n"
@@ -187,6 +191,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    decimals int ,\n" 
             + "    PRIMARY KEY (blockhash) \n)";
 
+    // Helpers
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
@@ -214,7 +219,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    PRIMARY KEY (orderid, pubKey) \n)";
 
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
-            + "    blockhash varbinary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
+            + "    blockhash binary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
             + "    data mediumblob NOT NULL,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
             + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
 
@@ -230,7 +235,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT logresult_pk PRIMARY KEY (logResultId) USING BTREE \n" + ")";
 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
-            + "    hash varbinary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
+            + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
             + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash) USING BTREE \n"
             + ")";
 
@@ -240,7 +245,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
 
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
-            + "    prevhash varbinary(32) NOT NULL,\n" + " hash varbinary(32) NOT NULL,\n" + "    inserttime bigint,\n"
+            + "    prevhash binary(32) NOT NULL,\n" + " hash binary(32) NOT NULL,\n" + "    inserttime bigint,\n"
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ")";
     
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"

@@ -63,6 +63,15 @@ public class OrderBookEvents implements OrderBookListener {
                 long remainingQuantity) {
             this(String.valueOf(restingOrderId), String.valueOf(incomingOrderId), incomingSide, price, executedQuantity, remainingQuantity);
         }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            return o.toString().equals(toString());
+        }
 
         @Override
         public String toString() {
@@ -88,6 +97,15 @@ public class OrderBookEvents implements OrderBookListener {
         public Add(long orderId, Side side, long price, long size) {
             this(String.valueOf(orderId), side, price, size);
         }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            return o.toString().equals(toString());
+        }
 
         @Override
         public String toString() {
@@ -108,6 +126,15 @@ public class OrderBookEvents implements OrderBookListener {
         
         public Cancel(long orderId, long canceledQuantity, long remainingQuantity) {
             this(String.valueOf(orderId), canceledQuantity, remainingQuantity);
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            return o.toString().equals(toString());
         }
 
         @Override
