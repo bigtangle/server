@@ -438,30 +438,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             SolidityState solidityState = validatorService.checkSolidity(block, false);
             
-            switch (solidityState.getState()) {
-            case MissingPredecessor:
-                break;
-            case MissingCalculation:
-                break;
-            case Success:
-                if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !runConsensusLogic)
-                    break;
-            case Invalid:
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                solidifyBlock(block, solidityState, runConsensusLogic, false);
+                blockStore.commitDatabaseBatchWrite();
                 try {
-                    blockStore.beginDatabaseBatchWrite();
-                    solidifyBlock(block, solidityState, runConsensusLogic, false);
-                    blockStore.commitDatabaseBatchWrite();
-                    try {
-                        // TODO this is recursive and may blow the stack
-                        scanWaitingBlocks(block, runConsensusLogic);
-                    } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage());
-                    }
-                    return true;
-                } catch (BlockStoreException e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
+                    // TODO this is recursive and may blow the stack
+                    scanWaitingBlocks(block, runConsensusLogic);
+                } catch (BlockStoreException | VerificationException e) {
+                    log.debug(e.getLocalizedMessage());
                 }
+                return true;
+            } catch (BlockStoreException e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
             }
 
         } catch (BlockStoreException e) {
@@ -476,7 +466,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } finally {
             lock.unlock();
         }
-        return false;
     }
 
     private void scanWaitingBlocks(Block block, boolean runConsensusLogic) throws BlockStoreException {
@@ -1260,13 +1249,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case MissingCalculation:            
             blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             
+            // Reward blocks follow different logic: If this is new, run consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
                 addReward(block);                
                 runConsensusLogic(block);
                 return;
             }
             
-            // Insert into waiting list
+            // Insert other blocks into waiting list
             insertUnsolidBlock(block, solidityState);
             break;
         case MissingPredecessor:
@@ -1280,15 +1270,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 //            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
 //                return;
             
-            connectUTXOs(block);
-            connectTypeSpecificUTXOs(block); 
-            calculateBlock(block);
+            // Sanity check:
+            if (!setMilestoneSuccess && runConsensusLogic)
+                throw new RuntimeException("Shouldn't happen");
 
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
                 // If we don't want to set the milestone success, initialize as missing calc
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             } else {
                 // Else normal update
+                connectUTXOs(block);
+                connectTypeSpecificUTXOs(block); 
+                calculateBlock(block);
+                
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
                 
                 // Update tips table
