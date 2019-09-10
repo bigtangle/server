@@ -123,19 +123,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + afterSelect() + " order by height asc ";
     protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-            + "   block, solid, confirmed FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?) AND solid >= 0 " + afterSelect();
+            + "   block, solid, confirmed FROM blocks WHERE prevblockhash = ? AND solid >= 0 " + afterSelect()
+            + " UNION SELECT hash, rating, depth, cumulativeweight, "
+            + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + "   block, solid, confirmed FROM blocks WHERE prevbranchblockhash = ? AND solid >= 0 " + afterSelect();
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-            + "   block, solid, confirmed FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?) AND solid = 2 " + afterSelect();
+            + "   block, solid, confirmed FROM blocks WHERE prevblockhash = ? AND solid = 2 " + afterSelect()
+            + " UNION SELECT hash, rating, depth, cumulativeweight, "
+            + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + "   block, solid, confirmed FROM blocks WHERE prevbranchblockhash = ? AND solid = 2 " + afterSelect();
     protected final String SELECT_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
-            + "   block, solid, confirmed FROM blocks" + " WHERE (prevblockhash = ? OR prevbranchblockhash = ?) " + afterSelect();
-    protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks " + " "
-            + "WHERE  (blocks.prevblockhash = ? OR blocks.prevbranchblockhash = ?)" + afterSelect();
+            + "   block, solid, confirmed FROM blocks WHERE prevblockhash = ? " + afterSelect()
+            + " UNION SELECT hash, rating, depth, cumulativeweight, "
+            + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
+            + "   block, solid, confirmed FROM blocks WHERE prevbranchblockhash = ? " + afterSelect();
+    protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks "
+            + "WHERE blocks.prevblockhash = ?" + afterSelect()
+            + "UNION SELECT hash FROM blocks "
+            + "WHERE blocks.prevbranchblockhash = ?" + afterSelect();
 
     protected final String INSERT_BLOCKS_SQL = getInsert()
             + "  INTO blocks(hash,  height, block, wasundoable,prevblockhash,"
-            + "prevbranchblockhash,mineraddress,blocktype " + "  , rating, depth, cumulativeweight, "
+            + "prevbranchblockhash,mineraddress,blocktype, rating, depth, cumulativeweight, "
             + "milestone, milestonelastupdate, milestonedepth, inserttime, maintained, solid, confirmed )"
             + " VALUES(?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?)";
 
