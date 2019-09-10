@@ -265,6 +265,7 @@ public class OkHttp3Util {
     }
 
     public static String decompress(byte[] contentBytes) throws IOException {
+        if(contentBytes.length ==0) return "";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(contentBytes));
