@@ -50,7 +50,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
                     if (block == null)
                         System.out.println(" block from " + server + " not found in  " + server2 + "  " + b.toString());
                 } catch (Exception e) {
-                    System.out.println(" block from " + server + " not found in  " + server2 + "  " + b.toString());
+                    System.out.println(" " + b.toString());  e.printStackTrace();
                 }
 
             }
@@ -102,7 +102,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", blockhash);
-        byte[] data = OkHttp3Util.post(server + "/" + ReqCmd.getBlock,
+        byte[] data = OkHttp3Util.post(server + ReqCmd.getBlock,
                 Json.jsonmapper().writeValueAsString(requestParam));
         if (data != null) {
             return networkParameters.getDefaultSerializer().makeBlock(data);

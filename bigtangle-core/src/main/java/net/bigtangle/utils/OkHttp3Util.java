@@ -93,6 +93,8 @@ public class OkHttp3Util {
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
+        if(!response.isSuccessful()) {
+            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);}
         try {
             String resp = decompress( response.body().bytes());
             // logger.debug(resp);
@@ -113,6 +115,9 @@ public class OkHttp3Util {
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
+        if(!response.isSuccessful()) {
+            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+        }
         try {
             // return response.body().bytes();
             String resp =decompress( response.body().bytes());
@@ -138,6 +143,9 @@ public class OkHttp3Util {
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
+        if(!response.isSuccessful()) {
+            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+        }
         try {
             String resp = decompress( response.body().bytes());
             checkResponse(resp, url);
