@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -678,7 +679,10 @@ public class DispatcherController {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
-        } catch (IOException e) {
+        }  catch (ZipException |java.io.EOFException notzip) {
+            return contentBytes; 
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
         return out.toByteArray();

@@ -586,3 +586,5 @@ ENS eliminates the need to copy or type long addresses. With ENS, you'll be able
 https://medium.com/tech-and-the-city/from-image-to-bytes-and-back-again-563abc5c1412
 
 ### compress of block data for API (gzip)
+
+### cp  /home/cui/.m2/
