@@ -202,9 +202,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void runConsensusLogic(Block block) throws BlockStoreException {
+    private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
         try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
             long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
             
@@ -215,7 +215,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 // Find block to which to rollback (if at all) and all new chain blocks
                 List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
-                newMilestoneBlocks.add(blockStore.getBlockWrap(block.getHash()));
+                newMilestoneBlocks.add(blockStore.getBlockWrap(newestBlock.getHash()));
                 BlockWrap splitPoint = null;
                 Sha256Hash prevHash = prevRewardHash;
                 for (int i = 0; i < currChainLength; i++) {
@@ -302,10 +302,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             // Solidification forward with failState
                             try {
                                 blockStore.beginDatabaseBatchWrite();
-                                solidifyBlock(block, solidityState, false);
+                                solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false, false);
                                 blockStore.commitDatabaseBatchWrite();
                                 try {
-                                    scanWaitingBlocks(block, false);
+                                    scanWaitingBlocks(newMilestoneBlock.getBlock(), false);
                                 } catch (BlockStoreException | VerificationException e) {
                                     log.debug(e.getLocalizedMessage());
                                 }
@@ -344,10 +344,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Solidification forward
                     try {
                         blockStore.beginDatabaseBatchWrite();
-                        solidifyBlock(block, solidityState, rerunConsensusLogic);
+                        solidifyBlock(newMilestoneBlock.getBlock(), solidityState, rerunConsensusLogic, true);
                         blockStore.commitDatabaseBatchWrite();
                         try {
-                            scanWaitingBlocks(block, rerunConsensusLogic);
+                            scanWaitingBlocks(newMilestoneBlock.getBlock(), rerunConsensusLogic);
                         } catch (BlockStoreException | VerificationException e) {
                             log.debug(e.getLocalizedMessage());
                         }
@@ -389,9 +389,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // If explicitly wanted (e.g. new block from local clients), this block must strictly be solid now.
             if (!allowUnsolid) {
                 switch (solidityState.getState()) {
-                case MissingCalculation:
                 case MissingPredecessor:
                     throw new UnsolidException();
+                case MissingCalculation:
                 case Success:
                     break;
                 case Invalid:
@@ -399,7 +399,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
             } 
             
-            // Sanity check: This should not happen.
+            // Sanity check: This should not happen because it should throw first.
             if (solidityState.isFailState())
                 throw new GenericInvalidityException();
 
@@ -449,7 +449,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             case Invalid:
                 try {
                     blockStore.beginDatabaseBatchWrite();
-                    solidifyBlock(block, solidityState, runConsensusLogic);
+                    solidifyBlock(block, solidityState, runConsensusLogic, false);
                     blockStore.commitDatabaseBatchWrite();
                     try {
                         // TODO this is recursive and may blow the stack
@@ -513,7 +513,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void connect(final Block block, SolidityState solidityState) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         blockStore.put(block);
-        solidifyBlock(block, solidityState, true);
+        solidifyBlock(block, solidityState, true, false);
     }
 
     /**
@@ -1251,15 +1251,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateAllTransactionOutputsConfirmed(parentBlock.getHash(), false);
     }
 
-    public void solidifyBlock(Block block, SolidityState solidityState, boolean runConsensusLogic) throws BlockStoreException {
+    public void solidifyBlock(Block block, SolidityState solidityState, boolean runConsensusLogic, boolean setMilestoneSuccess) throws BlockStoreException {
+        // Sanity check: TODO && soliditiyState!=Success, then readd ignore success reset
+        if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
+            throw new RuntimeException("Shouldn't happen");
+        
         switch (solidityState.getState()) {
-        case MissingCalculation:
+        case MissingCalculation:            
             blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
-                // Add already for next consensus blocks
-                addReward(block);
-                
+                addReward(block);                
                 runConsensusLogic(block);
                 return;
             }
@@ -1274,27 +1276,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             insertUnsolidBlock(block, solidityState);
             break;
         case Success:
-            // If already solid, nothing to do here...
-            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
-                return;
+            // TODO If already set, nothing to do here...
+//            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
+//                return;
             
             connectUTXOs(block);
             connectTypeSpecificUTXOs(block); 
             calculateBlock(block);
-            
-            blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
-            
-            // Update tips table
-            blockStore.deleteTip(block.getPrevBlockHash());
-            blockStore.deleteTip(block.getPrevBranchBlockHash());
-            blockStore.deleteTip(block.getHash());
-            blockStore.insertTip(block.getHash());
 
-            // If new reward block, run the consensus logic
-            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
-                // Add already for next consensus blocks
-                addReward(block);
+            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
+                // If we don't want to set the milestone success, initialize as missing calc
+                blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
+            } else {
+                // Else normal update
+                blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
                 
+                // Update tips table
+                blockStore.deleteTip(block.getPrevBlockHash());
+                blockStore.deleteTip(block.getPrevBranchBlockHash());
+                blockStore.deleteTip(block.getHash());
+                blockStore.insertTip(block.getHash());
+            }
+            
+            if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
+                addReward(block);                
                 runConsensusLogic(block);
                 return;
             }
