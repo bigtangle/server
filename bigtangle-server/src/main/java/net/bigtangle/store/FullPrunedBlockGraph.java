@@ -258,10 +258,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Sanity check: if my predecessors are still not fully solid or invalid, there must be something wrong.
                     List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
                     for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
-                        if (blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != 2 
-                                && blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != -1) {
-                            log.error("Predecessors are missing stuff. This should not happen.");
-                            throw new RuntimeException("Predecessors are missing stuff. This should not happen.");
+                        if (blockStore.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {
+                            log.error("Predecessors are not solidified. This should not happen.");
+                            throw new RuntimeException("Predecessors are not solidified. This should not happen.");
                         }
                     }
 
@@ -1269,20 +1268,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // TODO If already set, nothing to do here...
 //            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
 //                return;
-            
-            // Sanity check:
-            if (!setMilestoneSuccess && runConsensusLogic)
-                throw new RuntimeException("Shouldn't happen");
+
+            // TODO don't calculate again, it may already have been calculated before
+            connectUTXOs(block);
+            connectTypeSpecificUTXOs(block); 
+            calculateBlock(block); 
 
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
                 // If we don't want to set the milestone success, initialize as missing calc
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
             } else {
                 // Else normal update
-                connectUTXOs(block);
-                connectTypeSpecificUTXOs(block); 
-                calculateBlock(block);
-                
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
                 
                 // Update tips table
