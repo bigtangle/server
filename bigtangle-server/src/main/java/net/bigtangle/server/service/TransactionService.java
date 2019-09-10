@@ -87,6 +87,19 @@ public class TransactionService {
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
         return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
     }
+    
+    /*
+     * Block byte[] bytes
+     */
+    public Optional<Block> addConnectedFromKafka(byte[] bytes, boolean request, boolean checksolidity) {
+   
+        try{return addConnected(bytes, request, checksolidity);
+        }catch (Exception e) {
+            logger.warn("addConnectedFromKafka", e);
+            return null;
+        }
+    
+    }
 
     /*
      * Block byte[] bytes
@@ -94,6 +107,7 @@ public class TransactionService {
     public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity) {
         if (bytes == null)
             return null;
+        
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request,
                 checksolidity);
     }
