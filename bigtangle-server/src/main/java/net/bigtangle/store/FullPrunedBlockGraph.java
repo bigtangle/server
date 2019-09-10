@@ -1240,8 +1240,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public void solidifyBlock(Block block, SolidityState solidityState, boolean runConsensusLogic, boolean setMilestoneSuccess) throws BlockStoreException {
-        // Sanity check: TODO && soliditiyState!=Success, then readd ignore success reset
-        if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
+        // Sanity check:
+        if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2 && !solidityState.isSuccessState())
             throw new RuntimeException("Shouldn't happen");
         
         switch (solidityState.getState()) {
@@ -1265,9 +1265,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             insertUnsolidBlock(block, solidityState);
             break;
         case Success:
-            // TODO If already set, nothing to do here...
-//            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
-//                return;
+            // If already set, nothing to do here...
+            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
+                return;
 
             // TODO don't calculate again, it may already have been calculated before
             connectUTXOs(block);
