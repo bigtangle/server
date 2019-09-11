@@ -37,7 +37,7 @@ public class ExchangeService {
         String toTokenHex = (String) request.get("toTokenHex");
         String toAmount = (String) request.get("toAmount");
         String dataHex = (String) request.get("dataHex");
-        byte[] data = Utils.HEX.decode(dataHex);
+        byte[] data = new byte[0];
         Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
         exchange.setOrderid(orderid);
         exchange.setFromSign(1);

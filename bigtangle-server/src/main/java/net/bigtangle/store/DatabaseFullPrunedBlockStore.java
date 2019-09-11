@@ -6483,7 +6483,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.getSigs().add(resultSet.getBytes("signInputData"));
             sub_preparedStatement = conn.get().prepareStatement(sql);
             sub_preparedStatement.setString(1, exchange.getToOrderId());
-            ResultSet sub_resultSet = preparedStatement.executeQuery();
+            ResultSet sub_resultSet = sub_preparedStatement.executeQuery();
             List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
 
             while (sub_resultSet.next()) {
