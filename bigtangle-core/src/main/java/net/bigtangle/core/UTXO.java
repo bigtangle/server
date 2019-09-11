@@ -290,6 +290,9 @@ public class UTXO {
     }
 
     public String getMemo() {
+        if(memo!=null && "{}".equals( memo.trim())) {
+            memo="";
+        }
         return memo;
     }
 
