@@ -34,6 +34,13 @@ public class TokensService {
         return response;
     }
 
+    public AbstractResponse getToken(String id) throws BlockStoreException {
+        List<Token> tokens = new ArrayList<>();
+        tokens.add(this.store.getToken(id));
+        AbstractResponse response = GetTokensResponse.create(tokens);
+        return response;
+    }
+
     public AbstractResponse getMarketTokensList() throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         list.addAll(store.getMarketTokenList());

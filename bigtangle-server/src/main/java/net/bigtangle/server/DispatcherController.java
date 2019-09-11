@@ -180,6 +180,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getToken: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = tokensService.getTokenById((String) request.get("id"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -679,10 +686,9 @@ public class DispatcherController {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
-        }  catch (ZipException |java.io.EOFException notzip) {
-            return contentBytes; 
-        }
-        catch (IOException e) {
+        } catch (ZipException | java.io.EOFException notzip) {
+            return contentBytes;
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return out.toByteArray();

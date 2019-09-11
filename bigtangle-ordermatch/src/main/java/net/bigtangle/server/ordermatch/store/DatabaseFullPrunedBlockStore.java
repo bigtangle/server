@@ -157,7 +157,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             // Create tables if needed
             if (!tablesExists()) {
-                createTables();
+               // createTables();
             }
         } catch (SQLException e) {
             e.printStackTrace();
