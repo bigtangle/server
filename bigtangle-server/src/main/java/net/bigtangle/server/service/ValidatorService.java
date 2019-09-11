@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2152,13 +2151,7 @@ public class ValidatorService {
                 throw new InvalidDependencyException("Domain predecessor is not a domain definition token");
             return SolidityState.getFailState();
         }
-
-        if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
-            if (throwExceptions)
-                throw new InvalidDependencyException("Domainname is empty");
-            return SolidityState.getFailState();
-        }
-
+ 
         // Ensure signatures exist
         int signatureCount = 0;
         if (tx.getDataSignature() == null) {
@@ -2315,7 +2308,12 @@ public class ValidatorService {
             throw new InsufficientSignaturesException();
         return SolidityState.getFailState();
     }
+    
+    public boolean checkTokenUniqueInDomain(String tokenname, String domainPredecessorBlockHash) throws BlockStoreException {
 
+    return store.getDomainIssuingConfirmedBlock( tokenname, domainPredecessorBlockHash) ==null ;
+
+    }
     private SolidityState checkDomainPermission(List<MultiSignAddress> permissionedAddresses,
             List<MultiSignBy> multiSignBies, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
 

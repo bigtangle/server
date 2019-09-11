@@ -15,17 +15,17 @@ public class Token implements java.io.Serializable {
             String predecessingDomainBlockHash) {
 
         return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null,
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals,
                 predecessingDomainBlockHash);
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
             String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
-            int decimals, String domainname, String predecessingDomainBlockHash) {
+            int decimals, String predecessingDomainBlockHash) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
                 tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(), decimals,
-                domainname, predecessingDomainBlockHash);
+                 predecessingDomainBlockHash);
 
         return token;
     }
@@ -243,7 +243,7 @@ public class Token implements java.io.Serializable {
     public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
-            int decimals, final String domainName, final String domainPredecessorBlockHash) {
+            int decimals, final String domainPredecessorBlockHash) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -260,7 +260,7 @@ public class Token implements java.io.Serializable {
         tokens.language = language;
         tokens.classification = classification;
         tokens.decimals = decimals;
-        tokens.domainName = domainName;
+     
         tokens.domainPredecessorBlockHash = domainPredecessorBlockHash;
         return tokens;
     }

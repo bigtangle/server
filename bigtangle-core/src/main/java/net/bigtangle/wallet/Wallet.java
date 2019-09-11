@@ -2354,7 +2354,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         walletKeys.add(signKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname,   domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
 
@@ -2363,12 +2363,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
         String domainPredecessorBlockHash = getDomainBlockHashResponse.getDomainPredecessorBlockHash();
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainname, domainPredecessorBlockHash, aesKey,
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname,  domainPredecessorBlockHash, aesKey,
                 amount, description, signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, BigInteger amount, String description,
+             String domainPredecessorBlockHash, KeyParameter aesKey, BigInteger amount, String description,
             int signnumber) throws Exception {
 
         Coin basecoin = new Coin(amount, tokenid);
@@ -2378,7 +2378,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex_, amount, false, 0, domainname, domainPredecessorBlockHash);
+                tokenindex_, amount, false, 0,   domainPredecessorBlockHash);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 

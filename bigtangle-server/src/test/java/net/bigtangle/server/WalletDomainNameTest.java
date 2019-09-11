@@ -34,7 +34,7 @@ public class WalletDomainNameTest extends AbstractIntegrationTest {
 
         // don't use the first key which is in the wallet
         ECKey signKey = this.walletKeys.get(3);
-        this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, domainname,
+        this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, 
                 domainPredecessorBlockHash, aesKey, BigInteger.valueOf(6789000), "", 3);
 
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);

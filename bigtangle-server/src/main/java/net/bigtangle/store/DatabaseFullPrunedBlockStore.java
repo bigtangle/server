@@ -297,7 +297,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
 
-    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE domainname = ? AND domainpredblockhash = ? AND confirmed = true";
+    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenname = ? AND domainpredblockhash = ? AND confirmed = true";
 
     protected final String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM tokens WHERE domainpredblockhash = ? AND confirmed = true";
 
@@ -976,7 +976,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             //create domain name bc
             Token bc = Token.buildDomainnameTokenInfo(true, "", NetworkParameters.BIGTANGLE_TOKENID_STRING+ "01",
                     NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, BigInteger.valueOf(1), true,
-                    0, "bc", "");
+                    0,  "");
             insertToken(params.getGenesisBlock().getHashAsString(), bc);
             updateTokenConfirmed(params.getGenesisBlock().getHashAsString(), true);
 
@@ -3188,12 +3188,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred) throws BlockStoreException {
+    public BlockWrap getDomainIssuingConfirmedBlock(String tokenname, String domainPred) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
-            preparedStatement.setString(1, domainName);
+            preparedStatement.setString(1, tokenname);
             preparedStatement.setString(2, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {

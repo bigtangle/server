@@ -1738,7 +1738,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             @Override
             public boolean expectsException() {
-                return true;
+                return false;
 
             }
         }, new TestCase() {
@@ -1750,7 +1750,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             @Override
             public boolean expectsException() {
-                return true;
+                return false;
 
             }
         }, new TestCase() {
