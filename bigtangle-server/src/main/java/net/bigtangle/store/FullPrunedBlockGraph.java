@@ -423,7 +423,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
-            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString());
+            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString(),e );
             throw e;
         } catch (Exception e) {
             log.error("", e);
@@ -458,7 +458,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw new VerificationException(e);
         } catch (VerificationException e) {
-            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString());
+            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString(), e);
             throw e;
         } catch (Exception e) {
             log.error("", e);
