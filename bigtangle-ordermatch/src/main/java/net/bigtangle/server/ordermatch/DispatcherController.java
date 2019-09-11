@@ -4,14 +4,19 @@
  *******************************************************************************/
 package net.bigtangle.server.ordermatch;
 
-import java.io.PrintWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipException;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,18 +152,46 @@ public class DispatcherController {
     @Autowired
     private NetworkParameters networkParameters;
 
-    public void outPointBinaryArray(HttpServletResponse httpServletResponse, byte[] data) throws Exception {
-        ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
-        servletOutputStream.write(data);
+
+    public void gzipBinary(HttpServletResponse httpServletResponse, AbstractResponse response) throws Exception {
+        GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
+
+        servletOutputStream.write(Json.jsonmapper().writeValueAsBytes(response));
         servletOutputStream.flush();
         servletOutputStream.close();
     }
 
+ 
+
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
             throws Exception {
-        PrintWriter printWriter = httpServletResponse.getWriter();
-        printWriter.append(Json.jsonmapper().writeValueAsString(response));
-        printWriter.flush();
-        printWriter.close();
+        gzipBinary(httpServletResponse, response);
+    }
+ 
+    public static byte[] decompress(byte[] contentBytes) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
+        }  catch (ZipException |java.io.EOFException notzip) {
+            return contentBytes; 
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
+    }
+
+    public static byte[] compress(byte[] contentBytes) {
+        ByteArrayInputStream in = new ByteArrayInputStream(contentBytes);
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            GZIPOutputStream gis = new GZIPOutputStream(out);
+
+            IOUtils.copy(in, gis);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
