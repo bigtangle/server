@@ -19,6 +19,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
@@ -56,21 +57,29 @@ public class KafkaBridge {
         // log.info("KafkaConfiguration {} ", kafkaConfiguration.toString());
         log.info("start stream {} handler", bootstrapServers);
         Properties props = prepareConfiguration(bootstrapServers);
-        KStreamBuilder streamBuilder = new KStreamBuilder();
-        run(streamBuilder, bootstrapServers, topic);
-        streams = new KafkaStreams(streamBuilder, props);
+
+        StreamsBuilder streamBuilder = new StreamsBuilder();
+
+        try {
+            run(streamBuilder, bootstrapServers, topic);
+        } catch (Exception e) {
+            log.error(" run(streamBuilder);  ", e);
+
+        }
+
+        streams = new KafkaStreams(streamBuilder.build(), props);
         streams.setUncaughtExceptionHandler((thread, exception) -> {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             exception.printStackTrace(pw);
             log.error("uncaught exception handler {} {}", exception, exception.getMessage());
             log.error(sw.toString());
-            streams.close();
+
         });
         streams.start();
     }
 
-    public void run(KStreamBuilder streamBuilder, String bootstrapServers, String topic) {
+    public void run(StreamsBuilder streamBuilder, String bootstrapServers, String topic) {
         final KStream<byte[], byte[]> input = streamBuilder.stream(topic);
         input.map((key, bytes) -> KeyValue.pair(key, broadcast(bytes, kafkaServerTo)));
 
@@ -81,12 +90,10 @@ public class KafkaBridge {
         try {
             sendMessage(data, "bigtangle", bootstrapServers);
             return true;
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        } catch (InterruptedException e) { 
+            log.error("",e);
         } catch (ExecutionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error("",e);
         }
         return false;
     }
