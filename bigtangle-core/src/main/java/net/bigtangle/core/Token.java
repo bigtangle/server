@@ -47,8 +47,8 @@ public class Token implements java.io.Serializable {
     private String tokenname;
     // description
     private String description;
-    // the domain name defined by this token
-    private String domainName;
+    // the domain name defined by this token, default "" for root domain, not  null value for easy use  
+    private String domainName="";
     // the predecessing domain's block hash
     private String domainPredecessorBlockHash;
     // number of signature
@@ -144,6 +144,7 @@ public class Token implements java.io.Serializable {
     }
 
     public String getDomainName() {
+        if(domainName==null) domainName="";
         return domainName;
     }
 
@@ -232,7 +233,7 @@ public class Token implements java.io.Serializable {
     }
 
     public String getTokennameDisplay() {
-        if (domainName == null || "null".equals(domainName))
+        if (domainName == null || "null".equals(domainName) || "".equals(domainName) )
             return tokenname;
         else {
             return tokenname + "@" + domainName;

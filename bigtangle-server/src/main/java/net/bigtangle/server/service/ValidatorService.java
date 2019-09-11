@@ -2203,11 +2203,19 @@ public class ValidatorService {
                         throw new InvalidDependencyException("Wrong token index");
                     return SolidityState.getFailState();
                 }
+                
                 if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token name");
                     return SolidityState.getFailState();
                 }
+                
+                if ( currentToken.getToken().getDomainName() !=null && !currentToken.getToken().getDomainName().equals(prevToken.getDomainName())) {
+                    if (throwExceptions)
+                        throw new PreviousTokenDisallowsException("Cannot change token domain name");
+                    return SolidityState.getFailState();
+                }
+                
                 if (currentToken.getToken().getDecimals() !=prevToken.getDecimals()) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token decimal");
@@ -2434,7 +2442,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
         
-        if ( (currentToken.getToken().getAmount()+""). length()+   currentToken.getToken().getDecimals()  >  NetworkParameters.TOKEN_MAX_DECIMAL ) {
+        if ( (currentToken.getToken().getAmount()+""). length() +   currentToken.getToken().getDecimals()  >  NetworkParameters.TOKEN_MAX_DECIMAL ) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("amount with decimal must be bewteen 0 and 10**19 ");
             return SolidityState.getFailState();
