@@ -243,11 +243,11 @@ public class ExchangeController {
     }
 
     public void exchangeCoin(ActionEvent event) throws Exception {
-        if (!Main.getNoMultiTokens().contains(toTokenHexComboBox.getValue())) {
+        if (!Main.getNoMultiTokens().contains(Main.getTokenid(toTokenHexComboBox.getValue()))) {
             GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
             return;
         }
-        if (!Main.getNoMultiTokens().contains(fromTokenHexComboBox.getValue())) {
+        if (!Main.getNoMultiTokens().contains(Main.getTokenid(fromTokenHexComboBox.getValue()))) {
             GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
             return;
         }
@@ -605,37 +605,14 @@ public class ExchangeController {
 
         byte[] buf = null;
         try {
-            List<UTXO> outputs = new ArrayList<UTXO>();
-            outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
-            outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(Main.getAesKey()),
-                    toCoin.getTokenHex()));
 
-            SendRequest req = SendRequest.to(toAddress00, toCoin);
-            req.tx.addOutput(fromCoin, fromAddress00);
+            SendRequest req = SendRequest.to(toAddress00, fromCoin);
+            req.tx.addOutput(toCoin, fromAddress00);
 
-            // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
-            // req.tx.addOutput(toAmount , toAddress00 );
-
-            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
-
-            HashMap<String, Address> addressResult = new HashMap<String, Address>();
-            addressResult.put(fromCoin.getTokenHex(), toAddress00);
-            addressResult.put(toCoin.getTokenHex(), fromAddress00);
-
-            // addressResult.put((String) exchangemap.get("fromTokenHex"),
-            // toAddress00);
-            // addressResult.put((String) exchangemap.get("toTokenHex"),
-            // fromAddress00);
-
-            List<TransactionOutput> candidates = Main.walletAppKit.wallet().transforSpendCandidates(outputs);
             Main.walletAppKit.wallet().setServerURL(ContextRoot);
-            Main.walletAppKit.wallet().completeTx(req, candidates, false, addressResult);
+            Main.walletAppKit.wallet().completeTx(req, Main.getAesKey());
             Main.walletAppKit.wallet().signTransaction(req);
 
-            // walletAppKit.wallet().completeTx(req,
-            // walletAppKit.wallet().transforSpendCandidates(ulist), false,
-            // addressResult);
-            // walletAppKit.wallet().signTransaction(req);
             this.mTransaction = req.tx;
             buf = mTransaction.bitcoinSerialize();
         } catch (Exception e) {

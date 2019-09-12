@@ -564,6 +564,17 @@ public class Main extends Application {
 
     }
 
+    public static String getTokenid(String string) {
+        if (string != null) {
+            if (string.contains(":")) {
+                string = string.substring(string.indexOf(":") + 1);
+            }
+            string = string.trim();
+        }
+        return string;
+
+    }
+
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
 
         if (seed != null)
@@ -843,7 +854,7 @@ public class Main extends Application {
             if (!utxo.getTokenId().equals(tokenid)) {
                 continue;
             }
-            if (utxo.getValue().getValue(). signum()> 0) {
+            if (utxo.getValue().getValue().signum() > 0) {
                 listUTXO.add(utxo);
             }
         }
@@ -982,7 +993,7 @@ public class Main extends Application {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();
-            if (tokens.getSignnumber() >= 2) {
+            if (tokens.getSignnumber() >= 3) {
                 continue;
             }
             if (tokens.getTokentype() != TokenType.token.ordinal()) {
