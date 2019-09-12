@@ -243,11 +243,11 @@ public class ExchangeController {
     }
 
     public void exchangeCoin(ActionEvent event) throws Exception {
-        if (!Main.getNoMultiTokens().contains(toTokenHexComboBox.getValue())) {
+        if (!Main.getNoMultiTokens().contains(Main.getTokenid(toTokenHexComboBox.getValue()))) {
             GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
             return;
         }
-        if (!Main.getNoMultiTokens().contains(fromTokenHexComboBox.getValue())) {
+        if (!Main.getNoMultiTokens().contains(Main.getTokenid(fromTokenHexComboBox.getValue()))) {
             GuiUtils.informationalAlert("", Main.getText("noMulti"), "");
             return;
         }
