@@ -606,12 +606,12 @@ public class ExchangeController {
         byte[] buf = null;
         try {
             List<UTXO> outputs = new ArrayList<UTXO>();
-            outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), fromCoin.getTokenHex()));
+            outputs.addAll(Main.getUTXOWithPubKeyHash(toAddress00.getHash160(), toCoin.getTokenHex()));
             outputs.addAll(Main.getUTXOWithECKeyList(Main.walletAppKit.wallet().walletKeys(Main.getAesKey()),
-                    toCoin.getTokenHex()));
+                    fromCoin.getTokenHex()));
 
-            SendRequest req = SendRequest.to(toAddress00, toCoin);
-            req.tx.addOutput(fromCoin, fromAddress00);
+            SendRequest req = SendRequest.to(toAddress00, fromCoin);
+            req.tx.addOutput(toCoin, fromAddress00);
 
             // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
             // req.tx.addOutput(toAmount , toAddress00 );
