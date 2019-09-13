@@ -25,6 +25,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
@@ -47,7 +48,7 @@ public class TransactionService {
     protected FullPrunedBlockGraph blockgraph;
     @Autowired
     private BlockService blockService;
- 
+
     @Autowired
     protected TipsService tipService;
     @Autowired
@@ -68,7 +69,7 @@ public class TransactionService {
     public Block askTransactionBlock() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight()); 
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
         return r1.createNextBlock(r2,
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
@@ -89,18 +90,20 @@ public class TransactionService {
     public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
         return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
     }
-    
+
     /*
      * Block byte[] bytes
      */
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes, boolean request, boolean checksolidity) {
-   
-        try{return addConnected(bytes, request, checksolidity);
-        }catch (Exception e) {
-            logger.warn("addConnectedFromKafka with sendkey:" + new String(bytes), e);
+
+        try {
+            logger.debug(" bytes " +bytes.length);
+            return addConnected(Gzip.decompress(bytes), request, checksolidity);
+        } catch (Exception e) {
+            logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);
             return null;
         }
-    
+
     }
 
     /*
@@ -109,7 +112,7 @@ public class TransactionService {
     public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity) {
         if (bytes == null)
             return null;
-        
+
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request,
                 checksolidity);
     }
@@ -119,7 +122,7 @@ public class TransactionService {
 
             if (!checkBlockExists(block)) {
                 boolean added = blockgraph.add(block, true);
-                if (!added  ) {
+                if (!added) {
                     logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
                             + block.getHeight() + " block: " + block.toString() + " request remote: " + request);
                     return Optional.empty();
@@ -140,9 +143,10 @@ public class TransactionService {
         return Optional.empty();
     }
 
-//    private boolean blockTimeRange(Block block) {
-//        return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 * 3600 * 1000;
-//    }
+    // private boolean blockTimeRange(Block block) {
+    // return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 *
+    // 3600 * 1000;
+    // }
 
     /*
      * check before add Block from kafka , the block can be already exists.

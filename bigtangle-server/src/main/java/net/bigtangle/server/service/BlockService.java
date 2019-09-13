@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -231,7 +232,7 @@ public class BlockService {
 
             kafkaMessageProducer.sendMessage(block.bitcoinSerialize(),
                     serverConfiguration.getMineraddress());
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException |IOException e) {
             logger.warn("", e);
         }
     }

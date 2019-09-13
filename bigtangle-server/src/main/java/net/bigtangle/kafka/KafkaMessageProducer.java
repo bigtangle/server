@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.kafka;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -17,7 +18,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.bigtangle.server.DispatcherController;
+import net.bigtangle.server.utils.Gzip;
 
 public class KafkaMessageProducer {
 
@@ -36,25 +37,29 @@ public class KafkaMessageProducer {
         this.binaryMessageKey = binaryMessageKey;
     }
 
-    public KafkaMessageProducer(KafkaConfiguration kafkaConfiguration ) {
+    public KafkaMessageProducer(KafkaConfiguration kafkaConfiguration) {
         super();
         this.kafkaserver = kafkaConfiguration.getBootstrapServers();
         this.topic = kafkaConfiguration.getTopicOutName();
 
     }
 
-    public boolean sendMessage(byte[] data, String serveraddress) throws InterruptedException, ExecutionException {
-        if ("".equalsIgnoreCase(kafkaserver))
-            {return false;}
+    public boolean sendMessage(byte[] data, String serveraddress)
+            throws InterruptedException, ExecutionException, IOException {
+        if ("".equalsIgnoreCase(kafkaserver)) {
+            return false;
+        }
         // messages can be ordered per a certain property,
-        //set a consistent message key and use multiple partitions
-        final String key = serveraddress;//UUID.randomUUID().toString();
+        // set a consistent message key and use multiple partitions
+        final String key = serveraddress;// UUID.randomUUID().toString();
         KafkaProducer<String, byte[]> messageProducer = new KafkaProducer<String, byte[]>(producerConfig());
         ProducerRecord<String, byte[]> producerRecord = null;
-        producerRecord = new ProducerRecord<String, byte[]>(topic, key,DispatcherController.compress(data));
+        byte[] bytes = Gzip.compress(data);
+     //   log.debug(" compress  " + bytes.length);
+        producerRecord = new ProducerRecord<String, byte[]>(topic, key, bytes);
         final Future<RecordMetadata> result = messageProducer.send(producerRecord);
         RecordMetadata mdata = result.get();
-         log.trace(" sendMessage " + key);
+        log.trace(" sendMessage " + key);
         messageProducer.close();
         return mdata != null;
 

@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -15,15 +13,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -66,6 +60,7 @@ import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.VOSExecuteService;
 import net.bigtangle.server.service.WalletService;
+import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @RestController
@@ -118,7 +113,7 @@ public class DispatcherController {
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     contentBytes.length);
 
-            bodyByte = decompress(contentBytes);
+            bodyByte = Gzip.decompress(contentBytes);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             if (serverConfiguration.getPermissioned())
                 checkPermission(httpServletResponse, httprequest);
@@ -680,29 +675,4 @@ public class DispatcherController {
         }
     }
 
-    public static byte[] decompress(byte[] contentBytes) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
-        } catch (ZipException | java.io.EOFException notzip) {
-            return contentBytes;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return out.toByteArray();
-    }
-
-    public static byte[] compress(byte[] contentBytes) {
-        ByteArrayInputStream in = new ByteArrayInputStream(contentBytes);
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            GZIPOutputStream gis = new GZIPOutputStream(out);
-
-            IOUtils.copy(in, gis);
-            return out.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
 }
