@@ -1134,7 +1134,7 @@ public abstract class AbstractIntegrationTest {
 
         // TODO domainname create token 
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, basecoin.getValue(), false, 0,   networkParameters.getGenesisBlock().getHashAsString());
+                signnumber, tokenindex_, basecoin.getValue(), false, 0, domainname, networkParameters.getGenesisBlock().getHashAsString());
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
