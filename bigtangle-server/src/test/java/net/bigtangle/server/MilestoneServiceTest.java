@@ -568,7 +568,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock();
+            block2 = fusingBlock.createNextBlock( fusingBlock);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();

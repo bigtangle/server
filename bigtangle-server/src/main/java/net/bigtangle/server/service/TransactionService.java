@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
@@ -67,9 +68,10 @@ public class TransactionService {
     public Block askTransactionBlock() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight()); 
 
-        return r1.createNextBlock(r2);
+        return r1.createNextBlock(r2,
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
     }
 
     public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
@@ -91,11 +93,11 @@ public class TransactionService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnectedFromKafka(byte[] bytes, boolean request, boolean checksolidity) {
+    public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes, boolean request, boolean checksolidity) {
    
         try{return addConnected(bytes, request, checksolidity);
         }catch (Exception e) {
-            logger.warn("addConnectedFromKafka", e);
+            logger.warn("addConnectedFromKafka with sendkey:" + new String(bytes), e);
             return null;
         }
     

@@ -128,8 +128,8 @@ public class Block extends Message {
         BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts
         BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Governance
         BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-file
-        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), 
-        BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
+        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), BLOCKTYPE_CROSSTANGLE(false,
+                NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
         BLOCKTYPE_ORDER_OP(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // refresh/cancel-order
         BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Reclaim-orders
@@ -151,7 +151,7 @@ public class Block extends Message {
         public int getMaxBlockSize() {
             return maxSize;
         }
-        
+
         public boolean requiresCalculation() {
             return requiresCalculation;
         }
@@ -1164,7 +1164,7 @@ public class Block extends Message {
                     }
                 }
                 if (keys.size() == 1) {
-                    signnumber =1;
+                    signnumber = 1;
                     pubKeyTo = keys.get(0).getPubKey();
                 }
                 if (signnumber <= 1 && keys.size() <= 1) {
@@ -1190,19 +1190,14 @@ public class Block extends Message {
     private static Random gen = new Random();
 
     /**
-     * Returns a solved, valid empty block that builds on top of this one and
-     * the specified other Block.
-     * 
-     */
-    public Block createNextBlock() {
-        return createNextBlock(this);
-    }
-
-    /**
      * Returns a unsolved, valid empty block that builds on top of this one and
      * the specified other Block.
      * 
      */
+    public Block createNextBlock(Block branchBlock, byte[] mineraddress) {
+        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, mineraddress);
+    }
+
     public Block createNextBlock(Block branchBlock) {
         return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
                 Address.fromBase58(params, "1Kbm8rqjcX6j5oLbq9J8FapksdvrfGUA88").getHash160());

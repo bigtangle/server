@@ -17,11 +17,13 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -48,7 +50,8 @@ public class OrderReclaimService {
 
     @Autowired
     protected NetworkParameters networkParameters;
-
+    @Autowired
+    ServerConfiguration serverConfiguration;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final ReentrantLock lock = Threading.lock("OrderReclaimService");
@@ -93,11 +96,12 @@ public class OrderReclaimService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        Block block = r1.createNextBlock(r2);
+        Block block = r1.createNextBlock(r2,
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
         block.addTransaction(tx);
         block.setBlockType(Block.Type.BLOCKTYPE_ORDER_RECLAIM);
         block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
-
+ 
         block.solve();
         blockService.saveBlock(block);
         return block;

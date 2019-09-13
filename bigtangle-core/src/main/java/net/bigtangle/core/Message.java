@@ -341,6 +341,7 @@ public abstract class Message {
             cursor += length;
             return b;
         } catch (IndexOutOfBoundsException e) {
+            log.debug(" payload.length ", payload.length , " readBytes" + length);
             throw new ProtocolException(e);
         }
     }

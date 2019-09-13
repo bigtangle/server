@@ -126,9 +126,7 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = transactionService.askTransactionBlock();
-                rollingBlock.setMinerAddress(
-                        Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-                register(rollingBlock);
+                     register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }

@@ -311,7 +311,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with tx
-        block = predecessor.createNextBlock();
+        block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.solve();
         this.blockGraph.add(block, true);
@@ -389,7 +389,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock();
+        block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -445,7 +445,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock();
+        block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -478,7 +478,7 @@ public abstract class AbstractIntegrationTest {
         tx.setDataSignature(buf1);
 
         // Create block with order
-        Block block = predecessor.createNextBlock();
+        Block block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
         block.solve();

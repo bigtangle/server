@@ -15,12 +15,14 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -45,7 +47,8 @@ public class RewardService {
     private BlockService blockService;
     @Autowired
     protected TipsService tipService;
-
+    @Autowired
+    protected ServerConfiguration serverConfiguration;
     @Autowired
     private ValidatorService validatorService;
     @Autowired
@@ -66,7 +69,7 @@ public class RewardService {
             performRewardVoting();
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
-            logger.debug(" Infeasible performRewardVoting: ", e1);
+         //  logger.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
             logger.error("performRewardVoting ", e);
         } finally {
@@ -128,7 +131,8 @@ public class RewardService {
         Block block = new Block(networkParameters, r1, r2);
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
         block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
- 
+        block.setMinerAddress(
+        Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
         // Make the new block
         block.addTransaction(result.getTx());
         block.setDifficultyTarget(result.getDifficulty());
