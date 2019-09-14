@@ -85,6 +85,9 @@ public class BlockRequester {
 
     }
 
+    /*
+     * switch chain select * from txreward where confirmed=1 chainlength with my blockhash with remote   ;
+     */
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
         for (String s : re) {

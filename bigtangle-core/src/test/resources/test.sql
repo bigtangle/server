@@ -5,6 +5,8 @@ select count( *) from blocks   ;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
 select   *  from unsolidblocks order by inserttime asc   ;
 
+select * from blocks order by height asc limit 100 ;
+select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
 select * from openorders where spent=0 and confirmed=1  ;
 

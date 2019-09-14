@@ -151,8 +151,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " VALUES(?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?)";
 
     protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert()
-            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency, height)"
-            + " VALUES(?, ?, ?, ?, ?,? )";
+            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency, height, directlymissing)"
+            + " VALUES(?, ?, ?, ?, ?, ?, ?)";
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
@@ -215,7 +215,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "rating, depth, cumulativeweight,  height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained, solid, confirmed " + " FROM blocks ";
 
-    protected final String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime, height from unsolidblocks order by inserttime asc, height desc ";
+    protected final String SELECT_NONSOLID_BLOCKS_SQL = "select hash, block, inserttime, height from unsolidblocks where directlymissing=1 order by inserttime asc, height desc ";
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"
@@ -2555,6 +2555,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             case MissingCalculation:
             case MissingPredecessor:
                 preparedStatement.setBytes(5, solidityState.getMissingDependency().getBytes());
+                preparedStatement.setBoolean(7, solidityState.isDirectlyMissing());
                 break;
             case Success:
                 throw new RuntimeException("Should not happen");
@@ -3333,7 +3334,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         StringBuffer stringBuffer = new StringBuffer();
         if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
             sql += "SELECT hash, rating, depth, cumulativeweight, "
-                    + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype "
+                    + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, confirmed "
                     + "  FROM  blocks ";
             sql += " where height >= " +heigth ;
             sql += " ORDER BY insertTime desc ";
@@ -3345,7 +3346,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " LIMIT " + a;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
-                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype"
+                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, confirmed"
                     + " FROM outputs JOIN blocks " + "ON outputs.blockhash = blocks.hash  ";
             sql += " where height >= " +heigth ;
             sql += " and  outputs.toaddress in ";
@@ -3365,7 +3366,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
                         Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11));
+                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11), resultSet.getLong("solid"), 
+                        resultSet.getBoolean("confirmed"));
                 result.add(blockEvaluation);
             }
             return result;
@@ -3390,7 +3392,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         // if (!"0".equalsIgnoreCase(lastestAmount) &&
         // !"".equalsIgnoreCase(lastestAmount)) {
         sql += "SELECT hash, rating, depth, cumulativeweight, "
-                + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype "
+                + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, confirmed "
                 + "  FROM  blocks ";
         if (blockhash != null && !"".equals(blockhash.trim())) {
             sql += " WHERE hash=? ";
@@ -3419,7 +3421,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
                         Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11));
+                        resultSet.getLong(8), resultSet.getLong(9), resultSet.getBoolean(10), resultSet.getInt(11),resultSet.getLong("solid"),
+                        resultSet.getBoolean("confirmed"));
                 result.add(blockEvaluation);
             }
             return result;

@@ -62,6 +62,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    reason bigint NOT NULL,\n" 
             + "    missingdependency mediumblob NOT NULL,\n" 
             + "    height bigint ,\n"
+            + "    directlymissing boolean NOT NULL,\n" 
             + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) \n" + ")";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 

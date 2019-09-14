@@ -369,8 +369,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         lock.lock();
         try {
             // If block already exists, no need to add this block to db
-            if (blockStore.getBlockEvaluation(block.getHash()) != null) 
+            if (blockStore.getBlockEvaluation(block.getHash()) != null) {
+                // if 
+                if (blockStore.getBlockEvaluation(block.getHash()).getSolid() >= 1) {
+                    try {
+                        scanWaitingBlocks(block, true);
+                    } catch (BlockStoreException | VerificationException e) {
+                        log.debug(e.getLocalizedMessage());
+                    }
+                }
                 return false;
+            }
 
             // Check the block is partially formally valid and fulfills PoW
             try {

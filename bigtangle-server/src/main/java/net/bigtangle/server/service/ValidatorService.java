@@ -877,7 +877,7 @@ public class ValidatorService {
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq);
             if (pred == null)
-                return SolidityState.from(predecessorReq);
+                return SolidityState.from(predecessorReq, true);
             if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
                 return SolidityState.fromMissingCalculation(predecessorReq);
             if (pred.getBlock().getHeight() >= block.getHeight()) {
@@ -899,7 +899,7 @@ public class ValidatorService {
             } else if (predecessor.getBlockEvaluation().getSolid() == 1) {
                 missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
-                missingDependency = SolidityState.from(predecessor.getBlockHash());
+                missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
                 if (throwExceptions)
                     throw new VerificationException("The used blocks are invalid.");
@@ -1366,10 +1366,10 @@ public class ValidatorService {
             }
             // Check predecessor blocks exist
             if (storedPrev == null) {
-                return SolidityState.from(block.getPrevBlockHash());
+                return SolidityState.from(block.getPrevBlockHash(), true);
             }
             if (storedPrevBranch == null) {
-                return SolidityState.from(block.getPrevBranchBlockHash());
+                return SolidityState.from(block.getPrevBranchBlockHash(), true);
             }
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 if (throwExceptions)
@@ -1467,7 +1467,7 @@ public class ValidatorService {
                     UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
                     if (prevOut == null) {
                         // Missing previous transaction output
-                        return SolidityState.from(in.getOutpoint());
+                        return SolidityState.from(in.getOutpoint(), true);
                     }
                 }
             }
@@ -1712,7 +1712,7 @@ public class ValidatorService {
         // Ensure the predecessing order block exists
         BlockWrap orderBlock = store.getBlockWrap(info.getOrderBlockHash());
         if (orderBlock == null) {
-            return SolidityState.from(info.getOrderBlockHash());
+            return SolidityState.from(info.getOrderBlockHash(), true);
         }
 
         // Ensure it is an order open block
@@ -1725,7 +1725,7 @@ public class ValidatorService {
         // Ensure the predecessing order matching block exists
         BlockWrap orderMatchingBlock = store.getBlockWrap(info.getNonConfirmingMatcherBlockHash());
         if (orderMatchingBlock == null) {
-            return SolidityState.from(info.getNonConfirmingMatcherBlockHash());
+            return SolidityState.from(info.getNonConfirmingMatcherBlockHash(), true);
         }
 
         // Ensure it is an order matching block
@@ -1935,7 +1935,7 @@ public class ValidatorService {
         // Ensure the predecessing order exists
         OrderRecord order = store.getOrder(info.getInitialBlockHash(), Sha256Hash.ZERO_HASH);
         if (order == null) {
-            return SolidityState.from(info.getInitialBlockHash());
+            return SolidityState.from(info.getInitialBlockHash(), true);
         }
 
         byte[] pubKey = order.getBeneficiaryPubKey();
@@ -1996,7 +1996,7 @@ public class ValidatorService {
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         BlockWrap dependency = store.getBlockWrap(prevRewardHash);
         if (dependency == null)
-            return SolidityState.from(prevRewardHash);
+            return SolidityState.from(prevRewardHash, true);
 
         // Ensure dependency (prev reward hash) is valid predecessor
         if (dependency.getBlock().getBlockType() != Type.BLOCKTYPE_INITIAL
@@ -2144,7 +2144,7 @@ public class ValidatorService {
         if (prevDomain == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
-            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
+            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()), true);
         }
         
         if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
@@ -2188,8 +2188,9 @@ public class ValidatorService {
                 prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
                 if (prevToken == null) {
                     if (throwExceptions)
-                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
-                    return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+                        // TODO
+                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()), true);
+                    return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()), true);
                 }
 
                 // Compare members of previous and current issuance
