@@ -50,6 +50,8 @@ import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -286,6 +288,27 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
+    @Test
+    public void blocksFromChainlenght() throws Exception {
+        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<String> address = new ArrayList<String>();
+        for (ECKey ecKey : keys) {
+            address.add(ecKey.toAddress(networkParameters).toBase58());
+        }
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("start", "0");
+        request.put("end", "0");
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.blocksFromChainLength.name(),
+                Json.jsonmapper().writeValueAsString(request).getBytes());
+
+        GetBlockListResponse blockListResponse = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
+
+   
+       // log.info("searchBlock resp : " + response);
+        assertEquals(blockListResponse.getBlockbytelist().size() , 1);
+    }
+
+    
     @Test
     public void exchangeToken() throws Exception {
         testInitWallet();

@@ -1167,7 +1167,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             s = conn.get().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
             s.setLong(1, start);
-            s.setLong(1, end);
+            s.setLong(2, end);
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 re.add(results.getBytes(2));
@@ -3359,7 +3359,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " LIMIT " + a;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
-                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, confirmed"
+                    + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, blocks.confirmed"
                     + " FROM outputs JOIN blocks " + "ON outputs.blockhash = blocks.hash  ";
             sql += " where height >= " + heigth;
             sql += " and  outputs.toaddress in ";
