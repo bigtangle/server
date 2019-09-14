@@ -42,6 +42,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.ErrorResponse;
 import net.bigtangle.core.http.OkResponse;
+import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
@@ -52,6 +53,7 @@ import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
+import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
@@ -102,6 +104,8 @@ public class DispatcherController {
     private TokenDomainnameService tokenDomainnameService;
     @Autowired
     private ExchangeService exchangeService;
+    @Autowired
+    private RewardService rewardService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -121,7 +125,7 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = transactionService.askTransactionBlock();
-                     register(rollingBlock);
+                register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
@@ -227,14 +231,13 @@ public class DispatcherController {
                 }
             }
                 break;
-            case blocksFromHeight: {
+            case blocksFromChainLength: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class); 
+                GetBlockListResponse response = this.blockService.blocksFromChainLength(
+                        Long.valueOf((String) request.get("start")), Long.valueOf((String) request.get("end")));
 
-                this.blockService.blocksFromHeight(Long.valueOf((String) request.get("heightstart")),
-                        Long.valueOf((String) request.get("heightend")));
-
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
             case getMultiSignWithAddress: {
@@ -485,7 +488,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case getMaxConfirmedReward: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = rewardService.getMaxConfirmedReward(request);
 
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             default:
                 break;
             }

@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -38,11 +40,9 @@ public class UnsolidBlockService {
     @Autowired
     private BlockRequester blockRequester;
 
-    
     @Autowired
     private BlockService blockService;
-    
-    
+
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
     protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
@@ -54,12 +54,11 @@ public class UnsolidBlockService {
         }
 
         try {
-
             logger.debug(" Start updateUnsolideServiceSingle: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            
-           // deleteOldUnsolidBlock();
+
+            // deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
             blockRequester.diff();
             logger.debug(" end  updateUnsolideServiceSingle: ");
@@ -83,34 +82,28 @@ public class UnsolidBlockService {
      * CONSUMERIDSUFFIX 12324
      */
     public void reCheckUnsolidBlock() throws Exception {
-         Block storedBlock = store.getNonSolidBlocksFirst();
-        if (storedBlock != null) {
+        List<Sha256Hash> storedBlocklist = store.getNonSolidMissingBlocks();
 
-             Block storedBlock0 = null;
-            try {
-                storedBlock0 = blockService.getBlock(storedBlock.getPrevBlockHash());
-            } catch (NoBlockException e) {
-                // Ok, no prev
-            }
-
-           Block storedBlock1 = null;
-            try {
-                storedBlock1 =blockService.getBlock(storedBlock.getPrevBranchBlockHash());
-            } catch (NoBlockException e) {
-                // Ok, no prev
-            }
-            if (storedBlock1 != null && storedBlock0 != null) {
-               boolean added= blockgraph.add(storedBlock , true);
-                if (added ) {
-                    this.store.deleteUnsolid(storedBlock.getHash());
-                    logger.debug("addConnected from reCheckUnsolidBlock " + storedBlock);
-
+        for (Sha256Hash storedBlock : storedBlocklist) {
+            if (storedBlock != null) {
+                if (blockService.getBlock(storedBlock) != null) {
+                    store.updateMissingBlock(storedBlock, false);
                 } else {
-                    requestPrev(storedBlock);
+                    requestPrevBlock(storedBlock);
                 }
-            } else {
-                requestPrev(storedBlock );
             }
+        }
+    }
+
+    public void requestPrevBlock(Sha256Hash hash) {
+        try {
+            byte[] re = blockRequester.requestBlock(hash);
+            if (re != null) {
+                Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
+                blockgraph.add(req, true);
+            }
+        } catch (Exception e) {
+            logger.debug("", e);
         }
     }
 
@@ -120,9 +113,9 @@ public class UnsolidBlockService {
                 return;
             }
 
-             Block storedBlock0 = null;
+            Block storedBlock0 = null;
             try {
-                storedBlock0 =blockService.getBlock(block.getPrevBlockHash());
+                storedBlock0 = blockService.getBlock(block.getPrevBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
@@ -137,7 +130,7 @@ public class UnsolidBlockService {
             Block storedBlock1 = null;
 
             try {
-                storedBlock1 =blockService.getBlock(block.getPrevBranchBlockHash());
+                storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash());
             } catch (NoBlockException e) {
                 // Ok, no prev
             }

@@ -29,6 +29,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
+import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -62,7 +63,7 @@ public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     @Cacheable("blocks")
-    //nullable
+    // nullable
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
     }
@@ -99,8 +100,8 @@ public class BlockService {
         Context context = new Context(networkParameters);
         Context.propagate(context);
         boolean added = blockgraph.add(block, false);
-        if (added  ) {
-                broadcastBlock(block);
+        if (added) {
+            broadcastBlock(block);
         }
     }
 
@@ -158,7 +159,8 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block) throws BlockStoreException {
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block)
+            throws BlockStoreException {
         if (block == null)
             return false;
 
@@ -167,7 +169,7 @@ public class BlockService {
 
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
-        
+
         List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
         for (Sha256Hash req : allRequiredBlockHashes) {
             BlockWrap pred = store.getBlockWrap(req);
@@ -183,8 +185,8 @@ public class BlockService {
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
-        long heigth = request.get("heigth") == null ?  0l : Long.valueOf( request.get("heigth").toString());
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount,heigth);
+        long heigth = request.get("heigth") == null ? 0l : Long.valueOf(request.get("heigth").toString());
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, heigth);
         HashSet<String> hashSet = new HashSet<String>();
         // filter
         for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
@@ -230,9 +232,8 @@ public class BlockService {
                 return;
             KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
 
-            kafkaMessageProducer.sendMessage(block.bitcoinSerialize(),
-                    serverConfiguration.getMineraddress());
-        } catch (InterruptedException | ExecutionException |IOException e) {
+            kafkaMessageProducer.sendMessage(block.bitcoinSerialize(), serverConfiguration.getMineraddress());
+        } catch (InterruptedException | ExecutionException | IOException e) {
             logger.warn("", e);
         }
     }
@@ -256,9 +257,9 @@ public class BlockService {
 
         this.store.deleteMyserverblocks(prevhash);
     }
-    
-    public List<byte[]> blocksFromHeight(Long heightstart, Long heightend) throws BlockStoreException {
 
-        return store.blocksFromHeight(heightstart);
+    public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
+
+        return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
 }

@@ -22,6 +22,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
+import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
@@ -73,6 +74,33 @@ public class BlockRequester {
         return data;
     }
 
+    public void requestBlocks(long chainlength) {
+        String[] re = serverConfiguration.getRequester().split(",");
+        List<String> badserver = new ArrayList<String>();
+
+        for (String s : re) {
+            if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
+                HashMap<String, String> requestParam = new HashMap<String, String>();
+                requestParam.put("start", chainlength + "");
+                requestParam.put("end", chainlength + "");
+                try {
+                    String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
+                            Json.jsonmapper().writeValueAsString(requestParam));
+                    GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response,
+                            GetBlockListResponse.class);
+                    for (byte[] data : blockbytelist.getBlockbytelist()) {
+                        transactionService.addConnected(data, false, false);
+                    }
+                    break;
+                } catch (Exception e) {
+                    log.debug(s, e);
+                    badserver.add(s);
+                }
+            }
+        }
+
+    }
+
     public boolean badserver(List<String> badserver, String s) {
         for (String d : badserver) {
             if (d.equals(s))
@@ -81,12 +109,11 @@ public class BlockRequester {
         return false;
     }
 
-    public void broadcastBlocks(long startheight, String kafkaserver) {
-
-    }
+    
 
     /*
-     * switch chain select * from txreward where confirmed=1 chainlength with my blockhash with remote   ;
+     * switch chain select * from txreward where confirmed=1 chainlength with my
+     * blockhash with remote ;
      */
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
@@ -98,19 +125,15 @@ public class BlockRequester {
 
     /*
      * check difference to remote server2 and get it.
+     * ask the remote getMaxConfirmedReward to compare the my getMaxConfirmedReward
+     * if the remote has length > my length, then find the get the list of confirmed chains data.
+     * match the block hash to find the sync chain length, then sync the chain data from 
      */
     public void diff(String server2) throws Exception {
         log.debug(" start difference check with " + server2);
 
         List<BlockEvaluationDisplay> remoteBlocks = getBlockInfos(server2);
 
-        // sort increasing of insert time, not height for add to connected
-        /*
-         * Collections.sort(remoteBlocks, new
-         * Comparator<BlockEvaluationDisplay>() { public int
-         * compare(BlockEvaluationDisplay p1, BlockEvaluationDisplay p2) {
-         * return p1.getHeight() < p2.getHeight() ? -1 : 1; } });
-         */
         List<BlockEvaluationDisplay> localblocks = getBlockInfos();
         for (BlockEvaluationDisplay b : remoteBlocks) {
             BlockEvaluationDisplay s = find(localblocks, b);

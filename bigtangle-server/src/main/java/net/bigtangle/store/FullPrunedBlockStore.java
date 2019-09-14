@@ -27,6 +27,7 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.UTXO;
@@ -232,7 +233,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException;
 
     /* Reward TXOs */
-    public Sha256Hash getMaxConfirmedRewardBlockHash() throws BlockStoreException;
+    public TXReward getMaxConfirmedReward() throws BlockStoreException;
 
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
 
@@ -330,7 +331,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
             throws BlockStoreException;
 
-    public List<byte[]> blocksFromHeight(long heightstart) throws BlockStoreException;
+    public List<byte[]> blocksFromChainLength(long start, long end  ) throws BlockStoreException;
 
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
@@ -421,10 +422,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
-    public List<Block> getNonSolidBlocks() throws BlockStoreException;
+    public List<Sha256Hash> getNonSolidMissingBlocks() throws BlockStoreException;
 
-    public Block getNonSolidBlocksFirst() throws BlockStoreException;
-
+    
     void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
@@ -495,5 +495,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException;
 
     void updateAllConfirmedToMilestone(long milestoneNumber) throws BlockStoreException;
+
+    void updateMissingBlock(Sha256Hash storedBlock, boolean b) throws BlockStoreException;
 
 }

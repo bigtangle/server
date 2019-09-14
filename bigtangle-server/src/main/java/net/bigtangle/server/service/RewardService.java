@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,9 +20,12 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -69,7 +73,7 @@ public class RewardService {
             performRewardVoting();
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
-         //  logger.debug(" Infeasible performRewardVoting: ", e1);
+            // logger.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
             logger.error("performRewardVoting ", e);
         } finally {
@@ -92,7 +96,7 @@ public class RewardService {
     public Block createAndAddMiningRewardBlock() throws Exception {
         logger.info("createAndAddMiningRewardBlock  started");
 
-        Sha256Hash prevRewardHash = store.getMaxConfirmedRewardBlockHash();
+        Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getHash();
         return createAndAddMiningRewardBlock(prevRewardHash);
 
     }
@@ -130,9 +134,9 @@ public class RewardService {
 
         Block block = new Block(networkParameters, r1, r2);
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
-        block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
+        block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
         block.setMinerAddress(
-        Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
         // Make the new block
         block.addTransaction(result.getTx());
         block.setDifficultyTarget(result.getDifficulty());
@@ -143,6 +147,12 @@ public class RewardService {
 
         block.solve();
         return block;
+    }
+
+    public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request) throws BlockStoreException {
+
+        return GetTXRewardResponse.create(store.getMaxConfirmedReward());
+
     }
 
 }

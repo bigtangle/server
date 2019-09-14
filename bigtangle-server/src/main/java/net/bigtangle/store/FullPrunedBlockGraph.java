@@ -209,7 +209,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
             
             // Consensus logic>
-            Sha256Hash oldLongestChainEnd = blockStore.getMaxConfirmedRewardBlockHash();
+            Sha256Hash oldLongestChainEnd = blockStore.getMaxConfirmedReward().getHash();
             long maxChainLength = blockStore.getRewardChainLength(oldLongestChainEnd);
             if (maxChainLength < currChainLength) {
                 
@@ -237,7 +237,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 
                 // Rollback to split point
                 Sha256Hash maxConfirmedRewardBlockHash;
-                while (!(maxConfirmedRewardBlockHash = blockStore.getMaxConfirmedRewardBlockHash()).equals(splitPoint.getBlockHash())) {
+                while (!(maxConfirmedRewardBlockHash = blockStore.getMaxConfirmedReward().getHash()).equals(splitPoint.getBlockHash())) {
                     
                     // Unset the milestone of this one (where milestone = maxConfRewardblock.chainLength)
                     long milestoneNumber = blockStore.getRewardChainLength(maxConfirmedRewardBlockHash);
