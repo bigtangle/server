@@ -231,10 +231,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException;
-
-    /* Reward TXOs */
+ 
     public TXReward getMaxConfirmedReward() throws BlockStoreException;
-
+    public List<TXReward> getAllConfirmedReward() throws BlockStoreException;
+    
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
 
     public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException;

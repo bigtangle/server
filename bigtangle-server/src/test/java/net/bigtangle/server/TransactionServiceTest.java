@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -33,6 +30,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
@@ -46,36 +44,17 @@ import net.bigtangle.wallet.SendRequest;
 public class TransactionServiceTest extends AbstractIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceTest.class);
 
-    // Deprecated @Test
-    public void testRewardVoting() throws Exception {
-        store.resetStore();
-        Block rollingBlock = networkParameters.getGenesisBlock();
+    @Test
+    public void testAllTXReward() throws Exception {
 
-        // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
+        // get new Block to be used from server
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getAllConfirmedReward.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
 
-        // Generate mining reward blocks
-        Block rewardBlock = rewardService.performRewardVoting();
-
-        // Assert that voting will not generate a new block since we have an
-        // eligible alternative already
-        assertEquals(rewardBlock, rewardService.performRewardVoting());
-
-        // After updating, we shall make new blocks now
-        rollingBlock = rewardBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-        Block rewardBlock2 = rewardService.performRewardVoting();
-        assertNotEquals(rewardBlock, rewardBlock2);
-        assertNotNull(rewardBlock2);
+        GetTXRewardListResponse getBalancesResponse = Json.jsonmapper().readValue(response,
+                GetTXRewardListResponse.class);
+        assertTrue(getBalancesResponse.getTxReward().size() >0);
     }
 
     // pay to mutilsigns keys wallet1Keys_part
@@ -116,7 +95,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         wallet1Keys_part.add(wallet1Keys.get(0));
         wallet1Keys_part.add(wallet1Keys.get(1));
         createMultiSigns(wallet1Keys_part);
- 
+
     }
 
     public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception {
@@ -179,7 +158,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        request.tx.setMemo(  new MemoInfo(createDataSize(5000)));
+        request.tx.setMemo(new MemoInfo(createDataSize(5000)));
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();

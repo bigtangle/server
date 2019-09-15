@@ -154,7 +154,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency, height, directlymissing)"
             + " VALUES(?, ?, ?, ?, ?, ?, ?)";
 
-    protected final String UPDATE_SET_MISSING_BLOCK_SQL = getUpdate() + " directlymissing=? WHERE missingdependency=?";
+    protected final String UPDATE_SET_MISSING_BLOCK_SQL = getUpdate()
+            + " unsolidblocks set directlymissing=? WHERE missingdependency=?";
 
     protected final String SELECT_OUTPUTS_COUNT_SQL = "SELECT COUNT(*) FROM outputs WHERE hash = ?";
     protected final String INSERT_OUTPUTS_SQL = getInsert()
@@ -416,7 +417,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String INSERT_TX_REWARD_SQL = getInsert()
             + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
-    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
+    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
+            + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
+    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
+            + "WHERE confirmed = 1 ";
+
     protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_CHAINLENGTH_SQL = "SELECT chainlength "
             + "FROM txreward WHERE blockhash = ?";
@@ -4443,13 +4448,39 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
 
-            return new TXReward(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
+            return new TXReward(resultSet.getBytes("blockhash"), resultSet.getBoolean("confirmed"),
                     resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
-                    resultSet.getBytes("spenderblockhash") == null ? null
-                            : Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-                    resultSet.getBytes("prevblockhash") == null ? null
-                            : Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
+                    resultSet.getBytes("spenderblockhash"), resultSet.getBytes("prevblockhash"),
                     resultSet.getLong("difficulty"), resultSet.getLong("chainlength"));
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<TXReward> getAllConfirmedReward() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<TXReward> list = new ArrayList<TXReward>();
+            while (resultSet.next()) {
+                list.add(new TXReward(resultSet.getBytes("blockhash"), resultSet.getBoolean("confirmed"),
+                        resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
+                        resultSet.getBytes("spenderblockhash"), resultSet.getBytes("prevblockhash"),
+                        resultSet.getLong("difficulty"), resultSet.getLong("chainlength")));
+            }
+
+            return list;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

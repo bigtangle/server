@@ -97,7 +97,7 @@ public class TransactionService {
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes, boolean request, boolean checksolidity) {
 
         try {
-            logger.debug(" bytes " +bytes.length);
+            //logger.debug(" bytes " +bytes.length);
             return addConnected(Gzip.decompress(bytes), request, checksolidity);
         } catch (Exception e) {
             logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);

@@ -93,7 +93,7 @@ public class OrdermatchService {
 
     public Block createAndAddOrderMatchingBlock() throws Exception {
 
-        Sha256Hash prevHash = store.getMaxConfirmedReward().getHash();
+        Sha256Hash prevHash = store.getMaxConfirmedReward().getSha256Hash();
         return createAndAddOrderMatchingBlock(prevHash);
 
     }

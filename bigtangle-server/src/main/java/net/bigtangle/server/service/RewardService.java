@@ -20,11 +20,10 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
@@ -96,7 +95,7 @@ public class RewardService {
     public Block createAndAddMiningRewardBlock() throws Exception {
         logger.info("createAndAddMiningRewardBlock  started");
 
-        Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getHash();
+        Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getSha256Hash();
         return createAndAddMiningRewardBlock(prevRewardHash);
 
     }
@@ -155,4 +154,9 @@ public class RewardService {
 
     }
 
+    public GetTXRewardListResponse getAllConfirmedReward(Map<String, Object> request) throws BlockStoreException {
+
+        return GetTXRewardListResponse.create(store.getAllConfirmedReward());
+
+    }
 }

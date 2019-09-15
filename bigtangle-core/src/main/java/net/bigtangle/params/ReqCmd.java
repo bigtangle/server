@@ -8,7 +8,7 @@ public enum ReqCmd {
 
     getTip, saveBlock, getOutputs, getBalances, searchBlock, searchBlockByBlockHash, getBlock,
     
-    blocksFromChainLength, streamBlocks, getOutputsHistory, getMaxConfirmedReward,
+    blocksFromChainLength, streamBlocks, getOutputsHistory, getMaxConfirmedReward,getAllConfirmedReward,
 
     getTokens, getTokensAmount, getTokenById, getToken, getTokenSerials, getCalTokenIndex, updateTokenInfo,
 

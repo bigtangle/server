@@ -116,7 +116,7 @@ public class OrderReclaimService {
      */
     public List<Block> performOrderReclaimMaintenance() throws Exception {
         // Find height from which on all orders are finished
-        Sha256Hash prevHash = store.getMaxConfirmedReward().getHash();
+        Sha256Hash prevHash = store.getMaxConfirmedReward().getSha256Hash();
         long finishedHeight = store.getRewardToHeight(prevHash);
 
         // Find orders that are unspent confirmed with height lower than the

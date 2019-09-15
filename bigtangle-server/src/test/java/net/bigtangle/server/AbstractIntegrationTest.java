@@ -500,7 +500,7 @@ public abstract class AbstractIntegrationTest {
         // Generate blocks until passing interval
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
-        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getHash());
+        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getSha256Hash());
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
@@ -509,7 +509,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getHash(),
+        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 
