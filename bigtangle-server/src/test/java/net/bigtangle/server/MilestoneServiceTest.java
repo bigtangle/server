@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,8 +21,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
@@ -36,8 +39,10 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -951,6 +956,29 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
     }
     
+
+    @Test
+    public void blocksFromChainlenght() throws Exception {
+        // create some blocks
+        testReorgMiningReward();
+
+        HashMap<String, Object> request = new HashMap<String, Object>();
+        request.put("start", "0");
+        request.put("end", "0");
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.blocksFromChainLength.name(),
+                Json.jsonmapper().writeValueAsString(request).getBytes());
+
+        GetBlockListResponse blockListResponse = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
+
+   
+        // log.info("searchBlock resp : " + response);
+        assertTrue(blockListResponse.getBlockbytelist().size() > 0);
+
+        for (byte[] data : blockListResponse.getBlockbytelist()) {
+            transactionService.addConnected(data, false, false);
+        }
+    }
+
     @Test
     public void testReorgMiningReward2() throws Exception {
         store.resetStore();

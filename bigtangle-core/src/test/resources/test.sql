@@ -4,7 +4,7 @@ select * from openorders   ;
 select count( *) from blocks   ;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
 select   *  from unsolidblocks order by inserttime asc   ;
-
+select * from txreward ;
 select * from blocks order by height desc limit 200 ;
 select * from blocks order by height asc limit 200 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;

@@ -15,18 +15,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
@@ -50,16 +46,13 @@ import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.core.http.server.resp.GetBalancesResponse;
 import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.PayOTCOrder;
@@ -168,7 +161,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
         store.resetStore();
-        
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
@@ -178,7 +170,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<>();
         for (int i = 0; i < 3; i++) {
             ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() .longValue() );
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, genesiskey);
         milestoneService.update();
@@ -188,7 +180,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         for (UTXO utxo : balance) {
 
             assertTrue(utxo.getValue().getValue().equals(NetworkParameters.BigtangleCoinTotal
-                    . subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf( 3)))));
+                    .subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf(3)))));
 
         }
     }
@@ -289,27 +281,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void blocksFromChainlenght() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        List<String> address = new ArrayList<String>();
-        for (ECKey ecKey : keys) {
-            address.add(ecKey.toAddress(networkParameters).toBase58());
-        }
-        HashMap<String, Object> request = new HashMap<String, Object>();
-        request.put("start", "0");
-        request.put("end", "0");
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.blocksFromChainLength.name(),
-                Json.jsonmapper().writeValueAsString(request).getBytes());
-
-        GetBlockListResponse blockListResponse = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
-
-   
-       // log.info("searchBlock resp : " + response);
-        assertEquals(blockListResponse.getBlockbytelist().size() , 1);
-    }
-
-    
-    @Test
     public void exchangeToken() throws Exception {
         testInitWallet();
         wallet1();
@@ -339,8 +310,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
         SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
-        req.tx.addOutput(myutxo.getValue(), new Address(networkParameters,
-         yourutxo.getAddress()));
+        req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
 
         walletAppKit.wallet().completeTx(req, null);
         // walletAppKit.wallet().signTransaction(req);
@@ -739,20 +709,18 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     @SuppressWarnings({ "unchecked" })
-   // @Test
+    // @Test
     public void exchangeSign(String orderid) throws Exception {
 
-    
-     
         String serverURL = "http://localhost:8090";
         String marketURL = "http://localhost:8090";
-       // String orderid = (String) exchangemap.get("orderid");
+        // String orderid = (String) exchangemap.get("orderid");
 
         PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit.wallet(), orderid, serverURL, serverURL);
         payOrder1.sign();
 
         PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit1.wallet(), orderid, serverURL, serverURL);
         payOrder2.sign();
-       
+
     }
 }

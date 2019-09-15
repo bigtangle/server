@@ -1175,7 +1175,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(2, end);
             ResultSet results = s.executeQuery();
             while (results.next()) {
-                re.add(results.getBytes(2));
+                re.add(results.getBytes("block"));
             }
             return re;
         } catch (Exception ex) {
@@ -3346,7 +3346,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
-            long heigth) throws BlockStoreException {
+            long height) throws BlockStoreException {
 
         String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
@@ -3354,7 +3354,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += "SELECT hash, rating, depth, cumulativeweight, "
                     + " height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, confirmed "
                     + "  FROM  blocks ";
-            sql += " where height >= " + heigth;
+            sql += " where height >= " + height;
             sql += " ORDER BY insertTime desc ";
             Long a = Long.valueOf(lastestAmount);
             // TODO paging
@@ -3366,7 +3366,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
                     + " blocks.height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained, blocktype, solid, blocks.confirmed"
                     + " FROM outputs JOIN blocks " + "ON outputs.blockhash = blocks.hash  ";
-            sql += " where height >= " + heigth;
+            sql += " where height >= " + height;
             sql += " and  outputs.toaddress in ";
             for (String str : address)
                 stringBuffer.append(",").append("'" + str + "'");

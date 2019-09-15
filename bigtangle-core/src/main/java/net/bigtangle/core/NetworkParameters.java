@@ -171,7 +171,7 @@ public abstract class NetworkParameters {
             + 8 // sequence (lastMiningReward) long
             + 20 // miner address
             + 4 // blockType
-            + 8 // heigth
+            + 8 // height
             + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
     // Transaction setting

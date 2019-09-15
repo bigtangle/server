@@ -177,7 +177,7 @@ public class Block extends Message {
     }
 
     public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
-            long minTime, long lastMiningRewardBlock, long difficultyTarget, long heigth) {
+            long minTime, long lastMiningRewardBlock, long difficultyTarget, long height) {
         this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype], minTime, lastMiningRewardBlock,
                 difficultyTarget);
     }
