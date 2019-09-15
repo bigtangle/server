@@ -165,7 +165,7 @@ public class BlockRequester {
         TXReward remote = getMaxConfirmedReward(server2);
         TXReward my = store.getMaxConfirmedReward();
         // sync all chain data d
-        if (remote.getChainLength() > my.getChainLength() + 5) {
+        if (remote.getChainLength() > my.getChainLength() + 2) {
       
             
             List<TXReward> remotes = getAllConfirmedReward(server2);

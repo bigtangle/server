@@ -52,7 +52,7 @@ public class SendEmptyBlock {
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
     public String CONTEXT_ROOT = 
-            "https://bigtangle.org/";
+            "https://test.bigtangle.de/";
 
      //"http://localhost:8088/";//
     public static void main(String[] args) throws Exception {

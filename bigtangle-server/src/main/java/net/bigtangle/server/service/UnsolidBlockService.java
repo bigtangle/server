@@ -57,10 +57,10 @@ public class UnsolidBlockService {
             logger.debug(" Start updateUnsolideServiceSingle: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-
+            blockRequester.diff();
             // deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
-            blockRequester.diff();
+       
             logger.debug(" end  updateUnsolideServiceSingle: ");
 
         } catch (Exception e) {

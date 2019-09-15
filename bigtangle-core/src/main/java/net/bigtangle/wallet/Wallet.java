@@ -1421,13 +1421,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 // If the change output would result in this transaction
                 // being
                 // rejected as dust, just drop the change and make it a fee
-             
-                    size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size())
-                            - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
-                    // This solution is either category 1 or 2
-                    if (!eitherCategory2Or3) // must be category 1
-                        additionalValueForNextCategory = null;
-                 
+
+                size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size())
+                        - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
+                // This solution is either category 1 or 2
+                if (!eitherCategory2Or3) // must be category 1
+                    additionalValueForNextCategory = null;
+
             } else {
                 if (eitherCategory2Or3) {
                     // This solution definitely fits in category 3 (we threw
@@ -2017,7 +2017,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // this key
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, 3, 600000);
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, 3, 10000);
     }
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
@@ -2154,7 +2154,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
-                    && u.getValue().getValue() .compareTo( amount.getValue() )>0 ) {
+                    && u.getValue().getValue().compareTo(amount.getValue()) > 0) {
                 return u;
             }
         }
@@ -2162,9 +2162,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
-            Long validFromTime) throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+            Long validFromTime)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token t = checkTokenId(tokenId);
-        long total = totalAmount(sellPrice, sellAmount, t.getDecimals()) ;
+        long total = totalAmount(sellPrice, sellAmount, t.getDecimals());
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId);
 
@@ -2289,7 +2290,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
-     
+
         request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
         rollingBlock.addTransaction(request.tx);
@@ -2368,8 +2369,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, BigInteger amount, String description,
-            int signnumber) throws Exception {
+            String domainname, String domainPredecessorBlockHash, KeyParameter aesKey, BigInteger amount,
+            String description, int signnumber) throws Exception {
 
         Coin basecoin = new Coin(amount, tokenid);
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
@@ -2462,17 +2463,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
-    
+    public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,
+            String sellText) throws IOException, JsonProcessingException, JsonParseException, JsonMappingException {
 
-    public void getOrderMap( boolean matched,  List<String> address,  List<Map<String, Object>> orderData,
-             String buytext, String sellText) throws IOException, JsonProcessingException, JsonParseException, JsonMappingException {
-     
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("spent", matched  ? "false" : "true");
+        requestParam.put("spent", matched ? "false" : "true");
         requestParam.put("addresses", address);
         String response0 = OkHttp3Util.post(serverurl + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-      
+
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
 
         MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
@@ -2490,7 +2489,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                         / orderRecord.getTargetValue()));
             } else {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
-                map.put("type",sellText);
+                map.put("type", sellText);
                 map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("tokenname", t.getTokennameDisplay());
@@ -2501,8 +2500,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
             map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
-            map.put("address",
-                    ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
+            map.put("address", ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
             map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
             // map.put("state", Main.getText( (String)
             // requestParam.get("state")));
