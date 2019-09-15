@@ -159,12 +159,12 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
-                Utils.encodeCompactBits(NetworkParameters.MAX_TARGET), 0);
+                Utils.encodeCompactBits(params.getMaxTarget()), 0);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long type) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0,
-                Utils.encodeCompactBits(NetworkParameters.MAX_TARGET), 0);
+                Utils.encodeCompactBits(params.getMaxTarget()), 0);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {
@@ -650,7 +650,7 @@ public class Block extends Message {
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = Utils.decodeCompactBits(difficultyTarget);
-        if (target.signum() < 0 || target.compareTo(NetworkParameters.MAX_TARGET) > 0)
+        if (target.signum() < 0 || target.compareTo(params.getMaxTarget()) > 0)
             throw new DifficultyTargetException();
         return target;
     }

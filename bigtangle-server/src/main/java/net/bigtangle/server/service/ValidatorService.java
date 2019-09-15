@@ -265,9 +265,9 @@ public class ValidatorService {
             newTarget = minNewTarget;
         }
 
-        if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
+        if (newTarget.compareTo(networkParameters.getMaxTarget()) > 0) {
             logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = NetworkParameters.MAX_TARGET;
+            newTarget = networkParameters.getMaxTarget();
         }
 
         return Utils.encodeCompactBits(newTarget);

@@ -147,7 +147,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
         for (int i = 0; i < 100; i++) {
             Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
-                    Block.Type.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000,0,  Utils.encodeCompactBits(NetworkParameters.MAX_TARGET));
+                    Block.Type.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000,0,  Utils.encodeCompactBits(networkParameters.getMaxTarget()));
             if (i == 99) {
                 break;
             }
@@ -161,7 +161,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         }
         
         Block block = new Block(this.networkParameters, sha256Hash1, sha256Hash2,
-                Block.Type.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000,0,  Utils.encodeCompactBits(NetworkParameters.MAX_TARGET));
+                Block.Type.BLOCKTYPE_TRANSFER, System.currentTimeMillis() / 1000,0,  Utils.encodeCompactBits(networkParameters.getMaxTarget()));
         
         ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));

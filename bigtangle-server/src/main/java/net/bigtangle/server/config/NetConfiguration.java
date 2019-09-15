@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.TestParams;
 
 @Configuration
 public class NetConfiguration {
@@ -21,8 +22,11 @@ public class NetConfiguration {
         if("Mainnet".equals(serverConfiguration.getNet())) {
             return new MainNetParams();
         }
+        if("Test".equals(serverConfiguration.getNet())) {
+            return new TestParams();
+        }
   
-        return new MainNetParams();
+        return new TestParams();
     }
     
     

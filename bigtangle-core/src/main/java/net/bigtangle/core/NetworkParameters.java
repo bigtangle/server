@@ -67,6 +67,7 @@ public abstract class NetworkParameters {
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
+      
     protected Block genesisBlock;
     protected BigInteger maxTarget;
 
@@ -79,11 +80,6 @@ public abstract class NetworkParameters {
     protected byte[] alertSigningKey;
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
-
-    /** Used to check majorities for block version upgrade */
-    protected int majorityEnforceBlockUpgrade;
-    protected int majorityRejectBlockOutdated;
-    protected int majorityWindow;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case
@@ -196,9 +192,7 @@ public abstract class NetworkParameters {
     public static final long REWARD_MIN_HEIGHT_INTERVAL = 10;
     public static final long REWARD_MIN_REWARDED_HEIGHT_INTERVAL = REWARD_MIN_HEIGHT_INTERVAL
             - REWARD_MIN_HEIGHT_DIFFERENCE;
-    // just about one second on server
-    public static final BigInteger MAX_TARGET = new BigInteger(
-            "578960377169117509212217050695880916496095398817113098493422368414323410");
+
 
     public static final int TARGET_TIMESPAN = 24 * 60 * 60; // 1 day per
                                                             // difficulty cycle
@@ -224,7 +218,7 @@ public abstract class NetworkParameters {
         genesisBlock.setTime(1532896109L);
 
         // 1 in 4 blocks shall be correct
-        BigInteger diff = NetworkParameters.MAX_TARGET;
+        BigInteger diff = params.getMaxTarget();
         genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
         Transaction coinbase = new Transaction(params);
@@ -463,32 +457,6 @@ public abstract class NetworkParameters {
      * Construct and return a custom serializer.
      */
     public abstract BitcoinSerializer getSerializer(boolean parseRetain);
-
-    /**
-     * The number of blocks in the last {@link getMajorityWindow()} blocks at
-     * which to trigger a notice to the user to upgrade their client, where the
-     * client does not understand those blocks.
-     */
-    public int getMajorityEnforceBlockUpgrade() {
-        return majorityEnforceBlockUpgrade;
-    }
-
-    /**
-     * The number of blocks in the last {@link getMajorityWindow()} blocks at
-     * which to enforce the requirement that all new blocks are of the newer
-     * type (i.e. outdated blocks are rejected).
-     */
-    public int getMajorityRejectBlockOutdated() {
-        return majorityRejectBlockOutdated;
-    }
-
-    /**
-     * The sampling window from which the version numbers of blocks are taken in
-     * order to determine if a new block version is now the majority.
-     */
-    public int getMajorityWindow() {
-        return majorityWindow;
-    }
 
     /**
      * The flags indicating which script validation tests should be applied to

@@ -176,9 +176,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
         newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
-        if (newTarget.compareTo(NetworkParameters.MAX_TARGET) > 0) {
+        if (newTarget.compareTo(networkParameters.getMaxTarget()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = NetworkParameters.MAX_TARGET;
+            newTarget =networkParameters.getMaxTarget();
         }
 
         return Utils.encodeCompactBits(newTarget);
