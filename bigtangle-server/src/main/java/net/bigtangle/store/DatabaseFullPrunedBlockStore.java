@@ -990,7 +990,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Just fill the tables with some valid data
             // Reward output table
             insertReward(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH,
-                    NetworkParameters.EASIEST_DIFFICULTY_TARGET, 0);
+                    Utils.encodeCompactBits(NetworkParameters.MAX_TARGET), 0);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
             // create domain name bc
@@ -1035,7 +1035,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 Block.Type.BLOCKTYPE_TOKEN_CREATION.ordinal());
         bcBlock.setTime(1532896109L);
 
-        BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+        BigInteger diff =  NetworkParameters.MAX_TARGET;
         bcBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
         bcBlock.setNonce(0);

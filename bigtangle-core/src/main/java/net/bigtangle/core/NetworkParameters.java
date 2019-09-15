@@ -127,12 +127,6 @@ public abstract class NetworkParameters {
     public static final long BLOCK_VERSION_GENESIS = 1;
 
     /**
-     * A value for difficultyTarget (nBits) that allows half of all possible
-     * hash solutions. Used in unit testing.
-     */
-    public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
-
-    /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
      * Bitcoin can continue to grow. For now it exists as an anti-DoS measure to
@@ -154,13 +148,11 @@ public abstract class NetworkParameters {
      */
     public static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
-    
     /**
      * The maximum returned search blocks to the request.
      */
     public static final long ALLOWED_SEARCH_BLOCKS = 10000;
 
-    
     /**
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
@@ -191,32 +183,37 @@ public abstract class NetworkParameters {
 
     public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-    
-    public static String genesisPub =testPub;
-    
-    // 100 billions  as Value
-    public static BigInteger BigtangleCoinTotal = BigInteger.valueOf(LongMath.pow(10, 11+BIGTANGLE_DECIMAL));
+
+    public static String genesisPub = testPub;
+
+    // 100 billions as Value
+    public static BigInteger BigtangleCoinTotal = BigInteger.valueOf(LongMath.pow(10, 11 + BIGTANGLE_DECIMAL));
     public static final long TARGET_YEARLY_MINING_PAYOUT = BigtangleCoinTotal.longValue() / 1000;
 
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
     public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
     public static final long REWARD_MIN_HEIGHT_INTERVAL = 10;
-    public static final long REWARD_MIN_REWARDED_HEIGHT_INTERVAL = REWARD_MIN_HEIGHT_INTERVAL - REWARD_MIN_HEIGHT_DIFFERENCE;
-    public static final BigInteger MAX_TARGET = Utils.decodeCompactBits(0x207fFFFFL);
+    public static final long REWARD_MIN_REWARDED_HEIGHT_INTERVAL = REWARD_MIN_HEIGHT_INTERVAL
+            - REWARD_MIN_HEIGHT_DIFFERENCE;
+    // just about one second on server
+    public static final BigInteger MAX_TARGET = new BigInteger(
+            "578960377169117509212217050695880916496095398817113098493422368414323410");
 
-    public static final int TARGET_TIMESPAN = 24 * 60 * 60;  // 1 day per difficulty cycle
-    public static final int TARGET_SPACING = 15;  // 15 seconds per block.
+    public static final int TARGET_TIMESPAN = 24 * 60 * 60; // 1 day per
+                                                            // difficulty cycle
+    public static final int TARGET_SPACING = 15; // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-    
+
     public static final int TARGET_MAX_TPS = 100;
 
     // per interval of length target_spacing, the reward is:
-    public static final long TARGET_INTERVAL_REWARD = TARGET_YEARLY_MINING_PAYOUT * TARGET_SPACING / 31536000;  
+    public static final long TARGET_INTERVAL_REWARD = TARGET_YEARLY_MINING_PAYOUT * TARGET_SPACING / 31536000;
     // a third always comes directly from the consensus blocks:
-    public static final long CONSENSUS_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3; 
-    // the other two thirds are for each inclusion into consensus and each block itself:
-    public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING; 
+    public static final long CONSENSUS_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3;
+    // the other two thirds are for each inclusion into consensus and each block
+    // itself:
+    public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
 
     protected NetworkParameters() {
     }
@@ -227,7 +224,7 @@ public abstract class NetworkParameters {
         genesisBlock.setTime(1532896109L);
 
         // 1 in 4 blocks shall be correct
-        BigInteger diff = Utils.decodeCompactBits(NetworkParameters.EASIEST_DIFFICULTY_TARGET);
+        BigInteger diff = NetworkParameters.MAX_TARGET;
         genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
         Transaction coinbase = new Transaction(params);
@@ -237,7 +234,7 @@ public abstract class NetworkParameters {
         RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH);
 
         coinbase.setData(rewardInfo.toByteArray());
-        add(params, BigtangleCoinTotal  ,  genesisPub, coinbase);
+        add(params, BigtangleCoinTotal, genesisPub, coinbase);
         genesisBlock.addTransaction(coinbase);
         genesisBlock.setNonce(0);
         genesisBlock.setHeight(0);
@@ -248,7 +245,7 @@ public abstract class NetworkParameters {
     }
 
     public static void add(NetworkParameters params, BigInteger amount, String account, Transaction coinbase) {
-        //  amount, many public keys
+        // amount, many public keys
         String[] list = account.split(",");
         Coin base = new Coin(amount, BIGTANGLE_TOKENID);
         List<ECKey> keys = new ArrayList<ECKey>();

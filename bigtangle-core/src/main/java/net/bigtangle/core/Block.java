@@ -159,12 +159,12 @@ public class Block extends Message {
 
     Block(NetworkParameters params, long setVersion) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
-                NetworkParameters.EASIEST_DIFFICULTY_TARGET, 0);
+                Utils.encodeCompactBits(NetworkParameters.MAX_TARGET), 0);
     }
 
     public Block(NetworkParameters params, long blockVersionGenesis, long type) {
         this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0,
-                NetworkParameters.EASIEST_DIFFICULTY_TARGET, 0);
+                Utils.encodeCompactBits(NetworkParameters.MAX_TARGET), 0);
     }
 
     public Block(NetworkParameters params, Block r1, Block r2) {

@@ -14,8 +14,11 @@ select * from openorders where spent=0 and confirmed=1  ;
 select  missingdependency, height from unsolidblocks where directlymissing=1
 
 
+select * from outputs  where spent=0 and confirmed=1 ;
+select * from openorders  where spent=0 and confirmed=1 ;
+
 OUTPUTS
-select * from outputs   ;
+select * from outputs  ;
 select * from tokens   ;
 select * from txreward   ;
 select * from ordermatching   ;

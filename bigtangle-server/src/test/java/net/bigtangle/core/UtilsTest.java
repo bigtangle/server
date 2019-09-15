@@ -9,17 +9,40 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.kenai.jffi.Array;
 
 import net.bigtangle.core.Utils;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.server.utils.Gzip;
 
 import static org.junit.Assert.*;
 
 public class UtilsTest {
+
+    
+    private static final NetworkParameters PARAMS = MainNetParams.get();
+
+   
+    private static final Logger log = LoggerFactory.getLogger(UtilsTest.class);
+ 
+    @Test
+    public void testSolve() throws Exception {
+
+        Block block = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());
+        
+        // save block
+        Stopwatch watch = Stopwatch.createStarted();
+        block.solve();
+        log.info(" Solve time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+    }
 
     @Test
     public void testReverseBytes() {
