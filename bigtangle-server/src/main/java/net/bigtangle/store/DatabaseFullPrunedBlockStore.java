@@ -5644,7 +5644,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(15, record.getBeneficiaryAddress());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new BlockStoreException(e);
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                throw new BlockStoreException(e);
+        
         } finally {
             if (preparedStatement != null) {
                 try {
