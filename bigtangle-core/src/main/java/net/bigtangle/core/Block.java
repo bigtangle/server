@@ -1057,7 +1057,7 @@ public class Block extends Message {
 
         coinbase.setData(data);
         coinbase.setDataClassName(dataClassName.name());
-
+        coinbase.setMemo(new MemoInfo(" Coinbase:  " +dataClassName.name()));
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
@@ -1129,7 +1129,7 @@ public class Block extends Message {
             byte[] buf = tokenInfo.toByteArray();
             coinbase.setData(buf);
         }
-
+        coinbase.setMemo(new MemoInfo(" Coinbase:  " +DataClassName.TOKEN.name()));
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 

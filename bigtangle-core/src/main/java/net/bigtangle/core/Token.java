@@ -309,12 +309,13 @@ public class Token implements java.io.Serializable {
     @Override
     public String toString() {
         return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
-                + tokenname + ", description=" + description + ", url=" + domainName + ", domainpred="
-                + domainPredecessorBlockHash + ", signnumber=" + signnumber + ", tokentype=" + tokentype
-                + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash + ", blockhash=" + blockhash
-                + ", amount=" + amount + ", revoked=" + revoked + ", classification=" + classification + ", language="
-                + language + ", tokenKeyValues=" + tokenKeyValues + "]";
+                + tokenname + ", description=" + description + ", domainName=" + domainName
+                + ", domainPredecessorBlockHash=" + domainPredecessorBlockHash + ", signnumber=" + signnumber
+                + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
+                + ", blockhash=" + blockhash + ", amount=" + amount + ", decimals=" + decimals + ", classification="
+                + classification + ", language=" + language + ", revoked=" + revoked + ", tokenKeyValues="
+                + tokenKeyValues + "]";
     }
-    
+ 
   
 }

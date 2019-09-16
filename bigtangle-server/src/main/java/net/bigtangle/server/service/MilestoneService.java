@@ -70,7 +70,8 @@ public class MilestoneService {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-
+      //Lock the table  txreward ;
+        
         try {
             log.trace("Milestone Update started");
             // clearCacheBlockEvaluations();

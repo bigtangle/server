@@ -6,16 +6,19 @@ select count( *) from unsolidblocks   where inserttime < 1515432033 ;
 select   *  from unsolidblocks order by inserttime asc   ;
 select * from txreward ;
 select * from blocks order by height desc limit 200 ;
-select * from blocks order by height asc limit 200 ;
+select * from blocks where height > 450 order by height asc limit 500 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
 select * from openorders where spent=0 and confirmed=1  ;
 
 select  missingdependency, height from unsolidblocks where directlymissing=1
 
+select * from blocks where confirmed=1 ;
 
 select * from outputs  where spent=0 and confirmed=1 ;
 select * from openorders  where spent=0 and confirmed=1 ;
+
+update blocks set milestone=0    where height=0
 
 OUTPUTS
 select * from outputs  ;

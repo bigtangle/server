@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.tools;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Test;
@@ -12,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Utils;
 
 public class TokenCreateTests extends AbstractIntegrationTest {
@@ -23,7 +26,7 @@ public class TokenCreateTests extends AbstractIntegrationTest {
 
     
     @Test
-    public void testYuanToken() throws JsonProcessingException, Exception {
+    public void testTokens() throws JsonProcessingException, Exception {
      
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
                 Utils.HEX.decode(yuanTokenPub)),  "人民币",2,null);
@@ -40,6 +43,28 @@ public class TokenCreateTests extends AbstractIntegrationTest {
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(GOLDTokenPriv),
                 Utils.HEX.decode(GOLDTokenPub)),  "GOLD",0,null);
     }
+    // create a token with multi sign
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname)
+            throws JsonProcessingException, Exception {
+       super.testCreateMultiSigToken(key, tokename, decimals, domainname);
+       try {
+       HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+       wallet1();
+       wallet2();
+       for(int i=0;i<100; i++) {
+       giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size() ).toAddress(networkParameters).toString(), 333L);
+       giveMoneyResult.put(wallet2Keys.get(i % wallet2Keys.size() ).toAddress(networkParameters).toString(), 5555L);
+
+       }
+      
+       Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult,   key,key.getPubKey(), "");
+       log.debug("block " + b.toString());
+
+       }catch (Exception e) {
+           log.debug("block " , e);
+    }
+    }
+
    // @Test
     public void testCreateToken() throws JsonProcessingException, Exception {
         // Setup transaction and signatures

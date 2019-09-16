@@ -290,7 +290,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // get token from wallet to spent
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-        testCreateToken();
+        testCreateToken(walletKeys.get(0));
 
         milestoneService.update();
 

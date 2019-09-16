@@ -780,8 +780,8 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
-    protected void testCreateToken() throws JsonProcessingException, Exception {
-        ECKey outKey = walletKeys.get(0);
+    protected void testCreateToken( ECKey outKey) throws JsonProcessingException, Exception {
+      //  ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 

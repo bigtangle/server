@@ -44,6 +44,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpInfo;
@@ -203,6 +204,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
+        //Lock the table  txreward ;
         try {
             RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -238,6 +240,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Rollback to split point
                 Sha256Hash maxConfirmedRewardBlockHash;
                 while (!(maxConfirmedRewardBlockHash = blockStore.getMaxConfirmedReward().getSha256Hash()).equals(splitPoint.getBlockHash())) {
+
+                    // Sanity check:
+                    if (maxConfirmedRewardBlockHash.equals(params.getGenesisBlock().getHash()))
+                        throw new RuntimeException("Unset genesis. Shouldn't happen");
                     
                     // Unset the milestone of this one (where milestone = maxConfRewardblock.chainLength)
                     long milestoneNumber = blockStore.getRewardChainLength(maxConfirmedRewardBlockHash);
@@ -1769,7 +1775,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         TransactionInput input = new TransactionInput(networkParameters, tx, Script
                 .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
-
+        tx.setMemo(new MemoInfo("OrderMatchingResult: coinbase: "));
         // Return all consumed orders, virtual order matching tx and newly
         // generated remaining MODIFIED order book
         return new OrderMatchingResult(spentOrders, tx, remainingOrders.values(), tokenId2Events);
@@ -1842,7 +1848,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-
         // Read the order of the referenced block
         OrderRecord order = blockStore.getOrder(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
 
@@ -2003,7 +2008,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
                 prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
         tx.addInput(input);
-
+        tx.setMemo(new MemoInfo("MiningRewardTX from height "+ fromHeight + " to: "+toHeight ));
         return tx;
     }
 

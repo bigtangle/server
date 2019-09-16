@@ -325,6 +325,7 @@ public abstract class AbstractIntegrationTest {
             throws JsonProcessingException, Exception {
         try {
             createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname);
+                   
         } catch (Exception e) {
             // TODO: handle exception
             log.warn("", e);

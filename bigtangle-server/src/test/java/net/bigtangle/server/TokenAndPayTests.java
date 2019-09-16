@@ -177,13 +177,17 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     @Test
     public void testGetTokenById() throws Exception {
+        
+        testCreateToken(walletKeys.get(0));
+        
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", "b5c5ef754de00444775ef7247d51f48d6e13cbdf");
+        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         log.info("getTokensResponse : " + getTokensResponse);
+       assertTrue( getTokensResponse.getTokens().size() >0);
     }
 
     // @Before

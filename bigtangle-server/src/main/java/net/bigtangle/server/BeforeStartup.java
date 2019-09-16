@@ -17,6 +17,7 @@ public class BeforeStartup {
 
     @PostConstruct
     public void run() throws Exception {
+        //may cleanup of project in mixed eclipse   false in test 
         if (serverConfiguration.getCreatetable()) {
             store.create();
         }

@@ -25,7 +25,6 @@ public class ServerConfiguration {
 
     private Boolean debug;
 
-    @Value("${net:Mainnet}")
     private String net;
 
     private String mineraddress;
