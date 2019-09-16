@@ -171,6 +171,9 @@ public class MainController {
     }
 
     public boolean checkVersion() throws Exception {
+        return true;
+    }
+    public boolean checkVersion1() throws Exception {
         try {
             String CONTEXT_ROOT = Main.versionserver;
             HashMap<String, Object> requestParam = new HashMap<String, Object>();

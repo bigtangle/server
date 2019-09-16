@@ -325,7 +325,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_MARKET_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE
             + " FROM tokens WHERE tokentype = 1 and confirmed = true";
 
-    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, SUM(amount) as amount FROM tokens WHERE confirmed = true GROUP BY tokenid";
+    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, amount  as amount FROM tokens WHERE confirmed = true ";
 
     protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens WHERE tokenid = ? AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
