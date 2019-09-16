@@ -46,6 +46,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         contactInfo0.setContactList(list);
 
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
+        //TODO encrypt and decrypt the contactInfo0 
         transaction.setData(contactInfo0.toByteArray());
 
         Sha256Hash sighash = transaction.getHash();
