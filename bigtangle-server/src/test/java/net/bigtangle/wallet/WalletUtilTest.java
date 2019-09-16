@@ -30,6 +30,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletUtil;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.params.TestParams;
 
 public class WalletUtilTest {
 
@@ -38,7 +39,7 @@ public class WalletUtilTest {
     @Test
     public void walletCreateLoadTest() throws Exception {
 
-        byte[] a = WalletUtil.createWallet(MainNetParams.get());
+        byte[] a = WalletUtil.createWallet(TestParams.get());
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
@@ -87,7 +88,7 @@ public class WalletUtilTest {
     @Test
     public void setPassword() throws Exception {
 
-        byte[] a = WalletUtil.createWallet(MainNetParams.get());
+        byte[] a = WalletUtil.createWallet(TestParams.get());
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);

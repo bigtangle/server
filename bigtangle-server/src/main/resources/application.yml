@@ -1,6 +1,6 @@
 server:
   port: ${SERVER_PORT:8088}
-  net: ${SERVER_NET:Mainnet}
+  net: ${SERVER_NET:Test}
   requester: ${REQUESTER:}
   mineraddress: ${SERVER_MINERADDRESS:1Kbm8rqjcX6j5oLbq9J8FapksdvrfGUA88}
   serverversion: ${SERVERVERSION:0.3.5.0}
