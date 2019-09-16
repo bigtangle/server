@@ -63,15 +63,14 @@ public class MilestoneService {
      */
 
     protected final ReentrantLock lock = Threading.lock("milestoneService");
-  
 
     public void update(int numberUpdates) {
         if (!lock.tryLock()) {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-      //Lock the table  txreward ;
-        
+        // Lock the add ;
+        blockGraph.lock.lock();
         try {
             log.trace("Milestone Update started");
             // clearCacheBlockEvaluations();
@@ -106,28 +105,30 @@ public class MilestoneService {
             log.trace("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             watch.stop();
-            
+
             log.debug("Maintained update 1 time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
 
             watchAll.stop();
-            
+
         } catch (Exception e) {
             log.warn("", e);
         } finally {
+            blockGraph.lock.unlock();
             lock.unlock();
         }
 
     }
 
-  
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
-     * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks too.
+     * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks
+     * too.
      * 
      * @throws BlockStoreException
      */
     private void updateWeightAndDepth() throws BlockStoreException {
-        // Begin from the highest maintained height blocks and go backwards from there
+        // Begin from the highest maintained height blocks and go backwards from
+        // there
         PriorityQueue<BlockWrap> blockQueue = store.getMaintainedBlocksDescending();
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
@@ -268,7 +269,8 @@ public class MilestoneService {
             }
         }
 
-        // Begin from the highest solid height tips plus selected tips and go backwards from there
+        // Begin from the highest solid height tips plus selected tips and go
+        // backwards from there
         PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
         HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
         selectedTipSet.removeAll(blockQueue);
@@ -299,7 +301,7 @@ public class MilestoneService {
             subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
 
             // Update your rating if solid
-            if (currentBlock.getBlockEvaluation().getSolid() == 2) 
+            if (currentBlock.getBlockEvaluation().getSolid() == 2)
                 store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
                         approvers.get(currentBlock.getBlockHash()).size());
             approvers.remove(currentBlock.getBlockHash());
@@ -333,7 +335,8 @@ public class MilestoneService {
             blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
         for (int i = 0; i < numberUpdates; i++) {
-            // Now try to find blocks that can be added to the milestone. DISALLOWS UNSOLID
+            // Now try to find blocks that can be added to the milestone.
+            // DISALLOWS UNSOLID
             HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm();
 
             // VALIDITY CHECKS

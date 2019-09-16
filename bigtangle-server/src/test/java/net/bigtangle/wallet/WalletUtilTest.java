@@ -88,7 +88,7 @@ public class WalletUtilTest {
     @Test
     public void setPassword() throws Exception {
 
-        byte[] a = WalletUtil.createWallet(TestParams.get());
+        byte[] a = WalletUtil.createWallet(MainNetParams.get());
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
