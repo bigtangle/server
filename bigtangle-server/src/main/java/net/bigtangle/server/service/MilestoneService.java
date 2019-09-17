@@ -69,8 +69,10 @@ public class MilestoneService {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-        // Lock the add ;
-        blockGraph.lock.lock();
+        
+        // Lock the consensus logic
+        blockGraph.confirmLock.lock();
+        
         try {
             log.trace("Milestone Update started");
             // clearCacheBlockEvaluations();
@@ -113,7 +115,7 @@ public class MilestoneService {
         } catch (Exception e) {
             log.warn("", e);
         } finally {
-            blockGraph.lock.unlock();
+            blockGraph.confirmLock.unlock();
             lock.unlock();
         }
 

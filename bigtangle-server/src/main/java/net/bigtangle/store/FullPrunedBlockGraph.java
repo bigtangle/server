@@ -204,7 +204,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
-        //Lock the table  txreward ;
+        // Lock the tables
+        confirmLock.lock();
+        
         try {
             RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -367,12 +369,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Cannot happen when connecting
             e.printStackTrace();
             throw new RuntimeException(e);
+        } finally {
+            confirmLock.unlock();
         }
     }
 
     public boolean add(Block block, boolean allowUnsolid) {
-        // TODO lock from milestoneService
-        lock.lock();
+        addLock.lock();
         try {
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null) {
@@ -397,7 +400,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 log.warn(block.getHashAsString());
                 throw e;
             }
-            checkState(lock.isHeldByCurrentThread());
+            checkState(addLock.isHeldByCurrentThread());
 
             SolidityState solidityState = validatorService.checkSolidity(block, true);
 
@@ -444,12 +447,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw e;
         } finally {
-            lock.unlock();
+            addLock.unlock();
         }
     }
 
     public boolean solidifyWaiting(Block block, boolean runConsensusLogic) {
-        lock.lock();
+        addLock.lock();
         try {
             SolidityState solidityState = validatorService.checkSolidity(block, false);
             
@@ -479,7 +482,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             log.error("", e);
             throw e;
         } finally {
-            lock.unlock();
+            addLock.unlock();
         }
     }
 
@@ -515,7 +518,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws VerificationException
      */
     private void connect(final Block block, SolidityState solidityState) throws BlockStoreException, VerificationException {
-        checkState(lock.isHeldByCurrentThread());
+        checkState(addLock.isHeldByCurrentThread());
         blockStore.put(block);
         solidifyBlock(block, solidityState, true, false);
     }
