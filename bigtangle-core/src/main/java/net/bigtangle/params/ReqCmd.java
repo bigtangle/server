@@ -24,5 +24,5 @@ public enum ReqCmd {
 
     getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, findDomainPredecessorBlockHash,
 
-    exchangeSignTransaction, exchangeInfo, exchangeMultiSignTransaction, saveExchange;
+    signTransaction, exchangeInfo, exchangeMultiSignTransaction, saveExchange;
 }

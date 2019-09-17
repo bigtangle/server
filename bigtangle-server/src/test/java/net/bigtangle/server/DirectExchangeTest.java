@@ -15,7 +15,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,10 +48,10 @@ import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.UserDataResponse;
 import net.bigtangle.core.http.server.resp.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -333,6 +335,47 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.info("getExchange resp : " + requestParam);
     }
 
+    @Test
+    public void exchangeTokenA() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
+        ECKey myKey = walletAppKit2.wallet().walletKeys(null).get(0);
+        log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
+        testCreateToken(walletKeys.get(0));
+
+        milestoneService.update();
+        testCreateToken(walletKeys.get(1));
+
+        milestoneService.update();
+        payToken(yourKey);
+        payToken(myKey);
+        String orderid = UUID.randomUUID().toString();
+        String fromAddress = myKey.toAddress(networkParameters).toBase58();
+        String fromTokenHex = myKey.getPublicKeyAsHex();
+        String fromAmount = "2";
+        String toAddress = yourKey.toAddress(networkParameters).toBase58();
+        String toTokenHex = yourKey.getPublicKeyAsHex();
+        String toAmount = "3";
+        Map<String, Object> request = new HashMap<>();
+        request.put("orderid", orderid);
+
+        request.put("fromAddress", fromAddress);
+        request.put("fromTokenHex", fromTokenHex);
+        request.put("fromAmount", fromAmount);
+
+        request.put("toAddress", toAddress);
+        request.put("toTokenHex", toTokenHex);
+        request.put("toAmount", toAmount);
+        String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.saveExchange.name(),
+                Json.jsonmapper().writeValueAsString(request).getBytes());
+        PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit1.wallet(), orderid, contextRoot, contextRoot);
+        payOrder1.sign();
+        PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit2.wallet(), orderid, contextRoot, contextRoot);
+        payOrder2.sign();
+    }
+
     // TODO @Test
     public void testExchangeTokenMulti() throws Exception {
         testInitWallet();
@@ -485,7 +528,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         List<UTXO> ulist = getBalance();
 
         for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+            if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
                 utxo = u;
             }
         }
