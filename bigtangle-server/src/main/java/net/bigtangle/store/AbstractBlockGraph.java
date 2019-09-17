@@ -90,7 +90,7 @@ import net.bigtangle.wallet.Wallet;
  * </p>
  */
 public abstract class AbstractBlockGraph {
-    protected final ReentrantLock addLock = Threading.lock("blocktangle");
+    
     public final ReentrantLock confirmLock = Threading.lock("blocktangle");
 
     /** Keeps a map of block hashes to StoredBlocks. */
