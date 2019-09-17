@@ -232,7 +232,7 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>());
+        blockGraph.confirmWithLock(block.getHash(), new HashSet<>());
 
         return block;
     }
@@ -248,7 +248,7 @@ public abstract class AbstractIntegrationTest {
         Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -318,7 +318,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -332,7 +332,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -396,7 +396,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -452,7 +452,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         milestoneService.update();
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         milestoneService.update();
         return block;
 
@@ -486,7 +486,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
         milestoneService.update();
         return block;
     }
@@ -514,7 +514,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-        blockGraph.confirm(block.getHash(), new HashSet<>());
+        blockGraph.confirmWithLock(block.getHash(), new HashSet<>());
         milestoneService.update();
         return block;
     }
@@ -611,7 +611,7 @@ public abstract class AbstractIntegrationTest {
         for (Block b : addedBlocks) {
             blockGraph.add(b, false);
             if (blockConfirmed.get(b))
-                blockGraph.confirm(b.getHash(), new HashSet<>());
+                blockGraph.confirmWithLock(b.getHash(), new HashSet<>());
             else
                 blockGraph.unconfirm(b.getHash(), new HashSet<>());
         }

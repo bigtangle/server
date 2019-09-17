@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.apache.tomcat.jni.Lock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -612,6 +613,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
             throw e;
+        }
+    }
+
+    public void confirmWithLock(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+        // Write to DB
+        confirmLock.lock();
+        try {
+        confirm(blockHash, traversedBlockHashes);
+        }finally {
+            confirmLock.unlock();
+            
         }
     }
 

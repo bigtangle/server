@@ -225,7 +225,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
-        blockGraph.confirm(depBlock.getHash(), new HashSet<>());
+        blockGraph.confirmWithLock(depBlock.getHash(), new HashSet<>());
 
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -265,13 +265,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(b.getHash(), new HashSet<Sha256Hash>());
         }
 
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<Sha256Hash>());
+        blockGraph.confirmWithLock(rewardBlock1.getHash(), new HashSet<Sha256Hash>());
 
         // Mining reward block should go through
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
@@ -284,22 +284,22 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(b.getHash(), new HashSet<Sha256Hash>());
         }
 
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>());
+        blockGraph.confirmWithLock(rewardBlock2.getHash(), new HashSet<Sha256Hash>());
 
         store.resetStore();
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(b.getHash(), new HashSet<Sha256Hash>());
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(b.getHash(), new HashSet<Sha256Hash>());
         }
 
         // Add block allowing unsolids
@@ -558,7 +558,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(rollingBlock.getHash(), new HashSet<Sha256Hash>());
         }
 
         // Generate eligible mining reward block
@@ -616,7 +616,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>());
+            blockGraph.confirmWithLock(rollingBlock.getHash(), new HashSet<Sha256Hash>());
         }
 
         // Generate eligible mining reward block
@@ -750,7 +750,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm 1
-        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>());
+        blockGraph.confirmWithLock(spenderBlock1.getHash(), new HashSet<>());
 
         // 1 should be confirmed now
         UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
@@ -802,7 +802,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(origUTXO.isSpent());
 
         // Confirm 2
-        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>());
+        blockGraph.confirmWithLock(spenderBlock2.getHash(), new HashSet<>());
 
         // 2 should be confirmed now
         utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
@@ -2769,7 +2769,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+            blockGraph.confirmWithLock(tokenBlock.getHash(), new HashSet<>());
         }
 
         Block block1 = null;
@@ -2888,7 +2888,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+            blockGraph.confirmWithLock(tokenBlock.getHash(), new HashSet<>());
         }
 
         Block block1 = null;
@@ -2977,7 +2977,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+            blockGraph.confirmWithLock(tokenBlock.getHash(), new HashSet<>());
         }
 
         Block block1 = null;
@@ -3046,7 +3046,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>());
+            blockGraph.confirmWithLock(tokenBlock.getHash(), new HashSet<>());
         }
 
         Block block1 = null;

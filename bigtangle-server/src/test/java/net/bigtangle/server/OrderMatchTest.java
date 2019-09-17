@@ -682,7 +682,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
@@ -761,7 +761,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);

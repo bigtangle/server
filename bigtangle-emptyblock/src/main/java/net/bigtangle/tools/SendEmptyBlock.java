@@ -101,7 +101,7 @@ public class SendEmptyBlock {
             // conflicts
             int res = 0;
             for (BlockEvaluationDisplay b : a) {
-                if (b.getRating() < 70) {
+                if (b.getRating() < 70 || b.getMilestone() <0) {
                     res += 1;
                 }
             }

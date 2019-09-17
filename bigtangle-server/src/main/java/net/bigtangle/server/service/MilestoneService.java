@@ -347,7 +347,7 @@ public class MilestoneService {
             // Finally add the resolved new milestone blocks to the milestone
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
+                blockGraph.confirmWithLock(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
