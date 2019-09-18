@@ -2055,7 +2055,7 @@ public class ValidatorService {
         }
 
         // Fallback: Ensure everything is generated canonically
-        if (!block.getTransactions().get(0).equals(result.getTx())) {
+        if (!block.getTransactions().get(0).getHash().equals( result.getTx().getHash())) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect Transaction");
             return SolidityState.getFailState();

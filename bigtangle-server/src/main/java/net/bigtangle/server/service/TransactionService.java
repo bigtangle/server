@@ -21,7 +21,9 @@ import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -97,8 +99,11 @@ public class TransactionService {
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes, boolean request, boolean checksolidity) {
 
         try {
-            //logger.debug(" bytes " +bytes.length);
+            // logger.debug(" bytes " +bytes.length);
             return addConnected(Gzip.decompress(bytes), request, checksolidity);
+        } catch (DifficultyTargetException e) {
+
+            return null;
         } catch (Exception e) {
             logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);
             return null;
@@ -109,7 +114,8 @@ public class TransactionService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity) {
+    public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity)
+            throws ProtocolException, BlockStoreException, NoBlockException {
         if (bytes == null)
             return null;
 
@@ -117,29 +123,23 @@ public class TransactionService {
                 checksolidity);
     }
 
-    private Optional<Block> addConnectedBlock(Block block, boolean request, boolean checksolidity) {
-        try {
+    private Optional<Block> addConnectedBlock(Block block, boolean request, boolean checksolidity)
+            throws BlockStoreException, NoBlockException {
 
-            if (!checkBlockExists(block)) {
-                boolean added = blockgraph.add(block, true);
-                if (!added) {
-                    logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height ="
-                            + block.getHeight() + " block: " + block.toString() + " request remote: " + request);
-                    return Optional.empty();
+        if (!checkBlockExists(block)) {
+            boolean added = blockgraph.add(block, true);
+            if (!added) {
+                logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height =" + block.getHeight()
+                        + " block: " + block.toString() + " request remote: " + request);
+                return Optional.empty();
 
-                } else {
-                    return Optional.of(block);
-                }
             } else {
-                // logger.debug("addConnected BlockExists " + block);
+                return Optional.of(block);
             }
-        } catch (VerificationException e) {
-            logger.debug("addConnected   ", e);
-            return Optional.empty();
-        } catch (Exception e) {
-            logger.debug("addConnected  ", e);
-            return Optional.empty();
+        } else {
+            // logger.debug("addConnected BlockExists " + block);
         }
+
         return Optional.empty();
     }
 
