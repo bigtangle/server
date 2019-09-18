@@ -349,8 +349,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testCreateToken(walletKeys.get(1));
 
         milestoneService.update();
-        payToken(yourKey);
-        payToken(myKey);
+        payToken(yourKey, walletKeys.get(0).getPubKey());
+        payToken(myKey, walletKeys.get(1).getPubKey());
         String orderid = UUID.randomUUID().toString();
         String fromAddress = myKey.toAddress(networkParameters).toBase58();
         String fromTokenHex = myKey.getPublicKeyAsHex();
@@ -529,6 +529,38 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         for (UTXO u : ulist) {
             if (!Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+                utxo = u;
+            }
+        }
+        log.debug(utxo.getValue().toString());
+        // Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
+        // utxo.getValue().getTokenid()));
+        // log.debug(baseCoin);
+        Address destination = outKey.toAddress(networkParameters);
+
+        Coin coinbase = Coin.valueOf(100, utxo.getValue().getTokenid());
+        SendRequest request = SendRequest.to(destination, coinbase);
+        walletAppKit.wallet().completeTx(request, null);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
+        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+
+        checkBalance(coinbase, walletAppKit1.wallet().walletKeys(null));
+    }
+
+    public void payToken(ECKey outKey, byte[] tokenbuf) throws Exception {
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        log.info("resp block, hex : " + Utils.HEX.encode(data));
+        // get other tokenid from wallet
+        UTXO utxo = null;
+        List<UTXO> ulist = getBalance();
+
+        for (UTXO u : ulist) {
+            if (Arrays.equals(u.getTokenidBuf(), tokenbuf)) {
                 utxo = u;
             }
         }
