@@ -41,7 +41,7 @@ import okio.Okio;
 public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
-    private static long timeoutMinute = 16;
+    private static long timeoutMinute = 6;
     private static OkHttpClient client = null;
     public static String pubkey;
     public static String signHex;

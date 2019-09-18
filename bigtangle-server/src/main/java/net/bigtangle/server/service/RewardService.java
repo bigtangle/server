@@ -126,8 +126,12 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException {
-        RewardBuilderResult result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
-
+        RewardBuilderResult result =null;
+        try {
+              result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
+        } catch (java.lang.ArithmeticException e) {
+            return null;
+        }
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
 

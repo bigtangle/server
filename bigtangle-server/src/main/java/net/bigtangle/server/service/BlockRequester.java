@@ -164,6 +164,7 @@ public class BlockRequester {
         log.debug(" start difference check with " + server2);
         TXReward remote = getMaxConfirmedReward(server2);
         TXReward my = store.getMaxConfirmedReward();
+        log.debug("  remote chain lenght  " +  remote .getChainLength() + " my chain lenght " +my.getChainLength());
         // sync all chain data d
         if (remote.getChainLength() > my.getChainLength() + 2) {
       
