@@ -175,5 +175,14 @@ public class ServerConfiguration {
     public void setServerurl(String serverurl) {
         this.serverurl = serverurl;
     }
+
+    @Override
+    public String toString() {
+        return "ServerConfiguration [requester=" + requester + ", port=" + port + ", debug=" + debug + ", net=" + net
+                + ", mineraddress=" + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion
+                + ", clientversion=" + clientversion + ", permissioned=" + permissioned + ", permissionadmin="
+                + permissionadmin + ", myserverblockOnly=" + myserverblockOnly + ", permissionDomainname="
+                + permissionDomainname + ", serviceReady=" + serviceReady + ", createtable=" + createtable + "]";
+    }
     
 }

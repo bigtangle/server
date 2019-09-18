@@ -1653,9 +1653,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // All Spend Candidates as List<TransactionOutput>
     public List<TransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
             throws IOException {
-        lock.lock();
-        try {
-
+   
             List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
 
             List<String> pubKeyHashs = new ArrayList<String>();
@@ -1674,14 +1672,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 } else {
                     if (!output.isMultiSig()) {
                         candidates.add(new FreeStandingTransactionOutput(this.params, output));
+                    }else {
+                        log.debug(" warning MultiSig token in Wallet, but not inlcude in  SpendCandidates " + output);
                     }
-                }
+                } 
             }
             Collections.shuffle(candidates);
             return candidates;
-        } finally {
-            lock.unlock();
-        }
+        
     }
 
     /*
