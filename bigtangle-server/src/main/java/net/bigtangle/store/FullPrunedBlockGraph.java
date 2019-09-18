@@ -187,6 +187,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void addReward(Block block) throws BlockStoreException {
+        checkState(confirmLock.isHeldByCurrentThread());
         try {
             
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
@@ -199,15 +200,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
         } catch (IOException e) {
             // Cannot happen when connecting
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
 
     private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
-        // Lock the tables
-        confirmLock.lock();
-
+   
+        checkState(confirmLock.isHeldByCurrentThread());
         try {
             RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -367,12 +366,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             
         } catch (IOException e) {
-            // Cannot happen when connecting
-            e.printStackTrace();
+            // Cannot happen when connecting 
             throw new RuntimeException(e);
-        } finally {
-            confirmLock.unlock();
-        }
+        } 
     }
 
     public boolean add(Block block, boolean allowUnsolid) {
@@ -385,7 +381,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     try {
                         scanWaitingBlocks(block, true);
                     } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage());
+                        log.debug(e.getLocalizedMessage(),e);
                     }
                 }
                 return false;
@@ -1278,8 +1274,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             
             // Reward blocks follow different logic: If this is new, run consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && runConsensusLogic) {
+                // Lock the tables
+                confirmLock.lock();
+                try {
                 addReward(block);                
                 runConsensusLogic(block);
+                }finally {
+                    confirmLock.unlock();
+                }
                 return;
             }
             
