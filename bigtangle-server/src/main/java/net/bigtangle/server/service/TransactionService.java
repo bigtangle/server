@@ -22,6 +22,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
@@ -72,9 +73,8 @@ public class TransactionService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-       Block b =   new Block(networkParameters,r1, r2);
-       b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-         return b;
+        return r1.createNextBlock(r2,
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
     }
 
     public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {

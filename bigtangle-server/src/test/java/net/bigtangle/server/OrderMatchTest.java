@@ -676,7 +676,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block =createNextBlock( predecessor,predecessor);
+        block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -755,7 +755,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = createNextBlock(predecessor,predecessor);
+        block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
