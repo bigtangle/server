@@ -6,8 +6,6 @@
 package net.bigtangle.core;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
@@ -183,53 +181,17 @@ public class TransactionTest {
         }
     }
 
-    @Test
-    public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
-        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
-            @Override
-            public Script getScriptSig() throws ScriptException {
-                throw new ScriptException("");
-            }
-        };
-
-        tx.addInput(ti);
-        assertEquals(tx.toString().contains("[exception: "), true);
-    }
-
+    
     @Test
     public void testToStringWhenThereAreZeroInputs() {
         Transaction tx = new Transaction(PARAMS);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
-   
-    @Test(expected = ScriptException.class)
-    public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
-        ECKey key = new ECKey();
-        Address addr = key.toAddress(PARAMS);
-        Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
-
-        Transaction tx = new Transaction(PARAMS);
-        tx.addOutput(fakeTx.getOutput(0));
-
-        Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
-
-        tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(Sha256Hash.ZERO_HASH), script, key);
-    }
+    
 
  
-   
-
-    @Test
-    public void optInFullRBF() {
-        // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
-        assertFalse(tx.isOptInFullRBF());
-
-        tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
-        assertTrue(tx.isOptInFullRBF());
-    }
+    
 
     /**
      * Ensure that hashForSignature() doesn't modify a transaction's data, which

@@ -130,13 +130,13 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -203,7 +203,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             conflictBlock2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
         }
         // Make a fusing block
-        Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
+        Block rollingBlock =createNextBlock( conflictBlock1,conflictBlock2);
         blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
@@ -258,7 +258,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block conflictBlock2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null);
 
         // Make a fusing block
-        Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
+        Block rollingBlock = createNextBlock(conflictBlock1,conflictBlock2);
         blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
@@ -297,7 +297,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Make another conflicting issuance that goes through
         // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
-        Block rollingBlock = block2.createNextBlock(block1);
+        Block rollingBlock =createNextBlock( block2,block1);
         blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
@@ -345,7 +345,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
         Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-        Block rollingBlock = block2.createNextBlock(block1);
+        Block rollingBlock = createNextBlock(block2,block1);
         blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
@@ -371,11 +371,11 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Generate blocks 
-        Block rollingBlock = txBlock1.createNextBlock(txBlock1);
+        Block rollingBlock = createNextBlock(txBlock1,txBlock1);
         blockGraph.add(rollingBlock, true);
 
         for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         
@@ -394,7 +394,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         // Create conflicting block with UTXO
         Block txBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
-        rollingBlock = rollingBlock.createNextBlock(txBlock2);
+        rollingBlock = createNextBlock(rollingBlock,txBlock2);
         blockGraph.add(rollingBlock, true);
 
         milestoneService.update();
@@ -467,7 +467,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Make another conflicting issuance that goes through
         Block genHash = networkParameters.getGenesisBlock();
         Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
-        Block rollingBlock = block2.createNextBlock(block1);
+        Block rollingBlock = createNextBlock(block2,block1);
         blockGraph.add(rollingBlock, true);
 
         // Let block 1 win
@@ -493,7 +493,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < 2 * NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
 
@@ -545,7 +545,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -555,14 +555,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         // Generate matching block
         Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        Block fusingBlock =  createNextBlock(block1,block1);
         blockGraph.add(fusingBlock, false);
 
         // Try order reclaim
@@ -573,7 +573,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock( fusingBlock);
+            block2 = createNextBlock(fusingBlock,fusingBlock);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
@@ -590,7 +590,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block3 = block2.createNextBlock(block2);
+            block3 =createNextBlock( block2,block2);
             block3.addTransaction(tx);
             block3.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block3.solve();
@@ -867,7 +867,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 1; i < 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -883,24 +883,24 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         Block rollingBlock2 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
+            rollingBlock2 = createNextBlock(rollingBlock2,rollingBlock2);
             blockGraph.add(rollingBlock2, true);
         }
 
-        Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
+        Block fusingBlock =createNextBlock( rollingBlock1,rollingBlock2);
         blockGraph.add(fusingBlock, true);
 
         // Generate mining reward block
@@ -932,7 +932,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         rollingBlock = rewardBlock3;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
@@ -947,7 +947,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = r2.createNextBlock(r1);
+            Block b = createNextBlock(r2,r1);
             blockGraph.add(b, true);
         }
         milestoneService.update();
@@ -986,14 +986,14 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         List<Block> blocksAdded = new ArrayList<>();
 
         // Generate blocks until passing first reward interval parallel
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
         blocksAdded.add(rollingBlock);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
             blocksAdded.add(rollingBlock1);
         }
@@ -1001,7 +1001,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rollingBlock2 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
+            rollingBlock2 = createNextBlock(rollingBlock2,rollingBlock2);
             blockGraph.add(rollingBlock2, true);
             blocksAdded.add(rollingBlock2);
         }
@@ -1034,7 +1034,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Third mining reward block should now instead go through since longer
         Block rollingBlock3 = rewardBlock3;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock3 = rollingBlock3.createNextBlock(rollingBlock3);
+            rollingBlock3 = createNextBlock(rollingBlock3,rollingBlock3);
             blockGraph.add(rollingBlock3, true);
             blocksAdded.add(rollingBlock3);
         }
@@ -1086,7 +1086,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Now try switching to second
         Block rollingBlock4 = rewardBlock2;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock4 = rollingBlock4.createNextBlock(rollingBlock4);
+            rollingBlock4 =createNextBlock( rollingBlock4,rollingBlock4);
             blockGraph.add(rollingBlock4, true);
             blocksAdded.add(rollingBlock4);
         }
@@ -1096,7 +1096,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Block rollingBlock5 = rewardBlock5;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock5 = rollingBlock5.createNextBlock(rollingBlock5);
+            rollingBlock5 =createNextBlock( rollingBlock5,rollingBlock5);
             blockGraph.add(rollingBlock5, true);
             blocksAdded.add(rollingBlock5);
         }
@@ -1177,7 +1177,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Now try switching to third again
         Block rollingBlock6 = rewardBlock4;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock6 = rollingBlock6.createNextBlock(rollingBlock6);
+            rollingBlock6 = createNextBlock(rollingBlock6,rollingBlock6);
             blockGraph.add(rollingBlock6, true);
             blocksAdded.add(rollingBlock6);
         }
@@ -1187,7 +1187,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Block rollingBlock7 = rewardBlock7;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock7 = rollingBlock7.createNextBlock(rollingBlock7);
+            rollingBlock7 =createNextBlock( rollingBlock7,rollingBlock7);
             blockGraph.add(rollingBlock7, true);
             blocksAdded.add(rollingBlock7);
         }
@@ -1314,7 +1314,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Approve these blocks by adding linear tangle onto them
         Block rollingBlock = b2;
         for (int i = 0; i < 10; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         milestoneService.update();
@@ -1328,7 +1328,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
             Block r1 = blockService.getBlock(tipsToApprove.getLeft());
             Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = r2.createNextBlock(r1);
+            Block b = createNextBlock(r2,r1);
             blockGraph.add(b, true);
         }
         milestoneService.update();

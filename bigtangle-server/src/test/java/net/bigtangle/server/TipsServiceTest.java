@@ -167,13 +167,13 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 

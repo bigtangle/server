@@ -75,13 +75,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -192,7 +192,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with UTXOs
-        Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         block1.addTransaction(tx);
         block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block1.solve();
@@ -250,13 +250,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block rollingBlock = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -339,7 +339,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with UTXOs
-        Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         block1.addTransaction(tx);
         block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block1.solve();
@@ -387,7 +387,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -397,14 +397,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         // Generate matching block
         Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        Block fusingBlock = createNextBlock(rewardBlock1,block1);
         blockGraph.add(fusingBlock, false);
 
         // Try order reclaim
@@ -415,7 +415,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock(fusingBlock);
+            block2 = createNextBlock(fusingBlock,fusingBlock);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
@@ -475,7 +475,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -485,7 +485,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -546,7 +546,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -601,7 +601,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block3 = block2.createNextBlock(block2);
+            block3 =createNextBlock( block2,block2);
             block3.addTransaction(tx);
             block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block3.solve();
@@ -611,7 +611,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -695,7 +695,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
 
@@ -792,7 +792,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with UTXOs
-        Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
         block1.addTransaction(tx);
         block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block1.solve();
@@ -841,7 +841,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -851,14 +851,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
         // Generate matching block
         Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
+        Block fusingBlock = createNextBlock(rewardBlock1,block1);
         blockGraph.add(fusingBlock, false);
 
         // Try order reclaim
@@ -869,7 +869,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             tx.setData(info.toByteArray());
 
             // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock(fusingBlock);
+            block2 = createNextBlock(fusingBlock,fusingBlock);
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
@@ -931,7 +931,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -941,7 +941,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block1;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -1006,7 +1006,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1 = createNextBlock(networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block1.solve();
@@ -1061,7 +1061,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             input.setScriptSig(inputScript);
 
             // Create block with order
-            block3 = block2.createNextBlock(block2);
+            block3 =createNextBlock( block2,block2);
             block3.addTransaction(tx);
             block3.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
             block3.solve();
@@ -1071,7 +1071,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         Block rollingBlock1 = block3;
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            rollingBlock1 = createNextBlock(rollingBlock1,rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
 
@@ -1166,7 +1166,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         Block rewardBlock11 = rewardService.createAndAddMiningRewardBlock(
@@ -1183,7 +1183,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         rollingBlock = rewardBlock11;
         for (int i1 = 0; i1 < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i1++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
         Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
@@ -1235,7 +1235,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock,NetworkParameters.BLOCK_VERSION_GENESIS, testKey.getPubKeyHash());
+            rollingBlock = createNextBlock(rollingBlock,rollingBlock);
             rollingBlock.solve();
           
             blockGraph.add(rollingBlock, true);

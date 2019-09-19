@@ -1186,58 +1186,6 @@ public class Block extends Message {
     private static Random gen = new Random();
 
     /**
-     * Returns a unsolved, valid empty block that builds on top of this one and
-     * the specified other Block.
-     * 
-     */
-    public Block createNextBlock(Block branchBlock, byte[] mineraddress) {
-        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, mineraddress);
-    }
-
-    public Block createNextBlock(Block branchBlock) {
-        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
-                Address.fromBase58(params, "1Kbm8rqjcX6j5oLbq9J8FapksdvrfGUA88").getHash160());
-    }
-
-    /**
-     * Returns a solved, valid empty block that builds on top of this one and
-     * the specified other Block.
-     */
-    public Block createNextBlock(Block branchBlock, final long version, byte[] mineraddress) {
-        Block b = new Block(params, version);
-
-        b.setMinerAddress(mineraddress);
-        b.setPrevBlockHash(getHash());
-        b.setPrevBranchBlockHash(branchBlock.getHash());
-
-        // Set difficulty according to previous consensus
-        // only BLOCKTYPE_REWARD and BLOCKTYPE_INITIAL should overwrite this
-        b.setLastMiningRewardBlock(Math.max(lastMiningRewardBlock, branchBlock.lastMiningRewardBlock));
-        b.setDifficultyTarget(lastMiningRewardBlock >= branchBlock.lastMiningRewardBlock ? difficultyTarget
-                : branchBlock.difficultyTarget);
-
-        b.setHeight(Math.max(getHeight(), branchBlock.getHeight()) + 1);
-
-        // Don't let timestamp go backwards
-        long currTime = System.currentTimeMillis() / 1000;
-        long minTime = Math.max(currTime, branchBlock.getTimeSeconds());
-        if (currTime >= minTime)
-            b.setTime(currTime + 1);
-        else
-            b.setTime(minTime);
-        b.solve();
-        try {
-            b.verifyHeader();
-        } catch (VerificationException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
-        if (b.getVersion() != version) {
-            throw new RuntimeException();
-        }
-        return b;
-    }
-
-    /**
      * Return whether this block contains any transactions.
      * 
      * @return true if the block contains transactions, false otherwise (is

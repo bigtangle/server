@@ -41,6 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
@@ -272,7 +273,7 @@ public abstract class AbstractIntegrationTest {
         tx.setData(info.toByteArray());
 
         // Create block with order reclaim
-        block = predecessor.createNextBlock(branchPredecessor);
+        block = createNextBlock(predecessor,branchPredecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
         block.solve();
@@ -310,7 +311,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with tx
-        block = predecessor.createNextBlock(predecessor);
+        block = createNextBlock(predecessor,predecessor);
         block.addTransaction(tx);
         block.solve();
         this.blockGraph.add(block, true);
@@ -325,7 +326,7 @@ public abstract class AbstractIntegrationTest {
         Block block = null;
 
         // Create and add block
-        block = predecessor.createNextBlock(predecessor);
+        block = createNextBlock(predecessor,predecessor);
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
@@ -339,7 +340,7 @@ public abstract class AbstractIntegrationTest {
         Block block = null;
 
         // Create and add block
-        block = predecessor.createNextBlock(predecessor);
+        block = createNextBlock(predecessor,predecessor);
         block.solve();
         this.blockGraph.add(block, true);
         return block;
@@ -388,7 +389,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock(predecessor);
+        block = createNextBlock(predecessor,predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -444,7 +445,7 @@ public abstract class AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with order
-        block = predecessor.createNextBlock(predecessor);
+        block = createNextBlock(predecessor,predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block.solve();
@@ -477,7 +478,7 @@ public abstract class AbstractIntegrationTest {
         tx.setDataSignature(buf1);
 
         // Create block with order
-        Block block = predecessor.createNextBlock(predecessor);
+        Block block = createNextBlock(predecessor,predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
         block.solve();
@@ -502,7 +503,7 @@ public abstract class AbstractIntegrationTest {
         long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getSha256Hash());
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock =createNextBlock( rollingBlock,rollingBlock);
             blockGraph.add(rollingBlock, true);
             addedBlocks.add(rollingBlock);
         }
@@ -628,14 +629,14 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block createAndAddNextBlock(Block b1, Block b2) throws VerificationException, PrunedException {
-        Block block = b1.createNextBlock(b2);
+        Block block = createNextBlock(b1,b2);
         this.blockGraph.add(block, true);
         return block;
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
             throws VerificationException, PrunedException {
-        Block block1 = b1.createNextBlock(b2);
+        Block block1 =createNextBlock( b1,b2);
         block1.addTransaction(prevOut);
         block1.solve();
         Block block = block1;
@@ -1290,4 +1291,19 @@ public abstract class AbstractIntegrationTest {
         
         return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
     }
+    
+
+   
+    /**
+     * Returns a solved, valid empty block that builds on top of this one and
+     * the specified other Block.
+     */
+    public Block createNextBlock(Block  prev, Block branchBlock ) {
+        Block b = new Block(networkParameters, prev, branchBlock);
+ 
+        b.solve();
+       
+        return b;
+    }
+
 }

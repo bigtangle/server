@@ -77,8 +77,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(resp, GetOrderResponse.class);
         OrderPublish orderPublish = getOrderResponse.getOrders().get(0);
 
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock(),
-                NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKeyHash());
+        Block rollingBlock = new Block(networkParameters, networkParameters.getGenesisBlock(),networkParameters.getGenesisBlock() );
         Transaction transaction = new Transaction(this.networkParameters);
         transaction.setData(orderPublish.getOrderId().getBytes());
 

@@ -96,12 +96,14 @@ public class OrderReclaimService {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
 
-        Block block = r1.createNextBlock(r2,
+        Block block = new Block(networkParameters, r1, r2);
+        block.setMinerAddress(
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+
         block.addTransaction(tx);
         block.setBlockType(Block.Type.BLOCKTYPE_ORDER_RECLAIM);
-        block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
- 
+        block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
+
         block.solve();
         blockService.saveBlock(block);
         return block;

@@ -135,7 +135,7 @@ public class BlockTest {
     @Test
     public void testUpdateLength() {
         NetworkParameters params = MainNetParams.get();
-        Block block = params.getGenesisBlock().createNextBlock(params.getGenesisBlock());
+        Block block = new Block(params,  params.getGenesisBlock(), params.getGenesisBlock());
        // assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
         Transaction tx = new Transaction(params);

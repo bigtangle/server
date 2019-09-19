@@ -14,12 +14,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MessageSerializer;
@@ -29,7 +27,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
@@ -268,34 +265,7 @@ public class FakeTxBuilder {
         public Block block;
     }
 
+     
+
     
- 
-    public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws Exception {
-        Pair<Sha256Hash, Sha256Hash> validatedBlockPair = tipsManager.getValidatedBlockPair();
-        Block b = blockStore.get(validatedBlockPair.getLeft()).createNextBlock(blockStore.get(validatedBlockPair.getRight()));
-        b.solve();
-        return b;
-    }
-
-    public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        Address to = new ECKey().toAddress(prev.getParams());
-        Block b = prev.createNextBlock(prev);
-        // Coinbase tx already exists.
-        for (Transaction tx : transactions) {
-            b.addTransaction(tx);
-        }
-        b.solve();
-        return b;
-    }
-
-    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions)
-            throws BlockStoreException {
-        Block b = prev.createNextBlock(prev);
-        // Coinbase tx already exists.
-        for (Transaction tx : transactions) {
-            b.addTransaction(tx);
-        }
-        b.solve();
-        return b;
-    }
 }
