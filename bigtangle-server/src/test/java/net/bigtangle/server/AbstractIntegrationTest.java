@@ -67,6 +67,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -82,7 +83,6 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
-import net.bigtangle.server.service.OrdermatchService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
@@ -127,8 +127,7 @@ public abstract class AbstractIntegrationTest {
     protected TransactionService transactionService;
     @Autowired
     protected RewardService rewardService;
-    @Autowired
-    protected OrdermatchService ordermatchService;
+   
     @Autowired
     protected OrderReclaimService ordeReclaimService;
     @Autowired
@@ -509,7 +508,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
+        Block block =createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 
@@ -1266,4 +1265,29 @@ public abstract class AbstractIntegrationTest {
         return permissionedAddressesResponse;
     }
 
+  
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
+        return createAndAddOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws Exception {
+
+        Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
+        if (block != null)
+            blockService.saveBlock(block);
+        return block;
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws BlockStoreException, NoBlockException {
+        return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws BlockStoreException, NoBlockException {
+        
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
+    }
 }
