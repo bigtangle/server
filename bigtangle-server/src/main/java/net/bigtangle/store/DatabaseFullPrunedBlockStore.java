@@ -218,7 +218,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "rating, depth, cumulativeweight,  height, milestone,"
             + " milestonelastupdate, milestonedepth, inserttime, maintained, solid, confirmed " + " FROM blocks ";
 
-    protected final String SELECT_NONSOLID_MISSINGBLOCKS_SQL = "select  missingdependency from unsolidblocks where directlymissing=1";
+    protected final String SELECT_NONSOLID_MISSINGBLOCKS_SQL = "select  missingdependency from unsolidblocks ";
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"

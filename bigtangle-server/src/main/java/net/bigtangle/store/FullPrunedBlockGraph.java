@@ -354,11 +354,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     // Solidification forward
                     try {
-
                         solidifyBlock(newMilestoneBlock.getBlock(), solidityState, rerunConsensusLogic, true);
-
+                        scanWaitingBlocks(newMilestoneBlock.getBlock(), rerunConsensusLogic);
                     } catch (BlockStoreException e) {
-                        blockStore.abortDatabaseBatchWrite();
                         throw e;
                     }
                 }
@@ -409,16 +407,22 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 blockStore.beginDatabaseBatchWrite();
                 connect(block, solidityState);
                 blockStore.commitDatabaseBatchWrite();
-                try {
-                    scanWaitingBlocks(block, true);
-                } catch (BlockStoreException | VerificationException e) {
-                    log.debug(e.getLocalizedMessage());
-                }
-                return true;
             } catch (BlockStoreException e) {
-                // blockStore.abortDatabaseBatchWrite();
+                blockStore.abortDatabaseBatchWrite();
                 throw e;
             }
+            
+            // Check for waiting blocks
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                scanWaitingBlocks(block, true);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (BlockStoreException | VerificationException e) {
+                log.debug(e.getLocalizedMessage(), e);
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            }
+            return true;
 
         } catch (BlockStoreException e) {
             log.error("", e);
@@ -437,22 +441,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         try {
             SolidityState solidityState = validatorService.checkSolidity(block, false);
+            solidifyBlock(block, solidityState, runConsensusLogic, false);
+            // TODO this is recursive and may blow the stack
+            scanWaitingBlocks(block, runConsensusLogic);
 
-            try {
-                blockStore.beginDatabaseBatchWrite();
-                solidifyBlock(block, solidityState, runConsensusLogic, false);
-                blockStore.commitDatabaseBatchWrite();
-                try {
-                    // TODO this is recursive and may blow the stack
-                    scanWaitingBlocks(block, runConsensusLogic);
-                } catch (BlockStoreException | VerificationException e) {
-                    log.debug(e.getLocalizedMessage());
-                }
-                return true;
-            } catch (BlockStoreException e) {
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            }
+            return true;
 
         } catch (BlockStoreException e) {
             log.error("", e);
@@ -590,14 +583,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Write to DB
         checkState(confirmLock.isHeldByCurrentThread());
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            confirmUntil(blockHash, traversedBlockHashes);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (BlockStoreException e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        }
+
+        confirmUntil(blockHash, traversedBlockHashes);
     }
 
     public void confirmWithLock(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
@@ -928,14 +915,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Write to DB
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            unconfirmFrom(blockHash, traversedBlockHashes);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (BlockStoreException e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        }
+        unconfirmFrom(blockHash, traversedBlockHashes);
     }
 
     private void unconfirmFrom(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)

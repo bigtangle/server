@@ -62,7 +62,7 @@ public class UnsolidBlockService {
             blockRequester.diff();
             // deleteOldUnsolidBlock();
             reCheckUnsolidBlock();
-       
+
             logger.debug(" end  updateUnsolideServiceSingle: ");
 
         } catch (Exception e) {
@@ -88,18 +88,24 @@ public class UnsolidBlockService {
 
         for (Sha256Hash storedBlock : storedBlocklist) {
             if (storedBlock != null) {
-               Block req=blockService.getBlock(storedBlock); 
-            
-                if ( req!= null) {
+                Block req = blockService.getBlock(storedBlock);
+
+                if (req != null) {
                     store.updateMissingBlock(storedBlock, false);
                     // if the block is there, now scan the rest unsolid blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
                         try {
-                            blockgraph.    scanWaitingBlocks(req, true);
+                            store.beginDatabaseBatchWrite();
+                            blockgraph.scanWaitingBlocks(req, true);
+                            store.commitDatabaseBatchWrite();
                         } catch (BlockStoreException | VerificationException e) {
                             logger.debug(e.getLocalizedMessage(), e);
+
+                            store.abortDatabaseBatchWrite();
+                            throw e;
+
                         }
-                    } 
+                    }
                 } else {
                     requestPrevBlock(storedBlock);
                 }
@@ -112,9 +118,9 @@ public class UnsolidBlockService {
             byte[] re = blockRequester.requestBlock(hash);
             if (re != null) {
                 Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-              
+
                 blockgraph.add(req, true);
-               
+
             }
         } catch (Exception e) {
             logger.debug("", e);

@@ -23,6 +23,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -87,9 +88,18 @@ public class RewardService {
      * @return the new block or block voted on
      * @throws Exception
      */
-    public Block performRewardVoting() throws Exception {
+    public Block performRewardVoting() {
         // Make new one
-        return createAndAddMiningRewardBlock();
+        try {
+            return createAndAddMiningRewardBlock();
+        } catch (InvalidTransactionDataException e) {
+            // This is not a problem
+            return null;
+        } catch (Exception e) {
+            // This is not a problem
+            logger.debug("", e);
+            return null;
+        }
     }
 
     public Block createAndAddMiningRewardBlock() throws Exception {
@@ -126,9 +136,9 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException {
-        RewardBuilderResult result =null;
+        RewardBuilderResult result = null;
         try {
-              result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
+            result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
         } catch (java.lang.ArithmeticException e) {
             return null;
         }

@@ -951,7 +951,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testMultiMatching4() throws Exception {
-
+       
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;

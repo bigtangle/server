@@ -80,10 +80,6 @@ public class MilestoneService {
 
             Stopwatch watchAll = Stopwatch.createStarted();
 
-            Stopwatch watchrewardService = Stopwatch.createStarted();
-            rewardService.performRewardVoting();
-            watchrewardService.stop();
-
             Stopwatch watchupdateMilestoneDepth = Stopwatch.createStarted();
             updateMilestoneDepth();
             watchupdateMilestoneDepth.stop();
@@ -104,8 +100,8 @@ public class MilestoneService {
             watchupdateMaintained.stop();
 
             log.debug(
-                    " performRewardVoting " + watchrewardService.elapsed(TimeUnit.MILLISECONDS) 
-                    + " \n" + "Weight and depth update time {} ms.",
+
+                    "Weight and depth update time {} ms.",
                     watchupdateWeightAndDepth.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Rating update time {} ms.",
                     watchupdateRating.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Confirmation update time {} ms.",
                     watchupdateConfirmed.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Maintained update  time {} ms.",
