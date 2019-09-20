@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +21,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
@@ -158,7 +160,9 @@ public class RewardService {
         // Enforce timestamp equal to previous max for reward blocktypes
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 
-        block.solve();
+        BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
+        
+        block.solve(chainTarget);
         return block;
     }
 

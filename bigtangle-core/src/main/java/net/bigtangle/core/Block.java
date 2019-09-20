@@ -618,7 +618,7 @@ public class Block extends Message {
      * Finds a value of nonce and equihashProof if using Equihash that validates
      * correctly.
      */
-    public void solve() {
+    public void solve(BigInteger target) {
         // Add randomness to prevent new empty blocks from same miner with same
         // approved blocks to be the same
         setNonce(gen.nextLong());
@@ -626,7 +626,7 @@ public class Block extends Message {
         while (true) {
             try {
                 // Is our proof of work valid yet?
-                if (checkProofOfWork(false))
+                if (checkProofOfWork(false, target))
                     return;
 
                 // No, so increment the nonce and try again.
@@ -640,6 +640,15 @@ public class Block extends Message {
                 throw new RuntimeException(e); // Cannot happen.
             }
         }
+    }
+
+    /**
+     * <p>
+     * Finds a value of nonce and equihashProof if using Equihash that validates
+     * correctly.
+     */
+    public void solve() {
+        solve(getDifficultyTargetAsInteger());
     }
 
     /**

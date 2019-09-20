@@ -19,6 +19,7 @@ public class TestParams extends AbstractBitcoinNetParams {
         id = ID_UNITTESTNET;
 
         maxTarget = new BigInteger("578960377169117509212217050695880916496095398817113098493422368414323410000");
+        maxTargetReward =  maxTarget.subtract(new BigInteger("100"));
 
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;

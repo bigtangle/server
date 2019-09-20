@@ -990,7 +990,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Just fill the tables with some valid data
             // Reward output table
             insertReward(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH,
-                    Utils.encodeCompactBits(params.getMaxTarget()), 0);
+                    Utils.encodeCompactBits(params.getMaxTargetReward()), 0);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
             // create domain name bc

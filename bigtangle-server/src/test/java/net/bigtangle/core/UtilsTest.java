@@ -57,6 +57,18 @@ public class UtilsTest {
         }
     }
 
+    //@Test
+    public void testSolveMainReward() throws Exception {
+
+        for(int i=0; i<20; i++) {
+        Block block =  MainNetParams.get().getGenesisBlock().createNextBlock( MainNetParams.get().getGenesisBlock());
+        
+        // save block
+        Stopwatch watch = Stopwatch.createStarted();
+        block.solve(MainNetParams.get().maxTargetReward);
+        log.info(" Solve time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        }
+    }
     
     @Test
     public void testReverseBytes() {

@@ -70,7 +70,7 @@ public abstract class NetworkParameters {
       
     protected Block genesisBlock;
     protected BigInteger maxTarget;
-
+    protected BigInteger maxTargetReward;
     protected long packetMagic; // Indicates message origin network and is used
                                 // to seek to the next message when stream state
                                 // is unknown.
@@ -377,6 +377,12 @@ public abstract class NetworkParameters {
     /** Maximum target represents the easiest allowable proof of work. */
     public BigInteger getMaxTarget() {
         return maxTarget;
+    }
+
+
+    /** Maximum target represents the easiest allowable proof of work. */
+    public BigInteger getMaxTargetReward() {
+        return maxTargetReward;
     }
 
     /**
