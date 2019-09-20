@@ -463,7 +463,7 @@ public class MainController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(utxoModel.getHashHex()));
 
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getBlock.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);

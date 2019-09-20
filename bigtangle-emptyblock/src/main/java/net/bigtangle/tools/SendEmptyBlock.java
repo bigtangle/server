@@ -84,7 +84,7 @@ public class SendEmptyBlock {
     public void send() throws JsonProcessingException, Exception {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);

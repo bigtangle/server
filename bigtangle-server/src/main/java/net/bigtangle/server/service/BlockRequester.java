@@ -29,6 +29,7 @@ import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -52,7 +53,8 @@ public class BlockRequester {
     protected BlockService blockService;
     @Autowired
     protected FullPrunedBlockStore store;
-
+    @Autowired
+    protected FullPrunedBlockGraph blockgraph;
     @Autowired
     protected ServerConfiguration serverConfiguration;
 
@@ -67,7 +69,7 @@ public class BlockRequester {
                 HashMap<String, String> requestParam = new HashMap<String, String>();
                 requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes()));
                 try {
-                    data = OkHttp3Util.post(s.trim() + "/" + ReqCmd.getBlock,
+                    data = OkHttp3Util.postAndGetBlock(s.trim() + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
                     transactionService.addConnected(data, false, false);
                     break;
@@ -97,12 +99,13 @@ public class BlockRequester {
                             GetBlockListResponse.class);
                     for (byte[] data : blockbytelist.getBlockbytelist()) {
                         transactionService.addConnected(data, false, false);
-                    }
+                      }
                     break;
                 } catch (Exception e) {
                     log.debug(s, e);
                     badserver.add(s);
                 }
+                //rerun the 
             }
         }
 
@@ -174,6 +177,8 @@ public class BlockRequester {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote chain   " + re.getChainLength() + " to " +remote.getChainLength());
             for(long i= re.getChainLength(); i<=remote.getChainLength();i++ ) {
+                log.debug("   sync remote chain requestBlocks  at:  " + i);
+
                 requestBlocks(i);
             }
         }

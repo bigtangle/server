@@ -402,7 +402,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -490,7 +490,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -616,7 +616,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -856,7 +856,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -946,7 +946,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -1076,7 +1076,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm

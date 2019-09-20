@@ -913,7 +913,7 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(signnumber);
         payMultiSign.setOutputHashHex(utxo.getHashHex());
 
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+        OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
@@ -965,7 +965,7 @@ public class SendMoneyController {
         payMultiSign.setMinsignnumber(keys.size());
         payMultiSign.setOutputHashHex(utxo.getHashHex());
         payMultiSign.setOutputindex(utxo.getIndex());
-        OkHttp3Util.post(contextRoot + ReqCmd.launchPayMultiSign.name(),
+        OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.launchPayMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(payMultiSign));
     }
 
@@ -1090,7 +1090,7 @@ public class SendMoneyController {
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
 
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+            byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);

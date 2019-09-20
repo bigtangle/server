@@ -560,7 +560,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block rewardBlock1 = ordermatchService.createAndAddOrderMatchingBlock(
+        Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
         Block fusingBlock = rewardBlock1.createNextBlock(block1);
         blockGraph.add(fusingBlock, false);
@@ -935,6 +935,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
+        unsolidBlockService. reCheckUnsolidBlock();
         rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         milestoneService.update();
@@ -960,7 +961,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void blocksFromChainlenght() throws Exception {
         // create some blocks
-      //  testReorgMiningReward();
+        //testReorgMiningReward();
 
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("start", "0");

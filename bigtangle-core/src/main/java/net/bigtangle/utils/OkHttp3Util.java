@@ -41,7 +41,8 @@ import okio.Okio;
 public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
-    private static long timeoutMinute = 6;
+
+    private static long timeoutMinute = 16;
     private static OkHttpClient client = null;
     public static String pubkey;
     public static String signHex;
@@ -77,7 +78,7 @@ public class OkHttp3Util {
 
         if (number < url.length) {
             try {
-                return post(url[number], b);
+                return postAndGetBlock(url[number], b);
             } catch (RuntimeException e) {
                 number += 1;
                 return post(url, b, number);
@@ -93,10 +94,11 @@ public class OkHttp3Util {
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
-        if(!response.isSuccessful()) {
-            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);}
+        if (!response.isSuccessful()) {
+            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+        }
         try {
-            String resp = decompress( response.body().bytes());
+            String resp = decompress(response.body().bytes());
             // logger.debug(resp);
             checkResponse(resp, url);
             return resp;
@@ -109,33 +111,21 @@ public class OkHttp3Util {
     }
 
     @SuppressWarnings("unchecked")
-    public static byte[] post(String url, String s) throws IOException {
-        logger.debug("url : " + url);
-        OkHttpClient client = getOkHttpClient();
-        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
-        Request request = new Request.Builder().url(url).post(body).build();
-        Response response = client.newCall(request).execute();
-        if(!response.isSuccessful()) {
-            throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+    public static byte[] postAndGetBlock(String url, String s) throws IOException {
+
+        // return response.body().bytes();
+        String resp = postString(url, s);
+        if ("".equals(resp))
+            return null;
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
+        if (dataHex != null) {
+            return Utils.HEX.decode(dataHex);
+        } else {
+            return null;
         }
-        try {
-            // return response.body().bytes();
-            String resp =decompress( response.body().bytes());
-            if ("".equals(resp))
-                return null;
-            checkResponse(resp, url);
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            String dataHex = (String) result.get("dataHex");
-            if (dataHex != null) {
-                return Utils.HEX.decode(dataHex);
-            } else {
-                return null;
-            }
-        } finally {
-            // client.cache().close();
-            response.close();
-            response.body().close();
-        }
+
     }
 
     public static String postString(String url, String s) throws IOException {
@@ -143,11 +133,11 @@ public class OkHttp3Util {
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
         Response response = client.newCall(request).execute();
-        if(!response.isSuccessful()) {
+        if (!response.isSuccessful()) {
             throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
         }
         try {
-            String resp = decompress( response.body().bytes());
+            String resp = decompress(response.body().bytes());
             checkResponse(resp, url);
             return resp;
         } finally {
@@ -273,20 +263,26 @@ public class OkHttp3Util {
     }
 
     public static String decompress(byte[] contentBytes) throws IOException {
-        if(contentBytes.length ==0) return "";
+        if (contentBytes.length == 0)
+            return "";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-
         GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(contentBytes));
-        byte[] buffer = new byte[1024];
-        int length;
+        try {
 
-        // Read from the compressed source file and write the
-        // decompress file.
-        while ((length = gzis.read(buffer)) > 0) {
-            out.write(buffer, 0, length);
+            byte[] buffer = new byte[1024];
+            int length;
+
+            // Read from the compressed source file and write the
+            // decompress file.
+            while ((length = gzis.read(buffer)) > 0) {
+                out.write(buffer, 0, length);
+            }
+            logger.debug("decompress " + contentBytes.length + " to " + out.size());
+            return out.toString();
+        } finally {
+            out.close();
+            gzis.close();
         }
-        logger.debug("decompress "+ contentBytes.length + " to "+  out.size());
-        return out.toString();
     }
 
 }

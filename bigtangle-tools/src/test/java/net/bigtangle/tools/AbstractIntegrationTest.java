@@ -371,7 +371,7 @@ public abstract class AbstractIntegrationTest {
     public void emptyBlocks(int number) throws JsonProcessingException, Exception {
         for (int i = 0; i < number; i++) {
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+            byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
@@ -393,7 +393,7 @@ public abstract class AbstractIntegrationTest {
     public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws JsonProcessingException, IOException {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);

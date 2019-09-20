@@ -263,7 +263,7 @@ public class ExchangeController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
 
-        OkHttp3Util.post(ContextRoot + OrdermatchReqCmd.cancelOrder.name(),
+        OkHttp3Util.postAndGetBlock(ContextRoot + OrdermatchReqCmd.cancelOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
@@ -277,7 +277,7 @@ public class ExchangeController {
         Main.walletAppKit.wallet().signTransaction(request);
 
         String ContextRoot = Main.getContextRoot();
-        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(ContextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(mTransaction);
@@ -316,8 +316,8 @@ public class ExchangeController {
             requestParam.put("orderid", orderid);
             requestParam.put("dataHex", Utils.HEX.encode(buf));
             requestParam.put("signtype", signtype);
-            OkHttp3Util.post(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
-            OkHttp3Util.post(Main.getContextRoot() + "/saveBlock", Utils.HEX.encode(buf));
+            OkHttp3Util.postAndGetBlock(marketURL + "/signTransaction", Json.jsonmapper().writeValueAsString(requestParam));
+            OkHttp3Util.postAndGetBlock(Main.getContextRoot() + "/saveBlock", Utils.HEX.encode(buf));
         }
     }
 
@@ -479,7 +479,7 @@ public class ExchangeController {
 
         String ContextRoot = Main.getContextRoot();
 
-        byte[] data = OkHttp3Util.post(ContextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(ContextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = Main.params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);

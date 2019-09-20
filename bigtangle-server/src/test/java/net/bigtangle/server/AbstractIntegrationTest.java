@@ -67,6 +67,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
@@ -82,10 +83,10 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
-import net.bigtangle.server.service.OrdermatchService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
@@ -127,8 +128,7 @@ public abstract class AbstractIntegrationTest {
     protected TransactionService transactionService;
     @Autowired
     protected RewardService rewardService;
-    @Autowired
-    protected OrdermatchService ordermatchService;
+   
     @Autowired
     protected OrderReclaimService ordeReclaimService;
     @Autowired
@@ -137,8 +137,9 @@ public abstract class AbstractIntegrationTest {
     protected FullPrunedBlockStore store;
     @Autowired
     protected TipsService tipsService;
- 
-
+    @Autowired
+    protected  UnsolidBlockService unsolidBlockService;
+    
     @Autowired
     protected void prepareContextRoot(@Value("${local.server.port}") int port) {
         contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -509,7 +510,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = ordermatchService.createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
+        Block block =createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 
@@ -917,7 +918,7 @@ public abstract class AbstractIntegrationTest {
         
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
@@ -1070,7 +1071,7 @@ public abstract class AbstractIntegrationTest {
         }
         
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
@@ -1187,7 +1188,7 @@ public abstract class AbstractIntegrationTest {
     public void upstreamToken2LocalServer(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
@@ -1266,4 +1267,29 @@ public abstract class AbstractIntegrationTest {
         return permissionedAddressesResponse;
     }
 
+  
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws Exception {
+        return createAndAddOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws Exception {
+
+        Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
+        if (block != null)
+            blockService.saveBlock(block);
+        return block;
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+            throws BlockStoreException, NoBlockException {
+        return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
+    }
+
+    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            boolean override) throws BlockStoreException, NoBlockException {
+        
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
+    }
 }

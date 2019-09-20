@@ -317,19 +317,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                             solidityState = SolidityState.getFailState();
 
                             // Solidification forward with failState
-                            try {
-                                blockStore.beginDatabaseBatchWrite();
-                                solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false, false);
-                                blockStore.commitDatabaseBatchWrite();
-                                try {
-                                    scanWaitingBlocks(newMilestoneBlock.getBlock(), false);
-                                } catch (BlockStoreException | VerificationException e) {
-                                    log.debug(e.getLocalizedMessage());
-                                }
-                            } catch (BlockStoreException e) {
-                                blockStore.abortDatabaseBatchWrite();
-                                throw e;
-                            }
+
+                            solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false, false);
 
                             runConsensusLogic(blockStore.get(oldLongestChainEnd));
                             return;
@@ -365,14 +354,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                     // Solidification forward
                     try {
-                        blockStore.beginDatabaseBatchWrite();
+
                         solidifyBlock(newMilestoneBlock.getBlock(), solidityState, rerunConsensusLogic, true);
-                        blockStore.commitDatabaseBatchWrite();
-                        try {
-                            scanWaitingBlocks(newMilestoneBlock.getBlock(), rerunConsensusLogic);
-                        } catch (BlockStoreException | VerificationException e) {
-                            log.debug(e.getLocalizedMessage());
-                        }
+
                     } catch (BlockStoreException e) {
                         blockStore.abortDatabaseBatchWrite();
                         throw e;
@@ -391,14 +375,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null) {
-                // if
-                if (blockStore.getBlockEvaluation(block.getHash()).getSolid() >= 1) {
-                    try {
-                        scanWaitingBlocks(block, true);
-                    } catch (BlockStoreException | VerificationException e) {
-                        log.debug(e.getLocalizedMessage(), e);
-                    }
-                }
                 return false;
             }
 
@@ -430,9 +406,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // Accept the block
             try {
-                // blockStore.beginDatabaseBatchWrite();
+                blockStore.beginDatabaseBatchWrite();
                 connect(block, solidityState);
-                // blockStore.commitDatabaseBatchWrite();
+                blockStore.commitDatabaseBatchWrite();
                 try {
                     scanWaitingBlocks(block, true);
                 } catch (BlockStoreException | VerificationException e) {
@@ -490,7 +466,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void scanWaitingBlocks(Block block, boolean runConsensusLogic) throws BlockStoreException {
+    public void scanWaitingBlocks(Block block, boolean runConsensusLogic) throws BlockStoreException {
         // Finally, look in the solidity waiting queue for blocks that are still
         // waiting
         for (Block b : blockStore.getUnsolidBlocks(block.getHash().getBytes())) {
@@ -1346,10 +1322,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 try {
                     addReward(block);
                     runConsensusLogic(block);
-                }finally {
+                } finally {
                     confirmLock.unlock();
                 }
- 
+
                 return;
             }
 

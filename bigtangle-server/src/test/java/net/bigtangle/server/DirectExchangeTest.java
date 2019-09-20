@@ -69,7 +69,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     @Test
     public void testBatchBlock() throws Exception {
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         this.store.insertBatchBlock(block);
@@ -99,7 +99,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         transaction.setToAddressInSubtangle(subtangleID);
 
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
@@ -109,7 +109,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
-        data = OkHttp3Util.post(contextRoot + ReqCmd.getBlock.name(),
+        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlock.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
 
@@ -132,7 +132,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(0L, pubKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
@@ -208,7 +208,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             coinbaseWallet.completeTx(request, null);
 
             HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip,
+            byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip,
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
             rollingBlock.addTransaction(request.tx);
@@ -248,7 +248,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         coinbaseWallet.completeTx(request, null);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
@@ -509,7 +509,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     public void exchangeTokenComplete(Transaction tx) throws Exception {
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(tx);
@@ -526,7 +526,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     public void payToken(ECKey outKey, byte[] tokenbuf) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         log.info("resp block, hex : " + Utils.HEX.encode(data));
@@ -569,7 +569,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         vos.setContent("test");
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_VOS);
@@ -658,7 +658,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_VOS_EXECUTE);
@@ -698,7 +698,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         wallet2();
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         log.info("resp block, hex : " + Utils.HEX.encode(data));
