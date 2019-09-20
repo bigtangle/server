@@ -181,13 +181,13 @@ public class Main extends Application {
         byte[] data = null;
         File file = new File(Main.keyFileDirectory + "/usersetting.block");
         if (!file.exists()) {
-            data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+            data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
         } else {
             if (DataClassName.WATCHED.name().equals(type)) {
                 data = FileUtil.readFile(new File(Main.keyFileDirectory + "/usersetting.block"));
             } else {
-                data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+                data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                         Json.jsonmapper().writeValueAsString(requestParam));
             }
         }
@@ -409,7 +409,7 @@ public class Main extends Application {
     public static void addAddress2block(String name, String address) throws Exception {
         String CONTEXT_ROOT = getContextRoot();
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = Main.params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
@@ -816,7 +816,7 @@ public class Main extends Application {
         String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                     // + ":" + Main.port + "/";
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.solve();
@@ -946,7 +946,7 @@ public class Main extends Application {
             }
             requestParam.put("pubKey", pubKeyTo.getPublicKeyAsHex());
             requestParam.put("dataclassname", type);
-            byte[] bytes = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getUserData.name(),
+            byte[] bytes = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getUserData.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             if (DataClassName.CONTACTINFO.name().equals(type)) {
                 if (bytes == null || bytes.length == 0) {

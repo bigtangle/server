@@ -30,7 +30,7 @@ public class UserdataTest extends AbstractIntegrationTest {
     @Test
     public void testSaveUserData() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
@@ -70,7 +70,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getUserData.name(),
+        byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         ContactInfo contactInfo1 = new ContactInfo().parse(buf);
@@ -97,7 +97,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         requestParam.clear();
-        data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
@@ -110,7 +110,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        buf = OkHttp3Util.post(contextRoot + ReqCmd.getUserData.name(),
+        buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         contactInfo1 = new ContactInfo().parse(buf);
@@ -120,7 +120,7 @@ public class UserdataTest extends AbstractIntegrationTest {
     @Test
     public void testServerURL() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);

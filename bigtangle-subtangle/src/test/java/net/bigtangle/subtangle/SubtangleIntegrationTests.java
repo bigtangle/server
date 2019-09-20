@@ -63,7 +63,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         Coin basecoin = Coin.valueOf(0L, pubKey);
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
@@ -119,7 +119,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.post(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
         rollingBlock.solve();
@@ -177,7 +177,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("pubkey", pubkey);
         requestParam.put("signHex", signHex);
-        OkHttp3Util.post(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
     }
 
     @Test
@@ -188,6 +188,6 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         requestParam.put("pubkey", pubkey);
         requestParam.put("userdataPubkey", pubkey);
         requestParam.put("status", SubtangleStatus.OK);
-        OkHttp3Util.post(contextRoot + ReqCmd.updateSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
+        OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.updateSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
     }
 }

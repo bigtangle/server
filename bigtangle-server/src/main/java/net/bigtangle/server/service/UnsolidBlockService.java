@@ -16,7 +16,9 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -86,8 +88,18 @@ public class UnsolidBlockService {
 
         for (Sha256Hash storedBlock : storedBlocklist) {
             if (storedBlock != null) {
-                if (blockService.getBlock(storedBlock) != null) {
+               Block req=blockService.getBlock(storedBlock); 
+            
+                if ( req!= null) {
                     store.updateMissingBlock(storedBlock, false);
+                    // if the block is there, now scan the rest unsolid blocks
+                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
+                        try {
+                            blockgraph.    scanWaitingBlocks(req, true);
+                        } catch (BlockStoreException | VerificationException e) {
+                            logger.debug(e.getLocalizedMessage(), e);
+                        }
+                    } 
                 } else {
                     requestPrevBlock(storedBlock);
                 }
@@ -100,7 +112,9 @@ public class UnsolidBlockService {
             byte[] re = blockRequester.requestBlock(hash);
             if (re != null) {
                 Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
+              
                 blockgraph.add(req, true);
+               
             }
         } catch (Exception e) {
             logger.debug("", e);

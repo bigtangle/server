@@ -47,6 +47,9 @@ public class MilestoneService {
     @Autowired
     private ValidatorService validatorService;
 
+    @Autowired
+    private RewardService rewardService;
+
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -69,46 +72,45 @@ public class MilestoneService {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
-        
+
         // Lock the consensus logic
         blockGraph.confirmLock.lock();
-        
+
         try {
-            log.trace("Milestone Update started");
-            // clearCacheBlockEvaluations();
+
             Stopwatch watchAll = Stopwatch.createStarted();
-            Stopwatch watch = Stopwatch.createStarted();
-            updateMaintained();
-            log.trace("Maintained update 1 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-            watch.stop();
-            watch = Stopwatch.createStarted();
+            Stopwatch watchrewardService = Stopwatch.createStarted();
+            rewardService.performRewardVoting();
+            watchrewardService.stop();
+
+            Stopwatch watchupdateMilestoneDepth = Stopwatch.createStarted();
             updateMilestoneDepth();
-            log.trace("Milestonedepth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watchupdateMilestoneDepth.stop();
 
-            watch.stop();
-            watch = Stopwatch.createStarted();
+            Stopwatch watchupdateWeightAndDepth = Stopwatch.createStarted();
             updateWeightAndDepth();
-            log.trace("Weight and depth update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watchupdateWeightAndDepth.stop();
 
-            watch.stop();
-            watch = Stopwatch.createStarted();
+            Stopwatch watchupdateRating = Stopwatch.createStarted();
             updateRating();
-            log.trace("Rating update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watchupdateRating.stop();
 
-            watch.stop();
-            watch = Stopwatch.createStarted();
+            Stopwatch watchupdateConfirmed = Stopwatch.createStarted();
             updateConfirmed(numberUpdates);
-            log.trace("Confirmation update time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-
-            watch.stop();
-            watch = Stopwatch.createStarted();
+            watchupdateConfirmed.stop();
+            Stopwatch watchupdateMaintained = Stopwatch.createStarted();
             updateMaintained();
-            log.trace("Maintained update 2 time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watchupdateMaintained.stop();
 
-            watch.stop();
-
-            log.debug("Maintained update 1 time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
+            log.debug(
+                    " performRewardVoting " + watchrewardService.elapsed(TimeUnit.MILLISECONDS) 
+                    + " \n" + "Weight and depth update time {} ms.",
+                    watchupdateWeightAndDepth.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Rating update time {} ms.",
+                    watchupdateRating.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Confirmation update time {} ms.",
+                    watchupdateConfirmed.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Maintained update  time {} ms.",
+                    watchupdateMaintained.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Milestone All  1 time {} ms.",
+                    watchAll.elapsed(TimeUnit.MILLISECONDS));
 
             watchAll.stop();
 

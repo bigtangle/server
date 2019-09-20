@@ -267,7 +267,7 @@ public class ValidatorService {
         }
 
         if (newTarget.compareTo(networkParameters.getMaxTarget()) > 0) {
-            logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+           //TODO logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
             newTarget = networkParameters.getMaxTarget();
         }
 

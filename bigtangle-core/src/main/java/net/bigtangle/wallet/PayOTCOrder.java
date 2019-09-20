@@ -198,7 +198,7 @@ public class PayOTCOrder {
         this.wallet().setServerURL(this.serverURL);
         this.wallet().signTransaction(request);
 
-        byte[] data = OkHttp3Util.post(this.serverURL + ReqCmd.getTip.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(this.serverURL + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block rollingBlock = this.wallet().getNetworkParameters().getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
@@ -228,7 +228,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -258,7 +258,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", this.orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.post(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -577,7 +577,7 @@ public class PayOTCOrder {
             Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
             transaction0.getInput(0).setScriptSig(inputScript);
 
-            byte[] buf = OkHttp3Util.post(contextRoot + ReqCmd.getTip.name(),
+            byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
             rollingBlock.addTransaction(transaction0);

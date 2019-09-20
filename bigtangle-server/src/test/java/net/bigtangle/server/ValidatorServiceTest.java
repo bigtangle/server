@@ -73,6 +73,7 @@ import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -174,6 +175,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
+        unsolidBlockService. reCheckUnsolidBlock();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -193,6 +195,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
+        unsolidBlockService. reCheckUnsolidBlock();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -212,6 +215,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
+        unsolidBlockService. reCheckUnsolidBlock();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -245,6 +249,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
+        unsolidBlockService. reCheckUnsolidBlock();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -310,7 +315,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
-
+        unsolidBlockService. reCheckUnsolidBlock();
         // After adding the missing dependency, should be solid
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -357,6 +362,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
+        unsolidBlockService. reCheckUnsolidBlock();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -444,7 +450,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
-
+        unsolidBlockService. reCheckUnsolidBlock();
         // After adding the missing dependency, should be solid
         assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -536,7 +542,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(block1);
-
+        unsolidBlockService. reCheckUnsolidBlock();
         // After adding the missing dependency, should be solid
         assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(block1.getHash()).getBlockEvaluation().getSolid() == 2);

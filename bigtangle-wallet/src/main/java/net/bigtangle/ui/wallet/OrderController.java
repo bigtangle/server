@@ -667,7 +667,7 @@ public class OrderController extends ExchangeController {
         Token token_ = getTokensResponse.getTokens().get(0);
 
         String url = "https://" + token_.getDomainName();
-        OkHttp3Util.post(url + "/" + OrdermatchReqCmd.saveOrder.name(),
+        OkHttp3Util.postAndGetBlock(url + "/" + OrdermatchReqCmd.saveOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         overlayUI.done();
     }
