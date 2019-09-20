@@ -23,6 +23,9 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
@@ -83,32 +86,19 @@ public class BlockRequester {
         return data;
     }
 
-    public void requestBlocks(long chainlength) {
-        String[] re = serverConfiguration.getRequester().split(",");
-        List<String> badserver = new ArrayList<String>();
+    public void requestBlocks(long chainlength, String s)
+            throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
-        for (String s : re) {
-            if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
-                HashMap<String, String> requestParam = new HashMap<String, String>();
-                requestParam.put("start", chainlength + "");
-                requestParam.put("end", chainlength + "");
-                try {
-                    String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
-                            Json.jsonmapper().writeValueAsString(requestParam));
-                    GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response,
-                            GetBlockListResponse.class);
-                    for (byte[] data : blockbytelist.getBlockbytelist()) {
-                        transactionService.addConnected(data, false, false);
-                      }
-                    break;
-                } catch (Exception e) {
-                    log.debug(s, e);
-                    badserver.add(s);
-                }
-                //rerun the 
-            }
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        requestParam.put("start", chainlength + "");
+        requestParam.put("end", chainlength + "");
+
+        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
+        for (byte[] data : blockbytelist.getBlockbytelist()) {
+            transactionService.addConnected(data, false, false);
         }
-
     }
 
     public TXReward getMaxConfirmedReward(String s) throws JsonProcessingException, IOException {
@@ -148,12 +138,29 @@ public class BlockRequester {
      * switch chain select * from txreward where confirmed=1 chainlength with my
      * blockhash with remote ;
      */
+    public class MaxConfirmedReward {
+        String server;
+        TXReward aTXReward;
+    }
+
     public void diff() throws Exception {
         String[] re = serverConfiguration.getRequester().split(",");
+        MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {
-            if (s != null && !"".equals(s))
-                diff(s.trim());
+            if (s != null && !"".equals(s)) {
+                TXReward aTXReward = getMaxConfirmedReward(s.trim());
+                if (aMaxConfirmedReward.aTXReward == null) {
+                    aMaxConfirmedReward.server = s.trim();
+                    aMaxConfirmedReward.aTXReward = aTXReward;
+                } else {
+                    if (aTXReward.getChainLength() > aMaxConfirmedReward.aTXReward.getChainLength()) {
+                        aMaxConfirmedReward.server = s.trim();
+                        aMaxConfirmedReward.aTXReward = aTXReward;
+                    }
+                }
+            }
         }
+        diffMaxConfirmedReward(aMaxConfirmedReward);
     }
 
     /*
@@ -163,26 +170,25 @@ public class BlockRequester {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data from
      */
-    public void diff(String server2) throws Exception {
-        log.debug(" start difference check with " + server2);
-        TXReward remote = getMaxConfirmedReward(server2);
+    public void diffMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
         TXReward my = store.getMaxConfirmedReward();
-        log.debug("  remote chain lenght  " +  remote .getChainLength() + " my chain lenght " +my.getChainLength());
+        log.debug("  remote chain lenght  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
+                + aMaxConfirmedReward.server + " my chain lenght " + my.getChainLength());
         // sync all chain data d
-        if (remote.getChainLength() > my.getChainLength() + 2) {
-      
-            
-            List<TXReward> remotes = getAllConfirmedReward(server2);
+        if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength() + 2) {
+
+            List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
             List<TXReward> mylist = store.getAllConfirmedReward();
             TXReward re = findSync(remotes, mylist);
-            log.debug(" start sync remote chain   " + re.getChainLength() + " to " +remote.getChainLength());
-            for(long i= re.getChainLength(); i<=remote.getChainLength();i++ ) {
-                log.debug("   sync remote chain requestBlocks  at:  " + i);
-
-                requestBlocks(i);
+            log.debug(" start sync remote chain   " + re.getChainLength() + " to "
+                    + aMaxConfirmedReward.aTXReward.getChainLength());
+            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
+                log.debug(
+                        "   sync remote chain requestBlocks  at:  " + i + " at server: " + aMaxConfirmedReward.server);
+                requestBlocks(i, aMaxConfirmedReward.server);
             }
         }
-        log.debug(" finish difference check " + server2 + "  ");
+        log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
     }
 
     private TXReward findSync(List<TXReward> remotes, List<TXReward> mylist) throws Exception {

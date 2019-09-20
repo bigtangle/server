@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Component
@@ -27,9 +28,13 @@ public class BeforeStartup {
         if (serverConfiguration.getCreatetable()) {
             store.create();
         }
+        unsolidBlockService.startSingleProcess();
+        
         serverConfiguration.setServiceReady(true);
     }
-
+    @Autowired
+    private UnsolidBlockService unsolidBlockService;
+  
     @Autowired
     private ServerConfiguration serverConfiguration;
     @Autowired
