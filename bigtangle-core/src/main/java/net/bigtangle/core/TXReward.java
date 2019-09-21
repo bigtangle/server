@@ -1,5 +1,7 @@
 package net.bigtangle.core;
 
+import java.util.Arrays;
+
 public class TXReward  extends DataClass implements java.io.Serializable {
 
     /**
@@ -82,6 +84,13 @@ public class TXReward  extends DataClass implements java.io.Serializable {
     }
     public void setChainLength(long chainLength) {
         this.chainLength = chainLength;
+    }
+    @Override
+    public String toString() {
+        return "TXReward [hash=" + Arrays.toString(hash) + ", confirmed=" + confirmed + ", spent=" + spent
+                + ", toHeight=" + toHeight + ", prevBlockHash=" + Arrays.toString(prevBlockHash) + ", spenderblockhash="
+                + Arrays.toString(spenderblockhash) + ", difficulty=" + difficulty + ", chainLength=" + chainLength
+                + "]";
     }
     
  

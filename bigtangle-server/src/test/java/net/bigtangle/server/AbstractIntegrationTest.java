@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -1283,12 +1284,12 @@ public abstract class AbstractIntegrationTest {
     }
 
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws BlockStoreException, NoBlockException {
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
     }
 
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException, NoBlockException {
+            boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         
         return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
     }

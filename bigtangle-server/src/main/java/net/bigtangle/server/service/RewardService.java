@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,27 +78,8 @@ public class RewardService {
 
         try {
             logger.info("performRewardVoting  started");
-            Stopwatch watch = Stopwatch.createStarted();
-            
-            final Duration timeout = Duration.ofSeconds(30);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-
-            @SuppressWarnings({ "unchecked", "rawtypes" })
-            final Future<String> handler = executor.submit(new Callable() {
-                @Override
-                public Block call() throws Exception {
-                    return  performRewardVoting();
-                }
-            });
-
-            try {
-                handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            } catch (TimeoutException e) {
-                handler.cancel(true);
-            }
-
-            executor.shutdownNow();
-      
+            Stopwatch watch = Stopwatch.createStarted(); 
+          performRewardVoting(); 
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
             // logger.debug(" Infeasible performRewardVoting: ", e1);
@@ -157,12 +139,12 @@ public class RewardService {
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws BlockStoreException, NoBlockException {
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException, NoBlockException {
+            boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         RewardBuilderResult result = null;
         try {
             result = validatorService.makeReward(prevTrunk, prevBranch, prevRewardHash);
@@ -187,7 +169,28 @@ public class RewardService {
 
         BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
         
-        block.solve(chainTarget);
+        
+        
+        final Duration timeout = Duration.ofSeconds(30);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                block.solve(chainTarget);return "";
+            }
+        });
+
+        try {
+            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
+        }
+
+        executor.shutdownNow();
+        
+       
         return block;
     }
 

@@ -74,7 +74,7 @@ public class BlockRequester {
                 try {
                     data = OkHttp3Util.postAndGetBlock(s.trim() + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    transactionService.addConnected(data, false, false);
+                    transactionService.addConnected(data, true);
                     break;
                 } catch (Exception e) {
                     log.debug(s, e);
@@ -97,7 +97,7 @@ public class BlockRequester {
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         for (byte[] data : blockbytelist.getBlockbytelist()) {
-            transactionService.addConnected(data, false, false);
+            transactionService.addConnected(data, true);
         }
     }
 
@@ -172,6 +172,8 @@ public class BlockRequester {
      */
     public void diffMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
         TXReward my = store.getMaxConfirmedReward();
+        if (my == null || aMaxConfirmedReward.aTXReward==null)
+            return;
         log.debug("  remote chain lenght  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
                 + aMaxConfirmedReward.server + " my chain lenght " + my.getChainLength());
         // sync all chain data d

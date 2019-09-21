@@ -96,11 +96,11 @@ public class TransactionService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes, boolean request, boolean checksolidity) {
+    public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes) {
 
         try {
             // logger.debug(" bytes " +bytes.length);
-            return addConnected(Gzip.decompress(bytes), request, checksolidity);
+            return addConnected(Gzip.decompress(bytes), true);
         } catch (DifficultyTargetException e) {
 
             return null;
@@ -114,33 +114,27 @@ public class TransactionService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnected(byte[] bytes, boolean request, boolean checksolidity)
+    public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid)
             throws ProtocolException, BlockStoreException, NoBlockException {
         if (bytes == null)
             return null;
 
-        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), request,
-                checksolidity);
+        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), allowUnsolid);
     }
 
-    private Optional<Block> addConnectedBlock(Block block, boolean request, boolean checksolidity)
+    private Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid)
             throws BlockStoreException, NoBlockException {
 
-        if (!checkBlockExists(block)) {
-            boolean added = blockgraph.add(block, true);
-            if (!added) {
-                logger.debug(" unsolid block  Blockhash=" + block.getHashAsString() + " height =" + block.getHeight()
-                        + " block: " + block.toString() + " request remote: " + request);
-                return Optional.empty();
+        boolean added = blockgraph.add(block, allowUnsolid);
+        if (!added) {
+            logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height =" + block.getHeight()
+                    + " block: " + block.toString());
+            return Optional.empty();
 
-            } else {
-                return Optional.of(block);
-            }
         } else {
-            // logger.debug("addConnected BlockExists " + block);
+            return Optional.of(block);
         }
 
-        return Optional.empty();
     }
 
     // private boolean blockTimeRange(Block block) {

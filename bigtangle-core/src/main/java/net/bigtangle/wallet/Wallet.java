@@ -1653,33 +1653,33 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // All Spend Candidates as List<TransactionOutput>
     public List<TransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
             throws IOException {
-   
-            List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
 
-            List<String> pubKeyHashs = new ArrayList<String>();
+        List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
 
-            for (ECKey ecKey : walletKeys(aesKey)) {
-                pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-            }
+        List<String> pubKeyHashs = new ArrayList<String>();
 
-            String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
-                    Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
+        for (ECKey ecKey : walletKeys(aesKey)) {
+            pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        }
 
-            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
-            for (UTXO output : getOutputsResponse.getOutputs()) {
-                if (multisigns) {
+        String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
+                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
+
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+        for (UTXO output : getOutputsResponse.getOutputs()) {
+            if (multisigns) {
+                candidates.add(new FreeStandingTransactionOutput(this.params, output));
+            } else {
+                if (!output.isMultiSig()) {
                     candidates.add(new FreeStandingTransactionOutput(this.params, output));
                 } else {
-                    if (!output.isMultiSig()) {
-                        candidates.add(new FreeStandingTransactionOutput(this.params, output));
-                    }else {
-                        log.debug(" warning MultiSig token in Wallet, but not inlcude in  SpendCandidates " + output);
-                    }
-                } 
+                    log.debug(" warning MultiSig token in Wallet, but not inlcude in  SpendCandidates " + output);
+                }
             }
-            Collections.shuffle(candidates);
-            return candidates;
-        
+        }
+        Collections.shuffle(candidates);
+        return candidates;
+
     }
 
     /*
@@ -2071,7 +2071,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         signTransaction(multispent, aesKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
 
@@ -2130,7 +2131,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         signTransaction(tx, aesKey);
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
 
         // block = predecessor.createNextBlock();
@@ -2186,7 +2188,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         signTransaction(tx, aesKey);
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
 
         block.addTransaction(tx);
@@ -2215,7 +2218,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
 
         block.addTransaction(tx);
@@ -2504,6 +2508,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             // requestParam.get("state")));
             orderData.add(map);
         }
+    }
+
+    public Block getBlock(String hashHex) throws JsonProcessingException, IOException {
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hashHex", hashHex);
+
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getBlock.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        return params.getDefaultSerializer().makeBlock(data);
     }
 
     public boolean isAllowClientMining() {

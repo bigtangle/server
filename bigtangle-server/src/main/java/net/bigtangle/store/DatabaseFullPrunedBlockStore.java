@@ -4446,12 +4446,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+            if (resultSet.next()) {
 
-            return new TXReward(resultSet.getBytes("blockhash"), resultSet.getBoolean("confirmed"),
-                    resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
-                    resultSet.getBytes("spenderblockhash"), resultSet.getBytes("prevblockhash"),
-                    resultSet.getLong("difficulty"), resultSet.getLong("chainlength"));
+                return new TXReward(resultSet.getBytes("blockhash"), resultSet.getBoolean("confirmed"),
+                        resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
+                        resultSet.getBytes("spenderblockhash"), resultSet.getBytes("prevblockhash"),
+                        resultSet.getLong("difficulty"), resultSet.getLong("chainlength"));
+            } else
+                return null;
+
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
@@ -5646,7 +5649,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw new BlockStoreException(e);
-        
+
         } finally {
             if (preparedStatement != null) {
                 try {
