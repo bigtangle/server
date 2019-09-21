@@ -5,8 +5,14 @@
 package net.bigtangle.server.service;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -72,7 +78,26 @@ public class RewardService {
         try {
             logger.info("performRewardVoting  started");
             Stopwatch watch = Stopwatch.createStarted();
-            performRewardVoting();
+            
+            final Duration timeout = Duration.ofSeconds(30);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            final Future<String> handler = executor.submit(new Callable() {
+                @Override
+                public Block call() throws Exception {
+                    return  performRewardVoting();
+                }
+            });
+
+            try {
+                handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                handler.cancel(true);
+            }
+
+            executor.shutdownNow();
+      
             logger.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
             // logger.debug(" Infeasible performRewardVoting: ", e1);
