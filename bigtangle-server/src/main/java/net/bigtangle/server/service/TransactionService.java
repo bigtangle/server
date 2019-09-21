@@ -22,7 +22,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;

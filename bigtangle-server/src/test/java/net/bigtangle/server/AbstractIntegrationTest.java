@@ -630,14 +630,14 @@ public abstract class AbstractIntegrationTest {
         return sha256Hash;
     }
 
-    protected Block createAndAddNextBlock(Block b1, Block b2) throws VerificationException, PrunedException {
+    protected Block createAndAddNextBlock(Block b1, Block b2) throws VerificationException, PrunedException, BlockStoreException {
         Block block = b1.createNextBlock(b2);
         this.blockGraph.add(block, true);
         return block;
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
-            throws VerificationException, PrunedException {
+            throws VerificationException, PrunedException, BlockStoreException {
         Block block1 = b1.createNextBlock(b2);
         block1.addTransaction(prevOut);
         block1.solve();

@@ -99,11 +99,11 @@ public class UnsolidBlockService {
                             blockgraph.scanWaitingBlocks(req, true);
                             store.commitDatabaseBatchWrite();
                         } catch (BlockStoreException | VerificationException e) {
-                            logger.debug(e.getLocalizedMessage(), e);
-
+                            logger.debug(e.getLocalizedMessage(), e); 
                             store.abortDatabaseBatchWrite();
-                            throw e;
-
+                            throw e; 
+                        }finally {
+                            store.defaultDatabaseBatchWrite();  
                         }
                     }
                 } else {

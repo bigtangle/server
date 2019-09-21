@@ -368,9 +368,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    public boolean add(Block block, boolean allowUnsolid) {
-
-        try {
+    public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
+ 
             // If block already exists, no need to add this block to db
             if (blockStore.getBlockEvaluation(block.getHash()) != null) {
                 return false;
@@ -410,6 +409,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } catch (BlockStoreException e) {
                 blockStore.abortDatabaseBatchWrite();
                 throw e;
+            }finally {
+                blockStore.defaultDatabaseBatchWrite();  
             }
             
             // Check for waiting blocks
@@ -421,20 +422,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 log.debug(e.getLocalizedMessage(), e);
                 blockStore.abortDatabaseBatchWrite();
                 throw e;
+            }finally {
+                blockStore.defaultDatabaseBatchWrite();  
             }
             return true;
 
-        } catch (BlockStoreException e) {
-            log.error("", e);
-            throw new VerificationException(e);
-        } catch (VerificationException e) {
-            // log.info("Could not verify block:\n" + e.getLocalizedMessage() +
-            // "\n" + block.toString(),e );
-            throw e;
-        } catch (Exception e) {
-            log.error("", e);
-            throw e;
-        }
+       
     }
 
     public boolean solidifyWaiting(Block block, boolean runConsensusLogic) {

@@ -97,11 +97,14 @@ public class TokensService {
             }
             this.store.deleteMultiSign(tokenid);
             multiSignService.multiSign(block, true);
+            this.store.commitDatabaseBatchWrite();
         } catch (Exception e) {
-            e.printStackTrace();
             this.store.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            store.defaultDatabaseBatchWrite();
         }
-        this.store.commitDatabaseBatchWrite();
+
     }
 
     @Autowired

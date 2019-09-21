@@ -1505,6 +1505,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             throw new BlockStoreException(e);
         }
     }
+    @Override
+    public void defaultDatabaseBatchWrite() throws BlockStoreException {
+        maybeConnect();
+               try {
+            if (!conn.get().getAutoCommit()) {
+                conn.get().setAutoCommit(true);
+            } 
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        }
+    }
 
     @Override
     public NetworkParameters getParams() {

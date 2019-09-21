@@ -182,6 +182,7 @@ public class BlockService {
     }
 
     @SuppressWarnings("unchecked")
+    @Cacheable("searchBlock")
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
@@ -199,7 +200,7 @@ public class BlockService {
         }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
-
+    @Cacheable("searchBlockByBlockHash")
     public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
         String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
@@ -257,7 +258,7 @@ public class BlockService {
 
         this.store.deleteMyserverblocks(prevhash);
     }
-
+    @Cacheable("blocksFromChainLength")
     public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));

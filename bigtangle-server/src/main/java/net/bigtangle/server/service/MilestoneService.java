@@ -47,9 +47,6 @@ public class MilestoneService {
     @Autowired
     private ValidatorService validatorService;
 
-    @Autowired
-    private RewardService rewardService;
-
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -81,34 +78,81 @@ public class MilestoneService {
             Stopwatch watchAll = Stopwatch.createStarted();
 
             Stopwatch watchupdateMilestoneDepth = Stopwatch.createStarted();
-            updateMilestoneDepth();
-            watchupdateMilestoneDepth.stop();
+            try {
+                store.beginDatabaseBatchWrite();
+                updateMilestoneDepth();
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+            } finally {
+                store.defaultDatabaseBatchWrite();
+            }
+            ;
 
             Stopwatch watchupdateWeightAndDepth = Stopwatch.createStarted();
-            updateWeightAndDepth();
-            watchupdateWeightAndDepth.stop();
+
+            try {
+                store.beginDatabaseBatchWrite();
+                updateWeightAndDepth();
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+            } finally {
+                store.defaultDatabaseBatchWrite();
+            }
+            ;
 
             Stopwatch watchupdateRating = Stopwatch.createStarted();
-            updateRating();
-            watchupdateRating.stop();
+
+            try {
+                store.beginDatabaseBatchWrite();
+                updateRating();
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+            } finally {
+                store.defaultDatabaseBatchWrite();
+            }
+            ;
 
             Stopwatch watchupdateConfirmed = Stopwatch.createStarted();
-            updateConfirmed(numberUpdates);
-            watchupdateConfirmed.stop();
+
+            try {
+                store.beginDatabaseBatchWrite();
+                updateConfirmed(numberUpdates);
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+            } finally {
+                store.defaultDatabaseBatchWrite();
+            }
+            ;
+
             Stopwatch watchupdateMaintained = Stopwatch.createStarted();
-            updateMaintained();
-            watchupdateMaintained.stop();
 
-            log.debug(
+            try {
+                store.beginDatabaseBatchWrite();
+                updateMaintained();
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+            } finally {
+                store.defaultDatabaseBatchWrite();
+            }
+            ;
 
-                    "Weight and depth update time {} ms.",
+            log.debug("Weight and depth update time {} ms.",
                     watchupdateWeightAndDepth.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Rating update time {} ms.",
                     watchupdateRating.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Confirmation update time {} ms.",
                     watchupdateConfirmed.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Maintained update  time {} ms.",
                     watchupdateMaintained.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Milestone All  1 time {} ms.",
                     watchAll.elapsed(TimeUnit.MILLISECONDS));
-
+            watchupdateRating.stop();
+            watchupdateWeightAndDepth.stop();
+            watchupdateMilestoneDepth.stop();
             watchAll.stop();
+            watchupdateConfirmed.stop();
+            watchupdateMaintained.stop();
 
         } catch (Exception e) {
             log.warn("", e);

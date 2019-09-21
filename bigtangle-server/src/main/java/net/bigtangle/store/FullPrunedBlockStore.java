@@ -126,6 +126,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void abortDatabaseBatchWrite() throws BlockStoreException;
 
+    public void defaultDatabaseBatchWrite() throws BlockStoreException;
+
+    
     public void resetStore() throws BlockStoreException;
     
     public void deleteStore() throws BlockStoreException;

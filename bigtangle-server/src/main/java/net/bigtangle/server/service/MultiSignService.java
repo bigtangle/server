@@ -45,12 +45,12 @@ public class MultiSignService {
     @Autowired
     protected NetworkParameters params;
 
-    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address) throws BlockStoreException {
+    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address)
+            throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
             List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
-        }
-        else {
+        } else {
             List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
         }
@@ -63,8 +63,9 @@ public class MultiSignService {
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
             throws Exception {
-      return   getMultiSignListWithTokenid(tokenid, new HashSet<String>(addresses), isSign);
+        return getMultiSignListWithTokenid(tokenid, new HashSet<String>(addresses), isSign);
     }
+
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws Exception {
         List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses, isSign);
@@ -117,13 +118,13 @@ public class MultiSignService {
 
             // Enter the required multisign addresses
             List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
-            
+
             // Always needs domain owner signature
             Token prevToken = store.getToken(tokens.getDomainPredecessorBlockHash());
-            List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
-                    prevToken.getTokenid(), prevToken.getBlockhash());
+            List<MultiSignAddress> permissionedAddresses = store
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(), prevToken.getBlockhash());
             for (MultiSignAddress permissionedAddress : permissionedAddresses) {
-            	permissionedAddress.setTokenid(tokens.getTokenid());
+                permissionedAddress.setTokenid(tokens.getTokenid());
             }
             multiSignAddresses.addAll(permissionedAddresses);
 
@@ -160,11 +161,12 @@ public class MultiSignService {
             }
             store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokens.getTokenindex(),
                     block.bitcoinSerialize());
-            this.store.commitDatabaseBatchWrite();
-
+            this.store.commitDatabaseBatchWrite(); 
         } catch (Exception e) {
             log.error("", e);
             this.store.abortDatabaseBatchWrite();
+        } finally {
+            this.store.defaultDatabaseBatchWrite();
         }
     }
 
