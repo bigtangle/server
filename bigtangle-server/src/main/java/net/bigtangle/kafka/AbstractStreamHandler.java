@@ -31,7 +31,7 @@ public abstract class AbstractStreamHandler {
     protected KafkaStreams streams;
     private static final Logger log = LoggerFactory.getLogger(KafkaMessageProducer.class);
 
-    @PostConstruct
+    
     public void runStream() {
         if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
             return;

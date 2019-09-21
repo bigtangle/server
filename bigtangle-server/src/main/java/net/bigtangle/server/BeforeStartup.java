@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -29,7 +30,7 @@ public class BeforeStartup {
             store.create();
         }
         unsolidBlockService.startSingleProcess();
-        
+        blockStreamHandler.runStream();
         serverConfiguration.setServiceReady(true);
     }
     @Autowired
@@ -39,4 +40,6 @@ public class BeforeStartup {
     private ServerConfiguration serverConfiguration;
     @Autowired
     FullPrunedBlockStore store;
+    @Autowired
+    BlockStreamHandler blockStreamHandler;
 }

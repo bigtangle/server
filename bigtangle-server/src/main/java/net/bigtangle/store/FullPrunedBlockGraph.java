@@ -369,12 +369,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
- 
-            // If block already exists, no need to add this block to db
-            if (blockStore.getBlockEvaluation(block.getHash()) != null) {
-                return false;
-            }
-
+   
             // Check the block is partially formally valid and fulfills PoW
 
             block.verifyHeader();

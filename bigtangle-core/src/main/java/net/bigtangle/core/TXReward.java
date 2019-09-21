@@ -87,10 +87,9 @@ public class TXReward  extends DataClass implements java.io.Serializable {
     }
     @Override
     public String toString() {
-        return "TXReward [hash=" + Arrays.toString(hash) + ", confirmed=" + confirmed + ", spent=" + spent
-                + ", toHeight=" + toHeight + ", prevBlockHash=" + Arrays.toString(prevBlockHash) + ", spenderblockhash="
-                + Arrays.toString(spenderblockhash) + ", difficulty=" + difficulty + ", chainLength=" + chainLength
-                + "]";
+        return   " chainLength=" + chainLength +", confirmed=" + confirmed + ", spent=" + spent
+                + ", toHeight=" + toHeight +   ", difficulty=" + difficulty ;
+                
     }
     
  

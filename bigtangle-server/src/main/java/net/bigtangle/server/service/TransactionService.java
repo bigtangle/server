@@ -123,17 +123,20 @@ public class TransactionService {
 
     private Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid)
             throws BlockStoreException, NoBlockException {
+        if (store.getBlockEvaluation(block.getHash()) == null) {
 
-        boolean added = blockgraph.add(block, allowUnsolid);
-        if (!added) {
-            logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height =" + block.getHeight()
-                    + " block: " + block.toString());
-            return Optional.empty();
+            boolean added = blockgraph.add(block, allowUnsolid);
 
-        } else {
-            return Optional.of(block);
+            if (!added) {
+                logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
+                        + block.getHeight() + " block: " + block.toString());
+                return Optional.empty();
+
+            } else {
+                return Optional.of(block);
+            }
         }
-
+        return Optional.empty();
     }
 
     // private boolean blockTimeRange(Block block) {

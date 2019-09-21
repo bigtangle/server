@@ -6,9 +6,10 @@ package net.bigtangle.server.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -26,7 +26,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
-import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.core.http.server.resp.GetBlockListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardListResponse;
 import net.bigtangle.core.http.server.resp.GetTXRewardResponse;
@@ -96,6 +95,9 @@ public class BlockRequester {
         String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
+        log.debug("blocks: " + blockbytelist.getBlockbytelist().size() + " remote chain requestBlocks  at:  "
+                + chainlength + " at server: " + s);
+
         for (byte[] data : blockbytelist.getBlockbytelist()) {
             transactionService.addConnected(data, true);
         }
@@ -172,25 +174,38 @@ public class BlockRequester {
      */
     public void diffMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
         TXReward my = store.getMaxConfirmedReward();
-        if (my == null || aMaxConfirmedReward.aTXReward==null)
+        if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
         log.debug("  remote chain lenght  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
                 + aMaxConfirmedReward.server + " my chain lenght " + my.getChainLength());
         // sync all chain data d
+
+        // Comparator<TXReward>chainlengthID=(TXReward o1,TXReward
+        // o2)->o1.getChainLength()>o2.getChainLength()?1:0));
+
         if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength() + 2) {
 
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
-            List<TXReward> mylist = store.getAllConfirmedReward();
+            Collections.sort(remotes,
+                    new SortbyChain());
+            List<TXReward> mylist =store.getAllConfirmedReward();
+            Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote chain   " + re.getChainLength() + " to "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
-                log.debug(
-                        "   sync remote chain requestBlocks  at:  " + i + " at server: " + aMaxConfirmedReward.server);
+            for (long i = re.getChainLength()+1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
             }
         }
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
+    }
+
+    public class SortbyChain implements Comparator<TXReward> {
+        // Used for sorting in ascending order of
+        // roll number
+        public int compare(TXReward a, TXReward b) {
+            return a.getChainLength() < b.getChainLength() ? 1 : -1;
+        }
     }
 
     private TXReward findSync(List<TXReward> remotes, List<TXReward> mylist) throws Exception {
@@ -213,37 +228,4 @@ public class BlockRequester {
         }
         return null;
     }
-
-    private BlockEvaluationDisplay find(List<BlockEvaluationDisplay> l, BlockEvaluationDisplay b) throws Exception {
-
-        for (BlockEvaluationDisplay b1 : l) {
-            if (b1.getBlockHash().equals(b.getBlockHash())) {
-                return b1;
-            }
-        }
-        return null;
-    }
-
-    private List<BlockEvaluationDisplay> getBlockInfos() throws Exception {
-
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-
-        requestParam.put("lastestAmount", "" + NetworkParameters.ALLOWED_SEARCH_BLOCKS);
-        return ((GetBlockEvaluationsResponse) blockService.searchBlock(requestParam)).getEvaluations();
-
-    }
-
-    private List<BlockEvaluationDisplay> getBlockInfos(String server) throws Exception {
-        String CONTEXT_ROOT = server;
-        String lastestAmount = "" + NetworkParameters.ALLOWED_SEARCH_BLOCKS;
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-
-        requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.searchBlock.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
-                GetBlockEvaluationsResponse.class);
-        return getBlockEvaluationsResponse.getEvaluations();
-    }
-
 }
