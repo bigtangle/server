@@ -5,13 +5,22 @@
 package net.bigtangle.server.service;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -24,11 +33,16 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -49,14 +63,27 @@ public class MilestoneService {
     private TipsService tipsService;
     @Autowired
     private ValidatorService validatorService;
+    @Autowired
+    private UnsolidBlockService unsolidBlockService;
+    @Autowired
+    private  BlockService blockService;
 
+    @Autowired
+    private  NetworkParameters params;
+
+    
     /**
      * Scheduled update function that updates the Tangle
      * 
      * @throws BlockStoreException
      */
     public void update() throws BlockStoreException {
-        update(Integer.MAX_VALUE);
+        try {
+            update(Integer.MAX_VALUE);
+        } catch (InterruptedException | ExecutionException e) {
+            // ignore
+
+        }
     }
 
     /**
@@ -67,103 +94,121 @@ public class MilestoneService {
 
     protected final ReentrantLock lock = Threading.lock("milestoneService");
 
-    public void update(int numberUpdates) {
+    public void update(int numberUpdates) throws InterruptedException, ExecutionException {
         if (!lock.tryLock()) {
             log.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }
+        Stopwatch watchAll = Stopwatch.createStarted();
 
-        // Lock the consensus logic
-        blockGraph.confirmLock.lock();
+        updateDo(numberUpdates);
+
+        log.debug("Milestone All  time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
+
+        watchAll.stop();
+
+    }
+
+    public void updateDo(int numberUpdates) throws InterruptedException, ExecutionException {
+        final Duration timeout = Duration.ofSeconds(5000000);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                updateSolidity();
+
+                try {
+                    store.beginDatabaseBatchWrite();
+                    updateMilestone();
+                    store.commitDatabaseBatchWrite();
+                } catch (Exception e) {
+                    store.abortDatabaseBatchWrite();
+                } finally {
+                    store.defaultDatabaseBatchWrite();
+                }
+                
+                updateMaintained();
+                updateMilestoneDepth();
+                updateWeightAndDepth();
+                updateRating();
+
+                try {
+                    store.beginDatabaseBatchWrite();
+                    updateConfirmed(numberUpdates);
+                    store.commitDatabaseBatchWrite();
+                } catch (Exception e) {
+                    store.abortDatabaseBatchWrite();
+                } finally {
+                    store.defaultDatabaseBatchWrite();
+                }
+
+                return "";
+            }
+        });
 
         try {
-
-            Stopwatch watchAll = Stopwatch.createStarted();
-
-            Stopwatch watchupdateMilestoneDepth = Stopwatch.createStarted();
-            try {
-                store.beginDatabaseBatchWrite();
-                updateMilestoneDepth();
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            ;
-
-            Stopwatch watchupdateWeightAndDepth = Stopwatch.createStarted();
-
-            try {
-                store.beginDatabaseBatchWrite();
-                updateWeightAndDepth();
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            ;
-
-            Stopwatch watchupdateRating = Stopwatch.createStarted();
-
-            try {
-                store.beginDatabaseBatchWrite();
-                updateRating();
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            ;
-
-            Stopwatch watchupdateConfirmed = Stopwatch.createStarted();
-
-            try {
-                store.beginDatabaseBatchWrite();
-                updateConfirmed(numberUpdates);
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            ;
-
-            Stopwatch watchupdateMaintained = Stopwatch.createStarted();
-
-            try {
-                store.beginDatabaseBatchWrite();
-                updateMaintained();
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            ;
-
-            log.debug("Weight and depth update time {} ms.",
-                    watchupdateWeightAndDepth.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Rating update time {} ms.",
-                    watchupdateRating.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Confirmation update time {} ms.",
-                    watchupdateConfirmed.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Maintained update  time {} ms.",
-                    watchupdateMaintained.elapsed(TimeUnit.MILLISECONDS) + " \n" + "Milestone All  1 time {} ms.",
-                    watchAll.elapsed(TimeUnit.MILLISECONDS));
-            watchupdateRating.stop();
-            watchupdateWeightAndDepth.stop();
-            watchupdateMilestoneDepth.stop();
-            watchAll.stop();
-            watchupdateConfirmed.stop();
-            watchupdateMaintained.stop();
-
-        } catch (Exception e) {
-            log.warn("", e);
-        } finally {
-            blockGraph.confirmLock.unlock();
-            lock.unlock();
+            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
         }
 
+        executor.shutdownNow();
+    }
+    
+    /**
+     * Switch to longest chain
+     * 
+     * @throws BlockStoreException
+     * @throws NoBlockException 
+     */
+    private void updateMilestone() throws BlockStoreException, NoBlockException {
+        Block longestRewardBlock = store.get(store.getMaxSolidReward().getSha256Hash());
+        runConsensusLogic(longestRewardBlock);
+    }
+    
+    /**
+     * the missing previous block and reward blocks requested and run the
+     * solidity check.
+     * 
+     * 
+     * @throws BlockStoreException
+     * @throws NoBlockException 
+     */
+    private void updateSolidity() throws BlockStoreException, NoBlockException {
+
+        /*
+         * TODO this grows to infinite size
+         */
+        List<Sha256Hash> storedBlocklist = store.getNonSolidMissingBlocks();
+
+        for (Sha256Hash storedBlock : storedBlocklist) {
+            if (storedBlock != null) {
+                Block req = blockService.getBlock(storedBlock);
+
+                if (req != null) {
+                    store.updateMissingBlock(storedBlock, false);
+                    // if the block is there, now scan the rest unsolid blocks
+                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
+                        try {
+                            store.beginDatabaseBatchWrite();
+                            scanWaitingBlocks(req);
+                            store.commitDatabaseBatchWrite();
+                        } catch (BlockStoreException | VerificationException e) {
+                            log.debug(e.getLocalizedMessage(), e); 
+                            store.abortDatabaseBatchWrite();
+                            throw e; 
+                        }finally {
+                            store.defaultDatabaseBatchWrite();  
+                        }
+                    }
+                } else {
+                    unsolidBlockService.requestPrevBlock(storedBlock);
+                }
+            }
+        }
+      
     }
 
     /**
@@ -373,11 +418,12 @@ public class MilestoneService {
      * correspondingly
      * 
      * @throws BlockStoreException
-     * @throws IOException 
-     * @throws JsonMappingException 
-     * @throws JsonParseException 
+     * @throws IOException
+     * @throws JsonMappingException
+     * @throws JsonParseException
      */
-    private void updateConfirmed(int numberUpdates) throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+    private void updateConfirmed(int numberUpdates)
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
@@ -395,7 +441,7 @@ public class MilestoneService {
             // Finally add the resolved new milestone blocks to the milestone
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirmWithLock(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
+                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
@@ -446,5 +492,200 @@ public class MilestoneService {
         for (Sha256Hash hash : traversedBlockHashes.stream().filter(h -> !maintainedBlockHashes.contains(h))
                 .collect(Collectors.toList()))
             store.updateBlockEvaluationMaintained(hash, true);
+    }
+    
+    public boolean solidifyWaiting(Block block) throws BlockStoreException {
+
+        SolidityState solidityState = validatorService.checkSolidity(block, false);
+        blockGraph. solidifyBlock(block, solidityState, false);
+        // TODO this is recursive and may blow the stack
+        if (solidityState.getState() != State.MissingPredecessor)
+            scanWaitingBlocks(block);
+
+        return true;
+
+    }
+
+    public void scanWaitingBlocks(Block block) throws BlockStoreException {
+        // Finally, look in the solidity waiting queue for blocks that are still
+        // waiting
+        for (Block b : store.getUnsolidBlocks(block.getHash().getBytes())) {
+            try {
+                // Clear from waiting list
+                store.deleteUnsolid(b.getHash());
+
+                // If going through or waiting for more dependencies, all is
+                // good
+                solidifyWaiting(b);
+
+            } catch (VerificationException e) {
+                // If the block is deemed invalid, we do not propagate the error
+                // upwards
+                log.debug(e.getMessage());
+            }
+        }
+    }
+
+    private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
+
+   
+        try {
+            RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
+            Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+            long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
+
+            // Consensus logic>
+            Sha256Hash oldLongestChainEnd = store.getMaxConfirmedReward().getSha256Hash();
+            long maxChainLength = store.getRewardChainLength(oldLongestChainEnd);
+            if (maxChainLength < currChainLength) {
+
+                // Find block to which to rollback (if at all) and all new chain
+                // blocks
+                List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
+                newMilestoneBlocks.add(store.getBlockWrap(newestBlock.getHash()));
+                BlockWrap splitPoint = null;
+                Sha256Hash prevHash = prevRewardHash;
+                for (int i = 0; i < currChainLength; i++) {
+                    splitPoint = store.getBlockWrap(prevHash);
+                    prevHash = store.getRewardPrevBlockHash(prevHash);
+
+                    if (store.getRewardConfirmed(splitPoint.getBlockHash()))
+                        break;
+
+                    newMilestoneBlocks.add(splitPoint);
+                }
+                Collections.reverse(newMilestoneBlocks);
+
+                // Unconfirm anything not confirmed by milestone
+                List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
+                HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
+                for (Sha256Hash wipeBlock : wipeBlocks)
+                    blockGraph. unconfirm(wipeBlock, traversedBlockHashes);
+
+                // Rollback to split point
+                Sha256Hash maxConfirmedRewardBlockHash;
+                while (!(maxConfirmedRewardBlockHash = store.getMaxConfirmedReward().getSha256Hash())
+                        .equals(splitPoint.getBlockHash())) {
+
+                    // Sanity check:
+                    if (maxConfirmedRewardBlockHash.equals(params.getGenesisBlock().getHash()))
+                        throw new RuntimeException("Unset genesis. Shouldn't happen");
+
+                    // Unset the milestone of this one (where milestone =
+                    // maxConfRewardblock.chainLength)
+                    long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
+                    store.updateUnsetMilestone(milestoneNumber);
+
+                    // Unconfirm anything not confirmed by milestone
+                    wipeBlocks = store.getWhereConfirmedNotMilestone();
+                    traversedBlockHashes = new HashSet<>();
+                    for (Sha256Hash wipeBlock : wipeBlocks)
+                        blockGraph. unconfirm(wipeBlock, traversedBlockHashes);
+                }
+
+                // Build milestone forwards.
+                for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
+
+                    boolean rerunConsensusLogic = newMilestoneBlocks
+                            .indexOf(newMilestoneBlock) == newMilestoneBlocks.size() - 1;
+
+                    // Sanity check: if my predecessors are still not fully
+                    // solid or invalid, there must be something wrong.
+                    List<Sha256Hash> allRequiredBlockHashes = validatorService
+                            .getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
+                    for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
+                        if (store.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {
+                            log.error("Predecessors are not solidified. This should not happen.");
+                            throw new RuntimeException("Predecessors are not solidified. This should not happen.");
+                        }
+                    }
+
+                    // Sanity check: At this point, predecessors cannot be
+                    // missing
+                    SolidityState solidityState = validatorService.checkSolidity(newMilestoneBlock.getBlock(), false);
+                    if (!solidityState.isSuccessState() && !solidityState.isFailState()) {
+                        log.error("The block is not failing or successful. This should not happen.");
+                        throw new RuntimeException("The block is not failing or successful. This should not happen.");
+                    }
+
+                    // Check: If all is ok, try confirming this milestone.
+                    if (solidityState.isSuccessState()) {
+
+                        // Find conflicts in the dependency set
+                        HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
+                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock);
+
+                        // If anything is already spent, no-go
+                        boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                                .flatMap(i -> i.stream()).anyMatch(c -> {
+                                    try {
+                                        return validatorService.hasSpentDependencies(c);
+                                    } catch (BlockStoreException e) {
+                                        e.printStackTrace();
+                                        return true;
+                                    }
+                                });
+
+                        // If any conflicts exist between the current set of
+                        // blocks, no-go
+                        boolean anyCandidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                                .flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint()))
+                                .values().stream().anyMatch(l -> l.size() > 1);
+
+                        // Did we fail? Then we stop now and rerun consensus
+                        // logic on the new longest chain.
+                        if (anySpentInputs || anyCandidateConflicts) {
+                            solidityState = SolidityState.getFailState();
+
+                            // Solidification forward with failState
+
+                            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false);
+
+                            runConsensusLogic(store.get(oldLongestChainEnd));
+                            return;
+                        }
+
+                        // Otherwise, all predecessors exist and were at least
+                        // solid > 0,
+                        // so we should be able to confirm all of the
+                        // predecessors.
+                        while (!allApprovedNewBlocks.isEmpty()) {
+                            @SuppressWarnings("unchecked")
+                            HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
+                            validatorService.removeWhereIneligible(nowApprovedBlocks);
+                            validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
+                            // Only here the current milestone block is
+                            // eligible, so readd it:
+                            nowApprovedBlocks.add(newMilestoneBlock);
+
+                            // Confirm the addable blocks and remove them from
+                            // the list
+                            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+                            for (BlockWrap approvedBlock : nowApprovedBlocks)
+                                blockGraph. confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms);
+
+                            allApprovedNewBlocks.removeAll(nowApprovedBlocks);
+                        }
+
+                        // Set the milestone on all confirmed non-milestone
+                        // blocks
+                        long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getBlockHash());
+                        store.updateAllConfirmedToMilestone(milestoneNumber);
+                    }
+
+                    // Solidification forward
+                    try {
+                        blockGraph. solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
+                        scanWaitingBlocks(newMilestoneBlock.getBlock());
+                    } catch (BlockStoreException e) {
+                        throw e;
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            // Cannot happen when connecting
+            throw new RuntimeException(e);
+        }
     }
 }

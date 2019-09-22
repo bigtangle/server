@@ -361,48 +361,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 || blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
     }
 
-    @Test
-    public void testPrunedConflict() throws Exception {
-        store.resetStore();
-
-        // Create block with UTXO
-        Transaction tx1 = createTestGenesisTransaction();
-        Block txBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx1);
-
-        // Generate blocks 
-        Block rollingBlock = txBlock1.createNextBlock(txBlock1);
-        blockGraph.add(rollingBlock, true);
-
-        for (int i = 0; i < NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 5; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        
-        // Generate mining reward block
-        rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
-        milestoneService.update();
-
-        // First block is no longer maintained, while newest one is maintained
-        assertFalse(blockService.getBlockEvaluation(txBlock1.getHash()).isMaintained());
-        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isMaintained());
-
-        // All confirmed
-        assertTrue(blockService.getBlockEvaluation(txBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rollingBlock.getHash()).isConfirmed());
-
-        // Create conflicting block with UTXO
-        Block txBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(), tx1);
-        rollingBlock = rollingBlock.createNextBlock(txBlock2);
-        blockGraph.add(rollingBlock, true);
-
-        milestoneService.update();
-
-        // Confirmation should stay true except for conflict
-        assertTrue(blockService.getBlockEvaluation(txBlock1.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(txBlock2.getHash()).isConfirmed());
-    }
 
     @Test
     public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
@@ -1011,6 +969,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         blocksAdded.add(rewardBlock1);
+        milestoneService.update();
 
         // Mining reward block should go through
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
@@ -1022,6 +981,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
                 rollingBlock2.getHash(), rollingBlock2.getHash());
         blocksAdded.add(rewardBlock2);
         blocksAdded.add(rewardBlock3);
+        milestoneService.update();
 
         // No change
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
@@ -1042,6 +1002,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock4 = rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
                 rollingBlock3.getHash(), rollingBlock3.getHash());
         blocksAdded.add(rewardBlock4);
+        milestoneService.update();
 
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1057,6 +1018,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1072,6 +1034,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1094,6 +1057,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock5 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(),
                 rollingBlock4.getHash(), rollingBlock4.getHash());
         blocksAdded.add(rewardBlock5);
+        milestoneService.update();
 
         Block rollingBlock5 = rewardBlock5;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
@@ -1104,6 +1068,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock6 = rewardService.createAndAddMiningRewardBlock(rewardBlock5.getHash(),
                 rollingBlock5.getHash(), rollingBlock5.getHash());
         blocksAdded.add(rewardBlock6);
+        milestoneService.update();
 
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1123,6 +1088,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1142,6 +1108,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1161,6 +1128,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1185,6 +1153,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock7 = rewardService.createAndAddMiningRewardBlock(rewardBlock4.getHash(),
                 rollingBlock6.getHash(), rollingBlock6.getHash());
         blocksAdded.add(rewardBlock7);
+        milestoneService.update();
 
         Block rollingBlock7 = rewardBlock7;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
@@ -1195,6 +1164,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block rewardBlock8 = rewardService.createAndAddMiningRewardBlock(rewardBlock7.getHash(),
                 rollingBlock7.getHash(), rollingBlock7.getHash());
         blocksAdded.add(rewardBlock8);
+        milestoneService.update();
 
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1218,6 +1188,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1241,6 +1212,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -1264,6 +1236,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());

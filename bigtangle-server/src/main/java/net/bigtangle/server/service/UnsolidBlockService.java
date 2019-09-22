@@ -61,7 +61,7 @@ public class UnsolidBlockService {
             Context.propagate(context);
             blockRequester.diff();
             // deleteOldUnsolidBlock();
-            reCheckUnsolidBlock();
+ 
 
             logger.debug(" end  updateUnsolideServiceSingle: ");
 
@@ -74,45 +74,7 @@ public class UnsolidBlockService {
 
     }
 
-    /*
-     * unsolid blocks can be solid, if previous can be found in network etc.
-     * read data from table oder by insert time, use add Block to check again,
-     * if missing previous, it may request network for the blocks
-     * 
-     * BOOT_STRAP_SERVERS de.kafka.bigtangle.net:9092
-     * 
-     * CONSUMERIDSUFFIX 12324
-     */
-    public void reCheckUnsolidBlock() throws Exception {
-        List<Sha256Hash> storedBlocklist = store.getNonSolidMissingBlocks();
-
-        for (Sha256Hash storedBlock : storedBlocklist) {
-            if (storedBlock != null) {
-                Block req = blockService.getBlock(storedBlock);
-
-                if (req != null) {
-                    store.updateMissingBlock(storedBlock, false);
-                    // if the block is there, now scan the rest unsolid blocks
-                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        try {
-                            store.beginDatabaseBatchWrite();
-                            blockgraph.scanWaitingBlocks(req, true);
-                            store.commitDatabaseBatchWrite();
-                        } catch (BlockStoreException | VerificationException e) {
-                            logger.debug(e.getLocalizedMessage(), e); 
-                            store.abortDatabaseBatchWrite();
-                            throw e; 
-                        }finally {
-                            store.defaultDatabaseBatchWrite();  
-                        }
-                    }
-                } else {
-                    requestPrevBlock(storedBlock);
-                }
-            }
-        }
-    }
-
+ 
     public void requestPrevBlock(Sha256Hash hash) {
         try {
             byte[] re = blockRequester.requestBlock(hash);

@@ -305,7 +305,7 @@ public class KeyChainGroupTest {
         assertFalse(checkNotNull(group.findKeyFromPubKey(key.getPubKey())).isEncrypted());
     }
 
-    @Test
+   // @Test
     public void bloom() throws Exception {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = new ECKey();

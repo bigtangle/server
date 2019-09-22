@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.ECKey;
@@ -38,6 +39,7 @@ public class TokenDomainnameService {
      * @return
      * @throws BlockStoreException
      */
+    @Cacheable("queryDomainnameTokenPermissionedAddresses")
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainPredecessorBlockHash)
             throws BlockStoreException {
         Token token = this.store.getToken(domainPredecessorBlockHash);
@@ -81,7 +83,7 @@ public class TokenDomainnameService {
             return multiSignAddresses;
         }
     }
-
+    @Cacheable("queryDomainnameTokenPredecessorBlockHash")
     public AbstractResponse queryDomainnameTokenPredecessorBlockHash(String domainname) 
             throws BlockStoreException {
         AbstractResponse response;

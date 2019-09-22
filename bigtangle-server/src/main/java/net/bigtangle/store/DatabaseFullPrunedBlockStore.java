@@ -419,6 +419,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
+    protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
+            + "  JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1 AND chainlength="
+            + "(SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)";
     protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
             + "WHERE confirmed = 1 ";
 
@@ -850,7 +853,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     }
                 }
             }
-            log.info("Made a new connection to database " + connectionURL);
+            log.debug("Made a new connection to database " + connectionURL);
+            log.debug("Thread name is {}.", 
+                    Thread.currentThread().getName());
+            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+            for (int i = 1; i < elements.length; i++) {
+              StackTraceElement s = elements[i];
+              log.debug("\tat " + s.getClassName() + "." + s.getMethodName()
+                  + "(" + s.getFileName() + ":" + s.getLineNumber() + ")");
+            }
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         }
@@ -4456,6 +4467,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+
+                return new TXReward(resultSet.getBytes("blockhash"), resultSet.getBoolean("confirmed"),
+                        resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
+                        resultSet.getBytes("spenderblockhash"), resultSet.getBytes("prevblockhash"),
+                        resultSet.getLong("difficulty"), resultSet.getLong("chainlength"));
+            } else
+                return null;
+
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public TXReward getMaxSolidReward() throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
 

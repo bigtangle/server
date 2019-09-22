@@ -501,4 +501,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateMissingBlock(Sha256Hash storedBlock, boolean b) throws BlockStoreException;
 
+    TXReward getMaxSolidReward() throws BlockStoreException;
+
 }

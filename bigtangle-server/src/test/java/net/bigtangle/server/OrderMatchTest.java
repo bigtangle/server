@@ -86,9 +86,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-
-        // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
 
     @Test
@@ -127,7 +124,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertEquals(1000l, tickerService.getLastMatchingEvents(a).getTickers().get(0).getPrice());
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
 
         // check the method of client service
 
@@ -223,7 +220,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getInitialBlockHash());
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -261,7 +258,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -296,7 +293,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -336,7 +333,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -376,7 +373,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -411,7 +408,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -446,7 +443,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -485,7 +482,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -523,7 +520,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -554,7 +551,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -588,7 +585,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -627,7 +624,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -682,7 +679,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
@@ -710,7 +707,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -761,7 +758,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.solve();
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -773,7 +770,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -812,7 +809,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -848,9 +845,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-
-        // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
 
     @Test
@@ -887,7 +881,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
     }
 
     @Test
@@ -935,7 +929,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+        
 
         // Bonus: check open and closed orders
         List<OrderRecord> closedOrders = store.getMyClosedOrders(genesisKey.toAddress(networkParameters).toBase58());

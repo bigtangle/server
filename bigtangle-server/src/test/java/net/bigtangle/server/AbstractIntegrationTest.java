@@ -236,7 +236,7 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        blockGraph.confirmWithLock(block.getHash(), new HashSet<>());
+        blockGraph.confirm(block.getHash(), new HashSet<>());
 
         return block;
     }
@@ -252,7 +252,7 @@ public abstract class AbstractIntegrationTest {
         Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
 
         // Confirm and return
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -322,7 +322,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -336,7 +336,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -400,7 +400,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
     }
 
@@ -456,7 +456,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         milestoneService.update();
         addedBlocks.add(block);
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         milestoneService.update();
         return block;
 
@@ -490,7 +490,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirmWithLock(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         milestoneService.update();
         return block;
     }
@@ -518,7 +518,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-        blockGraph.confirmWithLock(block.getHash(), new HashSet<>());
+//        blockGraph.confirm(block.getHash(), new HashSet<>());
         milestoneService.update();
         return block;
     }
@@ -614,11 +614,8 @@ public abstract class AbstractIntegrationTest {
         store.resetStore();
         for (Block b : addedBlocks) {
             blockGraph.add(b, false);
-            if (blockConfirmed.get(b))
-                blockGraph.confirmWithLock(b.getHash(), new HashSet<>());
-            else
-                blockGraph.unconfirm(b.getHash(), new HashSet<>());
         }
+        milestoneService.update();
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
         assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
