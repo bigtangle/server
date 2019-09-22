@@ -14,6 +14,7 @@ select * from blocks order by inserttime desc limit 1000  ;
 select * from openorders where spent=0 and confirmed=1  ;
 
 select  missingdependency, height from unsolidblocks where directlymissing=1
+select * from blocks where hash =373;
 
 select * from blocks where confirmed=1 ;
 

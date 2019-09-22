@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -16,9 +15,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;

@@ -784,7 +784,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = matchingResult.getOutputTx();
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-            if (utxo.isSpent()) {
+            if (utxo !=null && utxo.isSpent()) {
                 unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }
@@ -846,7 +846,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = generateVirtualMiningRewardTX(block);
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-            if (utxo.isSpent()) {
+            if (utxo!=null && utxo.isSpent()) {
                 unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }

@@ -120,7 +120,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL = "SELECT block FROM unsolidblocks WHERE missingDependency = ? "
             + afterSelect();
 
-    protected final String SELECT_BLOCKS_MILESTONE_SQL = "SELECT block, height FROM blocks WHERE milestone >= ? and  milestone <=?"
+    //need all blocks from the milestone, even it is not include in milestone
+    protected final String SELECT_BLOCKS_MILESTONE_SQL = 
+            "SELECT block, height FROM blocks WHERE height "
+            + " >= (select min(height) from blocks where  milestone >= ? and  milestone <=?)"
+            + " and height <= (select max(height) from blocks where  milestone >= ? and  milestone <=?) "
             + afterSelect() + " order by height asc ";
     protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT hash, rating, depth, cumulativeweight, "
             + "  height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained,"
@@ -1184,6 +1188,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
             s.setLong(1, start);
             s.setLong(2, end);
+            s.setLong(3, start);
+            s.setLong(4, end);
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 re.add(results.getBytes("block"));

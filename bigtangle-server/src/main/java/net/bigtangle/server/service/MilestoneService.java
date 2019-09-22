@@ -67,12 +67,11 @@ public class MilestoneService {
     @Autowired
     private UnsolidBlockService unsolidBlockService;
     @Autowired
-    private  BlockService blockService;
+    private BlockService blockService;
 
     @Autowired
-    private  NetworkParameters params;
+    private NetworkParameters params;
 
-    
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -102,12 +101,31 @@ public class MilestoneService {
         }
         Stopwatch watchAll = Stopwatch.createStarted();
 
-        updateDo(numberUpdates);
+        log.debug("Milestone running "   );
+        try {
+            Context context = new Context(params);
+            Context.propagate(context);
 
-        log.debug("Milestone All  time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
+            updateSolidity();
 
-        watchAll.stop();
+            updateMilestone();
 
+            updateMaintained();
+            updateMilestoneDepth();
+            updateWeightAndDepth();
+            updateRating();
+
+            updateConfirmed(numberUpdates);
+
+            log.debug("Milestone All  time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
+
+            watchAll.stop();
+        } catch (Exception e) {
+            log.debug(" ", e);
+
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void updateDo(int numberUpdates) throws InterruptedException, ExecutionException {
@@ -131,7 +149,7 @@ public class MilestoneService {
                 } finally {
                     store.defaultDatabaseBatchWrite();
                 }
-                
+
                 updateMaintained();
                 updateMilestoneDepth();
                 updateWeightAndDepth();
@@ -159,25 +177,25 @@ public class MilestoneService {
 
         executor.shutdownNow();
     }
-    
+
     /**
      * Switch to longest chain
      * 
      * @throws BlockStoreException
-     * @throws NoBlockException 
+     * @throws NoBlockException
      */
     private void updateMilestone() throws BlockStoreException, NoBlockException {
         Block longestRewardBlock = store.get(store.getMaxSolidReward().getSha256Hash());
         runConsensusLogic(longestRewardBlock);
     }
-    
+
     /**
      * the missing previous block and reward blocks requested and run the
      * solidity check.
      * 
      * 
      * @throws BlockStoreException
-     * @throws NoBlockException 
+     * @throws NoBlockException
      */
     private void updateSolidity() throws BlockStoreException, NoBlockException {
 
@@ -185,7 +203,7 @@ public class MilestoneService {
          * TODO this grows to infinite size
          */
         List<Sha256Hash> storedBlocklist = store.getNonSolidMissingBlocks();
-
+        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
         for (Sha256Hash storedBlock : storedBlocklist) {
             if (storedBlock != null) {
                 Block req = blockService.getBlock(storedBlock);
@@ -194,24 +212,16 @@ public class MilestoneService {
                     store.updateMissingBlock(storedBlock, false);
                     // if the block is there, now scan the rest unsolid blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        try {
-                            store.beginDatabaseBatchWrite();
-                            scanWaitingBlocks(req);
-                            store.commitDatabaseBatchWrite();
-                        } catch (BlockStoreException | VerificationException e) {
-                            log.debug(e.getLocalizedMessage(), e); 
-                            store.abortDatabaseBatchWrite();
-                            throw e; 
-                        }finally {
-                            store.defaultDatabaseBatchWrite();  
-                        }
+
+                        scanWaitingBlocks(req);
                     }
                 } else {
+                    log.debug(" requestPrevBlock " +storedBlock);
                     unsolidBlockService.requestPrevBlock(storedBlock);
                 }
             }
         }
-      
+
     }
 
     /**
@@ -496,11 +506,11 @@ public class MilestoneService {
                 .collect(Collectors.toList()))
             store.updateBlockEvaluationMaintained(hash, true);
     }
-    
+
     public boolean solidifyWaiting(Block block) throws BlockStoreException {
 
         SolidityState solidityState = validatorService.checkSolidity(block, false);
-        blockGraph. solidifyBlock(block, solidityState, false);
+        blockGraph.solidifyBlock(block, solidityState, false);
         // TODO this is recursive and may blow the stack
         if (solidityState.getState() != State.MissingPredecessor)
             scanWaitingBlocks(block);
@@ -531,7 +541,6 @@ public class MilestoneService {
 
     private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
 
-   
         try {
             RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -563,7 +572,7 @@ public class MilestoneService {
                 List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
                 HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
                 for (Sha256Hash wipeBlock : wipeBlocks)
-                    blockGraph. unconfirm(wipeBlock, traversedBlockHashes);
+                    blockGraph.unconfirm(wipeBlock, traversedBlockHashes);
 
                 // Rollback to split point
                 Sha256Hash maxConfirmedRewardBlockHash;
@@ -583,7 +592,7 @@ public class MilestoneService {
                     wipeBlocks = store.getWhereConfirmedNotMilestone();
                     traversedBlockHashes = new HashSet<>();
                     for (Sha256Hash wipeBlock : wipeBlocks)
-                        blockGraph. unconfirm(wipeBlock, traversedBlockHashes);
+                        blockGraph.unconfirm(wipeBlock, traversedBlockHashes);
                 }
 
                 // Build milestone forwards.
@@ -665,7 +674,8 @@ public class MilestoneService {
                             // the list
                             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
                             for (BlockWrap approvedBlock : nowApprovedBlocks)
-                                blockGraph. confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms);
+                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(),
+                                        traversedConfirms);
 
                             allApprovedNewBlocks.removeAll(nowApprovedBlocks);
                         }
@@ -678,7 +688,7 @@ public class MilestoneService {
 
                     // Solidification forward
                     try {
-                        blockGraph. solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
+                        blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
                         scanWaitingBlocks(newMilestoneBlock.getBlock());
                     } catch (BlockStoreException e) {
                         throw e;

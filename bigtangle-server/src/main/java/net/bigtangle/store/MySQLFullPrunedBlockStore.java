@@ -53,7 +53,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    maintained boolean NOT NULL,\n" 
             + "    solid bigint NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n"
-            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ")";
+            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ") ENGINE=InnoDB ";
 
     private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
             + "    hash binary(32) NOT NULL,\n" 
@@ -63,7 +63,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    missingdependency mediumblob NOT NULL,\n" 
             + "    height bigint ,\n"
             + "    directlymissing boolean NOT NULL,\n" 
-            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) \n" + ")";
+            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) \n" + ") ENGINE=InnoDB";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    blockhash binary(32) NOT NULL,\n" 
@@ -83,7 +83,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    spendpendingtime bigint,\n" 
             + "    spenderblockhash  binary(32),\n" 
             + "    time bigint NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + ")\n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + "   ) ENGINE=InnoDB \n";
 
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
@@ -94,7 +94,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   difficulty bigint NOT NULL,\n" 
             + "   chainlength bigint NOT NULL,\n" 
-            + "   PRIMARY KEY (blockhash) )";
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
 
     private static final String CREATE_ORDER_MATCHING_TABLE = "CREATE TABLE ordermatching (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
@@ -103,18 +103,18 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
             + "   prevblockhash binary(32) NOT NULL,\n" 
-            + "   PRIMARY KEY (blockhash) )";
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
 
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
             + "    hash binary(32) NOT NULL,\n" 
             + "    outputindex bigint NOT NULL,\n"
             + "    toaddress varchar(255) NOT NULL,\n" 
             + "    minimumsign bigint NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ")\n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ") ENGINE=InnoDB \n";
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
             + "    hash binary(32) NOT NULL,\n"
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ")\n";
+            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ") ENGINE=InnoDB\n";
 
     private static final String CREATE_CONFIRMATION_DEPENDENCY_TABLE = "CREATE TABLE confirmationdependency (\n"
             + "    blockhash binary(32) NOT NULL,\n" 
@@ -161,13 +161,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    validFromTime bigint,\n" // order is valid after this time
             + "    side varchar(255),\n" // buy or sell
             + "    beneficiaryaddress varchar(255),\n" // public addressl
-            + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING HASH \n" + ")\n";
+            + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) USING HASH \n" + ") ENGINE=InnoDB \n";
 
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
             + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY (id) \n" + ")\n";
+            + "    PRIMARY KEY (id) \n" + ") ENGINE=InnoDB\n";
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash varchar(255) NOT NULL,\n" 
@@ -190,64 +190,64 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    classification varchar(255)   ,\n"
             + "    domainpredblockhash varchar(255) NOT NULL,\n"
             + "    decimals int ,\n" 
-            + "    PRIMARY KEY (blockhash) \n)";
+            + "    PRIMARY KEY (blockhash) \n) ENGINE=InnoDB";
 
     // Helpers
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
             + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
-            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n)";
+            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ENGINE=InnoDB";
 
     private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
             + "    tokenid varchar(255) NOT NULL  ,\n" + "    tokenindex bigint NOT NULL   ,\n"
-            + "    address varchar(255),\n" + "    PRIMARY KEY (tokenid,tokenindex, address) \n)";
+            + "    address varchar(255),\n" + "    PRIMARY KEY (tokenid,tokenindex, address) \n) ENGINE=InnoDB";
 
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenindex bigint NOT NULL   ,\n" + "    address varchar(255),\n"
-            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n" + "    PRIMARY KEY (id) \n)";
+            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n" + "    PRIMARY KEY (id) \n) ENGINE=InnoDB";
 
     private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    toaddress varchar(255) NOT NULL,\n" + "    blockhash mediumblob NOT NULL,\n"
             + "    amount mediumblob ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
-            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n)";
+            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n) ENGINE=InnoDB";
 
     private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    pubKey varchar(255),\n" + "    sign int(11) NOT NULL,\n"
             + "    signIndex int(11) NOT NULL,\n" + "    signInputData mediumblob,\n"
-            + "    PRIMARY KEY (orderid, pubKey) \n)";
+            + "    PRIMARY KEY (orderid, pubKey) \n) ENGINE=InnoDB";
 
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
             + "    data mediumblob NOT NULL,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
-            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ")";
+            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ENGINE=InnoDB";
 
     private static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n"
             + "    vosKey varchar(255) NOT NULL,\n" + "    pubKey varchar(255) NOT NULL,\n"
             + "    execute bigint NOT NULL,\n" + "    data mediumblob NOT NULL,\n"
             + "    startDate datetime NOT NULL,\n" + "    endDate datetime NOT NULL,\n"
-            + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" + ")";
+            + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" + ") ENGINE=InnoDB";
 
     private static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n"
             + "    logResultId varchar(255) NOT NULL,\n" + "    logContent varchar(255) NOT NULL,\n"
             + "    submitDate datetime NOT NULL,\n"
-            + "   CONSTRAINT logresult_pk PRIMARY KEY (logResultId) USING BTREE \n" + ")";
+            + "   CONSTRAINT logresult_pk PRIMARY KEY (logResultId) USING BTREE \n" + ") ENGINE=InnoDB";
 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
-            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash) USING BTREE \n"
-            + ")";
+            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n"
+            + ") ENGINE=InnoDB";
 
     private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
             + "    pubkey varchar(255) NOT NULL,\n" + "    userdataPubkey varchar(255) NOT NULL,\n"
             + "    status varchar(255) NOT NULL,\n"
-            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ")";
+            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ") ENGINE=InnoDB";
 
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
             + "    prevhash binary(32) NOT NULL,\n" + " hash binary(32) NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ")";
+            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ") ENGINE=InnoDB";
     
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) NOT NULL,\n" 
@@ -264,7 +264,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   fromOrderId varchar(255),\n" 
             + "   market varchar(255),\n" 
             + "   signInputData varbinary(5000),\n"
-            + "   PRIMARY KEY (orderid) )";
+            + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
     
     private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
 //          + "   id varchar(255) NOT NULL,\n"
@@ -272,7 +272,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
           + "   pubkey varchar(255),\n"
           + "   signInputData varbinary(5000),\n"
           + "   sign integer\n"
-          + "    )";
+          + "    ) ENGINE=InnoDB";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";

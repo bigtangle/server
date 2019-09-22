@@ -121,7 +121,7 @@ public class TransactionService {
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), allowUnsolid);
     }
 
-    private Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
+    public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
         if (store.getBlockEvaluation(block.getHash()) == null) {
 
             try {

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -97,11 +98,17 @@ public class BlockRequester {
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("blocks: " + blockbytelist.getBlockbytelist().size() + " remote chain requestBlocks  at:  "
                 + chainlength + " at server: " + s);
-
+        List<Block> sortedBlocks= new ArrayList<Block>();
         for (byte[] data : blockbytelist.getBlockbytelist()) {
+            sortedBlocks.add(  networkParameters.getDefaultSerializer().makeBlock(data));
+             
           
-            transactionService.addConnected(data, true);
         }
+        Collections.sort(sortedBlocks, new SortbyBlock());
+        for (Block block : sortedBlocks) {
+            transactionService.addConnectedBlock(block, true);
+        }
+        
     }
 
     public TXReward getMaxConfirmedReward(String s) throws JsonProcessingException, IOException {
@@ -201,6 +208,13 @@ public class BlockRequester {
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
     }
 
+    public class SortbyBlock implements Comparator<Block> {
+    
+        public int compare(Block a, Block b) {
+            return a.getHeight() > b.getHeight() ? 1 : -1;
+        }
+    }
+    
     public class SortbyChain implements Comparator<TXReward> {
         // Used for sorting in ascending order of
         // roll number
