@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.BlockEvaluation;
@@ -370,8 +373,11 @@ public class MilestoneService {
      * correspondingly
      * 
      * @throws BlockStoreException
+     * @throws IOException 
+     * @throws JsonMappingException 
+     * @throws JsonParseException 
      */
-    private void updateConfirmed(int numberUpdates) throws BlockStoreException {
+    private void updateConfirmed(int numberUpdates) throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();

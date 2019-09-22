@@ -99,10 +99,9 @@ public class BlockService {
     public void saveBlock(Block block) throws Exception {
         Context context = new Context(networkParameters);
         Context.propagate(context);
-        boolean added = blockgraph.add(block, false);
-        if (added) {
-            broadcastBlock(block);
-        }
+        blockgraph.add(block, false); 
+        broadcastBlock(block);
+        
     }
 
     public long getTimeSeconds(int days) throws Exception {

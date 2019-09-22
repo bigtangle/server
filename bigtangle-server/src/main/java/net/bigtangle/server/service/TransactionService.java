@@ -121,41 +121,23 @@ public class TransactionService {
         return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), allowUnsolid);
     }
 
-    private Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid)
-            throws BlockStoreException, NoBlockException {
+    private Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
         if (store.getBlockEvaluation(block.getHash()) == null) {
 
-            boolean added = blockgraph.add(block, allowUnsolid);
-
-            if (!added) {
+            try {
+                blockgraph.add(block, allowUnsolid);
+                return Optional.of(block); 
+            } catch (Exception e) {
                 logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
-                        + block.getHeight() + " block: " + block.toString());
+                        + block.getHeight() + " block: " + block.toString(), e);
                 return Optional.empty();
 
-            } else {
-                return Optional.of(block);
             }
         }
         return Optional.empty();
     }
 
-    // private boolean blockTimeRange(Block block) {
-    // return System.currentTimeMillis() - block.getTimeSeconds() * 1000 < 8 *
-    // 3600 * 1000;
-    // }
-
-    /*
-     * check before add Block from kafka , the block can be already exists.
-     */
-    public boolean checkBlockExists(Block block) throws BlockStoreException, NoBlockException {
-        return store.get(block.getHash()) != null;
-    }
-
-    public void streamBlocks(Long heightstart) throws BlockStoreException {
-        KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-        store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
-    }
-
+ 
     public void streamBlocks(Long heightstart, String kafka) throws BlockStoreException {
         KafkaMessageProducer kafkaMessageProducer;
         if (kafka == null || "".equals(kafka)) {

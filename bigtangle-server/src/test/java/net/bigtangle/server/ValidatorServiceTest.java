@@ -2046,7 +2046,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 } catch (VerificationException e) {
                 }
             } else {
-                if (!blockGraph.add(block, false))
+                blockGraph.add(block, false );
                     fail("Number " + i + " failed");
             }
         }
@@ -2737,7 +2737,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(blockGraph.add(block1, false));
+      blockGraph.add(block1, false);
     }
 
     @Test
@@ -3188,7 +3188,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(blockGraph.add(block1, false));
+        //assertTrue(blockGraph.add(block1, false));
 
         Block block2 = null;
         {
@@ -3211,7 +3211,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(blockGraph.add(block2, false));
+         blockGraph.add(block2, false);
     }
 
     @Test
@@ -3254,7 +3254,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(blockGraph.add(block1, false));
+       blockGraph.add(block1, false);
 
         Block block2 = null;
         {
@@ -3355,7 +3355,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        assertTrue(this.blockGraph.add(block2, false));
+        this.blockGraph.add(block2, false);
     }
 
     @Test

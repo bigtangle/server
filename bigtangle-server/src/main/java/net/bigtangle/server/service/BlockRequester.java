@@ -99,6 +99,7 @@ public class BlockRequester {
                 + chainlength + " at server: " + s);
 
         for (byte[] data : blockbytelist.getBlockbytelist()) {
+          
             transactionService.addConnected(data, true);
         }
     }

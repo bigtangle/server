@@ -36,6 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -368,83 +371,71 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
-   
-            // Check the block is partially formally valid and fulfills PoW
+    public void add(Block block, boolean allowUnsolid) throws BlockStoreException {
 
-            block.verifyHeader();
-            block.verifyTransactions();
+        // Check the block is partially formally valid and fulfills PoW
 
-            SolidityState solidityState = validatorService.checkSolidity(block, true);
+        block.verifyHeader();
+        block.verifyTransactions();
 
-            // If explicitly wanted (e.g. new block from local clients), this
-            // block must strictly be solid now.
-            if (!allowUnsolid) {
-                switch (solidityState.getState()) {
-                case MissingPredecessor:
-                    throw new UnsolidException();
-                case MissingCalculation:
-                case Success:
-                    break;
-                case Invalid:
-                    throw new GenericInvalidityException();
-                }
-            }
+        SolidityState solidityState = validatorService.checkSolidity(block, true);
 
-            // Sanity check: This should not happen because it should throw
-            // first.
-            if (solidityState.isFailState())
+        // If explicitly wanted (e.g. new block from local clients), this
+        // block must strictly be solid now.
+        if (!allowUnsolid) {
+            switch (solidityState.getState()) {
+            case MissingPredecessor:
+                throw new UnsolidException();
+            case MissingCalculation:
+            case Success:
+                break;
+            case Invalid:
                 throw new GenericInvalidityException();
-
-            // Accept the block
-            try {
-                blockStore.beginDatabaseBatchWrite();
-                connect(block, solidityState);
-                blockStore.commitDatabaseBatchWrite();
-            } catch (BlockStoreException e) {
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            }finally {
-                blockStore.defaultDatabaseBatchWrite();  
             }
-            
-            // Check for waiting blocks
-            try {
-                blockStore.beginDatabaseBatchWrite();
-                scanWaitingBlocks(block, true);
-                blockStore.commitDatabaseBatchWrite();
-            } catch (BlockStoreException | VerificationException e) {
-                log.debug(e.getLocalizedMessage(), e);
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            }finally {
-                blockStore.defaultDatabaseBatchWrite();  
-            }
-            return true;
+        }
 
-       
+        // Sanity check: This should not happen because it should throw
+        // first.
+        if (solidityState.isFailState())
+            throw new GenericInvalidityException();
+
+        // Accept the block
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            connect(block, solidityState);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (BlockStoreException e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
+        }
+
+        // Check for waiting blocks
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            scanWaitingBlocks(block, true);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (BlockStoreException | VerificationException e) {
+            log.debug(e.getLocalizedMessage(), e);
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
+        }
+  
+
     }
 
-    public boolean solidifyWaiting(Block block, boolean runConsensusLogic) {
+    public boolean solidifyWaiting(Block block, boolean runConsensusLogic) throws BlockStoreException {
 
-        try {
-            SolidityState solidityState = validatorService.checkSolidity(block, false);
-            solidifyBlock(block, solidityState, runConsensusLogic, false);
-            // TODO this is recursive and may blow the stack
-            scanWaitingBlocks(block, runConsensusLogic);
+        SolidityState solidityState = validatorService.checkSolidity(block, false);
+        solidifyBlock(block, solidityState, runConsensusLogic, false);
+        // TODO this is recursive and may blow the stack
+        scanWaitingBlocks(block, runConsensusLogic);
 
-            return true;
+        return true;
 
-        } catch (BlockStoreException e) {
-            log.error("", e);
-            throw new VerificationException(e);
-        } catch (VerificationException e) {
-            log.info("Could not verify block:\n" + e.getLocalizedMessage() + "\n" + block.toString(), e);
-            throw e;
-        } catch (Exception e) {
-            log.error("", e);
-            throw e;
-        }
     }
 
     public void scanWaitingBlocks(Block block, boolean runConsensusLogic) throws BlockStoreException {
@@ -536,7 +527,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @SuppressWarnings("unchecked")
-    private void synchronizationVOSData(byte[] data) throws Exception {
+    private void synchronizationVOSData(byte[] data)
+            throws JsonParseException, JsonMappingException, IOException, BlockStoreException  {
         String jsonStr = new String(data);
         HashMap<String, Object> map = Json.jsonmapper().readValue(jsonStr, HashMap.class);
         String vosKey = (String) map.get("vosKey");
@@ -567,8 +559,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * 
      * @param blockHash
      * @throws BlockStoreException
+     * @throws IOException 
+     * @throws JsonMappingException 
+     * @throws JsonParseException 
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Write to DB
         checkState(confirmLock.isHeldByCurrentThread());
 
@@ -576,7 +571,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public void confirmWithLock(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Write to DB
         confirmLock.lock();
         try {
@@ -588,7 +583,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -677,7 +672,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return Optional.ofNullable(matchingResult);
     }
 
-    private void confirmBlock(BlockWrap block) throws BlockStoreException {
+    private void confirmBlock(BlockWrap block)
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
 
         // Update block's transactions in db
         for (final Transaction tx : block.getBlock().getTransactions()) {
@@ -749,10 +745,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmVOSExecute(BlockWrap block) {
+    private void confirmVOSExecute(BlockWrap block) throws JsonParseException, JsonMappingException, IOException, BlockStoreException {
         Transaction tx1 = block.getBlock().getTransactions().get(0);
         if (tx1.getData() != null && tx1.getDataSignature() != null) {
-            try {
+            
                 @SuppressWarnings("unchecked")
                 List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx1.getDataSignature(),
                         List.class);
@@ -765,9 +761,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     throw new BlockStoreException("multisign signature error");
                 }
                 this.synchronizationVOSData(tx1.getData());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            
         }
     }
 
