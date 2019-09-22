@@ -20,6 +20,8 @@ package net.bigtangle.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.StringWriter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,27 +110,30 @@ public class Context {
             if (lastConstructed == null)
                 throw new IllegalStateException("You must construct a Context object before using bitcoinj!");
             slot.set(lastConstructed);
-            log.error("Performing thread fixup: you are accessing context via a thread that has not had any context set on it.");
-            log.error("This error has been corrected for, but doing this makes your app less robust.");
-            log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
-            log.error("Please refer to the user guide for more information about this.");
-            log.error("Thread name is {}.", 
-                    Thread.currentThread().getName());
-            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-            for (int i = 1; i < elements.length; i++) {
-              StackTraceElement s = elements[i];
-              log.error("\tat " + s.getClassName() + "." + s.getMethodName()
-                  + "(" + s.getFileName() + ":" + s.getLineNumber() + ")");
-            }
-            
-            // TODO: Actually write the user guide section about this.
-            // TODO: If the above TODO makes it past the 0.13 release, kick Mike and tell him he sucks.
+            log.warn("Performing thread fixup: you are accessing context via a thread that has not had any context set on it.");
+            log.warn("This error has been corrected for, but doing this makes your app less robust.");
+            log.warn("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
+            log.warn("Please refer to the user guide for more information about this.");
+            logStack();
+     
             return lastConstructed;
         } else {
             return tls;
         }
     }
 
+    private static void logStack() {
+        log.debug("Thread name is {}.", Thread.currentThread().getName());
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        StringWriter mes = new StringWriter();
+        for (int i = 1; i < elements.length; i++) {
+            StackTraceElement s = elements[i];
+            mes.append("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":"
+                    + s.getLineNumber() + "  ) \n");
+        }
+        log.debug(mes.toString());
+
+    }
     /**
      * Require that new threads use {@link #propagate(Context)} or {@link net.bigtangle.utils.ContextPropagatingThreadFactory},
      * rather than using a heuristic for the desired context.

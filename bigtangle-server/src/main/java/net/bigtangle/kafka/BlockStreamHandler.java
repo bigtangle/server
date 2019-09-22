@@ -26,12 +26,12 @@ public class BlockStreamHandler extends AbstractStreamHandler {
     }
 
     public void dorun(StreamsBuilder streamBuilder) {
-        if (serverConfiguration.checkService()) {
+        
             final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOutName());
 
             input.map((key, bytes) -> KeyValue.pair(key,
                     transactionService.addConnectedFromKafka(key, bytes )));
-        }
+        
     }
 
 }

@@ -35,6 +35,7 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -117,6 +118,8 @@ public class MilestoneService {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
+                Context context = new Context(params);
+                Context.propagate(context);
                 updateSolidity();
 
                 try {
