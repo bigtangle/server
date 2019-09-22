@@ -4330,8 +4330,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CHAINLENGTH_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+           if( resultSet.next()) {
             return resultSet.getLong(1);
+           }else {
+               return -1;
+           }
+         
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
