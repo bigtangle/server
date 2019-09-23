@@ -60,7 +60,8 @@ public class BlockRequester {
     protected FullPrunedBlockGraph blockgraph;
     @Autowired
     protected ServerConfiguration serverConfiguration;
-
+    @Autowired
+    protected  MilestoneService milestoneService;
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());
@@ -191,7 +192,7 @@ public class BlockRequester {
         // Comparator<TXReward>chainlengthID=(TXReward o1,TXReward
         // o2)->o1.getChainLength()>o2.getChainLength()?1:0));
 
-        if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength() + 2) {
+        if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()  ) {
 
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
             Collections.sort(remotes,
@@ -203,6 +204,7 @@ public class BlockRequester {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength()+1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
+                milestoneService.update();
             }
         }
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
