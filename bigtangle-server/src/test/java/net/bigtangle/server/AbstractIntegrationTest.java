@@ -86,7 +86,7 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.server.service.TransactionService;
+ 
 import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -125,8 +125,7 @@ public abstract class AbstractIntegrationTest {
     protected BlockService blockService;
     @Autowired
     protected MilestoneService milestoneService;
-    @Autowired
-    protected TransactionService transactionService;
+ 
     @Autowired
     protected RewardService rewardService;
 

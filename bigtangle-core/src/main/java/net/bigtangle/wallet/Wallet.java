@@ -2003,7 +2003,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
         // save block
-        block.solve();
+        String resp = OkHttp3Util.post(serverurl + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
+
+        Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
+        adjust. solve();
+
         OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
         return block;
     }
@@ -2076,10 +2082,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
 
-        rollingBlock.solve();
-
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        return rollingBlock;
+         return solveAndPost(rollingBlock);
     }
 
     // check the token id is on the server
@@ -2139,15 +2142,22 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
+        return solveAndPost(block);
+    }
+
+    public Block solveAndPost(Block block) throws IOException {
         if (allowClientMining && clientMiningAddress != null) {
             block.setMinerAddress(clientMiningAddress);
         }
-        block.solve();
+        String resp = OkHttp3Util.post(serverurl + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
 
+        Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
+        adjust. solve();
         // check the valid to time must be at least the block creation time
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-
-        return block;
+        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), adjust.bitcoinSerialize());
+        return adjust;
     }
 
     private UTXO getSpendableUTXO(KeyParameter aesKey, Coin amount) throws IOException, InsufficientMoneyException {
@@ -2195,12 +2205,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
-        if (allowClientMining && clientMiningAddress != null) {
-            block.setMinerAddress(clientMiningAddress);
-        }
-        block.solve();
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        return block;
+   
+        return solveAndPost(block);
     }
 
     public Block cancelOrder(Sha256Hash orderblockhash, ECKey legitimatingKey)
@@ -2225,9 +2231,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
 
-        block.solve();
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        return block;
+
+        return solveAndPost(block);
+       
     }
 
     public Block paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
@@ -2262,10 +2268,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(transaction);
 
-        rollingBlock.solve();
-
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        return rollingBlock;
+        return solveAndPost(rollingBlock);
     }
 
     public ECKey getECKey(KeyParameter aesKey, String address) throws UTXOProviderException {
@@ -2288,19 +2291,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+        Block block = params.getDefaultSerializer().makeBlock(data);
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
 
         request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
-        rollingBlock.addTransaction(request.tx);
+        block.addTransaction(request.tx); 
 
-        rollingBlock.solve();
-
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        return rollingBlock;
+        return solveAndPost(block);
     }
 
     /*
@@ -2342,10 +2342,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         rollingBlock.addTransaction(request.tx);
 
-        rollingBlock.solve();
-
-        OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        return rollingBlock;
+        return solveAndPost(rollingBlock);
     }
 
     public void publishDomainName(ECKey signKey, String tokenid, String tokenname, String domainname,
@@ -2462,7 +2459,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        
+        String resps = OkHttp3Util.post(serverurl + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resps, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
+
+        Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
+        adjust. solve();
+    
+        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), adjust.bitcoinSerialize());
     }
 
     public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,

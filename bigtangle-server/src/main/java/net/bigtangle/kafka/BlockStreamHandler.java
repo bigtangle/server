@@ -10,13 +10,13 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.server.service.TransactionService;
+import net.bigtangle.server.service.BlockService;
 
 @Service
 public class BlockStreamHandler extends AbstractStreamHandler {
 
     @Autowired
-    TransactionService transactionService;
+    BlockService blockService;
 
     @Override
     public void run(StreamsBuilder streamBuilder) {
@@ -30,7 +30,7 @@ public class BlockStreamHandler extends AbstractStreamHandler {
             final KStream<byte[], byte[]> input = streamBuilder.stream(kafkaConfiguration.getTopicOutName());
 
             input.map((key, bytes) -> KeyValue.pair(key,
-                    transactionService.addConnectedFromKafka(key, bytes )));
+                    blockService.addConnectedFromKafka(key, bytes )));
         
     }
 

@@ -58,7 +58,6 @@ import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
-import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.VOSExecuteService;
 import net.bigtangle.server.service.WalletService;
@@ -70,8 +69,7 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class DispatcherController {
 
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
-    @Autowired
-    private TransactionService transactionService;
+ 
     @Autowired
     private NetworkParameters networkParameters;
     @Autowired
@@ -124,7 +122,7 @@ public class DispatcherController {
             checkReady(httpServletResponse, httprequest);
             switch (reqCmd0000) {
             case getTip: {
-                Block rollingBlock = transactionService.askTransactionBlock();
+                Block rollingBlock = blockService.askTransactionBlock();
                 register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
@@ -221,11 +219,17 @@ public class DispatcherController {
                 }
             }
                 break;
+            case adjustHeight: {
+                Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
+                 this.blockService.adjustHeightRequiredTrasnactionHashes(block);;
+                this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
+            }
+                break;
             case streamBlocks: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("heightstart") != null) {
-                    this.transactionService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
+                    this.blockService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
                             (String) request.get("kafka"));
                     this.outPrintJSONString(httpServletResponse, OkResponse.create());
                 }

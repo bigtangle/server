@@ -101,7 +101,7 @@ public class OrderReclaimService {
         block.addTransaction(tx);
         block.setBlockType(Block.Type.BLOCKTYPE_ORDER_RECLAIM);
         block.setHeight( Math.max(r1.getHeight(), r2.getHeight()) + 1);
- 
+       
         block.solve();
         blockService.saveBlock(block);
         return block;

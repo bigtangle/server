@@ -31,7 +31,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.TransactionService;
 import net.bigtangle.server.service.WalletService;
 import net.bigtangle.subtangle.SubtangleConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
@@ -63,7 +62,7 @@ public class SubtangleService {
                 }
                 Coin coinbase = output.getValue();
 
-                Block b = transactionService.askTransactionBlock();
+                Block b = blockService.askTransactionBlock();
                 b.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
                 b.addCoinbaseTransaction(signKey.getPubKey(), coinbase);
                 blockService.saveBlock(b);
@@ -95,7 +94,7 @@ public class SubtangleService {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        Block b = transactionService.askTransactionBlock();
+        Block b = blockService.askTransactionBlock();
         b.addTransaction(transaction);
         b.solve();
         this.blockService.saveBlock(b);
@@ -119,7 +118,7 @@ public class SubtangleService {
         transaction.addOutput(spendableOutput.getValue().subtract(amount), signKey);
         wallet.signTransaction(transaction, null);
 
-        Block b = transactionService.askTransactionBlock();
+        Block b = blockService.askTransactionBlock();
         b.addTransaction(transaction);
         b.solve();
         this.blockService.saveBlock(b);
@@ -153,8 +152,7 @@ public class SubtangleService {
     @Autowired
     private BlockService blockService;
 
-    @Autowired
-    private TransactionService transactionService;
+  
 
     public List<UTXO> getRemoteBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();

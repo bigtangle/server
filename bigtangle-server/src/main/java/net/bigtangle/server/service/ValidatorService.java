@@ -106,8 +106,7 @@ public class ValidatorService {
     private BlockService blockService;
     @Autowired
     protected NetworkParameters networkParameters;
-    @Autowired
-    private TransactionService transactionService;
+   
     @Autowired
     private NetworkParameters params;
 
@@ -347,7 +346,7 @@ public class ValidatorService {
     public boolean hasSpentDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
-            return transactionService.getUTXOSpent(c.getConflictPoint().getConnectedOutpoint());
+            return blockService.getUTXOSpent(c.getConflictPoint().getConnectedOutpoint());
         case TOKENISSUANCE:
             final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
@@ -373,7 +372,7 @@ public class ValidatorService {
     public boolean hasConfirmedDependencies(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
-            return transactionService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint());
+            return blockService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint());
         case TOKENISSUANCE:
             final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
@@ -732,7 +731,7 @@ public class ValidatorService {
     private BlockWrap getSpendingBlock(ConflictCandidate c) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
-            final BlockEvaluation utxoSpender = transactionService
+            final BlockEvaluation utxoSpender = blockService
                     .getUTXOSpender(c.getConflictPoint().getConnectedOutpoint());
             if (utxoSpender == null)
                 return null;

@@ -21,7 +21,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.TransactionService;
+ 
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
 
@@ -36,10 +36,7 @@ public class BlockBatchService {
 
     @Autowired
     private NetworkParameters networkParameters;
-
-    @Autowired
-    private TransactionService transactionService;
-
+ 
     @Autowired
     private BlockService blockService;
 
@@ -72,7 +69,7 @@ public class BlockBatchService {
             if (batchBlocks.isEmpty()) {
                 return;
             }
-            Block block = transactionService.askTransactionBlock();
+            Block block = blockService.askTransactionBlock();
             for (BatchBlock batchBlock : batchBlocks) {
                 byte[] payloadBytes = batchBlock.getBlock();
                 Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);

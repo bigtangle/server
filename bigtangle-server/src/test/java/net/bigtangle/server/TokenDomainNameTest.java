@@ -54,7 +54,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
             }
         }
         
-        blockGraph.add(transactionService.askTransactionBlock(), false);
+        blockGraph.add(blockService.askTransactionBlock(), false);
 
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();

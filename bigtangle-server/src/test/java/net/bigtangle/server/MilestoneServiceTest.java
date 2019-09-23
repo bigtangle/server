@@ -934,7 +934,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockListResponse.getBlockbytelist().size() > 0);
 
         for (byte[] data : blockListResponse.getBlockbytelist()) {
-            transactionService.addConnected(data, false);
+            blockService.addConnected(data, false);
         }
     }
 

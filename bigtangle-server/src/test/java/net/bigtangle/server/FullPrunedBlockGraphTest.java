@@ -60,8 +60,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 tx1);
 
         // Should exist now
-        final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
-        final UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
+        final UTXO utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()));
         assertNotNull(utxo1);
         assertNotNull(utxo2);
         assertFalse(utxo1.isConfirmed());
@@ -230,15 +230,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(spenderBlock.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock.getHash()));
-        final UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        final UTXO origUTXO = transactionService
+        final UTXO origUTXO = blockService
                 .getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
@@ -279,7 +279,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Check the virtual txs too
         Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock1);
-        final UTXO utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -438,7 +438,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Since the order matching did not collect the confirmed block, the
         // reclaim works
         Transaction tx = blockGraph.generateReclaimTX(block2);
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(block2.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(block2.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -640,7 +640,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Ensure virtual UTXOs are now confirmed
         Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getOutputTx();
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -658,8 +658,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(block.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        final UTXO utxo11 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()));
-        final UTXO utxo21 = transactionService.getUTXO(tx11.getOutput(1).getOutPointFor(block.getHash()));
+        final UTXO utxo11 = blockService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()));
+        final UTXO utxo21 = blockService.getUTXO(tx11.getOutput(1).getOutPointFor(block.getHash()));
         assertNotNull(utxo11);
         assertNotNull(utxo21);
         assertTrue(utxo11.isConfirmed());
@@ -671,8 +671,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(block.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
-        final UTXO utxo1 = transactionService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()));
-        final UTXO utxo2 = transactionService.getUTXO(tx11.getOutput(1).getOutPointFor(block.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()));
+        final UTXO utxo2 = blockService.getUTXO(tx11.getOutput(1).getOutPointFor(block.getHash()));
         assertNotNull(utxo1);
         assertNotNull(utxo2);
         assertFalse(utxo1.isConfirmed());
@@ -681,7 +681,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        final UTXO origUTXO = transactionService
+        final UTXO origUTXO = blockService
                 .getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertFalse(origUTXO.isSpent());
@@ -725,7 +725,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Check the virtual txs too
         Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11);
-        final UTXO utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -894,7 +894,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // The virtual tx is in the db but unconfirmed
         Transaction tx = blockGraph.generateReclaimTX(block2);
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(block2.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(block2.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -1104,7 +1104,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Ensure virtual UTXOs are now confirmed
         Transaction tx = blockGraph.generateOrderMatching(rewardBlock1).getOutputTx();
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -1127,15 +1127,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Should be confirmed now
         assertTrue(store.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(store.getBlockEvaluation(block2.getHash()).isConfirmed());
-        UTXO utxo11 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
-        UTXO utxo21 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()));
+        UTXO utxo11 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
+        UTXO utxo21 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()));
         assertNotNull(utxo11);
         assertNotNull(utxo21);
         assertTrue(utxo11.isConfirmed());
         assertTrue(utxo21.isConfirmed());
         assertTrue(utxo11.isSpent());
         assertFalse(utxo21.isSpent());
-        utxo11 = transactionService.getUTXO(tx2.getOutput(0).getOutPointFor(block2.getHash()));
+        utxo11 = blockService.getUTXO(tx2.getOutput(0).getOutPointFor(block2.getHash()));
         assertNotNull(utxo11);
         assertTrue(utxo11.isConfirmed());
         assertFalse(utxo11.isSpent());
@@ -1147,12 +1147,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertFalse(store.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(store.getBlockEvaluation(block2.getHash()).isConfirmed());
 
-        final UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()));
         assertNotNull(utxo1);
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
 
-        final UTXO utxo2 = transactionService.getUTXO(tx2.getOutput(0).getOutPointFor(block2.getHash()));
+        final UTXO utxo2 = blockService.getUTXO(tx2.getOutput(0).getOutPointFor(block2.getHash()));
         assertNotNull(utxo2);
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo2.isSpent());
@@ -1218,11 +1218,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Check the virtual txs too
         Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11);
-        UTXO utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()));
+        UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
         virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock2);
-        utxo1 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()));
+        utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo1.isSpent());
     }
@@ -1277,8 +1277,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(spenderBlock.getHash(), new HashSet<Sha256Hash>());
 
         // Should be confirmed now
-        final UTXO utxo11 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()));
-        final UTXO utxo21 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo11 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo21 = blockService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()));
         assertNotNull(utxo11);
         assertNotNull(utxo21);
         assertTrue(utxo11.isConfirmed());
@@ -1292,8 +1292,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Both should be unconfirmed now
         assertFalse(store.getRewardConfirmed(rewardBlock.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock.getHash()));
-        final UTXO utxo1 = transactionService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()));
-        final UTXO utxo2 = transactionService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()));
+        final UTXO utxo2 = blockService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()));
         assertNotNull(utxo1);
         assertNotNull(utxo2);
         assertFalse(utxo1.isConfirmed());
@@ -1303,7 +1303,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Check the virtual txs too
         Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock);
-        UTXO utxo3 = transactionService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock.getHash()));
+        UTXO utxo3 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock.getHash()));
         assertFalse(utxo3.isConfirmed());
         assertFalse(utxo3.isSpent());
         assertNull(store.getTransactionOutputSpender(utxo3.getBlockHash(), utxo3.getTxHash(), utxo3.getIndex()));

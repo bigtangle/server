@@ -50,9 +50,6 @@ public class BlockRequester {
     protected NetworkParameters networkParameters;
 
     @Autowired
-    TransactionService transactionService;
-
-    @Autowired
     protected BlockService blockService;
     @Autowired
     protected FullPrunedBlockStore store;
@@ -61,7 +58,8 @@ public class BlockRequester {
     @Autowired
     protected ServerConfiguration serverConfiguration;
     @Autowired
-    protected  MilestoneService milestoneService;
+    protected MilestoneService milestoneService;
+
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());
@@ -75,7 +73,7 @@ public class BlockRequester {
                 try {
                     data = OkHttp3Util.postAndGetBlock(s.trim() + "/" + ReqCmd.getBlock,
                             Json.jsonmapper().writeValueAsString(requestParam));
-                    transactionService.addConnected(data, true);
+                    blockService.addConnected(data, true);
                     break;
                 } catch (Exception e) {
                     log.debug(s, e);
@@ -99,17 +97,16 @@ public class BlockRequester {
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("blocks: " + blockbytelist.getBlockbytelist().size() + " remote chain requestBlocks  at:  "
                 + chainlength + " at server: " + s);
-        List<Block> sortedBlocks= new ArrayList<Block>();
+        List<Block> sortedBlocks = new ArrayList<Block>();
         for (byte[] data : blockbytelist.getBlockbytelist()) {
-            sortedBlocks.add(  networkParameters.getDefaultSerializer().makeBlock(data));
-             
-          
+            sortedBlocks.add(networkParameters.getDefaultSerializer().makeBlock(data));
+
         }
         Collections.sort(sortedBlocks, new SortbyBlock());
         for (Block block : sortedBlocks) {
-            transactionService.addConnectedBlock(block, true);
+            blockService.addConnectedBlock(block, true);
         }
-        
+
     }
 
     public TXReward getMaxConfirmedReward(String s) throws JsonProcessingException, IOException {
@@ -192,17 +189,16 @@ public class BlockRequester {
         // Comparator<TXReward>chainlengthID=(TXReward o1,TXReward
         // o2)->o1.getChainLength()>o2.getChainLength()?1:0));
 
-        if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()  ) {
+        if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()) {
 
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
-            Collections.sort(remotes,
-                    new SortbyChain());
-            List<TXReward> mylist =store.getAllConfirmedReward();
+            Collections.sort(remotes, new SortbyChain());
+            List<TXReward> mylist = store.getAllConfirmedReward();
             Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote chain   " + re.getChainLength() + " to "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength()+1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
+            for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
                 milestoneService.update();
             }
@@ -211,12 +207,12 @@ public class BlockRequester {
     }
 
     public class SortbyBlock implements Comparator<Block> {
-    
+
         public int compare(Block a, Block b) {
             return a.getHeight() > b.getHeight() ? 1 : -1;
         }
     }
-    
+
     public class SortbyChain implements Comparator<TXReward> {
         // Used for sorting in ascending order of
         // roll number

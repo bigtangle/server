@@ -133,7 +133,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         System.out.println(block.getHashAsString());
 
         // Send over kafka method to allow unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(block.bitcoinSerialize(), true);
     }
 
     @Test
@@ -166,7 +166,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = depBlock.createNextBlock(depBlock);
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(block.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -186,7 +186,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = depBlock.createNextBlock(networkParameters.getGenesisBlock());
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(block.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -206,7 +206,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = networkParameters.getGenesisBlock().createNextBlock(depBlock);
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(block.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -240,8 +240,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Add block allowing unsolids
-        transactionService.addConnected(betweenBlock.bitcoinSerialize(), false);
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(betweenBlock.bitcoinSerialize(), false);
+        blockService.addConnected(block.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -309,7 +309,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(rewardBlock2.bitcoinSerialize(), true);
+        blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -353,7 +353,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Add block allowing unsolids
-        transactionService.addConnected(block.bitcoinSerialize(), true);
+        blockService.addConnected(block.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -443,7 +443,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(block2.bitcoinSerialize(), true);
+        blockService.addConnected(block2.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -525,17 +525,17 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             block2.addTransaction(tx);
             block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
             block2.solve();
-            transactionService.addConnected(block2.bitcoinSerialize(), false);
+            blockService.addConnected(block2.bitcoinSerialize(), false);
         }
 
         // Now reset and readd all but dependency and unsolid block
         store.resetStore();
         for (Block b : premiseBlocks) {
-            transactionService.addConnected(b.bitcoinSerialize(), true);
+            blockService.addConnected(b.bitcoinSerialize(), true);
         }
 
         // Add block allowing unsolids
-        transactionService.addConnected(block2.bitcoinSerialize(), true);
+        blockService.addConnected(block2.bitcoinSerialize(), true);
 
         // Should not be solid
         assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
@@ -759,23 +759,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>());
 
         // 1 should be confirmed now
-        UTXO utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        UTXO utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        UTXO utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 2 should be unconfirmed
-        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        UTXO origUTXO = transactionService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0)
+        UTXO origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0)
                 .getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
@@ -788,23 +788,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.unconfirm(spenderBlock1.getHash(), new HashSet<>());
 
         // 1 should be confirmed now
-        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 2 should be unconfirmed
-        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        origUTXO = transactionService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
+        origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
                 .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertFalse(origUTXO.isSpent());
@@ -813,23 +813,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>());
 
         // 2 should be confirmed now
-        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 1 should be unconfirmed
-        utxo1 = transactionService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        utxo2 = transactionService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        origUTXO = transactionService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
+        origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
                 .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());

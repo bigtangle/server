@@ -32,6 +32,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
+import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -425,7 +426,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
-    public List<Sha256Hash> getNonSolidMissingBlocks() throws BlockStoreException;
+    public List<UnsolidBlock> getNonSolidMissingBlocks() throws BlockStoreException;
 
     
     void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
@@ -502,5 +503,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void updateMissingBlock(Sha256Hash storedBlock, boolean b) throws BlockStoreException;
 
     TXReward getMaxSolidReward() throws BlockStoreException;
+
+    long getHeightTransactions(List<Sha256Hash>  txHashs) throws BlockStoreException ;
 
 }

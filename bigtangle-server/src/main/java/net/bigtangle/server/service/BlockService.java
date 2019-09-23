@@ -11,22 +11,31 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
 import net.bigtangle.core.http.server.resp.GetBlockListResponse;
@@ -34,8 +43,11 @@ import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.wallet.CoinSelector;
+import net.bigtangle.wallet.DefaultCoinSelector;
 
 /**
  * <p>
@@ -60,6 +72,9 @@ public class BlockService {
     @Autowired
     private ServerConfiguration serverConfiguration;
 
+    @Autowired
+    protected TipsService tipService;
+    
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     @Cacheable("blocks")
@@ -261,5 +276,110 @@ public class BlockService {
     public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
+    }
+    
+
+    protected CoinSelector coinSelector = new DefaultCoinSelector();
+
+    public Block askTransactionBlock() throws Exception {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Block r1 =  getBlock(tipsToApprove.getLeft());
+        Block r2 =  getBlock(tipsToApprove.getRight());
+
+        return r1.createNextBlock(r2,
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+    }
+
+    public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isSpent();
+    }
+
+    public boolean getUTXOConfirmed(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isConfirmed();
+    }
+
+    public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) throws BlockStoreException {
+        return store.getTransactionOutputSpender(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+    }
+
+    public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
+        return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
+    }
+
+    /*
+     * Block byte[] bytes
+     */
+    public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes) {
+
+        try {
+            // logger.debug(" bytes " +bytes.length);
+            return addConnected(Gzip.decompress(bytes), true);
+        } catch (DifficultyTargetException e) {
+
+            return null;
+        } catch (Exception e) {
+            logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);
+            return null;
+        }
+
+    }
+
+    /*
+     * Block byte[] bytes
+     */
+    public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid)
+            throws ProtocolException, BlockStoreException, NoBlockException {
+        if (bytes == null)
+            return null;
+
+        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), allowUnsolid);
+    }
+
+    public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
+        if (store.getBlockEvaluation(block.getHash()) == null) {
+
+            try {
+                blockgraph.add(block, allowUnsolid);
+                return Optional.of(block);
+            } catch (Exception e) {
+                logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
+                        + block.getHeight() + " block: " + block.toString(), e);
+                return Optional.empty();
+
+            }
+        }
+        return Optional.empty();
+    }
+
+    public void streamBlocks(Long heightstart, String kafka) throws BlockStoreException {
+        KafkaMessageProducer kafkaMessageProducer;
+        if (kafka == null || "".equals(kafka)) {
+            kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
+        } else {
+            kafkaMessageProducer = new KafkaMessageProducer(kafka, kafkaConfiguration.getTopicOutName(), true);
+        }
+        store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
+    }
+
+    public void adjustHeightRequiredTrasnactionHashes(Block block) throws BlockStoreException {
+        List<Sha256Hash> txHashs = getAllRequiredTrasnactionHashes(block);
+        if (!txHashs.isEmpty())
+            block.setHeight(Math.max(block.getHeight(), store.getHeightTransactions(txHashs)));
+    }
+
+    public List<Sha256Hash> getAllRequiredTrasnactionHashes(Block block) {
+        // All used transaction outputs
+        List<Sha256Hash> predecessors = new ArrayList<>();
+        final List<Transaction> transactions = block.getTransactions();
+        for (final Transaction tx : transactions) {
+            if (!tx.isCoinBase()) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+                    // due to virtual txs from order/reward
+                    predecessors.add(in.getOutpoint().getBlockHash());
+                }
+            }
+        }
+        return predecessors;
     }
 }

@@ -590,12 +590,6 @@ public class Block extends Message {
     public String toString() {
         StringBuilder s = new StringBuilder();
         s.append("block hash: ").append(getHashAsString()).append('\n');
-        if (transactions != null && transactions.size() > 0) {
-            s.append("   ").append(transactions.size()).append(" transaction(s):\n");
-            for (Transaction tx : transactions) {
-                s.append(tx);
-            }
-        }
         s.append("   version: ").append(version);
         s.append('\n');
         s.append("   height: ").append(height).append("\n");
@@ -609,7 +603,12 @@ public class Block extends Message {
             s.append("   mineraddress: ").append(new Address(params, minerAddress)).append("\n");
 
         s.append("   blocktype: ").append(blockType).append("\n");
-
+        if (transactions != null && transactions.size() > 0) {
+            s.append("   ").append(transactions.size()).append(" transaction(s):\n");
+            for (Transaction tx : transactions) {
+                s.append(tx);
+            }
+        }
         return s.toString();
     }
 

@@ -284,8 +284,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         SendRequest request = SendRequest.to(destination, utxo.getValue());
         walletAppKit.wallet().completeTx(request,null);
         rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        walletAppKit.wallet().solveAndPost(rollingBlock);
         logger.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
     }

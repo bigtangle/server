@@ -72,19 +72,6 @@ public class UnsolidBlockService {
     }
 
  
-    public void requestPrevBlock(Sha256Hash hash) {
-        try {
-            byte[] re = blockRequester.requestBlock(hash);
-            if (re != null) {
-                Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-
-                blockgraph.add(req, true);
-
-            }
-        } catch (Exception e) {
-            logger.debug("", e);
-        }
-    }
 
     public void requestPrev(Block block) {
         try {

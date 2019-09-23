@@ -39,6 +39,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
@@ -65,7 +66,7 @@ public class MilestoneService {
     @Autowired
     private ValidatorService validatorService;
     @Autowired
-    private UnsolidBlockService unsolidBlockService;
+    private BlockRequester blockRequester;
     @Autowired
     private BlockService blockService;
 
@@ -101,7 +102,7 @@ public class MilestoneService {
         }
         Stopwatch watchAll = Stopwatch.createStarted();
 
-        log.debug("Milestone running "   );
+        log.debug("Milestone running ");
         try {
             Context context = new Context(params);
             Context.propagate(context);
@@ -202,22 +203,21 @@ public class MilestoneService {
         /*
          * TODO this grows to infinite size
          */
-        List<Sha256Hash> storedBlocklist = store.getNonSolidMissingBlocks();
+        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks();
         log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
-        for (Sha256Hash storedBlock : storedBlocklist) {
+        for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
-                Block req = blockService.getBlock(storedBlock);
+                Block req = blockService.getBlock(storedBlock.missingdependencyHash());
 
                 if (req != null) {
-                    store.updateMissingBlock(storedBlock, false);
+                    store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
                     // if the block is there, now scan the rest unsolid blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-
                         scanWaitingBlocks(req);
                     }
                 } else {
-                    log.debug(" requestPrevBlock " +storedBlock);
-                    unsolidBlockService.requestPrevBlock(storedBlock);
+
+                    blockRequester.requestBlock(storedBlock.missingdependencyHash());
                 }
             }
         }
