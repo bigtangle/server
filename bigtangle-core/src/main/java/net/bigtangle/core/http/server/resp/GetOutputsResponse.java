@@ -17,7 +17,7 @@ public class GetOutputsResponse extends AbstractResponse {
 
     private Map<String, Token> tokennames;
     
-    public static AbstractResponse create(List<UTXO> outputs, Map<String, Token> tokennames) {
+    public static GetOutputsResponse create(List<UTXO> outputs, Map<String, Token> tokennames) {
         GetOutputsResponse res = new GetOutputsResponse();
         res.outputs = outputs;
         res.tokennames = tokennames;

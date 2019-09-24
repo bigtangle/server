@@ -65,7 +65,7 @@ import net.bigtangle.server.ordermatch.bean.OrderMatch;
  * FullPrunedBlockStores are thread safe.
  * </p>
  */
-public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
+public interface FullPrunedBlockStore extends BlockStore {
 
     void beginDatabaseBatchWrite() throws BlockStoreException;
 

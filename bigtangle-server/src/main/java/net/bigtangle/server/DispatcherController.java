@@ -69,7 +69,7 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class DispatcherController {
 
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
- 
+
     @Autowired
     private NetworkParameters networkParameters;
     @Autowired
@@ -151,6 +151,15 @@ public class DispatcherController {
                 outputHistory(bodyByte, httpServletResponse);
             }
                 break;
+            case outputsbyToken: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = walletService
+                        .getOpenAllOutputsResponse( (String) request.get("tokenid"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
             case getTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -221,7 +230,8 @@ public class DispatcherController {
                 break;
             case adjustHeight: {
                 Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                 this.blockService.adjustHeightRequiredTrasnactionHashes(block);;
+                this.blockService.adjustHeightRequiredTrasnactionHashes(block);
+                ;
                 this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
             }
                 break;
@@ -237,7 +247,7 @@ public class DispatcherController {
                 break;
             case blocksFromChainLength: {
                 String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class); 
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 GetBlockListResponse response = this.blockService.blocksFromChainLength(
                         Long.valueOf((String) request.get("start")), Long.valueOf((String) request.get("end")));
 
@@ -500,15 +510,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case    getAllConfirmedReward: {
+            case getAllConfirmedReward: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = rewardService.   getAllConfirmedReward(request);
+                AbstractResponse response = rewardService.getAllConfirmedReward(request);
 
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;  
-             
+                break;
+
             default:
                 break;
             }

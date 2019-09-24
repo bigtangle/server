@@ -28,10 +28,10 @@ public class OrderSell2Test extends AbstractIntegrationTest {
         importKeys(walletAppKit.wallet());
         while (true) {
             try {
-                sell(HTTPS_BIGTANGLE_INFO,walletAppKit2.wallet());
-                sell(HTTPS_BIGTANGLE_DE,walletAppKit1.wallet());
-                sell(HTTPS_BIGTANGLE_DE,walletAppKit2.wallet());
-                sell(HTTPS_BIGTANGLE_INFO,walletAppKit1.wallet());
+                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit2.wallet());
+                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit1.wallet());
+                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit2.wallet());
+                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit1.wallet());
             } catch (Exception e) {
                 // TODO: handle exception
                 // Thread.sleep(3000);

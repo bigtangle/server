@@ -1697,8 +1697,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // All Spend Candidates as List<UTXO>
     public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns) throws IOException {
-        lock.lock();
-        try {
+     
             List<UTXO> candidates = new ArrayList<UTXO>();
             List<String> pubKeyHashs = new ArrayList<String>();
             for (ECKey ecKey : walletKeys(aesKey)) {
@@ -1721,9 +1720,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
             Collections.shuffle(candidates);
             return candidates;
-        } finally {
-            lock.unlock();
-        }
+    
     }
 
     public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {

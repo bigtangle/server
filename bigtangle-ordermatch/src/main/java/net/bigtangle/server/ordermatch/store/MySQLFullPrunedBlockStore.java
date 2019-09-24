@@ -10,7 +10,9 @@ import java.util.Collections;
 import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 
 /**
  * <p>
@@ -122,4 +124,5 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
+ 
 }

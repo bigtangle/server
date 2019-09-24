@@ -956,16 +956,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public Block get(Sha256Hash hash) throws BlockStoreException {
         return null;
     }
-
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
-        return null;
-    }
-
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException {
-        return null;
-    }
+ 
 
     @Override
     public void deleteOrderPublish(String orderid) throws BlockStoreException {

@@ -193,6 +193,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
+    protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
+            + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
+            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime "
+            + "FROM outputs  WHERE   tokenid = ?";
 
     protected final String SELECT_DUMP_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes FROM outputs";
 
@@ -1613,6 +1617,55 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract List<String> getDropIndexsSQL();
 
     @Override
+    public List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
+
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL);
+            s.setString(1, tokenid);
+            ResultSet rs = s.executeQuery();
+            while (rs.next()) {
+                Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
+                Coin amount = new Coin(new BigInteger(rs.getBytes("coinvalue")), rs.getString("tokenid"));
+                byte[] scriptBytes = rs.getBytes(3);
+                int index = rs.getInt(4);
+                boolean coinbase = rs.getBoolean(5);
+                String toAddress = rs.getString(6);
+                // addresstargetable =rs.getBytes(7);
+                Sha256Hash blockhash = Sha256Hash.wrap(rs.getBytes(8));
+
+                String fromaddress = rs.getString(10);
+                String memo = rs.getString(11);
+                boolean spent = rs.getBoolean(12);
+                boolean confirmed = rs.getBoolean(13);
+                boolean spendPending = rs.getBoolean(14);
+                ;
+
+                UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress, blockhash,
+                        fromaddress, memo, rs.getString("tokenid"), spent, confirmed, spendPending, 0,
+                        rs.getLong("spendpendingtime"));
+                outputs.add(output);
+
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
+        }
+
+    }
+
+    @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
@@ -1638,10 +1691,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     boolean spent = rs.getBoolean(12);
                     boolean confirmed = rs.getBoolean(13);
                     boolean spendPending = rs.getBoolean(14);
-                    String tokenid = rs.getString("tokenid");
+
                     long minimumsign = rs.getLong("minimumsign");
                     UTXO output = new UTXO(hash, index, amount, coinbase, new Script(scriptBytes), toAddress, blockhash,
-                            fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign,
+                            fromaddress, memo, rs.getString("tokenid"), spent, confirmed, spendPending, minimumsign,
                             rs.getLong("spendpendingtime"));
                     outputs.add(output);
                 }

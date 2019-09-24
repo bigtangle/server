@@ -91,7 +91,7 @@ public class WalletService {
             boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-           
+
             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
@@ -108,7 +108,7 @@ public class WalletService {
             byte[] tokenid, boolean excludeImmatureCoinbases) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-             for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
                 candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
@@ -142,7 +142,18 @@ public class WalletService {
         return list;
     }
 
-    public AbstractResponse getAccountOutputs(Set<byte[]> pubKeyHashs) throws BlockStoreException {
+    private List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
+        return store.getOpenAllOutputs(tokenid);
+
+    }
+
+    public GetOutputsResponse getOpenAllOutputsResponse(String tokenid)
+            throws BlockStoreException, UTXOProviderException {
+        List<UTXO> outputs = getOpenAllOutputs(tokenid);
+        return GetOutputsResponse.create(outputs, getTokename(outputs));
+    }
+
+    public GetOutputsResponse getAccountOutputs(Set<byte[]> pubKeyHashs) throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
                 false);
@@ -153,14 +164,14 @@ public class WalletService {
         return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
-    public AbstractResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
+    public GetOutputsResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
             throws Exception {
         List<UTXO> outputs = this.store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
 
         return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
-    public AbstractResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) throws BlockStoreException {
+    public GetOutputsResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid) throws BlockStoreException {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(pubKey);
 
@@ -204,7 +215,7 @@ public class WalletService {
         for (Token t : tokens) {
             re.put(t.getTokenid(), t);
         }
-         
+
         return re;
     }
 }

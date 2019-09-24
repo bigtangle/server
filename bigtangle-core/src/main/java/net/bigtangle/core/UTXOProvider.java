@@ -31,20 +31,11 @@ import net.bigtangle.core.exception.UTXOProviderException;
  */
 public interface UTXOProvider {
 
-    // TODO currently the access to outputs is by address. Change to ECKey
-    /**
-     * Get the list of {@link UTXO}'s for a given address.
-     * @param addresses List of address.
-     * @return The list of transaction outputs.
-     * @throws UTXOProviderException If there is an error.
-     */
+    
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException;
     
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException;
+  
 
-    /**
-     * The {@link NetworkParameters} of this provider.
-     * @return The network parameters.
-     */
-    NetworkParameters getParams();
+    List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException;
 }

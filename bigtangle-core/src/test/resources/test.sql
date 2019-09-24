@@ -29,7 +29,7 @@ select * from openorders  where spent=0 and confirmed=1 ;
 update blocks set milestone=0    where height=0
 
 OUTPUTS
-select * from outputs  ;
+select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
 select * from txreward   ;
 select * from ordermatching   ;
