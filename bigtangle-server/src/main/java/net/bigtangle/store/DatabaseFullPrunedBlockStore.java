@@ -280,7 +280,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " FROM openorders WHERE collectinghash = ?";
     protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
             + " FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash"
-            + " WHERE blocks.height <= ? AND openorders.confirmed = 1  AND openorders.spent = 0 AND openorders.collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000"
+            + " WHERE blocks.height <= ? AND openorders.confirmed = 1  "
+            + "AND openorders.spent = 0 AND "
+            + "openorders.collectinghash="
+            + "0x0000000000000000000000000000000000000000000000000000000000000000"
             + afterSelect();
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM openorders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM openorders WHERE blockhash = ? AND collectinghash = ?";

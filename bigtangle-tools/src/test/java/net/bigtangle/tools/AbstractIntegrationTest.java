@@ -29,16 +29,14 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.core.http.server.resp.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
@@ -86,8 +84,8 @@ public abstract class AbstractIntegrationTest {
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-    public String contextRoot = HTTPS_BIGTANGLE_DE;
-    // "http://localhost:8088/";
+    public String contextRoot = //HTTPS_BIGTANGLE_DE;
+     "http://localhost:8088/";
 
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
@@ -107,8 +105,9 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-     //   System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-     //   System.setProperty("https.proxyPort", "3128");
+        // System.setProperty("https.proxyHost",
+        // "anwproxy.anwendungen.localnet.de");
+        // System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();
@@ -288,6 +287,31 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
+    protected void testCheckToken() throws JsonProcessingException, Exception {
+        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        for (ECKey k : w.walletKeys()) {
+            requestParam.put("tokenid", k.getPublicKeyAsHex());
+            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+            log.info("getOutputsResponse : " + getOutputsResponse);
+
+            //assertTrue(getOutputsResponse.getOutputs().size() > 0);
+            // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+            // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+
+        }
+
+    }
+
     protected void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
         checkResponse(resp, 0);
     }
@@ -325,7 +349,7 @@ public abstract class AbstractIntegrationTest {
             throws JsonProcessingException, Exception {
         try {
             createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname);
-                   
+
         } catch (Exception e) {
             // TODO: handle exception
             log.warn("", e);
@@ -366,61 +390,6 @@ public abstract class AbstractIntegrationTest {
                 Utils.HEX.decode(NetworkParameters.testPub));
 
         walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
-    }
-
-    public void emptyBlocks(int number) throws JsonProcessingException, Exception {
-        for (int i = 0; i < number; i++) {
-            HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-
-            Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-            rollingBlock.solve();
-
-            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        }
-    }
-
-    // for unit tests
-    public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-            throws IOException {
-        Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey);
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-        return block;
-    }
-
-    // for unit tests
-    public Block makeTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-            throws JsonProcessingException, IOException {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
-
-        Transaction transaction = block.getTransactions().get(0);
-
-        Sha256Hash sighash = transaction.getHash();
-
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
-        multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-
-        // save block
-        block.solve();
-        return block;
     }
 
 }

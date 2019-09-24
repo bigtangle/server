@@ -57,6 +57,20 @@ SELECT blockhash FROM blocks INNER JOIN openorders
 ON openorders.blockhash=blocks.hash 
 WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND openorders.spent = 0;
 
+
+ SELECT blockhash, height
+             FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash
+             WHERE   openorders.confirmed = 0  
+            AND openorders.spent = 0 AND 
+            openorders.collectinghash=
+            '0x0000000000000000000000000000000000000000000000000000000000000000'
+ 
+ SELECT blockhash, height
+             FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash
+             WHERE    
+            openorders.collectinghash=
+            '0x0000000000000000000000000000000000000000000000000000000000000000'           
+            
 select * from vm_deposit ;
 
 select * from wechatinvite ;

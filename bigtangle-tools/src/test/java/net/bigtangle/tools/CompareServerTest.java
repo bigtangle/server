@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
@@ -111,5 +113,16 @@ public class CompareServerTest extends AbstractIntegrationTest {
         }
 
     }
-
+    @Test
+    public void testCheckTokens() throws JsonProcessingException, Exception {
+        while( true) {
+            try {
+               
+        super.testCheckToken();
+        Thread.sleep(5000);
+            } catch (Exception e) {
+                log.debug("", e);
+            }
+        }
+    }
 }

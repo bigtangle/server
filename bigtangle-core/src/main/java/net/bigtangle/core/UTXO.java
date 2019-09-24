@@ -57,10 +57,10 @@ public class UTXO {
     private long spendPendingTime;
     private String tokenId;
     private long time;
-  
+ 
     private long minimumsign;
 
-    @Deprecated
+     //JSON
     public UTXO() {
     }
  
@@ -250,7 +250,7 @@ public class UTXO {
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "Stored TxOut of %s (%s:%d)", value.toString(), hash, index);
+        return String.format(Locale.US, "UTXO %s (%s:%d)", value.toString(), hash, index);
     }
 
     @Override
