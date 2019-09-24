@@ -2018,15 +2018,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // this key
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, 3, 10000);
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,"", 3, 10000);
     }
-
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey, String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,memo, 3, 10000);
+    }
     private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            int repeat, int sleep) throws JsonProcessingException, IOException, InsufficientMoneyException {
+           String memo, int repeat, int sleep) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         // int sleep = 60000;
         try {
-            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "");
+            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo);
         } catch (InsufficientMoneyException e) {
             log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
@@ -2035,7 +2038,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     Thread.sleep(sleep);
                 } catch (InterruptedException e1) {
                 }
-                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, repeat, sleep);
+                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,memo, repeat, sleep);
             }
         }
         return null;
