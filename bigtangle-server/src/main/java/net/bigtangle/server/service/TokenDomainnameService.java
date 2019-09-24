@@ -83,7 +83,7 @@ public class TokenDomainnameService {
             return multiSignAddresses;
         }
     }
-    @Cacheable("queryDomainnameTokenPredecessorBlockHash")
+   
     public AbstractResponse queryDomainnameTokenPredecessorBlockHash(String domainname) 
             throws BlockStoreException {
         AbstractResponse response;

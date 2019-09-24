@@ -77,7 +77,8 @@ public class BlockService {
     
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-    @Cacheable("blocks")
+    //  cache only binary block  only
+     @Cacheable("blocks")
     // nullable
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
@@ -214,7 +215,7 @@ public class BlockService {
         }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
-    @Cacheable("searchBlockByBlockHash")
+    //@Cacheable("searchBlockByBlockHash")
     public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
         String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
@@ -272,7 +273,7 @@ public class BlockService {
 
         this.store.deleteMyserverblocks(prevhash);
     }
-    @Cacheable("blocksFromChainLength")
+    //TODO @Cacheable("blocksFromChainLength")
     public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
