@@ -196,7 +196,7 @@ public class BlockService {
     }
 
     @SuppressWarnings("unchecked")
-    @Cacheable("searchBlock")
+    //TODO cache last blocks, but add evict @Cacheable("searchBlock")
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
