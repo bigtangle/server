@@ -2541,7 +2541,7 @@ public class ValidatorService {
         int index = rewards.size()-1;
         if (rewards.size() > 5) {
             long maxH = rewards.get(index).getToHeight() - rewards.get(rewards.size() - 5).getToHeight();
-            if (Math.abs(block.getHeight() - rewards.get(rewards.size()).getToHeight()) > maxH) {
+            if (Math.abs(block.getHeight() - rewards.get(index).getToHeight()) > maxH) {
                 throw new VerificationException("checkHeight failed block height:  " + block.getHeight()
                         + " last rewards at height: " + rewards.get(index).getToHeight());
             }
