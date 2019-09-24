@@ -85,8 +85,8 @@ public abstract class AbstractIntegrationTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot = //HTTPS_BIGTANGLE_DE;
-     "http://localhost:8088/";
-
+    // "http://localhost:8088/";
+    "https://bigtangle.org/";
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
@@ -345,10 +345,10 @@ public abstract class AbstractIntegrationTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname)
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname, String description)
             throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname);
+            createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname, description);
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -358,7 +358,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals,
-            String domainname)
+            String domainname,String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
@@ -377,7 +377,7 @@ public abstract class AbstractIntegrationTest {
         long tokenindex_ = tokenIndexResponse.getTokenindex();
         String prevblockhash = tokenIndexResponse.getBlockhash();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, tokename, 1, tokenindex_,
+        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, description, 1, tokenindex_,
                 basecoin.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 

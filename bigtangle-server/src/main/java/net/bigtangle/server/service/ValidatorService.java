@@ -1167,9 +1167,9 @@ public class ValidatorService {
         }
 
         // Check bounds for target coin values
-        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
+        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Long.MAX_VALUE) {
             if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target value");
+                throw new InvalidTransactionDataException("Invalid target value max: " + Long.MAX_VALUE);
             return SolidityState.getFailState();
         }
 
@@ -1802,7 +1802,7 @@ public class ValidatorService {
         }
 
         // Check bounds for target coin values
-        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Integer.MAX_VALUE) {
+        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() >  Long.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target value");
             return SolidityState.getFailState();

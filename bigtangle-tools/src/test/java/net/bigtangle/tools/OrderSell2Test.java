@@ -3,6 +3,7 @@ package net.bigtangle.tools;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -18,7 +19,7 @@ import net.bigtangle.wallet.Wallet;
 
 public class OrderSell2Test extends AbstractIntegrationTest {
 
-    // sell tokens from wallet 1 and 2 on different servers 
+    // sell tokens from wallet 1 and 2 on different servers
 
     @Test
     public void sellThread() throws Exception {
@@ -28,14 +29,14 @@ public class OrderSell2Test extends AbstractIntegrationTest {
         importKeys(walletAppKit.wallet());
         while (true) {
             try {
-                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit2.wallet());
-                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit1.wallet());
-                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit2.wallet());
-                sell(HTTPS_BIGTANGLE_LOCAL,walletAppKit1.wallet());
+                sell("https://bigtangle.org/", walletAppKit2.wallet());
+               // sell(HTTPS_BIGTANGLE_LOCAL, walletAppKit1.wallet());
+               // sell(HTTPS_BIGTANGLE_LOCAL, walletAppKit2.wallet());
+               // sell(HTTPS_BIGTANGLE_LOCAL, walletAppKit1.wallet());
             } catch (Exception e) {
                 // TODO: handle exception
                 // Thread.sleep(3000);
-                log.debug("",e);
+                log.debug("", e);
             }
         }
 
@@ -58,8 +59,9 @@ public class OrderSell2Test extends AbstractIntegrationTest {
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
                     && utxo.getValue().getValue().signum() > 0) {
-                wallet .setServerURL(url);
-                wallet.sellOrder(null, utxo.getTokenId(), 100, 2, null, null);
+                wallet.setServerURL(url);
+                wallet.sellOrder(null, utxo.getTokenId(),   (new Random()).nextInt(), 8,
+                        null, null);
 
             }
         }

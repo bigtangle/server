@@ -25,7 +25,7 @@ public class FundsTests extends AbstractIntegrationTest {
         long initprice = 100;
         List<ECKey> keys = walletAppKit2.wallet().walletKeys(null);
         // create the funds with unit 1000
-        createMultisignToken(keys.get(1), new TokenInfo(), "cryptofunds", 1000,0,null);
+        createMultisignToken(keys.get(1), new TokenInfo(), "cryptofunds", 1000,0,null, "Funds");
         // sell the unit for a price within the exchange
 
         walletAppKit2.wallet().sellOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,

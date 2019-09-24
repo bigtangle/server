@@ -23,24 +23,24 @@ public class TokenCreateTests extends AbstractIntegrationTest {
     public void testTokens() throws JsonProcessingException, Exception {
 
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
-                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, null);
+                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, null, "人民币 CNY");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BTCTokenPriv), Utils.HEX.decode(BTCTokenPub)),
-                "BTC", 8, null);
+                "BTC", 8, null, "Bitcoin ETF");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(ETHTokenPriv), Utils.HEX.decode(ETHTokenPub)),
-                "ETH", 8, null);
+                "ETH", 8, null, "Ethereum ETF");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(EURTokenPriv), Utils.HEX.decode(EURTokenPub)),
-                "EUR", 2, null);
+                "EUR", 2, null,"Euro");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(USDTokenPriv), Utils.HEX.decode(USDTokenPub)),
-                "USD", 2, null);
+                "USD", 2, null, "US Dollar");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(JPYTokenPriv), Utils.HEX.decode(JPYTokenPub)),
-                "JPY", 2, null);
+                "JPY", 2, null, "Japan Yuan");
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(GOLDTokenPriv),
-                Utils.HEX.decode(GOLDTokenPub)), "GOLD", 0, null);
+                Utils.HEX.decode(GOLDTokenPub)), "GOLD", 0, null, "Gold ETF");
     }
    
 }
