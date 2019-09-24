@@ -203,16 +203,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-
     public void add(Block block, boolean allowUnsolid) throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
-        block.verifyTransactions();
+        block.verifyTransactions(); 
 
         SolidityState solidityState = validatorService.checkSolidity(block, true);
-
+        if (solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
+            // not allow unsolid height away from confirmed reward
+            validatorService.checkHeight(block);
+        }
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
         if (!allowUnsolid) {
@@ -245,7 +247,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
     }
-
 
     /**
      * Inserts the specified block into the DB
@@ -355,7 +356,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Write to DB
-        //checkState(confirmLock.isHeldByCurrentThread());
+        // checkState(confirmLock.isHeldByCurrentThread());
 
         confirmUntil(blockHash, traversedBlockHashes);
     }
@@ -784,7 +785,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = matchingResult.getOutputTx();
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-            if (utxo !=null && utxo.isSpent()) {
+            if (utxo != null && utxo.isSpent()) {
                 unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }
@@ -846,7 +847,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = generateVirtualMiningRewardTX(block);
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-            if (utxo!=null && utxo.isSpent()) {
+            if (utxo != null && utxo.isSpent()) {
                 unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }

@@ -55,6 +55,7 @@ import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
@@ -93,7 +94,6 @@ import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
- 
 
 @Service
 public class ValidatorService {
@@ -106,7 +106,7 @@ public class ValidatorService {
     private BlockService blockService;
     @Autowired
     protected NetworkParameters networkParameters;
-   
+
     @Autowired
     private NetworkParameters params;
 
@@ -164,14 +164,18 @@ public class ValidatorService {
 
     /**
      * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-     * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
-     * a prototype implementation. In the actual Spark implementation, the
-     * computational cost is not a problem, since it is instead backpropagated and
-     * calculated for free with delay. For more info, see notes.
+     * Pair.of(new difficulty + new perTxReward) here for new reward blocks.
+     * This is a prototype implementation. In the actual Spark implementation,
+     * the computational cost is not a problem, since it is instead
+     * backpropagated and calculated for free with delay. For more info, see
+     * notes.
      * 
-     * @param prevTrunk      a predecessor block in the db
-     * @param prevBranch     a predecessor block in the db
-     * @param prevRewardHash the predecessor reward
+     * @param prevTrunk
+     *            a predecessor block in the db
+     * @param prevBranch
+     *            a predecessor block in the db
+     * @param prevRewardHash
+     *            the predecessor reward
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
@@ -238,7 +242,7 @@ public class ValidatorService {
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash);
         tx.setData(rewardInfo.toByteArray());
-        tx.setMemo(new MemoInfo("RewardInfo:" +rewardInfo));
+        tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
         return new RewardBuilderResult(tx, difficulty);
     }
 
@@ -266,7 +270,8 @@ public class ValidatorService {
         }
 
         if (newTarget.compareTo(networkParameters.getMaxTarget()) > 0) {
-           //TODO logger.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            // TODO logger.info("Difficulty hit proof of work limit: {}",
+            // newTarget.toString(16));
             newTarget = networkParameters.getMaxTarget();
         }
 
@@ -274,13 +279,13 @@ public class ValidatorService {
     }
 
     /**
-     * Checks if the given set is eligible to be walked to during local approval tip
-     * selection given the current set of non-confirmed blocks to include. This is
-     * the case if the set is compatible with the current milestone. It must
-     * disallow spent prev UTXOs / unconfirmed prev UTXOs
+     * Checks if the given set is eligible to be walked to during local approval
+     * tip selection given the current set of non-confirmed blocks to include.
+     * This is the case if the set is compatible with the current milestone. It
+     * must disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
-     * @param currentApprovedUnconfirmedBlocks The set of all currently approved
-     *                                          unconfirmed blocks.
+     * @param currentApprovedUnconfirmedBlocks
+     *            The set of all currently approved unconfirmed blocks.
      * @return true if the given set is eligible
      * @throws BlockStoreException
      */
@@ -292,8 +297,8 @@ public class ValidatorService {
             return false;
 
         // If there exists a new block whose dependency is already spent
-        // or not confirmed yet, we fail to approve this block since the 
-        // current set of confirmed blocks takes precedence 
+        // or not confirmed yet, we fail to approve this block since the
+        // current set of confirmed blocks takes precedence
         if (findBlockWithSpentOrUnconfirmedInputs(currentApprovedUnconfirmedBlocks))
             return false;
 
@@ -309,24 +314,27 @@ public class ValidatorService {
     }
 
     /**
-     * Checks if the given block is eligible to be walked to during local approval
-     * tip selection given the current set of unconfirmed blocks to include. This
-     * is the case if the block + the set is compatible with the current confirmeds.
-     * It must disallow spent prev UTXOs / unconfirmed prev UTXOs or unsolid blocks.
+     * Checks if the given block is eligible to be walked to during local
+     * approval tip selection given the current set of unconfirmed blocks to
+     * include. This is the case if the block + the set is compatible with the
+     * current confirmeds. It must disallow spent prev UTXOs / unconfirmed prev
+     * UTXOs or unsolid blocks.
      * 
-     * @param block                             The block to check for eligibility.
-     * @param currentApprovedUnconfirmedBlocks The set of all currently approved
-     *                                          unconfirmed blocks.
-     * @return true if the given block is eligible to be walked to during approval
-     *         tip selection.
+     * @param block
+     *            The block to check for eligibility.
+     * @param currentApprovedUnconfirmedBlocks
+     *            The set of all currently approved unconfirmed blocks.
+     * @return true if the given block is eligible to be walked to during
+     *         approval tip selection.
      * @throws BlockStoreException
      */
     public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedUnconfirmedBlocks)
             throws BlockStoreException {
-        // Any confirmed blocks are always compatible with the current confirmeds
+        // Any confirmed blocks are always compatible with the current
+        // confirmeds
         if (block.getBlockEvaluation().isConfirmed())
             return true;
-        
+
         // Unchecked blocks are not allowed
         if (block.getBlockEvaluation().getSolid() < 2)
             return false;
@@ -334,8 +342,7 @@ public class ValidatorService {
         // Get sets of all / all new unconfirmed blocks when approving the
         // specified block in combination with the currently included blocks
         @SuppressWarnings("unchecked")
-        HashSet<BlockWrap> allApprovedUnconfirmedBlocks = (HashSet<BlockWrap>) currentApprovedUnconfirmedBlocks
-                .clone();
+        HashSet<BlockWrap> allApprovedUnconfirmedBlocks = (HashSet<BlockWrap>) currentApprovedUnconfirmedBlocks.clone();
         if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block))
             throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
 
@@ -418,16 +425,15 @@ public class ValidatorService {
     // disallow unconfirmed prev UTXOs and spent UTXOs if
     // unmaintained (unundoable) spend
     /**
-     * Resolves all conflicts such that the confirmed set is compatible with all blocks
-     * remaining in the set of blocks. 
+     * Resolves all conflicts such that the confirmed set is compatible with all
+     * blocks remaining in the set of blocks.
      * 
-     * @param blocksToAdd               the set of blocks to add to the current
-     *                                  milestone
+     * @param blocksToAdd
+     *            the set of blocks to add to the current milestone
      * @throws BlockStoreException
      */
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd)
-            throws BlockStoreException {
-        // Remove ineligible blocks, i.e. only reward blocks 
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+        // Remove ineligible blocks, i.e. only reward blocks
         // since they follow a different logic
         removeWhereIneligible(blocksToAdd);
 
@@ -473,7 +479,8 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD).collect(Collectors.toSet());
+        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -489,8 +496,9 @@ public class ValidatorService {
         new HashSet<BlockWrap>(blocksToAdd).stream().filter(b -> !b.getBlockEvaluation().isConfirmed())
                 .flatMap(b -> b.toConflictCandidates().stream()).filter(c -> {
                     try {
-                        return !hasConfirmedDependencies(c); // Any candidates where used
-                                                // dependencies unconfirmed
+                        return !hasConfirmedDependencies(c); // Any candidates
+                                                             // where used
+                        // dependencies unconfirmed
                     } catch (BlockStoreException e) {
                         // Cannot happen.
                         e.printStackTrace();
@@ -533,8 +541,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd)
-            throws BlockStoreException {
+    private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
         HashSet<BlockWrap> conflictingConfirmedBlocks = new HashSet<BlockWrap>();
 
@@ -581,7 +588,8 @@ public class ValidatorService {
         }
         HashSet<BlockWrap> losingBlocks = new HashSet<>(winningBlocks);
 
-        // Sort conflicts internally by descending rating, then cumulative weight. 
+        // Sort conflicts internally by descending rating, then cumulative
+        // weight.
         Comparator<ConflictCandidate> byDescendingRating = getConflictComparator()
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getRating())
                 .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
@@ -594,17 +602,17 @@ public class ValidatorService {
         Map<Object, TreeSet<ConflictCandidate>> conflicts = conflictingOutPoints.stream().collect(
                 Collectors.groupingBy(i -> i.getConflictPoint(), Collectors.toCollection(conflictTreeSetSupplier)));
 
-        // Sort conflicts among each other by descending max(rating). 
+        // Sort conflicts among each other by descending max(rating).
         Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
-                        .thenComparingLong(
-                                (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
-                        .thenComparingLong((TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation()
-                                .getInsertTime())
-                        .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
-                                .getCumulativeWeight())
-                        .thenComparing((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
-                                .getBlockHash())
-                        .reversed();
+                .thenComparingLong(
+                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
+                .thenComparingLong(
+                        (TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation().getInsertTime())
+                .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
+                        .getCumulativeWeight())
+                .thenComparing(
+                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getBlockHash())
+                .reversed();
 
         Supplier<TreeSet<TreeSet<ConflictCandidate>>> conflictsTreeSetSupplier = () -> new TreeSet<TreeSet<ConflictCandidate>>(
                 byDescendingSetRating);
@@ -760,7 +768,8 @@ public class ValidatorService {
 
             // The spender is always the one block with the same domainname and
             // predecessing domain tokenid that is confirmed
-            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getDomainName(), connectedDomainToken.getDomainPredecessorBlockHash());
+            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getDomainName(),
+                    connectedDomainToken.getDomainPredecessorBlockHash());
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -776,7 +785,7 @@ public class ValidatorService {
             }
         });
     }
-    
+
     private List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
         List<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         List<BlockWrap> result = new ArrayList<>();
@@ -784,9 +793,10 @@ public class ValidatorService {
             result.add(store.getBlockWrap(pred));
         return result;
     }
-    
+
     /**
      * Returns all blocks that must be confirmed if this block is confirmed.
+     * 
      * @param block
      * @return
      */
@@ -794,7 +804,7 @@ public class ValidatorService {
         List<Sha256Hash> predecessors = new ArrayList<>();
         predecessors.add(block.getPrevBlockHash());
         predecessors.add(block.getPrevBranchBlockHash());
-        
+
         // All used transaction outputs
         final List<Transaction> transactions = block.getTransactions();
         for (final Transaction tx : transactions) {
@@ -802,11 +812,11 @@ public class ValidatorService {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
                     // due to virtual txs from order/reward
-                    predecessors.add(in.getOutpoint().getBlockHash()); 
+                    predecessors.add(in.getOutpoint().getBlockHash());
                 }
             }
         }
-        
+
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -823,7 +833,7 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(rewardInfo.getPrevRewardHash()); 
+            predecessors.add(rewardInfo.getPrevRewardHash());
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             TokenInfo currentToken = null;
@@ -833,7 +843,7 @@ public class ValidatorService {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
             predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
-            if (!currentToken.getToken().getPrevblockhash().equals("")) 
+            if (!currentToken.getToken().getPrevblockhash().equals(""))
                 predecessors.add(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
             break;
         case BLOCKTYPE_TRANSFER:
@@ -868,10 +878,10 @@ public class ValidatorService {
         default:
             throw new RuntimeException("No Implementation");
         }
-        
+
         return predecessors;
     }
-    
+
     private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions) throws BlockStoreException {
         final List<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
@@ -888,7 +898,7 @@ public class ValidatorService {
         }
         return SolidityState.getSuccessState();
     }
-    
+
     private SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
         final List<BlockWrap> allPredecessors = getAllRequirements(block);
         SolidityState missingCalculation = null;
@@ -908,7 +918,7 @@ public class ValidatorService {
                 throw new NotImplementedException("not implemented");
             }
         }
-        
+
         if (missingDependency == null) {
             if (missingCalculation == null) {
                 return SolidityState.getSuccessState();
@@ -930,7 +940,7 @@ public class ValidatorService {
                     throw new VerificationException("Lucky zeros not allowed");
                 return SolidityState.getFailState();
             }
-            
+
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 if (throwExceptions)
                     throw new GenesisBlockDisallowedException();
@@ -970,7 +980,8 @@ public class ValidatorService {
         }
     }
 
-    private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+    private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
         try {
             long sigOps = 0;
 
@@ -998,7 +1009,7 @@ public class ValidatorService {
                         throw new SigOpsException();
                 }
             }
-            
+
         } catch (VerificationException e) {
             scriptVerificationExecutor.shutdownNow();
             logger.info("", e);
@@ -1010,7 +1021,8 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkFormalTypeSpecificSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+    private SolidityState checkFormalTypeSpecificSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1178,8 +1190,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState checkFormalOrderOpSolidity(Block block, boolean throwExceptions)
-            throws BlockStoreException {
+    private SolidityState checkFormalOrderOpSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1344,21 +1355,22 @@ public class ValidatorService {
                 throw new MalformedTransactionDataException();
             return SolidityState.getFailState();
         }
-        
+
         return SolidityState.getSuccessState();
     }
 
     /*
-     * Checks if the block is valid based on itself and its dependencies. Rechecks formal criteria too. If
-     * SolidityState.getSuccessState() is returned, the block is valid. If
-     * SolidityState.getFailState() is returned, the block is invalid. Otherwise,
-     * appropriate solidity states are returned to imply missing dependencies.
+     * Checks if the block is valid based on itself and its dependencies.
+     * Rechecks formal criteria too. If SolidityState.getSuccessState() is
+     * returned, the block is valid. If SolidityState.getFailState() is
+     * returned, the block is invalid. Otherwise, appropriate solidity states
+     * are returned to imply missing dependencies.
      */
     private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions) {
         try {
             BlockWrap storedPrev = store.getBlockWrap(block.getPrevBlockHash());
             BlockWrap storedPrevBranch = store.getBlockWrap(block.getPrevBranchBlockHash());
-            
+
             if (block.getHash() == Sha256Hash.ZERO_HASH) {
                 if (throwExceptions)
                     throw new VerificationException("Lucky zeros not allowed");
@@ -1432,7 +1444,8 @@ public class ValidatorService {
             }
 
             // Check transactions are solid
-            SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(), throwExceptions);
+            SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
+                    throwExceptions);
             if (!(transactionalSolidityState.getState() == State.Success)) {
                 return transactionalSolidityState;
             }
@@ -1464,7 +1477,8 @@ public class ValidatorService {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
-                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                    UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(),
+                            in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
                     if (prevOut == null) {
                         // Missing previous transaction output
                         return SolidityState.from(in.getOutpoint(), true);
@@ -1498,8 +1512,8 @@ public class ValidatorService {
                 if (!isCoinBase) {
                     for (int index = 0; index < tx.getInputs().size(); index++) {
                         TransactionInput in = tx.getInputs().get(index);
-                        UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
-                                in.getOutpoint().getIndex());
+                        UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(),
+                                in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
                         if (prevOut == null) {
                             // Cannot happen due to solidity checks before
                             throw new RuntimeException("Block attempts to spend a not yet existent output!");
@@ -1522,7 +1536,7 @@ public class ValidatorService {
                         txOutsSpent.add(prevOut);
                     }
                 }
-//                Sha256Hash hash = tx.getHash();
+                // Sha256Hash hash = tx.getHash();
                 for (TransactionOutput out : tx.getOutputs()) {
                     if (valueOut.containsKey(Utils.HEX.encode(out.getValue().getTokenid()))) {
                         valueOut.put(Utils.HEX.encode(out.getValue().getTokenid()),
@@ -1737,7 +1751,8 @@ public class ValidatorService {
 
         // Ensure the predecessing order matching block approves sufficient
         // height, i.e. higher than the order opening
-        if (store.getRewardToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation().getHeight()) {
+        if (store.getRewardToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation()
+                .getHeight()) {
             if (throwExceptions)
                 throw new InvalidDependencyException(
                         "The order matching block does not approve the given reclaim block height yet.");
@@ -1865,7 +1880,8 @@ public class ValidatorService {
         for (final Transaction tx : block.getTransactions()) {
             for (int index = 0; index < tx.getInputs().size(); index++) {
                 TransactionInput in = tx.getInputs().get(index);
-                UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
+                        in.getOutpoint().getIndex());
                 if (prevOut == null) {
                     // Cannot happen due to solidity checks before
                     throw new RuntimeException("Block attempts to spend a not yet existent output!");
@@ -2054,7 +2070,7 @@ public class ValidatorService {
         }
 
         // Fallback: Ensure everything is generated canonically
-        if (!block.getTransactions().get(0).getHash().equals( result.getTx().getHash())) {
+        if (!block.getTransactions().get(0).getHash().equals(result.getTx().getHash())) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect Transaction");
             return SolidityState.getFailState();
@@ -2063,7 +2079,8 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions) throws BlockStoreException {
+    public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions)
+            throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -2097,7 +2114,8 @@ public class ValidatorService {
 
         // Check field correctness: amount
         if (!currentToken.getToken().getAmount().equals(block.getTransactions().get(0).getOutputSum())) {
-            logger.debug("Incorrect amount field" +  currentToken.getToken().getAmount() + " !="+ block.getTransactions().get(0).getOutputSum());
+            logger.debug("Incorrect amount field" + currentToken.getToken().getAmount() + " !="
+                    + block.getTransactions().get(0).getOutputSum());
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Incorrect amount field");
             return SolidityState.getFailState();
@@ -2132,21 +2150,22 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-    	// Must have a predecessing domain definition
+        // Must have a predecessing domain definition
         if (currentToken.getToken().getDomainPredecessorBlockHash() == null) {
             if (throwExceptions)
                 throw new InvalidDependencyException("Domain predecessor is empty");
             return SolidityState.getFailState();
         }
 
-    	// Requires the predecessing domain definition block to exist and be a legal domain
+        // Requires the predecessing domain definition block to exist and be a
+        // legal domain
         Token prevDomain = store.getToken(currentToken.getToken().getDomainPredecessorBlockHash());
         if (prevDomain == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
             return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()), true);
         }
-        
+
         if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
             if (throwExceptions)
                 throw new InvalidDependencyException("Domain predecessor is not a domain definition token");
@@ -2180,7 +2199,7 @@ public class ValidatorService {
 
         // Get permissioned addresses
         Token prevToken = null;
-        List<MultiSignAddress> permissionedAddresses =  new ArrayList<MultiSignAddress>();
+        List<MultiSignAddress> permissionedAddresses = new ArrayList<MultiSignAddress>();
         // If not initial issuance, we check according to the previous token
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
@@ -2204,20 +2223,21 @@ public class ValidatorService {
                         throw new InvalidDependencyException("Wrong token index");
                     return SolidityState.getFailState();
                 }
-                
+
                 if (!currentToken.getToken().getTokenname().equals(prevToken.getTokenname())) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token name");
                     return SolidityState.getFailState();
                 }
-                
-                if ( currentToken.getToken().getDomainName() !=null && !currentToken.getToken().getDomainName().equals(prevToken.getDomainName())) {
+
+                if (currentToken.getToken().getDomainName() != null
+                        && !currentToken.getToken().getDomainName().equals(prevToken.getDomainName())) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token domain name");
                     return SolidityState.getFailState();
                 }
-                
-                if (currentToken.getToken().getDecimals() !=prevToken.getDecimals()) {
+
+                if (currentToken.getToken().getDecimals() != prevToken.getDecimals()) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token decimal");
                     return SolidityState.getFailState();
@@ -2227,7 +2247,8 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState();
                 }
-                if (!currentToken.getToken().getDomainPredecessorBlockHash().equals(prevToken.getDomainPredecessorBlockHash())) {
+                if (!currentToken.getToken().getDomainPredecessorBlockHash()
+                        .equals(prevToken.getDomainPredecessorBlockHash())) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token domain");
                     return SolidityState.getFailState();
@@ -2254,7 +2275,8 @@ public class ValidatorService {
 
             // Any first time issuances also require the domain signatures
             List<MultiSignAddress> prevDomainPermissionedAddresses = store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevDomain.getTokenid(), prevDomain.getBlockhash());
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevDomain.getTokenid(),
+                            prevDomain.getBlockhash());
             SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
                     txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
@@ -2272,11 +2294,12 @@ public class ValidatorService {
         for (MultiSignBy multiSignBy : new ArrayList<>(txSignatures.getMultiSignBies())) {
             ByteBuffer pubKey = ByteBuffer.wrap(Utils.HEX.decode(multiSignBy.getPublickey()));
             if (!permissionedPubKeys.contains(pubKey)) {
-            	// If a pubkey is not from the list, drop it.
-            	txSignatures.getMultiSignBies().remove(multiSignBy);
-            	continue;
+                // If a pubkey is not from the list, drop it.
+                txSignatures.getMultiSignBies().remove(multiSignBy);
+                continue;
             } else {
-                // Otherwise the listed address is used. Cannot use same address multiple times.
+                // Otherwise the listed address is used. Cannot use same address
+                // multiple times.
                 permissionedPubKeys.remove(pubKey);
             }
         }
@@ -2307,8 +2330,8 @@ public class ValidatorService {
         }
 
         // Return whether sufficient signatures exist
-         int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
-//        int requiredSignatureCount = signNumberCount;
+        int requiredSignatureCount = prevToken != null ? prevToken.getSignnumber() : 1;
+        // int requiredSignatureCount = signNumberCount;
         if (signatureCount >= requiredSignatureCount)
             return SolidityState.getSuccessState();
 
@@ -2338,7 +2361,8 @@ public class ValidatorService {
                 multiSignBies.remove(multiSignBy);
                 continue;
             } else {
-                // Otherwise the listed address is used. Cannot use same address multiple times.
+                // Otherwise the listed address is used. Cannot use same address
+                // multiple times.
                 permissionedPubKeys.remove(pubKey);
             }
         }
@@ -2400,7 +2424,7 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too many token issuances");
             return SolidityState.getFailState();
         }
-  
+
         if (currentToken.getToken().getDescription() != null
                 && currentToken.getToken().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
             if (throwExceptions)
@@ -2437,18 +2461,20 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getDecimals()  >= NetworkParameters.TOKEN_MAX_DECIMAL  || currentToken.getToken().getDecimals()  < 0) {
+        if (currentToken.getToken().getDecimals() >= NetworkParameters.TOKEN_MAX_DECIMAL
+                || currentToken.getToken().getDecimals() < 0) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("decimals must be bewteen 0 and 18 ");
             return SolidityState.getFailState();
         }
-        
-        if ( (currentToken.getToken().getAmount()+""). length() +   currentToken.getToken().getDecimals()  >  NetworkParameters.TOKEN_MAX_DECIMAL ) {
+
+        if ((currentToken.getToken().getAmount() + "").length()
+                + currentToken.getToken().getDecimals() > NetworkParameters.TOKEN_MAX_DECIMAL) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("amount with decimal must be bewteen 0 and 10**19 ");
             return SolidityState.getFailState();
         }
-        
+
         if (currentToken.getToken().getDomainName() != null
                 && currentToken.getToken().getDomainName().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)
@@ -2469,7 +2495,7 @@ public class ValidatorService {
         try {
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-            
+
             // Check if the prev block is reward block
             BlockWrap dependency = store.getBlockWrap(prevRewardHash);
             if (dependency.getBlock().getBlockType() != Type.BLOCKTYPE_INITIAL
@@ -2481,8 +2507,8 @@ public class ValidatorService {
 
             // Get difficulty from predecessors
             BigInteger target = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
-            
-            // Check PoW 
+
+            // Check PoW
             boolean allOk = false;
             try {
                 allOk = block.checkProofOfWork(throwExceptions, target);
@@ -2491,12 +2517,12 @@ public class ValidatorService {
                 logger.warn(block.getHashAsString());
                 throw e;
             }
-            
+
             if (!allOk)
                 return SolidityState.getFailState();
             else
                 return SolidityState.getSuccessState();
-            
+
         } catch (IOException e) {
             // Cannot happen
             e.printStackTrace();
@@ -2504,16 +2530,36 @@ public class ValidatorService {
         }
     }
 
+    /*
+     * check the height of the block, if the block is missing predecessors, then
+     * the height must be in a range to be accepted in unsolid blocks.
+     */
+    public void checkHeight(Block block) throws VerificationException, BlockStoreException {
+
+        List<TXReward> rewards = store.getAllConfirmedReward();
+        if(rewards.isEmpty()) return;
+        int index = rewards.size()-1;
+        if (rewards.size() > 5) {
+            long maxH = rewards.get(index).getToHeight() - rewards.get(rewards.size() - 5).getToHeight();
+            if (Math.abs(block.getHeight() - rewards.get(rewards.size()).getToHeight()) > maxH) {
+                throw new VerificationException("checkHeight failed block height:  " + block.getHeight()
+                        + " last rewards at height: " + rewards.get(index).getToHeight());
+            }
+
+        } 
+    }
+
     /**
      * Checks if the block has all of its dependencies to fully determine its
      * validity. Then checks if the block is valid based on its dependencies. If
      * SolidityState.getSuccessState() is returned, the block is valid. If
-     * SolidityState.getFailState() is returned, the block is invalid. Otherwise,
-     * appropriate solidity states are returned to imply missing dependencies.
+     * SolidityState.getFailState() is returned, the block is invalid.
+     * Otherwise, appropriate solidity states are returned to imply missing
+     * dependencies.
      *
      * @param block
      * @return SolidityState
-     * @throws BlockStoreException 
+     * @throws BlockStoreException
      */
     public SolidityState checkSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
         try {
@@ -2521,25 +2567,25 @@ public class ValidatorService {
             SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
             if (formalSolidityResult.isFailState())
                 return formalSolidityResult;
-            
+
             // Predecessors must exist and be ok
             SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions);
             if (!predecessorsExist.isSuccessState()) {
-                return predecessorsExist;            
+                return predecessorsExist;
             }
-            
+
             // Inherit solidity from predecessors if they are not solid
             SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions);
-            
+
             // For consensus blocks, it works as follows:
-            // If solid == 1 or solid == 2, we also check for PoW now 
+            // If solid == 1 or solid == 2, we also check for PoW now
             // since it is possible to do so
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                if (minPredecessorSolidity.getState() == State.MissingCalculation 
+                if (minPredecessorSolidity.getState() == State.MissingCalculation
                         || minPredecessorSolidity.getState() == State.Success) {
                     SolidityState state = checkConsensusBlockPow(block, throwExceptions);
                     if (!state.isSuccessState()) {
-                        return state;            
+                        return state;
                     }
                 }
             }
@@ -2547,7 +2593,7 @@ public class ValidatorService {
             // Inherit solidity from predecessors if they are not solid
             switch (minPredecessorSolidity.getState()) {
             case MissingCalculation:
-            case Invalid:   
+            case Invalid:
             case MissingPredecessor:
                 return minPredecessorSolidity;
             case Success:
@@ -2556,7 +2602,7 @@ public class ValidatorService {
         } catch (IllegalArgumentException e) {
             throw new VerificationException(e);
         }
-        
+
         // Otherwise, the solidity of the block itself is checked
         return checkFullBlockSolidity(block, throwExceptions);
     }

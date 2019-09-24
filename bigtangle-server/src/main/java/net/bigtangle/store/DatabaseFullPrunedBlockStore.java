@@ -432,8 +432,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
             + "  JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1 AND chainlength="
             + "(SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)";
-    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
-            + "WHERE confirmed = 1 ";
+    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, "
+            + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
+            + "WHERE confirmed = 1 order by chainlength ";
 
     protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_CHAINLENGTH_SQL = "SELECT chainlength "

@@ -13,6 +13,11 @@ select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash orde
 select * from blocks order by inserttime desc limit 1000  ;
 select * from openorders where spent=0 and confirmed=1  ;
 
+ SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
+ txreward.difficulty, txreward.chainlength FROM txreward 
+JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1  and
+   chainlength= (SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)
+   
 select  missingdependency, height from unsolidblocks where directlymissing=1
 select * from blocks where hash =373;
 

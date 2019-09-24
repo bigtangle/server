@@ -2010,8 +2010,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
         adjust. solve();
 
-        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-        return block;
+        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), adjust.bitcoinSerialize());
+        return adjust;
     }
 
     // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long>
@@ -2024,7 +2024,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, 3, 10000);
     }
 
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+    private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
             int repeat, int sleep) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         // int sleep = 60000;
@@ -2045,14 +2045,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     }
 
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo);
-    }
-
+ 
     // pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+    private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
             byte[] tokenid, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         if (giveMoneyResult.isEmpty()) {

@@ -185,7 +185,7 @@ public class MilestoneService {
      * @throws BlockStoreException
      * @throws NoBlockException
      */
-    private void updateMilestone() throws BlockStoreException, NoBlockException {
+    public void updateMilestone() throws BlockStoreException, NoBlockException {
         Block longestRewardBlock = store.get(store.getMaxSolidReward().getSha256Hash());
         runConsensusLogic(longestRewardBlock);
     }
