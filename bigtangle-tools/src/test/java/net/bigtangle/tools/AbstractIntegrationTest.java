@@ -105,9 +105,9 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        // System.setProperty("https.proxyHost",
-        // "anwproxy.anwendungen.localnet.de");
-        // System.setProperty("https.proxyPort", "3128");
+         System.setProperty("https.proxyHost",
+         "anwproxy.anwendungen.localnet.de");
+          System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();
@@ -287,30 +287,7 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
-    protected void testCheckToken() throws JsonProcessingException, Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
-
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        for (ECKey k : w.walletKeys()) {
-            requestParam.put("tokenid", k.getPublicKeyAsHex());
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-            log.info("getOutputsResponse : " + getOutputsResponse);
-
-            //assertTrue(getOutputsResponse.getOutputs().size() > 0);
-            // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
-            // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
-
-        }
-
-    }
+  
 
     protected void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
         checkResponse(resp, 0);

@@ -77,6 +77,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    tokenid varchar(255),\n" 
             + "    fromaddress varchar(255),\n" 
             + "    memo MEDIUMTEXT,\n"
+            //begin the derived value of the output from block
             + "    spent boolean NOT NULL,\n" 
             + "    confirmed boolean NOT NULL,\n"
             + "    spendpending boolean NOT NULL,\n" 

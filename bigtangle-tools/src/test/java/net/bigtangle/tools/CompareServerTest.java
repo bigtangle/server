@@ -10,11 +10,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.Coin;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.http.server.resp.GetBlockEvaluationsResponse;
+import net.bigtangle.core.http.server.resp.GetOutputsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
-
+import net.bigtangle.wallet.Wallet;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 public class CompareServerTest extends AbstractIntegrationTest {
 
     private static final String CHECHNUMBER = "2000";
@@ -113,16 +120,39 @@ public class CompareServerTest extends AbstractIntegrationTest {
         }
 
     }
-    @Test
-    public void testCheckTokens() throws JsonProcessingException, Exception {
-        while( true) {
-            try {
-               
-        super.testCheckToken();
-        Thread.sleep(5000);
-            } catch (Exception e) {
-                log.debug("", e);
+    @Test 
+    public void testCheckToken() throws JsonProcessingException, Exception {
+        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        for (ECKey k : w.walletKeys()) {
+            requestParam.put("tokenid", k.getPublicKeyAsHex());
+            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+            log.info("getOutputsResponse : " + getOutputsResponse);
+            Coin sumUnspent= Coin.valueOf(0l, k.getPubKey());
+            Coin sumCoinbase= Coin.valueOf(0l, k.getPubKey());
+            for(UTXO u:getOutputsResponse.getOutputs()) {
+                if(!u.isCoinbase())
+                sumCoinbase=  sumCoinbase. add(u.getValue());
+                
+                if(!u.isSpent())
+                    sumUnspent=  sumUnspent. add(u.getValue());
             }
+            log.info("sumUnspent : " + sumUnspent);
+            log.info("sumCoinbase : " + sumCoinbase);
+           assertTrue( sumUnspent.equals(sumCoinbase));
+            // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+            // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+
         }
+
     }
 }
