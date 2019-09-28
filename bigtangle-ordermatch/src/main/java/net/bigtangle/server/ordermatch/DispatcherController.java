@@ -30,7 +30,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.server.ordermatch.service.ExchangeService;
 import net.bigtangle.server.ordermatch.service.OrderPublishService;

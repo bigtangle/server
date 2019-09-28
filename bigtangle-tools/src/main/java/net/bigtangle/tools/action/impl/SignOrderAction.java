@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
+import net.bigtangle.core.response.GetExchangeResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.SimpleAction;

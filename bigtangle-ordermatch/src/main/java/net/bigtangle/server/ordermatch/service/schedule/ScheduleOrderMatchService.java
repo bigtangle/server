@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
+import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.server.ordermatch.bean.OrderMatch;
 import net.bigtangle.server.ordermatch.config.ScheduleConfiguration;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
@@ -72,8 +72,8 @@ public class ScheduleOrderMatchService {
                             logger.info("order match hit : " + match);
                             saveOrderMatch(match);
 
-                            OrderPublish incomingOrder = this.store.getOrderPublishByOrderid(match.incomingOrderId);
-                            OrderPublish restingOrder = this.store.getOrderPublishByOrderid(match.restingOrderId);
+                            OTCOrder incomingOrder = this.store.getOrderPublishByOrderid(match.incomingOrderId);
+                            OTCOrder restingOrder = this.store.getOrderPublishByOrderid(match.restingOrderId);
                             // TODO Here's the change orders Jiang
                             // sell side will get the system coin as token
                             if (match.incomingSide == Side.BUY) {

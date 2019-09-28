@@ -83,6 +83,7 @@ import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.LazyECPoint;
 import net.bigtangle.crypto.LinuxSecureRandom;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.utils.DumpedPrivateKey;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.Wallet;
 
@@ -946,7 +947,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
-     * the {@link net.bigtangle.core.DumpedPrivateKey#toString()} method to get the string.
+     * the {@link net.bigtangle.utils.DumpedPrivateKey#toString()} method to get the string.
      *
      * @param params The network this key is intended for use on.
      * @return Private key bytes as a {@link DumpedPrivateKey}.

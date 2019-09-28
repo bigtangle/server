@@ -30,7 +30,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -274,7 +274,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
+    
     public synchronized void close() {
         for (Connection conn : allConnections) {
             try {
@@ -415,7 +415,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
+ 
     public NetworkParameters getParams() {
         return params;
     }
@@ -468,7 +468,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException {
+    public void saveOrderPublish(OTCOrder orderPublish) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -529,10 +529,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
+    public List<OTCOrder> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
+        List<OTCOrder> list = new ArrayList<OTCOrder>();
         try {
             StringBuffer whereStr = new StringBuffer(" WHERE 1 = 1 ");
             for (Entry<String, Object> entry : request.entrySet()) {
@@ -546,7 +546,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
+                OTCOrder orderPublish = new OTCOrder();
                 orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
                 orderPublish.setTokenId(resultSet.getString("tokenid"));
@@ -796,7 +796,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException {
+    public OTCOrder getOrderPublishByOrderid(String orderid) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -808,7 +808,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (!resultSet.next()) {
                 return null;
             }
-            OrderPublish orderPublish = new OrderPublish();
+            OTCOrder orderPublish = new OTCOrder();
             orderPublish.setOrderId(resultSet.getString("orderid"));
             orderPublish.setAddress(resultSet.getString("address"));
             orderPublish.setTokenId(resultSet.getString("tokenid"));
@@ -911,17 +911,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
+    public List<OTCOrder> getOrderPublishListWithNotMatch() throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
+        List<OTCOrder> list = new ArrayList<OTCOrder>();
         try {
             String sql = SELECT_ORDERPUBLISH_SQL + " WHERE 1 = 1 AND state = ?";
             preparedStatement = conn.get().prepareStatement(sql);
             preparedStatement.setInt(1, OrderState.publish.ordinal());
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
+                OTCOrder orderPublish = new OTCOrder();
                 orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
                 orderPublish.setTokenId(resultSet.getString("tokenid"));
@@ -948,14 +948,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    @Override
-    public void put(Block block) throws BlockStoreException {
-    }
-
-    @Override
-    public Block get(Sha256Hash hash) throws BlockStoreException {
-        return null;
-    }
+ 
  
 
     @Override
@@ -1024,16 +1017,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderPublish> getOrderPublishListRemoveDaily(int i) throws BlockStoreException {
+    public List<OTCOrder> getOrderPublishListRemoveDaily(int i) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        List<OrderPublish> list = new ArrayList<OrderPublish>();
+        List<OTCOrder> list = new ArrayList<OTCOrder>();
         try {
             String sql = SELECT_ORDERPUBLISH_SQL + " WHERE DATE_ADD(submitDate, INTERVAL 2 DAY) <= NOW()";
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                OrderPublish orderPublish = new OrderPublish();
+                OTCOrder orderPublish = new OTCOrder();
                 orderPublish.setOrderId(resultSet.getString("orderid"));
                 orderPublish.setAddress(resultSet.getString("address"));
                 orderPublish.setTokenId(resultSet.getString("tokenid"));

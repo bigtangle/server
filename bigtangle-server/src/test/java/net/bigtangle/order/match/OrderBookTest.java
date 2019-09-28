@@ -11,11 +11,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import net.bigtangle.core.Side;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Add;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Cancel;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
+import net.bigtangle.core.ordermatch.OrderBookEvents;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Add;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Cancel;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.server.utils.OrderBook;
 
 public class OrderBookTest {

@@ -69,7 +69,7 @@ import net.bigtangle.core.exception.VerificationException.TimeReversionException
 import net.bigtangle.core.exception.VerificationException.TimeTravelerException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;

@@ -85,7 +85,7 @@ import net.bigtangle.core.exception.VerificationException.PreviousTokenDisallows
 import net.bigtangle.core.exception.VerificationException.SigOpsException;
 import net.bigtangle.core.exception.VerificationException.TimeReversionException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.core.BlockWrap;

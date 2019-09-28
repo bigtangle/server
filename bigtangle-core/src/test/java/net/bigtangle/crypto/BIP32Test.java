@@ -9,13 +9,13 @@ import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 
-import net.bigtangle.core.Base58;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.DeterministicHierarchy;
 import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.HDKeyDerivation;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.utils.Base58;
 
 import org.junit.Test;
 import org.slf4j.Logger;

@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.server.resp.SettingResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.SettingResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
 

@@ -39,18 +39,7 @@ public abstract class MessageSerializer {
      */
     public abstract Message deserialize(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException;
 
-    /**
-     * Deserializes only the header in case packet meta data is needed before decoding
-     * the payload. This method assumes you have already called seekPastMagicBytes()
-     */
-    public abstract BitcoinSerializer.BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException;
-
-    /**
-     * Deserialize payload only.  You must provide a header, typically obtained by calling
-     * {@link BitcoinSerializer#deserializeHeader}.
-     */
-    public abstract Message deserializePayload(BitcoinSerializer.BitcoinPacketHeader header, ByteBuffer in) throws ProtocolException, BufferUnderflowException, UnsupportedOperationException;
-
+  
     /**
      * Whether the serializer will produce cached mode Messages
      */
@@ -92,19 +81,7 @@ public abstract class MessageSerializer {
      * serialization format support.
      */
     public abstract Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
-
-    /**
-     * Make a filtered block from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
-
-    /**
-     * Make an inventory message from the payload. Extension point for alternative
-     * serialization format support.
-     */
-    public abstract InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
-
+ 
     /**
      * Make a transaction from the payload. Extension point for alternative
      * serialization format support.

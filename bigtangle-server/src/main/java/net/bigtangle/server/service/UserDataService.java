@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.server.resp.UserDataResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.UserDataResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

@@ -13,12 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Exchange;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
-import net.bigtangle.core.http.ordermatch.resp.GetExchangeResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.ExchangeInfoResponse;
+import net.bigtangle.core.response.GetExchangeResponse;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.utils.OrderState;
 
@@ -48,8 +48,8 @@ public class ExchangeService {
         String orderid = (String) request.get("orderid");
 
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
-        OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
-        OrderPublish orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
+        OTCOrder orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
+        OTCOrder orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
 
         if (orderPublish1.getState() == OrderState.finish.ordinal()
                 || orderPublish2.getState() == OrderState.finish.ordinal()) {
@@ -75,8 +75,8 @@ public class ExchangeService {
         String orderid = (String) request.get("orderid");
 
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
-        OrderPublish orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
-        OrderPublish orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
+        OTCOrder orderPublish1 = this.store.getOrderPublishByOrderid(exchange.getToOrderId());
+        OTCOrder orderPublish2 = this.store.getOrderPublishByOrderid(exchange.getFromOrderId());
 
         if (orderPublish1.getState() == OrderState.finish.ordinal()
                 || orderPublish2.getState() == OrderState.finish.ordinal()) {

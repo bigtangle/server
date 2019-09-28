@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.OrderPublish;
-import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
+import net.bigtangle.core.OTCOrder;
+import net.bigtangle.core.response.GetOrderResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.tools.account.Account;
 import net.bigtangle.tools.action.SimpleAction;
@@ -37,7 +37,7 @@ public class BuyOrderAction extends SimpleAction {
             String resp = OkHttp3Util.postString(Configure.ORDER_MATCH_CONTEXT_ROOT + OrdermatchReqCmd.getOrders.name(),
                     Json.jsonmapper().writeValueAsString(new HashMap<String, Object>()));
             GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(resp, GetOrderResponse.class);
-            for (OrderPublish orderPublish : getOrderResponse.getOrders()) {
+            for (OTCOrder orderPublish : getOrderResponse.getOrders()) {
                 if (orderPublish.getState() != OrderState.publish.ordinal()) {
                     continue;
                 }

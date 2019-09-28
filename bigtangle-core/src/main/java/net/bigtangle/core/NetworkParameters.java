@@ -349,7 +349,7 @@ public abstract class NetworkParameters {
 
     /**
      * First byte of a base58 encoded dumped private key. See
-     * {@link net.bigtangle.core.DumpedPrivateKey}.
+     * {@link net.bigtangle.utils.DumpedPrivateKey}.
      */
     public int getDumpedPrivateKeyHeader() {
         return dumpedPrivateKeyHeader;

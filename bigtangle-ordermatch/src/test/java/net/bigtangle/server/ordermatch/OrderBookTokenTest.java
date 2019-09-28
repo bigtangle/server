@@ -17,8 +17,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
+import net.bigtangle.core.ordermatch.OrderBookEvents;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.server.utils.OrderBook;
 
 @RunWith(SpringRunner.class)

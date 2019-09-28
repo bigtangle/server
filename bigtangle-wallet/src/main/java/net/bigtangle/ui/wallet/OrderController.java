@@ -47,13 +47,13 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
-import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.response.GetOrderResponse;
+import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -395,7 +395,7 @@ public class OrderController extends ExchangeController {
                 continue;
             }
             GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(response, GetOrderResponse.class);
-            for (OrderPublish orderPublish : getOrderResponse.getOrders()) {
+            for (OTCOrder orderPublish : getOrderResponse.getOrders()) {
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 if (orderPublish.getType() == 1) {
                     map.put("type", Main.getText("SELL"));

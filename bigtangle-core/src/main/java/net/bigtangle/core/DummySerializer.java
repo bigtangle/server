@@ -41,15 +41,7 @@ class DummySerializer extends MessageSerializer {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
-    @Override
-    public BitcoinSerializer.BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public Message deserializePayload(BitcoinSerializer.BitcoinPacketHeader header, ByteBuffer in) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
+   
 
     @Override
     public boolean isParseRetainMode() {
@@ -72,16 +64,7 @@ class DummySerializer extends MessageSerializer {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
-    @Override
-    public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
+   
     @Override
     public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hash) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
@@ -101,5 +84,6 @@ class DummySerializer extends MessageSerializer {
     public void serialize(Message message, OutputStream out) throws IOException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
+ 
     
 }

@@ -10,10 +10,10 @@ import org.junit.Test;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
+import net.bigtangle.core.response.GetOrderResponse;
 
 public class JsonMapperTest {
 
@@ -22,9 +22,9 @@ public class JsonMapperTest {
         GetOrderResponse getOrderResponse = new GetOrderResponse();
         getOrderResponse.setErrorcode(0);
 
-        OrderPublish orderPublish = new OrderPublish("address", "tokenid", 0, null, null, 2000, 2000,
+        OTCOrder orderPublish = new OTCOrder("address", "tokenid", 0, null, null, 2000, 2000,
                 "http://localhost");
-        List<OrderPublish> orders = new ArrayList<>();
+        List<OTCOrder> orders = new ArrayList<>();
         orders.add(orderPublish);
 
         getOrderResponse.setOrders(orders);
@@ -33,7 +33,7 @@ public class JsonMapperTest {
 
         GetOrderResponse getOrderResponse2 = Json.jsonmapper().readValue(jsonStr, GetOrderResponse.class);
 
-        OrderPublish orderPublish2 = getOrderResponse2.getOrders().get(0);
+        OTCOrder orderPublish2 = getOrderResponse2.getOrders().get(0);
 
         Class<?> clazz = orderPublish2.getClass();
         for (Field field : clazz.getDeclaredFields()) {

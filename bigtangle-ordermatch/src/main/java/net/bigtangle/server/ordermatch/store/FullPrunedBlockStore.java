@@ -8,14 +8,14 @@ package net.bigtangle.server.ordermatch.store;
 import java.util.List;
 import java.util.Map;
 
-import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
  
 import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.ordermatch.bean.OrderMatch;
+ 
 
 /**
  * <p>
@@ -65,7 +65,7 @@ import net.bigtangle.server.ordermatch.bean.OrderMatch;
  * FullPrunedBlockStores are thread safe.
  * </p>
  */
-public interface FullPrunedBlockStore extends BlockStore {
+public interface FullPrunedBlockStore   {
 
     void beginDatabaseBatchWrite() throws BlockStoreException;
 
@@ -73,7 +73,7 @@ public interface FullPrunedBlockStore extends BlockStore {
 
     void abortDatabaseBatchWrite() throws BlockStoreException;
 
-    public void saveOrderPublish(OrderPublish orderPublish) throws BlockStoreException;
+    public void saveOrderPublish(OTCOrder orderPublish) throws BlockStoreException;
 
     public void saveExchangeMulti(ExchangeMulti exchangeMulti) throws BlockStoreException;
 
@@ -81,7 +81,7 @@ public interface FullPrunedBlockStore extends BlockStore {
 
     public void saveOrderMatch(OrderMatch orderMatch) throws BlockStoreException;
 
-    public List<OrderPublish> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
+    public List<OTCOrder> getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException;
 
     public void saveExchange(Exchange exchange) throws BlockStoreException;
 
@@ -93,7 +93,7 @@ public interface FullPrunedBlockStore extends BlockStore {
 
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
-    public OrderPublish getOrderPublishByOrderid(String orderid) throws BlockStoreException;
+    public OTCOrder getOrderPublishByOrderid(String orderid) throws BlockStoreException;
 
     public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
 
@@ -101,7 +101,7 @@ public interface FullPrunedBlockStore extends BlockStore {
 
     public void resetStore() throws BlockStoreException;
 
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException;
+    public List<OTCOrder> getOrderPublishListWithNotMatch() throws BlockStoreException;
 
     void deleteOrderPublish(String orderid) throws BlockStoreException;
 
@@ -109,5 +109,5 @@ public interface FullPrunedBlockStore extends BlockStore {
 
     void deleteOrderMatch(String orderid) throws BlockStoreException;
 
-    List<OrderPublish> getOrderPublishListRemoveDaily(int i) throws BlockStoreException;
+    List<OTCOrder> getOrderPublishListRemoveDaily(int i) throws BlockStoreException;
 }

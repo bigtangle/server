@@ -28,13 +28,13 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.response.GetOrderResponse;
+import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.service.schedule.ScheduleOrderMatchService;
@@ -75,7 +75,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         logger.info("getOrders resp : " + resp);
 
         GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(resp, GetOrderResponse.class);
-        OrderPublish orderPublish = getOrderResponse.getOrders().get(0);
+        OTCOrder orderPublish = getOrderResponse.getOrders().get(0);
 
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock(),
                 NetworkParameters.BLOCK_VERSION_GENESIS, outKey.getPubKeyHash());
@@ -128,7 +128,7 @@ public class ClientIntegrationTest extends AbstractIntegrationTest {
         String response = OkHttp3Util.post(contextRoot + OrdermatchReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(response, GetOrderResponse.class);
-        for (OrderPublish orderPublish : getOrderResponse.getOrders()) {
+        for (OTCOrder orderPublish : getOrderResponse.getOrders()) {
             logger.info("getOrders resp : " + orderPublish);
         }
     }

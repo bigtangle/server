@@ -14,9 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.core.Json;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Side;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
+import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.server.ordermatch.service.OrderPublishService;
 import net.bigtangle.server.utils.OrderBook;
 
@@ -26,8 +26,8 @@ public class OrderBookHolder {
     public void init() {
         try {
             ConcurrentHashMap<String, OrderBook> dataMap = new ConcurrentHashMap<String, OrderBook>();
-            List<OrderPublish> orderPublishs = this.orderPublishService.getOrderPublishListWithNotMatch();
-            for (OrderPublish order : orderPublishs) {
+            List<OTCOrder> orderPublishs = this.orderPublishService.getOrderPublishListWithNotMatch();
+            for (OTCOrder order : orderPublishs) {
                 OrderBook orderBook = dataMap.get(order.getTokenId());
                 if (orderBook == null) {
                     orderBook = this.createOrderBook();

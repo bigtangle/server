@@ -27,7 +27,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VersionMessage;
 import net.bigtangle.crawler.PeerSeedProtos;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -87,7 +86,7 @@ public class HttpDiscovery implements PeerDiscovery {
                 url.addQueryParameter("srvmask", Long.toString(services));
             Request.Builder request = new Request.Builder();
             request.url(url.build());
-            request.addHeader("User-Agent", VersionMessage.LIBRARY_SUBVER); // TODO Add main version.
+          //  request.addHeader("User-Agent", VersionMessage.LIBRARY_SUBVER); // TODO Add main version.
             log.info("Requesting seeds from {}", url);
             Response response = client.newCall(request.build()).execute();
             if (!response.isSuccessful())

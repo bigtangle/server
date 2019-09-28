@@ -10,10 +10,10 @@ import org.junit.Test;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BloomFilter;
 import net.bigtangle.core.Context;
-import net.bigtangle.core.DumpedPrivateKey;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.utils.DumpedPrivateKey;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Wallet;
 

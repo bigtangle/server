@@ -29,6 +29,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
 
 import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.utils.Base58;
 
 /**
  * <p>In Bitcoin the following format is often used to represent some type of key:</p>

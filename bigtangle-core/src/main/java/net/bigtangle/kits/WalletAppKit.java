@@ -41,11 +41,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
@@ -98,7 +96,6 @@ public class WalletAppKit extends AbstractIdleService {
     protected final String filePrefix;
     protected final NetworkParameters params;
 
-    protected volatile BlockStore vStore;
     protected volatile Wallet vWallet;
 
     protected final File directory;
@@ -298,7 +295,6 @@ public class WalletAppKit extends AbstractIdleService {
             wallet = loadWallet(shouldReplayWallet);
         } else {
             wallet = createWallet();
-        
 
             // Currently the only way we can be sure that an extension is aware
             // of its containing wallet is by
@@ -379,31 +375,18 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
-  
     @Override
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
-        try {
-            Context.propagate(context);
+        Context.propagate(context);
 
-            vWallet.saveToFile(vWalletFile);
-            vStore.close();
+        vWallet.saveToFile(vWalletFile);
+        vWallet = null;
 
-            vWallet = null;
-            vStore = null;
-
-        } catch (BlockStoreException e) {
-            throw new IOException(e);
-        }
     }
 
     public NetworkParameters params() {
         return params;
-    }
-
-    public BlockStore store() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
-        return vStore;
     }
 
     public Wallet wallet() {

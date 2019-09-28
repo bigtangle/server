@@ -3,7 +3,7 @@ package net.bigtangle.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.bigtangle.core.http.AbstractResponse;
+import net.bigtangle.core.response.AbstractResponse;
 
 public class ByteListResp extends AbstractResponse {
 

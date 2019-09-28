@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.server.utils.OrderBook;
@@ -34,8 +34,8 @@ public class ScheduleOrderRemoveService {
     public void updateRemoveSchedule() {
         try {
             logger.info("order publish remove start");
-            List<OrderPublish> list = this.store.getOrderPublishListRemoveDaily(2);
-            for (OrderPublish orderPublish : list) {
+            List<OTCOrder> list = this.store.getOrderPublishListRemoveDaily(2);
+            for (OTCOrder orderPublish : list) {
                 String tokenid = orderPublish.getTokenId();
                 OrderBook orderBook = orderBookHolder.getOrderBookWithTokenId(tokenid);
                 synchronized (this) {

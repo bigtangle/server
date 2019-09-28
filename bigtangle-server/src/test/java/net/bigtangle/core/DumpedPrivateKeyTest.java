@@ -16,6 +16,7 @@ import java.io.ObjectOutputStream;
 import org.junit.Test;
 
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.utils.DumpedPrivateKey;
 
 public class DumpedPrivateKeyTest {
 

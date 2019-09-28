@@ -17,8 +17,8 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.server.resp.GetTokensResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

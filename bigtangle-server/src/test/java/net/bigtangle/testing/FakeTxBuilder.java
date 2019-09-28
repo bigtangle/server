@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MessageSerializer;
@@ -34,6 +33,7 @@ import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.TipsService;
+import net.bigtangle.store.BlockStore;
 
 public class FakeTxBuilder {
 

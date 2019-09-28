@@ -14,11 +14,11 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.server.resp.OrderTickerResponse;
-import net.bigtangle.server.ordermatch.bean.MatchResult;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Event;
-import net.bigtangle.server.ordermatch.bean.OrderBookEvents.Match;
+import net.bigtangle.core.ordermatch.MatchResult;
+import net.bigtangle.core.ordermatch.OrderBookEvents;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
+import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.store.FullPrunedBlockGraph.OrderMatchingResult;
 import net.bigtangle.store.FullPrunedBlockStore;
 

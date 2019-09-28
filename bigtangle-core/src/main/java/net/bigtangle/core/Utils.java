@@ -30,6 +30,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 
 import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.utils.Base58;
 
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 

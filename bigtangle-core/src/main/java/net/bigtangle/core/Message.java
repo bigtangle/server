@@ -20,16 +20,17 @@
  */
 package net.bigtangle.core;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.exception.ProtocolException;
-
-import java.io.*;
-import java.math.BigInteger;
-import java.util.Arrays;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -104,25 +105,12 @@ public abstract class Message {
             checkState(false, "Length field has not been set in constructor for %s after parse.",
                        getClass().getSimpleName());
         
-        if (SELF_CHECK) {
-            selfCheck(payload, offset);
-        }
-        
+       
         if (!serializer.isParseRetainMode())
             this.payload = null;
     }
 
-    private void selfCheck(byte[] payload, int offset) {
-        if (!(this instanceof VersionMessage)) {
-            byte[] payloadBytes = new byte[cursor - offset];
-            System.arraycopy(payload, offset, payloadBytes, 0, cursor - offset);
-            byte[] reserialized = bitcoinSerialize();
-            if (!Arrays.equals(reserialized, payloadBytes))
-                throw new RuntimeException("Serialization is wrong: \n" +
-                        Utils.HEX.encode(reserialized) + " vs \n" +
-                        Utils.HEX.encode(payloadBytes));
-        }
-    }
+    
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         this(params, payload, offset, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),

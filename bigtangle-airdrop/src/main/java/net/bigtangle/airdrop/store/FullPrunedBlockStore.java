@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 import net.bigtangle.airdrop.bean.WechatInvite;
-import net.bigtangle.core.BlockStore;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
+ 
 
 /**
  * <p>

@@ -37,7 +37,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.http.server.resp.GetBalancesResponse;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.ordermatch.config.DBStoreConfiguration;

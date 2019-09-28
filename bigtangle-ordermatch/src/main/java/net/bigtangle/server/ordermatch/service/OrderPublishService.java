@@ -18,14 +18,14 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
-import net.bigtangle.core.OrderPublish;
+import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.ordermatch.resp.GetOrderResponse;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.GetOrderResponse;
+import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.server.ordermatch.context.OrderBookHolder;
 import net.bigtangle.server.ordermatch.store.FullPrunedBlockStore;
 import net.bigtangle.server.utils.OrderBook;
@@ -57,7 +57,7 @@ public class OrderPublishService {
         if (market == null)
             market = "";
         // add market
-        OrderPublish order = OrderPublish.create(address, tokenid, type, toDate, fromDate, price, amount, market);
+        OTCOrder order = OTCOrder.create(address, tokenid, type, toDate, fromDate, price, amount, market);
         store.saveOrderPublish(order);
         if (type == 1) {
             if (signaddress != null && !signaddress.isEmpty()) {
@@ -102,7 +102,7 @@ public class OrderPublishService {
             throw new BlockStoreException("multisign signature error");
         }
 
-        OrderPublish orderPublish = this.store.getOrderPublishByOrderid(orderid);
+        OTCOrder orderPublish = this.store.getOrderPublishByOrderid(orderid);
         if (orderPublish == null) {
             throw new BlockStoreException("order publish not found");
         }
@@ -129,12 +129,12 @@ public class OrderPublishService {
     protected FullPrunedBlockStore store;
 
     public AbstractResponse getOrderPublishListWithCondition(Map<String, Object> request) throws BlockStoreException {
-        List<OrderPublish> orders = this.store.getOrderPublishListWithCondition(request);
+        List<OTCOrder> orders = this.store.getOrderPublishListWithCondition(request);
         return GetOrderResponse.create(orders);
     }
 
-    public List<OrderPublish> getOrderPublishListWithNotMatch() throws BlockStoreException {
-        List<OrderPublish> orders = this.store.getOrderPublishListWithNotMatch();
+    public List<OTCOrder> getOrderPublishListWithNotMatch() throws BlockStoreException {
+        List<OTCOrder> orders = this.store.getOrderPublishListWithNotMatch();
         return orders;
     }
 }

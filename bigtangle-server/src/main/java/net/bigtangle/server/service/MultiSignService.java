@@ -28,11 +28,11 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.server.req.MultiSignByRequest;
-import net.bigtangle.core.http.server.resp.MultiSignResponse;
-import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
-import net.bigtangle.core.http.server.resp.TokenIndexResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.MultiSignByRequest;
+import net.bigtangle.core.response.MultiSignResponse;
+import net.bigtangle.core.response.SearchMultiSignResponse;
+import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.UUIDUtil;
 

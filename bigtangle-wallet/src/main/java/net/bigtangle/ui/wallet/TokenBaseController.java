@@ -25,7 +25,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
+import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MonetaryFormat;

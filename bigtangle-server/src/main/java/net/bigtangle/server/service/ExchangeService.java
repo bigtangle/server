@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.ordermatch.resp.ExchangeInfoResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.ExchangeInfoResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service

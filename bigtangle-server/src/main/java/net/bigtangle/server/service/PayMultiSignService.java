@@ -18,11 +18,11 @@ import net.bigtangle.core.PayMultiSignExt;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.http.AbstractResponse;
-import net.bigtangle.core.http.server.resp.PayMultiSignAddressListResponse;
-import net.bigtangle.core.http.server.resp.PayMultiSignDetailsResponse;
-import net.bigtangle.core.http.server.resp.PayMultiSignListResponse;
-import net.bigtangle.core.http.server.resp.PayMultiSignResponse;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.PayMultiSignAddressListResponse;
+import net.bigtangle.core.response.PayMultiSignDetailsResponse;
+import net.bigtangle.core.response.PayMultiSignListResponse;
+import net.bigtangle.core.response.PayMultiSignResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
