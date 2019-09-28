@@ -13,6 +13,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PermissionDomainname;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.AbstractResponse;
@@ -42,11 +43,11 @@ public class TokenDomainnameService {
     @Cacheable("queryDomainnameTokenPermissionedAddresses")
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainPredecessorBlockHash)
             throws BlockStoreException {
-        Token token = this.store.getToken(domainPredecessorBlockHash);
+        Token token = this.store.getToken(Sha256Hash.wrap(domainPredecessorBlockHash));
         final String domainName = token.getDomainName();
 
         List<MultiSignAddress> multiSignAddresses = this
-                .queryDomainnameTokenMultiSignAddresses(domainPredecessorBlockHash);
+                .queryDomainnameTokenMultiSignAddresses(token.getBlockHash());
 
         PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
                 .create(domainName, false, multiSignAddresses);
@@ -60,7 +61,7 @@ public class TokenDomainnameService {
      * @return
      * @throws BlockStoreException
      */
-    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(String domainPredecessorBlockHash)
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(Sha256Hash domainPredecessorBlockHash)
             throws BlockStoreException {
         if (domainPredecessorBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
@@ -76,10 +77,9 @@ public class TokenDomainnameService {
             if (token == null)
                 throw new BlockStoreException("token not found");
 
-            final String tokenid = token.getTokenid();
-            final String prevblockhash = token.getBlockhash();
+            final String tokenid = token.getTokenid(); 
             List<MultiSignAddress> multiSignAddresses = this.store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokenid, prevblockhash);
+                    .getMultiSignAddressListByTokenidAndBlockHashHex(tokenid, token.getBlockHash());
             return multiSignAddresses;
         }
     }
@@ -96,7 +96,7 @@ public class TokenDomainnameService {
             if (token == null) {
                 throw new BlockStoreException("token domain name not found : " + domainname);
             }
-            String domainPredecessorBlockHash = token.getBlockhash();
+            String domainPredecessorBlockHash = token.getBlockHashHex();
             response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainPredecessorBlockHash);
         }
         return response;

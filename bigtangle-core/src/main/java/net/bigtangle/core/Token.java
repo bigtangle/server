@@ -6,11 +6,11 @@ package net.bigtangle.core;
 
 import java.math.BigInteger;
 
-public class Token implements java.io.Serializable {
+public class Token extends SpentBlock implements java.io.Serializable {
 
     private static final long serialVersionUID = 6992138619113601243L;
 
-    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+    public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop, int decimals,
             String predecessingDomainBlockHash) {
 
@@ -19,7 +19,7 @@ public class Token implements java.io.Serializable {
                 predecessingDomainBlockHash);
     }
 
-    public static Token buildDomainnameTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
+    public static Token buildDomainnameTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
             String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             int decimals, String domainname, String predecessingDomainBlockHash) {
 
@@ -38,8 +38,6 @@ public class Token implements java.io.Serializable {
     public Token() {
     }
 
-    // indicator, if the token block is confirmed
-    private boolean confirmed;
     private String tokenid;
     // the index for token in serial
     private long tokenindex;
@@ -59,9 +57,9 @@ public class Token implements java.io.Serializable {
     // if this is true, there is no possible to change the token anymore.
     private boolean tokenstop;
     // indicator of the prev token index blockhash
-    private String prevblockhash;
+    private Sha256Hash prevblockhash;
 
-    private String blockhash;
+ 
     private BigInteger amount;
     private int decimals = 0; // number of decimals for the token, default
                               // integer
@@ -86,22 +84,7 @@ public class Token implements java.io.Serializable {
         }
         tokenKeyValues.addKeyvalue(kv);
     }
-
-    public String getBlockhash() {
-        return blockhash;
-    }
-
-    public void setBlockhash(String blockhash) {
-        this.blockhash = blockhash;
-    }
-
-    public boolean isConfirmed() {
-        return confirmed;
-    }
-
-    public void setConfirmed(boolean confirmed) {
-        this.confirmed = confirmed;
-    }
+ 
 
     public String getTokenid() {
         return tokenid;
@@ -192,11 +175,11 @@ public class Token implements java.io.Serializable {
         this.tokenstop = tokenstop;
     }
 
-    public String getPrevblockhash() {
+    public Sha256Hash getPrevblockhash() {
         return prevblockhash;
     }
 
-    public void setPrevblockhash(String prevblockhash) {
+    public void setPrevblockhash(Sha256Hash prevblockhash) {
         this.prevblockhash = prevblockhash;
     }
 
@@ -240,7 +223,7 @@ public class Token implements java.io.Serializable {
         }
     }
 
-    public static Token buildSimpleTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+    public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
             int decimals, final String domainName, final String domainPredecessorBlockHash) {
@@ -253,7 +236,7 @@ public class Token implements java.io.Serializable {
         tokens.signnumber = signnumber;
         tokens.amount = amount;
         tokens.tokenindex = tokenindex;
-        tokens.confirmed = confirmed;
+        tokens.setConfirmed ( confirmed);
         tokens.prevblockhash = prevblockhash;
         tokens.tokenKeyValues = tokenKeyValues;
         tokens.revoked = revoked;
@@ -265,7 +248,7 @@ public class Token implements java.io.Serializable {
         return tokens;
     }
 
-    public static Token buildMarketTokenInfo(boolean confirmed, String prevblockhash, String tokenid, String tokenname,
+    public static Token buildMarketTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
@@ -278,15 +261,13 @@ public class Token implements java.io.Serializable {
         tokens.signnumber = 1;
         tokens.amount = BigInteger.ZERO;
         tokens.tokenindex = 0;
-        tokens.confirmed = confirmed;
+        tokens.setConfirmed ( confirmed);
         tokens.prevblockhash = prevblockhash;
-
-        // TODO unmaintained, missing fields
-
+ 
         return tokens;
     }
 
-    public static Token buildSubtangleTokenInfo(boolean confirmed, String prevblockhash, String tokenid,
+    public static Token buildSubtangleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
             String tokenname, String description, String domainname) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
@@ -298,24 +279,12 @@ public class Token implements java.io.Serializable {
         tokens.signnumber = 1;
         tokens.amount = BigInteger.ZERO;
         tokens.tokenindex = 1;
-        tokens.confirmed = confirmed;
+        tokens.setConfirmed ( confirmed);
         tokens.prevblockhash = prevblockhash;
-
-        // TODO unmaintained, missing fields
 
         return tokens;
     }
 
-    @Override
-    public String toString() {
-        return "Token [confirmed=" + confirmed + ", tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", tokenname="
-                + tokenname + ", description=" + description + ", domainName=" + domainName
-                + ", domainPredecessorBlockHash=" + domainPredecessorBlockHash + ", signnumber=" + signnumber
-                + ", tokentype=" + tokentype + ", tokenstop=" + tokenstop + ", prevblockhash=" + prevblockhash
-                + ", blockhash=" + blockhash + ", amount=" + amount + ", decimals=" + decimals + ", classification="
-                + classification + ", language=" + language + ", revoked=" + revoked + ", tokenKeyValues="
-                + tokenKeyValues + "]";
-    }
- 
+
   
 }

@@ -209,7 +209,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         block.verifyHeader();
         block.verifyTransactions(); 
-
         SolidityState solidityState = validatorService.checkSolidity(block, true);
         if (solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
             // not allow unsolid height away from confirmed reward
@@ -554,7 +553,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // All consumed order records are now spent by this block
         for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
-            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true,
+            blockStore.updateOrderSpent(o.getBlockHash(), o.getIssuingMatcherBlockHash(), true,
                     block.getBlock().getHash());
         }
 
@@ -563,7 +562,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders confirmed
         for (OrderRecord o : actualCalculationResult.getRemainingOrders())
-            blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), true);
+            blockStore.updateOrderConfirmed(o.getBlockHash(), o.getIssuingMatcherBlockHash(), true);
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult);
@@ -631,11 +630,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void confirmToken(BlockWrap block) throws BlockStoreException {
         // Set used other output spent
-        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHashAsString()), true,
-                block.getBlock().getHash());
+      //  blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHash()), true,
+     //           block.getBlock().getHash());
 
         // Set own output confirmed
-        blockStore.updateTokenConfirmed(block.getBlock().getHashAsString(), true);
+        blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
     }
 
     private void confirmTransaction(BlockWrap block, Transaction tx) throws BlockStoreException {
@@ -819,13 +818,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throws BlockStoreException {
 
         // Disconnect token record spender
-        if (blockStore.getTokenSpent(block.getHashAsString())) {
+        if (blockStore.getTokenSpent(block.getHash())) {
             unconfirmFrom(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
         }
 
         // If applicable: Disconnect all domain definitions that were based on
         // this domain
-        Token token = blockStore.getToken(block.getHashAsString());
+        Token token = blockStore.getToken(block.getHash());
         if (token.getTokentype() == TokenType.domainname.ordinal()) {
             List<String> dependents = blockStore
                     .getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
@@ -882,7 +881,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             unconfirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            unconfirmToken(block.getHashAsString());
+            unconfirmToken(block.getHash());
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -913,7 +912,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // All consumed order records are now unspent by this block
         for (OrderRecord o : matchingResult.getSpentOrders()) {
-            blockStore.updateOrderSpent(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false, null);
+            blockStore.updateOrderSpent(o.getBlockHash(), o.getIssuingMatcherBlockHash(), false, null);
         }
 
         // Set virtual outputs unconfirmed
@@ -921,7 +920,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders unconfirmed
         for (OrderRecord o : matchingResult.getRemainingOrders())
-            blockStore.updateOrderConfirmed(o.getInitialBlockHash(), o.getIssuingMatcherBlockHash(), false);
+            blockStore.updateOrderConfirmed(o.getBlockHash(), o.getIssuingMatcherBlockHash(), false);
 
         // Update the matching history in db
         tickerService.removeMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
@@ -960,9 +959,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), false);
     }
 
-    private void unconfirmToken(String blockhash) throws BlockStoreException {
+    private void unconfirmToken(Sha256Hash blockhash) throws BlockStoreException {
         // Set used other output unspent
-        blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
+      //  blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
 
         // Set own output unconfirmed
         blockStore.updateTokenConfirmed(blockhash, false);
@@ -1104,17 +1103,21 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (ScriptException e) {
                     // No address found.
                 }
+                int minsignnumber =1;
+                if (script.isSentToMultiSig()) {
+                      minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                }
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, 0, 0);
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
-                    int minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                   
                     for (ECKey ecKey : script.getPubKeys()) {
                         String toaddress = ecKey.toAddress(params).toBase58();
-                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex(),
-                                minsignnumber);
+                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex()
+                                 );
                         this.blockStore.insertOutputsMulti(outputsMulti);
                     }
                 }
@@ -1187,16 +1190,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
                 // Correctly insert tokens
                 tokenInfo.getToken().setConfirmed(false);
-                tokenInfo.getToken().setBlockhash(block.getHashAsString());
+                tokenInfo.getToken().setBlockHash(block.getHash());
 
-                this.blockStore.insertToken(block.getHashAsString(), tokenInfo.getToken());
+                this.blockStore.insertToken(block.getHash(), tokenInfo.getToken());
 
                 // Correctly insert additional data
                 for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
                     if (permissionedAddress == null)
                         continue;
                     // The primary key must be the correct block
-                    permissionedAddress.setBlockhash(block.getHashAsString());
+                    permissionedAddress.setBlockhash(block.getHash());
                     permissionedAddress.setTokenid(tokenInfo.getToken().getTokenid());
                     if (permissionedAddress.getAddress() != null)
                         blockStore.insertMultiSignAddress(permissionedAddress);
@@ -1314,18 +1317,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Process cancel ops after matching
         for (OrderOpInfo c : cancels) {
-            if (remainingOrders.containsKey(c.getInitialBlockHash())) {
-                cancelledOrders.add(remainingOrders.get(c.getInitialBlockHash()));
+            if (remainingOrders.containsKey(c.getBlockHash())) {
+                cancelledOrders.add(remainingOrders.get(c.getBlockHash()));
             }
         }
 
         // Remove the now cancelled orders from remaining orders
         for (OrderRecord c : cancelledOrders) {
-            if (remainingOrders.remove(c.getInitialBlockHash()) == null)
+            if (remainingOrders.remove(c.getBlockHash()) == null)
                 log.error("Should not happen: non-existent order");
 
-            oldOrders.remove(c.getInitialBlockHash());
-            newOrders.remove(c.getInitialBlockHash());
+            oldOrders.remove(c.getBlockHash());
+            newOrders.remove(c.getBlockHash());
         }
 
         // Add to proceeds all cancelled orders going back to the beneficiary
@@ -1442,13 +1445,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Otherwise, we will make the orders smaller by the
                     // executed amounts
                     if (sellableAmount == executedAmount) {
-                        remainingOrders.remove(restingOrder.getInitialBlockHash());
+                        remainingOrders.remove(restingOrder.getBlockHash());
                     } else {
                         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount);
                         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount * executedPrice);
                     }
                     if (buyableAmount == executedAmount) {
-                        remainingOrders.remove(incomingOrder.getInitialBlockHash());
+                        remainingOrders.remove(incomingOrder.getBlockHash());
                     } else {
                         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount * incomingPrice);
                         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount);
@@ -1485,13 +1488,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // Otherwise, we will make the orders smaller by the
                     // executed amounts
                     if (sellableAmount == executedAmount) {
-                        remainingOrders.remove(incomingOrder.getInitialBlockHash());
+                        remainingOrders.remove(incomingOrder.getBlockHash());
                     } else {
                         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount);
                         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount * incomingPrice);
                     }
                     if (buyableAmount == executedAmount) {
-                        remainingOrders.remove(restingOrder.getInitialBlockHash());
+                        remainingOrders.remove(restingOrder.getBlockHash());
                     } else {
                         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount * executedPrice);
                         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount);

@@ -469,7 +469,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), -1, 0, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -498,7 +498,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenInfo tokenInfo = new TokenInfo();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, 0, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -534,8 +534,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+     
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -571,9 +571,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+    
+        Token tokens = Token.buildSimpleTokenInfo(true,  tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -613,9 +612,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+  
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -695,9 +693,8 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+ 
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -774,10 +771,9 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true,   tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -845,7 +841,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
             Coin basecoin = Coin.valueOf(100000L, pubKey);
 
-            Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "test", 2, 0, basecoin.getValue(),
+            Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "test", 2, 0, basecoin.getValue(),
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo.setToken(tokens);
 
@@ -911,7 +907,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         long tokenindex1 = 1;
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex1, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -1045,13 +1041,12 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(true,tokenIndexResponse.getBlockhash(), tokenid, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), 3, tokenindex_, basecoin.getValue(), false, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
@@ -1101,7 +1096,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         block_.solve();
 
         // save block
-        OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());
+       // OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());
 
     }
 

@@ -114,7 +114,7 @@ public class RewardService {
     public Block createAndAddMiningRewardBlock() throws Exception {
         logger.info("createAndAddMiningRewardBlock  started");
 
-        Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getSha256Hash();
+        Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
         return createAndAddMiningRewardBlock(prevRewardHash);
 
     }

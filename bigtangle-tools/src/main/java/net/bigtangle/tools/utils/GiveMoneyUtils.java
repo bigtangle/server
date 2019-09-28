@@ -56,10 +56,9 @@ public class GiveMoneyUtils {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
                 TokenIndexResponse.class);
-        long tokenindex = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        long tokenindex = tokenIndexResponse.getTokenindex(); 
         
-        Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenId, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(false,  tokenIndexResponse.getBlockhash(), tokenId, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), ecKeys.size(), tokenindex, basecoin.getValue(),  false,0, Configure.PARAMS.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         
@@ -185,7 +184,7 @@ public class GiveMoneyUtils {
         Coin basecoin = Coin.valueOf(10000000L, pubKey);
         
         
-        Token tokens = Token.buildSimpleTokenInfo(false, tokenId, UUID.randomUUID().toString(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), "", 1, 0, basecoin.getValue(), true,0, "de");//networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         

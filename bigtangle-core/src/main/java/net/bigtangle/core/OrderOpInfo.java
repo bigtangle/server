@@ -21,7 +21,7 @@ public class OrderOpInfo implements java.io.Serializable {
 	
 	private OrderOp op;
 	private int opIndex;
-	private Sha256Hash initialBlockHash;
+	private Sha256Hash blockHash;
 
     public OrderOpInfo() {
 		super();
@@ -31,7 +31,7 @@ public class OrderOpInfo implements java.io.Serializable {
 		super();
 		this.op = op;
 		this.opIndex = opIndex;
-		this.initialBlockHash = initialBlockHash;
+		this.blockHash = initialBlockHash;
 	}
 
 	public OrderOp getOp() {
@@ -50,15 +50,16 @@ public class OrderOpInfo implements java.io.Serializable {
 		this.opIndex = opIndex;
 	}
 
-	public Sha256Hash getInitialBlockHash() {
-		return initialBlockHash;
-	}
+ 
+	public Sha256Hash getBlockHash() {
+        return blockHash;
+    }
 
-	public void setInitialBlockHash(Sha256Hash initialBlockHash) {
-		this.initialBlockHash = initialBlockHash;
-	}
+    public void setBlockHash(Sha256Hash blockHash) {
+        this.blockHash = blockHash;
+    }
 
-	public static long getSerialversionuid() {
+    public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
 

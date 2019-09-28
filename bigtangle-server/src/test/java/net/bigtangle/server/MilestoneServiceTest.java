@@ -170,7 +170,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
  
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -184,7 +184,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo2 = new TokenInfo();
             Coin coinbase2 = Coin.valueOf(666, pubKey);
         
-            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey),
+            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey),
                     "Test", "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
@@ -195,7 +195,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             TokenInfo tokenInfo2 = new TokenInfo();
             Coin coinbase2 = Coin.valueOf(666, pubKey);
        
-            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey),
+            Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey),
                     "Test", "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
@@ -229,7 +229,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
      
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -240,7 +240,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
   
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test",
                 "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
@@ -250,7 +250,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
  
-        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHashAsString(), Utils.HEX.encode(pubKey), "Test",
+        Token tokens3 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test",
                 "Test", 1, 1, coinbase3.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
@@ -285,7 +285,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
  
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -324,7 +324,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
  
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -337,7 +337,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(6666, pubKey);
  
-        Token tokens2 = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0, coinbase2.getValue(),
+        Token tokens2 = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test2", "Test2", 1, 0, coinbase2.getValue(),
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
@@ -413,7 +413,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
  
-        Token tokens = Token.buildSimpleTokenInfo(false, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -805,7 +805,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
  
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, coinbase.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
@@ -820,7 +820,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         Transaction tx1 = block1.getTransactions().get(0);
         assertTrue(store.getTransactionOutput(block1.getHash(), tx1.getHash(), 0).isConfirmed());
-        assertTrue(store.getTokenConfirmed(block1.getHashAsString()));
+        assertTrue(store.getTokenConfirmed(block1.getHash()));
 
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
@@ -833,7 +833,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Should be out
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(store.getTransactionOutput(block1.getHash(), tx1.getHash(), 0).isConfirmed());
-        assertFalse(store.getTokenConfirmed(block1.getHashAsString()));
+        assertFalse(store.getTokenConfirmed(block1.getHash()));
     }
 
     @Test

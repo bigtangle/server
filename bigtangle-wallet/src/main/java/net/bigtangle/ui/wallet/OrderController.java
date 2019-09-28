@@ -436,7 +436,7 @@ public class OrderController extends ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {
-            String tokenHex = tokens.getBlockhash();
+            String tokenHex = tokens.getBlockHashHex();
             String tokenname = tokens.getTokenname();
             tokenData.add(tokenname + " : " + tokenHex);
         }

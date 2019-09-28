@@ -57,7 +57,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         Coin basecoin = Coin.valueOf(0L, pubKey);
 
-        Token tokens = Token.buildSubtangleTokenInfo(false, "", Utils.HEX.encode(pubKey), "subtangle", "", "");
+        Token tokens = Token.buildSubtangleTokenInfo(false, null, Utils.HEX.encode(pubKey), "subtangle", "", "");
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 

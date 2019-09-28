@@ -26,7 +26,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
         while (true) {
 
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String response0 = OkHttp3Util.post(HTTPS_BIGTANGLE_DE + ReqCmd.getOrders.name(),
+            String response0 = OkHttp3Util.post("https://bigtangle.org/" + ReqCmd.getOrders.name(),
                     Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
             OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
@@ -36,15 +36,15 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 try {
                 if (i % 2 == 0) {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy(HTTPS_BIGTANGLE_LOCAL, walletAppKit2.wallet(), orderRecord);
+                        buy("https://bigtangle.org/", walletAppKit2.wallet(), orderRecord);
                     } else {
-                        buy(HTTPS_BIGTANGLE_LOCAL, walletAppKit1.wallet(), orderRecord);
+                        buy("https://bigtangle.org/", walletAppKit1.wallet(), orderRecord);
                     }
                 } else {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy(HTTPS_BIGTANGLE_LOCAL, walletAppKit2.wallet(), orderRecord);
+                        buy("https://bigtangle.org/", walletAppKit2.wallet(), orderRecord);
                     } else {
-                        buy(HTTPS_BIGTANGLE_LOCAL, walletAppKit1.wallet(), orderRecord);
+                        buy("https://bigtangle.org/", walletAppKit1.wallet(), orderRecord);
                     }
                 }
                 i += 1;

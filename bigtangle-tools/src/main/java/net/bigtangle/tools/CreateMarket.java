@@ -62,7 +62,7 @@ public class CreateMarket {
         TokenInfo tokenInfo = new TokenInfo();
 
         String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", "https://market.bigtangle.net");
+        Token tokens = Token.buildMarketTokenInfo(true, null, tokenid, "p2p", "", "https://market.bigtangle.net");
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item

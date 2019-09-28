@@ -558,10 +558,9 @@ public class TokenController extends TokenBaseController {
                         Json.jsonmapper().writeValueAsString(requestParam00));
 
                 TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-                long tokenindex_ = tokenIndexResponse.getTokenindex();
-                String prevblockhash = tokenIndexResponse.getBlockhash();
+                long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
-                Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, tokenid.getValue().trim(),
+                Token tokens = Token.buildSimpleTokenInfo(false, tokenIndexResponse.getBlockhash(), tokenid.getValue().trim(),
                         stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, basecoin.getValue(), true,
                         Integer.parseInt(decimalsTF.getText()), null);
                 tokens.setDomainName(stockUrl.getText().trim());
@@ -607,7 +606,7 @@ public class TokenController extends TokenBaseController {
 
             TokenInfo tokenInfo = new TokenInfo();
 
-            Token tokens = Token.buildMarketTokenInfo(false, "", marketid.getValue().trim(),
+            Token tokens = Token.buildMarketTokenInfo(false, null, marketid.getValue().trim(),
                     marketName.getText().trim(), marketDescription.getText().trim(), marketurl.getText());
             tokenInfo.setToken(tokens);
 
@@ -690,7 +689,7 @@ public class TokenController extends TokenBaseController {
 
         TokenInfo tokenInfo = new TokenInfo();
 
-        Token tokens = Token.buildSubtangleTokenInfo(false, "", String.valueOf(map.get("tokenHex")).trim(),
+        Token tokens = Token.buildSubtangleTokenInfo(false, null, String.valueOf(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Main.getString(map.get("url")).trim());
         tokenInfo.setToken(tokens);
@@ -854,7 +853,7 @@ public class TokenController extends TokenBaseController {
     private void multiSinglePpublish(KeyParameter aesKey, List<ECKey> issuedKeys)
             throws JsonProcessingException, Exception {
         TokenInfo tokenInfo = new TokenInfo();
-        Token tokens = Token.buildSimpleTokenInfo(false, "", tokenid1.getValue().trim(), stockName1.getText().trim(),
+        Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid1.getValue().trim(), stockName1.getText().trim(),
                 stockDescription1.getText().trim(), 1, 0, MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
                         Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF.getText())).getValue(),
                 true, 0, "de");
@@ -975,13 +974,13 @@ public class TokenController extends TokenBaseController {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         Long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+      ;
 
           BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()),
                 Integer.parseInt(decimalsTF.getText())).getValue();
         Coin basecoin = new Coin(amount, Main.getString(map.get("tokenHex")).trim());
 
-        Token tokens = Token.buildSimpleTokenInfo(false, prevblockhash, Main.getString(map.get("tokenHex")).trim(),
+        Token tokens = Token.buildSimpleTokenInfo(false,  tokenIndexResponse.getBlockhash(), Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
                 (boolean) map.get("tokenstop"), Integer.parseInt(decimalsTF1.getText()), "de");

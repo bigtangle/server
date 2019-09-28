@@ -21,11 +21,13 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.req.MultiSignByRequest;
 import net.bigtangle.core.http.server.resp.MultiSignResponse;
@@ -78,7 +80,7 @@ public class MultiSignService {
             map.put("blockhashHex", multiSign.getBlockhashHex());
             map.put("sign", multiSign.getSign());
             map.put("address", multiSign.getAddress());
-            Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockhash());
+            Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockbytes());
             Transaction transaction = block.getTransactions().get(0);
             TokenInfo tokenInfo = TokenInfo.parse(transaction.getData());
             map.put("signnumber", tokenInfo.getToken().getSignnumber());
@@ -105,7 +107,7 @@ public class MultiSignService {
 
     public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
         Token tokens = this.store.getCalMaxTokenIndex(tokenid);
-        return TokenIndexResponse.createTokenSerialIndexResponse(tokens.getTokenindex() + 1, tokens.getBlockhash());
+        return TokenIndexResponse.createTokenSerialIndexResponse(tokens.getTokenindex() + 1, tokens.getBlockHash());
     }
 
     public void saveMultiSign(Block block) throws BlockStoreException, Exception {
@@ -120,9 +122,9 @@ public class MultiSignService {
             List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
 
             // Always needs domain owner signature
-            Token prevToken = store.getToken(tokens.getDomainPredecessorBlockHash());
-            List<MultiSignAddress> permissionedAddresses = store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevToken.getTokenid(), prevToken.getBlockhash());
+            Token prevToken = store.getToken(Sha256Hash.wrap(tokens.getDomainPredecessorBlockHash()));
+            List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
+                    prevToken.getTokenid(), prevToken.getBlockHash());
             for (MultiSignAddress permissionedAddress : permissionedAddresses) {
                 permissionedAddress.setTokenid(tokens.getTokenid());
             }
@@ -142,7 +144,7 @@ public class MultiSignService {
                     multiSign.setTokenid(tokenid);
                     multiSign.setTokenindex(tokenindex);
                     multiSign.setAddress(address);
-                    multiSign.setBlockhash(block.bitcoinSerialize());
+                    multiSign.setBlockbytes(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
                     store.saveMultiSign(multiSign);
                 } else {
@@ -161,7 +163,7 @@ public class MultiSignService {
             }
             store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokens.getTokenindex(),
                     block.bitcoinSerialize());
-            this.store.commitDatabaseBatchWrite(); 
+            this.store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.error("", e);
             this.store.abortDatabaseBatchWrite();
@@ -171,11 +173,16 @@ public class MultiSignService {
     }
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
+        try {
+            //TODO check set true
         if (validatorService.checkFullTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
             this.saveMultiSign(block);
             blockService.saveBlock(block);
         } else {
             // data save only on this server, not in block.
+            this.saveMultiSign(block);
+        }
+        }catch (InsufficientSignaturesException e) {
             this.saveMultiSign(block);
         }
     }

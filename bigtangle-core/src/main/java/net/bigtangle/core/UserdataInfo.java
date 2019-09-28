@@ -14,7 +14,7 @@ public class UserdataInfo extends DataClass implements java.io.Serializable {
 
     private Token tokens;
     
-    private TokenSerial tokenSerial;
+  
     
     private List<MultiSignAddress> multiSignAddresses;
    
@@ -34,7 +34,7 @@ public class UserdataInfo extends DataClass implements java.io.Serializable {
             UserdataInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, UserdataInfo.class);
             if (tokenInfo == null) return this;
             this.tokens = tokenInfo.getTokens();
-            this.tokenSerial = tokenInfo.getTokenSerial();
+     
             this.multiSignAddresses.clear();
             this.multiSignAddresses.addAll(tokenInfo.getMultiSignAddresses());
         } catch (Exception e) {
@@ -50,15 +50,7 @@ public class UserdataInfo extends DataClass implements java.io.Serializable {
     public void setTokens(Token tokens) {
         this.tokens = tokens;
     }
-    
-    public TokenSerial getTokenSerial() {
-        return tokenSerial;
-    }
-
-    public void setTokenSerial(TokenSerial tokenSerial) {
-        this.tokenSerial = tokenSerial;
-    }
-
+ 
     public List<MultiSignAddress> getMultiSignAddresses() {
         return multiSignAddresses;
     }

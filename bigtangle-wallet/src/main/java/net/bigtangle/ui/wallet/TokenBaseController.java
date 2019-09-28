@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,10 +25,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.http.server.resp.GetTokensResponse;
 import net.bigtangle.core.http.server.resp.SearchMultiSignResponse;
-import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MonetaryFormat;
@@ -115,47 +111,7 @@ public class TokenBaseController {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public void initSerialTableView() throws Exception {
-
-        String CONTEXT_ROOT = Main.getContextRoot();
-        ObservableList<Map> tokenData = FXCollections.observableArrayList();
-
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", tokenidTF.getText());
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
-        List<String> addresses = keys.stream().map(key -> key.toAddress(Main.params).toBase58())
-                .collect(Collectors.toList());
-        requestParam.put("addresses", addresses);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSerials.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-        List<TokenSerial> tokenSerials = getTokensResponse.getTokenSerials();
-
-        if (tokenSerials != null) {
-            for (TokenSerial tokenSerial : tokenSerials) {
-                Coin fromAmount = Coin.valueOf(tokenSerial.getAmount(), tokenSerial.getTokenid());
-
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("amount", MonetaryFormat.FIAT.noCode().format(fromAmount,
-                        getToken(getTokensResponse.getTokens(), tokenSerial.getTokenid()).getDecimals()));
-                map.put("tokenid", tokenSerial.getTokenid());
-                map.put("tokenindex", tokenSerial.getTokenindex());
-                map.put("signnumber", tokenSerial.getSignnumber());
-                map.put("count", tokenSerial.getCount());
-
-                tokenData.add(map);
-            }
-        }
-        tokenidColumn.setCellValueFactory(new MapValueFactory("tokenid"));
-        tokenindexColumn.setCellValueFactory(new MapValueFactory("tokenindex"));
-        tokenAmountColumn.setCellValueFactory(new MapValueFactory("amount"));
-        signnumColumn.setCellValueFactory(new MapValueFactory("signnumber"));
-        realSignnumColumn.setCellValueFactory(new MapValueFactory("count"));
-        tokenserialTable.setItems(tokenData);
-    }
+ 
 
     public Token getToken(List<Token> tokens, String tokenid) throws Exception {
         for (Token t : tokens) {

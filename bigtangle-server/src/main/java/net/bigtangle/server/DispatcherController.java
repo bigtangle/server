@@ -285,31 +285,17 @@ public class DispatcherController {
                 break;
             case multiSign: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.multiSignService.multiSign(block, true);
+                this.multiSignService.multiSign(block, false);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
-
-            case getTokenSerials: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokenSerialListById((String) request.get("tokenid"),
-                        (List<String>) request.get("addresses"));
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
+ 
             case getCalTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
                 AbstractResponse response = this.multiSignService.getNextTokenSerialIndex(tokenid);
                 this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case updateTokenInfo: {
-                Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.tokensService.updateTokenInfo(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
             case getUserData: {

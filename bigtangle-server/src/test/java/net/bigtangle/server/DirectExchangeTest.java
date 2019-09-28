@@ -124,7 +124,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         byte[] pubKey = ecKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
-        Token tokens = Token.buildSubtangleTokenInfo(false, "", Utils.HEX.encode(pubKey), "subtangle", "", "");
+        Token tokens = Token.buildSubtangleTokenInfo(false, null, Utils.HEX.encode(pubKey), "subtangle", "", "");
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));

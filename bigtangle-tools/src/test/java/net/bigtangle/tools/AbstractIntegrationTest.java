@@ -276,7 +276,7 @@ public abstract class AbstractIntegrationTest {
 
         Coin basecoin = Coin.valueOf(77777L, pubKey);
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, basecoin.getValue(), true, 0,
+        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, basecoin.getValue(), true, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
@@ -351,10 +351,9 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, tokename, description, 1, tokenindex_,
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename, description, 1, tokenindex_,
                 basecoin.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 

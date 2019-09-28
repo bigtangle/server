@@ -2370,10 +2370,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Coin basecoin = new Coin(amount, tokenid);
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
-        Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, description, signnumber,
+        Token tokens = Token.buildDomainnameTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokenname, description, signnumber,
                 tokenindex_, amount, false, 0, domainname, domainPredecessorBlockHash);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
@@ -2499,12 +2498,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
                         / orderRecord.getOfferValue()));
             }
-            map.put("orderId", orderRecord.getInitialBlockHashHex());
+            map.put("orderId", orderRecord.getBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
             map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
             map.put("address", ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
-            map.put("initialBlockHashHex", orderRecord.getInitialBlockHashHex());
+            map.put("initialBlockHashHex", orderRecord.getBlockHashHex());
             // map.put("state", Main.getText( (String)
             // requestParam.get("state")));
             orderData.add(map);

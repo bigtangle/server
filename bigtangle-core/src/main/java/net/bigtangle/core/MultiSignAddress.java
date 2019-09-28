@@ -9,7 +9,7 @@ public class MultiSignAddress implements java.io.Serializable {
 
     private static final long serialVersionUID = -2956933642847534834L;
 
-    private String blockhash;
+    private Sha256Hash blockhash;
     private String tokenid;
     private String address;
     private String pubKeyHex;
@@ -48,11 +48,11 @@ public class MultiSignAddress implements java.io.Serializable {
         this.address = address;
     }
 
-    public String getBlockhash() {
+    public Sha256Hash getBlockhash() {
         return blockhash;
     }
 
-    public void setBlockhash(String blockhash) {
+    public void setBlockhash(Sha256Hash blockhash) {
         this.blockhash = blockhash;
     }
 

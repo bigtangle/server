@@ -13,16 +13,16 @@ public class OutputsMulti {
     
     private long outputIndex;
     
-    private long minimumSignCount;
+ 
     
     public OutputsMulti() {
     }
 
-    public OutputsMulti(Sha256Hash hash, String toaddress, long outputIndex, long minimumSign) {
+    public OutputsMulti(Sha256Hash hash, String toaddress, long outputIndex) {
         this.hash = hash;
         this.toAddress = toaddress;
         this.outputIndex = outputIndex;
-        this.minimumSignCount = minimumSign;
+      
     }
 
     public Sha256Hash getHash() {
@@ -49,11 +49,5 @@ public class OutputsMulti {
         this.outputIndex = outputIndex;
     }
 
-    public long getMinimumSignCount() {
-        return minimumSignCount;
-    }
-
-    public void setMinimumSignCount(long minimumSign) {
-        this.minimumSignCount = minimumSign;
-    }
+     
 }

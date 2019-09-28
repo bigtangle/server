@@ -226,7 +226,7 @@ public abstract class AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         BigInteger amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
                 amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -503,7 +503,7 @@ public abstract class AbstractIntegrationTest {
         // Generate blocks until passing interval
         Block rollingBlock = predecessor;
         long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
-        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getSha256Hash());
+        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getBlockHash());
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
@@ -512,7 +512,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         // Generate matching block
-        Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getSha256Hash(),
+        Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         addedBlocks.add(block);
 
@@ -792,7 +792,7 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         BigInteger amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, "", tokenid, "test", "", 1, 0, amount, true, 0,
+        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0,
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
@@ -825,7 +825,7 @@ public abstract class AbstractIntegrationTest {
         TokenInfo tokenInfo = new TokenInfo();
 
         String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, "", tokenid, "p2p", "", null);
+        Token tokens = Token.buildMarketTokenInfo(true, null, tokenid, "p2p", "", null);
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -892,9 +892,9 @@ public abstract class AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+          ;
 
-        Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true,    tokenIndexResponse.getBlockhash(), tokenid, "test", "test", 3, tokenindex_, amount,
                 false, 0, networkParameters.getGenesisBlock().getHashAsString());
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
@@ -1003,7 +1003,7 @@ public abstract class AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+        Sha256Hash prevblockhash =   tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_,
                 basecoin.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
@@ -1135,7 +1135,7 @@ public abstract class AbstractIntegrationTest {
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        String prevblockhash = tokenIndexResponse.getBlockhash();
+         Sha256Hash prevblockhash = tokenIndexResponse.getBlockhash();
 
         int signnumber = 3;
 

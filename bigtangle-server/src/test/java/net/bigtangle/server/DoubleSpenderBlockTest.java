@@ -231,7 +231,7 @@ public class DoubleSpenderBlockTest extends AbstractIntegrationTest {
         
         Coin basecoin = Coin.valueOf(100000L, pubKey);
         
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 0, 1, basecoin.getValue(),
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 0, 1, basecoin.getValue(),
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()

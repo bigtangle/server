@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 
@@ -37,26 +35,24 @@ import net.bigtangle.script.Script;
  * transaction and consensus logic. It does not stand for Unspent Transaction Output
  * but for Used Transaction Output, i.e. they are not necessarily unspent.
  */
-public class UTXO {
+public class UTXO extends SpentBlock{
 
 
 
     private Coin value;
     @JsonIgnore
     private Script script;
-    private Sha256Hash blockhash;
     private Sha256Hash hash;
     private long index;
     private boolean coinbase;
     private String address;
     private String fromaddress;
     private String memo;
-    private boolean spent;
-    private boolean confirmed;
+ 
     private boolean spendPending;
     private long spendPendingTime;
     private String tokenId;
-    private long time;
+
  
     private long minimumsign;
 
@@ -82,10 +78,6 @@ public class UTXO {
         this.hash = Sha256Hash.wrap(hashHex);
     }
 
-    public void setBlockHashHex(String blockHashHex) {
-        if (StringUtils.isNotBlank(blockHashHex))
-            this.blockhash = Sha256Hash.wrap(blockHashHex);
-    }
 
     public void setValue(Coin value) {
         this.value = value;
@@ -127,6 +119,14 @@ public class UTXO {
         return Utils.HEX.decode(this.tokenId);
     }
 
+    public String getFromaddress() {
+        return fromaddress;
+    }
+
+    public void setFromaddress(String fromaddress) {
+        this.fromaddress = fromaddress;
+    }
+
     /**
      * Creates a stored transaction output.
      *
@@ -151,13 +151,13 @@ public class UTXO {
         this.value = value;
         this.script = script;
         this.coinbase = coinbase;
-        this.blockhash = blockhash;
+        this.setBlockHash(blockhash);
         this.fromaddress = fromaddress;
         this.memo = memo;
         this.address = address;
-        this.spent = spent;
+        this.setSpent(spent);
         this.tokenId = tokenid;
-        this.confirmed = confirmed;
+        this.setConfirmed ( confirmed);
         this.spendPending = spendPending;
         this.minimumsign = minimumsign;
         this.spendPendingTime=spendPendingTime;
@@ -268,27 +268,7 @@ public class UTXO {
         return getIndex() == other.getIndex() && getTxHash().equals(other.getTxHash());
     }
  
-    @Transient
-    public Sha256Hash getBlockHash() {
-        return blockhash;
-    }
-
-    public String getBlockHashHex() {
-        return this.blockhash != null ? Utils.HEX.encode(this.blockhash.getBytes()) : "";
-    }
-
-    public void setBlockhash(Sha256Hash blockhash) {
-        this.blockhash = blockhash;
-    }
-
-    public String getFromaddress() {
-        return fromaddress;
-    }
-
-    public void setFromaddress(String fromaddress) {
-        this.fromaddress = fromaddress;
-    }
-
+ 
     public String getMemo() {
         if(memo!=null && "{}".equals( memo.trim())) {
             memo="";
@@ -299,23 +279,7 @@ public class UTXO {
     public void setMemo(String memo) {
         this.memo = memo;
     }
-
-    public boolean isSpent() {
-        return spent;
-    }
-
-    public void setSpent(boolean spent) {
-        this.spent = spent;
-    }
-
-    public boolean isConfirmed() {
-        return confirmed;
-    }
-
-    public void setConfirmed(boolean confirmed) {
-        this.confirmed = confirmed;
-    }
-
+ 
     public boolean isSpendPending() {
         return spendPending;
     }
@@ -331,13 +295,5 @@ public class UTXO {
     public void setMinimumsign(long minimumsign) {
         this.minimumsign = minimumsign;
     }
-
-    public long getTime() {
-        return time;
-    }
-
-    public void setTime(long time) {
-        this.time = time;
-    }
-
+ 
 }

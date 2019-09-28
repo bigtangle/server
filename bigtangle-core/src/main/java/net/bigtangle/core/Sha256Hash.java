@@ -68,6 +68,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
     public static Sha256Hash wrap(byte[] rawHashBytes) {
+        if(rawHashBytes ==null ||  rawHashBytes.length ==0) return null;
         return new Sha256Hash(rawHashBytes);
     }
 

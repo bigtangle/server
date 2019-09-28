@@ -5,20 +5,17 @@
 
 package net.bigtangle.core;
 
-public class OrderRecord implements java.io.Serializable {
+import java.util.Arrays;
+
+public class OrderRecord extends SpentBlock  {
 
     private static final long serialVersionUID = -2331665478149550684L;
-    // order is in this block
-    private Sha256Hash initialBlockHash;
+ 
     // order matching block
     private Sha256Hash issuingMatcherBlockHash;
     private long offerValue;
     private String offerTokenid;
-    // order block is confirmed
-    private boolean confirmed;
-    // spent true is matched and closed, false is open.
-    private boolean spent;
-    private Sha256Hash spenderBlockHash;
+ 
     private long targetValue;
     private String targetTokenid;
     // owner public key of the order
@@ -42,13 +39,13 @@ public class OrderRecord implements java.io.Serializable {
             String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, int opIndex, Long validFromTime,
             String side, String beneficiaryAddress) {
         super();
-        this.initialBlockHash = initialBlockHash;
+        this.setBlockHash ( initialBlockHash);
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
         this.offerValue = offerValue;
         this.offerTokenid = offerTokenid;
-        this.confirmed = confirmed;
-        this.spent = spent;
-        this.spenderBlockHash = spenderBlockHash;
+        this.setConfirmed (confirmed);
+        this.setSpent( spent);
+        this.setSpenderBlockHash( spenderBlockHash);
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
@@ -67,15 +64,7 @@ public class OrderRecord implements java.io.Serializable {
         return getTargetValue() / getOfferValue();
     }
 
-    @Override
-    public String toString() {
-        return "Order \n[initialBlockHash=" + initialBlockHash + ", \nissuingMatcherBlockHash="
-                + issuingMatcherBlockHash + ", \nofferValue=" + offerValue + ", \nofferTokenid=" + offerTokenid
-                + ", \nconfirmed=" + confirmed + ", \nspent=" + spent + ", \nspenderBlockHash=" + spenderBlockHash
-                + ", \ntargetValue=" + targetValue + ", \ntargetTokenid=" + targetTokenid + ", \nbeneficiaryPubKey="
-                + Utils.HEX.encode(beneficiaryPubKey) + ", \nvalidToTime=" + validToTime + ", \nopIndex=" + opIndex
-                + ", \nside=" + side + ", \nvalidFromTime=" + validFromTime + "]\n";
-    }
+     
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;
@@ -85,18 +74,7 @@ public class OrderRecord implements java.io.Serializable {
         return blockTime >= validFromTime;
     }
 
-    public Sha256Hash getInitialBlockHash() {
-        return initialBlockHash;
-    }
-
-    public String getInitialBlockHashHex() {
-        return initialBlockHash != null ? Utils.HEX.encode(this.initialBlockHash.getBytes()) : "";
-    }
-
-    public void setInitialBlockHash(Sha256Hash initialBlockHash) {
-        this.initialBlockHash = initialBlockHash;
-    }
-
+     
     public Sha256Hash getIssuingMatcherBlockHash() {
         return issuingMatcherBlockHash;
     }
@@ -120,31 +98,7 @@ public class OrderRecord implements java.io.Serializable {
     public void setOfferTokenid(String offerTokenid) {
         this.offerTokenid = offerTokenid;
     }
-
-    public boolean isConfirmed() {
-        return confirmed;
-    }
-
-    public void setConfirmed(boolean confirmed) {
-        this.confirmed = confirmed;
-    }
-
-    public boolean isSpent() {
-        return spent;
-    }
-
-    public void setSpent(boolean spent) {
-        this.spent = spent;
-    }
-
-    public Sha256Hash getSpenderBlockHash() {
-        return spenderBlockHash;
-    }
-
-    public void setSpenderBlockHash(Sha256Hash spenderBlockHash) {
-        this.spenderBlockHash = spenderBlockHash;
-    }
-
+  
     public long getTargetValue() {
         return targetValue;
     }
@@ -211,6 +165,15 @@ public class OrderRecord implements java.io.Serializable {
 
     public void setBeneficiaryAddress(String beneficiaryAddress) {
         this.beneficiaryAddress = beneficiaryAddress;
+    }
+
+    @Override
+    public String toString() {
+        return "OrderRecord [issuingMatcherBlockHash=" + issuingMatcherBlockHash + ", offerValue=" + offerValue
+                + ", offerTokenid=" + offerTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
+                + ", beneficiaryPubKey=" + Arrays.toString(beneficiaryPubKey) + ", beneficiaryAddress="
+                + beneficiaryAddress + ", validToTime=" + validToTime + ", opIndex=" + opIndex + ", validFromTime="
+                + validFromTime + ", side=" + side + "]";
     }
 
 }

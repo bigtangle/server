@@ -45,7 +45,7 @@ public class SerializationTest {
     @Test
     public void testTokenInfoSerialization() throws JsonParseException, JsonMappingException, IOException {
         List<MultiSignAddress> addresses = new ArrayList<>();
-        Token tokens = Token.buildSimpleTokenInfo(true, "1", "2", "3", "4", 2, 3, BigInteger.valueOf(4), true, 0, "de");
+        Token tokens = Token.buildSimpleTokenInfo(true, null, "2", "3", "4", 2, 3, BigInteger.valueOf(4), true, 0, "de");
         TokenInfo info1 = new TokenInfo();
         info1.setToken(tokens);
         info1.setMultiSignAddresses(addresses);
@@ -56,7 +56,7 @@ public class SerializationTest {
         assertArrayEquals(bytes1, bytes2);
         assertEquals(info1.getMultiSignAddresses().size(), info2.getMultiSignAddresses().size());
         assertEquals(info1.getToken().getAmount(), info2.getToken().getAmount());
-        assertEquals(info1.getToken().getBlockhash(), info2.getToken().getBlockhash());
+        assertEquals(info1.getToken().getBlockHash(), info2.getToken().getBlockHash());
         assertEquals(info1.getToken().getDescription(), info2.getToken().getDescription());
         assertEquals(info1.getToken().getPrevblockhash(), info2.getToken().getPrevblockhash());
         assertEquals(info1.getToken().getSignnumber(), info2.getToken().getSignnumber());

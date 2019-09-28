@@ -29,7 +29,6 @@ import net.bigtangle.core.PayMultiSignAddress;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenSerial;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UnsolidBlock;
@@ -262,19 +261,19 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash hash) throws BlockStoreException;
 
     /* Token TXOs */
-    public void insertToken(String blockhash, Token tokens) throws BlockStoreException;
+    public void insertToken(Sha256Hash blockhash, Token tokens) throws BlockStoreException;
 
-    public Token getToken(String blockhash) throws BlockStoreException;
+    public Token getToken(Sha256Hash blockhash) throws BlockStoreException;
 
     public List<Token> getTokenID(String tokenid) throws BlockStoreException;
 
-    public String getTokenPrevblockhash(String blockhash) throws BlockStoreException;
+    public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException;
 
-    public boolean getTokenSpent(String blockhash) throws BlockStoreException;
+    public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException;
 
     public boolean getTokenAnySpent(String tokenId, long tokenindex) throws BlockStoreException;
 
-    public boolean getTokenConfirmed(String blockHash) throws BlockStoreException;
+    public boolean getTokenConfirmed(Sha256Hash  blockHash) throws BlockStoreException;
 
     public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException;
 
@@ -286,9 +285,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<String> getDomainDescendantConfirmedBlocks(String domainPred) throws BlockStoreException;
 
-    public void updateTokenSpent(String blockhash, boolean b, Sha256Hash spenderBlockHash) throws BlockStoreException;
+    public void updateTokenSpent(Sha256Hash blockhash, boolean b, Sha256Hash spenderBlockHash) throws BlockStoreException;
 
-    public void updateTokenConfirmed(String blockhash, boolean confirmed) throws BlockStoreException;
+    public void updateTokenConfirmed(Sha256Hash blockhash, boolean confirmed) throws BlockStoreException;
 
     /* For tests */
     public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent) throws BlockStoreException;
@@ -312,11 +311,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException;
 
-    /* Wallet / Informational */
+  
     public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
-
-    public List<TokenSerial> getSearchTokenSerialInfo(String tokenid, List<String> addresses)
-            throws BlockStoreException;
+ 
 
     public List<Token> getMarketTokenList() throws BlockStoreException;
 
@@ -339,7 +336,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
-    public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid, String prevblockhash)
+    public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid, Sha256Hash prevblockhash)
             throws BlockStoreException;
 
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;
@@ -482,7 +479,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
 
-    Token queryDomainnameToken(String domainPredecessorBlockHash) throws BlockStoreException;
+    Token queryDomainnameToken(Sha256Hash domainPredecessorBlockHash) throws BlockStoreException;
 
     Token getTokensByDomainname(String domainname) throws BlockStoreException;
     
@@ -505,5 +502,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     TXReward getMaxSolidReward() throws BlockStoreException;
 
     long getHeightTransactions(List<Sha256Hash>  txHashs) throws BlockStoreException ;
+
+    
 
 }

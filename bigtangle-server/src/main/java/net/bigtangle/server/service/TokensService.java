@@ -13,13 +13,9 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenSerial;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.http.AbstractResponse;
 import net.bigtangle.core.http.server.resp.GetTokensResponse;
@@ -36,7 +32,7 @@ public class TokensService {
 
     public AbstractResponse getToken(String id) throws BlockStoreException {
         List<Token> tokens = new ArrayList<>();
-        tokens.add(this.store.getToken(id));
+        tokens.add(this.store.getToken(Sha256Hash.wrap(id)));
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
@@ -60,56 +56,9 @@ public class TokensService {
         return GetTokensResponse.create(list, map);
     }
 
-    public AbstractResponse getTokenSerialListById(String tokenid, List<String> addresses) throws BlockStoreException {
-        List<TokenSerial> tokenSerials = this.store.getSearchTokenSerialInfo(tokenid, addresses);
-        AbstractResponse response = GetTokensResponse.createTokenSerial(tokenSerials);
-        return response;
-    }
-
-    public void updateTokenInfo(Block block) throws Exception {
-        this.store.beginDatabaseBatchWrite();
-        try {
-            if (block.getTransactions() == null || block.getTransactions().isEmpty()) {
-                return;
-            }
-            Transaction transaction = block.getTransactions().get(0);
-            if (transaction.getData() == null) {
-                return;
-            }
-            byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = TokenInfo.parse(buf);
-
-            final String tokenid = tokenInfo.getToken().getTokenid();
-            Token tokens = this.store.getToken(tokenInfo.getToken().getBlockhash());
-            if (tokens != null) {
-                throw new BlockStoreException("token can't update");
-            }
-            Token tokens2 = tokenInfo.getToken();
-            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokens2.getTokenindex());
-            int signnumber = 0;
-            for (MultiSign multiSign : multiSigns) {
-                if (multiSign.getSign() == 1) {
-                    signnumber++;
-                }
-            }
-            if (signnumber >= multiSigns.size()) {
-                throw new BlockStoreException("token can't update");
-            }
-            this.store.deleteMultiSign(tokenid);
-            multiSignService.multiSign(block, true);
-            this.store.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            this.store.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            store.defaultDatabaseBatchWrite();
-        }
-
-    }
-
-    @Autowired
-    private MultiSignService multiSignService;
-
+ 
+   
+ 
     @Autowired
     protected NetworkParameters networkParameters;
 

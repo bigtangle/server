@@ -205,19 +205,19 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify the best orders are correct
         List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2);
         assertEquals(2, bestOpenSellOrders.size());
-        assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getInitialBlockHash());
-        assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getInitialBlockHash());
+        assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
+        assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getBlockHash());
         List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2);
         assertEquals(2, bestOpenBuyOrders.size());
-        assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getInitialBlockHash());
-        assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getInitialBlockHash());
+        assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getBlockHash());
+        assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getBlockHash());
 
         List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1);
         assertEquals(1, bestOpenSellOrders2.size());
-        assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getInitialBlockHash());
+        assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getBlockHash());
         List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1);
         assertEquals(1, bestOpenBuyOrders2.size());
-        assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getInitialBlockHash());
+        assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getBlockHash());
 
         // Verify deterministic overall execution
         

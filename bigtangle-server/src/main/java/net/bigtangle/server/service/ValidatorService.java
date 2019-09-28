@@ -370,7 +370,7 @@ public class ValidatorService {
             return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-            return store.getTokenSpent(connectedDomainToken.getDomainPredecessorBlockHash());
+            return store.getTokenSpent(Sha256Hash.wrap(connectedDomainToken.getDomainPredecessorBlockHash()));
         default:
             throw new RuntimeException("Not Implemented");
         }
@@ -399,7 +399,7 @@ public class ValidatorService {
                     && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isConfirmed();
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-            return store.getTokenConfirmed(connectedDomainToken.getDomainPredecessorBlockHash());
+            return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainPredecessorBlockHash()));
         default:
             throw new RuntimeException("not implemented");
         }
@@ -843,8 +843,8 @@ public class ValidatorService {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
             predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
-            if (!currentToken.getToken().getPrevblockhash().equals(""))
-                predecessors.add(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()));
+            if (currentToken.getToken().getPrevblockhash()!=null)
+                predecessors.add(currentToken.getToken().getPrevblockhash());
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -863,7 +863,7 @@ public class ValidatorService {
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
-            predecessors.add(opInfo.getInitialBlockHash());
+            predecessors.add(opInfo.getBlockHash());
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             OrderReclaimInfo reclaimInfo = null;
@@ -1221,7 +1221,7 @@ public class ValidatorService {
         }
 
         // NotNull checks
-        if (info.getInitialBlockHash() == null) {
+        if (info.getBlockHash() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target txhash");
             return SolidityState.getFailState();
@@ -1802,7 +1802,7 @@ public class ValidatorService {
         }
 
         // Check bounds for target coin values
-        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() >  Long.MAX_VALUE) {
+        if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Long.MAX_VALUE) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target value");
             return SolidityState.getFailState();
@@ -1942,16 +1942,16 @@ public class ValidatorService {
         }
 
         // NotNull checks
-        if (info.getInitialBlockHash() == null) {
+        if (info.getBlockHash() == null) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid target txhash");
             return SolidityState.getFailState();
         }
 
         // Ensure the predecessing order exists
-        OrderRecord order = store.getOrder(info.getInitialBlockHash(), Sha256Hash.ZERO_HASH);
+        OrderRecord order = store.getOrder(info.getBlockHash(), Sha256Hash.ZERO_HASH);
         if (order == null) {
-            return SolidityState.from(info.getInitialBlockHash(), true);
+            return SolidityState.from(info.getBlockHash(), true);
         }
 
         byte[] pubKey = order.getBeneficiaryPubKey();
@@ -2134,8 +2134,8 @@ public class ValidatorService {
         }
 
         // Check previous issuance hash exists or initial issuance
-        if ((currentToken.getToken().getPrevblockhash().equals("") && currentToken.getToken().getTokenindex() != 0)
-                || (!currentToken.getToken().getPrevblockhash().equals("")
+        if ((currentToken.getToken().getPrevblockhash()==null && currentToken.getToken().getTokenindex() != 0)
+                || ( currentToken.getToken().getPrevblockhash()!=null
                         && currentToken.getToken().getTokenindex() == 0)) {
             if (throwExceptions)
                 throw new MissingDependencyException();
@@ -2159,7 +2159,7 @@ public class ValidatorService {
 
         // Requires the predecessing domain definition block to exist and be a
         // legal domain
-        Token prevDomain = store.getToken(currentToken.getToken().getDomainPredecessorBlockHash());
+        Token prevDomain = store.getToken(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
         if (prevDomain == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
@@ -2172,11 +2172,11 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
-            if (throwExceptions)
-                throw new InvalidDependencyException("Domainname is empty");
-            return SolidityState.getFailState();
-        }
+//        if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
+//            if (throwExceptions)
+//                throw new InvalidDependencyException("Domainname is empty");
+//            return SolidityState.getFailState();
+//        }
 
         // Ensure signatures exist
         int signatureCount = 0;
@@ -2208,8 +2208,8 @@ public class ValidatorService {
                 if (prevToken == null) {
                     if (throwExceptions)
                         // TODO
-                        return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()), true);
-                    return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getPrevblockhash()), true);
+                        return SolidityState.from( currentToken.getToken().getPrevblockhash(), true);
+                    return SolidityState.from(currentToken.getToken().getPrevblockhash(), true);
                 }
 
                 // Compare members of previous and current issuance
@@ -2263,7 +2263,7 @@ public class ValidatorService {
 
                 // Get addresses allowed to reissue
                 permissionedAddresses.addAll(store.getMultiSignAddressListByTokenidAndBlockHashHex(
-                        prevToken.getTokenid(), prevToken.getBlockhash()));
+                        prevToken.getTokenid(), prevToken.getBlockHash()));
 
             } catch (BlockStoreException e) {
                 // Cannot happen, previous token must exist
@@ -2276,7 +2276,7 @@ public class ValidatorService {
             // Any first time issuances also require the domain signatures
             List<MultiSignAddress> prevDomainPermissionedAddresses = store
                     .getMultiSignAddressListByTokenidAndBlockHashHex(prevDomain.getTokenid(),
-                            prevDomain.getBlockhash());
+                            prevDomain.getBlockHash());
             SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
                     txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
@@ -2388,7 +2388,7 @@ public class ValidatorService {
             return SolidityState.getSuccessState();
         else {
             if (throwExceptions)
-                throw new VerificationException("Domain signatures are insufficient!");
+                throw new InsufficientSignaturesException( );
             return SolidityState.getFailState();
         }
     }
@@ -2409,11 +2409,11 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("getTokenid is null");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getPrevblockhash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("getPrevblockhash is null");
-            return SolidityState.getFailState();
-        }
+//        if (currentToken.getToken().getPrevblockhash() == null) {
+//            if (throwExceptions)
+//                throw new InvalidTransactionDataException("getPrevblockhash is null");
+//            return SolidityState.getFailState();
+//        }
         if (currentToken.getToken().getTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Not allowed");
@@ -2537,8 +2537,9 @@ public class ValidatorService {
     public void checkHeight(Block block) throws VerificationException, BlockStoreException {
 
         List<TXReward> rewards = store.getAllConfirmedReward();
-        if(rewards.isEmpty()) return;
-        int index = rewards.size()-1;
+        if (rewards.isEmpty())
+            return;
+        int index = rewards.size() - 1;
         if (rewards.size() > 5) {
             long maxH = rewards.get(index).getToHeight() - rewards.get(rewards.size() - 5).getToHeight();
             if (Math.abs(block.getHeight() - rewards.get(index).getToHeight()) > maxH) {
@@ -2546,7 +2547,7 @@ public class ValidatorService {
                         + " last rewards at height: " + rewards.get(index).getToHeight());
             }
 
-        } 
+        }
     }
 
     /**

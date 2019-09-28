@@ -186,7 +186,7 @@ public class MilestoneService {
      * @throws NoBlockException
      */
     public void updateMilestone() throws BlockStoreException, NoBlockException {
-        Block longestRewardBlock = store.get(store.getMaxSolidReward().getSha256Hash());
+        Block longestRewardBlock = store.get(store.getMaxSolidReward().getBlockHash());
         runConsensusLogic(longestRewardBlock);
     }
 
@@ -547,7 +547,7 @@ public class MilestoneService {
             long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
 
             // Consensus logic>
-            Sha256Hash oldLongestChainEnd = store.getMaxConfirmedReward().getSha256Hash();
+            Sha256Hash oldLongestChainEnd = store.getMaxConfirmedReward().getBlockHash();
             long maxChainLength = store.getRewardChainLength(oldLongestChainEnd);
             if (maxChainLength < currChainLength) {
 
@@ -576,7 +576,7 @@ public class MilestoneService {
 
                 // Rollback to split point
                 Sha256Hash maxConfirmedRewardBlockHash;
-                while (!(maxConfirmedRewardBlockHash = store.getMaxConfirmedReward().getSha256Hash())
+                while (!(maxConfirmedRewardBlockHash = store.getMaxConfirmedReward().getBlockHash())
                         .equals(splitPoint.getBlockHash())) {
 
                     // Sanity check:

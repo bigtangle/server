@@ -109,7 +109,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+            Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -122,11 +122,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             firstIssuance = block1.getHash();
 
             // Should exist now
-            store.getTokenConfirmed(block1.getHash().toString()); // Fine as
+            store.getTokenConfirmed(block1.getHash() ); // Fine as
                                                                   // long as it
                                                                   // does not
                                                                   // throw
-            assertFalse(store.getTokenSpent(block1.getHash().toString()));
+            assertFalse(store.getTokenSpent(block1.getHash() ));
         }
 
         // Generate a subsequent issuance
@@ -135,7 +135,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
+            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance, Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -150,11 +150,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             block1 = pullBlockDoMultiSign(tokens.getTokenid(), walletKeys.get(1), null);
             // Should exist now
-            store.getTokenConfirmed(block1.getHash().toString()); // Fine as
+            store.getTokenConfirmed(block1.getHash()); // Fine as
                                                                   // long as it
                                                                   // does not
                                                                   // throw
-            assertFalse(store.getTokenSpent(block1.getHash().toString()));
+            assertFalse(store.getTokenSpent(block1.getHash()));
         }
     }
 
@@ -212,7 +212,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertEquals(order.getTargetTokenid(), "test");
         assertEquals(order.getTargetValue(), 2);
         // assertEquals(order.getTtl(), NetworkParameters.INITIAL_ORDER_TTL);
-        assertEquals(order.getInitialBlockHash(), block1.getHash());
+        assertEquals(order.getBlockHash(), block1.getHash());
         assertFalse(order.isConfirmed());
         assertFalse(order.isSpent());
     }
@@ -295,7 +295,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         BigInteger amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -307,8 +307,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(block1.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getTokenConfirmed(block1.getHash().toString()));
-        assertFalse(store.getTokenSpent(block1.getHash().toString()));
+        assertTrue(store.getTokenConfirmed(block1.getHash()));
+        assertFalse(store.getTokenSpent(block1.getHash()));
     }
 
     @Test
@@ -561,7 +561,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
+            Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -741,7 +741,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, pubKey);
         BigInteger amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                 true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
@@ -753,15 +753,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(block11.getHash(), new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getTokenConfirmed(block11.getHash().toString()));
-        assertFalse(store.getTokenSpent(block11.getHash().toString()));
+        assertTrue(store.getTokenConfirmed(block11.getHash()));
+        assertFalse(store.getTokenSpent(block11.getHash()));
 
         // Unconfirm
         blockGraph.unconfirm(block11.getHash(), new HashSet<>());
 
         // Should be unconfirmed now
-        assertFalse(store.getTokenConfirmed(block11.getHash().toString()));
-        assertFalse(store.getTokenSpent(block11.getHash().toString()));
+        assertFalse(store.getTokenConfirmed(block11.getHash()));
+        assertFalse(store.getTokenSpent(block11.getHash()));
     }
 
     @Test
@@ -945,7 +945,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
-
+       
         // Generate matching block
         Block rewardBlock1 =createAndAddOrderMatchingBlock(
                 networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(), rollingBlock1.getHash());
@@ -1021,7 +1021,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
+            Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test",
                     1, 0, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -1322,7 +1322,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, "", Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
+            Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0, amount,
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -1342,7 +1342,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             Coin coinbase = Coin.valueOf(77777L, pubKey);
             BigInteger amount = coinbase.getValue();
-            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance.toString(), Utils.HEX.encode(pubKey), "Test",
+            Token tokens = Token.buildSimpleTokenInfo(true, firstIssuance, Utils.HEX.encode(pubKey), "Test",
                     "Test", 1, 1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
@@ -1360,15 +1360,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(subseqIssuance, new HashSet<>());
 
         // Should be confirmed now
-        assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
-        assertTrue(store.getTokenConfirmed(subseqIssuance.toString()));
+        assertTrue(store.getTokenConfirmed(subseqIssuance));
+        assertTrue(store.getTokenConfirmed(subseqIssuance));
 
         // Unconfirm
         blockGraph.unconfirm(firstIssuance, new HashSet<>());
 
         // Should be unconfirmed now
-        assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
-        assertFalse(store.getTokenConfirmed(subseqIssuance.toString()));
+        assertFalse(store.getTokenConfirmed(subseqIssuance));
+        assertFalse(store.getTokenConfirmed(subseqIssuance));
     }
 
     @Test

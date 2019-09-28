@@ -15,23 +15,23 @@ public class MultiSign implements java.io.Serializable {
 
     private long tokenindex;
 
-    private byte[] blockhash;
+    private byte[] blockbytes;
 
     private String address;
 
     public String getBlockhashHex() {
-        if (this.blockhash == null) {
+        if (this.blockbytes == null) {
             return "";
         }
-        return Utils.HEX.encode(this.blockhash);
+        return Utils.HEX.encode(this.blockbytes);
     }
     
     public void setBlockhashHex(String blockhashHex) {
         if (blockhashHex == null) {
-            this.blockhash = null;
+            this.blockbytes = null;
         }
         else {
-            this.blockhash = Utils.HEX.decode(blockhashHex);
+            this.blockbytes = Utils.HEX.decode(blockhashHex);
         }
     }
 
@@ -69,12 +69,14 @@ public class MultiSign implements java.io.Serializable {
         this.tokenindex = tokenindex;
     }
 
-    public byte[] getBlockhash() {
-        return blockhash;
+   
+
+    public byte[] getBlockbytes() {
+        return blockbytes;
     }
 
-    public void setBlockhash(byte[] blockhash) {
-        this.blockhash = blockhash;
+    public void setBlockbytes(byte[] blockbytes) {
+        this.blockbytes = blockbytes;
     }
 
     public String getAddress() {

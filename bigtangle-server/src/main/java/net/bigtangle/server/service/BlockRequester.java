@@ -236,7 +236,7 @@ public class BlockRequester {
     private TXReward findSync(List<TXReward> remotes, TXReward my) throws Exception {
 
         for (TXReward b1 : remotes) {
-            if (b1.getSha256Hash().equals(my.getSha256Hash())) {
+            if (b1.getBlockHash().equals(my.getBlockHash())) {
                 return b1;
             }
         }
