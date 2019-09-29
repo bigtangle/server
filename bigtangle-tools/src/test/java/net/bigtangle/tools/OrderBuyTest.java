@@ -36,15 +36,15 @@ public class OrderBuyTest extends AbstractIntegrationTest {
                 try {
                 if (i % 2 == 0) {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy("https://bigtangle.org/", walletAppKit2.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
                     } else {
-                        buy("https://bigtangle.org/", walletAppKit1.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
                     }
                 } else {
                     if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy("https://bigtangle.org/", walletAppKit2.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit2.wallet(), orderRecord);
                     } else {
-                        buy("https://bigtangle.org/", walletAppKit1.wallet(), orderRecord);
+                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit1.wallet(), orderRecord);
                     }
                 }
                 i += 1;
