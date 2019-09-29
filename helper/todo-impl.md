@@ -463,15 +463,16 @@ User start a payment with 80 yuan to yuan-token
 example
  tokentype:domainname
  tokenname=de
+ domainname=""
  signatures: user + root 
  check: tokenname must be unique for tokentype domainname
  
  tokentype:domainname
  tokenname=bund.de
- signatures: user + domainame of de
- check: tokenname must be unique for tokentype domainname
+ domainname=de
  
- tokenname=gesund.bund.de
+ signatures: user + domainname of de
+ check: tokenname must be unique for tokentype domainname
  
  
 ### other type of token must be have a domain name

@@ -156,7 +156,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
         // save block
-        block.solve();
+        block = adjustSolve(block);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
@@ -712,7 +712,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // request.tx.setDataclassname(DataClassName.USERDATA.name());
 
         rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
+        rollingBlock = adjustSolve(rollingBlock);
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));

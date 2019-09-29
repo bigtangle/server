@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,7 +28,11 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderReclaimInfo;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -74,11 +79,11 @@ public class BlockService {
 
     @Autowired
     protected TipsService tipService;
-    
+
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
-    //  cache only binary block  only
-     @Cacheable("blocks")
+    // cache only binary block only
+    @Cacheable("blocks")
     // nullable
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
@@ -115,9 +120,9 @@ public class BlockService {
     public void saveBlock(Block block) throws Exception {
         Context context = new Context(networkParameters);
         Context.propagate(context);
-        blockgraph.add(block, false); 
+        blockgraph.add(block, false);
         broadcastBlock(block);
-        
+
     }
 
     public long getTimeSeconds(int days) throws Exception {
@@ -185,7 +190,7 @@ public class BlockService {
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
 
-        List<Sha256Hash> allRequiredBlockHashes = validatorService.getAllRequiredBlockHashes(block.getBlock());
+        Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
         for (Sha256Hash req : allRequiredBlockHashes) {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
@@ -197,7 +202,7 @@ public class BlockService {
     }
 
     @SuppressWarnings("unchecked")
-    //TODO cache last blocks, but add evict @Cacheable("searchBlock")
+    // TODO cache last blocks, but add evict @Cacheable("searchBlock")
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
@@ -215,7 +220,8 @@ public class BlockService {
         }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
-    //@Cacheable("searchBlockByBlockHash")
+
+    // @Cacheable("searchBlockByBlockHash")
     public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
         String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
@@ -273,19 +279,19 @@ public class BlockService {
 
         this.store.deleteMyserverblocks(prevhash);
     }
-    //TODO @Cacheable("blocksFromChainLength")
+
+    // TODO @Cacheable("blocksFromChainLength")
     public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
-    
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     public Block askTransactionBlock() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 =  getBlock(tipsToApprove.getLeft());
-        Block r2 =  getBlock(tipsToApprove.getRight());
+        Block r1 = getBlock(tipsToApprove.getLeft());
+        Block r2 = getBlock(tipsToApprove.getRight());
 
         return r1.createNextBlock(r2,
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
@@ -362,15 +368,43 @@ public class BlockService {
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 
-    public void adjustHeightRequiredTrasnactionHashes(Block block) throws BlockStoreException {
-        List<Sha256Hash> txHashs = getAllRequiredTrasnactionHashes(block);
-        if (!txHashs.isEmpty())
-            block.setHeight(Math.max(block.getHeight(), store.getHeightTransactions(txHashs)));
+    public void adjustHeightRequiredBlocks(Block block) throws BlockStoreException {
+       long h = calcHeightRequiredBlocks(block);
+       if(h>block.getHeight() ) {
+           logger.debug("adjustHeightRequiredBlocks" + block + " to " +h);
+        block.setHeight(h);
+       }
     }
 
-    public List<Sha256Hash> getAllRequiredTrasnactionHashes(Block block) {
+    public long calcHeightRequiredBlocks(Block block) throws BlockStoreException {
+        List<BlockWrap> requires = getAllRequirements(block);
+        long height =0 ;
+        for (BlockWrap b : requires) { 
+            height= Math.max(height, b.getBlock().getHeight());
+        }
+        return height+1;
+    }
+    
+    public List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
+        Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
+        List<BlockWrap> result = new ArrayList<>();
+        for (Sha256Hash pred : allPredecessorBlockHashes)
+            result.add(store.getBlockWrap(pred));
+        return result;
+    }
+
+    /**
+     * Returns all blocks that must be confirmed if this block is confirmed.
+     * 
+     * @param block
+     * @return
+     */
+    public Set<Sha256Hash> getAllRequiredBlockHashes(Block block) {
+        Set<Sha256Hash> predecessors = new HashSet<>();
+        predecessors.add(block.getPrevBlockHash());
+        predecessors.add(block.getPrevBranchBlockHash());
+
         // All used transaction outputs
-        List<Sha256Hash> predecessors = new ArrayList<>();
         final List<Transaction> transactions = block.getTransactions();
         for (final Transaction tx : transactions) {
             if (!tx.isCoinBase()) {
@@ -381,6 +415,69 @@ public class BlockService {
                 }
             }
         }
+
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_CROSSTANGLE:
+            break;
+        case BLOCKTYPE_FILE:
+            break;
+        case BLOCKTYPE_GOVERNANCE:
+            break;
+        case BLOCKTYPE_INITIAL:
+            break;
+        case BLOCKTYPE_REWARD:
+            RewardInfo rewardInfo = null;
+            try {
+                rewardInfo = RewardInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(rewardInfo.getPrevRewardHash());
+            break;
+        case BLOCKTYPE_TOKEN_CREATION:
+            TokenInfo currentToken = null;
+            try {
+                currentToken = TokenInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
+            if (currentToken.getToken().getPrevblockhash() != null)
+                predecessors.add(currentToken.getToken().getPrevblockhash());
+            break;
+        case BLOCKTYPE_TRANSFER:
+            break;
+        case BLOCKTYPE_USERDATA:
+            break;
+        case BLOCKTYPE_VOS:
+            break;
+        case BLOCKTYPE_VOS_EXECUTE:
+            break;
+        case BLOCKTYPE_ORDER_OPEN:
+            break;
+        case BLOCKTYPE_ORDER_OP:
+            OrderOpInfo opInfo = null;
+            try {
+                opInfo = OrderOpInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(opInfo.getBlockHash());
+            break;
+        case BLOCKTYPE_ORDER_RECLAIM:
+            OrderReclaimInfo reclaimInfo = null;
+            try {
+                reclaimInfo = OrderReclaimInfo.parse(transactions.get(0).getData());
+            } catch (IOException e) {
+                logger.error("Block was not checked: " + e.getLocalizedMessage());
+            }
+            predecessors.add(reclaimInfo.getOrderBlockHash());
+            predecessors.add(reclaimInfo.getNonConfirmingMatcherBlockHash());
+            break;
+        default:
+            throw new RuntimeException("No Implementation");
+        }
+
         return predecessors;
     }
 }

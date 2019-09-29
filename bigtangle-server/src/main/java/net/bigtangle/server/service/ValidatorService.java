@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +105,8 @@ public class ValidatorService {
     private BlockService blockService;
     @Autowired
     protected NetworkParameters networkParameters;
+    @Autowired
+    protected TokenDomainnameService tokenDomainnameService;
 
     @Autowired
     private NetworkParameters params;
@@ -370,7 +371,7 @@ public class ValidatorService {
             return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-            return store.getTokenSpent(Sha256Hash.wrap(connectedDomainToken.getDomainPredecessorBlockHash()));
+            return store.getTokenSpent(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
         default:
             throw new RuntimeException("Not Implemented");
         }
@@ -399,7 +400,7 @@ public class ValidatorService {
                     && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isConfirmed();
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-            return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainPredecessorBlockHash()));
+            return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
         default:
             throw new RuntimeException("not implemented");
         }
@@ -769,7 +770,7 @@ public class ValidatorService {
             // The spender is always the one block with the same domainname and
             // predecessing domain tokenid that is confirmed
             return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getDomainName(),
-                    connectedDomainToken.getDomainPredecessorBlockHash());
+                    connectedDomainToken.getDomainNameBlockHash());
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -786,104 +787,10 @@ public class ValidatorService {
         });
     }
 
-    private List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
-        List<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
-        List<BlockWrap> result = new ArrayList<>();
-        for (Sha256Hash pred : allPredecessorBlockHashes)
-            result.add(store.getBlockWrap(pred));
-        return result;
-    }
 
-    /**
-     * Returns all blocks that must be confirmed if this block is confirmed.
-     * 
-     * @param block
-     * @return
-     */
-    public List<Sha256Hash> getAllRequiredBlockHashes(Block block) {
-        List<Sha256Hash> predecessors = new ArrayList<>();
-        predecessors.add(block.getPrevBlockHash());
-        predecessors.add(block.getPrevBranchBlockHash());
-
-        // All used transaction outputs
-        final List<Transaction> transactions = block.getTransactions();
-        for (final Transaction tx : transactions) {
-            if (!tx.isCoinBase()) {
-                for (int index = 0; index < tx.getInputs().size(); index++) {
-                    TransactionInput in = tx.getInputs().get(index);
-                    // due to virtual txs from order/reward
-                    predecessors.add(in.getOutpoint().getBlockHash());
-                }
-            }
-        }
-
-        switch (block.getBlockType()) {
-        case BLOCKTYPE_CROSSTANGLE:
-            break;
-        case BLOCKTYPE_FILE:
-            break;
-        case BLOCKTYPE_GOVERNANCE:
-            break;
-        case BLOCKTYPE_INITIAL:
-            break;
-        case BLOCKTYPE_REWARD:
-            RewardInfo rewardInfo = null;
-            try {
-                rewardInfo = RewardInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
-            predecessors.add(rewardInfo.getPrevRewardHash());
-            break;
-        case BLOCKTYPE_TOKEN_CREATION:
-            TokenInfo currentToken = null;
-            try {
-                currentToken = TokenInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
-            predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
-            if (currentToken.getToken().getPrevblockhash()!=null)
-                predecessors.add(currentToken.getToken().getPrevblockhash());
-            break;
-        case BLOCKTYPE_TRANSFER:
-            break;
-        case BLOCKTYPE_USERDATA:
-            break;
-        case BLOCKTYPE_VOS:
-            break;
-        case BLOCKTYPE_VOS_EXECUTE:
-            break;
-        case BLOCKTYPE_ORDER_OPEN:
-            break;
-        case BLOCKTYPE_ORDER_OP:
-            OrderOpInfo opInfo = null;
-            try {
-                opInfo = OrderOpInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
-            predecessors.add(opInfo.getBlockHash());
-            break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            OrderReclaimInfo reclaimInfo = null;
-            try {
-                reclaimInfo = OrderReclaimInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
-            predecessors.add(reclaimInfo.getOrderBlockHash());
-            predecessors.add(reclaimInfo.getNonConfirmingMatcherBlockHash());
-            break;
-        default:
-            throw new RuntimeException("No Implementation");
-        }
-
-        return predecessors;
-    }
 
     private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions) throws BlockStoreException {
-        final List<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
+        final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block);
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq);
             if (pred == null)
@@ -900,7 +807,7 @@ public class ValidatorService {
     }
 
     private SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
-        final List<BlockWrap> allPredecessors = getAllRequirements(block);
+        final List<BlockWrap> allPredecessors =blockService. getAllRequirements(block);
         SolidityState missingCalculation = null;
         SolidityState missingDependency = null;
         for (BlockWrap predecessor : allPredecessors) {
@@ -1389,9 +1296,8 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-            // Check height
-            if (block.getHeight() != Math.max(storedPrev.getBlock().getHeight(),
-                    storedPrevBranch.getBlock().getHeight()) + 1) {
+            // Check height, all required max +1
+            if (block.getHeight() != blockService.calcHeightRequiredBlocks(block)) {
                 if (throwExceptions)
                     throw new VerificationException("Wrong height");
                 return SolidityState.getFailState();
@@ -2151,19 +2057,26 @@ public class ValidatorService {
         }
 
         // Must have a predecessing domain definition
-        if (currentToken.getToken().getDomainPredecessorBlockHash() == null) {
+        if (currentToken.getToken().getDomainNameBlockHash() == null) {
             if (throwExceptions)
                 throw new InvalidDependencyException("Domain predecessor is empty");
             return SolidityState.getFailState();
         }
 
+        
         // Requires the predecessing domain definition block to exist and be a
         // legal domain
-        Token prevDomain = store.getToken(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()));
+        Token prevDomain=null;
+        
+       if( ! currentToken.getToken().getDomainNameBlockHash(
+               ).equals(networkParameters.getGenesisBlock().getHashAsString()) )
+       {
+      
+          prevDomain = store.getToken(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
         if (prevDomain == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
-            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainPredecessorBlockHash()), true);
+            return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()), true);
         }
 
         if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
@@ -2172,12 +2085,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-//        if (StringUtils.isBlank(currentToken.getToken().getDomainName())) {
-//            if (throwExceptions)
-//                throw new InvalidDependencyException("Domainname is empty");
-//            return SolidityState.getFailState();
-//        }
-
+       }
         // Ensure signatures exist
         int signatureCount = 0;
         if (tx.getDataSignature() == null) {
@@ -2247,8 +2155,8 @@ public class ValidatorService {
                         throw new PreviousTokenDisallowsException("Cannot change token type");
                     return SolidityState.getFailState();
                 }
-                if (!currentToken.getToken().getDomainPredecessorBlockHash()
-                        .equals(prevToken.getDomainPredecessorBlockHash())) {
+                if (!currentToken.getToken().getDomainNameBlockHash()
+                        .equals(prevToken.getDomainNameBlockHash())) {
                     if (throwExceptions)
                         throw new PreviousTokenDisallowsException("Cannot change token domain");
                     return SolidityState.getFailState();
@@ -2274,11 +2182,13 @@ public class ValidatorService {
             permissionedAddresses = currentToken.getMultiSignAddresses();
 
             // Any first time issuances also require the domain signatures
-            List<MultiSignAddress> prevDomainPermissionedAddresses = store
-                    .getMultiSignAddressListByTokenidAndBlockHashHex(prevDomain.getTokenid(),
-                            prevDomain.getBlockHash());
+            List<MultiSignAddress> prevDomainPermissionedAddresses = tokenDomainnameService
+                    .queryDomainnameTokenMultiSignAddresses( 
+                            prevDomain==null? networkParameters.getGenesisBlock().getHash():
+                                prevDomain.getBlockHash());
             SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
-                    txSignatures.getMultiSignBies(), prevDomain.getSignnumber(), throwExceptions, tx.getHash());
+                    txSignatures.getMultiSignBies(), 
+                    prevDomain==null ? 1:prevDomain.getSignnumber(), throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
                 return domainPermission;
         }
@@ -2568,8 +2478,8 @@ public class ValidatorService {
             SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
             if (formalSolidityResult.isFailState())
                 return formalSolidityResult;
-
             // Predecessors must exist and be ok
+             if(true);
             SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions);
             if (!predecessorsExist.isSuccessState()) {
                 return predecessorsExist;

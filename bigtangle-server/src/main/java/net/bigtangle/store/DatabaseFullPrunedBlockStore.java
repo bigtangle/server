@@ -351,7 +351,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = ? limit 1";
 
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid "
-            + "FROM tokens WHERE domainname = ? AND tokentype = 3 limit 1";
+            + "FROM tokens WHERE tokenname = ? AND tokentype = 3  limit 1";
 
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
 
@@ -954,49 +954,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
 
-            put(params.getGenesisBlock());
+            saveNewStore(params.getGenesisBlock());
             saveGenesisTransactionOutput(params.getGenesisBlock());
-            updateBlockEvaluationMilestone(params.getGenesisBlock().getHash(), 0);
-            updateBlockEvaluationMilestoneDepth(params.getGenesisBlock().getHash(), 0);
-            updateBlockEvaluationSolid(params.getGenesisBlock().getHash(), 2);
-            updateBlockEvaluationConfirmed(params.getGenesisBlock().getHash(), true);
-
+            
             // Just fill the tables with some valid data
             // Reward output table
             insertReward(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH,
                     Utils.encodeCompactBits(params.getMaxTargetReward()), 0);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
-            // create domain name bc
-            Token bc = Token.buildDomainnameTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING + "01",
-                    NetworkParameters.BIGTANGLE_TOKENID_STRING, "BigTangle Domain", 1, 0, BigInteger.valueOf(1), true,
-                    0, "bc", "");
-            insertToken(params.getGenesisBlock().getHash(), bc);
-            updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
 
-            // Correctly insert additional data
-            ECKey genesisTestKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                    Utils.HEX.decode(NetworkParameters.testPub));
-            Address genesisAddress = genesisTestKey.toAddress(params);
-            MultiSignAddress permissionedAddress = new MultiSignAddress(bc.getTokenid(), genesisAddress.toBase58(),
-                    genesisTestKey.getPublicKeyAsHex());
-            permissionedAddress.setBlockhash(params.getGenesisBlock().getHash());
-            insertMultiSignAddress(permissionedAddress);
-
-            // Token output table
+            //create bigtangle Token output table
             Token bigtangle = Token.buildSimpleTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                     NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0,
                     NetworkParameters.BigtangleCoinTotal, true, NetworkParameters.BIGTANGLE_DECIMAL,
-                    params.getGenesisBlock().getHashAsString());
-            insertToken(bcBlockHash(params), bigtangle);
-            updateTokenConfirmed(bcBlockHash(params), true);
-
-            // Correctly insert additional data
-            permissionedAddress = new MultiSignAddress(bigtangle.getTokenid(), genesisAddress.toBase58(),
-                    genesisTestKey.getPublicKeyAsHex());
-            permissionedAddress.setBlockhash(bcBlockHash(params));
-            insertMultiSignAddress(permissionedAddress);
-
+                    "");
+            bigtangle.setDomainName(NetworkParameters.BIGTANGLE_TOKENID_STRING);
+            insertToken(params.getGenesisBlock().getHash(), bigtangle);
+            updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
+           
             // Tip table
             insertTip(params.getGenesisBlock().getHash());
         } catch (VerificationException e) {
@@ -1004,7 +980,17 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public static Sha256Hash bcBlockHash(NetworkParameters params) {
+    private void saveNewStore( Block b) throws BlockStoreException {
+        put(b);
+      
+        updateBlockEvaluationMilestone(b.getHash(), 0);
+        updateBlockEvaluationMilestoneDepth(b.getHash(), 0);
+        updateBlockEvaluationSolid(b.getHash(), 2);
+        updateBlockEvaluationConfirmed(b.getHash(), true);
+
+            
+        }
+    public static Block bcBlockHash(NetworkParameters params, long height) {
         Block bcBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS,
                 Block.Type.BLOCKTYPE_TOKEN_CREATION.ordinal());
         bcBlock.setTime(1532896109L);
@@ -1013,10 +999,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         bcBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
         bcBlock.setNonce(0);
-        bcBlock.setHeight(0);
+        bcBlock.setHeight(height);
         // genesisBlock.solve();
 
-        return bcBlock.getHash();
+        return bcBlock ;
 
     }
 
@@ -2897,7 +2883,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         tokens.setRevoked(resultSet.getBoolean("revoked"));
         tokens.setLanguage(resultSet.getString("language"));
         tokens.setClassification(resultSet.getString("classification"));
-        tokens.setDomainPredecessorBlockHash(resultSet.getString("domainpredblockhash"));
+        tokens.setDomainNameBlockHash(resultSet.getString("domainpredblockhash"));
         byte[] buf = resultSet.getBytes("tokenkeyvalues");
         if (buf != null) {
             tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
@@ -2924,13 +2910,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.insertToken(blockhash, confirmed, tokenid, tokenindex, token.getAmount(), tokenname, description,
                 token.getDomainName(), signnumber, tokentype, tokenstop, prevblockhash, tokenkeyvalues,
                 token.getRevoked(), token.getLanguage(), token.getClassification(), token.getDecimals(),
-                token.getDomainPredecessorBlockHash());
+                token.getDomainNameBlockHash());
     }
 
     public void insertToken(Sha256Hash blockhash, boolean confirmed, String tokenid, long tokenindex, BigInteger amount,
             String tokenname, String description, String domainname, int signnumber, int tokentype, boolean tokenstop,
             Sha256Hash prevblockhash, byte[] tokenkeyvalues, Boolean revoked, String language, String classification,
-            int decimals, String domainPredecessorBlockHash) throws BlockStoreException {
+            int decimals, String domainNameBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2956,7 +2942,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(17, language);
             preparedStatement.setString(18, classification);
             preparedStatement.setLong(19, decimals);
-            preparedStatement.setString(20, domainPredecessorBlockHash);
+            preparedStatement.setString(20, domainNameBlockHash);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -6316,12 +6302,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Token queryDomainnameToken(Sha256Hash domainPredecessorBlockHash) throws BlockStoreException {
+    public Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
-            preparedStatement.setBytes(1, domainPredecessorBlockHash.getBytes());
+            preparedStatement.setBytes(1, domainNameBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 Token tokens = new Token();

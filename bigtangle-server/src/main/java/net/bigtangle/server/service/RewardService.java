@@ -178,6 +178,7 @@ public class RewardService {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
+                 blockService.adjustHeightRequiredBlocks(block);
                 block.solve(chainTarget);return "";
             }
         });

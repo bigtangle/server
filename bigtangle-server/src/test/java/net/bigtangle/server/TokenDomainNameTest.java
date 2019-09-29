@@ -12,12 +12,49 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
+/*
+ * ## permission of token creation 
 
+### new type of token with domain name
+ server configuration parameter defines the root permission for single name as cn, com,  de etc.
+ the creation of top name need the signature of root permission and user signature
+ domain name is tree of permission
+ the other domain need the signature of parent signature and user signature
+ domain name is unique in system  -> ValidationService
+
+example
+ tokentype:domainname
+ tokenname=de
+ domainname=""
+ signatures: user + root 
+ check: tokenname must be unique for tokentype domainname
+ 
+ tokentype:domainname
+ tokenname=bund.de
+ domainname=de
+ 
+ signatures: user + domainname of de
+ check: tokenname must be unique for tokentype domainname
+ 
+ 
+### other type of token must be have a domain name
+   the token must be signed by domain name signature and user signature
+example
+ tokentype:token
+ tokenname=product1
+ domainname=bund.de
+ signatures: user + domainname token
+   
+
+### display with tokenname +"@" + domainname +":"+ tokenid
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TokenDomainNameTest extends AbstractIntegrationTest {
 
+    
     @Test
     public void testCreateDomainTokenBatch() throws Exception {
         store.resetStore();
@@ -30,7 +67,20 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", "bigtangle.bc", aesKey,
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey,
+                    BigInteger.valueOf(678900000), "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+            }
+        }
+
+        
+        {
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", aesKey,
                     BigInteger.valueOf(678900000), "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
@@ -42,7 +92,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "www.bigtangle.bc", "www.bigtangle.bc",
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "www.bigtangle.bc",  
                     aesKey, BigInteger.valueOf(678900000), "");
             walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
 
@@ -59,7 +109,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(ImmutableList.of(walletKeys.get(2), walletKeys.get(3)),
-                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", "info.www.bigtangle.bc", aesKey,
+                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc",  aesKey,
                     BigInteger.valueOf(678900000), "");
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(walletKeys.get(3));
@@ -71,4 +121,33 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
             }
         }
     }
+    
+    @Test
+    public void walletCreateDomain() throws Exception {
+        store.resetStore();
+
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(this.walletKeys.get(1));
+        keys.add(this.walletKeys.get(2));
+        keys.add(this.walletKeys.get(3));
+
+        final String tokenid = new ECKey().getPublicKeyAsHex();
+        final String tokenname = "bigtangle.de";
+      
+
+        final String domainNameBlockHash = networkParameters.getGenesisBlock().getHashAsString();
+
+        // don't use the first key which is in the wallet
+        ECKey signKey = this.walletKeys.get(3);
+        this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname,  
+                domainNameBlockHash, aesKey, BigInteger.valueOf(6789000), "", 3);
+
+        this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);
+        this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(2), aesKey);
+
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
+                Utils.HEX.decode(NetworkParameters.testPub));
+        this.walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
+    }
+
 }

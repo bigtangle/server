@@ -49,38 +49,6 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MilestoneServiceTest extends AbstractIntegrationTest {
 
-    @Test
-    public void testUnconfirmedOutput() throws Exception {
-        store.resetStore();
-
-        // Create block with UTXO
-        Transaction tx1 = createTestGenesisTransaction();
-        Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), tx1);
-
-        milestoneService.update();
-
-        // Create block with dependency
-        Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock());
-        Transaction tx2 = createTestGenesisTransaction();
-        Block block = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
-
-        store.resetStore();
-
-        blockGraph.add(depBlock, false);
-        blockGraph.add(betweenBlock, false);
-        blockGraph.add(block, false);
-
-        Block b1 = createAndAddNextBlock(depBlock, block);
-
-        milestoneService.update();
-
-        // Update cycle should allow all through
-        assertTrue(blockService.getBlockEvaluation(depBlock.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(block.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
-    }
 
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
@@ -506,7 +474,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
             block1.addTransaction(tx);
             block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
+            block1= adjustSolve(block1) ;
             this.blockGraph.add(block1, true);
         }
 

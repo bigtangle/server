@@ -45,14 +45,17 @@ public class Token extends SpentBlock implements java.io.Serializable {
     private String tokenname;
     // description
     private String description;
-    // the domain name defined by this token, default "" for root domain, not  null value for easy use  
+    // The domain name or parent domain name defined by this token, default "" or null for root domain, 
+    //if the token is domainname type, then it is the parent domain name
+    //for example type=domainname, then tokenname=bigtangle, here is domainname=bc, 
+    //the full domainname is bigtangle.bc, otherwise it is a token in this domain name 
     private String domainName="";
-    // the predecessing domain's block hash
-    private String domainPredecessorBlockHash;
+    // the  domainName's block hash, 
+    //"" or null as root domain, it will be networkParameters.getGenesisBlock().getHashAsString()
+    private String domainNameBlockHash;
     // number of signature
     private int signnumber;
-    // difference for external exchange, meta token, digital asset token and
-    // substangle
+    // difference type of token 
     private int tokentype;
     // if this is true, there is no possible to change the token anymore.
     private boolean tokenstop;
@@ -134,13 +137,14 @@ public class Token extends SpentBlock implements java.io.Serializable {
     public void setDomainName(String domainName) {
         this.domainName = domainName;
     }
+ 
 
-    public String getDomainPredecessorBlockHash() {
-        return domainPredecessorBlockHash;
+    public String getDomainNameBlockHash() {
+        return domainNameBlockHash;
     }
 
-    public void setDomainPredecessorBlockHash(String domainPredecessorBlockHash) {
-        this.domainPredecessorBlockHash = domainPredecessorBlockHash;
+    public void setDomainNameBlockHash(String domainNameBlockHash) {
+        this.domainNameBlockHash = domainNameBlockHash;
     }
 
     public Boolean getRevoked() {
@@ -226,7 +230,7 @@ public class Token extends SpentBlock implements java.io.Serializable {
     public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,
-            int decimals, final String domainName, final String domainPredecessorBlockHash) {
+            int decimals, final String domainName, final String domainNameBlockHash) {
         Token tokens = new Token();
         tokens.setTokenid(tokenid);
         tokens.setTokenname(tokenname);
@@ -244,7 +248,7 @@ public class Token extends SpentBlock implements java.io.Serializable {
         tokens.classification = classification;
         tokens.decimals = decimals;
         tokens.domainName = domainName;
-        tokens.domainPredecessorBlockHash = domainPredecessorBlockHash;
+        tokens.domainNameBlockHash = domainNameBlockHash;
         return tokens;
     }
 

@@ -230,8 +230,7 @@ public class DispatcherController {
                 break;
             case adjustHeight: {
                 Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.blockService.adjustHeightRequiredTrasnactionHashes(block);
-                ;
+                this.blockService.adjustHeightRequiredBlocks(block); 
                 this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
             }
                 break;
@@ -440,18 +439,18 @@ public class DispatcherController {
             case queryPermissionedAddresses: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                final String domainPredecessorBlockHash = (String) request.get("domainPredecessorBlockHash");
+                final String domainNameBlockHash = (String) request.get("domainNameBlockHash");
                 PermissionedAddressesResponse response = this.tokenDomainnameService
-                        .queryDomainnameTokenPermissionedAddresses(domainPredecessorBlockHash);
+                        .queryDomainnameTokenPermissionedAddresses(domainNameBlockHash);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case findDomainPredecessorBlockHash: {
+            case finddomainNameBlockHash: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 final String domainname = (String) request.get("domainname");
                 AbstractResponse response = this.tokenDomainnameService
-                        .queryDomainnameTokenPredecessorBlockHash(domainname);
+                        .queryDomainnameBlockHash(domainname);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;

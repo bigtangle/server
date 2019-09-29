@@ -676,7 +676,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block.solve();
+        block=adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
@@ -755,7 +755,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block.solve();
+        block=adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());

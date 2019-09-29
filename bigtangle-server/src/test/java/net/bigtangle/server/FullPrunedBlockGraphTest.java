@@ -1237,7 +1237,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
                 + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock,NetworkParameters.BLOCK_VERSION_GENESIS, testKey.getPubKeyHash());
-            rollingBlock.solve();
+            rollingBlock=adjustSolve(rollingBlock);
           
             blockGraph.add(rollingBlock, true);
         }
@@ -1376,7 +1376,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
-        ;
+ 
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token

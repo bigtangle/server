@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -603,7 +604,7 @@ public class MilestoneService {
 
                     // Sanity check: if my predecessors are still not fully
                     // solid or invalid, there must be something wrong.
-                    List<Sha256Hash> allRequiredBlockHashes = validatorService
+                    Set<Sha256Hash> allRequiredBlockHashes = blockService
                             .getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
                     for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
                         if (store.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {

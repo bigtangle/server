@@ -46,6 +46,8 @@ public class MultiSignService {
     protected ValidatorService validatorService;
     @Autowired
     protected NetworkParameters params;
+    @Autowired
+    protected TokenDomainnameService tokenDomainnameService;
 
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address)
             throws BlockStoreException {
@@ -122,13 +124,9 @@ public class MultiSignService {
             List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
 
             // Always needs domain owner signature
-            Token prevToken = store.getToken(Sha256Hash.wrap(tokens.getDomainPredecessorBlockHash()));
-            List<MultiSignAddress> permissionedAddresses = store.getMultiSignAddressListByTokenidAndBlockHashHex(
-                    prevToken.getTokenid(), prevToken.getBlockHash());
-            for (MultiSignAddress permissionedAddress : permissionedAddresses) {
-                permissionedAddress.setTokenid(tokens.getTokenid());
-            }
-            multiSignAddresses.addAll(permissionedAddresses);
+
+            multiSignAddresses.addAll(tokenDomainnameService
+                    .queryDomainnameTokenMultiSignAddresses(Sha256Hash.wrap(tokens.getDomainNameBlockHash())));
 
             // Add the entries to DB
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
@@ -174,15 +172,15 @@ public class MultiSignService {
 
     public void multiSign(Block block, boolean allowConflicts) throws Exception {
         try {
-            //TODO check set true
-        if (validatorService.checkFullTokenSolidity(block, 0, false) == SolidityState.getSuccessState()) {
-            this.saveMultiSign(block);
-            blockService.saveBlock(block);
-        } else {
-            // data save only on this server, not in block.
-            this.saveMultiSign(block);
-        }
-        }catch (InsufficientSignaturesException e) {
+            // TODO check set true
+            if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
+                this.saveMultiSign(block);
+                blockService.saveBlock(block);
+            } else {
+                // data save only on this server, not in block.
+                this.saveMultiSign(block);
+            }
+        } catch (InsufficientSignaturesException e) {
             this.saveMultiSign(block);
         }
     }

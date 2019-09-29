@@ -84,7 +84,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        block.solve();
+        block=adjustSolve(block);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 

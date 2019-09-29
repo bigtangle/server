@@ -277,7 +277,7 @@ public class OkHttp3Util {
             while ((length = gzis.read(buffer)) > 0) {
                 out.write(buffer, 0, length);
             }
-            logger.debug("decompress " + contentBytes.length + " to " + out.size());
+         //   logger.debug("decompress " + contentBytes.length + " to " + out.size());
             return out.toString();
         } finally {
             out.close();

@@ -478,7 +478,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
 
-    Token queryDomainnameToken(Sha256Hash domainPredecessorBlockHash) throws BlockStoreException;
+    Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException;
 
     Token getTokensByDomainname(String domainname) throws BlockStoreException;
     

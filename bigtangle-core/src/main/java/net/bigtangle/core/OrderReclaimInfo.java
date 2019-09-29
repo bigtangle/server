@@ -66,9 +66,8 @@ public class OrderReclaimInfo implements java.io.Serializable {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
             return jsonStr.getBytes();
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
+            throw new RuntimeException("toByteArray");
+        } 
     }
 
     public static OrderReclaimInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {

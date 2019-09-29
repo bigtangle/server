@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
   */
 public class SpentBlock extends DataClass {
     private Sha256Hash blockHash;
+    //confirmed=true, MCMC rating > 75 or block is on a milestone
     private boolean confirmed;
     private boolean spent;
     private Sha256Hash spenderBlockHash;

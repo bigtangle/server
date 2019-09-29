@@ -80,7 +80,7 @@ public class ConflictPoint {
 		case ORDERRECLAIM:
 			return getConnectedOrder().getOrderBlockHash().equals(other.getConnectedOrder().getOrderBlockHash());
         case DOMAINISSUANCE:
-            return getConnectedDomainToken().getDomainPredecessorBlockHash().equals(other.getConnectedDomainToken().getDomainPredecessorBlockHash())
+            return getConnectedDomainToken().getDomainNameBlockHash().equals(other.getConnectedDomainToken().getDomainNameBlockHash())
                     && getConnectedDomainToken().getDomainName().equals(other.getConnectedDomainToken().getDomainName());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
@@ -99,7 +99,7 @@ public class ConflictPoint {
 		case ORDERRECLAIM:
             return Objects.hashCode(type, getConnectedOrder().getOrderBlockHash());
         case DOMAINISSUANCE:
-            return Objects.hashCode(type, getConnectedDomainToken().getDomainPredecessorBlockHash(), getConnectedDomainToken().getDomainName());
+            return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(), getConnectedDomainToken().getDomainName());
 		default:
 			throw new NotImplementedException("Conflicts not implemented.");
         }

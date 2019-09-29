@@ -405,7 +405,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(buf);
         rollingBlock.addTransaction(transaction0);
-        rollingBlock.solve();
+           rollingBlock=adjustSolve(rollingBlock);
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
     }
 
@@ -782,17 +782,11 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(2).getPublicKeyAsHex()));
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
-        block.solve();
-        String resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
-        int duration = (Integer) result2.get("errorcode");
-        log.debug("resp : " + resp);
-        assertEquals(duration, 0);
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -822,12 +816,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        resp = OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
-
-        result2 = Json.jsonmapper().readValue(resp, HashMap.class);
-        duration = (Integer) result2.get("errorcode");
-        log.debug("resp : " + resp);
-        assertEquals(duration, 0);
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
     @Test
@@ -1060,17 +1049,9 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         ECKey key3 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
-        block.solve();
-
-        // save block
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
-
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+        
+     
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", key1.toAddress(networkParameters).toBase58());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getMultiSignWithAddress.name(),
@@ -1087,13 +1068,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         updateTokenInfo.getToken().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
-        requestParam = new HashMap<String, String>();
-        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block_ = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block_.addCoinbaseTransaction(key4.getPubKey(), basecoin, updateTokenInfo);
-        block_.solve();
+        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
 
         // save block
        // OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());

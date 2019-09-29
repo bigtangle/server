@@ -279,7 +279,7 @@ public abstract class AbstractIntegrationTest {
         block = predecessor.createNextBlock(branchPredecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         return block;
@@ -316,7 +316,7 @@ public abstract class AbstractIntegrationTest {
         // Create block with tx
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
 
@@ -330,7 +330,7 @@ public abstract class AbstractIntegrationTest {
 
         // Create and add block
         block = predecessor.createNextBlock(predecessor);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
 
@@ -344,7 +344,7 @@ public abstract class AbstractIntegrationTest {
 
         // Create and add block
         block = predecessor.createNextBlock(predecessor);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         return block;
     }
@@ -354,7 +354,8 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
-        milestoneService.update();
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        //milestoneService.update();
         return block;
 
     }
@@ -395,7 +396,7 @@ public abstract class AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
@@ -409,6 +410,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         milestoneService.update();
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
         return block;
 
     }
@@ -451,7 +453,7 @@ public abstract class AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block.solve();
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         milestoneService.update();
         addedBlocks.add(block);
@@ -484,7 +486,7 @@ public abstract class AbstractIntegrationTest {
         Block block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
-        block.solve();
+        block = adjustSolve(block);
 
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
@@ -507,6 +509,7 @@ public abstract class AbstractIntegrationTest {
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            rollingBlock= adjustSolve(rollingBlock);
             blockGraph.add(rollingBlock, true);
             addedBlocks.add(rollingBlock);
         }
@@ -517,7 +520,6 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-//        blockGraph.confirm(block.getHash(), new HashSet<>());
         milestoneService.update();
         return block;
     }
@@ -612,7 +614,7 @@ public abstract class AbstractIntegrationTest {
         // Redo and assert snapshot equal to new state
         store.resetStore();
         for (Block b : addedBlocks) {
-            blockGraph.add(b, false);
+            blockGraph.add(b, true);
         }
         milestoneService.update();
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
@@ -636,15 +638,25 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
-            throws VerificationException, PrunedException, BlockStoreException {
+            throws VerificationException, PrunedException, BlockStoreException, JsonParseException, JsonMappingException, IOException {
         Block block1 = b1.createNextBlock(b2);
-        block1.addTransaction(prevOut);
-        block1.solve();
-        Block block = block1;
-        this.blockGraph.add(block, true);
-        return block;
+        block1.addTransaction(prevOut); 
+        block1=adjustSolve(block1);
+        this.blockGraph.add(block1, true);
+        return block1;
     }
 
+    public Block adjustSolve(Block block) throws IOException, JsonParseException, JsonMappingException {
+        // save block
+        String resp = OkHttp3Util.post(contextRoot + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
+
+        Block adjust = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
+        adjust. solve();
+      return adjust;
+    }
     protected Transaction createTestGenesisTransaction() throws Exception {
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
@@ -783,6 +795,9 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void testCreateToken(ECKey outKey) throws JsonProcessingException, Exception {
+        testCreateToken(outKey, networkParameters.getGenesisBlock().getHashAsString());
+    }
+    protected void testCreateToken(ECKey outKey, String domainpre) throws JsonProcessingException, Exception {
         // ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -793,7 +808,7 @@ public abstract class AbstractIntegrationTest {
         BigInteger amount = basecoin.getValue();
 
         Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0,
-                networkParameters.getGenesisBlock().getHashAsString());
+                domainpre );
         tokenInfo.setToken(tokens);
 
         // add MultiSignAddress item
@@ -926,7 +941,7 @@ public abstract class AbstractIntegrationTest {
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
         block.addCoinbaseTransaction(keys.get(2).getPubKey(), basecoin, tokenInfo);
-        block.solve();
+        block = adjustSolve(block);
 
         log.debug("block hash : " + block.getHashAsString());
 
@@ -1124,7 +1139,7 @@ public abstract class AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
         // save block
-        block.solve();
+        block = adjustSolve(block);
         return block;
     }
 
@@ -1218,7 +1233,7 @@ public abstract class AbstractIntegrationTest {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        block.solve();
+        block = adjustSolve(block);
         OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
     }
 
@@ -1266,7 +1281,7 @@ public abstract class AbstractIntegrationTest {
 
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("domainPredecessorBlockHash", token.getDomainPredecessorBlockHash());
+        requestParam.put("domainNameBlockHash", token.getDomainNameBlockHash());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.queryPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,

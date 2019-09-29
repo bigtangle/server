@@ -355,8 +355,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Write to DB
-        // checkState(confirmLock.isHeldByCurrentThread());
-
         confirmUntil(blockHash, traversedBlockHashes);
     }
 
@@ -630,8 +628,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void confirmToken(BlockWrap block) throws BlockStoreException {
         // Set used other output spent
-      //  blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHash()), true,
-     //           block.getBlock().getHash());
+        if (blockStore.getTokenPrevblockhash(block.getBlock().getHash()) != null)
+            blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHash()), true,
+                block.getBlock().getHash());
 
         // Set own output confirmed
         blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
@@ -724,7 +723,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-                if (utxo.isSpent()) {
+                if (  utxo.isSpent()) {
                     unconfirmFrom(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
@@ -827,7 +826,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Token token = blockStore.getToken(block.getHash());
         if (token.getTokentype() == TokenType.domainname.ordinal()) {
             List<String> dependents = blockStore
-                    .getDomainDescendantConfirmedBlocks(token.getDomainPredecessorBlockHash());
+                    .getDomainDescendantConfirmedBlocks(token.getDomainNameBlockHash());
             for (String b : dependents) {
                 unconfirmFrom(Sha256Hash.wrap(b), traversedBlockHashes);
             }
@@ -881,7 +880,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             unconfirmOrderMatching(block);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            unconfirmToken(block.getHash());
+            unconfirmToken(block);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -959,12 +958,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), false);
     }
 
-    private void unconfirmToken(Sha256Hash blockhash) throws BlockStoreException {
+    private void unconfirmToken(Block block) throws BlockStoreException {
         // Set used other output unspent
-      //  blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(blockhash), false, null);
+        if (blockStore.getTokenPrevblockhash(block.getHash()) != null)
+            blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHash()), false, null);
 
         // Set own output unconfirmed
-        blockStore.updateTokenConfirmed(blockhash, false);
+        blockStore.updateTokenConfirmed(block.getHash(), false);
     }
 
     /**

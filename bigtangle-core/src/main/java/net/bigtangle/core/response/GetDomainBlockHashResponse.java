@@ -2,19 +2,19 @@ package net.bigtangle.core.response;
 
 public class GetDomainBlockHashResponse extends AbstractResponse {
 
-    private String domainPredecessorBlockHash;
+    private String domainNameBlockHash;
 
-    public String getDomainPredecessorBlockHash() {
-        return domainPredecessorBlockHash;
+    public String getdomainNameBlockHash() {
+        return domainNameBlockHash;
     }
 
-    public void setDomainPredecessorBlockHash(String domainPredecessorBlockHash) {
-        this.domainPredecessorBlockHash = domainPredecessorBlockHash;
+    public void setdomainNameBlockHash(String domainNameBlockHash) {
+        this.domainNameBlockHash = domainNameBlockHash;
     }
     
-    public static AbstractResponse createGetDomainBlockHashResponse(String domainPredecessorBlockHash) {
+    public static AbstractResponse createGetDomainBlockHashResponse(String domainNameBlockHash) {
         GetDomainBlockHashResponse res = new GetDomainBlockHashResponse();
-        res.domainPredecessorBlockHash = domainPredecessorBlockHash;
+        res.domainNameBlockHash = domainNameBlockHash;
         return res;
     }
 }
