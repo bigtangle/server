@@ -55,7 +55,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXOs
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(),
                 tx1);
 
@@ -222,7 +222,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXOs
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         Block spenderBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
@@ -650,7 +650,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXOs
-        Transaction tx11 = createTestGenesisTransaction();
+        Transaction tx11 = createTestTransaction();
         Block block = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx11);
 
@@ -1114,13 +1114,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create blocks with UTXOs
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
         blockGraph.confirm(block1.getHash(), new HashSet<>());
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock());
-        Transaction tx2 = createTestGenesisTransaction();
+        Transaction tx2 = createTestTransaction();
         Block block2 = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
         blockGraph.confirm(block2.getHash(), new HashSet<>());
 

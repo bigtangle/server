@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.Block;
@@ -26,19 +24,13 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MemoInfo;
-import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetTXRewardListResponse;
-import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;

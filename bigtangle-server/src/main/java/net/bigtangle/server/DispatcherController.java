@@ -184,13 +184,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getToken: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = tokensService.getTokenById((String) request.get("id"));
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
             case getBalances: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
@@ -445,23 +438,22 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case finddomainNameBlockHash: {
+            case findDomainNameBlockHash: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 final String domainname = (String) request.get("domainname");
-                AbstractResponse response = this.tokenDomainnameService
-                        .queryDomainnameBlockHash(domainname);
-                this.outPrintJSONString(httpServletResponse, response);
+                final String token = (String) request.get("token");
+                if(token==null|| "".equals(token) ) {
+                    this.outPrintJSONString(httpServletResponse, this.tokenDomainnameService
+                        .queryParentDomainnameBlockHash(domainname));
+                }else {
+                    this.outPrintJSONString(httpServletResponse, this.tokenDomainnameService
+                            .queryDomainnameBlockHash(domainname));
+                }
+                 
             }
                 break;
-            case signTransaction: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.signTransaction(request);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
+    
             case exchangeMultiSignTransaction: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

@@ -5,8 +5,6 @@
 
 package net.bigtangle.core;
 
-import java.beans.Transient;
-
 import org.apache.commons.lang3.StringUtils;
 
 /*

@@ -73,7 +73,6 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -225,7 +224,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXO
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
@@ -234,7 +233,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock());
-        Transaction tx2 = createTestGenesisTransaction();
+        Transaction tx2 = createTestTransaction();
         Block block = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2);
 
         store.resetStore();
@@ -749,7 +748,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXOs
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         Block spenderBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
         Block spenderBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
@@ -844,7 +843,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Create block with UTXO
-        Transaction tx1 = createTestGenesisTransaction();
+        Transaction tx1 = createTestTransaction();
         createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(),
                 tx1);
 
@@ -866,7 +865,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Create block with UTXO
         {
-            Transaction tx1 = createTestGenesisTransaction();
+            Transaction tx1 = createTestTransaction();
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), tx1);
         }
@@ -1108,7 +1107,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate mining reward block with additional tx
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        Transaction tx = createTestGenesisTransaction();
+        Transaction tx = createTestTransaction();
         rewardBlock.addTransaction(tx);
         rewardBlock.solve();
 
@@ -2363,7 +2362,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
         // Add another transfer transaction
-        Transaction tx = createTestGenesisTransaction();
+        Transaction tx = createTestTransaction();
         block.addTransaction(tx);
 
         // save block
@@ -2440,7 +2439,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Add transfer transaction
-        Transaction tx = createTestGenesisTransaction();
+        Transaction tx = createTestTransaction();
         block.addTransaction(tx);
 
         // save block

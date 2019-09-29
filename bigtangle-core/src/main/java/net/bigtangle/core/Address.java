@@ -112,8 +112,7 @@ public class Address extends VersionedChecksummedBytes {
         this.params = params;
     }
 
-    /** @deprecated Use {@link #fromBase58(NetworkParameters, String)} */
-    @Deprecated
+    
     public Address(@Nullable NetworkParameters params, String address) throws AddressFormatException {
         super(address);
         if (params != null) {

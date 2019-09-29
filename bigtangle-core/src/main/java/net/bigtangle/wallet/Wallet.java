@@ -1951,7 +1951,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())) {
             final String domainname = token.getDomainName();
-            GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(domainname);
+            GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(domainname);
             String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
             token.setDomainNameBlockHash(domainNameBlockHash);
         }
@@ -1971,7 +1971,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
 
-        // TODO why?
+       //+1 for domain name
         token.setSignnumber(token.getSignnumber() + 1);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2152,6 +2152,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             block.setMinerAddress(clientMiningAddress);
         }
         String resp = OkHttp3Util.post(serverurl + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+        @SuppressWarnings("unchecked")
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         String dataHex = (String) result.get("dataHex");
 
@@ -2348,8 +2349,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public void publishDomainName(ECKey signKey, String tokenid, String tokenname ,
-            KeyParameter aesKey, BigInteger amount, String description) throws Exception {
-        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(tokenname);
+            KeyParameter aesKey,  String description) throws Exception {
+        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
 
         List<ECKey> walletKeys = new ArrayList<ECKey>();
@@ -2357,29 +2358,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         final int signnumber = walletKeys.size();
         this.publishDomainName(walletKeys, signKey, tokenid, tokenname,   domainNameBlockHash, aesKey,
-                amount, description, signnumber);
+                  description, signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
              KeyParameter aesKey, BigInteger amount, String description) throws Exception {
-        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getGetDomainBlockHash(tokenname);
+        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
         final int signnumber = walletKeys.size();
         this.publishDomainName(walletKeys, signKey, tokenid, tokenname,   domainNameBlockHash, aesKey,
-                amount, description, signnumber);
+                 description, signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-           String domainNameBlockHash, KeyParameter aesKey, BigInteger amount,
+           String domainNameBlockHash, KeyParameter aesKey, 
             String description, int signnumber) throws Exception {
 
-        Coin basecoin = new Coin(amount, tokenid);
-        TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
+         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
         long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
         Token tokens = Token.buildDomainnameTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokenname, description, signnumber,
-                tokenindex_, amount, false, 0, null, domainNameBlockHash);
+                tokenindex_,   false,   null, domainNameBlockHash);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2390,7 +2390,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        saveToken(tokenInfo, basecoin, signKey, aesKey);
+        saveToken(tokenInfo, Coin.valueOf(1,tokenid), signKey, aesKey);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2411,11 +2411,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 PermissionedAddressesResponse.class);
         return permissionedAddressesResponse;
     }
-
-    public GetDomainBlockHashResponse getGetDomainBlockHash(String domainname) throws Exception {
+    public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname) throws Exception {
+    return getDomainNameBlockHash(domainname, "");
+    }
+    public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname, String token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.finddomainNameBlockHash.name(),
+        requestParam.put("token", token);
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.findDomainNameBlockHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetDomainBlockHashResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
                 GetDomainBlockHashResponse.class);
@@ -2461,7 +2464,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         
-        Block adjust = adjustSolve(block);
+        block=  adjustSolve(block);
     }
 
     public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,

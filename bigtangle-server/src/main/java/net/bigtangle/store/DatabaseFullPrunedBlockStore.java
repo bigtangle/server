@@ -969,7 +969,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0,
                     NetworkParameters.BigtangleCoinTotal, true, NetworkParameters.BIGTANGLE_DECIMAL,
                     "");
-            bigtangle.setDomainName(NetworkParameters.BIGTANGLE_TOKENID_STRING);
             insertToken(params.getGenesisBlock().getHash(), bigtangle);
             updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
            

@@ -12,7 +12,7 @@ public enum ReqCmd {
     
     getMaxConfirmedReward,getAllConfirmedReward,
 
-    getTokens, getTokensAmount, getTokenById, getToken,  getCalTokenIndex, 
+    getTokens, getTokensAmount, getTokenById,  getCalTokenIndex, 
 
     getOrders, getOTCMarkets, getOrdersTicker,
 
@@ -24,7 +24,7 @@ public enum ReqCmd {
 
     regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
 
-    getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, finddomainNameBlockHash,
+    getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, findDomainNameBlockHash,
 
-    signTransaction, exchangeInfo, exchangeMultiSignTransaction, saveExchange;
+     exchangeInfo, exchangeMultiSignTransaction, saveExchange;
 }

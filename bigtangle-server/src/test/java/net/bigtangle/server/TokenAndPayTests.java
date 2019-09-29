@@ -95,15 +95,6 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         }
     }
 
-    // @Test
-    public void testClientVersion() throws Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
-        String version = settingResponse.getVersion();
-        assertTrue(version.equals("0.3.3"));
-    }
 
     // FIXME @Test
     public void testBlockDamage() throws Exception {
@@ -175,30 +166,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         // assertArrayEquals(payMultiSign_.getBlockhash(), ecKey.getPubKey());
     }
 
-    @Test
-    public void testGetTokenById() throws Exception {
-
-        testCreateToken(walletKeys.get(0));
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        log.info("getTokenById resp : " + resp);
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        log.info("getTokensResponse : " + getTokensResponse);
-        assertTrue(getTokensResponse.getTokens().size() > 0);
-
-        milestoneService.update();
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-        log.info("getOutputsResponse : " + getOutputsResponse);
-
-        assertTrue(getOutputsResponse.getOutputs().size() > 0);
-        assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
-                .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
-    }
+   
 
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
@@ -750,7 +718,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         assertTrue(duration == 101);
     }
 
-    @SuppressWarnings("unchecked")
+    
     @Test
     public void testMultiSigMultiSignSignatureSuccess() throws Exception {
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);

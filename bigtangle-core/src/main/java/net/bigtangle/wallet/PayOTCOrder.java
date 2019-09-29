@@ -101,26 +101,8 @@ public class PayOTCOrder {
                 flag = 1;
             }
 
-      //      int size = exchangeMultis.size();
-           int signCount = 0;
             int fromsign = this.exchange.getFromSign();
             int tosign = this.exchange.getToSign();
-           int othersign = 0;
-            for (ExchangeMulti exchangeMulti : exchangeMultis) {
-                if (myaddresses.contains(exchangeMulti.getPubkey())) {
-                    flag = 2;
-                    if (exchangeMulti.getSign() == 1) {
-                        othersign = 1;
-                    }
-                    break;
-                }
-            }
-
-            for (ExchangeMulti exchangeMulti : exchangeMultis) {
-                if (exchangeMulti.getSign() == 1) {
-                    signCount++;
-                }
-            }
 
             if (flag == 0) {
                 if (fromsign == 0 && this.exchange.getSigs().isEmpty()) {
@@ -136,21 +118,15 @@ public class PayOTCOrder {
 
                         for (UTXO utxo : utxos) {
                             if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
-                                    && utxo.getValue().getValue().longValue() >= Long.parseLong(this.exchange.getFromAmount())) {
-                                TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(wallet.params,
-                                        utxo);
-                                Script multisigScript_ = multisigOutput_.getScriptPubKey();
-
+                                    && utxo.getValue().getValue().longValue() >= Long
+                                            .parseLong(this.exchange.getFromAmount())) {
+                            
                                 byte[] buf = Utils.HEX.decode(dataHex);
                                 OTCReload exchangeReload = this.reloadTransaction(buf);
                                 Transaction transaction0 = exchangeReload.getTransaction();
                                 if (transaction0 == null) {
                                     return;
                                 }
-                                Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_,
-                                        Transaction.SigHash.ALL, false);
-                                TransactionSignature transactionSignature = new TransactionSignature(
-                                        signEckey.sign(sighash, aesKey), Transaction.SigHash.ALL, false);
 
                                 ECKey.ECDSASignature party1Signature = signEckey.sign(transaction0.getHash(), aesKey);
                                 byte[] signature = party1Signature.encodeToDER();
@@ -240,9 +216,8 @@ public class PayOTCOrder {
         String toAmount = stringValueOf(this.exchange.getToAmount());
         String fromAmount = stringValueOf(this.exchange.getFromAmount());
 
-        byte[] buf = this.makeSignTransactionBufferCheckSwap(fromAddress,
-                parseCoinValue(fromAmount, fromTokenHex), toAddress,
-                parseCoinValue(toAmount, toTokenHex));
+        byte[] buf = this.makeSignTransactionBufferCheckSwap(fromAddress, parseCoinValue(fromAmount, fromTokenHex),
+                toAddress, parseCoinValue(toAmount, toTokenHex));
         if (buf == null) {
             return;
         }
@@ -280,7 +255,6 @@ public class PayOTCOrder {
         return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
     }
 
-    @SuppressWarnings("deprecation")
     private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
         Address fromAddress00 = new Address(this.wallet().getNetworkParameters(), fromAddress);
         Address toAddress00 = new Address(this.wallet().getNetworkParameters(), toAddress);
@@ -384,7 +358,7 @@ public class PayOTCOrder {
             if (!Arrays.equals(utxo.getTokenidBuf(), tokenid)) {
                 continue;
             }
-            if (utxo.getValue().getValue() .signum() > 0) {
+            if (utxo.getValue().getValue().signum() > 0) {
                 listUTXO.add(utxo);
             }
         }

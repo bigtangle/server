@@ -97,10 +97,15 @@ public class TokenDomainnameService {
         }
     }
    
+    public AbstractResponse queryParentDomainnameBlockHash(String domainname) 
+            throws BlockStoreException { 
+          domainname = DomainnameUtil.matchParentDomainname(domainname);
+        return queryDomainnameBlockHash(domainname);
+    }
     public AbstractResponse queryDomainnameBlockHash(String domainname) 
             throws BlockStoreException {
         AbstractResponse response;
-          domainname = DomainnameUtil.matchParentDomainname(domainname);
+    
         if (StringUtils.isBlank(domainname)) {
             String domainNameBlockHash = networkParameters.getGenesisBlock().getHashAsString();
             response = GetDomainBlockHashResponse.createGetDomainBlockHashResponse(domainNameBlockHash);

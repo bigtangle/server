@@ -20,11 +20,11 @@ public class Token extends SpentBlock implements java.io.Serializable {
     }
 
     public static Token buildDomainnameTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
-            int decimals, String domainname, String predecessingDomainBlockHash) {
+            String tokenname, String description, int signnumber, long tokenindex,  boolean tokenstop,
+           String domainname, String predecessingDomainBlockHash) {
 
         Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex, amount, tokenstop, null, false, null, null, TokenType.domainname.ordinal(), decimals,
+                tokenindex, new BigInteger("1"), tokenstop, null, false, null, null, TokenType.domainname.ordinal(), 0,
                 domainname, predecessingDomainBlockHash);
 
         return token;

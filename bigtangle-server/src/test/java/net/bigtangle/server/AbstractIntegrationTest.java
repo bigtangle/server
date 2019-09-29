@@ -75,6 +75,7 @@ import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
+import net.bigtangle.core.response.SettingResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
@@ -86,7 +87,7 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
- 
+
 import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -125,7 +126,7 @@ public abstract class AbstractIntegrationTest {
     protected BlockService blockService;
     @Autowired
     protected MilestoneService milestoneService;
- 
+
     @Autowired
     protected RewardService rewardService;
 
@@ -226,8 +227,8 @@ public abstract class AbstractIntegrationTest {
 
         Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
         BigInteger amount = coinbase.getValue();
-        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1, 0,
-                amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1,
+                0, amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
 
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -355,7 +356,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
-        //milestoneService.update();
+        // milestoneService.update();
         return block;
 
     }
@@ -509,7 +510,7 @@ public abstract class AbstractIntegrationTest {
         long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
         for (int i = 0; i < targetHeight - currHeight; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            rollingBlock= adjustSolve(rollingBlock);
+            rollingBlock = adjustSolve(rollingBlock);
             blockGraph.add(rollingBlock, true);
             addedBlocks.add(rollingBlock);
         }
@@ -638,10 +639,11 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
-            throws VerificationException, PrunedException, BlockStoreException, JsonParseException, JsonMappingException, IOException {
+            throws VerificationException, PrunedException, BlockStoreException, JsonParseException,
+            JsonMappingException, IOException {
         Block block1 = b1.createNextBlock(b2);
-        block1.addTransaction(prevOut); 
-        block1=adjustSolve(block1);
+        block1.addTransaction(prevOut);
+        block1 = adjustSolve(block1);
         this.blockGraph.add(block1, true);
         return block1;
     }
@@ -654,10 +656,11 @@ public abstract class AbstractIntegrationTest {
         String dataHex = (String) result.get("dataHex");
 
         Block adjust = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
-        adjust. solve();
-      return adjust;
+        adjust.solve();
+        return adjust;
     }
-    protected Transaction createTestGenesisTransaction() throws Exception {
+
+    protected Transaction createTestTransaction() throws Exception {
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
@@ -795,9 +798,10 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void testCreateToken(ECKey outKey) throws JsonProcessingException, Exception {
-        testCreateToken(outKey, networkParameters.getGenesisBlock().getHashAsString());
+        testCreateToken(outKey,"", networkParameters.getGenesisBlock().getHashAsString());
     }
-    protected void testCreateToken(ECKey outKey, String domainpre) throws JsonProcessingException, Exception {
+
+    protected Token testCreateToken(ECKey outKey, String domainName,  String domainpre) throws JsonProcessingException, Exception {
         // ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -807,13 +811,13 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         BigInteger amount = basecoin.getValue();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0,
-                domainpre );
-        tokenInfo.setToken(tokens);
-
+        Token token = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0, domainpre);
+        token.setDomainName(domainName);
+        tokenInfo.setToken(token);
+        
         // add MultiSignAddress item
         tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
+                .add(new MultiSignAddress(token.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         PermissionedAddressesResponse permissionedAddressesResponse = this
@@ -832,6 +836,7 @@ public abstract class AbstractIntegrationTest {
         String pubKeyHex = multiSignAddress.getPubKeyHex();
         ECKey ecKey = this.walletKeyData.get(pubKeyHex);
         this.pullBlockDoMultiSign(tokenid, ecKey, aesKey);
+        return token;
     }
 
     protected void testCreateMarket() throws JsonProcessingException, Exception {
@@ -907,10 +912,10 @@ public abstract class AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-          ;
+        ;
 
-        Token tokens = Token.buildSimpleTokenInfo(true,    tokenIndexResponse.getBlockhash(), tokenid, "test", "test", 3, tokenindex_, amount,
-                false, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, "test", "test", 3,
+                tokenindex_, amount, false, 0, networkParameters.getGenesisBlock().getHashAsString());
         KeyValue kv = new KeyValue();
         kv.setKey("testkey");
         kv.setKey("testvalue");
@@ -1018,7 +1023,7 @@ public abstract class AbstractIntegrationTest {
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-        Sha256Hash prevblockhash =   tokenIndexResponse.getBlockhash();
+        Sha256Hash prevblockhash = tokenIndexResponse.getBlockhash();
 
         Token tokens = Token.buildSimpleTokenInfo(true, prevblockhash, tokenid, "test", "test", 3, tokenindex_,
                 basecoin.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
@@ -1150,14 +1155,13 @@ public abstract class AbstractIntegrationTest {
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
         long tokenindex_ = tokenIndexResponse.getTokenindex();
-         Sha256Hash prevblockhash = tokenIndexResponse.getBlockhash();
+        Sha256Hash prevblockhash = tokenIndexResponse.getBlockhash();
 
         int signnumber = 3;
 
         // TODO domainname create token
         Token tokens = Token.buildDomainnameTokenInfo(true, prevblockhash, tokenid, tokenname, "de domain name",
-                signnumber, tokenindex_, basecoin.getValue(), false, 0, domainname,
-                networkParameters.getGenesisBlock().getHashAsString());
+                signnumber, tokenindex_, false, domainname, networkParameters.getGenesisBlock().getHashAsString());
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -1313,4 +1317,15 @@ public abstract class AbstractIntegrationTest {
 
         return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
     }
+    
+    // @Test
+    public void testClientVersion() throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.version.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
+        String version = settingResponse.getVersion();
+        assertTrue(version.equals("0.3.3"));
+    }
+
 }
