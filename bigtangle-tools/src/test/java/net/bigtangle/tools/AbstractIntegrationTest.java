@@ -86,7 +86,7 @@ public abstract class AbstractIntegrationTest {
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot = //HTTPS_BIGTANGLE_DE;
     // "http://localhost:8088/";
-    "https://bigtangle.org/";
+    "https://test.bigtangle.org/";
     public List<ECKey> walletKeys;
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
@@ -105,9 +105,9 @@ public abstract class AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-         System.setProperty("https.proxyHost",
-         "anwproxy.anwendungen.localnet.de");
-          System.setProperty("https.proxyPort", "3128");
+        // System.setProperty("https.proxyHost",
+       //  "anwproxy.anwendungen.localnet.de");
+       //   System.setProperty("https.proxyPort", "3128");
         walletKeys();
         wallet1();
         wallet2();
