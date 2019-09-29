@@ -296,7 +296,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         milestoneService.update();
         // pay big to yourKey
-        payToken(yourKey);
+        payToken(yourKey, walletAppKit1.wallet());
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(yourKey);
         List<UTXO> utxos = getBalance(false, keys);
@@ -351,15 +351,21 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testCreateToken(walletKeys.get(1));
 
         milestoneService.update();
-        payToken(yourKey, walletKeys.get(0).getPubKey());
-        payToken(myKey, walletKeys.get(1).getPubKey());
+        payToken(200, yourKey, walletKeys.get(0).getPubKey(),walletAppKit1.wallet());
+        payToken(300,myKey, walletKeys.get(1).getPubKey(),walletAppKit2.wallet());
+        
         String orderid = UUID.randomUUID().toString();
+        
+        // fromTokenHex = youkey
         String fromAddress = myKey.toAddress(networkParameters).toBase58();
-        String fromTokenHex = myKey.getPublicKeyAsHex();
+        String fromTokenHex = walletKeys.get(0).getPublicKeyAsHex();
         String fromAmount = "2";
+        
+        // toTokenHex = mykey
         String toAddress = yourKey.toAddress(networkParameters).toBase58();
-        String toTokenHex = yourKey.getPublicKeyAsHex();
+        String toTokenHex = walletKeys.get(1).getPublicKeyAsHex();
         String toAmount = "3";
+        
         Map<String, Object> request = new HashMap<>();
         request.put("orderid", orderid);
 
@@ -520,11 +526,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     }
 
     // Pay BIG
-    public void payToken(ECKey outKey) throws Exception {
-        payToken(outKey, NetworkParameters.BIGTANGLE_TOKENID);
+    public void payToken(ECKey outKey, Wallet wallet) throws Exception {
+        payToken(100, outKey, NetworkParameters.BIGTANGLE_TOKENID, wallet);
     }
 
-    public void payToken(ECKey outKey, byte[] tokenbuf) throws Exception {
+    public void payToken(int amount, ECKey outKey, byte[] tokenbuf, Wallet wallet) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -545,7 +551,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         // log.debug(baseCoin);
         Address destination = outKey.toAddress(networkParameters);
 
-        Coin coinbase = Coin.valueOf(100, utxo.getValue().getTokenid());
+        Coin coinbase = Coin.valueOf(amount, utxo.getValue().getTokenid());
         SendRequest request = SendRequest.to(destination, coinbase);
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
@@ -553,7 +559,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
         log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 
-        checkBalance(coinbase, walletAppKit1.wallet().walletKeys(null));
+        checkBalance(coinbase, wallet.walletKeys(null));
     }
 
     @Test
