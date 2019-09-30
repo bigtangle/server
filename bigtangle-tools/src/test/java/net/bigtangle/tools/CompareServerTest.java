@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -139,16 +140,17 @@ public class CompareServerTest extends AbstractIntegrationTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
 
         Map<String, BigInteger> tokensums = tokensum();
-
+        Set<String> tokenids = tokensums.keySet();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        for (ECKey k : w.walletKeys()) {
-            requestParam.put("tokenid", k.getPublicKeyAsHex());
+        
+        for (String  tokenid : tokenids) {
+            requestParam.put("tokenid", tokenid);
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
             log.info("getOutputsResponse : " + getOutputsResponse);
-            Coin sumUnspent = Coin.valueOf(0l, k.getPubKey());
-            Coin sumCoinbase = Coin.valueOf(0l, k.getPubKey());
+            Coin sumUnspent = Coin.valueOf(0l, tokenid);
+            Coin sumCoinbase = Coin.valueOf(0l, tokenid);
             for (UTXO u : getOutputsResponse.getOutputs()) {
                 if (!u.isCoinbase())
                     sumCoinbase = sumCoinbase.add(u.getValue());
@@ -157,14 +159,15 @@ public class CompareServerTest extends AbstractIntegrationTest {
                     sumUnspent = sumUnspent.add(u.getValue());
             }
 
-            Coin ordersum = ordersum(k.getPublicKeyAsHex());
-            Coin tokensum = new Coin(tokensums.get(k.getPublicKeyAsHex()), k.getPublicKeyAsHex());
+            Coin ordersum = ordersum(tokenid);
+            Coin tokensum = new Coin(tokensums.get(tokenid)
+                    ==null ?BigInteger.ZERO:tokensums.get(tokenid), tokenid);
 
             log.info("sumUnspent : " + sumUnspent);
             log.info("ordersum : " + ordersum);
             log.info("sumCoinbase : " + sumCoinbase);
 
-            log.info("tokensum : " + k.getPublicKeyAsHex());
+            log.info("tokensum : " + tokensum);
             assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
             // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
             // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
