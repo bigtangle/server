@@ -2072,7 +2072,7 @@ public class ValidatorService {
                ).equals(networkParameters.getGenesisBlock().getHashAsString()) )
        {
       
-          prevDomain = store.getToken(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
+          prevDomain = store.getTokenByBlockHash(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
         if (prevDomain == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
@@ -2112,7 +2112,7 @@ public class ValidatorService {
         if (currentToken.getToken().getTokenindex() != 0) {
             try {
                 // Previous issuance must exist to check solidity
-                prevToken = store.getToken(currentToken.getToken().getPrevblockhash());
+                prevToken = store.getTokenByBlockHash(currentToken.getToken().getPrevblockhash());
                 if (prevToken == null) {
                     if (throwExceptions)
                         // TODO

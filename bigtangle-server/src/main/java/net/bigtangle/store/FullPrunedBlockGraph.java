@@ -823,7 +823,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // If applicable: Disconnect all domain definitions that were based on
         // this domain
-        Token token = blockStore.getToken(block.getHash());
+        Token token = blockStore.getTokenByBlockHash(block.getHash());
         if (token.getTokentype() == TokenType.domainname.ordinal()) {
             List<String> dependents = blockStore
                     .getDomainDescendantConfirmedBlocks(token.getDomainNameBlockHash());

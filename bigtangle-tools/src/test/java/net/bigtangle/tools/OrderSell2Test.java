@@ -18,9 +18,7 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
 public class OrderSell2Test extends AbstractIntegrationTest {
-
-    // sell tokens from wallet 1 and 2 on different servers
-
+ 
     @Test
     public void sellThread() throws Exception {
 

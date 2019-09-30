@@ -1,5 +1,8 @@
 package net.bigtangle.tools;
 
+import static org.junit.Assert.assertTrue;
+
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,15 +16,17 @@ import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
 public class CompareServerTest extends AbstractIntegrationTest {
 
     private static final String CHECHNUMBER = "2000";
@@ -59,7 +64,8 @@ public class CompareServerTest extends AbstractIntegrationTest {
                     if (block == null)
                         System.out.println(" block from " + server + " not found in  " + server2 + "  " + b.toString());
                 } catch (Exception e) {
-                    System.out.println(" " + b.toString());  e.printStackTrace();
+                    System.out.println(" " + b.toString());
+                    e.printStackTrace();
                 }
 
             }
@@ -120,7 +126,8 @@ public class CompareServerTest extends AbstractIntegrationTest {
         }
 
     }
-    @Test 
+
+    @Test
     public void testCheckToken() throws JsonProcessingException, Exception {
         Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
 
@@ -130,6 +137,9 @@ public class CompareServerTest extends AbstractIntegrationTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+
+        Map<String, BigInteger> tokensums = tokensum();
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         for (ECKey k : w.walletKeys()) {
             requestParam.put("tokenid", k.getPublicKeyAsHex());
@@ -137,22 +147,56 @@ public class CompareServerTest extends AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
             log.info("getOutputsResponse : " + getOutputsResponse);
-            Coin sumUnspent= Coin.valueOf(0l, k.getPubKey());
-            Coin sumCoinbase= Coin.valueOf(0l, k.getPubKey());
-            for(UTXO u:getOutputsResponse.getOutputs()) {
-                if(!u.isCoinbase())
-                sumCoinbase=  sumCoinbase. add(u.getValue());
-                
-                if(!u.isSpent())
-                    sumUnspent=  sumUnspent. add(u.getValue());
+            Coin sumUnspent = Coin.valueOf(0l, k.getPubKey());
+            Coin sumCoinbase = Coin.valueOf(0l, k.getPubKey());
+            for (UTXO u : getOutputsResponse.getOutputs()) {
+                if (!u.isCoinbase())
+                    sumCoinbase = sumCoinbase.add(u.getValue());
+
+                if (!u.isSpent())
+                    sumUnspent = sumUnspent.add(u.getValue());
             }
+
+            Coin ordersum = ordersum(k.getPublicKeyAsHex());
+            Coin tokensum = new Coin(tokensums.get(k.getPublicKeyAsHex()), k.getPublicKeyAsHex());
+
             log.info("sumUnspent : " + sumUnspent);
+            log.info("ordersum : " + ordersum);
             log.info("sumCoinbase : " + sumCoinbase);
-           assertTrue( sumUnspent.equals(sumCoinbase));
+
+            log.info("tokensum : " + k.getPublicKeyAsHex());
+            assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
+            // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
             // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
             // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
 
         }
 
+    }
+
+    public Coin ordersum(String tokenid) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        Coin sumUnspent = Coin.valueOf(0l, tokenid);
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            if (orderRecord.getOfferTokenid().equals(tokenid)) {
+                sumUnspent = sumUnspent.add(Coin.valueOf(orderRecord.getOfferValue(), tokenid));
+            }
+        }
+        return sumUnspent;
+    }
+
+    public Map<String, BigInteger> tokensum() throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.searchTokens.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+
+        return orderdataResponse.getAmountMap();
     }
 }

@@ -12,7 +12,7 @@ public enum ReqCmd {
     
     getMaxConfirmedReward,getAllConfirmedReward,
 
-    getTokens, getTokensAmount, getTokenById,  getCalTokenIndex, 
+    searchTokens,  getTokenById,  getCalTokenIndex, 
 
     getOrders, getOTCMarkets, getOrdersTicker,signTransaction,
 

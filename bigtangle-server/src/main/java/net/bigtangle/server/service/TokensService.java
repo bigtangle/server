@@ -30,9 +30,9 @@ public class TokensService {
         return response;
     }
 
-    public AbstractResponse getToken(String id) throws BlockStoreException {
+    public AbstractResponse getToken(String blockhashString) throws BlockStoreException {
         List<Token> tokens = new ArrayList<>();
-        tokens.add(this.store.getToken(Sha256Hash.wrap(id)));
+        tokens.add(this.store.getTokenByBlockHash(Sha256Hash.wrap(blockhashString)));
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
@@ -43,16 +43,11 @@ public class TokensService {
         return GetTokensResponse.create(list);
     }
 
-    public AbstractResponse getTokensList() throws BlockStoreException {
-        List<Token> list = new ArrayList<Token>();
-        list.addAll(store.getTokensList(new HashSet<String>()));
-        return GetTokensResponse.create(list);
-    }
-
-    public GetTokensResponse getTokensList(String name) throws BlockStoreException {
+ 
+    public GetTokensResponse searchTokens(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         list.addAll(store.getTokensList(name));
-        Map<String, BigInteger> map = store.getTokenAmountMap(name);
+        Map<String, BigInteger> map = store.getTokenAmountMap();
         return GetTokensResponse.create(list, map);
     }
 

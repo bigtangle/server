@@ -2797,7 +2797,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public Map<String, BigInteger> getTokenAmountMap(String name) throws BlockStoreException {
+    public Map<String, BigInteger> getTokenAmountMap() throws BlockStoreException {
         Map<String, BigInteger> map = new HashMap<String, BigInteger>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3542,7 +3542,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public Token getToken(Sha256Hash blockhash) throws BlockStoreException {
+    public Token getTokenByBlockHash(Sha256Hash blockhash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

@@ -55,7 +55,7 @@ public class TokenDomainnameService {
                     .create("", false, multiSignAddresses);
             return response;
         }else {
-        Token token = this.store.getToken(Sha256Hash.wrap(domainNameBlockHash));
+        Token token = this.store.getTokenByBlockHash(Sha256Hash.wrap(domainNameBlockHash));
         final String domainName = token.getDomainName();
 
         List<MultiSignAddress> multiSignAddresses = this

@@ -545,7 +545,7 @@ public class Main extends Application {
     public static GetTokensResponse getAllTokens() throws Exception {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(getContextRoot() + ReqCmd.getTokens.name(),
+        String response = OkHttp3Util.post(getContextRoot() + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         return Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -987,9 +987,9 @@ public class Main extends Application {
         List<String> tokenList = new ArrayList<String>();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensAmount.name(),
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {
             String tokenHex = tokens.getTokenid();

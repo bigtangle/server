@@ -129,7 +129,7 @@ public class TokenBaseController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", Main.getString(name));
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);

@@ -215,7 +215,7 @@ public class ExchangeController {
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokens.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);

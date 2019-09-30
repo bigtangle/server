@@ -262,7 +262,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     /* Token TXOs */
     public void insertToken(Sha256Hash blockhash, Token tokens) throws BlockStoreException;
 
-    public Token getToken(Sha256Hash blockhash) throws BlockStoreException;
+    public Token getTokenByBlockHash(Sha256Hash blockhash) throws BlockStoreException;
 
     public List<Token> getTokenID(String tokenid) throws BlockStoreException;
 
@@ -318,7 +318,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<Token> getTokensList(String name) throws BlockStoreException;
 
-    public Map<String, BigInteger> getTokenAmountMap(String name) throws BlockStoreException;
+    public Map<String, BigInteger> getTokenAmountMap() throws BlockStoreException;
 
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 

@@ -452,9 +452,9 @@ public class OrderController extends ExchangeController {
         String CONTEXT_ROOT = Main.getContextRoot();
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokensAmount.name(),
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 
         if (!buy) {

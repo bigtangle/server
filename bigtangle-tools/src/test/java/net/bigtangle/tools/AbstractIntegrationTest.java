@@ -84,7 +84,7 @@ public abstract class AbstractIntegrationTest {
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     public String contextRoot = // HTTPS_BIGTANGLE_DE;
             // "http://localhost:8088/";
-            "https://test.bigtangle.org/";
+            "https://test.bigtangle.de/";
 
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
