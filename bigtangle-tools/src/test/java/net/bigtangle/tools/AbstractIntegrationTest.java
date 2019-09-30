@@ -9,12 +9,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -29,12 +33,16 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.core.response.GetOutputsResponse;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
@@ -217,7 +225,6 @@ public abstract class AbstractIntegrationTest {
         wallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
-  
     protected void checkBalance(Coin coin, ECKey ecKey) throws Exception {
         ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(ecKey);
@@ -287,4 +294,83 @@ public abstract class AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(tokenid, genesiskey, null);
     }
 
+    public void testCheckToken(String server) throws JsonProcessingException, Exception {
+        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+        Map<String, BigInteger> tokensums = tokensum(server);
+        Set<String> tokenids = tokensums.keySet();
+
+        for (String tokenid : tokenids) {
+            Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
+                    tokenid);
+
+            testCheckToken(server, tokenid, tokensum);
+        }
+    }
+
+    public void testCheckToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(server + ReqCmd.outputsbyToken.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        log.info("getOutputsResponse : " + getOutputsResponse);
+        Coin sumUnspent = Coin.valueOf(0l, tokenid);
+        Coin sumCoinbase = Coin.valueOf(0l, tokenid);
+        for (UTXO u : getOutputsResponse.getOutputs()) {
+
+            if (u.isConfirmed() && !u.isSpent())
+                sumUnspent = sumUnspent.add(u.getValue());
+        }
+
+        Coin ordersum = ordersum(tokenid, server);
+
+        log.info("sumUnspent : " + sumUnspent);
+        log.info("ordersum : " + ordersum);
+        // log.info("sumCoinbase : " + sumCoinbase);
+
+        log.info("tokensum : " + tokensum);
+
+        log.info("  ordersum + : sumUnspent = " + sumUnspent.add(ordersum));
+
+        if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
+            assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
+        // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
+        // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+        // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+
+    }
+ 
+
+    public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        Coin sumUnspent = Coin.valueOf(0l, tokenid);
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            if (orderRecord.getOfferTokenid().equals(tokenid)) {
+                sumUnspent = sumUnspent.add(Coin.valueOf(orderRecord.getOfferValue(), tokenid));
+            }
+        }
+        return sumUnspent;
+    }
+
+    public Map<String, BigInteger> tokensum(String server) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+
+        return orderdataResponse.getAmountMap();
+    }
 }

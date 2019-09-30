@@ -1375,6 +1375,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         long spendPendingTime = results.getLong("spendpendingtime");
         String tokenid = results.getString("tokenid");
         long minimumsign = results.getLong("minimumsign");
+        if(minimumsign > 1) {
+            address = results.getString("multitoaddress");
+        }
         UTXO txout = new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
                 fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime);
         return txout;
@@ -1433,9 +1436,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void commitDatabaseBatchWrite() throws BlockStoreException {
-        maybeConnect();
-
+    public void commitDatabaseBatchWrite() throws BlockStoreException { 
         try {
             if (!conn.get().getAutoCommit())
                 conn.get().commit();
@@ -1447,7 +1448,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void abortDatabaseBatchWrite() throws BlockStoreException {
-        maybeConnect();
+    
         if (log.isDebugEnabled())
             log.debug("Rollback database batch write with connection: " + conn.get().toString());
         try {
@@ -1464,7 +1465,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void defaultDatabaseBatchWrite() throws BlockStoreException {
-        maybeConnect();
         try {
             if (!conn.get().getAutoCommit()) {
                 conn.get().setAutoCommit(true);

@@ -54,7 +54,7 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
         GetTXRewardListResponse getBalancesResponse = Json.jsonmapper().readValue(response,
                 GetTXRewardListResponse.class);
-        assertTrue(getBalancesResponse.getTxReward().size() >0);
+        assertTrue(getBalancesResponse.getTxReward().size() > 0);
     }
 
     // pay to mutilsigns keys wallet1Keys_part
@@ -78,9 +78,10 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
         SendRequest request = SendRequest.forTx(multiSigTransaction);
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
+        rollingBlock= adjustSolve(rollingBlock);
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-
+        milestoneService.update();
         checkBalance(amount0, wallet1Keys_part);
     }
 
@@ -189,8 +190,6 @@ public class TransactionServiceTest extends AbstractIntegrationTest {
 
     }
 
-  
-    
     public void testPartsToOne(Coin amount, ECKey to) throws Exception {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();

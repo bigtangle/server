@@ -1,32 +1,18 @@
 package net.bigtangle.tools;
 
-import static org.junit.Assert.assertTrue;
-
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.mockito.internal.stubbing.answers.ThrowsException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
-import net.bigtangle.core.response.GetOutputsResponse;
-import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.Wallet;
 
 public class CompareServerTest extends AbstractIntegrationTest {
 
@@ -36,9 +22,18 @@ public class CompareServerTest extends AbstractIntegrationTest {
     public void diffThread() throws Exception {
 
         while (true) {
-            diff(HTTPS_BIGTANGLE_ORG, HTTPS_BIGTANGLE_DE);
+            try {
+          //  testCheckToken(HTTPS_BIGTANGLE_ORG);
+
+            testCheckToken(HTTPS_BIGTANGLE_DE);
+            // diff(HTTPS_BIGTANGLE_ORG, HTTPS_BIGTANGLE_DE);
 
             Thread.sleep(30000);
+            }
+            catch (Throwable e) {
+                e.printStackTrace();
+    
+            }
         }
 
     }
@@ -128,78 +123,4 @@ public class CompareServerTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void testCheckToken() throws JsonProcessingException, Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
-
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BTCTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
-
-        Map<String, BigInteger> tokensums = tokensum();
-        Set<String> tokenids = tokensums.keySet();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        
-        for (String  tokenid : tokenids) {
-            requestParam.put("tokenid", tokenid);
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-            log.info("getOutputsResponse : " + getOutputsResponse);
-            Coin sumUnspent = Coin.valueOf(0l, tokenid);
-            Coin sumCoinbase = Coin.valueOf(0l, tokenid);
-            for (UTXO u : getOutputsResponse.getOutputs()) {
-                if (!u.isCoinbase())
-                    sumCoinbase = sumCoinbase.add(u.getValue());
-
-                if (!u.isSpent())
-                    sumUnspent = sumUnspent.add(u.getValue());
-            }
-
-            Coin ordersum = ordersum(tokenid);
-            Coin tokensum = new Coin(tokensums.get(tokenid)
-                    ==null ?BigInteger.ZERO:tokensums.get(tokenid), tokenid);
-
-            log.info("sumUnspent : " + sumUnspent);
-            log.info("ordersum : " + ordersum);
-            log.info("sumCoinbase : " + sumCoinbase);
-
-            log.info("tokensum : " + tokensum);
-            assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
-            // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
-            // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
-            // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
-
-        }
-
-    }
-
-    public Coin ordersum(String tokenid) throws JsonProcessingException, Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        Coin sumUnspent = Coin.valueOf(0l, tokenid);
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            if (orderRecord.getOfferTokenid().equals(tokenid)) {
-                sumUnspent = sumUnspent.add(Coin.valueOf(orderRecord.getOfferValue(), tokenid));
-            }
-        }
-        return sumUnspent;
-    }
-
-    public Map<String, BigInteger> tokensum() throws JsonProcessingException, Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("name", null);
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.searchTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-
-        return orderdataResponse.getAmountMap();
-    }
 }

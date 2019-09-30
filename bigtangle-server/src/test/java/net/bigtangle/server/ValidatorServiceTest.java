@@ -1440,7 +1440,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 new TestCase() {
             @Override
             public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.setToken(null);
+                tokenInfo5.setToken(null); 
             }
 
             @Override
@@ -1556,6 +1556,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
             }
         }, new TestCase() {
+            //11
             @Override
             public void preApply(TokenInfo tokenInfo5) {
                 tokenInfo5.getToken().setTokenindex(1);
@@ -1567,6 +1568,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
             }
         }, new TestCase() {
+            //12
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1589,6 +1591,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return false;
             }
         }, new TestCase() {
+            //14
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1600,6 +1603,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
             }
         }, new TestCase() {
+            //15
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1611,6 +1615,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
             }
         }, new TestCase() {
+            //16
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1622,6 +1627,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 return true;
             }
         }, new TestCase() {
+            //17
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1634,6 +1640,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //18
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1646,6 +1653,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //19
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1670,6 +1678,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //21
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1682,6 +1691,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //22
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1694,6 +1704,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //23
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1707,6 +1718,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //24
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1732,6 +1744,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             }
         }, new TestCase() {
+            //26
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1751,10 +1764,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             @Override
             public boolean expectsException() {
-                return true;
+                return false;
 
             }
         }, new TestCase() {
+            //28
             @Override
             public void preApply(TokenInfo tokenInfo5) {
 
@@ -1763,7 +1777,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             @Override
             public boolean expectsException() {
-                return true;
+                return false;
 
             }
         }, new TestCase() {
@@ -1861,7 +1875,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             @Override
             public boolean expectsException() {
-                return true; // these do not matter, they are overwritten
+                return false; // these do not matter, they are overwritten
 
             }
         }, new TestCase() {
