@@ -20,7 +20,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size() ).toAddress(networkParameters).toString(), 3333000000L);
 
         }
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
 
     }
@@ -33,7 +33,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         for(int i=0;i<100; i++) {
         giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(), 333300000l);
         }
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
         log.debug("block " + b.toString());
 
     }

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -36,7 +35,6 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBalancesResponse;
-import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
@@ -84,14 +82,13 @@ public abstract class AbstractIntegrationTest {
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-    public String contextRoot = //HTTPS_BIGTANGLE_DE;
-    // "http://localhost:8088/";
-    "https://test.bigtangle.org/";
-    public List<ECKey> walletKeys;
+    public String contextRoot = // HTTPS_BIGTANGLE_DE;
+            // "http://localhost:8088/";
+            "https://test.bigtangle.org/";
+
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
 
-    WalletAppKit walletAppKit;
     WalletAppKit walletAppKit1;
     WalletAppKit walletAppKit2;
 
@@ -106,37 +103,12 @@ public abstract class AbstractIntegrationTest {
     @Before
     public void setUp() throws Exception {
         // System.setProperty("https.proxyHost",
-       //  "anwproxy.anwendungen.localnet.de");
-       //   System.setProperty("https.proxyPort", "3128");
-        walletKeys();
+        // "anwproxy.anwendungen.localnet.de");
+        // System.setProperty("https.proxyPort", "3128");
+
         wallet1();
         wallet2();
         // emptyBlocks(10);
-    }
-
-    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            List<Block> addedBlocks) throws Exception {
-        Thread.sleep(30000);
-        Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
-        addedBlocks.add(block);
-        return block;
-
-    }
-
-    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            List<Block> addedBlocks) throws Exception {
-        // Thread.sleep(100000);
-        Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
-        addedBlocks.add(block);
-        return block;
-
-    }
-
-    protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
-            throws Exception {
-        Block block = walletAppKit.wallet().cancelOrder(order.getHash(), legitimatingKey);
-        addedBlocks.add(block);
-        return block;
     }
 
     protected void assertHasAvailableToken(ECKey testKey, String tokenId_, Long amount) throws Exception {
@@ -158,19 +130,6 @@ public abstract class AbstractIntegrationTest {
         new Random().nextBytes(rawHashBytes);
         Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
         return sha256Hash;
-    }
-
-    protected void walletKeys() throws Exception {
-        KeyParameter aesKey = null;
-        File f = new File("./logs/", "bigtangle");
-        if (f.exists() & deleteWlalletFile)
-            f.delete();
-        walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
-        walletAppKit.wallet().importKey(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
-        // add ge
-        walletAppKit.wallet().setServerURL(contextRoot);
-        walletKeys = walletAppKit.wallet().walletKeys(aesKey);
     }
 
     public void importKeys(Wallet w) throws Exception {
@@ -205,15 +164,6 @@ public abstract class AbstractIntegrationTest {
         walletAppKit2.wallet().setServerURL(contextRoot);
 
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-    }
-
-    protected List<UTXO> getBalance() throws Exception {
-        return getBalance(false);
-    }
-
-    // get balance for the walletKeys
-    protected List<UTXO> getBalance(boolean withZero) throws Exception {
-        return getBalance(withZero, walletKeys);
     }
 
     protected UTXO getBalance(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
@@ -267,39 +217,7 @@ public abstract class AbstractIntegrationTest {
         wallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
-    protected void testCreateToken() throws JsonProcessingException, Exception {
-        ECKey outKey = walletKeys.get(0);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
-
-        String tokenid = Utils.HEX.encode(pubKey);
-
-        Coin basecoin = Coin.valueOf(77777L, pubKey);
-
-        Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, basecoin.getValue(), true, 0,
-                networkParameters.getGenesisBlock().getHashAsString());
-        tokenInfo.setToken(tokens);
-
-        // add MultiSignAddress item
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
-    }
-
   
-
-    protected void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
-        checkResponse(resp, 0);
-    }
-
-    protected void checkResponse(String resp, int code) throws JsonParseException, JsonMappingException, IOException {
-        @SuppressWarnings("unchecked")
-        HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
-        int error = (Integer) result2.get("errorcode");
-        assertTrue(error == code);
-    }
-
     protected void checkBalance(Coin coin, ECKey ecKey) throws Exception {
         ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(ecKey);
@@ -322,8 +240,8 @@ public abstract class AbstractIntegrationTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname, String description)
-            throws JsonProcessingException, Exception {
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
+            String description) throws JsonProcessingException, Exception {
         try {
             createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname, description);
 
@@ -335,7 +253,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals,
-            String domainname,String description)
+            String domainname, String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
@@ -351,21 +269,22 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
 
-        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename, description, 1, tokenindex_,
-                basecoin.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
+                description, 1, tokenindex_, basecoin.getValue(), false, 0,
+                networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
 
-        walletAppKit.wallet().setServerURL(contextRoot);
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, key, null);
+        walletAppKit1.wallet().setServerURL(contextRoot);
+        walletAppKit1.wallet().saveToken(tokenInfo, basecoin, key, null);
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
                 Utils.HEX.decode(NetworkParameters.testPub));
 
-        walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
+        walletAppKit1.wallet().multiSign(tokenid, genesiskey, null);
     }
 
 }

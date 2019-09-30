@@ -42,7 +42,7 @@ public class FundsTests extends AbstractIntegrationTest {
  
       //  walletAppKit2.wallet().sellOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,
       //          null);
-        walletAppKit.wallet().buyOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,
+        walletAppKit1.wallet().buyOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,
                 null);
 
     }

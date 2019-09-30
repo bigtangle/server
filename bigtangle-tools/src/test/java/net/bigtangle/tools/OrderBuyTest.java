@@ -22,7 +22,7 @@ public class OrderBuyTest extends AbstractIntegrationTest {
 
         importKeys(walletAppKit2.wallet());
         importKeys(walletAppKit1.wallet());
-        importKeys(walletAppKit.wallet());
+
         while (true) {
 
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -34,26 +34,25 @@ public class OrderBuyTest extends AbstractIntegrationTest {
             int i = 0;
             for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
                 try {
-                if (i % 2 == 0) {
-                    if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
+                    if (i % 2 == 0) {
+                        if (isWallet1Token(orderRecord, orderdataResponse)) {
+                            buy(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
+                        } else {
+                            buy(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
+                        }
                     } else {
-                        buy(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
+                        if (isWallet1Token(orderRecord, orderdataResponse)) {
+                            buy(HTTPS_BIGTANGLE_ORG, walletAppKit2.wallet(), orderRecord);
+                        } else {
+                            buy(HTTPS_BIGTANGLE_ORG, walletAppKit1.wallet(), orderRecord);
+                        }
                     }
-                } else {
-                    if (isWallet1Token(orderRecord, orderdataResponse)) {
-                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit2.wallet(), orderRecord);
-                    } else {
-                        buy(HTTPS_BIGTANGLE_ORG, walletAppKit1.wallet(), orderRecord);
-                    }
-                }
-                i += 1;
-                }catch (InsufficientMoneyException e) {
+                    i += 1;
+                } catch (InsufficientMoneyException e) {
                     Thread.sleep(4000);
+                } catch (Exception e) {
+                    log.debug("", e);
                 }
-             catch ( Exception e) {
-                 log.debug("",e);
-            }
             }
 
         }
@@ -66,8 +65,6 @@ public class OrderBuyTest extends AbstractIntegrationTest {
     }
 
     public void buy(String url, Wallet w, OrderRecord orderRecord) throws Exception {
-
-        HashMap<String, Object> map = new HashMap<String, Object>();
 
         if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
             // sell order and make buy

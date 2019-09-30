@@ -26,7 +26,7 @@ public class OrderSell2Test extends AbstractIntegrationTest {
 
         importKeys(walletAppKit2.wallet());
         importKeys(walletAppKit1.wallet());
-        importKeys(walletAppKit.wallet());
+ 
         while (true) {
             try {
                 sell(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet());
