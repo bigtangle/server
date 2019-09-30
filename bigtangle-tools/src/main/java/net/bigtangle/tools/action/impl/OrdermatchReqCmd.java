@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.params;
+package net.bigtangle.tools.action.impl;
 
 public enum OrdermatchReqCmd {
 

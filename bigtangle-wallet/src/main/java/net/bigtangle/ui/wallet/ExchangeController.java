@@ -37,11 +37,9 @@ import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
-import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
-import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -50,7 +48,6 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.PayOTCOrder;
 import net.bigtangle.wallet.SendRequest;
-import net.bigtangle.wallet.Wallet.MissingSigsMode;
 
 public class ExchangeController {
     private static final Logger log = LoggerFactory.getLogger(ExchangeController.class);

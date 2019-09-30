@@ -42,7 +42,6 @@ import net.bigtangle.core.response.PayMultiSignAddressListResponse;
 import net.bigtangle.core.response.PayMultiSignDetailsResponse;
 import net.bigtangle.core.response.PayMultiSignResponse;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.params.OrdermatchReqCmd;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -204,7 +203,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.postAndGetBlock(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -233,7 +232,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", this.orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.postAndGetBlock(this.marketURL + OrdermatchReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signTransaction.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -448,7 +447,7 @@ public class PayOTCOrder {
     private Exchange getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(this.marketURL + OrdermatchReqCmd.exchangeInfo.name(),
+        String respone = OkHttp3Util.postString(this.marketURL + ReqCmd.exchangeInfo.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         ExchangeInfoResponse exchangeInfoResponse = Json.jsonmapper().readValue(respone, ExchangeInfoResponse.class);
         return exchangeInfoResponse.getExchange();
