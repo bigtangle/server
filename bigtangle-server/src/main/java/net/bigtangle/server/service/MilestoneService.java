@@ -141,7 +141,7 @@ public class MilestoneService {
             public String call() throws Exception {
                 Context context = new Context(params);
                 Context.propagate(context);
-                cleanupNonSolidMissingBlocks();
+               // cleanupNonSolidMissingBlocks();
                 updateSolidity();
 
                 try {

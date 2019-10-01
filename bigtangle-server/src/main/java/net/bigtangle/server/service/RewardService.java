@@ -166,20 +166,22 @@ public class RewardService {
 
         // Enforce timestamp equal to previous max for reward blocktypes
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-
-        BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
+        BigInteger chainTarget = 
+                Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
+        if(Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) 
+            chainTarget = Utils.decodeCompactBits(result.getDifficulty());
         
-        
+       final  BigInteger chainTargetFinal= chainTarget;
         
         final Duration timeout = Duration.ofSeconds(30);
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
+       final   Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
                  blockService.adjustHeightRequiredBlocks(block);
-                block.solve(chainTarget);return "";
+                block.solve(chainTargetFinal);return "";
             }
         });
 

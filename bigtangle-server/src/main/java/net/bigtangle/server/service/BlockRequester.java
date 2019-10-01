@@ -152,7 +152,7 @@ public class BlockRequester {
     }
 
     public void diff() throws Exception {
-        milestoneService.cleanupNonSolidMissingBlocks();
+      //  milestoneService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {

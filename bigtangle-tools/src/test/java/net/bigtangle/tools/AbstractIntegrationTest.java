@@ -58,7 +58,7 @@ public abstract class AbstractIntegrationTest {
     public static String HTTPS_BIGTANGLE_INFO =
             // HTTPS_BIGTANGLE_LOCAL;
             "https://" + (testnet ? "test." : "") + "bigtangle.info/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org/";
+    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.de/";
 
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
@@ -90,9 +90,14 @@ public abstract class AbstractIntegrationTest {
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-    public String contextRoot = // HTTPS_BIGTANGLE_DE;
+    
+    public static String TESTSERVER1=   HTTPS_BIGTANGLE_DE;
+    
+     public static String TESTSERVER2=   HTTPS_BIGTANGLE_LOCAL;
+     
+    public String contextRoot = TESTSERVER1;
             // "http://localhost:8088/";
-            "https://test.bigtangle.de/";
+           // "https://test.bigtangle.de/";
 
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
@@ -250,7 +255,7 @@ public abstract class AbstractIntegrationTest {
     protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
             String description) throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, 678900000, decimals, domainname, description);
+            createMultisignToken(key, new TokenInfo(), tokename, 100000, decimals, domainname, description);
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -320,9 +325,9 @@ public abstract class AbstractIntegrationTest {
         String resp = OkHttp3Util.postString(server + ReqCmd.outputsbyToken.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-        log.info("getOutputsResponse : " + getOutputsResponse);
+      //  log.info("getOutputsResponse : " + getOutputsResponse);
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
-        Coin sumCoinbase = Coin.valueOf(0l, tokenid);
+      //  Coin sumCoinbase = Coin.valueOf(0l, tokenid);
         for (UTXO u : getOutputsResponse.getOutputs()) {
 
             if (u.isConfirmed() && !u.isSpent())

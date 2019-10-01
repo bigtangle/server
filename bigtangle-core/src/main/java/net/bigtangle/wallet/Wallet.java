@@ -2167,7 +2167,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
         for (UTXO u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
-                    && u.getValue().getValue().compareTo(amount.getValue()) > 0) {
+                    && u.getValue().getValue().compareTo(amount.getValue()) >= 0) {
                 return u;
             }
         }
