@@ -168,11 +168,11 @@ public class RewardService {
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         BigInteger chainTarget = 
                 Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
-        if(Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) 
+        if(Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) {
             chainTarget = Utils.decodeCompactBits(result.getDifficulty());
-        
+        }
        final  BigInteger chainTargetFinal= chainTarget;
-        
+    
         final Duration timeout = Duration.ofSeconds(30);
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -189,9 +189,12 @@ public class RewardService {
             handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             handler.cancel(true);
+            return null;
+        }finally {
+            executor.shutdownNow();
         }
 
-        executor.shutdownNow();
+     
         
        
         return block;
