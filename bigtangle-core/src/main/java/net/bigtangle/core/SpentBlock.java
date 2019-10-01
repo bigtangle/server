@@ -20,6 +20,13 @@ public class SpentBlock extends DataClass {
     private long time;
     
     
+    public void setDefault() {
+        spent= false;
+        confirmed= false;
+        spenderBlockHash=null;
+        time=System.currentTimeMillis() / 1000;
+        
+    }
     public void setBlockHashHex(String blockHashHex) {
         if (StringUtils.isNotBlank(blockHashHex))
             this.blockHash = Sha256Hash.wrap(blockHashHex);

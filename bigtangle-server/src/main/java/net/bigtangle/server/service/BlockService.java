@@ -28,7 +28,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -455,10 +455,10 @@ public class BlockService {
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;
-        case BLOCKTYPE_ORDER_OP:
-            OrderOpInfo opInfo = null;
+        case BLOCKTYPE_ORDER_CANCEL:
+            OrderCancelInfo opInfo = null;
             try {
-                opInfo = OrderOpInfo.parse(transactions.get(0).getData());
+                opInfo = OrderCancelInfo.parse(transactions.get(0).getData());
             } catch (IOException e) {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }

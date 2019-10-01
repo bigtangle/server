@@ -52,8 +52,7 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
@@ -87,7 +86,6 @@ import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
-
 import net.bigtangle.server.service.UnsolidBlockService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -474,7 +472,7 @@ public abstract class AbstractIntegrationTest {
             Block predecessor) throws Exception {
         // Make an order op
         Transaction tx = new Transaction(networkParameters);
-        OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, order.getHash());
+        OrderCancelInfo info = new OrderCancelInfo( order.getHash());
         tx.setData(info.toByteArray());
 
         // Legitimate it by signing
@@ -486,7 +484,7 @@ public abstract class AbstractIntegrationTest {
         // Create block with order
         Block block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
         block = adjustSolve(block);
 
         this.blockGraph.add(block, true);

@@ -24,19 +24,27 @@ public class OrderRecord extends SpentBlock  {
     private String beneficiaryAddress;
 
     // order will be traded until this time
-    private Long validToTime;
-    private int opIndex;
+    private Long validToTime; 
     // order will be traded after this time
     private Long validFromTime;
     // Side can be calculated as Big Coin as only base trading coin
     private Side side;
 
+    
+    /*
+     * for wallet set the order status from cancel
+     */
+    
+    private boolean cancelPending;
+    private long cancelPendingTime;
+  
+    
     public OrderRecord() {
     }
 
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
-            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, int opIndex, Long validFromTime,
+            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime,  Long validFromTime,
             String side, String beneficiaryAddress) {
         super();
         this.setBlockHash ( initialBlockHash);
@@ -50,7 +58,7 @@ public class OrderRecord extends SpentBlock  {
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         this.validToTime = validToTime;
-        this.opIndex = opIndex;
+ 
         this.validFromTime = validFromTime;
         try {
             this.side = Side.valueOf(side);
@@ -131,14 +139,7 @@ public class OrderRecord extends SpentBlock  {
         this.validToTime = validToTime;
     }
 
-    public int getOpIndex() {
-        return opIndex;
-    }
-
-    public void setOpIndex(int opIndex) {
-        this.opIndex = opIndex;
-    }
-
+  
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
@@ -167,12 +168,29 @@ public class OrderRecord extends SpentBlock  {
         this.beneficiaryAddress = beneficiaryAddress;
     }
 
+     
+    public boolean isCancelPending() {
+        return cancelPending;
+    }
+
+    public void setCancelPending(boolean cancelPending) {
+        this.cancelPending = cancelPending;
+    }
+
+    public long getCancelPendingTime() {
+        return cancelPendingTime;
+    }
+
+    public void setCancelPendingTime(long cancelPendingTime) {
+        this.cancelPendingTime = cancelPendingTime;
+    }
+
     @Override
     public String toString() {
         return "OrderRecord [issuingMatcherBlockHash=" + issuingMatcherBlockHash + ", offerValue=" + offerValue
                 + ", offerTokenid=" + offerTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
                 + ", beneficiaryPubKey=" + Arrays.toString(beneficiaryPubKey) + ", beneficiaryAddress="
-                + beneficiaryAddress + ", validToTime=" + validToTime + ", opIndex=" + opIndex + ", validFromTime="
+                + beneficiaryAddress + ", validToTime=" + validToTime +   ", validFromTime="
                 + validFromTime + ", side=" + side + "]";
     }
 

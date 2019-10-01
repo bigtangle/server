@@ -132,7 +132,7 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             try {

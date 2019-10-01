@@ -47,8 +47,8 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
+import net.bigtangle.core.OrderCancel;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
@@ -76,7 +76,6 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -109,8 +108,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
-    @Autowired
-    private BlockService blockService;
+
     @Autowired
     private OrderTickerService tickerService;
 
@@ -208,7 +206,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
-        block.verifyTransactions(); 
+        block.verifyTransactions();
         SolidityState solidityState = validatorService.checkSolidity(block, true);
         if (solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
             // not allow unsolid height away from confirmed reward
@@ -433,7 +431,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             tx = generateReclaimTX(block);
@@ -487,7 +485,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_OPEN:
             confirmOrderOpen(block);
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             confirmOrderReclaim(block);
@@ -630,7 +628,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set used other output spent
         if (blockStore.getTokenPrevblockhash(block.getBlock().getHash()) != null)
             blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHash()), true,
-                block.getBlock().getHash());
+                    block.getBlock().getHash());
 
         // Set own output confirmed
         blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
@@ -723,7 +721,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-                if (  utxo.isSpent()) {
+                if (utxo.isSpent()) {
                     unconfirmFrom(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
@@ -762,7 +760,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_OPEN:
             unconfirmOrderOpenDependents(block, traversedBlockHashes);
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             unconfirmOrderReclaimDependents(block, traversedBlockHashes);
@@ -825,8 +823,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // this domain
         Token token = blockStore.getTokenByBlockHash(block.getHash());
         if (token.getTokentype() == TokenType.domainname.ordinal()) {
-            List<String> dependents = blockStore
-                    .getDomainDescendantConfirmedBlocks(token.getDomainNameBlockHash());
+            List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getDomainNameBlockHash());
             for (String b : dependents) {
                 unconfirmFrom(Sha256Hash.wrap(b), traversedBlockHashes);
             }
@@ -893,7 +890,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_OPEN:
             unconfirmOrderOpen(block);
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             unconfirmOrderReclaim(block);
@@ -1103,9 +1100,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 } catch (ScriptException e) {
                     // No address found.
                 }
-                int minsignnumber =1;
+                int minsignnumber = 1;
                 if (script.isSentToMultiSig()) {
-                      minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+                    minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
                 }
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
@@ -1113,11 +1110,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 newOut.setTime(System.currentTimeMillis() / 1000);
                 blockStore.addUnspentTransactionOutput(newOut);
                 if (script.isSentToMultiSig()) {
-                   
+
                     for (ECKey ecKey : script.getPubKeys()) {
                         String toaddress = ecKey.toAddress(params).toBase58();
-                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex()
-                                 );
+                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex());
                         this.blockStore.insertOutputsMulti(outputsMulti);
                     }
                 }
@@ -1151,7 +1147,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_OPEN:
             connectOrder(block);
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
+            connectCancelOrder(block);
             break;
         case BLOCKTYPE_ORDER_RECLAIM:
             break;
@@ -1161,6 +1158,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    private void connectCancelOrder(Block block) throws BlockStoreException {
+        try {
+            OrderCancelInfo info = OrderCancelInfo.parse(block.getTransactions().get(0).getData());
+            OrderCancel record = new OrderCancel(info.getBlockHash() );
+            record.setBlockHash(block.getHash());
+            blockStore.insertCancelOrder(record);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void connectOrder(Block block) throws BlockStoreException {
         try {
             OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
@@ -1170,13 +1177,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
                     offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
-                    reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), 0, reqInfo.getValidFromTime(),
-                    side.name(), reqInfo.getBeneficiaryAddress());
+                    reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
+                    reqInfo.getBeneficiaryAddress());
 
             blockStore.insertOrder(record);
         } catch (IOException e) {
-            // Cannot happen when connecting
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -1205,8 +1210,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         blockStore.insertMultiSignAddress(permissionedAddress);
                 }
             } catch (IOException e) {
-                // Cannot happen when connecting
-                e.printStackTrace();
+
                 throw new RuntimeException(e);
             }
 
@@ -1265,7 +1269,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
 
         // Collect all orders approved by this block in the interval
-        List<OrderOpInfo> cancels = new ArrayList<>(), refreshs = new ArrayList<>();
+        List<OrderCancelInfo> cancels = new ArrayList<>();
         Map<Sha256Hash, OrderRecord> newOrders = new TreeMap<>(
                 Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
         Set<OrderRecord> spentOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevHash).values());
@@ -1281,19 +1285,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     newOrders.put(blockHash, order);
                     spentOrders.add(blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH));
                 }
-            } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP) {
-                OrderOpInfo info = null;
+            } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
+                OrderCancelInfo info = null;
                 try {
-                    info = OrderOpInfo.parse(b.getBlock().getTransactions().get(0).getData());
+                    info = OrderCancelInfo.parse(b.getBlock().getTransactions().get(0).getData());
                 } catch (IOException e) {
-                    // Cannot happen since checked before
-                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
-                if (info.getOp() == OrderOp.CANCEL)
-                    cancels.add(info);
-                else if (info.getOp() == OrderOp.REFRESH)
-                    refreshs.add(info);
+
+                cancels.add(info);
             }
         }
 
@@ -1316,7 +1316,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
 
         // Process cancel ops after matching
-        for (OrderOpInfo c : cancels) {
+        for (OrderCancelInfo c : cancels) {
             if (remainingOrders.containsKey(c.getBlockHash())) {
                 cancelledOrders.add(remainingOrders.get(c.getBlockHash()));
             }
@@ -1554,7 +1554,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // If in relevant reward height interval and a relevant block,
             // collect it
             if (currentHeight <= toHeight) {
-                if (currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OP
+                if (currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL
                         || currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN)
                     relevantBlocks.add(currentBlock);
             }

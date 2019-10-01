@@ -281,60 +281,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void exchangeToken() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
 
-        // create token
-        // get token from wallet to spent
-        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
-        log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-        testCreateToken(walletKeys.get(0));
-
-        milestoneService.update();
-        // pay big to yourKey
-        payToken(yourKey, walletAppKit1.wallet());
-        List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(yourKey);
-        List<UTXO> utxos = getBalance(false, keys);
-        UTXO yourutxo = utxos.get(0);
-
-        List<UTXO> ulist = getBalance();
-        UTXO myutxo = null;
-        for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), walletKeys.get(0).getPubKey())) {
-                myutxo = u;
-            }
-        }
-        log.debug("outKey : " + myutxo.getAddress());
-
-        Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
-        SendRequest req = SendRequest.to(new Address(networkParameters, myutxo.getAddress()), amount);
-
-        walletAppKit.wallet().completeTx(req, null);
-        // walletAppKit.wallet().signTransaction(req);
-
-        byte[] a = req.tx.bitcoinSerialize();
-
-        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(a);
-
-        SendRequest request = SendRequest.forTx(transaction);
-        req.tx.addOutput(myutxo.getValue(), new Address(networkParameters, yourutxo.getAddress()));
-        walletAppKit.wallet().completeTx(req, null);
-        // walletAppKit1.wallet().signTransaction(request);
-        exchangeTokenComplete(request.tx);
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("address", "fromAddress");
-
-        // String response = OkHttp3Util.post(contextRoot +
-        // OrdermatchReqCmd.getExchange.name(),
-        // Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        // log.info("getExchange resp : " + requestParam);
-    }
 
     @Test
     public void exchangeSignsServer() throws Exception {

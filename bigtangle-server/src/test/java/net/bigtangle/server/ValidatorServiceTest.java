@@ -33,8 +33,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
@@ -3196,7 +3195,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         {
             // Make an order op
             Transaction tx = new Transaction(networkParameters);
-            OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getHash());
+            OrderCancelInfo info = new OrderCancelInfo( block1.getHash());
             tx.setData(info.toByteArray());
 
             // Legitimate it by signing
@@ -3208,7 +3207,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create block with order
             block2 = block1.createNextBlock(block1);
             block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+            block2.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
             block2.solve();
         }
 
@@ -3262,7 +3261,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         {
             // Make an order op
             Transaction tx = new Transaction(networkParameters);
-            OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, block1.getHash());
+            OrderCancelInfo info = new OrderCancelInfo(block1.getHash());
             tx.setData(info.toByteArray());
 
             // Legitimate it by signing
@@ -3277,7 +3276,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Create block with order
             block2 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
             block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+            block2.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
             block2.solve();
         }
 

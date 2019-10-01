@@ -207,7 +207,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         assertEquals(order.getIssuingMatcherBlockHash(), Sha256Hash.ZERO_HASH);
         assertEquals(order.getOfferTokenid(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         assertEquals(order.getOfferValue(), 2);
-        assertEquals(order.getOpIndex(), 0);
         assertEquals(order.getSpenderBlockHash(), null);
         assertEquals(order.getTargetTokenid(), "test");
         assertEquals(order.getTargetValue(), 2);

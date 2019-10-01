@@ -131,7 +131,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    CONSTRAINT confirmationdependency_pk PRIMARY KEY (blockhash, dependencyblockhash) \n"
             + ")";
 
-    private static final String CREATE_ORDERS_TABLE = "CREATE TABLE openorders (\n"
+    private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
                 // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
                 // ZEROHASH if confirmed by order blocks,
@@ -154,16 +154,24 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 // order, e.g. increasing by one when refreshing
                 // order is valid after this time
             + "    validFromTime bigint,\n" 
-            + "    opindex int,\n" 
             // true iff a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
             // true if used by a confirmed  ordermatch block (either
             // returned or used for another orderoutput/output)
             + "    spent boolean NOT NULL,\n" 
             + "    spenderblockhash  binary(32),\n" 
-            + "    CONSTRAINT openorders_pk PRIMARY KEY (blockhash, collectinghash) "
+            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
+    private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
+            + "   blockhash binary(32) NOT NULL,\n" 
+            + "   orderblockhash binary(32) NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash binary(32),\n" 
+            + "   time bigint NOT NULL,\n"
+            + "   PRIMARY KEY (ordercancel) ) ENGINE=InnoDB";
+    
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
             + "    txhash varchar(255) NOT NULL,\n"
@@ -259,12 +267,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" 
             + ") ENGINE=InnoDB";
 
-    private static final String CREATE_LOGRESULT_TABLE = "CREATE TABLE logresult (\n"
-            + "    logResultId varchar(255) NOT NULL,\n" 
-            + "    logContent varchar(255) NOT NULL,\n"
-            + "    submitDate datetime NOT NULL,\n"
-            + "   CONSTRAINT logresult_pk PRIMARY KEY (logResultId) USING BTREE \n" 
-            + ") ENGINE=InnoDB";
 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash binary(32) NOT NULL,\n" 
@@ -354,7 +356,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
         sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
-        sqlStatements.add(CREATE_LOGRESULT_TABLE);
+        sqlStatements.add(CREATE_ORDER_CANCEL_TABLE);
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ORDERS_TABLE);

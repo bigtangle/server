@@ -21,6 +21,7 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
@@ -222,6 +223,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public OrderRecord getOrder(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
     public void insertOrder(OrderRecord record) throws BlockStoreException;
+    public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException;
 
     public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException;

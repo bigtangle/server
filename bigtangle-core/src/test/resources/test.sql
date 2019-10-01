@@ -1,6 +1,6 @@
 select * from blocks   ;
 select * from unsolidblocks order by height;
-select * from openorders   ;
+select * from orders   ;
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
@@ -11,7 +11,7 @@ select * from blocks order by height desc limit 200 ;
 select * from blocks where height > 450 order by height asc limit 500 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
-select * from openorders where spent=0 and confirmed=1  ;
+select * from orders where spent=0 and confirmed=1  ;
 
  SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
@@ -24,13 +24,14 @@ select * from blocks where hash =373;
 select * from blocks where confirmed=1 ;
 
 select * from outputs  where spent=0 and confirmed=1 ;
-select * from openorders  where spent=0 and confirmed=1 ;
-
+select * from orders  where spent=0 and confirmed=1 ;
+select * from ordercancel
 update blocks set milestone=0    where height=0
 
 OUTPUTS
 select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
+select * from orders   ;
 select * from txreward   ;
 select * from ordermatching   ;
 select * from matching   ;
@@ -51,25 +52,25 @@ select * from  exchange;
 
 select * from ordermatch;
 select * from orderpublish;
-select * from openorders;
+select * from orders;
 
 
-SELECT blockhash FROM blocks INNER JOIN openorders 
-ON openorders.blockhash=blocks.hash 
-WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND openorders.spent = 0;
+SELECT blockhash FROM blocks INNER JOIN orders 
+ON orders.blockhash=blocks.hash 
+WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND orders.spent = 0;
 
 
  SELECT blockhash, height
-             FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash
-             WHERE   openorders.confirmed = 0  
-            AND openorders.spent = 0 AND 
-            openorders.collectinghash=
+             FROM blocks INNER JOIN orders ON orders.blockhash=blocks.hash
+             WHERE   orders.confirmed = 0  
+            AND orders.spent = 0 AND 
+            orders.collectinghash=
             '0x0000000000000000000000000000000000000000000000000000000000000000'
  
  SELECT blockhash, height
-             FROM blocks INNER JOIN openorders ON openorders.blockhash=blocks.hash
+             FROM blocks INNER JOIN orders ON orders.blockhash=blocks.hash
              WHERE    
-            openorders.collectinghash=
+            orders.collectinghash=
             '0x0000000000000000000000000000000000000000000000000000000000000000'           
             
 select * from vm_deposit ;

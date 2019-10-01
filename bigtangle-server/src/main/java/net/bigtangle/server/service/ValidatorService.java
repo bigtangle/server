@@ -48,7 +48,7 @@ import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
@@ -969,7 +969,7 @@ public class ValidatorService {
                 return openSolidityState;
             }
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             SolidityState opSolidityState = checkFormalOrderOpSolidity(block, throwExceptions);
             if (!(opSolidityState.getState() == State.Success)) {
                 return opSolidityState;
@@ -1118,9 +1118,9 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        OrderOpInfo info = null;
+        OrderCancelInfo info = null;
         try {
-            info = OrderOpInfo.parse(tx.getData());
+            info = OrderCancelInfo.parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1567,7 +1567,7 @@ public class ValidatorService {
                 return openSolidityState;
             }
             break;
-        case BLOCKTYPE_ORDER_OP:
+        case BLOCKTYPE_ORDER_CANCEL:
             SolidityState opSolidityState = checkFullOrderOpSolidity(block, height, throwExceptions);
             if (!(opSolidityState.getState() == State.Success)) {
                 return opSolidityState;
@@ -1838,9 +1838,9 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        OrderOpInfo info = null;
+        OrderCancelInfo info = null;
         try {
-            info = OrderOpInfo.parse(tx.getData());
+            info = OrderCancelInfo.parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();

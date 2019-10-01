@@ -72,8 +72,7 @@ import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderOpInfo;
-import net.bigtangle.core.OrderOpInfo.OrderOp;
+import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
@@ -2216,7 +2215,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws JsonProcessingException, IOException {
         // Make an order op
         Transaction tx = new Transaction(params);
-        OrderOpInfo info = new OrderOpInfo(OrderOp.CANCEL, 0, orderblockhash);
+        OrderCancelInfo info = new OrderCancelInfo(orderblockhash);
         tx.setData(info.toByteArray());
 
         // Legitimate it by signing
@@ -2232,7 +2231,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block block = params.getDefaultSerializer().makeBlock(data);
 
         block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_OP);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
 
 
         return solveAndPost(block);
