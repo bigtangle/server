@@ -152,6 +152,7 @@ public class BlockRequester {
     }
 
     public void diff() throws Exception {
+        milestoneService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {
@@ -200,9 +201,9 @@ public class BlockRequester {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
-           //     milestoneService.update();
+                milestoneService.update();
             }
-            milestoneService.updateMilestone();
+            //  milestoneService.updateMilestone();
         }
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
     }

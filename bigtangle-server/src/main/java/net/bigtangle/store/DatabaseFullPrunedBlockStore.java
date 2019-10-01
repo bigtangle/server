@@ -209,7 +209,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
     protected final String DELETE_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE hash = ?";
-    protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE inserttime <= ?";
+    protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE height <= ?";
     protected final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
     protected final String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash) VALUES (?)";
 
@@ -2429,12 +2429,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void deleteOldUnsolid(long time) throws BlockStoreException {
+    public void deleteOldUnsolid(long height) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(DELETE_OLD_UNSOLIDBLOCKS_SQL);
-            preparedStatement.setLong(1, time);
+            preparedStatement.setLong(1, height);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

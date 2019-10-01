@@ -40,6 +40,7 @@ import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
@@ -140,6 +141,7 @@ public class MilestoneService {
             public String call() throws Exception {
                 Context context = new Context(params);
                 Context.propagate(context);
+                cleanupNonSolidMissingBlocks();
                 updateSolidity();
 
                 try {
@@ -189,6 +191,19 @@ public class MilestoneService {
     public void updateMilestone() throws BlockStoreException, NoBlockException {
         Block longestRewardBlock = store.get(store.getMaxSolidReward().getBlockHash());
         runConsensusLogic(longestRewardBlock);
+    }
+
+    /**
+     * the missing blocks are check, blocks behind the last confirmed blocks are
+     * removed.
+     * 
+     * @throws BlockStoreException
+     * @throws NoBlockException
+     */
+    public void cleanupNonSolidMissingBlocks() throws BlockStoreException, NoBlockException {
+        TXReward txReward = store.getMaxConfirmedReward();
+        store.deleteOldUnsolid(txReward.getToHeight());
+
     }
 
     /**

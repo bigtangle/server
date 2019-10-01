@@ -429,7 +429,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
 
-    void deleteOldUnsolid(long time) throws BlockStoreException;
+    void deleteOldUnsolid(long toHeight) throws BlockStoreException;
 
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 

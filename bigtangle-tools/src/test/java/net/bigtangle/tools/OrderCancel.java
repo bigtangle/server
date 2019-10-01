@@ -32,7 +32,7 @@ public class OrderCancel extends AbstractIntegrationTest {
             OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
 
             for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-
+                cancel(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
                 cancel(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
 
             }
