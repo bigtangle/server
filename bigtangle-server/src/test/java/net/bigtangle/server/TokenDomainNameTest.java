@@ -200,7 +200,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         milestoneService.update();
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsbyToken.name(),
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);

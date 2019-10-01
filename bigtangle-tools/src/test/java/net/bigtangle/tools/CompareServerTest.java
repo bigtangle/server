@@ -102,7 +102,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
         Map<String, Object> requestParam = new HashMap<String, Object>();
 
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.searchBlock.name(),
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);

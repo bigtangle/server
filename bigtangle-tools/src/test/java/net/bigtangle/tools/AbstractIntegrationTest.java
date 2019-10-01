@@ -322,7 +322,7 @@ public abstract class AbstractIntegrationTest {
     public void testCheckToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(server + ReqCmd.outputsbyToken.name(),
+        String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
       //  log.info("getOutputsResponse : " + getOutputsResponse);

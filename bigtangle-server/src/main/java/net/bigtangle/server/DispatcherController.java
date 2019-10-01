@@ -151,7 +151,7 @@ public class DispatcherController {
                 outputHistory(bodyByte, httpServletResponse);
             }
                 break;
-            case outputsbyToken: {
+            case outputsOfTokenid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = walletService
@@ -191,14 +191,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case searchBlock: {
+            case findBlockEvaluation: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlock(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case searchBlockByBlockHash: {
+            case getBlockByBlockHash: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlockByBlockHash(request);
@@ -223,16 +223,7 @@ public class DispatcherController {
                 this.outPointBinaryArray(httpServletResponse, block.bitcoinSerialize());
             }
                 break;
-            case streamBlocks: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                if (request.get("heightstart") != null) {
-                    this.blockService.streamBlocks(Long.valueOf((String) request.get("heightstart")),
-                            (String) request.get("kafka"));
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
-                }
-            }
-                break;
+ 
             case blocksFromChainLength: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

@@ -274,7 +274,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", address);
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.searchBlock.name(),
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         log.info("searchBlock resp : " + response);
