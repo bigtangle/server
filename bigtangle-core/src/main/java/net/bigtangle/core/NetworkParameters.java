@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -225,7 +226,7 @@ public abstract class NetworkParameters {
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 
-        RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH);
+        RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH, new HashSet<Sha256Hash>(), 0l);
 
         coinbase.setData(rewardInfo.toByteArray());
         add(params, BigtangleCoinTotal, genesisPub, coinbase);

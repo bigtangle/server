@@ -310,12 +310,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
 
         // Should not be solid
-        assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 0);
+        assertTrue(store.getBlockWrap(rewardBlock2.getHash()) ==null);
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
         milestoneService.update();
         // After adding the missing dependency, should be solid
+        blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -1139,11 +1140,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(rewardBlock, false);
-
-            fail();
-        } catch (MissingTransactionDataException e) {
+          assertFalse(  blockGraph.add(rewardBlock, false));
+          fail();
+        }catch (RuntimeException e) {
+             
         }
+
+         
     }
 
     @Test
@@ -1166,12 +1169,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rewardBlock.solve();
 
         // Should not go through
-        try {
-            blockGraph.add(rewardBlock, false);
-
-            fail();
-        } catch (MalformedTransactionDataException e) {
-        }
+     try {
+         assertFalse(   blockGraph.add(rewardBlock, false));
+         fail();
+    } catch (RuntimeException e) {
+    }
     }
 
     @Test
@@ -1227,20 +1229,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(testBlock1, false);
-            fail();
+           assertFalse( blockGraph.add(testBlock1, false));
+           
         } catch (InvalidTransactionDataException e) {
         }
-        try {
-            blockGraph.add(testBlock2, false);
-            fail();
-        } catch (MissingDependencyException e) {
-        }
-        try {
-            blockGraph.add(testBlock3, false);
-            fail();
-        } catch (UnsolidException e) {
-        }
+        
+         assertFalse(   blockGraph.add(testBlock2, false));
+  
+          assertFalse(  blockGraph.add(testBlock3, false));
+        
+        
         try {
             blockGraph.add(testBlock4, false);
             fail();

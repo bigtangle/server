@@ -170,7 +170,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
             + "   time bigint NOT NULL,\n"
-            + "   PRIMARY KEY (ordercancel) ) ENGINE=InnoDB";
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
     
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" 

@@ -162,21 +162,21 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         milestoneService.update();
         {
              
-            Token token = testCreateToken(walletKeys.get(0), "de",
+            Token token = testCreateToken(walletKeys.get(1), "de",
                     walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameBlockHash());
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(token.getTokenid(), keys.get(i), aesKey);
             }
-       
+         milestoneService.update();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", token.getTokenid());
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
-            assertTrue(getTokensResponse.getTokens().size() > 0);
+            assertTrue(getTokensResponse.getTokens().size() == 1);
             assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay().equals(token.getTokenname() + "@de"));
             assertTrue(!getTokensResponse.getTokens().get(0).getDomainNameBlockHash().equals(networkParameters.getGenesisBlock().getHashAsString()));
 

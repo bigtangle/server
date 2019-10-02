@@ -1002,6 +1002,9 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        // Incomplete out-of-order blocks are added on second add
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1056,24 +1059,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
-        milestoneService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
-        
-        Collections.reverse(blocksAdded);
-        
-        store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
         milestoneService.update();
@@ -1094,6 +1079,32 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Collections.reverse(blocksAdded);
         
         store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        
+        Collections.reverse(blocksAdded);
+        
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
         milestoneService.update();
@@ -1156,6 +1167,8 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1180,6 +1193,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1202,6 +1221,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Collections.shuffle(blocksAdded);
         
         store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
         milestoneService.update();

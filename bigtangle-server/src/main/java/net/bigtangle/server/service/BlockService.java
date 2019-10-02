@@ -37,10 +37,12 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -76,6 +78,9 @@ public class BlockService {
 
     @Autowired
     private ServerConfiguration serverConfiguration;
+
+    @Autowired
+    private BlockRequester blockRequester;
 
     @Autowired
     protected TipsService tipService;
@@ -168,6 +173,68 @@ public class BlockService {
                 .getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
             addConfirmedApproversTo(evaluations, store.getBlockWrap(approverHash));
         }
+    }
+
+    /**
+     * Recursively adds the specified block and its approved blocks to the
+     * collection if the blocks are not in the collection. if a block is missing
+     * somewhere, returns false.
+     * 
+     * @param blocks
+     * @param milestoneEvaluation
+     * @throws BlockStoreException
+     */
+    public boolean addRequiredNonMilestoneBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block)
+            throws BlockStoreException {
+        if (block == null)
+            return false;
+
+        if (block.getBlockEvaluation().getMilestone() != -1 || blocks.contains(block))
+            return true;
+
+        // Add this block and add all of its required unconfirmed blocks
+        blocks.add(block.getBlockHash());
+
+        Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
+        for (Sha256Hash req : allRequiredBlockHashes) {
+            BlockWrap pred = store.getBlockWrap(req);
+            if (pred == null)
+                return false;
+            if (!addRequiredNonMilestoneBlockHashesTo(blocks, pred))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Recursively adds the specified block and its approved blocks to the
+     * collection if the blocks are not in the collection. if a block is missing
+     * somewhere, returns false.
+     * 
+     * @param blocks
+     * @param milestoneEvaluation
+     * @throws BlockStoreException
+     */
+    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
+            Collection<Sha256Hash> otherBlocks) throws BlockStoreException {
+        if (block == null)
+            return false;
+
+        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block))
+            return true;
+
+        // Add this block and add all of its required unconfirmed blocks
+        blocks.add(block.getBlockHash());
+
+        Set<Sha256Hash> allRequiredBlockHashes = getDirectRequiredBlockHashes(block.getBlock());
+        for (Sha256Hash req : allRequiredBlockHashes) {
+            BlockWrap pred = store.getBlockWrap(req);
+            if (pred == null)
+                return false;
+            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, otherBlocks))
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -346,7 +413,10 @@ public class BlockService {
         if (store.getBlockEvaluation(block.getHash()) == null) {
 
             try {
-                blockgraph.add(block, allowUnsolid);
+                if (!blockgraph.add(block, allowUnsolid)) {
+                    if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+                    blockRequester.requestBlocks(block);}
+                } 
                 return Optional.of(block);
             } catch (Exception e) {
                 logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
@@ -369,22 +439,22 @@ public class BlockService {
     }
 
     public void adjustHeightRequiredBlocks(Block block) throws BlockStoreException {
-       long h = calcHeightRequiredBlocks(block);
-       if(h>block.getHeight() ) {
-           logger.debug("adjustHeightRequiredBlocks" + block + " to " +h);
-        block.setHeight(h);
-       }
+        long h = calcHeightRequiredBlocks(block);
+        if (h > block.getHeight()) {
+            logger.debug("adjustHeightRequiredBlocks" + block + " to " + h);
+            block.setHeight(h);
+        }
     }
 
     public long calcHeightRequiredBlocks(Block block) throws BlockStoreException {
         List<BlockWrap> requires = getAllRequirements(block);
-        long height =0 ;
-        for (BlockWrap b : requires) { 
-            height= Math.max(height, b.getBlock().getHeight());
+        long height = 0;
+        for (BlockWrap b : requires) {
+            height = Math.max(height, b.getBlock().getHeight());
         }
-        return height+1;
+        return height + 1;
     }
-    
+
     public List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
         Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         List<BlockWrap> result = new ArrayList<>();
@@ -393,6 +463,13 @@ public class BlockService {
         return result;
     }
 
+    
+    public Set<Sha256Hash> getDirectRequiredBlockHashes(Block block) {
+        Set<Sha256Hash> predecessors = new HashSet<>();
+        predecessors.add(block.getPrevBlockHash());
+        predecessors.add(block.getPrevBranchBlockHash());
+        return predecessors;
+    }
     /**
      * Returns all blocks that must be confirmed if this block is confirmed.
      * 

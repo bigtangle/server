@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -89,6 +88,33 @@ public class MilestoneService {
         }
     }
 
+    public void update(int numberUpdates) throws InterruptedException, ExecutionException {
+
+        Context context = new Context(params);
+        Context.propagate(context);
+        // cleanupNonSolidMissingBlocks();
+        try {
+            updateSolidity();
+
+            updateMaintained();
+            updateMilestoneDepth();
+            updateWeightAndDepth();
+            updateRating();
+
+            blockGraph.chainlock.lock();
+
+      //FIXME      store.beginDatabaseBatchWrite();
+            updateConfirmed(numberUpdates);
+       //     store.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+
+        } finally {
+
+            blockGraph.chainlock.unlock();
+        }
+
+    }
+
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -96,102 +122,6 @@ public class MilestoneService {
      */
 
     protected final ReentrantLock lock = Threading.lock("milestoneService");
-
-    public void update(int numberUpdates) throws InterruptedException, ExecutionException {
-        if (!lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  Update already running. Returning...");
-            return;
-        }
-        Stopwatch watchAll = Stopwatch.createStarted();
-
-        log.debug("Milestone running ");
-        try {
-            Context context = new Context(params);
-            Context.propagate(context);
-
-            updateSolidity();
-
-            updateMilestone();
-
-            updateMaintained();
-            updateMilestoneDepth();
-            updateWeightAndDepth();
-            updateRating();
-
-            updateConfirmed(numberUpdates);
-
-            log.debug("Milestone All  time {} ms.", watchAll.elapsed(TimeUnit.MILLISECONDS));
-
-            watchAll.stop();
-        } catch (Exception e) {
-            log.debug(" ", e);
-
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void updateDo(int numberUpdates) throws InterruptedException, ExecutionException {
-        final Duration timeout = Duration.ofSeconds(5000000);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
-            @Override
-            public String call() throws Exception {
-                Context context = new Context(params);
-                Context.propagate(context);
-               // cleanupNonSolidMissingBlocks();
-                updateSolidity();
-
-                try {
-                    store.beginDatabaseBatchWrite();
-                    updateMilestone();
-                    store.commitDatabaseBatchWrite();
-                } catch (Exception e) {
-                    store.abortDatabaseBatchWrite();
-                } finally {
-                    store.defaultDatabaseBatchWrite();
-                }
-
-                updateMaintained();
-                updateMilestoneDepth();
-                updateWeightAndDepth();
-                updateRating();
-
-                try {
-                    store.beginDatabaseBatchWrite();
-                    updateConfirmed(numberUpdates);
-                    store.commitDatabaseBatchWrite();
-                } catch (Exception e) {
-                    store.abortDatabaseBatchWrite();
-                } finally {
-                    store.defaultDatabaseBatchWrite();
-                }
-
-                return "";
-            }
-        });
-
-        try {
-            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            handler.cancel(true);
-        }
-
-        executor.shutdownNow();
-    }
-
-    /**
-     * Switch to longest chain
-     * 
-     * @throws BlockStoreException
-     * @throws NoBlockException
-     */
-    public void updateMilestone() throws BlockStoreException, NoBlockException {
-        Block longestRewardBlock = store.get(store.getMaxSolidReward().getBlockHash());
-        runConsensusLogic(longestRewardBlock);
-    }
 
     /**
      * the missing blocks are check, blocks behind the last confirmed blocks are
@@ -213,29 +143,53 @@ public class MilestoneService {
      * 
      * @throws BlockStoreException
      * @throws NoBlockException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    private void updateSolidity() throws BlockStoreException, NoBlockException {
+    private void updateSolidity()
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
-        /*
-         * TODO this grows to infinite size
-         */
-        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks();
-        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
-        for (UnsolidBlock storedBlock : storedBlocklist) {
-            if (storedBlock != null) {
-                Block req = blockService.getBlock(storedBlock.missingdependencyHash());
+        final Duration timeout = Duration.ofSeconds(5);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
-                if (req != null) {
-                    store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
-                    // if the block is there, now scan the rest unsolid blocks
-                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        scanWaitingBlocks(req);
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+
+                /*
+                 * Cutoff window around current chain.
+                 */
+                List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks();
+                log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
+                for (UnsolidBlock storedBlock : storedBlocklist) {
+                    if (storedBlock != null) {
+                        Block req = blockService.getBlock(storedBlock.missingdependencyHash());
+
+                        if (req != null) {
+                            store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
+                            // if the block is there, now scan the rest unsolid
+                            // blocks
+                            if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
+                                scanWaitingBlocks(req);
+                            }
+                        } else {
+
+                            blockRequester.requestBlock(storedBlock.missingdependencyHash());
+                        }
                     }
-                } else {
-
-                    blockRequester.requestBlock(storedBlock.missingdependencyHash());
                 }
+                return "";
             }
+        });
+
+        try {
+            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
+
+        } finally {
+            executor.shutdownNow();
         }
 
     }
@@ -535,10 +489,13 @@ public class MilestoneService {
 
     }
 
-    public void scanWaitingBlocks(Block block) throws BlockStoreException {
+    public void scanWaitingBlocks(Block block, Set<Sha256Hash> updateSet) throws BlockStoreException {
         // Finally, look in the solidity waiting queue for blocks that are still
         // waiting
         for (Block b : store.getUnsolidBlocks(block.getHash().getBytes())) {
+            if (updateSet != null && !updateSet.contains(b.getHash()))
+                continue;
+
             try {
                 // Clear from waiting list
                 store.deleteUnsolid(b.getHash());
@@ -555,7 +512,59 @@ public class MilestoneService {
         }
     }
 
-    private void runConsensusLogic(Block newestBlock) throws BlockStoreException {
+    public void scanWaitingBlocks(Block block) throws BlockStoreException {
+        scanWaitingBlocks(block, null);
+    }
+
+    public boolean checkRewardReferencedBlocks(Block rewardBlock) throws BlockStoreException {
+        RewardInfo rewardInfo;
+        try {
+            rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // Check previous reward blocks exist and get their approved sets
+        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+        if (prevRewardHash == null)
+            return false;
+        Block prevRewardBlock = store.get(prevRewardHash);
+        if (prevRewardBlock == null)
+            return false;
+        RewardInfo prevRewardInfo;
+        try {
+            prevRewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // TODO cutoff window (1) is needed for this to work correctly,
+        // TODO merge this set with all previous sets
+        Set<Sha256Hash> prevMilestoneBlocks = prevRewardInfo.getBlocks();
+        prevMilestoneBlocks.add(prevRewardHash);
+
+        for (Sha256Hash hash : rewardInfo.getBlocks()) {
+            BlockWrap block = store.getBlockWrap(hash);
+            if (block == null)
+                return false;
+
+            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+            for (Sha256Hash reqHash : requiredBlocks) {
+                BlockWrap req = store.getBlockWrap(reqHash);
+                if (req == null && !prevMilestoneBlocks.contains(reqHash))
+                    return false;
+
+                if (req != null && req.getBlockEvaluation().getSolid() >= 1
+                        && block.getBlockEvaluation().getSolid() == 0) {
+                    scanWaitingBlocks(req.getBlock(), rewardInfo.getBlocks());
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean runConsensusLogic(Block newestBlock) throws BlockStoreException {
 
         try {
             RewardInfo rewardInfo = RewardInfo.parse(newestBlock.getTransactions().get(0).getData());
@@ -614,9 +623,6 @@ public class MilestoneService {
                 // Build milestone forwards.
                 for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
 
-                    boolean rerunConsensusLogic = newMilestoneBlocks
-                            .indexOf(newMilestoneBlock) == newMilestoneBlocks.size() - 1;
-
                     // Sanity check: if my predecessors are still not fully
                     // solid or invalid, there must be something wrong.
                     Set<Sha256Hash> allRequiredBlockHashes = blockService
@@ -670,7 +676,7 @@ public class MilestoneService {
                             blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false);
 
                             runConsensusLogic(store.get(oldLongestChainEnd));
-                            return;
+                            return false;
                         }
 
                         // Otherwise, all predecessors exist and were at least
@@ -716,5 +722,7 @@ public class MilestoneService {
             // Cannot happen when connecting
             throw new RuntimeException(e);
         }
+
+        return true;
     }
 }

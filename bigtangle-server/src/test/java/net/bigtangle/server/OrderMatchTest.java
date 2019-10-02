@@ -999,7 +999,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 852, 69, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
-
+        milestoneService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 

@@ -5,11 +5,26 @@
 
 package net.bigtangle.store;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.service.SolidityState;
@@ -89,12 +104,27 @@ import net.bigtangle.wallet.Wallet;
  * </p>
  */
 public abstract class AbstractBlockGraph {
-    
-  //  public final ReentrantLock confirmLock = Threading.lock("blocktangle");
+
+    public final ReentrantLock chainlock = Threading.lock("chainLock");
+    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
     /** Keeps a map of block hashes to StoredBlocks. */
     protected final BlockStore blockStore;
     protected final NetworkParameters params;
+
+    // Holds a block header and, optionally, a list of tx hashes or block's
+    // transactions
+    class OrphanBlock {
+        final Block block; 
+        OrphanBlock(Block block) { 
+            this.block = block; 
+        }
+    }
+
+    // Holds blocks that we have received but can't plug into the chain yet, eg
+    // because they were created whilst we
+    // were downloading the block chain.
+    protected final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<>();
 
     /**
      * Constructs a BlockTangle connected to the given list of listeners (eg,
@@ -142,5 +172,6 @@ public abstract class AbstractBlockGraph {
      *             if the block cannot be added to the chain.
      * @throws BlockStoreException
      */
-    public abstract void add(Block block, boolean allowUnsolid) throws VerificationException, BlockStoreException;
+    public abstract boolean add(Block block, boolean allowUnsolid) throws VerificationException, BlockStoreException;
+
 }

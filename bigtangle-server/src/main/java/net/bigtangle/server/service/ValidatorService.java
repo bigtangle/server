@@ -194,6 +194,14 @@ public class ValidatorService {
 
         // Read previous reward block's data
         BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
+        RewardInfo prevRewardInfo;
+        try {
+            prevRewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        
+        long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
         long prevToHeight = store.getRewardToHeight(prevRewardHash);
         long prevDifficulty = prevRewardBlock.getBlock().getDifficultyTarget();
         long fromHeight = prevToHeight + 1;
@@ -239,9 +247,17 @@ public class ValidatorService {
 
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
+        
+        // Get all non-milestone approved blocks
+        Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
+        // TODO cutoff window (1) is needed for this to work correctly, 
+        Set<Sha256Hash> prevMilestoneBlocks = prevRewardInfo.getBlocks();
+        prevMilestoneBlocks.add(prevRewardHash);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks);
 
         // Build the type-specific tx data
-        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash);
+        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash, blocks, currChainLength);
         tx.setData(rewardInfo.toByteArray());
         tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
         return new RewardBuilderResult(tx, difficulty);

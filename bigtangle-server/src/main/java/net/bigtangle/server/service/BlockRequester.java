@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
@@ -83,6 +84,29 @@ public class BlockRequester {
             }
         }
         return data;
+    }
+
+    public void requestBlocks(Block rewardBlock) {
+        RewardInfo rewardInfo;
+        try {
+            rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String[] re = serverConfiguration.getRequester().split(",");
+        List<String> badserver = new ArrayList<String>();
+        for (String s : re) {
+            if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
+                try {
+                    requestBlocks(rewardInfo.getChainlength(), s);
+                    requestBlock(rewardInfo.getPrevRewardHash());
+                } catch (Exception e) {
+                    log.debug(s, e); 
+                    badserver.add(s);
+                }
+            }
+        }
     }
 
     public void requestBlocks(long chainlength, String s)
@@ -152,7 +176,7 @@ public class BlockRequester {
     }
 
     public void diff() throws Exception {
-      //  milestoneService.cleanupNonSolidMissingBlocks();
+        // milestoneService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {
@@ -203,7 +227,7 @@ public class BlockRequester {
                 requestBlocks(i, aMaxConfirmedReward.server);
                 milestoneService.update();
             }
-            //  milestoneService.updateMilestone();
+            // milestoneService.updateMilestone();
         }
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
     }

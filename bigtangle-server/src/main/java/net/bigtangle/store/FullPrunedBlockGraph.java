@@ -5,6 +5,8 @@
 
 package net.bigtangle.store;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -76,6 +78,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.MilestoneService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -108,6 +111,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
+    @Autowired
+    private MilestoneService milestoneService;
 
     @Autowired
     private OrderTickerService tickerService;
@@ -184,7 +189,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return Utils.encodeCompactBits(newTarget);
     }
 
-    private void addReward(Block block) throws BlockStoreException {
+    private void solidifyReward(Block block) throws BlockStoreException {
         try {
 
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
@@ -201,17 +206,84 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    public void add(Block block, boolean allowUnsolid) throws BlockStoreException {
+    public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
+         
+        
+        if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+            chainlock.lock();
+            try {
+            return  addChain(block, allowUnsolid, true); 
+            } finally {
+                chainlock.unlock();   
+            }
+        }else {
+            return  addNonChain(block, allowUnsolid);
+             
+        }
+    }
+
+    public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
+
+        // Check the block is partially formally valid and fulfills PoW
+
+        block.verifyHeader();
+        block.verifyTransactions();
+         
+    
+        if(!milestoneService.checkRewardReferencedBlocks(block)) {
+            log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
+            orphanBlocks.put(block.getHash(), new OrphanBlock(block));
+            if (tryConnecting)
+                tryConnectingOrphans();
+            return false;
+        }
+        
+        SolidityState solidityState = validatorService.checkSolidity(block, true);
+        
+        // If explicitly wanted (e.g. new block from local clients), this
+        // block must strictly be solid now.
+        if (!allowUnsolid) {
+            switch (solidityState.getState()) {
+            case MissingPredecessor:
+                throw new UnsolidException();
+            case MissingCalculation:
+            case Success:
+                break;
+            case Invalid:
+                throw new GenericInvalidityException();
+            }
+        }
+
+        // Sanity check: This should not happen because it should throw
+        // first.
+        if (solidityState.isFailState())
+            throw new GenericInvalidityException();
+
+        // Accept the block
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            connect(block, solidityState);
+            milestoneService.runConsensusLogic(block);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (BlockStoreException e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
+        }
+        if (tryConnecting)
+            tryConnectingOrphans();
+        return true;
+    }
+
+    public boolean addNonChain(Block block, boolean allowUnsolid) throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
         block.verifyTransactions();
         SolidityState solidityState = validatorService.checkSolidity(block, true);
-        if (solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
-            // not allow unsolid height away from confirmed reward
-            validatorService.checkHeight(block);
-        }
+
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
         if (!allowUnsolid) {
@@ -242,7 +314,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         } finally {
             blockStore.defaultDatabaseBatchWrite();
         }
-
+        return true;
     }
 
     /**
@@ -1004,7 +1076,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Reward blocks follow different logic: If this is new, run
             // consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                addReward(block);
+                solidifyReward(block);
 
                 return;
             }
@@ -1049,7 +1121,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 blockStore.insertTip(block.getHash());
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                addReward(block);
+                solidifyReward(block);
                 // runConsensusLogic(block);
                 return;
             }
@@ -1784,4 +1856,62 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         return totalRewardCount;
     }
+    
+
+    /**
+     * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
+     */
+    private void tryConnectingOrphans() throws VerificationException, BlockStoreException {
+        checkState(chainlock.isHeldByCurrentThread());
+        // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
+        // from the list and keep going. If we changed the head of the list at the end of the round try again until
+        // we can't fit anything else on the top.
+        //
+        // This algorithm is kind of crappy, we should do a topo-sort then just connect them in order, but for small
+        // numbers of orphan blocks it does OK.
+        int blocksConnectedThisRound;
+        do {
+            blocksConnectedThisRound = 0;
+            Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
+            while (iter.hasNext()) {
+                OrphanBlock orphanBlock = iter.next();
+                // Look up the blocks previous.
+                Block prev = blockStore.get(orphanBlock.block.getPrevBlockHash());
+                if (prev == null) {
+                    // This is still an unconnected/orphan block.
+                    if (log.isDebugEnabled())
+                        log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
+                   
+                    continue;
+                }
+                // Otherwise we can connect it now.
+                // False here ensures we don't recurse infinitely downwards when connecting huge chains.
+                log.info("Connected orphan {}", orphanBlock.block.getHash());
+                addChain(orphanBlock.block, false,  false);
+                iter.remove();
+                blocksConnectedThisRound++;
+            }
+            if (blocksConnectedThisRound > 0) {
+                log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
+            }
+        } while (blocksConnectedThisRound > 0);
+    }
+    
+
+    /**
+     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
+     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
+     * might be inaccurate/incomplete.
+     */
+    public Set<Sha256Hash> drainOrphanBlocks() {
+        chainlock.lock();
+        try {
+            Set<Sha256Hash> hashes = new HashSet<>(orphanBlocks.keySet());
+            orphanBlocks.clear();
+            return hashes;
+        } finally {
+            chainlock.unlock();
+        }
+    }
+
 }

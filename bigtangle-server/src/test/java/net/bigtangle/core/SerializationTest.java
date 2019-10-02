@@ -11,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
@@ -31,7 +32,9 @@ public class SerializationTest {
     @Test
     public void testRewardInfoSerialization() throws JsonParseException, JsonMappingException, IOException {
         Sha256Hash randomHash = getRandomSha256Hash();
-        RewardInfo info1 = new RewardInfo(123, 456, randomHash);
+        HashSet<Sha256Hash> blocks = new HashSet<Sha256Hash>();
+        blocks.add(randomHash);
+        RewardInfo info1 = new RewardInfo(123, 456, randomHash, blocks, 2l);
         byte[] bytes1 = info1.toByteArray();
         RewardInfo info2 = RewardInfo.parse(bytes1);
         byte[] bytes2 = info2.toByteArray();
@@ -40,6 +43,8 @@ public class SerializationTest {
         assertEquals(info1.getFromHeight(), info2.getFromHeight());
         assertEquals(info1.getPrevRewardHash(), info2.getPrevRewardHash());
         assertEquals(info1.getToHeight(), info2.getToHeight());
+        assertEquals(info1.getChainlength(), info2.getChainlength());
+        assertEquals(info1.getBlocks().toArray()[0], info2.getBlocks().toArray()[0]);
     }
 
     @Test
