@@ -852,7 +852,7 @@ public class ValidatorService {
     /*
      * Checks if the block is formally correct without relying on predecessors
      */
-    private SolidityState checkFormalBlockSolidity(Block block, boolean throwExceptions) {
+    public SolidityState checkFormalBlockSolidity(Block block, boolean throwExceptions) {
         try {
             if (block.getHash() == Sha256Hash.ZERO_HASH) {
                 if (throwExceptions)
@@ -2490,8 +2490,8 @@ public class ValidatorService {
             SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
             if (formalSolidityResult.isFailState())
                 return formalSolidityResult;
+            
             // Predecessors must exist and be ok
-             if(true);
             SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions);
             if (!predecessorsExist.isSuccessState()) {
                 return predecessorsExist;

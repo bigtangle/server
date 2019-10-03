@@ -210,7 +210,7 @@ public abstract class NetworkParameters {
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
 
-    public static final int MILESTONE_CUTOFF = 5;
+    public static final int MILESTONE_CUTOFF = 6;
 
     
     protected NetworkParameters() {

@@ -228,7 +228,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         block.verifyHeader();
         block.verifyTransactions();
-         
+
+        // Check formal correctness of the block
+        validatorService.checkFormalBlockSolidity(block, true);
     
         if(!milestoneService.checkRewardReferencedBlocks(block)) {
             log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());

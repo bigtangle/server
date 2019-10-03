@@ -689,7 +689,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(6, blockService.getBlockEvaluation(b8weight4.getHash()).getHeight());
 
         // Check depths (handmade tests)
-        assertEquals(6, blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getDepth());
         assertEquals(5, blockService.getBlockEvaluation(b1.getHash()).getDepth());
         assertEquals(5, blockService.getBlockEvaluation(b2.getHash()).getDepth());
         assertEquals(4, blockService.getBlockEvaluation(b3.getHash()).getDepth());
@@ -713,8 +712,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertEquals(0, blockService.getBlockEvaluation(b8weight4.getHash()).getDepth());
 
         // Check cumulative weights (handmade tests)
-        assertEquals(30,
-                blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getCumulativeWeight());
         assertEquals(28, blockService.getBlockEvaluation(b1.getHash()).getCumulativeWeight());
         assertEquals(27, blockService.getBlockEvaluation(b2.getHash()).getCumulativeWeight());
         assertEquals(26, blockService.getBlockEvaluation(b3.getHash()).getCumulativeWeight());
@@ -754,8 +751,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isConfirmed());
 
         // Check milestone depths (handmade tests)
-        assertEquals(16,
-                blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).getMilestoneDepth());
         assertEquals(15, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
         assertEquals(15, blockService.getBlockEvaluation(b2.getHash()).getMilestoneDepth());
         assertEquals(1, blockService.getBlockEvaluation(rollingBlock.getHash()).getMilestoneDepth());
@@ -1123,6 +1118,294 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
         
         // Now try switching to third again
+        Block rollingBlock6 = rewardBlock4;
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock6 = rollingBlock6.createNextBlock(rollingBlock6);
+            blockGraph.add(rollingBlock6, true);
+            blocksAdded.add(rollingBlock6);
+        }
+        Block rewardBlock7 = rewardService.createAndAddMiningRewardBlock(rewardBlock4.getHash(),
+                rollingBlock6.getHash(), rollingBlock6.getHash());
+        blocksAdded.add(rewardBlock7);
+        milestoneService.update();
+
+        Block rollingBlock7 = rewardBlock7;
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock7 = rollingBlock7.createNextBlock(rollingBlock7);
+            blockGraph.add(rollingBlock7, true);
+            blocksAdded.add(rollingBlock7);
+        }
+        Block rewardBlock8 = rewardService.createAndAddMiningRewardBlock(rewardBlock7.getHash(),
+                rollingBlock7.getHash(), rollingBlock7.getHash());
+        blocksAdded.add(rewardBlock8);
+        milestoneService.update();
+
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        
+        // The same state should be reached if getting the blocks in a different order
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        
+        Collections.reverse(blocksAdded);
+        
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        
+        Collections.shuffle(blocksAdded);
+        
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock4.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock7.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
+    }
+
+    @Test
+    public void testReorgMiningReward3() throws Exception {
+        store.resetStore();
+        
+        List<Block> blocksAdded = new ArrayList<>();
+
+        // Generate blocks until passing first reward interval parallel
+        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        blockGraph.add(rollingBlock, true);
+        blocksAdded.add(rollingBlock);
+
+        Block rollingBlock1 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+            blocksAdded.add(rollingBlock1);
+        }
+
+        Block rollingBlock2 = rollingBlock;
+        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
+                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+            rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
+            blockGraph.add(rollingBlock2, true);
+            blocksAdded.add(rollingBlock2);
+        }
+
+        // Generate mining reward block on chain 1
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        blocksAdded.add(rewardBlock1);
+        milestoneService.update();
+
+        // Mining reward block should go through
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+
+        // Generate more mining reward blocks
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock2.getHash(), rollingBlock1.getHash());
+        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock2.getHash(), rollingBlock2.getHash());
+        blocksAdded.add(rewardBlock2);
+        blocksAdded.add(rewardBlock3);
+        milestoneService.update();
+
+        // No change
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        milestoneService.update();
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        
+        // Now try switching to second
+        Block rollingBlock4 = rewardBlock2;
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock4 = rollingBlock4.createNextBlock(rollingBlock4);
+            blockGraph.add(rollingBlock4, true);
+            blocksAdded.add(rollingBlock4);
+        }
+        Block rewardBlock5 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(),
+                rollingBlock4.getHash(), rollingBlock4.getHash());
+        blocksAdded.add(rewardBlock5);
+        milestoneService.update();
+
+        Block rollingBlock5 = rewardBlock5;
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock5 = rollingBlock5.createNextBlock(rollingBlock5);
+            blockGraph.add(rollingBlock5, true);
+            blocksAdded.add(rollingBlock5);
+        }
+        Block rewardBlock6 = rewardService.createAndAddMiningRewardBlock(rewardBlock5.getHash(),
+                rollingBlock5.getHash(), rollingBlock5.getHash());
+        blocksAdded.add(rewardBlock6);
+        milestoneService.update();
+
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        
+        // The same state should be reached if getting the blocks in a different order
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        
+        Collections.reverse(blocksAdded);
+        
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        
+        Collections.reverse(blocksAdded);
+        
+        store.resetStore();
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        for (Block b : blocksAdded) 
+            blockGraph.add(b, true);
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+        milestoneService.update();
+        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock5.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock6.getHash()).isConfirmed());
+
+        // Now try switching to third 
+        Block rollingBlock3 = rewardBlock3;
+        for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+            rollingBlock3 = rollingBlock3.createNextBlock(rollingBlock3);
+            blockGraph.add(rollingBlock3, true);
+            blocksAdded.add(rollingBlock3);
+        }
+        Block rewardBlock4 = rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
+                rollingBlock3.getHash(), rollingBlock3.getHash());
+        blocksAdded.add(rewardBlock4);
+        milestoneService.update();
+
         Block rollingBlock6 = rewardBlock4;
         for (int i = 1; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
             rollingBlock6 = rollingBlock6.createNextBlock(rollingBlock6);

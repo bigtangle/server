@@ -82,7 +82,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -147,7 +147,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -280,7 +280,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -354,7 +354,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -414,7 +414,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -483,7 +483,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -521,8 +521,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         milestoneService.update();
         
         // Ensure the relevant blocks are all confirmed
-        blockGraph.confirm(order.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        blockGraph.confirm(rewardBlock.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(order.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());
+        blockGraph.confirm(rewardBlock.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -540,7 +540,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);

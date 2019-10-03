@@ -227,7 +227,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
-        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight());
 
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
@@ -269,7 +269,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
 
         // Generate eligible mining reward block
@@ -288,29 +288,29 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
 
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash());
-        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
 
         store.resetStore();
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
 
         // Add block allowing unsolids
         blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
 
         // Should not be solid
-        assertTrue(store.getBlockWrap(rewardBlock2.getHash()) ==null);
+        assertTrue(store.getBlockWrap(rewardBlock2.getHash()) == null);
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1);
@@ -341,8 +341,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();
-        Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHash (), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, coinbase.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHash(), Utils.HEX.encode(pubKey), "Test", "Test",
+                1, 1, coinbase.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -563,7 +563,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
 
         // Generate eligible mining reward block
@@ -621,7 +621,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
         }
 
         // Generate eligible mining reward block
@@ -755,7 +755,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm 1
-        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), blockService.getCutoffHeight());
 
         // 1 should be confirmed now
         UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
@@ -774,8 +774,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        UTXO origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0)
-                .getOutput(0).getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+        UTXO origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
+                .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
         assertEquals(
@@ -809,7 +809,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(origUTXO.isSpent());
 
         // Confirm 2
-        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), blockService.getCutoffHeight());
 
         // 2 should be confirmed now
         utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
@@ -1140,13 +1140,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-          assertFalse(  blockGraph.add(rewardBlock, false));
-          fail();
-        }catch (RuntimeException e) {
-             
+            assertFalse(blockGraph.add(rewardBlock, false));
+            fail();
+        } catch (RuntimeException e) {
+
         }
 
-         
     }
 
     @Test
@@ -1169,11 +1168,11 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rewardBlock.solve();
 
         // Should not go through
-     try {
-         assertFalse(   blockGraph.add(rewardBlock, false));
-         fail();
-    } catch (RuntimeException e) {
-    }
+        try {
+            assertFalse(blockGraph.add(rewardBlock, false));
+            fail();
+        } catch (RuntimeException e) {
+        }
     }
 
     @Test
@@ -1229,25 +1228,27 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-           assertFalse( blockGraph.add(testBlock1, false));
-           
+            assertFalse(blockGraph.add(testBlock1, false));
+
         } catch (InvalidTransactionDataException e) {
         }
-        
-         assertFalse(   blockGraph.add(testBlock2, false));
-  
-          assertFalse(  blockGraph.add(testBlock3, false));
-        
-        
+
+        try {
+            blockGraph.add(testBlock2, false);
+
+            fail();
+        } catch (MissingDependencyException e) {
+        }
+        assertFalse(blockGraph.add(testBlock3, false));
         try {
             blockGraph.add(testBlock4, false);
             fail();
-        } catch (InvalidDependencyException e) {
+        } catch (VerificationException e) {
         }
         try {
             blockGraph.add(testBlock5, false);
             fail();
-        } catch (InvalidDependencyException e) {
+        } catch (VerificationException e) {
         }
         try {
             blockGraph.add(testBlock6, false);
@@ -1433,557 +1434,565 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokens.setDomainName("bc");
 
         TestCase[] executors = new TestCase[] {
-              //1
+                // 1
                 new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.setToken(null); 
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //2
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.setMultiSignAddresses(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //3
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setAmount(new BigInteger("-1"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //4
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setBlockHash(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //5
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setDescription(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //6
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setDescription(
-                        new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //7
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setDescription(
-                        new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //8
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenstop(false);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //9
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setPrevblockhash(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //10
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setPrevblockhash(getRandomSha256Hash() );
-                tokenInfo5.getToken().setTokenindex(1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //11
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setTokenindex(1);
-                tokenInfo5.getToken().setPrevblockhash(networkParameters.getGenesisBlock().getHash());
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //12
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setSignnumber(-1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() { // 13
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setSignnumber(0);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-            }
-        }, new TestCase() {
-            //14
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenid(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //15
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenid("");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //16
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenid("test");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-            }
-        }, new TestCase() {
-            //17
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenid(Utils.HEX.encode(testKey.getPubKey()));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            //18
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenindex(-1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            //19
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenindex(5);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() { // 20
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            //21
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenname(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            //22
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenname("");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            //23
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken()
-                        .setTokenname(new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            //24
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenname(
-                        new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() { // 25
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokenstop(false);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            //26
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setTokentype(-1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-                tokenInfo5.getToken().setDomainName(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            //28
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken().setDomainName("");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getToken()
-                        .setDomainName(new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) { // 30
-
-                tokenInfo5.getToken().setDomainName(
-                        new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().remove(0);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setAddress(new String(new char[222]).replace("\0", "A"));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {// 35
-
-                tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        },  new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(getRandomSha256Hash());
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0)
-                        .setBlockhash(networkParameters.getGenesisBlock().getHash());
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(-1);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) { // 40
-
-                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(0);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(4);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false; // these do not matter, they are overwritten
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setPubKeyHex(Utils.HEX.encode(walletKeys.get(8).getPubKey()));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return true;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setTokenid(null);
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setTokenid("");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) { // 45
-                tokenInfo5.getMultiSignAddresses().get(0).setTokenid("test");
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        }, new TestCase() {
-            @Override
-            public void preApply(TokenInfo tokenInfo5) {
-
-                tokenInfo5.getMultiSignAddresses().get(0).setTokenid(Utils.HEX.encode(testKey.getPubKey()));
-            }
-
-            @Override
-            public boolean expectsException() {
-                return false;
-
-            }
-        } };
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.setToken(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 2
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.setMultiSignAddresses(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 3
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.getToken().setAmount(new BigInteger("-1"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 4
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setBlockHash(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 5
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setDescription(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 6
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setDescription(
+                                new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 7
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setDescription(
+                                new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 8
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenstop(false);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 9
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.getToken().setPrevblockhash(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 10
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setPrevblockhash(getRandomSha256Hash());
+                        tokenInfo5.getToken().setTokenindex(1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 11
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.getToken().setTokenindex(1);
+                        tokenInfo5.getToken().setPrevblockhash(networkParameters.getGenesisBlock().getHash());
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 12
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setSignnumber(-1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() { // 13
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setSignnumber(0);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+                    }
+                }, new TestCase() {
+                    // 14
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenid(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 15
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenid("");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 16
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenid("test");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+                    }
+                }, new TestCase() {
+                    // 17
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenid(Utils.HEX.encode(testKey.getPubKey()));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    // 18
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenindex(-1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    // 19
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenindex(5);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() { // 20
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    // 21
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenname(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    // 22
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenname("");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    // 23
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenname(
+                                new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    // 24
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenname(
+                                new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() { // 25
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokenstop(false);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    // 26
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setTokentype(-1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+                        tokenInfo5.getToken().setDomainName(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    // 28
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setDomainName("");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getToken().setDomainName(
+                                new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) { // 30
+
+                        tokenInfo5.getToken().setDomainName(
+                                new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().remove(0);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setAddress(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setAddress("");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0)
+                                .setAddress(new String(new char[222]).replace("\0", "A"));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {// 35
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setBlockhash(getRandomSha256Hash());
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0)
+                                .setBlockhash(networkParameters.getGenesisBlock().getHash());
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(-1);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) { // 40
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(0);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setPosIndex(4);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false; // these do not matter, they are
+                                      // overwritten
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0)
+                                .setPubKeyHex(Utils.HEX.encode(walletKeys.get(8).getPubKey()));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return true;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setTokenid(null);
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setTokenid("");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) { // 45
+                        tokenInfo5.getMultiSignAddresses().get(0).setTokenid("test");
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                }, new TestCase() {
+                    @Override
+                    public void preApply(TokenInfo tokenInfo5) {
+
+                        tokenInfo5.getMultiSignAddresses().get(0).setTokenid(Utils.HEX.encode(testKey.getPubKey()));
+                    }
+
+                    @Override
+                    public boolean expectsException() {
+                        return false;
+
+                    }
+                } };
 
         for (int i = 0; i < executors.length; i++) {
             // Modify the tokenInfo
@@ -2045,8 +2054,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 } catch (VerificationException e) {
                 }
             } else {
-                //always add  
-                blockGraph.add(block, true); 
+                // always add
+                blockGraph.add(block, true);
             }
         }
     }
@@ -2487,8 +2496,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey2);
 
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey2), "Test",
-                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey2), "Test", "Test",
+                1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", walletKeys.get(8).getPublicKeyAsHex()));
@@ -2522,8 +2531,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
 
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 2, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test", "Test", 1,
+                2, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2557,8 +2566,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
 
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test", "Test", 1,
+                1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2592,8 +2601,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
 
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test",
-                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test", "Test", 1,
+                1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokens2.setTokentype(123);
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
@@ -2628,8 +2637,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
 
-        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test2",
-                "Test", 1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
+        Token tokens2 = Token.buildSimpleTokenInfo(false, block1.getHash(), Utils.HEX.encode(pubKey), "Test2", "Test",
+                1, 1, coinbase2.getValue(), true, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
@@ -2781,7 +2790,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight());
         }
 
         Block block1 = null;
@@ -2900,7 +2909,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight());
         }
 
         Block block1 = null;
@@ -2989,7 +2998,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight());
         }
 
         Block block1 = null;
@@ -3058,7 +3067,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight());
         }
 
         Block block1 = null;
@@ -3193,7 +3202,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         {
             // Make an order op
             Transaction tx = new Transaction(networkParameters);
-            OrderCancelInfo info = new OrderCancelInfo( block1.getHash());
+            OrderCancelInfo info = new OrderCancelInfo(block1.getHash());
             tx.setData(info.toByteArray());
 
             // Legitimate it by signing

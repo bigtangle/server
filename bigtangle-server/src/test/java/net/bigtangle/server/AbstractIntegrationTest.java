@@ -234,8 +234,8 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-       milestoneService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
 
         return block;
     }
@@ -251,8 +251,8 @@ public abstract class AbstractIntegrationTest {
         Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        return block;
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     return block;
     }
 
     protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks)
@@ -321,8 +321,8 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        return block;
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
     }
 
     protected Block makeAndConfirmBlock(List<Block> addedBlocks, Block predecessor) throws Exception {
@@ -335,8 +335,8 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        return block;
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
     }
 
     protected Block makeAndAddBlock(Block predecessor) throws Exception {
@@ -354,8 +354,8 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        // milestoneService.update();
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  // milestoneService.update();
         return block;
 
     }
@@ -400,8 +400,8 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        return block;
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
     }
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
@@ -410,8 +410,8 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        return block;
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  return block;
 
     }
 
@@ -457,8 +457,8 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         milestoneService.update();
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        milestoneService.update();
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  milestoneService.update();
         return block;
 
     }
@@ -491,8 +491,8 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
-        milestoneService.update();
+        long cutoffHeight = blockService.getCutoffHeight();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     milestoneService.update();
         return block;
     }
 

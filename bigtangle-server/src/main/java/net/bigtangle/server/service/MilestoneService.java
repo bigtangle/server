@@ -34,6 +34,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
@@ -539,6 +540,9 @@ public class MilestoneService {
         Block prevRewardBlock = store.get(prevRewardHash);
         if (prevRewardBlock == null)
             return false;
+        if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
+                && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
+            throw new VerificationException("Previous block not reward block.");
 
         // Get all blocks approved by previous reward blocks
         Set<Sha256Hash> allMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
