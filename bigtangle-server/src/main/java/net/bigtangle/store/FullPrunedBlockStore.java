@@ -170,7 +170,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
-    public HashSet<BlockWrap> getBlocksToConfirm() throws BlockStoreException;
+    public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
 
     public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 
@@ -424,7 +424,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
-    public List<UnsolidBlock> getNonSolidMissingBlocks() throws BlockStoreException;
+    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight) throws BlockStoreException;
 
     
     void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
@@ -503,6 +503,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     TXReward getMaxSolidReward() throws BlockStoreException;
 
     long getHeightTransactions(List<Sha256Hash>  txHashs) throws BlockStoreException ;
+
+    TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException;
 
     
 

@@ -194,13 +194,6 @@ public class ValidatorService {
 
         // Read previous reward block's data
         BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
-        RewardInfo prevRewardInfo;
-        try {
-            prevRewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        
         long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
         long prevToHeight = store.getRewardToHeight(prevRewardHash);
         long prevDifficulty = prevRewardBlock.getBlock().getDifficultyTarget();
@@ -248,13 +241,13 @@ public class ValidatorService {
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
         
-        // Get all non-milestone approved blocks
-        Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
-        // TODO cutoff window (1) is needed for this to work correctly, 
-        Set<Sha256Hash> prevMilestoneBlocks = prevRewardInfo.getBlocks();
-        prevMilestoneBlocks.add(prevRewardHash);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks);
+        // Get all blocks approved by previous reward blocks 
+        Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();        
+        Set<Sha256Hash> prevMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
+        long cutoffheight = blockService.getCutoffHeight(prevRewardHash);
+        
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks, cutoffheight);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks, cutoffheight);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash, blocks, currChainLength);
@@ -345,7 +338,8 @@ public class ValidatorService {
      *         approval tip selection.
      * @throws BlockStoreException
      */
-    public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedUnconfirmedBlocks)
+    public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
+            long cutoffHeight)
             throws BlockStoreException {
         // Any confirmed blocks are always compatible with the current
         // confirmeds
@@ -360,7 +354,7 @@ public class ValidatorService {
         // specified block in combination with the currently included blocks
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedUnconfirmedBlocks = (HashSet<BlockWrap>) currentApprovedUnconfirmedBlocks.clone();
-        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block, cutoffHeight))
             throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
 
         // If this set of blocks is eligible, all is fine
@@ -447,9 +441,10 @@ public class ValidatorService {
      * 
      * @param blocksToAdd
      *            the set of blocks to add to the current milestone
+     * @param cutoffHeight 
      * @throws BlockStoreException
      */
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
         // Remove ineligible blocks, i.e. only reward blocks
         // since they follow a different logic
         removeWhereIneligible(blocksToAdd);
@@ -464,7 +459,7 @@ public class ValidatorService {
         resolveMilestoneConflicts(blocksToAdd);
 
         // Then resolve conflicts between non-milestone + new candidates
-        resolveTemporaryConflicts(blocksToAdd);
+        resolveTemporaryConflicts(blocksToAdd, cutoffHeight);
 
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output no longer confirmed
@@ -556,9 +551,10 @@ public class ValidatorService {
      * Resolves conflicts between non-milestone blocks and candidates
      * 
      * @param blocksToAdd
+     * @param cutoffHeight 
      * @throws BlockStoreException
      */
-    private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+    private void resolveTemporaryConflicts(Set<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
         HashSet<ConflictCandidate> conflictingOutPoints = new HashSet<ConflictCandidate>();
         HashSet<BlockWrap> conflictingConfirmedBlocks = new HashSet<BlockWrap>();
 
@@ -567,7 +563,7 @@ public class ValidatorService {
 
         // Resolve all conflicts by grouping by UTXO ordered by descending
         // rating
-        HashSet<BlockWrap> losingBlocks = resolveTemporaryConflicts(conflictingOutPoints, blocksToAdd);
+        HashSet<BlockWrap> losingBlocks = resolveTemporaryConflicts(conflictingOutPoints, blocksToAdd, cutoffHeight);
 
         // For confirmed blocks that have been eliminated call disconnect
         // procedure
@@ -593,13 +589,13 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private HashSet<BlockWrap> resolveTemporaryConflicts(Set<ConflictCandidate> conflictingOutPoints,
-            Set<BlockWrap> blocksToAdd) throws BlockStoreException {
+            Set<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
         // Initialize blocks that will/will not survive the conflict resolution
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
         for (BlockWrap winningBlock : initialBlocks) {
-            if (!blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock))
+            if (!blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock, cutoffHeight))
                 throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
             blockService.addConfirmedApproversTo(winningBlocks, winningBlock);
         }

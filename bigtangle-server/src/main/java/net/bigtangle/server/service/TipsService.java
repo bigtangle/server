@@ -133,9 +133,10 @@ public class TipsService {
      */
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithExisting(Block prototype)
             throws BlockStoreException {
+        long cutoffHeight = blockService.getCutoffHeight();
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, 
-                store.getBlockWrap(prototype.getHash())))
+                store.getBlockWrap(prototype.getHash()), cutoffHeight))
             throw new InfeasiblePrototypeException("The given prototype is insolid");
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
     }
@@ -154,9 +155,10 @@ public class TipsService {
      */
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairStartingFrom(BlockWrap prototype)
             throws BlockStoreException {
+        long cutoffHeight = blockService.getCutoffHeight();
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks, 
-                store.getBlockWrap(prototype.getBlockHash())))
+                store.getBlockWrap(prototype.getBlockHash()), cutoffHeight))
             throw new InfeasiblePrototypeException("The given prototype is insolid");
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, prototype);
     }
@@ -179,11 +181,12 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
             BlockWrap left, BlockWrap right) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
+        long cutoffHeight = blockService.getCutoffHeight();
 
         // Initialize approved blocks
-        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
 
         // Necessary: Initial test if the prototype's
@@ -192,8 +195,8 @@ public class TipsService {
             throw new InfeasiblePrototypeException("The given prototype is invalid under the current milestone");
 
         // Perform next steps
-        BlockWrap nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
-        BlockWrap nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
+        BlockWrap nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
+        BlockWrap nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
 
         // Repeat: Proceed on path to be included first (highest rating else
         // random)
@@ -201,36 +204,36 @@ public class TipsService {
             if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
                 // Go left
                 left = nextLeft;
-                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
-                nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
-                nextRight = validateOrPerformValidatedStep(right, currentApprovedUnconfirmedBlocks, nextRight);
+                nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
+                nextRight = validateOrPerformValidatedStep(right, currentApprovedUnconfirmedBlocks, nextRight, cutoffHeight);
             } else {
                 // Go right
                 right = nextRight;
-                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
-                nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
-                nextLeft = validateOrPerformValidatedStep(left, currentApprovedUnconfirmedBlocks, nextLeft);
+                nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
+                nextLeft = validateOrPerformValidatedStep(left, currentApprovedUnconfirmedBlocks, nextLeft, cutoffHeight);
             }
         }
 
         // Go forward on the remaining paths
         while (nextLeft != left) {
             left = nextLeft;
-            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left))
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
-            nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks);
+            nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
         while (nextRight != right) {
             right = nextRight;
-            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right))
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
-            nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks);
+            nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
 
         watch.stop();
@@ -241,17 +244,18 @@ public class TipsService {
 
     // Does not redo finding next step if next step was still valid
     private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock,
-            HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, BlockWrap potentialNextBlock)
+            HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, BlockWrap potentialNextBlock,
+            long cutoffHeight)
             throws BlockStoreException {
-        if (validatorService.isEligibleForApprovalSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks))
+        if (validatorService.isEligibleForApprovalSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks, cutoffHeight))
             return potentialNextBlock;
         else
-            return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks);
+            return performValidatedStep(fromBlock, currentApprovedNonMilestoneBlocks, cutoffHeight);
     }
 
     // Finds a potential approver block to include given the currently approved
     // blocks
-    private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks)
+    private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, long cutoffHeight)
             throws BlockStoreException {
         List<BlockWrap> candidates = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
         BlockWrap result;
@@ -259,7 +263,7 @@ public class TipsService {
             // Find results until one is valid/eligible
             result = performTransition(fromBlock, candidates);
             candidates.remove(result);
-        } while (!validatorService.isEligibleForApprovalSelection(result, currentApprovedNonMilestoneBlocks));
+        } while (!validatorService.isEligibleForApprovalSelection(result, currentApprovedNonMilestoneBlocks, cutoffHeight));
         return result;
     }
 

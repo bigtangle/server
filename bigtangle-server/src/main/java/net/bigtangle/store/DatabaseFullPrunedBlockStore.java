@@ -231,12 +231,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_NONSOLID_MISSINGBLOCKS_SQL = "select   hash, "
             + "  inserttime,  reason,   missingdependency,   height,\n"
-            + "              directlymissing from unsolidblocks ";
+            + "              directlymissing from unsolidblocks where height > ?";
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT hash, "
             + "rating, depth, cumulativeweight, height, milestone, milestonelastupdate,"
             + " milestonedepth, inserttime, maintained, block, solid, confirmed "
-            + "FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = false AND rating >= "
+            + "FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = false AND height > ? AND rating >= "
             + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
     protected final String SELECT_MAINTAINED_BLOCK_HASHES_SQL = "SELECT hash " + "FROM blocks WHERE maintained = true"
             + afterSelect();
@@ -440,6 +440,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
     protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
+    protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
+            + " WHERE confirmed = 1 AND chainlength=?";
     protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
             + "  JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1 AND chainlength="
             + "(SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)";
@@ -1675,12 +1677,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UnsolidBlock> getNonSolidMissingBlocks() throws BlockStoreException {
+    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight) throws BlockStoreException {
         List<UnsolidBlock> storedBlockHashes = new ArrayList<UnsolidBlock>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_MISSINGBLOCKS_SQL);
+            preparedStatement.setLong(1, cutoffHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 storedBlockHashes.add(new UnsolidBlock(resultSet.getBytes("hash"), resultSet.getLong("inserttime"),
@@ -1782,12 +1785,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public HashSet<BlockWrap> getBlocksToConfirm() throws BlockStoreException {
+    public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException {
         HashSet<BlockWrap> storedBlockHashes = new HashSet<>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
+            preparedStatement.setLong(1, cutoffHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -4238,6 +4242,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
+            preparedStatement.setLong(1, chainlength);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return setReward(resultSet);
+            } else
+                return null;
+
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }

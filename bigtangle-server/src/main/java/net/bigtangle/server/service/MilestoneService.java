@@ -160,7 +160,8 @@ public class MilestoneService {
                 /*
                  * Cutoff window around current chain.
                  */
-                List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks();
+                long cutoffHeight = blockService.getCutoffHeight();
+                List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
                 log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
                 for (UnsolidBlock storedBlock : storedBlocklist) {
                     if (storedBlock != null) {
@@ -215,12 +216,14 @@ public class MilestoneService {
         }
 
         BlockWrap currentBlock = null;
+        long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             Sha256Hash currentBlockHash = currentBlock.getBlockHash();
 
             // Abort if unmaintained, since it will be irrelevant for any tip
             // selections
-            if (!currentBlock.getBlockEvaluation().isMaintained())
+            if (!currentBlock.getBlockEvaluation().isMaintained()
+                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
             // Add your own hash to approver hashes of current approver hashes
@@ -276,9 +279,11 @@ public class MilestoneService {
         }
 
         BlockWrap currentBlock = null;
+        long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained, since it will be irrelevant
-            if (!currentBlock.getBlockEvaluation().isMaintained())
+            if (!currentBlock.getBlockEvaluation().isMaintained()
+                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
             // If depth is set to -1 and we are milestone, set to 0
@@ -356,9 +361,11 @@ public class MilestoneService {
         }
 
         BlockWrap currentBlock = null;
+        long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained
-            if (!currentBlock.getBlockEvaluation().isMaintained())
+            if (!currentBlock.getBlockEvaluation().isMaintained() 
+                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
             // Add your own hashes as reference if current block is one of the
@@ -413,18 +420,19 @@ public class MilestoneService {
         for (BlockEvaluation block : blocksToRemove)
             blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
+        long cutoffHeight = blockService.getCutoffHeight();
         for (int i = 0; i < numberUpdates; i++) {
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
-            HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm();
+            HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight);
 
             // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd);
+            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);
 
             // Finally add the resolved new milestone blocks to the milestone
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms);
+                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
@@ -531,17 +539,10 @@ public class MilestoneService {
         Block prevRewardBlock = store.get(prevRewardHash);
         if (prevRewardBlock == null)
             return false;
-        RewardInfo prevRewardInfo;
-        try {
-            prevRewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        // TODO cutoff window (1) is needed for this to work correctly,
-        // TODO merge this set with all previous sets
-        Set<Sha256Hash> prevMilestoneBlocks = prevRewardInfo.getBlocks();
-        prevMilestoneBlocks.add(prevRewardHash);
+        // Get all blocks approved by previous reward blocks
+        Set<Sha256Hash> allMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
+        allMilestoneBlocks.addAll(rewardInfo.getBlocks());
 
         for (Sha256Hash hash : rewardInfo.getBlocks()) {
             BlockWrap block = store.getBlockWrap(hash);
@@ -551,7 +552,7 @@ public class MilestoneService {
             Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
             for (Sha256Hash reqHash : requiredBlocks) {
                 BlockWrap req = store.getBlockWrap(reqHash);
-                if (req == null && !prevMilestoneBlocks.contains(reqHash))
+                if (req == null && !allMilestoneBlocks.contains(reqHash))
                     return false;
 
                 if (req != null && req.getBlockEvaluation().getSolid() >= 1
@@ -645,9 +646,11 @@ public class MilestoneService {
                     // Check: If all is ok, try confirming this milestone.
                     if (solidityState.isSuccessState()) {
 
+                        long cutoffHeight = blockService.getCutoffHeight();
+                        
                         // Find conflicts in the dependency set
                         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock);
+                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock, cutoffHeight);
 
                         // If anything is already spent, no-go
                         boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
@@ -697,7 +700,7 @@ public class MilestoneService {
                             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
                             for (BlockWrap approvedBlock : nowApprovedBlocks)
                                 blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(),
-                                        traversedConfirms);
+                                        traversedConfirms, cutoffHeight);
 
                             allApprovedNewBlocks.removeAll(nowApprovedBlocks);
                         }

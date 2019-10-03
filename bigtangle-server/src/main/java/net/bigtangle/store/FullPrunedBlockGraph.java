@@ -417,18 +417,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * spent and adding new UTXOs to the db.
      * 
      * @param blockHash
+     * @param cutoffHeight 
      * @throws BlockStoreException
      * @throws IOException
      * @throws JsonMappingException
      * @throws JsonParseException
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Write to DB
-        confirmUntil(blockHash, traversedBlockHashes);
+        confirmUntil(blockHash, traversedBlockHashes, cutoffHeight);
     }
 
-    private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
+    private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
@@ -437,6 +438,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
         Block block = blockWrap.getBlock();
+        
+        // Cutoff
+        if (blockEvaluation.getHeight() <= cutoffHeight)
+            return;
 
         // If already confirmed, return
         if (blockEvaluation.isConfirmed())
@@ -447,9 +452,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Connect all approved blocks first if not traversed already
         if (!traversedBlockHashes.contains(block.getPrevBlockHash()))
-            confirmUntil(block.getPrevBlockHash(), traversedBlockHashes);
+            confirmUntil(block.getPrevBlockHash(), traversedBlockHashes, cutoffHeight);
         if (!traversedBlockHashes.contains(block.getPrevBranchBlockHash()))
-            confirmUntil(block.getPrevBranchBlockHash(), traversedBlockHashes);
+            confirmUntil(block.getPrevBranchBlockHash(), traversedBlockHashes, cutoffHeight);
 
         // Confirm the block
         confirmBlock(blockWrap);
@@ -1913,5 +1918,4 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             chainlock.unlock();
         }
     }
-
 }

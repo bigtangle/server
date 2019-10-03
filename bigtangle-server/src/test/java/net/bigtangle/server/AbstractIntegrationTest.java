@@ -234,7 +234,8 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>());
+       milestoneService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), NetworkParameters.MILESTONE_CUTOFF);
 
         return block;
     }
@@ -250,7 +251,7 @@ public abstract class AbstractIntegrationTest {
         Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         return block;
     }
 
@@ -320,7 +321,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         return block;
     }
 
@@ -334,7 +335,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         return block;
     }
 
@@ -353,7 +354,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         // milestoneService.update();
         return block;
 
@@ -399,7 +400,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         return block;
     }
 
@@ -409,7 +410,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         return block;
 
     }
@@ -456,7 +457,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         milestoneService.update();
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         milestoneService.update();
         return block;
 
@@ -490,7 +491,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         milestoneService.update();
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>());
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), NetworkParameters.MILESTONE_CUTOFF);
         milestoneService.update();
         return block;
     }

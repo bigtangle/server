@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
@@ -32,17 +33,16 @@ import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
-import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -66,8 +66,8 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-    @Autowired
-    private ValidatorService validatorService;
+//    @Autowired
+//    private ValidatorService validatorService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -184,12 +184,12 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredNonMilestoneBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block)
-            throws BlockStoreException {
+    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
+            Collection<Sha256Hash> otherBlocks, long cutoffHeight) throws BlockStoreException {
         if (block == null)
             return false;
 
-        if (block.getBlockEvaluation().getMilestone() != -1 || blocks.contains(block))
+        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
 
         // Add this block and add all of its required unconfirmed blocks
@@ -200,38 +200,7 @@ public class BlockService {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredNonMilestoneBlockHashesTo(blocks, pred))
-                return false;
-        }
-        return true;
-    }
-
-    /**
-     * Recursively adds the specified block and its approved blocks to the
-     * collection if the blocks are not in the collection. if a block is missing
-     * somewhere, returns false.
-     * 
-     * @param blocks
-     * @param milestoneEvaluation
-     * @throws BlockStoreException
-     */
-    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
-            Collection<Sha256Hash> otherBlocks) throws BlockStoreException {
-        if (block == null)
-            return false;
-
-        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block))
-            return true;
-
-        // Add this block and add all of its required unconfirmed blocks
-        blocks.add(block.getBlockHash());
-
-        Set<Sha256Hash> allRequiredBlockHashes = getDirectRequiredBlockHashes(block.getBlock());
-        for (Sha256Hash req : allRequiredBlockHashes) {
-            BlockWrap pred = store.getBlockWrap(req);
-            if (pred == null)
-                return false;
-            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, otherBlocks))
+            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, otherBlocks, cutoffHeight))
                 return false;
         }
         return true;
@@ -243,15 +212,20 @@ public class BlockService {
      * collection. if a block is missing somewhere, returns false.
      * 
      * @param blocks
+     * @param cutoffHeight 
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block)
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block, long cutoffHeight)
             throws BlockStoreException {
         if (block == null)
             return false;
 
         if (block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
+            return true;
+        
+        // Cutoff
+        if (block.getBlockEvaluation().getHeight() <= cutoffHeight)
             return true;
 
         // Add this block and add all of its required unconfirmed blocks
@@ -262,7 +236,7 @@ public class BlockService {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredUnconfirmedBlocksTo(blocks, pred))
+            if (!addRequiredUnconfirmedBlocksTo(blocks, pred, cutoffHeight))
                 return false;
         }
         return true;
@@ -463,6 +437,56 @@ public class BlockService {
         return result;
     }
 
+    public long getCutoffHeight() throws BlockStoreException {
+        TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
+        TXReward confirmedAtHeightReward = store.getConfirmedAtHeightReward(chainlength);
+        return confirmedAtHeightReward.getToHeight();
+    }
+
+    public long getCutoffHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
+        Set<Sha256Hash> prevMilestoneBlocks = new HashSet<Sha256Hash>();
+        Sha256Hash currPrevRewardHash = prevRewardHash;
+        for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
+            BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
+            RewardInfo currRewardInfo;
+            try {
+                currRewardInfo = RewardInfo.parse(currRewardBlock.getBlock().getTransactions().get(0).getData());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
+            prevMilestoneBlocks.add(currPrevRewardHash);
+            
+            if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
+                return 0;
+            
+            currPrevRewardHash = currRewardInfo.getPrevRewardHash(); 
+        }
+        return store.getRewardToHeight(currPrevRewardHash);
+    }
+
+    Set<Sha256Hash> getPastMilestoneBlocks(Sha256Hash prevRewardHash) throws BlockStoreException {
+        Set<Sha256Hash> prevMilestoneBlocks = new HashSet<Sha256Hash>();
+        Sha256Hash currPrevRewardHash = prevRewardHash;
+        for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
+            BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
+            RewardInfo currRewardInfo;
+            try {
+                currRewardInfo = RewardInfo.parse(currRewardBlock.getBlock().getTransactions().get(0).getData());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
+            prevMilestoneBlocks.add(currPrevRewardHash);
+            
+            if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
+                break;
+            
+            currPrevRewardHash = currRewardInfo.getPrevRewardHash(); 
+        }
+        return prevMilestoneBlocks;
+    }
     
     public Set<Sha256Hash> getDirectRequiredBlockHashes(Block block) {
         Set<Sha256Hash> predecessors = new HashSet<>();
