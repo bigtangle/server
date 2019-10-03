@@ -179,6 +179,16 @@ public abstract class AbstractIntegrationTest {
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
     }
 
+    protected WalletAppKit createAndInitWallet(String walletName) {
+        File f = new File("./logs/", walletName);
+        if (f.exists() & deleteWlalletFile) {
+            f.delete();
+        }
+        WalletAppKit walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), walletName);
+        walletAppKit.wallet().setServerURL(contextRoot);
+        return walletAppKit;
+    }
+
     protected UTXO getBalance(String tokenid, boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> ulist = getBalance(withZero, keys);
 
@@ -249,6 +259,20 @@ public abstract class AbstractIntegrationTest {
         assertTrue(myutxo != null);
         assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
         log.debug(myutxo.toString());
+    }
+
+    protected Coin sumUTXOBalance(String tokenid, ECKey ecKey) throws Exception {
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(ecKey);
+
+        Coin coinbase = Coin.ZERO;
+        List<UTXO> outputs = this.getBalance(false, keys);
+        for (UTXO utxo : outputs) {
+            if (tokenid.equals(utxo.getTokenId())) {
+                coinbase.add(utxo.getValue());
+            }
+        }
+        return coinbase;
     }
 
     // create a token with multi sign
