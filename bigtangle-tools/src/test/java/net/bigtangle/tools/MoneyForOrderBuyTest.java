@@ -10,8 +10,19 @@ import net.bigtangle.core.Utils;
 
 public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
-    // let the wallet 1 has money to buy order
+    //pay money to all keys in other wallets
     @Test
+    public void payMoney () throws Exception {
+        while (true) {
+            try {
+            payMoneyToWallet1();
+            Thread.sleep(10000);
+            payMoneyToWallet2();
+            }catch (Exception e) {
+                log.debug(" " ,e);
+            }
+        }
+    }
     public void payMoneyToWallet1() throws Exception {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
@@ -25,7 +36,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
+   
     public void payMoneyToWallet2() throws Exception {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();

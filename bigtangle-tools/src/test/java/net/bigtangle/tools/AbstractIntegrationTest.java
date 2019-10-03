@@ -58,7 +58,7 @@ public abstract class AbstractIntegrationTest {
     public static String HTTPS_BIGTANGLE_INFO =
             // HTTPS_BIGTANGLE_LOCAL;
             "https://" + (testnet ? "test." : "") + "bigtangle.info/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.de/";
+    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org/";
 
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
@@ -91,7 +91,7 @@ public abstract class AbstractIntegrationTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     
-    public static String TESTSERVER1=   HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER1=   HTTPS_BIGTANGLE_LOCAL;
     
      public static String TESTSERVER2=   HTTPS_BIGTANGLE_ORG;
      
