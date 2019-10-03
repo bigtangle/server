@@ -93,7 +93,7 @@ public abstract class AbstractIntegrationTest {
     
     public static String TESTSERVER1=   HTTPS_BIGTANGLE_DE;
     
-     public static String TESTSERVER2=   HTTPS_BIGTANGLE_LOCAL;
+     public static String TESTSERVER2=   HTTPS_BIGTANGLE_ORG;
      
     public String contextRoot = TESTSERVER1;
             // "http://localhost:8088/";

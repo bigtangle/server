@@ -31,7 +31,7 @@ public class ScheduleMilestoneService {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
                 logger.debug(" Start ScheduleMilestoneService: ");
-                milestoneService.update();
+                milestoneService.startSingleProcess();
   
             } catch (Exception e) {
                 logger.warn("updateMilestoneService ", e);

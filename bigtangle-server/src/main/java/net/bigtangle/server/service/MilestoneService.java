@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -75,6 +76,25 @@ public class MilestoneService {
     @Autowired
     private NetworkParameters params;
 
+    public void startSingleProcess() {
+        if (!lock.tryLock()) {
+            log.debug(this.getClass().getName() + "  MilestoneService running. Returning...");
+            return;
+        }
+
+        try {
+            log.info("MilestoneService  started");
+            Stopwatch watch = Stopwatch.createStarted();
+            update();
+            log.info("MilestoneService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            log.error("MilestoneService ", e);
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -101,16 +121,17 @@ public class MilestoneService {
             updateMilestoneDepth();
             updateWeightAndDepth();
             updateRating();
-
+        } catch (Exception e) {
+        }
+        try {
             blockGraph.chainlock.lock();
-
-      //FIXME      store.beginDatabaseBatchWrite();
+            // FIXME
+            // store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates);
-       //     store.commitDatabaseBatchWrite();
+            // store.commitDatabaseBatchWrite();
         } catch (Exception e) {
 
         } finally {
-
             blockGraph.chainlock.unlock();
         }
 
@@ -365,7 +386,7 @@ public class MilestoneService {
         long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained
-            if (!currentBlock.getBlockEvaluation().isMaintained() 
+            if (!currentBlock.getBlockEvaluation().isMaintained()
                     || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
@@ -651,10 +672,11 @@ public class MilestoneService {
                     if (solidityState.isSuccessState()) {
 
                         long cutoffHeight = blockService.getCutoffHeight();
-                        
+
                         // Find conflicts in the dependency set
                         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock, cutoffHeight);
+                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock,
+                                cutoffHeight);
 
                         // If anything is already spent, no-go
                         boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
@@ -703,8 +725,8 @@ public class MilestoneService {
                             // the list
                             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
                             for (BlockWrap approvedBlock : nowApprovedBlocks)
-                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(),
-                                        traversedConfirms, cutoffHeight);
+                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
+                                        cutoffHeight);
 
                             allApprovedNewBlocks.removeAll(nowApprovedBlocks);
                         }
