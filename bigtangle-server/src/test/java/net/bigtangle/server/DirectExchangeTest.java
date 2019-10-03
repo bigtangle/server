@@ -375,12 +375,15 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         request.put("toAddress", toAddress);
         request.put("toTokenHex", toTokenHex);
         request.put("toAmount", toAmount);
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.saveExchange.name(),
+        OkHttp3Util.post(contextRoot + ReqCmd.saveExchange.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
         PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit1.wallet(), orderid, contextRoot, contextRoot);
         payOrder1.sign();
         PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit2.wallet(), orderid, contextRoot, contextRoot);
         payOrder2.sign();
+        
+        checkBalance(new Coin(3, walletKeys.get(1).getPubKey()), walletAppKit1.wallet().walletKeys(null));
+        checkBalance(new Coin(2, walletKeys.get(0).getPubKey()), walletAppKit2.wallet().walletKeys(null));
     }
 
     // TODO @Test
