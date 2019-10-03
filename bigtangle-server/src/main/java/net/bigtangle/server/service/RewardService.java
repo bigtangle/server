@@ -171,6 +171,7 @@ public class RewardService {
         if(Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) {
             chainTarget = Utils.decodeCompactBits(result.getDifficulty());
         }
+        blockService.adjustHeightRequiredBlocks(block);
        final  BigInteger chainTargetFinal= chainTarget;
     
         final Duration timeout = Duration.ofSeconds(30);
@@ -179,9 +180,9 @@ public class RewardService {
         @SuppressWarnings({ "unchecked", "rawtypes" })
        final   Future<String> handler = executor.submit(new Callable() {
             @Override
-            public String call() throws Exception {
-                 blockService.adjustHeightRequiredBlocks(block);
-                block.solve(chainTargetFinal);return "";
+            public String call() throws Exception { 
+                block.solve(chainTargetFinal); 
+                return "";
             }
         });
 

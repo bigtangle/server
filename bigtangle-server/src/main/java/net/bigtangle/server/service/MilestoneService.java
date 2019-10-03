@@ -5,7 +5,6 @@
 package net.bigtangle.server.service;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,13 +14,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -42,7 +36,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
-import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
@@ -114,9 +107,7 @@ public class MilestoneService {
         Context context = new Context(params);
         Context.propagate(context);
         // cleanupNonSolidMissingBlocks();
-        try {
-            updateSolidity();
-
+        try { 
             updateMaintained();
             updateMilestoneDepth();
             updateWeightAndDepth();
@@ -126,9 +117,9 @@ public class MilestoneService {
         try {
             blockGraph.chainlock.lock();
             // FIXME
-            // store.beginDatabaseBatchWrite();
+       //     store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates);
-            // store.commitDatabaseBatchWrite();
+        //    store.commitDatabaseBatchWrite();
         } catch (Exception e) {
 
         } finally {
@@ -158,64 +149,6 @@ public class MilestoneService {
 
     }
 
-    /**
-     * the missing previous block and reward blocks requested and run the
-     * solidity check.
-     * 
-     * 
-     * @throws BlockStoreException
-     * @throws NoBlockException
-     * @throws ExecutionException
-     * @throws InterruptedException
-     */
-    private void updateSolidity()
-            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-
-        final Duration timeout = Duration.ofSeconds(5);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
-            @Override
-            public String call() throws Exception {
-
-                /*
-                 * Cutoff window around current chain.
-                 */
-                long cutoffHeight = blockService.getCutoffHeight();
-                List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
-                log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
-                for (UnsolidBlock storedBlock : storedBlocklist) {
-                    if (storedBlock != null) {
-                        Block req = blockService.getBlock(storedBlock.missingdependencyHash());
-
-                        if (req != null) {
-                            store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
-                            // if the block is there, now scan the rest unsolid
-                            // blocks
-                            if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                                scanWaitingBlocks(req);
-                            }
-                        } else {
-
-                            blockRequester.requestBlock(storedBlock.missingdependencyHash());
-                        }
-                    }
-                }
-                return "";
-            }
-        });
-
-        try {
-            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            handler.cancel(true);
-
-        } finally {
-            executor.shutdownNow();
-        }
-
-    }
 
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.

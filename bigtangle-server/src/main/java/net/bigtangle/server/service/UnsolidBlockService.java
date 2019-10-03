@@ -4,6 +4,15 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -14,7 +23,8 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.UnsolidBlock;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -42,6 +52,9 @@ public class UnsolidBlockService {
     @Autowired
     private BlockService blockService;
 
+    @Autowired
+    private MilestoneService milestoneService;
+
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
     protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
@@ -58,10 +71,8 @@ public class UnsolidBlockService {
             Context.propagate(context);
             blockRequester.diff();
             // deleteOldUnsolidBlock();
- 
-
-            logger.debug(" end  updateUnsolideServiceSingle: ");
-
+            updateSolidity();
+            logger.debug(" end  updateUnsolideServiceSingle: "); 
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);
         } finally {
@@ -70,8 +81,6 @@ public class UnsolidBlockService {
         }
 
     }
-
- 
 
     public void requestPrev(Block block) {
         try {
@@ -125,4 +134,89 @@ public class UnsolidBlockService {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
+    private void updateSolidity()
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+
+        /*
+         * Cutoff window around current chain.
+         */
+        long cutoffHeight = blockService.getCutoffHeight();
+        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
+        logger.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
+        for (UnsolidBlock storedBlock : storedBlocklist) {
+            if (storedBlock != null) {
+                Block req = blockService.getBlock(storedBlock.missingdependencyHash());
+
+                if (req != null) {
+                    store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
+                    // if the block is there, now scan the rest unsolid
+                    // blocks
+                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
+                        milestoneService.scanWaitingBlocks(req);
+                    }
+                } else {
+                    blockRequester.requestBlock(storedBlock.missingdependencyHash());
+                }
+            }
+        }
+
+    }
+
+    /**
+     * the missing previous block and reward blocks requested and run the
+     * solidity check.
+     * 
+     * 
+     * @throws BlockStoreException
+     * @throws NoBlockException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    private void updateSolidityTimebox()
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+
+        final Duration timeout = Duration.ofSeconds(5);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+
+                /*
+                 * Cutoff window around current chain.
+                 */
+                long cutoffHeight = blockService.getCutoffHeight();
+                List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
+                logger.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
+                for (UnsolidBlock storedBlock : storedBlocklist) {
+                    if (storedBlock != null) {
+                        Block req = blockService.getBlock(storedBlock.missingdependencyHash());
+
+                        if (req != null) {
+                            store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
+                            // if the block is there, now scan the rest unsolid
+                            // blocks
+                            if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
+                                milestoneService.scanWaitingBlocks(req);
+                            }
+                        } else {
+                            blockRequester.requestBlock(storedBlock.missingdependencyHash());
+                        }
+                    }
+                }
+                return "";
+            }
+        });
+
+        try {
+            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
+
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
 }
