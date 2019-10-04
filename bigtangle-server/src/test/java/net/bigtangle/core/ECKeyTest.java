@@ -7,7 +7,6 @@ package net.bigtangle.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.bigtangle.core.Utils.HEX;
-import static net.bigtangle.core.Utils.reverseBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -212,7 +211,7 @@ public class ECKeyTest {
         long time = key.getCreationTimeSeconds();
         assertNotEquals(0, time);
         assertTrue(!key.isEncrypted());
-        byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
+       // byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey("NeverUsed"));
         assertEquals(time, encryptedKey.getCreationTimeSeconds());
         assertTrue(encryptedKey.isEncrypted());

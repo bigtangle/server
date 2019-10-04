@@ -5,26 +5,13 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Nullable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.service.SolidityState;
@@ -106,7 +93,7 @@ import net.bigtangle.wallet.Wallet;
 public abstract class AbstractBlockGraph {
 
     public final ReentrantLock chainlock = Threading.lock("chainLock");
-    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
+  //  private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
     /** Keeps a map of block hashes to StoredBlocks. */
     protected final BlockStore blockStore;

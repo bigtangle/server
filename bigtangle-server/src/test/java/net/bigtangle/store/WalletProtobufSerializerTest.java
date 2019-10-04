@@ -11,7 +11,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.security.SecureRandom;
 import java.util.Date;
 
 import org.junit.Before;
@@ -23,12 +22,8 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.wallet.DeterministicKeyChain;
-import net.bigtangle.wallet.KeyChain;
-import net.bigtangle.wallet.MarriedKeyChain;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.UnreadableWalletException;
 import net.bigtangle.wallet.Wallet;

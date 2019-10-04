@@ -9,7 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.List;

@@ -21,7 +21,7 @@ import net.bigtangle.utils.DumpedPrivateKey;
 public class DumpedPrivateKeyTest {
 
     private static final MainNetParams MAINNET = MainNetParams.get();
-    private static final MainNetParams TESTNET = MainNetParams.get();
+  //  private static final TestParams TESTNET = TestParams.get();
 
     @Test
     public void checkNetwork() throws Exception {

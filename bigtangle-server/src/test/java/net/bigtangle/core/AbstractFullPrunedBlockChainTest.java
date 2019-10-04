@@ -9,13 +9,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.collect.Lists;
@@ -37,7 +34,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @org.junit.Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
+  //  private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
     protected static final NetworkParameters PARAMS = new MainNetParams();
 
@@ -63,10 +60,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
-
-        ECKey outKey = new ECKey();
-        int height = 1;
-
+ 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());
         blockgraph.add(rollingBlock, true);
@@ -107,7 +101,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
 
         ECKey outKey = new ECKey();
-        int height = 1;
+ 
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());
@@ -120,9 +114,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             blockgraph.add(rollingBlock, true);
         }
 
-        WeakReference<UTXO> out = new WeakReference<UTXO>(
-                store.getTransactionOutput(spendableOutput.getBlockHash(), spendableOutput.getTxHash(), spendableOutput.getIndex()));
-        rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());
+            rollingBlock = rollingBlock.createNextBlock(PARAMS.getGenesisBlock());
 
         Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
@@ -150,7 +142,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
-        int height = 1;
+ 
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlock(PARAMS.getGenesisBlock());

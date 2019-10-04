@@ -54,12 +54,10 @@ import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.RewardService;
-import net.bigtangle.server.service.SettingService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.UserDataService;
-import net.bigtangle.server.service.VOSExecuteService;
 import net.bigtangle.server.service.WalletService;
 import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -84,10 +82,7 @@ public class DispatcherController {
     private MultiSignService multiSignService;
     @Autowired
     private PayMultiSignService payMultiSignService;
-    @Autowired
-    private VOSExecuteService vosExecuteService;
-    @Autowired
-    private SettingService settingService;
+ 
     @Autowired
     private SubtanglePermissionService subtanglePermissionService;
     @Autowired
@@ -532,7 +527,7 @@ public class DispatcherController {
 
     private void checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
-        if (settingService.getPermissionFlag()) {
+        if (serverConfiguration.getPermissioned()) {
             if (!checkAuth(httpServletResponse, httprequest)) {
                 AbstractResponse resp = ErrorResponse.create(100);
                 resp.setMessage("no auth");

@@ -6,7 +6,6 @@
 package net.bigtangle.store;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -780,18 +779,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     }
 
-    private void logStack_1() {
-        log.debug("Thread name is {}.", Thread.currentThread().getName());
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        StringWriter mes = new StringWriter();
-        for (int i = 1; i < elements.length; i++) {
-            StackTraceElement s = elements[i];
-            mes.append("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":"
-                    + s.getLineNumber() + "  ) \n");
-        }
-        log.debug(mes.toString());
-
-    }
+ 
 
     @Override
     public void close() {

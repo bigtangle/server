@@ -74,7 +74,6 @@ import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
-import net.bigtangle.core.response.SettingResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;

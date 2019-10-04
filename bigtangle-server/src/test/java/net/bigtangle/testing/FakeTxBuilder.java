@@ -278,7 +278,7 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        Address to = new ECKey().toAddress(prev.getParams());
+       // Address to = new ECKey().toAddress(prev.getParams());
         Block b = prev.createNextBlock(prev);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {

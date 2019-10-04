@@ -52,7 +52,8 @@ public class HttpDiscovery implements PeerDiscovery {
     }
 
     private final Details details;
-    private final NetworkParameters params;
+    
+   // private   NetworkParameters params = MainNetParams.get();
     private final OkHttpClient client;
 
     /**
@@ -74,7 +75,7 @@ public class HttpDiscovery implements PeerDiscovery {
     public HttpDiscovery(NetworkParameters params, Details details,  OkHttpClient client) {
         checkArgument(details.uri.getScheme().startsWith("http"));
         this.details = details;
-        this.params = params;
+     //   this.params = params;
         this.client = client;
     }
 

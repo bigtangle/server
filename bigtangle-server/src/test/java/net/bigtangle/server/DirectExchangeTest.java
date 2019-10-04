@@ -49,7 +49,6 @@ import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.UserDataResponse;
-import net.bigtangle.core.response.VOSExecuteListResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;

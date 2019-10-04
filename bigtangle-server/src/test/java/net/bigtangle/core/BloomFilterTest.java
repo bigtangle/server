@@ -5,22 +5,17 @@
 
 package net.bigtangle.core;
 
-import org.junit.Test;
-
-import net.bigtangle.core.Address;
-import net.bigtangle.core.BloomFilter;
-import net.bigtangle.core.Context;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.utils.DumpedPrivateKey;
-import net.bigtangle.wallet.KeyChainGroup;
-import net.bigtangle.wallet.Wallet;
+import static net.bigtangle.core.Utils.HEX;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.utils.DumpedPrivateKey;
+import net.bigtangle.wallet.KeyChainGroup;
 
 public class BloomFilterTest {
     @Test
@@ -74,7 +69,7 @@ public class BloomFilterTest {
         KeyChainGroup group = new KeyChainGroup(params);
         // Add a random key which happens to have been used in a recent generation
         group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
-        Wallet wallet = new Wallet(params, group);
+       // Wallet wallet = new Wallet(params, group);
          
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have
      //   assertEquals(5, wallet.getBloomFilterElementCount());
