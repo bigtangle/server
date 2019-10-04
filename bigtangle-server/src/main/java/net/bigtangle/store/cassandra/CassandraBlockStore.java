@@ -51,8 +51,8 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_BLOCKEVALUATION_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle."
             + "blockevaluation (\n" + "    blockhash blob ,\n" + "    rating bigint ,\n" + "    depth bigint,\n"
             + "    cumulativeweight  bigint ,\n" + "    solid boolean ,\n" + "    height bigint,\n"
-            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n" + "    milestonedepth bigint,\n"
-            + "    inserttime bigint,\n" + "    maintained boolean,\n" + "    rewardvalidityassessment boolean,\n"
+            + "    milestone boolean,\n" + "    milestonelastupdate bigint,\n"  
+            + "    inserttime bigint,\n" +  "    rewardvalidityassessment boolean,\n"
             + "    PRIMARY KEY (blockhash)  )\n";
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE IF NOT EXISTS  " + " bigtangle." + "tokens (\n"

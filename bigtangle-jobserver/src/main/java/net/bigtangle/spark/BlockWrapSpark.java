@@ -122,10 +122,9 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
                 && getBlockEvaluation().isMilestone() == ((BlockWrapSpark) o).getBlockEvaluation().isMilestone()
                 && getBlockEvaluation().getMilestoneLastUpdateTime() == ((BlockWrapSpark) o)
                         .getBlockEvaluation().getMilestoneLastUpdateTime()
-                && getBlockEvaluation().getMilestoneDepth() == ((BlockWrapSpark) o).getBlockEvaluation().getMilestoneDepth()
+                
                 && getBlockEvaluation().getInsertTime() == ((BlockWrapSpark) o).getBlockEvaluation().getInsertTime()
-                && getBlockEvaluation().isMaintained() == ((BlockWrapSpark) o).getBlockEvaluation().isMaintained()
-                && getWeightHashes() == ((BlockWrapSpark) o).getWeightHashes();
+                  && getWeightHashes() == ((BlockWrapSpark) o).getWeightHashes();
     }
 
     @Override

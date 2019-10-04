@@ -34,14 +34,12 @@ public class BlockEvaluation implements Serializable {
     // Timestamp for entry into milestone as true, reset if flip to false
     private long milestoneLastUpdateTime;
 
-    // Longest path length to any indirect milestone approver
-    private long milestoneDepth;
+ 
     
     // Timestamp for entry into evaluations/reception time
     private long insertTime;
     
-    // If false, this block has no influence on MCMC transitions
-    private boolean maintained;
+ 
     
     // 0: unknown. -1: unsolid. 1: solid
     private long solid;
@@ -182,8 +180,16 @@ public class BlockEvaluation implements Serializable {
     public String toString() {
         return "BlockEvaluation [blockHash=" + blockHash + ", rating=" + rating + ", depth=" + depth
                 + ", cumulativeWeight=" + cumulativeWeight + ", height=" + height + ", milestone=" + milestone
-                + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", milestoneDepth=" + milestoneDepth
-                + ", insertTime=" + insertTime + ", maintained=" + maintained + ", solid=" + solid + "]";
+                + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", insertTime=" + insertTime + ", solid="
+                + solid + ", confirmed=" + confirmed + ", getBlockHexStr()=" + getBlockHexStr() + ", getBlockHash()="
+                + getBlockHash() + ", getRating()=" + getRating() + ", getDepth()=" + getDepth()
+                + ", getCumulativeWeight()=" + getCumulativeWeight() + ", getHeight()=" + getHeight()
+                + ", getMilestone()=" + getMilestone() + ", getMilestoneLastUpdateTime()="
+                + getMilestoneLastUpdateTime() + ", getInsertTime()=" + getInsertTime() + ", getSolid()=" + getSolid()
+                + ", isConfirmed()=" + isConfirmed() + ", getClass()=" + getClass() + ", hashCode()=" + hashCode()
+                + ", toString()=" + super.toString() + "]";
     }
+
+  
 
 }
