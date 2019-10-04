@@ -189,9 +189,8 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if (  block.getBlock().getHeight() <= cutoffHeight 
-                || blocks.size () > NetworkParameters.MAX_BLOCKS_IN_REWARD )
-            return false;
+        if (block.getBlock().getHeight() <= cutoffHeight)
+            return true;
         
         if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
@@ -492,14 +491,7 @@ public class BlockService {
         }
         return prevMilestoneBlocks;
     }
-
-    public Set<Sha256Hash> getDirectRequiredBlockHashes(Block block) {
-        Set<Sha256Hash> predecessors = new HashSet<>();
-        predecessors.add(block.getPrevBlockHash());
-        predecessors.add(block.getPrevBranchBlockHash());
-        return predecessors;
-    }
-
+    
     /**
      * Returns all blocks that must be confirmed if this block is confirmed.
      * 

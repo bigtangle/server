@@ -129,7 +129,7 @@ public class RewardService {
     }
 
     public Block createAndAddMiningRewardBlock(Sha256Hash prevRewardHash) throws Exception {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
         return createAndAddMiningRewardBlock(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
     }
 

@@ -225,7 +225,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
-
         block.verifyHeader();
         block.verifyTransactions();
 
@@ -1902,6 +1901,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
+        
+        if (orphanBlocks.size() > 100)
+            orphanBlocks.clear();
     }
     
 

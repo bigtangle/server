@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -139,6 +140,140 @@ public class TipsService {
                 store.getBlockWrap(prototype.getHash()), cutoffHeight))
             throw new InfeasiblePrototypeException("The given prototype is insolid");
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks);
+    }
+
+    /**
+     * Selects two blocks to approve via MCMC. Disallows unsolid blocks.
+     * 
+     * @return Two blockhashes selected via MCMC
+     * @throws BlockStoreException
+     */
+    public Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(Sha256Hash prevRewardHash) throws BlockStoreException {
+        return getValidatedRewardBlockPair(new HashSet<>(), prevRewardHash);
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash)
+            throws BlockStoreException {
+        List<BlockWrap> entryPoints = getValidationEntryPoints(2);
+        BlockWrap left = entryPoints.get(0);
+        BlockWrap right = entryPoints.get(1);
+        return getValidatedRewardBlockPair(currentApprovedNonMilestoneBlocks, left, right, prevRewardHash);
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
+            BlockWrap left, BlockWrap right, Sha256Hash prevRewardHash) throws BlockStoreException {
+        Stopwatch watch = Stopwatch.createStarted();
+        long cutoffHeight = blockService.getCutoffHeight();
+        HashSet<Sha256Hash> currentNewMilestoneBlocks = new HashSet<Sha256Hash>();
+        Set<Sha256Hash> pastMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
+
+        // Initialize approved blocks
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
+        if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left, pastMilestoneBlocks, cutoffHeight))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right, pastMilestoneBlocks, cutoffHeight))
+            throw new InfeasiblePrototypeException("The given starting points are insolid");
+
+        // Necessary: Initial test if the prototype's
+        // currentApprovedNonMilestoneBlocks are actually valid
+        if (!validatorService.isEligibleForApprovalSelection(currentApprovedUnconfirmedBlocks))
+            throw new InfeasiblePrototypeException("The given prototype is invalid under the current milestone");
+
+        // Perform next steps
+        BlockWrap nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
+        BlockWrap nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
+
+        // Repeat: Proceed on path to be included first (highest rating else
+        // random)
+        while (nextLeft != left && nextRight != right) {
+            if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+                // Terminate if next left approves too many new milestone blocks 
+                @SuppressWarnings("unchecked")
+                HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, pastMilestoneBlocks, cutoffHeight))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                    nextLeft = left;
+                    break;
+                }
+                
+                // Otherwise, go left
+                left = nextLeft;
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                currentNewMilestoneBlocks = nextNewMilestoneBlocks;
+
+                // Perform next steps
+                nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
+                nextRight = validateOrPerformValidatedStep(right, currentApprovedUnconfirmedBlocks, nextRight, cutoffHeight);
+            } else {
+                // Terminate if next right approves too many new milestone blocks 
+                @SuppressWarnings("unchecked")
+                HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, pastMilestoneBlocks, cutoffHeight))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                    nextRight = right;
+                    break;
+                }
+                
+                // Go right
+                right = nextRight;
+                if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
+                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                currentNewMilestoneBlocks = nextNewMilestoneBlocks;
+
+                // Perform next steps
+                nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
+                nextLeft = validateOrPerformValidatedStep(left, currentApprovedUnconfirmedBlocks, nextLeft, cutoffHeight);
+            }
+        }
+
+        // Go forward on the remaining paths
+        while (nextLeft != left) {
+            // Terminate if next left approves too many new milestone blocks 
+            @SuppressWarnings("unchecked")
+            HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, pastMilestoneBlocks, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+            if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                nextLeft = left;
+                break;
+            }
+
+            // Go left
+            left = nextLeft;
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+            currentNewMilestoneBlocks = nextNewMilestoneBlocks;
+            nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
+        }
+        while (nextRight != right) {
+            // Terminate if next right approves too many new milestone blocks 
+            @SuppressWarnings("unchecked")
+            HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, pastMilestoneBlocks, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+            if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                nextRight = right;
+                break;
+            }
+
+            // Go right
+            right = nextRight;
+            if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+            currentNewMilestoneBlocks = nextNewMilestoneBlocks;
+            nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
+        }
+
+        watch.stop();
+        log.trace("getValidatedRewardBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+
+        return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
     }
 
     /**

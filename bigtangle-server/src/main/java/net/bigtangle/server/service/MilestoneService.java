@@ -62,8 +62,6 @@ public class MilestoneService {
     @Autowired
     private ValidatorService validatorService;
     @Autowired
-    private BlockRequester blockRequester;
-    @Autowired
     private BlockService blockService;
 
     @Autowired
@@ -491,13 +489,21 @@ public class MilestoneService {
         // Check previous reward blocks exist and get their approved sets
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         if (prevRewardHash == null)
-            return false;
+            throw new VerificationException("Missing previous block reference.");
+        
         Block prevRewardBlock = store.get(prevRewardHash);
         if (prevRewardBlock == null)
             return false;
         if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
                 && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
             throw new VerificationException("Previous block not reward block.");
+
+        // TODO prevent DoS by repeated add of unsolid reward blocks
+        // Check for PoW now since it is possible to do so
+        SolidityState state = validatorService.checkConsensusBlockPow(rewardBlock, true);
+        if (!state.isSuccessState()) {
+            return false;
+        }
 
         // Get all blocks approved by previous reward blocks
         Set<Sha256Hash> allMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
