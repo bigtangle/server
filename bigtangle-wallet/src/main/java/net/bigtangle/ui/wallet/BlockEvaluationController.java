@@ -209,9 +209,9 @@ public class BlockEvaluationController {
                 map.put("height", blockEvaluation.getHeight());
                 map.put("milestone", blockEvaluation.getMilestone());
                 map.put("milestoneLastUpdateTime", blockEvaluation.getMilestoneLastUpdateTime());
-                map.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
+                map.put("milestoneDepth", "");
                 map.put("insertTime", blockEvaluation.getInsertTime());
-                map.put("maintained", blockEvaluation.isMaintained());
+                map.put("maintained", "");
                 map.put("blocktype", blockEvaluation.getBlockType().name());
                 if (tempValue.equalsIgnoreCase("m-c1-c2")) {
                     BlockEvaluation map1 = blockEvaluations.get(i + 1);
@@ -384,8 +384,8 @@ public class BlockEvaluationController {
                 dataRow.put("height", blockEvaluation.getHeight());
 
                 dataRow.put("milestone", blockEvaluation.getMilestone());
-                dataRow.put("milestoneDepth", blockEvaluation.getMilestoneDepth());
-                dataRow.put("maintained", blockEvaluation.isMaintained() ? Main.getText("yes") : Main.getText("no"));
+                dataRow.put("milestoneDepth", "");
+                dataRow.put("maintained", "");
 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());

@@ -478,8 +478,8 @@ public class ValidatorService {
         // weight.
         Comparator<ConflictCandidate> byDescendingRating = getConflictComparator()
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getRating())
-                .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
+                .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparing((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getBlockHash()).reversed();
 
         Supplier<TreeSet<ConflictCandidate>> conflictTreeSetSupplier = () -> new TreeSet<ConflictCandidate>(
@@ -492,10 +492,10 @@ public class ValidatorService {
         Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
                 .thenComparingLong(
                         (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
-                .thenComparingLong(
-                        (TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
                         .getCumulativeWeight())
+                .thenComparingLong(
+                        (TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparing(
                         (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getBlockHash())
                 .reversed();

@@ -49,12 +49,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    cumulativeweight bigint NOT NULL,\n"
             //reward block chain length is here milestone
             + "    milestone bigint NOT NULL,\n"
-            + "    milestonelastupdate bigint NOT NULL,\n"
-            
-            //remove this three?
-            + "    milestonedepth bigint NOT NULL,\n" 
+            + "    milestonelastupdate bigint NOT NULL,\n"  
             + "    confirmed boolean NOT NULL,\n"
-            + "    maintained boolean NOT NULL,\n" 
+       
             //solid is result of validation of the block, 
             + "    solid bigint NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
@@ -420,16 +417,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONEDEPTH_SQL;
-    }
-
-    @Override
-    protected String getUpdateBlockEvaluationMaintainedSQL() {
-        return UPDATE_BLOCKEVALUATION_MAINTAINED_SQL;
-    }
-
-    @Override
     protected String getUpdateOutputsSpentSQL() {
         return UPDATE_OUTPUTS_SPENT_SQL;
     }
@@ -447,10 +434,5 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getDropIndexsSQL() {
         return new ArrayList<String>();
-    }
-
-    @Override
-    protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return getUpdate() + " blocks SET maintained = false WHERE maintained = true";
     }
 }

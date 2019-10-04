@@ -23,8 +23,8 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
     }
 
     public static BlockEvaluationDisplay build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
-            long height, long milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained, int blocktype, long solid, boolean confirmed) {
+            long height, long milestone, long milestoneLastUpdateTime, long insertTime,
+            int blocktype, long solid, boolean confirmed) {
         BlockEvaluationDisplay blockEvaluation = new BlockEvaluationDisplay();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -34,9 +34,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         blockEvaluation.setHeight(height);
         blockEvaluation.setMilestone(milestone);
         blockEvaluation.setMilestoneLastUpdateTime(milestoneLastUpdateTime);
-        blockEvaluation.setMilestoneDepth(milestoneDepth);
         blockEvaluation.setInsertTime(insertTime);
-        blockEvaluation.setMaintained(maintained);
         blockEvaluation.setBlockTypeInt(blocktype);
         blockEvaluation.setSolid(solid);
         blockEvaluation.setConfirmed(confirmed);

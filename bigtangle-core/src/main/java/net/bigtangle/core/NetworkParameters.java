@@ -105,8 +105,6 @@ public abstract class NetworkParameters {
     public static final int CONFIRMATION_UPPER_THRESHOLD = 70;
     public static final int CONFIRMATION_LOWER_THRESHOLD = 67;
     public static final int NUMBER_RATING_TIPS = 100;
-    public static final long ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF = 60;
-    public static final long ENTRYPOINT_TIPSELECTION_DEPTH_CUTOFF = 20;
 
     // Token ID for System Coin
     public static final String BIGTANGLE_TOKENID_STRING = "bc";
@@ -122,7 +120,11 @@ public abstract class NetworkParameters {
      * The version number at the start of the network.
      */
     public static final long BLOCK_VERSION_GENESIS = 1;
-
+    
+    //block number can be taken in a reward block,
+    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / 8  blockhash 4bytes =  
+    public static final int MAX_BLOCKS_IN_REWARD = 4096;
+    
     /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
@@ -131,6 +133,7 @@ public abstract class NetworkParameters {
      * everyone to download/store it forever.
      */
     public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
+    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + MAX_BLOCKS_IN_REWARD * 200; 
 
     /**
      * A "sigop" is a signature verification operation. Because they're
@@ -208,12 +211,11 @@ public abstract class NetworkParameters {
     // the other two thirds are for each inclusion into consensus and each block
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
-    //block number can be taken in a reward block,
-    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / 8  blockhash 4bytes =  
-    public static final int MAX_BLOCKS_IN_REWARD = 32768;
+    
   
     // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 6;
+    public static final long ENTRYPOINT_CUTOFF = 3;
 
     
     protected NetworkParameters() {

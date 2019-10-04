@@ -228,7 +228,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
-
+        unsolidBlockService.updateSolidity();
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
@@ -267,7 +267,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
-
+        unsolidBlockService.updateSolidity();
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
@@ -397,15 +397,19 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         // Let block 1 win
-        createAndAddNextBlock(block1, block1);
+        createAndAddNextBlock(block1, block2);
+        unsolidBlockService.updateSolidity();
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed());
 
         // Reorg to block 2
-        for (int i = 0; i < 25; i++) {
-            createAndAddNextBlock(block2, block2);
+        rollingBlock=  block2;
+        for (int i = 0; i <25; i++) { 
+            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
+            blockGraph.add(rollingBlock, true);
         }
+ 
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed());
@@ -575,6 +579,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         Block b14 = createAndAddNextBlock(b5link, b8link);
         Block bOrphan1 = createAndAddNextBlock(b1, b1);
         Block bOrphan5 = createAndAddNextBlock(b5link, b5link);
+        unsolidBlockService.updateSolidity();
         milestoneService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
@@ -749,11 +754,6 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(b7.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b8.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isConfirmed());
-
-        // Check milestone depths (handmade tests)
-        assertEquals(15, blockService.getBlockEvaluation(b1.getHash()).getMilestoneDepth());
-        assertEquals(15, blockService.getBlockEvaluation(b2.getHash()).getMilestoneDepth());
-        assertEquals(1, blockService.getBlockEvaluation(rollingBlock.getHash()).getMilestoneDepth());
     }
 
     @Test
@@ -877,10 +877,12 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
     }
-    
+
+
+ 
 
     @Test
-    public void blocksFromChainlenght() throws Exception {
+    public void blocksFromChainlength() throws Exception {
         // create some blocks
         //testReorgMiningReward();
         milestoneService.update();
@@ -1512,6 +1514,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
             blockGraph.add(b, true);
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
+        unsolidBlockService.updateSolidity();
         milestoneService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -1532,60 +1535,4 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock8.getHash()).isConfirmed());
     }
 
-    @Test
-    public void testReorgMaintained() throws Exception {
-        store.resetStore();
-
-        // Generate two conflicting blocks where the second block approves the
-        // first
-
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub));
-        List<UTXO> outputs = getBalance(false, genesiskey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-        Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
-        TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
-                Transaction.SigHash.ALL, false);
-
-        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
-
-        // Create blocks with conflict
-        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                networkParameters.getGenesisBlock(), doublespendTX);
-        blockGraph.add(b1, true);
-        Block b2 = createAndAddNextBlockWithTransaction(b1, b1, doublespendTX);
-        blockGraph.add(b2, true);
-
-        // Approve these blocks by adding linear tangle onto them
-        Block rollingBlock = b2;
-        for (int i = 0; i < 10; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-        milestoneService.update();
-
-        // Second block may not be added, only first one
-        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
-
-        // Add blocks via tip selection
-        for (int i = 1; i < 30; i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-            Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-            Block r2 = blockService.getBlock(tipsToApprove.getRight());
-            Block b = r2.createNextBlock(r1);
-            blockGraph.add(b, true);
-        }
-        milestoneService.update();
-
-        // Ensure the second block eventually loses and is not
-        assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(b2.getHash()).getRating() < 50);
-    }
 }

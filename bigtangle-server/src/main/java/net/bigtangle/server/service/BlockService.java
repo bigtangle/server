@@ -284,12 +284,11 @@ public class BlockService {
     }
 
     public List<BlockWrap> getRatingEntryPointCandidates() throws BlockStoreException {
-        return store.getBlocksInMilestoneDepthInterval((long) 0,
-                NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+        return store.getRatingEntryPoints();
     }
 
     public List<BlockWrap> getValidationEntryPointCandidates() throws BlockStoreException {
-        return store.getBlocksInMilestoneDepthInterval(0, NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF);
+        return store.getRatingEntryPoints();
     }
 
     public void broadcastBlock(Block block) {

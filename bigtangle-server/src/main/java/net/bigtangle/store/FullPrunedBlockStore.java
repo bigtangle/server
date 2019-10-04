@@ -144,15 +144,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public List<BlockWrap> getApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
-    public List<BlockWrap> getBlocksInMilestoneDepthInterval(long minDepth, long maxDepth) throws BlockStoreException;
-
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
 
     public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
-
-    public List<BlockEvaluation> getSolidBlocksOfHeight(long height) throws BlockStoreException;
 
     public List<Sha256Hash> getConfirmedBlocksOfHeightHigherThan(long height) throws BlockStoreException;
 
@@ -164,15 +160,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
 
-    public PriorityQueue<BlockWrap> getMaintainedBlocksDescending() throws BlockStoreException;
-
     public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException;
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
     public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
-
-    public HashSet<Sha256Hash> getMaintainedBlockHashes() throws BlockStoreException;
 
     /* Block Evaluation */
     public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
@@ -188,18 +180,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException;
 
-    public void updateBlockEvaluationMilestoneDepth(Sha256Hash blockhash, long milestoneDepth)
-            throws BlockStoreException;
-
-    public void updateBlockEvaluationMaintained(Sha256Hash blockhash, boolean relevant) throws BlockStoreException;
-
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
 
     public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
 
     public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
-
-    public void updateAllBlocksMaintained() throws BlockStoreException;
 
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash,  long index, boolean b, Sha256Hash spenderBlock)
@@ -505,6 +490,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     long getHeightTransactions(List<Sha256Hash>  txHashs) throws BlockStoreException ;
 
     TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException;
+
+    List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
+
+    List<BlockWrap> getRatingEntryPoints() throws BlockStoreException;
 
     
 

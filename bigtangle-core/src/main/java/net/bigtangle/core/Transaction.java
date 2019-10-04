@@ -1369,14 +1369,9 @@ public class Transaction extends ChildMessage {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        if (this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
-            throw new VerificationException.LargerThanMaxBlockSize();
-
         if (this.getMemo() != null && this.getMemo().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
             throw new VerificationException("memo size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
 
-        if (this.getData() != null && this.getData().length > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
-            throw new VerificationException("getData size too large MAX " + NetworkParameters.MAX_DEFAULT_BLOCK_SIZE);
         /* Check by this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE
          * if (this.getDataClassName()!=null&& this.getDataClassName().length()
          * > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE) throw new

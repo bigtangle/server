@@ -169,16 +169,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getUpdateBlockEvaluationMilestoneDepthSQL() {
-        return getUpdate() + " blockevaluation SET milestonedepth = ? WHERE blockhash = ?";
-    }
-
-    @Override
-    protected String getUpdateBlockEvaluationMaintainedSQL() {
-        return getUpdate() + " blockevaluation SET maintained = ? WHERE blockhash = ?";
-    }
-
-    @Override
     protected String getUpdateOutputsSpentSQL() {
         return getUpdate() + " outputs SET spendpending = ? WHERE hash = ? AND outputindex= ?";
     }
@@ -202,11 +192,6 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getDropIndexsSQL() {
         return new ArrayList<String>();
-    }
-
-    @Override
-    protected String getUpdateBlockevaluationUnmaintainAllSQL() {
-        return null;
     }
 
 }

@@ -71,7 +71,7 @@ public class UnsolidBlockService {
             Context.propagate(context);
             blockRequester.diff();
             // deleteOldUnsolidBlock();
-            updateSolidity();
+           // updateSolidity();
             logger.debug(" end  updateUnsolideServiceSingle: "); 
         } catch (Exception e) {
             logger.warn("updateUnsolideService ", e);

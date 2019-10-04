@@ -439,18 +439,8 @@ public class TipsService {
 
             // Calculate the unnormalized transition weights
             for (int i = 0; i < candidates.size(); i++) {
-                // Scale alpha up if very deep to prevent splitting attack
-                double alpha = 0.1
-                        * Math.exp(0.05 * Math.max(0.0, (currentBlock.getBlockEvaluation().getMilestoneDepth()
-                                - NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF / 2)));
-
-                // Clamp
-                alpha = Math.max(0.001, alpha);
-                alpha = Math.min(1.5, alpha);
-
                 // Calculate transition weights
-                transitionWeights[i] = Math.exp(-alpha
-                        * (currentCumulativeWeight - candidates.get(i).getBlockEvaluation().getCumulativeWeight()));
+                transitionWeights[i] = Math.exp(-0.005 * (currentCumulativeWeight - candidates.get(i).getBlockEvaluation().getCumulativeWeight()));
                 transitionWeightSum += transitionWeights[i];
             }
 

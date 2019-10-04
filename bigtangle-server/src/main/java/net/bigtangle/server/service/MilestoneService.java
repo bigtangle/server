@@ -100,27 +100,29 @@ public class MilestoneService {
         }
     }
 
-    public void update(int numberUpdates) throws InterruptedException, ExecutionException {
+    public void update(int numberUpdates) throws InterruptedException, ExecutionException, BlockStoreException {
 
         Context context = new Context(params);
         Context.propagate(context);
         // cleanupNonSolidMissingBlocks();
         try { 
-            updateMaintained();
-            updateMilestoneDepth();
+            store.beginDatabaseBatchWrite();
             updateWeightAndDepth();
             updateRating();
+            store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);
+            store.abortDatabaseBatchWrite();
         }
         try {
             blockGraph.chainlock.lock();
-            // FIXME
+           
            store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("updateConfirmed ", e);
+            store.abortDatabaseBatchWrite();
         } finally {
             blockGraph.chainlock.unlock();
         }
@@ -159,7 +161,7 @@ public class MilestoneService {
     private void updateWeightAndDepth() throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        PriorityQueue<BlockWrap> blockQueue = store.getMaintainedBlocksDescending();
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
@@ -176,8 +178,7 @@ public class MilestoneService {
 
             // Abort if unmaintained, since it will be irrelevant for any tip
             // selections
-            if (!currentBlock.getBlockEvaluation().isMaintained()
-                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
+            if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
             // Add your own hash to approver hashes of current approver hashes
@@ -214,67 +215,6 @@ public class MilestoneService {
             approvers.get(approvedBlockHash).addAll(currentApprovers);
             if (currentDepth + 1 > depths.get(approvedBlockHash))
                 depths.put(approvedBlockHash, currentDepth + 1);
-        }
-    }
-
-    /**
-     * Update MilestoneDepth: the longest forward path to a milestone block
-     * 
-     * @throws BlockStoreException
-     */
-    private void updateMilestoneDepth() throws BlockStoreException {
-        // Begin from the highest solid height tips and go backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
-        HashMap<Sha256Hash, Long> milestoneDepths = new HashMap<>();
-
-        // Initialize milestone depths as -1
-        for (BlockWrap tip : blockQueue) {
-            milestoneDepths.put(tip.getBlockHash(), -1L);
-        }
-
-        BlockWrap currentBlock = null;
-        long cutoffHeight = blockService.getCutoffHeight();
-        while ((currentBlock = blockQueue.poll()) != null) {
-            // Abort if unmaintained, since it will be irrelevant
-            if (!currentBlock.getBlockEvaluation().isMaintained()
-                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
-                continue;
-
-            // If depth is set to -1 and we are milestone, set to 0
-            if (milestoneDepths.get(currentBlock.getBlockHash()) == -1L
-                    && currentBlock.getBlockEvaluation().getMilestone() != -1)
-                milestoneDepths.put(currentBlock.getBlockHash(), 0L);
-
-            // Add all current references to both approved blocks
-            Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            subUpdateMilestoneDepth(blockQueue, milestoneDepths, currentBlock, prevTrunk);
-
-            Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            subUpdateMilestoneDepth(blockQueue, milestoneDepths, currentBlock, prevBranch);
-
-            // Update and dereference
-            store.updateBlockEvaluationMilestoneDepth(currentBlock.getBlockHash(),
-                    milestoneDepths.get(currentBlock.getBlockHash()));
-            milestoneDepths.remove(currentBlock.getBlockHash());
-        }
-    }
-
-    private void subUpdateMilestoneDepth(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, Long> milestoneDepths,
-            BlockWrap currentBlock, Sha256Hash approvedBlock) throws BlockStoreException {
-        boolean isMilestone = currentBlock.getBlockEvaluation().getMilestone() != -1;
-        long milestoneDepth = milestoneDepths.get(currentBlock.getBlockHash());
-        long newMilestoneDepth = Math.min(milestoneDepth + 1,
-                NetworkParameters.ENTRYPOINT_RATING_UPPER_DEPTH_CUTOFF + 1);
-        if (!milestoneDepths.containsKey(approvedBlock)) {
-            BlockWrap prevBlock = store.getBlockWrap(approvedBlock);
-            if (prevBlock != null) {
-                blockQueue.add(prevBlock);
-                milestoneDepths.put(prevBlock.getBlockHash(), isMilestone ? newMilestoneDepth : -1L);
-            }
-        } else {
-            if (isMilestone)
-                if (newMilestoneDepth > milestoneDepths.get(approvedBlock))
-                    milestoneDepths.put(approvedBlock, newMilestoneDepth);
         }
     }
 
@@ -318,8 +258,7 @@ public class MilestoneService {
         long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained
-            if (!currentBlock.getBlockEvaluation().isMaintained()
-                    || currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
+            if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
                 continue;
 
             // Add your own hashes as reference if current block is one of the
@@ -395,48 +334,6 @@ public class MilestoneService {
             if (i == WARNING_MILESTONE_UPDATE_LOOPS)
                 log.warn("High amount of milestone updates per scheduled update. Can't keep up or reorganizing!");
         }
-    }
-
-    /**
-     * Updates maintained field in block evaluation. Sets maintained to true if
-     * reachable by a rating entry point, else false.
-     * 
-     * @throws BlockStoreException
-     */
-    private void updateMaintained() throws BlockStoreException {
-        HashSet<Sha256Hash> maintainedBlockHashes = store.getMaintainedBlockHashes();
-        HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
-        PriorityQueue<BlockWrap> blocks = store.getRatingEntryPointsAscending();
-        HashSet<BlockWrap> blocksToTraverse = new HashSet<>(blocks);
-
-        // Now set maintained in order of ascending height
-        BlockWrap currentBlock = null;
-        while ((currentBlock = blocks.poll()) != null) {
-            blocksToTraverse.remove(currentBlock);
-            traversedBlockHashes.add(currentBlock.getBlockHash());
-            List<BlockWrap> solidApproverBlocks = store.getApproverBlocks(currentBlock.getBlockHash());
-            for (BlockWrap b : solidApproverBlocks) {
-                if (blocksToTraverse.contains(b))
-                    continue;
-                if (b.getBlockEvaluation().getSolid() < 0)
-                    continue;
-                if (b.getBlock().getHeight() <= currentBlock.getBlock().getHeight())
-                    continue;
-
-                blocks.add(b);
-                blocksToTraverse.add(b);
-            }
-        }
-
-        // Unset no longer maintained blocks
-        for (Sha256Hash hash : maintainedBlockHashes.stream().filter(h -> !traversedBlockHashes.contains(h))
-                .collect(Collectors.toList()))
-            store.updateBlockEvaluationMaintained(hash, false);
-
-        // Set now maintained blocks
-        for (Sha256Hash hash : traversedBlockHashes.stream().filter(h -> !maintainedBlockHashes.contains(h))
-                .collect(Collectors.toList()))
-            store.updateBlockEvaluationMaintained(hash, true);
     }
 
     public boolean solidifyWaiting(Block block) throws BlockStoreException {

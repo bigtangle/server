@@ -61,21 +61,19 @@ public class BlockEvaluation implements Serializable {
         setHeight(other.height);
         setMilestone(other.milestone);
         setMilestoneLastUpdateTime(other.milestoneLastUpdateTime);
-        setMilestoneDepth(other.milestoneDepth);
         setInsertTime(other.insertTime);
-        setMaintained(other.maintained);
         setSolid(other.solid);
         setConfirmed(other.confirmed);
     }
 
     public static BlockEvaluation buildInitial(Block block) {
         long currentTimeMillis = System.currentTimeMillis();
-        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, -1, currentTimeMillis, -1, currentTimeMillis, true, 0, false);
+        return BlockEvaluation.build(block.getHash(), 0, 0, 1, 0, -1, currentTimeMillis, currentTimeMillis, 0, false);
     }
 
     public static BlockEvaluation build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
-            long height, long milestone, long milestoneLastUpdateTime, long milestoneDepth, long insertTime,
-            boolean maintained, long solid, boolean confirmed) {
+            long height, long milestone, long milestoneLastUpdateTime, long insertTime,
+            long solid, boolean confirmed) {
         BlockEvaluation blockEvaluation = new BlockEvaluation();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setRating(rating);
@@ -85,9 +83,7 @@ public class BlockEvaluation implements Serializable {
         blockEvaluation.setHeight(height);
         blockEvaluation.setMilestone(milestone);
         blockEvaluation.setMilestoneLastUpdateTime(milestoneLastUpdateTime);
-        blockEvaluation.setMilestoneDepth(milestoneDepth);
         blockEvaluation.setInsertTime(insertTime);
-        blockEvaluation.setMaintained(maintained);
         blockEvaluation.setSolid(solid);
         blockEvaluation.setConfirmed(confirmed);
 
@@ -158,28 +154,12 @@ public class BlockEvaluation implements Serializable {
         this.milestoneLastUpdateTime = milestoneLastUpdateTime;
     }
 
-    public long getMilestoneDepth() {
-        return milestoneDepth;
-    }
-
-    public void setMilestoneDepth(long milestoneDepth) {
-        this.milestoneDepth = milestoneDepth;
-    }
-
     public long getInsertTime() {
         return insertTime;
     }
 
     public void setInsertTime(long insertTime) {
         this.insertTime = insertTime;
-    }
-
-    public boolean isMaintained() {
-        return maintained;
-    }
-
-    public void setMaintained(boolean maintained) {
-        this.maintained = maintained;
     }
 
     public long getSolid() {
