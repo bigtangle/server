@@ -49,7 +49,7 @@ public class ScheduleOrderService {
     private FullPrunedBlockStore store;
 
     @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
-    public void updateMilestoneService() throws Exception {
+    public void updatemcmcService() throws Exception {
         // if (scheduleConfiguration.isGiveMoneyServiceActive()) {
 
         logger.debug(" Start ScheduleGiveMoneyOrderService");

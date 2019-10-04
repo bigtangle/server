@@ -81,7 +81,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
@@ -122,7 +122,7 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected BlockService blockService;
     @Autowired
-    protected MilestoneService milestoneService;
+    protected MCMCService mcmcService;
 
     @Autowired
     protected RewardService rewardService;
@@ -354,7 +354,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  // milestoneService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  // mcmcService.update();
         return block;
 
     }
@@ -398,7 +398,7 @@ public abstract class AbstractIntegrationTest {
         block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        milestoneService.update();
+        mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
     }
@@ -408,7 +408,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
-        milestoneService.update();
+        mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  return block;
 
@@ -454,10 +454,10 @@ public abstract class AbstractIntegrationTest {
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
         this.blockGraph.add(block, true);
-        milestoneService.update();
+        mcmcService.update();
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  milestoneService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  mcmcService.update();
         return block;
 
     }
@@ -489,9 +489,9 @@ public abstract class AbstractIntegrationTest {
 
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
-        milestoneService.update();
+        mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     milestoneService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     mcmcService.update();
         return block;
     }
 
@@ -519,7 +519,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
         return block;
     }
 
@@ -615,7 +615,7 @@ public abstract class AbstractIntegrationTest {
         for (Block b : addedBlocks) {
             blockGraph.add(b, true);
         }
-        milestoneService.update();
+        mcmcService.update();
         List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
         assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
@@ -775,7 +775,7 @@ public abstract class AbstractIntegrationTest {
         // testCreateMultiSig();
         // testCreateMarket();
         testInitTransferWallet();
-        milestoneService.update();
+        mcmcService.update();
         // testInitTransferWalletPayToTestPub();
         List<UTXO> ux = getBalance();
         // assertTrue(!ux.isEmpty());
@@ -872,7 +872,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void checkBalance(Coin coin, List<ECKey> a) throws Exception {
-        milestoneService.update();
+        mcmcService.update();
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
@@ -896,7 +896,7 @@ public abstract class AbstractIntegrationTest {
 
         String tokenid = createFirstMultisignToken(keys, tokenInfo);
 
-        milestoneService.update();
+        mcmcService.update();
 
         BigInteger amount = new BigInteger("200000");
         Coin basecoin = new Coin(amount, tokenid);

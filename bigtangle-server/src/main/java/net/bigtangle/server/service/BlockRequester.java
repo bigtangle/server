@@ -59,7 +59,7 @@ public class BlockRequester {
     @Autowired
     protected ServerConfiguration serverConfiguration;
     @Autowired
-    protected MilestoneService milestoneService;
+    protected MCMCService mcmcService;
 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
@@ -176,7 +176,7 @@ public class BlockRequester {
     }
 
     public void diff() throws Exception {
-        // milestoneService.cleanupNonSolidMissingBlocks();
+        // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {
@@ -225,9 +225,9 @@ public class BlockRequester {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
-                milestoneService.update();
+                mcmcService.update();
             }
-            // milestoneService.updateMilestone();
+            // mcmcService.updateMilestone();
         }
         log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
     }

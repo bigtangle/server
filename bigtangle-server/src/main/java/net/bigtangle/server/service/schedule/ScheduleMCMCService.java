@@ -13,28 +13,28 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.MCMCService;
 
 @Component
 @EnableAsync
-public class ScheduleMilestoneService {
-    private static final Logger logger = LoggerFactory.getLogger(ScheduleMilestoneService.class);
+public class ScheduleMCMCService {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleMCMCService.class);
     @Autowired
-    private MilestoneService milestoneService;
+    private MCMCService mcmcService;
   
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
     @Autowired
     ServerConfiguration serverConfiguration;
     @Scheduled(fixedRate = 3000)
-    public void updateMilestoneService() {
+    public void updatemcmcService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start ScheduleMilestoneService: ");
-                milestoneService.startSingleProcess();
+                logger.debug(" Start SchedulemcmcService: ");
+                mcmcService.startSingleProcess();
   
             } catch (Exception e) {
-                logger.warn("updateMilestoneService ", e);
+                logger.warn("updatemcmcService ", e);
             }
         }
     }

@@ -42,7 +42,7 @@ public class ScheduleRewardService {
     private FullPrunedBlockStore store;
 
     @Scheduled(fixedRateString = "${service.giveMoneyService.rate:10000}")
-    public void updateMilestoneService() {
+    public void updatemcmcService() {
         if (scheduleConfiguration.isGiveMoneyServiceActive()) {
             try {
                 logger.debug(" Start ScheduleGiveMoneyService");

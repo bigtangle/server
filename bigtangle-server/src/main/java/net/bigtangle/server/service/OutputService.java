@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.Token;
@@ -37,11 +36,9 @@ import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.KeyChainGroup;
-import net.bigtangle.wallet.Wallet;
 
 @Service
-public class WalletService {
+public class OutputService {
 
     public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs) throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
@@ -72,13 +69,7 @@ public class WalletService {
 
         return GetBalancesResponse.create(tokens, outputs, getTokename(outputs));
     }
-
-    public Wallet makeWallat(ECKey ecKey) {
-        KeyChainGroup group = new KeyChainGroup(networkParameters);
-        group.importKeys(ecKey);
-        return new Wallet(networkParameters, group);
-    }
-
+ 
     @Autowired
     private NetworkParameters networkParameters;
 

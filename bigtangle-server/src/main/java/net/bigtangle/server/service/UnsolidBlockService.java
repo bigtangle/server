@@ -46,7 +46,7 @@ public class UnsolidBlockService {
     private BlockService blockService;
 
     @Autowired
-    private MilestoneService milestoneService;
+    private MCMCService mcmcService;
 
     private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
 
@@ -146,7 +146,7 @@ public class UnsolidBlockService {
                     // if the block is there, now scan the rest unsolid
                     // blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        milestoneService.scanWaitingBlocks(req);
+                        mcmcService.scanWaitingBlocks(req);
                     }
                 } else {
                     blockRequester.requestBlock(storedBlock.missingdependencyHash());

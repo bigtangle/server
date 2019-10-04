@@ -58,7 +58,7 @@ import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.UserDataService;
-import net.bigtangle.server.service.WalletService;
+import net.bigtangle.server.service.OutputService;
 import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockStore;
 
@@ -73,7 +73,7 @@ public class DispatcherController {
     @Autowired
     private UserDataService userDataService;
     @Autowired
-    private WalletService walletService;
+    private OutputService walletService;
     @Autowired
     private BlockService blockService;
     @Autowired

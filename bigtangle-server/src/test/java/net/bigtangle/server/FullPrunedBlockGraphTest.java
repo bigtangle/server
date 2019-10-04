@@ -88,7 +88,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Generate mining reward block
         Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        milestoneService.update();
+        mcmcService.update();
 
         // Should exist now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -265,7 +265,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -423,7 +423,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
         blockGraph.confirm(block2.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         // Should be confirmed
@@ -706,7 +706,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -879,7 +879,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
         blockGraph.confirm(block2.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
 
         // Unconfirm
@@ -1175,7 +1175,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -1192,7 +1192,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -1248,7 +1248,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
@@ -1274,7 +1274,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx);
 
         // Confirm
-        milestoneService.update();
+        mcmcService.update();
         blockGraph.confirm(spenderBlock.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());
 
         // Should be confirmed now

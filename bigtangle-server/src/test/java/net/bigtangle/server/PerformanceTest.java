@@ -20,7 +20,7 @@ import net.bigtangle.core.Sha256Hash;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Ignore
-public class PerformanceMilestoneServiceTest extends AbstractIntegrationTest { 
+public class PerformanceTest extends AbstractIntegrationTest { 
     
     @Test
     public void testReorgMiningRewardLong() throws Exception {
@@ -49,10 +49,10 @@ public class PerformanceMilestoneServiceTest extends AbstractIntegrationTest {
         // Generate mining reward block
         Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        milestoneService.update();
+        mcmcService.update();
 
         // Mining reward block should go through
-        milestoneService.update();
+        mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
         // Generate more mining reward blocks
@@ -60,13 +60,13 @@ public class PerformanceMilestoneServiceTest extends AbstractIntegrationTest {
                 fusingBlock.getHash(), rollingBlock1.getHash());
         Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
-        milestoneService.update();
+        mcmcService.update();
 
         // No change
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
-        milestoneService.update();
+        mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -80,7 +80,7 @@ public class PerformanceMilestoneServiceTest extends AbstractIntegrationTest {
        // unsolidBlockService. reCheckUnsolidBlock();
         rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        milestoneService.update();
+        mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
@@ -93,7 +93,7 @@ public class PerformanceMilestoneServiceTest extends AbstractIntegrationTest {
             Block b = r2.createNextBlock(r1);
             blockGraph.add(b, true);
         }
-        milestoneService.update();
+        mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());

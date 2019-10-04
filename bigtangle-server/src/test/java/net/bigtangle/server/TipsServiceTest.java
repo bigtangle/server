@@ -129,7 +129,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -186,7 +186,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -204,7 +204,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        milestoneService.update();
+        mcmcService.update();
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -262,7 +262,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(block1, block1);
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -336,7 +336,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(block1, block1);
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -396,7 +396,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -465,7 +465,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
-        milestoneService.update();
+        mcmcService.update();
 
         boolean hit1 = false;
         boolean hit2 = false;
@@ -518,7 +518,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate reclaim blocks
         Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
         Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-        milestoneService.update();
+        mcmcService.update();
         
         // Ensure the relevant blocks are all confirmed
         blockGraph.confirm(order.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());

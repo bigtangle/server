@@ -78,7 +78,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.MilestoneService;
+import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
@@ -112,7 +112,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Autowired
     private ValidatorService validatorService;
     @Autowired
-    private MilestoneService milestoneService;
+    private MCMCService mcmcService;
 
     @Autowired
     private OrderTickerService tickerService;
@@ -231,7 +231,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check formal correctness of the block
         validatorService.checkFormalBlockSolidity(block, true);
     
-        if(!milestoneService.checkRewardReferencedBlocks(block)) {
+        if(!mcmcService.checkRewardReferencedBlocks(block)) {
             log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
             if (tryConnecting)
@@ -264,7 +264,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
             blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
-            milestoneService.runConsensusLogic(block);
+            mcmcService.runConsensusLogic(block);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();

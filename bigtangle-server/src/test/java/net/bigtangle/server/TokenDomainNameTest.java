@@ -158,7 +158,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
-        milestoneService.update();
+        mcmcService.update();
         {
              
             Token token = testCreateToken(walletKeys.get(1), "de",
@@ -168,7 +168,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(token.getTokenid(), keys.get(i), aesKey);
             }
-         milestoneService.update();
+         mcmcService.update();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", token.getTokenid());
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -198,7 +198,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         log.info("getTokensResponse : " + getTokensResponse);
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
-        milestoneService.update();
+        mcmcService.update();
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);

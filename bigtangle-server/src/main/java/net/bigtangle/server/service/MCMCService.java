@@ -49,8 +49,8 @@ import net.bigtangle.utils.Threading;
  *  This service offers maintenance functions to update the local state of the Tangle
  */
 @Service
-public class MilestoneService {
-    private static final Logger log = LoggerFactory.getLogger(MilestoneService.class);
+public class MCMCService {
+    private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
     private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
     @Autowired
@@ -69,17 +69,17 @@ public class MilestoneService {
 
     public void startSingleProcess() {
         if (!lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  MilestoneService running. Returning...");
+            log.debug(this.getClass().getName() + "  mcmcService running. Returning...");
             return;
         }
 
         try {
-            log.info("MilestoneService  started");
+            log.info("mcmcService  started");
             Stopwatch watch = Stopwatch.createStarted();
             update();
-            log.info("MilestoneService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
-            log.error("MilestoneService ", e);
+            log.error("mcmcService ", e);
         } finally {
             lock.unlock();
         }
@@ -135,7 +135,7 @@ public class MilestoneService {
      * @throws BlockStoreException
      */
 
-    protected final ReentrantLock lock = Threading.lock("milestoneService");
+    protected final ReentrantLock lock = Threading.lock("mcmcService");
 
     /**
      * the missing blocks are check, blocks behind the last confirmed blocks are
