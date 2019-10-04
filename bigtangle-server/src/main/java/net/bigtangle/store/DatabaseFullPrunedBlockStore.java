@@ -503,6 +503,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
             + "  INTO exchange_multisign (orderid, pubkey,sign) VALUES (?, ?,?)";
+    
+    protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -6343,4 +6345,46 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs)
+            throws BlockStoreException {
+        if (orderBlockHashs.isEmpty()) {
+            return new ArrayList<OrderCancel>();
+        }
+        List<OrderCancel> orderCancels = new ArrayList<OrderCancel>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            StringBuffer sql = new StringBuffer();
+            for (String s : orderBlockHashs) {
+                sql.append(",'").append(s).append("'");
+            }
+            preparedStatement = conn.get()
+                    .prepareStatement(SELECT_ORDERCANCEL_SQL + " AND orderblockhash IN (" + sql.substring(1) + ")");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                OrderCancel orderCancel = new OrderCancel();
+                orderCancel.setBlockHash(Sha256Hash.wrap(resultSet.getBytes("blockhash")));
+                orderCancel.setOrderBlockHash(Sha256Hash.wrap(resultSet.getBytes("orderblockhash")));
+                orderCancel.setConfirmed(resultSet.getBoolean("confirmed"));
+                orderCancel.setSpent(resultSet.getBoolean("spent"));
+                orderCancel.setSpenderBlockHash(Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")));
+                orderCancel.setTime(resultSet.getLong("time"));
+                orderCancels.add(orderCancel);
+            }
+            return orderCancels;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
 }
