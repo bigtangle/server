@@ -53,7 +53,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
         store.resetStore();
-
+        milestoneService.update();
         // Generate two conflicting blocks
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
@@ -298,7 +298,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
+        milestoneService.update();
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate another issuance slightly different
@@ -387,7 +387,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
+        milestoneService.update();
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
@@ -443,7 +443,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
+        milestoneService.update();
         Block block1 = null;
         {
             // Make a buy order for "test"s
@@ -883,7 +883,7 @@ public class MilestoneServiceTest extends AbstractIntegrationTest {
     public void blocksFromChainlenght() throws Exception {
         // create some blocks
         //testReorgMiningReward();
-
+        milestoneService.update();
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("start", "0");
         request.put("end", "0");

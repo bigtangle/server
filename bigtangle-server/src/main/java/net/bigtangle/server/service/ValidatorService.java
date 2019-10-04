@@ -107,7 +107,8 @@ public class ValidatorService {
     protected NetworkParameters networkParameters;
     @Autowired
     protected TokenDomainnameService tokenDomainnameService;
-
+    @Autowired
+    protected RewardService rewardService;
     @Autowired
     private NetworkParameters params;
 
@@ -161,131 +162,6 @@ public class ValidatorService {
         public long getDifficulty() {
             return difficulty;
         }
-    }
-
-    /**
-     * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-     * Pair.of(new difficulty + new perTxReward) here for new reward blocks.
-     * This is a prototype implementation. In the actual Spark implementation,
-     * the computational cost is not a problem, since it is instead
-     * backpropagated and calculated for free with delay. For more info, see
-     * notes.
-     * 
-     * @param prevTrunk
-     *            a predecessor block in the db
-     * @param prevBranch
-     *            a predecessor block in the db
-     * @param prevRewardHash
-     *            the predecessor reward
-     * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
-     *         perTxReward)
-     */
-    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash)
-            throws BlockStoreException {
-
-        // Count how many blocks from miners in the reward interval are approved
-        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
-        BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
-        // Read previous reward block's data
-        BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
-        long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
-        long prevToHeight = store.getRewardToHeight(prevRewardHash);
-        long prevDifficulty = prevRewardBlock.getBlock().getDifficultyTarget();
-        long fromHeight = prevToHeight + 1;
-        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(),
-                prevBranchBlock.getBlockEvaluation().getHeight()) - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
-
-        // Initialize
-        BlockWrap currentBlock = null, approvedBlock = null;
-        long currentHeight = Long.MAX_VALUE;
-        long totalRewardCount = 0;
-
-        // Go backwards by height
-        while ((currentBlock = blockQueue.poll()) != null) {
-            currentHeight = currentBlock.getBlockEvaluation().getHeight();
-
-            // Stop criterion: Block height lower than approved interval height
-            if (currentHeight < fromHeight)
-                break;
-
-            // If in relevant reward height interval, count it
-            if (currentHeight <= toHeight) {
-                totalRewardCount++;
-            }
-
-            // Continue with both approved blocks
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-        }
-
-        // New difficulty
-        long difficulty = calculateNextBlockDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                totalRewardCount);
-
-        // Build transaction for block
-        Transaction tx = new Transaction(networkParameters);
-        
-        // Get all blocks approved by previous reward blocks 
-        Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();        
-        Set<Sha256Hash> prevMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
-        long cutoffheight = blockService.getCutoffHeight(prevRewardHash);
-        
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks, cutoffheight);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks, cutoffheight);
-
-        // Build the type-specific tx data
-        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash, blocks, currChainLength);
-        tx.setData(rewardInfo.toByteArray());
-        tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
-        return new RewardBuilderResult(tx, difficulty);
-    }
-
-    private long calculateNextBlockDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
-            BlockWrap prevRewardBlock, long totalRewardCount) {
-        // The following equals current time by consensus rules
-        long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
-                prevBranchBlock.getBlock().getTimeSeconds());
-        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
-
-        BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
-        BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(NetworkParameters.TARGET_MAX_TPS));
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(totalRewardCount));
-
-        BigInteger maxNewTarget = prevTarget.multiply(BigInteger.valueOf(4));
-        BigInteger minNewTarget = prevTarget.divide(BigInteger.valueOf(4));
-
-        if (newTarget.compareTo(maxNewTarget) > 0) {
-            newTarget = maxNewTarget;
-        }
-
-        if (newTarget.compareTo(minNewTarget) < 0) {
-            newTarget = minNewTarget;
-        }
-
-        if (newTarget.compareTo(networkParameters.getMaxTarget()) > 0) {
-            // TODO logger.info("Difficulty hit proof of work limit: {}",
-            // newTarget.toString(16));
-            newTarget = networkParameters.getMaxTarget();
-        }
-
-        return Utils.encodeCompactBits(newTarget);
     }
 
     /**
@@ -1979,7 +1855,7 @@ public class ValidatorService {
         }
 
         // Ensure the new difficulty is set correctly
-        RewardBuilderResult result = makeReward(block.getPrevBlockHash(), block.getPrevBranchBlockHash(),
+        RewardBuilderResult result = rewardService.makeReward(block.getPrevBlockHash(), block.getPrevBranchBlockHash(),
                 rewardInfo.getPrevRewardHash());
         if (block.getDifficultyTarget() != result.getDifficulty()) {
             if (throwExceptions)

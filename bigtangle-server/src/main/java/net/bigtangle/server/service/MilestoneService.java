@@ -98,7 +98,7 @@ public class MilestoneService {
             update(Integer.MAX_VALUE);
         } catch (InterruptedException | ExecutionException e) {
             // ignore
-
+            log.debug("update  ", e);
         }
     }
 
@@ -113,15 +113,16 @@ public class MilestoneService {
             updateWeightAndDepth();
             updateRating();
         } catch (Exception e) {
+            log.debug("update  ", e);
         }
         try {
             blockGraph.chainlock.lock();
             // FIXME
-       //     store.beginDatabaseBatchWrite();
+           store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates);
-        //    store.commitDatabaseBatchWrite();
+            store.commitDatabaseBatchWrite();
         } catch (Exception e) {
-
+            log.debug("updateConfirmed ", e);
         } finally {
             blockGraph.chainlock.unlock();
         }
