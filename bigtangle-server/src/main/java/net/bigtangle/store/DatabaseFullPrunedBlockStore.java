@@ -107,7 +107,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
     public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
     public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
- 
+
     public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
     public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
@@ -277,20 +277,22 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE blockhash = ? AND collectinghash = ?";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = ? "
             + " WHERE blockhash = ? AND collectinghash = ?";
-      protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
+    protected final String SELECT_LOST_ORDERS_BEFORE_SQL = "SELECT blockhash"
             + " FROM blocks INNER JOIN orders ON orders.blockhash=blocks.hash"
             + " WHERE blocks.height <= ? AND orders.confirmed = 1  " + "AND orders.spent = 0 AND "
             + "orders.collectinghash=" + "0x0000000000000000000000000000000000000000000000000000000000000000"
             + afterSelect();
-      protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
-              + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
-              + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress";
-      protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE       + " FROM orders WHERE collectinghash = ?";
+    protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
+            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
+            + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress";
+    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
+            + " FROM orders WHERE collectinghash = ?";
 
     protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND collectinghash = ?";
     protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = ? AND collectinghash = ?";
-    protected final String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE        + " FROM orders WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE
+            + " FROM orders WHERE blockhash = ? AND collectinghash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
             + "  INTO orders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
             + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress) "
@@ -298,7 +300,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String INSERT_OrderCancel_SQL = getInsert()
             + " INTO ordercancel (blockhash, orderblockhash, confirmed, spent, spenderblockhash,time) "
-               + " VALUES (?, ?, ?, ?, ?,?)";
+            + " VALUES (?, ?, ?, ?, ?,?)";
+
+    protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
 
     protected final String INSERT_TOKENS_SQL = getInsert()
             + " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "
@@ -496,8 +500,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, hash, outputindex,  "
             + " FROM outputs ORDER BY hash, outputindex";
-    
-
 
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders ORDER BY blockhash, collectinghash";
@@ -557,27 +559,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
-     * instead of a hostname and password, and optionally allowing a schema to
-     * be specified.
+     * instead of a hostname and password, and optionally allowing a schema to be
+     * specified.
      * </p>
      *
-     * @param params
-     *            A copy of the NetworkParameters used.
-     * @param connectionURL
-     *            The jdbc url to connect to the database.
-     * @param fullStoreDepth
-     *            The number of blocks of history stored in full (something like
-     *            1000 is pretty safe).
-     * @param username
-     *            The database username.
-     * @param password
-     *            The password to the database.
-     * @param schemaName
-     *            The name of the schema to put the tables in. May be null if no
-     *            schema is being used.
-     * @throws BlockStoreException
-     *             If there is a failure to connect and/or initialise the
-     *             database.
+     * @param params         A copy of the NetworkParameters used.
+     * @param connectionURL  The jdbc url to connect to the database.
+     * @param fullStoreDepth The number of blocks of history stored in full
+     *                       (something like 1000 is pretty safe).
+     * @param username       The database username.
+     * @param password       The password to the database.
+     * @param schemaName     The name of the schema to put the tables in. May be
+     *                       null if no schema is being used.
+     * @throws BlockStoreException If there is a failure to connect and/or
+     *                             initialise the database.
      */
     public DatabaseFullPrunedBlockStore(NetworkParameters params, String connectionURL, int fullStoreDepth,
             @Nullable String username, @Nullable String password, @Nullable String schemaName)
@@ -769,16 +764,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * <p>
-     * If there isn't a connection on the {@link ThreadLocal} then create and
-     * store it.
+     * If there isn't a connection on the {@link ThreadLocal} then create and store
+     * it.
      * </p>
      * <p>
-     * This will also automatically set up the schema if it does not exist
-     * within the DB.
+     * This will also automatically set up the schema if it does not exist within
+     * the DB.
      * </p>
      * 
-     * @throws BlockStoreException
-     *             if successful connection to the DB couldn't be made.
+     * @throws BlockStoreException if successful connection to the DB couldn't be
+     *                             made.
      */
     protected void maybeConnect() throws BlockStoreException {
         try {
@@ -855,8 +850,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * </p>
      *
      * <p>
-     * This specifically checks for the 'settings' table and if it exists makes
-     * an assumption that the rest of the data structures are present.
+     * This specifically checks for the 'settings' table and if it exists makes an
+     * assumption that the rest of the data structures are present.
      * </p>
      *
      * @return If the tables exists.
@@ -881,10 +876,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Create the tables/block store in the database and
      * 
-     * @throws java.sql.SQLException
-     *             If there is a database error.
-     * @throws BlockStoreException
-     *             If the block store could not be created.
+     * @throws java.sql.SQLException If there is a database error.
+     * @throws BlockStoreException   If the block store could not be created.
      */
     private synchronized void createTables() throws SQLException, BlockStoreException {
         try {
@@ -938,10 +931,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * Create a new store for the given
      * {@link net.bigtangle.core.NetworkParameters}.
      * 
-     * @param params
-     *            The network.
-     * @throws BlockStoreException
-     *             If the store couldn't be created.
+     * @param params The network.
+     * @throws BlockStoreException If the store couldn't be created.
      */
     private void createNewStore(NetworkParameters params) throws BlockStoreException {
         try {
@@ -1470,11 +1461,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Resets the store by deleting the contents of the tables and
-     * reinitialising them.
+     * Resets the store by deleting the contents of the tables and reinitialising
+     * them.
      * 
-     * @throws BlockStoreException
-     *             If the tables couldn't be cleared and initialised.
+     * @throws BlockStoreException If the tables couldn't be cleared and
+     *                             initialised.
      */
     public void resetStore() throws BlockStoreException {
         maybeConnect();
@@ -1500,8 +1491,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Deletes the store by deleting the tables within the database.
      * 
-     * @throws BlockStoreException
-     *             If tables couldn't be deleted.
+     * @throws BlockStoreException If tables couldn't be deleted.
      */
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
@@ -5498,6 +5488,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
     @Override
     public void insertOrder(OrderRecord record) throws BlockStoreException {
         maybeConnect();
@@ -6506,6 +6497,47 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
             }
             return storedBlockHashes;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs)
+            throws BlockStoreException {
+        if (orderBlockHashs.isEmpty()) {
+            return new ArrayList<OrderCancel>();
+        }
+        List<OrderCancel> orderCancels = new ArrayList<OrderCancel>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            StringBuffer sql = new StringBuffer();
+            for (String s : orderBlockHashs) {
+                sql.append(",'").append(s).append("'");
+            }
+            preparedStatement = conn.get()
+                    .prepareStatement(SELECT_ORDERCANCEL_SQL + " AND orderblockhash IN (" + sql.substring(1) + ")");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                OrderCancel orderCancel = new OrderCancel();
+                orderCancel.setBlockHash(Sha256Hash.wrap(resultSet.getBytes("blockhash")));
+                orderCancel.setOrderBlockHash(Sha256Hash.wrap(resultSet.getBytes("orderblockhash")));
+                orderCancel.setConfirmed(resultSet.getBoolean("confirmed"));
+                orderCancel.setSpent(resultSet.getBoolean("spent"));
+                orderCancel.setSpenderBlockHash(Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")));
+                orderCancel.setTime(resultSet.getLong("time"));
+                orderCancels.add(orderCancel);
+            }
+            return orderCancels;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {

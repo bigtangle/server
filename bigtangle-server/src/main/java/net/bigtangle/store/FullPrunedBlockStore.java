@@ -506,6 +506,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException;
 
+    List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
+
     
 
 }
