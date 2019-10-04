@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -33,16 +34,25 @@ public class OrderdataService {
 
         List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses, tokenid);
 
-        // List<OrderRecord> closedOrders = store.getMyClosedOrders(address);
-        // TODO closed with part match (initialOrders - remainingOrders
-        // )+closedOrders
-        // List<OrderRecord> initialOrders =
-        // store.getMyInitialOpenOrders(address);
-        // List<OrderRecord> remainingOrders =
-        // store.getMyRemainingOpenOrders(address);
-        // if (spent)
-        // return OrderdataResponse.createOrderRecordResponse(closedOrders);
-        // else
+        HashSet<String> orderBlockHashs = new HashSet<String>();
+        for (OrderRecord orderRecord : allOrdersSorted) {
+            orderBlockHashs.add(orderRecord.getBlockHashHex());
+        }
+
+        List<OrderCancel> orderCancels = this.store.getOrderCancelByOrderBlockHash(orderBlockHashs);
+        HashMap<String, OrderCancel> orderCannelData = new HashMap<String, OrderCancel>();
+        for (OrderCancel orderCancel : orderCancels) {
+            orderCannelData.put(orderCancel.getOrderBlockHash().toString(), orderCancel);
+        }
+
+        for (OrderRecord orderRecord : allOrdersSorted) {
+            if (orderCannelData.containsKey(orderRecord.getBlockHashHex())) {
+                orderRecord.setCancelPending(true);
+            } else {
+                orderRecord.setCancelPending(false);
+            }
+        }
+
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
     }
 
