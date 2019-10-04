@@ -72,7 +72,7 @@ public class BlockRequester {
                 HashMap<String, String> requestParam = new HashMap<String, String>();
                 requestParam.put("hashHex", Utils.HEX.encode(hash.getBytes()));
                 try {
-                    data = OkHttp3Util.postAndGetBlock(s.trim() + "/" + ReqCmd.getBlock,
+                    data = OkHttp3Util.postAndGetBlock(s.trim() + "/" + ReqCmd.getBlockByHash,
                             Json.jsonmapper().writeValueAsString(requestParam));
                     blockService.addConnected(data, true);
                     break;

@@ -203,7 +203,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -232,7 +232,7 @@ public class PayOTCOrder {
         requestParam.put("orderid", this.orderid);
         requestParam.put("dataHex", Utils.HEX.encode(buf));
         requestParam.put("signtype", signtype);
-        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signTransaction.name(),
+        OkHttp3Util.postAndGetBlock(this.marketURL + ReqCmd.signOrder.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
     }
 
@@ -447,7 +447,7 @@ public class PayOTCOrder {
     private Exchange getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(this.marketURL + ReqCmd.exchangeInfo.name(),
+        String respone = OkHttp3Util.postString(this.marketURL + ReqCmd.getExchangeByOrderid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         ExchangeInfoResponse exchangeInfoResponse = Json.jsonmapper().readValue(respone, ExchangeInfoResponse.class);
         return exchangeInfoResponse.getExchange();
@@ -500,7 +500,7 @@ public class PayOTCOrder {
 
         requestParam.clear();
         requestParam.put("hexStr", payMultiSign_.getOutputHashHex());
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);

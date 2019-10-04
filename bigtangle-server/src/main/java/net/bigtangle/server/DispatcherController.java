@@ -198,14 +198,8 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getBlockByBlockHash: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = this.blockService.searchBlockByBlockHash(request);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case getBlock: {
+  
+            case getBlockByHash: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 if (request.get("hashHex") != null) {
@@ -233,7 +227,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getMultiSignWithAddress: {
+            case getTokenSignByAddress: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String address = (String) request.get("address");
@@ -242,7 +236,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getCountSign: {
+            case getTokenSigns: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
@@ -252,7 +246,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getMultiSignWithTokenid: {
+            case getTokenSignByTokenid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
@@ -262,20 +256,20 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case multiSign: {
+            case signToken: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.multiSign(block, false);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;
-            case signTransaction: {
+            case signOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.signTransaction(request);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getCalTokenIndex: {
+            case getTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
@@ -336,27 +330,15 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case getOutputWithKey: {
+            case getOutputByKey: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String hexStr = (String) request.get("hexStr");
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
                 this.outPrintJSONString(httpServletResponse, response);
             }
-                break;
-            case getVOSExecuteList: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String vosKey = (String) request.get("vosKey");
-                AbstractResponse response = vosExecuteService.getVOSExecuteList(vosKey);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case version: {
-                AbstractResponse response = settingService.clientVersion();
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
+                break; 
+ 
             case regSubtangle: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -378,26 +360,6 @@ public class DispatcherController {
                 String status = (String) request.get("status");
                 subtanglePermissionService.updateSubtanglePermission(pubkey, "", userdataPubkey, status);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
-            }
-                break;
-            case getSubtanglePermissionList: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String pubkey = (String) request.get("pubkey");
-                AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkey);
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case getAllSubtanglePermissionList: {
-                AbstractResponse response = subtanglePermissionService.getAllSubtanglePermissionList();
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-            case getSubtanglePermissionListByPubkeys: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                List<String> pubkeys = Json.jsonmapper().readValue(reqStr, List.class);
-                AbstractResponse response = subtanglePermissionService.getSubtanglePermissionList(pubkeys);
-                this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
             case getOrders: {
@@ -422,7 +384,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case queryPermissionedAddresses: {
+            case getTokenPermissionedAddresses: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 final String domainNameBlockHash = (String) request.get("domainNameBlockHash");
@@ -431,7 +393,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-            case findDomainNameBlockHash: {
+            case getDomainNameBlockHash: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 final String domainname = (String) request.get("domainname");
@@ -446,17 +408,8 @@ public class DispatcherController {
                  
             }
                 break;
-    
-            case exchangeMultiSignTransaction: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.signMultiTransaction(request);
-
-                this.outPrintJSONString(httpServletResponse, response);
-            }
-                break;
-
-            case exchangeInfo: {
+   
+            case getExchangeByOrderid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");

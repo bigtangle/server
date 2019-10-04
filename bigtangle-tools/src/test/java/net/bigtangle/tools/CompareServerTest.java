@@ -113,7 +113,7 @@ public class CompareServerTest extends AbstractIntegrationTest {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", blockhash);
-        byte[] data = OkHttp3Util.postAndGetBlock(server + ReqCmd.getBlock,
+        byte[] data = OkHttp3Util.postAndGetBlock(server + ReqCmd.getBlockByHash,
                 Json.jsonmapper().writeValueAsString(requestParam));
         if (data != null) {
             return networkParameters.getDefaultSerializer().makeBlock(data);

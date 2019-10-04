@@ -108,7 +108,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
-        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlock.name(),
+        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlockByHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
 
@@ -156,7 +156,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         // save block
         block = adjustSolve(block);
-        OkHttp3Util.post(contextRoot + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
     }
 
     @Test
@@ -583,33 +583,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             }
         }
     }
-
-    @Test
-    public void testSaveOVSExecuteBatch0() throws Exception {
-        ECKey outKey = new ECKey();
-        for (int i = 0; i < 10; i++) {
-            try {
-                this.testSaveOVSExecute(outKey);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        milestoneService.update();
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("vosKey", outKey.getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getVOSExecuteList.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        VOSExecuteListResponse vosExecuteListResponse = Json.jsonmapper().readValue(resp, VOSExecuteListResponse.class);
-
-        List<VOSExecute> vosExecutes = vosExecuteListResponse.getVosExecutes();
-        assertTrue(vosExecutes.size() == 1);
-
-        VOSExecute vosExecute = vosExecutes.get(0);
-        assertTrue((int) vosExecute.getExecute() == 10);
-    }
+ 
 
     public void testSaveOVSExecute(ECKey outKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

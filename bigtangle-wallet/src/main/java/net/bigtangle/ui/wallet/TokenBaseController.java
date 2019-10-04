@@ -196,7 +196,7 @@ public class TokenBaseController {
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
         requestParam.put("isSign", isSignCheckBox.isSelected());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         log.debug(response);
 

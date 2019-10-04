@@ -81,13 +81,13 @@ public class ScheduleOrderService {
             Map<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("blockhash", vm_deposit.getBlockhash());
             String response = OkHttp3Util.postString(
-                    scheduleConfiguration.getServerURL() + ReqCmd.getBlockByBlockHash.name(),
+                    scheduleConfiguration.getServerURL() + ReqCmd.getBlockByHash.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                     GetBlockEvaluationsResponse.class);
             List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
             if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
-                if (blockEvaluations.get(0).getRating() >= 75) {
+                if (blockEvaluations.get(0).getMilestone() >= 0) {
                     this.store.updateDepositStatus(vm_deposit.getUserid(), vm_deposit.getUseraccount(), "CONFIRM",
                             vm_deposit.getBlockhash());
                 }

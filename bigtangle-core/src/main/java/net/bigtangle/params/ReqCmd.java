@@ -5,26 +5,31 @@
 package net.bigtangle.params;
 
 public enum ReqCmd {
-
-    getTip, saveBlock, getOutputs, getBalances, findBlockEvaluation, getBlockByBlockHash, getBlock,
+   //Block
+    saveBlock, getBlockByHash, findBlockEvaluation, batchBlock,
     
-    blocksFromChainLength,  getOutputsHistory,adjustHeight, outputsOfTokenid,
+    getTip, adjustHeight,
+    //Chain
+    getMaxConfirmedReward, getAllConfirmedReward, blocksFromChainLength,
+    //Token
+    searchTokens, getTokenById, getTokenIndex, getTokenSignByAddress,
+
+    getTokenSignByTokenid, signToken, getTokenSigns,   getTokenPermissionedAddresses, getDomainNameBlockHash,
+    //Block Order
+    getOrders, getOTCMarkets, getOrdersTicker, signOrder,
+    //Outputs
+    getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,
+  
+    //payment 
+    launchPayMultiSign, payMultiSign,
+
+    getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
+    //Direct exchange
+    getExchangeByOrderid, saveExchange,
     
-    getMaxConfirmedReward,getAllConfirmedReward,
+    getUserData, userDataList,
+    //subtangle
+    regSubtangle, updateSubtangle;
 
-    searchTokens,  getTokenById,  getCalTokenIndex, 
-
-    getOrders, getOTCMarkets, getOrdersTicker,signTransaction,
-
-    getMultiSignWithAddress, getMultiSignWithTokenid, getOutputWithKey,
-
-    multiSign, getCountSign, launchPayMultiSign, payMultiSign, getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
-
-    getUserData, userDataList, getVOSExecuteList, version, batchBlock,
-
-    regSubtangle, getSubtanglePermissionList, getAllSubtanglePermissionList,
-
-    getSubtanglePermissionListByPubkeys, updateSubtangle, queryPermissionedAddresses, findDomainNameBlockHash,
-
-     exchangeInfo, exchangeMultiSignTransaction, saveExchange;
+   
 }

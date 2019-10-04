@@ -51,7 +51,7 @@ public class GiveMoneyUtils {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenId);
-        String resp2 = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
+        String resp2 = OkHttp3Util.postString(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2,
@@ -70,13 +70,13 @@ public class GiveMoneyUtils {
         block.addCoinbaseTransaction(ecKeys.get(0).getPubKey(), basecoin, tokenInfo);
         block.solve();
 
-        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.signToken.name(), block.bitcoinSerialize());
 
         for (ECKey ecKey : ecKeys) {
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(Configure.PARAMS).toBase58());
             String resp = OkHttp3Util.postString(
-                    Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
+                    Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                     Json.jsonmapper().writeValueAsString(requestParam0));
             System.out.println(resp);
 
@@ -109,7 +109,7 @@ public class GiveMoneyUtils {
             multiSignBies.add(multiSignBy0);
             MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
             transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
+            OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.signToken.name(), block0.bitcoinSerialize());
         }
     }
 

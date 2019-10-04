@@ -617,7 +617,7 @@ public class SendMoneyController {
         String outputStr = this.subtangleHashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getOutputWithKey.name(),
+        String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Address address = ECKey
                 .fromPublicOnly(Utils.HEX
@@ -873,7 +873,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -925,7 +925,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -1036,7 +1036,7 @@ public class SendMoneyController {
 
         requestParam.clear();
         requestParam.put("hexStr", payMultiSign_.getOutputHashHex() + ":" + payMultiSign_.getOutputindex());
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputWithKey.name(),
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.debug(resp);
 

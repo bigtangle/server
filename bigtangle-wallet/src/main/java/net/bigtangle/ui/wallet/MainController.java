@@ -173,29 +173,7 @@ public class MainController {
     public boolean checkVersion() throws Exception {
         return true;
     }
-    public boolean checkVersion1() throws Exception {
-        try {
-            String CONTEXT_ROOT = Main.versionserver;
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.version.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            SettingResponse settingResponse = Json.jsonmapper().readValue(resp, SettingResponse.class);
-            String version = settingResponse.getVersion();
-            int versionDiff = Main.compareVersion(version, Main.version);
-            if (versionDiff > 0) {
-                GuiUtils.informationalAlert("", Main.getText("needUpdate"), "");
-                searchPane.setVisible(false);
-                serverPane.setVisible(false);
-                buttonHBox.setVisible(false);
-                passwordHBox.setVisible(false);
-                return false;
-            }
-        } catch (Exception e) {
-            return true;
-        }
-        return true;
-    }
-
+    
     public void initTable(String addressString) throws Exception {
 
         Main.instance.getUtxoData().clear();
@@ -463,7 +441,7 @@ public class MainController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", Main.getString(utxoModel.getHashHex()));
 
-        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getBlock.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getBlockByHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block re = Main.params.getDefaultSerializer().makeBlock(data);
         Alert alert = new Alert(AlertType.INFORMATION);

@@ -1998,11 +1998,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        Block adjust = adjustSolve(block);
+        Block adjust = adjustSolveAndSign(block);
         return adjust;
     }
 
-    private Block adjustSolve(Block block) throws IOException, JsonParseException, JsonMappingException {
+    private Block adjustSolveAndSign(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
         String resp = OkHttp3Util.post(serverurl + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
         @SuppressWarnings("unchecked")
@@ -2012,7 +2012,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
         adjust. solve();
 
-        OkHttp3Util.post(serverurl + ReqCmd.multiSign.name(), adjust.bitcoinSerialize());
+        OkHttp3Util.post(serverurl + ReqCmd.signToken.name(), adjust.bitcoinSerialize());
         return adjust;
     }
 
@@ -2243,7 +2243,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getOutputWithKey.name(),
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -2395,7 +2395,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getCalTokenIndex.name(),
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
@@ -2404,7 +2404,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainNameBlockHash", token.getDomainNameBlockHash());
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.queryPermissionedAddresses.name(),
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
@@ -2417,7 +2417,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
         requestParam.put("token", token);
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.findDomainNameBlockHash.name(),
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getDomainNameBlockHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetDomainBlockHashResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
                 GetDomainBlockHashResponse.class);
@@ -2430,7 +2430,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String address = outKey.toAddress(params).toBase58();
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getMultiSignWithAddress.name(),
+        String resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -2463,7 +2463,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         
-        block=  adjustSolve(block);
+        block=  adjustSolveAndSign(block);
     }
 
     public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,
@@ -2516,7 +2516,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", hashHex);
 
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getBlock.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getBlockByHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         return params.getDefaultSerializer().makeBlock(data);
     }

@@ -28,7 +28,7 @@ public class TokenAction extends SimpleAction {
         try {
             for (ECKey outKey : this.account.walletKeys()) {
                 Block block = GiveMoneyUtils.createTokenBlock(outKey);
-                OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+                OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.signToken.name(), block.bitcoinSerialize());
             }
         } catch (Exception e) {
             logger.error("account name : {}, token action exception", account.getName(), e);

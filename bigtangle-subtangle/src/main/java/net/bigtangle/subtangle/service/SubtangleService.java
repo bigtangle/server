@@ -182,7 +182,7 @@ public class SubtangleService {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hashHex", blockHashHex);
         String contextRoot = subtangleConfiguration.getParentContextRoot();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlock.name(),
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlockByHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         return block;

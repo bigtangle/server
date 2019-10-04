@@ -254,7 +254,7 @@ public class TokenController extends TokenBaseController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -294,7 +294,7 @@ public class TokenController extends TokenBaseController {
         requestParam0.put("tokenid", rowdata.get("tokenid").toString());
         requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
         requestParam0.put("sign", 0);
-        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSigns.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse2 = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -323,7 +323,7 @@ public class TokenController extends TokenBaseController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -363,7 +363,7 @@ public class TokenController extends TokenBaseController {
         requestParam0.put("tokenid", rowdata.get("tokenid").toString());
         requestParam0.put("tokenindex", Long.parseLong(rowdata.get("tokenindex").toString()));
         requestParam0.put("sign", 0);
-        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCountSign.name(),
+        resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSigns.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse2 = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -497,7 +497,7 @@ public class TokenController extends TokenBaseController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid.getValue());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getMultiSignWithTokenid.name(),
+        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response,
@@ -554,7 +554,7 @@ public class TokenController extends TokenBaseController {
 
                 HashMap<String, String> requestParam00 = new HashMap<String, String>();
                 requestParam00.put("tokenid", tokenid.getValue().trim());
-                String resp2 = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getCalTokenIndex.name(),
+                String resp2 = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getTokenIndex.name(),
                         Json.jsonmapper().writeValueAsString(requestParam00));
 
                 TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
@@ -731,7 +731,7 @@ public class TokenController extends TokenBaseController {
         block.solve();
 
         // save block
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block.bitcoinSerialize());
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
         int errorcode = (Integer) respRes.get("errorcode");
@@ -912,7 +912,7 @@ public class TokenController extends TokenBaseController {
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", rowdata.get("address").toString());
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getMultiSignWithAddress.name(),
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
         // log.debug(resp);
 
@@ -952,7 +952,7 @@ public class TokenController extends TokenBaseController {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block0.bitcoinSerialize());
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
         initTableView();
         initMultisignTableView();
@@ -969,7 +969,7 @@ public class TokenController extends TokenBaseController {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
-        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getCalTokenIndex.name(),
+        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
@@ -1024,7 +1024,7 @@ public class TokenController extends TokenBaseController {
         block.solve();
 
         // save block
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.multiSign.name(), block.bitcoinSerialize());
+        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block.bitcoinSerialize());
         @SuppressWarnings("unchecked")
         HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
         int errorcode = (Integer) respRes.get("errorcode");

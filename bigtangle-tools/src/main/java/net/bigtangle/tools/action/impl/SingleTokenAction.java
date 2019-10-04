@@ -41,7 +41,7 @@ public class SingleTokenAction extends SimpleAction {
             public void run() {
                 try {
                     Block block = GiveMoneyUtils.createTokenBlock(ecKey);
-                    OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.multiSign.name(),
+                    OkHttp3Util.post(Configure.SIMPLE_SERVER_CONTEXT_ROOT + ReqCmd.signToken.name(),
                             block.bitcoinSerialize());
                 } catch (Exception e) {
                     logger.error("account name : {}, eckey : {}, single token action exception", account.getName(),
