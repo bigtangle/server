@@ -130,7 +130,7 @@ public abstract class NetworkParameters {
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 300000;
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
 
     /**
      * A "sigop" is a signature verification operation. Because they're
@@ -195,8 +195,7 @@ public abstract class NetworkParameters {
             - REWARD_MIN_HEIGHT_DIFFERENCE;
 
 
-    public static final int TARGET_TIMESPAN = 24 * 60 * 60; // 1 day per
-                                                            // difficulty cycle
+    public static final int TARGET_TIMESPAN = 86400; // 1 day per  difficulty cycle
     public static final int TARGET_SPACING = 15; // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
@@ -210,8 +209,8 @@ public abstract class NetworkParameters {
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
     //block number can be taken in a reward block,
-    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / blockhash 4bytes =  
-    public static final int MAX_BLOCKS_IN_REWARD =  MAX_DEFAULT_BLOCK_SIZE / 8;
+    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / 8  blockhash 4bytes =  
+    public static final int MAX_BLOCKS_IN_REWARD = 32768;
   
     // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 6;

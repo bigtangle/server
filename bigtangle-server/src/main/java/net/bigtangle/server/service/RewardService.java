@@ -97,17 +97,18 @@ public class RewardService {
      * @return the new block or block voted on
      * @throws Exception
      */
-    public Block performRewardVoting() {
+    public void performRewardVoting() {
         // Make new one
         try {
-            return createAndAddMiningRewardBlock();
+             Block reward = createAndAddMiningRewardBlock();
+             if(reward!=null) {
+                 logger.info(" reward block is created: "+ reward);
+             }
         } catch (InvalidTransactionDataException e) {
-            // This is not a problem
-            return null;
+            // This is not a problem 
         } catch (Exception e) {
             // This is not a problem
-            logger.debug("", e);
-            return null;
+            logger.debug("", e); 
         }
     }
 
