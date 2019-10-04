@@ -126,7 +126,7 @@ public abstract class NetworkParameters {
     /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
-     * Bitcoin can continue to grow. For now it exists as an anti-DoS measure to
+     * it can continue to grow. For now it exists as an anti-DoS measure to
      * avoid somebody creating a titanically huge but valid block and forcing
      * everyone to download/store it forever.
      */
@@ -209,7 +209,11 @@ public abstract class NetworkParameters {
     // the other two thirds are for each inclusion into consensus and each block
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
-
+    //block number can be taken in a reward block,
+    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / blockhash 4bytes =  
+    public static final int MAX_BLOCKS_IN_REWARD =  MAX_DEFAULT_BLOCK_SIZE / 8;
+  
+    // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 6;
 
     

@@ -392,7 +392,7 @@ public class Transaction extends ChildMessage {
         BigInteger totalOut = BigInteger.ZERO;
 
         for (TransactionOutput output : outputs) {
-            totalOut = totalOut .add(  output.getValue().getValue());
+            totalOut = totalOut.add(output.getValue().getValue());
         }
 
         return totalOut;
@@ -556,10 +556,11 @@ public class Transaction extends ChildMessage {
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-//            long t = readVarInt(8);
-//            long scriptLen = readVarInt((int) t);
-//            optimalEncodingMessageSize += 8 + 8 + 8 + VarInt.sizeOf(scriptLen) + scriptLen + VarInt.sizeOf(t) + t;
-//            cursor += scriptLen;
+            // long t = readVarInt(8);
+            // long scriptLen = readVarInt((int) t);
+            // optimalEncodingMessageSize += 8 + 8 + 8 +
+            // VarInt.sizeOf(scriptLen) + scriptLen + VarInt.sizeOf(t) + t;
+            // cursor += scriptLen;
             cursor += output.length;
             optimalEncodingMessageSize += output.length;
         }
@@ -791,7 +792,8 @@ public class Transaction extends ChildMessage {
      * 
      * @return the newly created input.
      */
-    public TransactionInput addInput(Sha256Hash spendBlockHash, Sha256Hash spendTxHash, long outputIndex, Script script) {
+    public TransactionInput addInput(Sha256Hash spendBlockHash, Sha256Hash spendTxHash, long outputIndex,
+            Script script) {
         return addInput(new TransactionInput(params, this, script.getProgram(),
                 new TransactionOutPoint(params, outputIndex, spendBlockHash, spendTxHash)));
     }
@@ -854,22 +856,26 @@ public class Transaction extends ChildMessage {
         return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false);
     }
 
-//    /**
-//     * Adds an input that points to the given output and contains a valid
-//     * signature for it, calculated using the signing key.
-//     */
-//    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey) {
-//        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey);
-//    }
-//
-//    /**
-//     * Adds an input that points to the given output and contains a valid
-//     * signature for it, calculated using the signing key.
-//     */
-//    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey, SigHash sigHash,
-//            boolean anyoneCanPay) {
-//        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay);
-//    }
+    // /**
+    // * Adds an input that points to the given output and contains a valid
+    // * signature for it, calculated using the signing key.
+    // */
+    // public TransactionInput addSignedInput(TransactionOutput output, ECKey
+    // signingKey) {
+    // return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(),
+    // signingKey);
+    // }
+    //
+    // /**
+    // * Adds an input that points to the given output and contains a valid
+    // * signature for it, calculated using the signing key.
+    // */
+    // public TransactionInput addSignedInput(TransactionOutput output, ECKey
+    // signingKey, SigHash sigHash,
+    // boolean anyoneCanPay) {
+    // return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(),
+    // signingKey, sigHash, anyoneCanPay);
+    // }
 
     /**
      * Removes all the outputs from this transaction. Note that this also
@@ -1366,21 +1372,22 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
-        if (this.getMemo()!=null && this.getMemo().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
+        if (this.getMemo() != null && this.getMemo().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
             throw new VerificationException("memo size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
 
-        if (this.getData()!=null && this.getData().length > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
-            throw new VerificationException(
-                    "getData size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
-
-        if (this.getDataClassName()!=null&& this.getDataClassName().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
-            throw new VerificationException(
-                    "getDataClassName size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
-
-        if (this.getDataSignature()!=null && this.getDataSignature().length > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
-            throw new VerificationException(
-                    "getDataSignature size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
-
+        if (this.getData() != null && this.getData().length > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE)
+            throw new VerificationException("getData size too large MAX " + NetworkParameters.MAX_DEFAULT_BLOCK_SIZE);
+        /* Check by this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE
+         * if (this.getDataClassName()!=null&& this.getDataClassName().length()
+         * > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE) throw new
+         * VerificationException( "getDataClassName size too large MAX " +
+         * NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+         * 
+         * if (this.getDataSignature()!=null && this.getDataSignature().length >
+         * NetworkParameters.MAX_TRANSACTION_MEMO_SIZE) throw new
+         * VerificationException( "getDataSignature size too large MAX " +
+         * NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
+         */
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
@@ -1487,7 +1494,6 @@ public class Transaction extends ChildMessage {
         return memo;
     }
 
-  
     /**
      * Set the transaction {@link #memo}. It can be used to record the memo of
      * the payment request that initiated the transaction.
@@ -1496,11 +1502,11 @@ public class Transaction extends ChildMessage {
     public void setMemo(MemoInfo memoInfo) {
         try {
             this.memo = memoInfo.toJson();
-        } catch (JsonProcessingException e) { 
+        } catch (JsonProcessingException e) {
         }
         unCache();
     }
-    
+
     public byte[] getData() {
         return data;
     }

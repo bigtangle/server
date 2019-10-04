@@ -134,7 +134,7 @@ public class UnsolidBlockService {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
-    private void updateSolidity()
+    public void updateSolidity()
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
         /*
@@ -142,7 +142,8 @@ public class UnsolidBlockService {
          */
         long cutoffHeight = blockService.getCutoffHeight();
         List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
-        logger.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size());
+        logger.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size()
+        + " from cutoff Height: " +cutoffHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
                 Block req = blockService.getBlock(storedBlock.missingdependencyHash());

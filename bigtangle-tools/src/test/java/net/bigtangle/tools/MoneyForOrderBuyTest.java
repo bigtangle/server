@@ -32,7 +32,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
 
         }
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-        log.debug("block " + b.toString());
+        log.debug("block " + b==null? "block is null": b.toString());
 
     }
 

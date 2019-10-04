@@ -66,8 +66,8 @@ public class BlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-//    @Autowired
-//    private ValidatorService validatorService;
+    // @Autowired
+    // private ValidatorService validatorService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -189,10 +189,14 @@ public class BlockService {
         if (block == null)
             return false;
 
+        if (  block.getBlock().getHeight() <= cutoffHeight 
+                || blocks.size () > NetworkParameters.MAX_BLOCKS_IN_REWARD )
+            return false;
+        
         if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
-
-        // Add this block and add all of its required unconfirmed blocks
+         
+        // Add this block and add all of its required  blocks.
         blocks.add(block.getBlockHash());
 
         Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
@@ -212,7 +216,7 @@ public class BlockService {
      * collection. if a block is missing somewhere, returns false.
      * 
      * @param blocks
-     * @param cutoffHeight 
+     * @param cutoffHeight
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
@@ -223,7 +227,7 @@ public class BlockService {
 
         if (block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
             return true;
-        
+
         // Cutoff
         if (block.getBlockEvaluation().getHeight() <= cutoffHeight)
             return true;
@@ -389,8 +393,9 @@ public class BlockService {
             try {
                 if (!blockgraph.add(block, allowUnsolid)) {
                     if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                    blockRequester.requestBlocks(block);}
-                } 
+                        blockRequester.requestBlocks(block);
+                    }
+                }
                 return Optional.of(block);
             } catch (Exception e) {
                 logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
@@ -457,11 +462,11 @@ public class BlockService {
             }
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
-            
+
             if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
                 return 0;
-            
-            currPrevRewardHash = currRewardInfo.getPrevRewardHash(); 
+
+            currPrevRewardHash = currRewardInfo.getPrevRewardHash();
         }
         return store.getRewardToHeight(currPrevRewardHash);
     }
@@ -479,21 +484,22 @@ public class BlockService {
             }
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
-            
+
             if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
                 break;
-            
-            currPrevRewardHash = currRewardInfo.getPrevRewardHash(); 
+
+            currPrevRewardHash = currRewardInfo.getPrevRewardHash();
         }
         return prevMilestoneBlocks;
     }
-    
+
     public Set<Sha256Hash> getDirectRequiredBlockHashes(Block block) {
         Set<Sha256Hash> predecessors = new HashSet<>();
         predecessors.add(block.getPrevBlockHash());
         predecessors.add(block.getPrevBranchBlockHash());
         return predecessors;
     }
+
     /**
      * Returns all blocks that must be confirmed if this block is confirmed.
      * 
