@@ -6,6 +6,7 @@ package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import javafx.scene.control.Button;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -86,6 +88,8 @@ public class OrderController extends ExchangeController {
     public TextField address4searchTextField;
     @FXML
     public TextField market4searchTextField;
+    
+    public Button cancelButton;
 
     @FXML
     public ComboBox<String> addressComboBox;
@@ -141,6 +145,8 @@ public class OrderController extends ExchangeController {
     public TableColumn<Map<String, Object>, String> priceCol;
     @FXML
     public TableColumn<Map<String, Object>, String> amountCol;
+    
+    public TableColumn<Map<String, Object>, String> cancelPendingCol;
     public Set<String> tempAddressSet;
     public ChangeListener<String> myListener;
     public ChangeListener<String> myListenerA;
@@ -360,12 +366,25 @@ public class OrderController extends ExchangeController {
         stateCol.setCellValueFactory(new MapValueFactory("state"));
         priceCol.setCellValueFactory(new MapValueFactory("price"));
         amountCol.setCellValueFactory(new MapValueFactory("amount"));
+        cancelPendingCol.setCellValueFactory(new MapValueFactory("cancelPending"));
 
         orderidCol.setCellFactory(TextFieldTableCell.forTableColumn());
         addressCol.setCellFactory(TextFieldTableCell.forTableColumn());
         tokenidCol.setCellFactory(TextFieldTableCell.forTableColumn());
 
         orderTable.setItems(orderData);
+		orderTable.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
+			@Override
+			public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+				Map<String, Object> rowData = orderTable.getSelectionModel().getSelectedItem();
+				if ((Boolean) rowData.get("cancelPending")){
+					cancelButton.setDisable(true);
+				}
+				else {
+					cancelButton.setDisable(false);
+				}
+			}
+		});
     }
 
     private void getOTCOrder(Map<String, Object> requestParam, ObservableList<Map<String, Object>> orderData,

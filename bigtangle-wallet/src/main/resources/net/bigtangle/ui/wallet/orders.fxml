@@ -30,7 +30,7 @@
 										<TableColumn fx:id="validdatetoCol" prefWidth="83.0" text="%validdateTo" />
 										
 										<TableColumn fx:id="orderidCol" prefWidth="108.0" text="%orderid" />
-								
+								<TableColumn fx:id="cancelPendingCol" prefWidth="60.0" text="cancelPending" />
 									
 
 									</columns>
@@ -48,7 +48,7 @@
 					
                         <CheckBox fx:id="mineCB" layoutX="165.0" layoutY="146.0" mnemonicParsing="false" selected="true" text="%yes" />
                         <Label layoutX="43.0" layoutY="147.0" prefHeight="15.0" prefWidth="112.0" text="%mineOrder" />
-                        <Button layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />
+                        <Button fx:id="cancelButton" layoutX="711.0" layoutY="557.0" mnemonicParsing="false" onAction="#cancelMyOrder" text="%cancelOrder" />
 							</children>
 						</AnchorPane>
 					</content>

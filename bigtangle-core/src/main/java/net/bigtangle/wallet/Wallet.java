@@ -2505,6 +2505,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
             map.put("address", ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
             map.put("initialBlockHashHex", orderRecord.getBlockHashHex());
+            map.put("cancelPending", orderRecord.isCancelPending());
             // map.put("state", Main.getText( (String)
             // requestParam.get("state")));
             orderData.add(map);
