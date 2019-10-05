@@ -16,10 +16,10 @@
 			<timeBasedFileNamingAndTriggeringPolicy
 				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
 				<!-- or whenever the file size reaches 50MB -->
-				<maxFileSize>50MB</maxFileSize>
+				<maxFileSize>10MB</maxFileSize>
 			</timeBasedFileNamingAndTriggeringPolicy>
 			<!-- keep 30 days' worth of history -->
-			<maxHistory>30</maxHistory>
+			<maxHistory>10</maxHistory>
 		</rollingPolicy>
 		<encoder>
 			<Pattern>"%date{yyyy-MM-dd'T'HH:mm:ss.SSSZ, Europe/Berlin}" [%thread]

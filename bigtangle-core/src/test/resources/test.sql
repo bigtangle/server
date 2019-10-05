@@ -7,11 +7,15 @@ select count( *) from unsolidblocks   where inserttime < 1515432033 ;
 select   *  from unsolidblocks order by inserttime asc   ;
 select * from txreward order by chainlength desc;
 SELECT block, height, blocktype FROM blocks WHERE milestone>9;
-select * from blocks where height < 222 ;
-select * from blocks where height > 6150 order by height asc limit 500 ;
+select * from blocks where height < 750 ;
+select * from blocks order by height desc limit 500 ;
+select * from blocks where height < 700 order by height desc limit 500 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
+select * from blocks where confirmed=1 order by height desc limit 500 ;
 select * from orders where spent=0 and confirmed=1  ;
+
+select * from blocks where hash = 0x00003ea668739eb196b27ddb5903180e6a84305e5b13f5dcd5ab78f9dc6b3f6b;
 
  SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
@@ -21,19 +25,28 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1  and
 select  missingdependency, height from unsolidblocks where directlymissing=1
 select * from blocks where hash =373;
 
+select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
+select * from blocks where hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
+select * from blocks where blocktype=12 ;
 select * from blocks where confirmed=1 ;
+select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.blocktype=12 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 
+select * from outputs  where spent=1 and confirmed=1 ;
 select * from outputs  where spent=0 and confirmed=1 ;
 select * from orders  where spent=0 and confirmed=1 ;
 select * from ordercancel
 update blocks set milestone=0    where height=0
+select * from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
+select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 
+select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
+
+select * from blocks where blocktype> 9 and milestone =  37 ;
 OUTPUTS
 select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
 select * from orders   ;
 select * from txreward   ;
-select * from ordermatching   ;
 select * from matching   ;
 select * from  multisignaddress
 select * from  multisign

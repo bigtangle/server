@@ -29,9 +29,10 @@ public class BeforeStartup {
         if (serverConfiguration.getCreatetable()) {
             store.create();
         }
-        unsolidBlockService.startSingleProcess();
-        blockStreamHandler.runStream();
         serverConfiguration.setServiceReady(true);
+         unsolidBlockService.startSingleProcess();
+        blockStreamHandler.runStream();
+      
     }
     @Autowired
     private UnsolidBlockService unsolidBlockService;

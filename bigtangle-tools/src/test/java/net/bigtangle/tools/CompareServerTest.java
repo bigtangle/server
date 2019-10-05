@@ -23,16 +23,15 @@ public class CompareServerTest extends AbstractIntegrationTest {
 
         while (true) {
             try {
-            testCheckToken(HTTPS_BIGTANGLE_ORG);
+                //   testCheckToken(HTTPS_BIGTANGLE_LOCAL);
+              testCheckToken(HTTPS_BIGTANGLE_ORG);
 
-            testCheckToken(HTTPS_BIGTANGLE_LOCAL);
-            // diff(HTTPS_BIGTANGLE_ORG, HTTPS_BIGTANGLE_DE);
+                // diff(HTTPS_BIGTANGLE_ORG, HTTPS_BIGTANGLE_DE);
 
-            Thread.sleep(30000);
-            }
-            catch (Throwable e) {
+                Thread.sleep(30000);
+            } catch (Throwable e) {
                 e.printStackTrace();
-    
+
             }
         }
 

@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
@@ -78,9 +77,6 @@ public class BlockService {
 
     @Autowired
     private ServerConfiguration serverConfiguration;
-
-    @Autowired
-    private BlockRequester blockRequester;
 
     @Autowired
     protected TipsService tipService;
@@ -390,9 +386,9 @@ public class BlockService {
 
             try {
                 if (!blockgraph.add(block, allowUnsolid)) {
-                    if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                        blockRequester.requestBlocks(block);
-                    }
+//                    if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+//                        blockRequester.requestBlocks(block);
+//                    }
                 }
                 return Optional.of(block);
             } catch (Exception e) {
@@ -444,7 +440,7 @@ public class BlockService {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
         TXReward confirmedAtHeightReward = store.getConfirmedAtHeightReward(chainlength);
-        return confirmedAtHeightReward.getToHeight();
+        return store.get(confirmedAtHeightReward.getBlockHash()).getHeight();
     }
 
     public long getCutoffHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
@@ -466,7 +462,7 @@ public class BlockService {
 
             currPrevRewardHash = currRewardInfo.getPrevRewardHash();
         }
-        return store.getRewardToHeight(currPrevRewardHash);
+        return store.get(currPrevRewardHash).getHeight();
     }
 
     Set<Sha256Hash> getPastMilestoneBlocks(Sha256Hash prevRewardHash) throws BlockStoreException {
