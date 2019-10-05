@@ -6,7 +6,6 @@
 package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -36,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Address;
@@ -78,10 +76,6 @@ import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
-import net.bigtangle.core.response.GetOutputsResponse;
-import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.core.response.OrderdataResponse;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.MCMCService;
@@ -90,7 +84,6 @@ import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
-import net.bigtangle.utils.OkHttp3Util;
 
 /**
  * <p>
