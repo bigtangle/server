@@ -1325,7 +1325,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      */
     public OrderMatchingResult generateOrderMatching(Block block) throws BlockStoreException {
-        Map<ByteBuffer, TreeMap<String, Long>> pubKey2Proceeds = new HashMap<>();
+        TreeMap<ByteBuffer, TreeMap<String, Long>> pubKey2Proceeds = new TreeMap<>();
 
         // Get previous order matching block
         Sha256Hash prevHash = null;

@@ -486,14 +486,19 @@ public class MCMCService {
                 // Build milestone forwards.
                 for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
 
-                    // Sanity check: if my predecessors are still not fully
+                    // If my predecessors are still not fully
                     // solid or invalid, there must be something wrong.
+                    // Already checked, hence reject block.
                     Set<Sha256Hash> allRequiredBlockHashes = blockService
                             .getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
                     for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
                         if (store.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {
                             log.error("Predecessors are not solidified. This should not happen.");
-                            throw new RuntimeException("Predecessors are not solidified. This should not happen.");
+
+                            // Solidification forward with failState
+                            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
+                            runConsensusLogic(store.get(oldLongestChainEnd));
+                            return false;
                         }
                     }
 
@@ -538,25 +543,20 @@ public class MCMCService {
                             solidityState = SolidityState.getFailState();
 
                             // Solidification forward with failState
-
                             blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, false);
-
                             runConsensusLogic(store.get(oldLongestChainEnd));
                             return false;
                         }
 
                         // Otherwise, all predecessors exist and were at least
                         // solid > 0,
-                        // so we should be able to confirm all of the
-                        // predecessors.
+                        // so we should be able to confirm everything
+                        blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
                         while (!allApprovedNewBlocks.isEmpty()) {
                             @SuppressWarnings("unchecked")
                             HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
                             validatorService.removeWhereIneligible(nowApprovedBlocks);
                             validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
-                            // Only here the current milestone block is
-                            // eligible, so readd it:
-                            nowApprovedBlocks.add(newMilestoneBlock);
 
                             // Confirm the addable blocks and remove them from
                             // the list
@@ -572,14 +572,21 @@ public class MCMCService {
                         // blocks
                         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getBlockHash());
                         store.updateAllConfirmedToMilestone(milestoneNumber);
-                    }
-
-                    // Solidification forward
-                    try {
-                        blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
-                        scanWaitingBlocks(newMilestoneBlock.getBlock());
-                    } catch (BlockStoreException e) {
-                        throw e;
+                        
+                        // Solidification forward
+                        try {
+                            scanWaitingBlocks(newMilestoneBlock.getBlock());
+                        } catch (BlockStoreException e) {
+                            throw e;
+                        }
+                    } else {
+                        // Solidification forward
+                        try {
+                            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
+                            scanWaitingBlocks(newMilestoneBlock.getBlock());
+                        } catch (BlockStoreException e) {
+                            throw e;
+                        }
                     }
                 }
             }
