@@ -577,7 +577,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block b14 = createAndAddNextBlock(b5link, b8link);
         Block bOrphan1 = createAndAddNextBlock(b1, b1);
         Block bOrphan5 = createAndAddNextBlock(b5link, b5link);
-        unsolidBlockService.updateSolidity();
+       // unsolidBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());

@@ -43,12 +43,7 @@ public class TransactionTest {
         tx = FakeTxBuilder.createFakeTx(PARAMS);
     }
 
-    @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
-    public void tooHuge() throws Exception {
-        tx.getInput(0).setScriptBytes(new byte[NetworkParameters.MAX_DEFAULT_BLOCK_SIZE]);
-        tx.verify();
-    }
-
+  
     @Test(expected = VerificationException.DuplicatedOutPoint.class)
     public void duplicateOutPoint() throws Exception {
         TransactionInput input = tx.getInput(0);

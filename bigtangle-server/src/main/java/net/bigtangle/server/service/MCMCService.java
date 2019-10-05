@@ -403,6 +403,7 @@ public class MCMCService {
         }
 
         // Get all blocks approved by previous reward blocks
+        long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
         Set<Sha256Hash> allMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
         allMilestoneBlocks.addAll(rewardInfo.getBlocks());
 
@@ -410,6 +411,8 @@ public class MCMCService {
             BlockWrap block = store.getBlockWrap(hash);
             if (block == null)
                 return false;
+            if (block.getBlock().getHeight() <= cutoffHeight)
+                throw new VerificationException("Referenced blocks are below cutoff height.");
 
             Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
             for (Sha256Hash reqHash : requiredBlocks) {
@@ -445,7 +448,7 @@ public class MCMCService {
                 newMilestoneBlocks.add(store.getBlockWrap(newestBlock.getHash()));
                 BlockWrap splitPoint = null;
                 Sha256Hash prevHash = prevRewardHash;
-                for (int i = 0; i < currChainLength; i++) {
+                for (int i = 0; i <= currChainLength; i++) {
                     splitPoint = store.getBlockWrap(prevHash);
                     prevHash = store.getRewardPrevBlockHash(prevHash);
 
@@ -514,11 +517,13 @@ public class MCMCService {
                     if (solidityState.isSuccessState()) {
 
                         long cutoffHeight = blockService.getCutoffHeight();
-
+                        RewardInfo currRewardInfo = RewardInfo.parse(newMilestoneBlock.getBlock().getTransactions().get(0).getData());
+                        
                         // Find conflicts in the dependency set
                         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-                        blockService.addRequiredUnconfirmedBlocksTo(allApprovedNewBlocks, newMilestoneBlock,
-                                cutoffHeight);
+                        for (Sha256Hash hash : currRewardInfo.getBlocks())
+                            allApprovedNewBlocks.add(store.getBlockWrap(hash));
+                        allApprovedNewBlocks.add(newMilestoneBlock);
 
                         // If anything is already spent, no-go
                         boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
@@ -530,6 +535,15 @@ public class MCMCService {
                                         return true;
                                     }
                                 });
+//                        Optional<ConflictCandidate> spentInput = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+//                                .flatMap(i -> i.stream()).filter(c -> {
+//                                    try {
+//                                        return validatorService.hasSpentDependencies(c);
+//                                    } catch (BlockStoreException e) {
+//                                        e.printStackTrace();
+//                                        return true;
+//                                    }
+//                                }).findFirst();
 
                         // If any conflicts exist between the current set of
                         // blocks, no-go
@@ -552,21 +566,25 @@ public class MCMCService {
                         // solid > 0,
                         // so we should be able to confirm everything
                         blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
-                        while (!allApprovedNewBlocks.isEmpty()) {
-                            @SuppressWarnings("unchecked")
-                            HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
-                            validatorService.removeWhereIneligible(nowApprovedBlocks);
-                            validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
-
-                            // Confirm the addable blocks and remove them from
-                            // the list
-                            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-                            for (BlockWrap approvedBlock : nowApprovedBlocks)
-                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
-                                        cutoffHeight);
-
-                            allApprovedNewBlocks.removeAll(nowApprovedBlocks);
-                        }
+//                        while (!allApprovedNewBlocks.isEmpty()) {
+//                            @SuppressWarnings("unchecked")
+//                            HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
+//                            validatorService.removeWhereIneligible(nowApprovedBlocks);
+//                            validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
+//
+//                            // Confirm the addable blocks and remove them from
+//                            // the list
+//                            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+//                            for (BlockWrap approvedBlock : nowApprovedBlocks)
+//                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
+//                                        cutoffHeight);
+//
+//                            allApprovedNewBlocks.removeAll(nowApprovedBlocks);
+//                        }
+                        HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+                        for (BlockWrap approvedBlock : allApprovedNewBlocks)
+                            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
+                                    cutoffHeight);
 
                         // Set the milestone on all confirmed non-milestone
                         // blocks

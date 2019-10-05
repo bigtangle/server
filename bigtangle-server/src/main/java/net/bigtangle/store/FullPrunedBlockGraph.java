@@ -6,6 +6,7 @@
 package net.bigtangle.store;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Address;
@@ -76,6 +78,10 @@ import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
+import net.bigtangle.core.response.GetOutputsResponse;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.OrderdataResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.MCMCService;
@@ -84,6 +90,7 @@ import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
+import net.bigtangle.utils.OkHttp3Util;
 
 /**
  * <p>
@@ -207,40 +214,43 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
-         
-        
+
+        boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             chainlock.lock();
             try {
-            return  addChain(block, allowUnsolid, true); 
+                a= addChain(block, allowUnsolid, true);
             } finally {
-                chainlock.unlock();   
+                chainlock.unlock();
             }
-        }else {
-            return  addNonChain(block, allowUnsolid);
-             
+        } else {
+             a= addNonChain(block, allowUnsolid);
+            
         }
+ 
+        return a;
     }
 
-    public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
 
+    public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
+        
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
         block.verifyTransactions();
 
         // Check formal correctness of the block
         validatorService.checkFormalBlockSolidity(block, true);
-    
-        if(!mcmcService.checkRewardReferencedBlocks(block)) {
-            log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
+
+        if (!mcmcService.checkRewardReferencedBlocks(block)) {
+            log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
             if (tryConnecting)
                 tryConnectingOrphans();
             return false;
         }
-        
+
         SolidityState solidityState = validatorService.checkSolidity(block, true);
-        
+
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
         if (!allowUnsolid) {
@@ -262,7 +272,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Accept the block
         try {
-            blockStore.beginDatabaseBatchWrite();
+        //    blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
             mcmcService.runConsensusLogic(block);
             blockStore.commitDatabaseBatchWrite();
@@ -418,7 +428,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * spent and adding new UTXOs to the db.
      * 
      * @param blockHash
-     * @param cutoffHeight 
+     * @param cutoffHeight
      * @throws BlockStoreException
      * @throws IOException
      * @throws JsonMappingException
@@ -438,8 +448,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
-        Block block = blockWrap.getBlock();
-        
+//        Block block = blockWrap.getBlock();
+
         // Cutoff
         if (blockEvaluation.getHeight() <= cutoffHeight)
             return;
@@ -452,10 +462,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
 
         // Connect all approved blocks first if not traversed already
-        if (!traversedBlockHashes.contains(block.getPrevBlockHash()))
-            confirmUntil(block.getPrevBlockHash(), traversedBlockHashes, cutoffHeight);
-        if (!traversedBlockHashes.contains(block.getPrevBranchBlockHash()))
-            confirmUntil(block.getPrevBranchBlockHash(), traversedBlockHashes, cutoffHeight);
+//        Set<Sha256Hash> allRequiredBlockHashes = blockService.getAllRequiredBlockHashes(block);
+//        for (Sha256Hash req : allRequiredBlockHashes) {
+//            confirmUntil(req, traversedBlockHashes, cutoffHeight);
+//        }
 
         // Confirm the block
         confirmBlock(blockWrap);
@@ -1239,13 +1249,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void connectCancelOrder(Block block) throws BlockStoreException {
         try {
             OrderCancelInfo info = OrderCancelInfo.parse(block.getTransactions().get(0).getData());
-            OrderCancel record = new OrderCancel(info.getBlockHash() );
+            OrderCancel record = new OrderCancel(info.getBlockHash());
             record.setBlockHash(block.getHash());
             blockStore.insertCancelOrder(record);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
     private void connectOrder(Block block) throws BlockStoreException {
         try {
             OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
@@ -1862,19 +1873,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         return totalRewardCount;
     }
-    
 
     /**
-     * For each block in orphanBlocks, see if we can now fit it on top of the chain and if so, do so.
+     * For each block in orphanBlocks, see if we can now fit it on top of the
+     * chain and if so, do so.
      */
     private void tryConnectingOrphans() throws VerificationException, BlockStoreException {
         checkState(chainlock.isHeldByCurrentThread());
-        // For each block in our orphan list, try and fit it onto the head of the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at the end of the round try again until
+        // For each block in our orphan list, try and fit it onto the head of
+        // the chain. If we succeed remove it
+        // from the list and keep going. If we changed the head of the list at
+        // the end of the round try again until
         // we can't fit anything else on the top.
         //
-        // This algorithm is kind of crappy, we should do a topo-sort then just connect them in order, but for small
+        // This algorithm is kind of crappy, we should do a topo-sort then just
+        // connect them in order, but for small
         // numbers of orphan blocks it does OK.
+        log.debug("Orphan  size = {}", orphanBlocks.size());
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
@@ -1885,31 +1900,34 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 Block prev = blockStore.get(orphanBlock.block.getPrevBlockHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
-                    if (log.isDebugEnabled())
-                        log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
-                   
+                    // if (log.isDebugEnabled())
+                    // log.debug("Orphan block {} is not connectable right now",
+                    // orphanBlock.block.getHash());
+
                     continue;
                 }
                 // Otherwise we can connect it now.
-                // False here ensures we don't recurse infinitely downwards when connecting huge chains.
+                // False here ensures we don't recurse infinitely downwards when
+                // connecting huge chains.
                 log.info("Connected orphan {}", orphanBlock.block.getHash());
-                addChain(orphanBlock.block, false,  false);
-                iter.remove();
-                blocksConnectedThisRound++;
+                if (addChain(orphanBlock.block, false, false)) {
+                    iter.remove();
+                    blocksConnectedThisRound++;
+                }
             }
             if (blocksConnectedThisRound > 0) {
                 log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
-        
+
         if (orphanBlocks.size() > 100)
             orphanBlocks.clear();
     }
-    
 
     /**
-     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
-     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
+     * Returns the hashes of the currently stored orphan blocks and then deletes
+     * them from this objects storage. Used by Peer when a filter exhaustion
+     * event has occurred and thus any orphan blocks that have been downloaded
      * might be inaccurate/incomplete.
      */
     public Set<Sha256Hash> drainOrphanBlocks() {

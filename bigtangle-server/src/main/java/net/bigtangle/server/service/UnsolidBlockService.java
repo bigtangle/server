@@ -4,7 +4,13 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import static org.junit.Assert.assertTrue;
+
+import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,14 +19,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.response.GetOutputsResponse;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.OrderdataResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 
 /**
@@ -48,26 +65,26 @@ public class UnsolidBlockService {
     @Autowired
     private MCMCService mcmcService;
 
-    private static final Logger logger = LoggerFactory.getLogger(UnsolidBlockService.class);
+    private static final Logger log = LoggerFactory.getLogger(UnsolidBlockService.class);
 
     protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
 
     public void startSingleProcess() {
         if (!lock.tryLock()) {
-            logger.debug(this.getClass().getName() + " UnsolidBlockService running. Returning...");
+            log.debug(this.getClass().getName() + " UnsolidBlockService running. Returning...");
             return;
         }
 
         try {
-            logger.debug(" Start updateUnsolideServiceSingle: ");
+            log.debug(" Start updateUnsolideServiceSingle: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
             blockRequester.diff();
             // deleteOldUnsolidBlock();
             // updateSolidity();
-            logger.debug(" end  updateUnsolideServiceSingle: ");
+            log.debug(" end  updateUnsolideServiceSingle: ");
         } catch (Exception e) {
-            logger.warn("updateUnsolideService ", e);
+            log.warn("updateUnsolideService ", e);
         } finally {
             lock.unlock();
             ;
@@ -111,7 +128,7 @@ public class UnsolidBlockService {
                 }
             }
         } catch (Exception e) {
-            logger.debug("", e);
+            log.debug("", e);
         }
     }
 
@@ -135,7 +152,7 @@ public class UnsolidBlockService {
          */
         long cutoffHeight = blockService.getCutoffHeight();
         List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
-        logger.debug(
+        log.debug(
                 "getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff Height: " + cutoffHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
@@ -156,4 +173,78 @@ public class UnsolidBlockService {
 
     }
 
+    public void testCheckToken() throws JsonProcessingException, Exception {
+        String server = "http://localhost:8088/";
+        Map<String, BigInteger> tokensums = tokensum(server);
+        Set<String> tokenids = tokensums.keySet();
+
+        for (String tokenid : tokenids) {
+            Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
+                    tokenid);
+
+            testCheckToken(server, tokenid, tokensum);
+        }
+    }
+
+    public void testCheckToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", tokenid);
+        String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        // log.info("getOutputsResponse : " + getOutputsResponse);
+        Coin sumUnspent = Coin.valueOf(0l, tokenid);
+        // Coin sumCoinbase = Coin.valueOf(0l, tokenid);
+        for (UTXO u : getOutputsResponse.getOutputs()) {
+
+            if (u.isConfirmed() && !u.isSpent())
+                sumUnspent = sumUnspent.add(u.getValue());
+        }
+
+        Coin ordersum = ordersum(tokenid, server);
+
+        log.info("sumUnspent : " + sumUnspent);
+        log.info("ordersum : " + ordersum);
+        // log.info("sumCoinbase : " + sumCoinbase);
+
+        log.info("tokensum : " + tokensum);
+
+        log.info("  ordersum + : sumUnspent = " + sumUnspent.add(ordersum));
+
+        if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
+            assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
+        else {
+            assertTrue(tokensum.compareTo(sumUnspent.add(ordersum)) <= 0);
+        }
+        // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
+        // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+        // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+
+    }
+
+    public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        Coin sumUnspent = Coin.valueOf(0l, tokenid);
+        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+            if (orderRecord.getOfferTokenid().equals(tokenid)) {
+                sumUnspent = sumUnspent.add(Coin.valueOf(orderRecord.getOfferValue(), tokenid));
+            }
+        }
+        return sumUnspent;
+    }
+
+    public Map<String, BigInteger> tokensum(String server) throws JsonProcessingException, Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("name", null);
+        String response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+
+        return orderdataResponse.getAmountMap();
+    }
 }
