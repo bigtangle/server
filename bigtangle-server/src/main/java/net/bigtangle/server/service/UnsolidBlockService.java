@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import static org.junit.Assert.assertTrue;
-
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -211,15 +209,16 @@ public class UnsolidBlockService {
 
         log.info("  ordersum + : sumUnspent = " + sumUnspent.add(ordersum));
 
-        if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
-            assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
-        else {
-            assertTrue(tokensum.compareTo(sumUnspent.add(ordersum)) <= 0);
+        if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if(!tokensum.equals(sumUnspent.add(ordersum))) {
+                log.warn("tokensum.equals(sumUnspent.add(ordersum)" );
+            } 
+    }else {
+            if(tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
+                log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0" ); 
+            }
         }
-        // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
-        // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
-        // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
-
+     
     }
 
     public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {

@@ -30,7 +30,7 @@ public class BeforeStartup {
             store.create();
         }
         serverConfiguration.setServiceReady(true);
-      //  unsolidBlockService.startSingleProcess();
+         unsolidBlockService.startSingleProcess();
         blockStreamHandler.runStream();
       
     }
