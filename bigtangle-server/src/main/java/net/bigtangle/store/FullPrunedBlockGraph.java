@@ -80,6 +80,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.OrderTickerService;
+import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
@@ -111,9 +112,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
+ 
     @Autowired
-    private MCMCService mcmcService;
-
+    private RewardService rewardService;
     @Autowired
     private OrderTickerService tickerService;
 
@@ -234,7 +235,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check formal correctness of the block
         validatorService.checkFormalBlockSolidity(block, true);
 
-        if (!mcmcService.checkRewardReferencedBlocks(block)) {
+        if (!rewardService.checkRewardReferencedBlocks(block)) {
             log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
             if (tryConnecting)
@@ -267,7 +268,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         try {
              blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
-            mcmcService.runConsensusLogic(block);
+            rewardService.runConsensusLogic(block);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();

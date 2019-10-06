@@ -47,9 +47,9 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // Manuell test
 @Ignore
-public class SubtangleIntegrationTests extends AbstractIntegrationTest {
+public class SubtangleTests extends AbstractIntegrationTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(SubtangleIntegrationTests.class);
+    private static final Logger logger = LoggerFactory.getLogger(SubtangleTests.class);
 
     public void createTokenSubtangleId(ECKey ecKey) throws Exception {
         byte[] pubKey = ecKey.getPubKey();

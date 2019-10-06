@@ -61,7 +61,7 @@ public class SyncBlockService {
     private BlockService blockService;
 
     @Autowired
-    private MCMCService mcmcService;
+    private RewardService rewardService;
 
     private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
 
@@ -74,15 +74,15 @@ public class SyncBlockService {
         }
 
         try {
-            log.debug(" Start updateUnsolideServiceSingle: ");
+            log.debug(" Start  SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
             blockRequester.diff();
             // deleteOldUnsolidBlock();
             // updateSolidity();
-            log.debug(" end  updateUnsolideServiceSingle: ");
+            log.debug(" end SyncBlockService Single: ");
         } catch (Exception e) {
-            log.warn("updateUnsolideService ", e);
+            log.warn("SyncBlockService ", e);
         } finally {
             lock.unlock();
             ;
@@ -160,7 +160,7 @@ public class SyncBlockService {
                     // if the block is there, now scan the rest unsolid
                     // blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        mcmcService.scanWaitingBlocks(req);
+                        rewardService.scanWaitingBlocks(req);
                     }
                 } else {
                     blockRequester.requestBlock(storedBlock.missingdependencyHash());
