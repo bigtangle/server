@@ -186,10 +186,12 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
+        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash())
+                )
             return true;
 
-        if (block.getBlock().getHeight() <= cutoffHeight) {
+        if (block.getBlock().getHeight() <= cutoffHeight
+                &&  ! block.getBlock().isBLOCKTYPE_INITIAL()) {
             throw new VerificationException(
                     "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
         }
@@ -227,7 +229,8 @@ public class BlockService {
             return true;
 
         // Cutoff
-        if (block.getBlockEvaluation().getHeight() <= cutoffHeight){
+        if (block.getBlockEvaluation().getHeight() <= cutoffHeight
+                &&  ! block.getBlock().isBLOCKTYPE_INITIAL()){
             throw new VerificationException(
                     "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
         }

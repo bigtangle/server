@@ -274,6 +274,11 @@ public class Block extends Message {
         super(params, payloadBytes, offset, serializer, length);
     }
 
+    public boolean isBLOCKTYPE_INITIAL() {
+            
+    return  getBlockType() ==  Type.BLOCKTYPE_INITIAL ;
+        
+    }
     /**
      * Parse transactions from the block.
      * 
