@@ -227,8 +227,12 @@ public class ValidatorService {
         // specified block in combination with the currently included blocks
         @SuppressWarnings("unchecked")
         HashSet<BlockWrap> allApprovedUnconfirmedBlocks = (HashSet<BlockWrap>) currentApprovedUnconfirmedBlocks.clone();
-        if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block, cutoffHeight))
-            throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
+        try {
+            if (!blockService.addRequiredUnconfirmedBlocksTo(allApprovedUnconfirmedBlocks, block, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
+        } catch (VerificationException e) {
+            return false;
+        }
 
         // If this set of blocks is eligible, all is fine
         return isEligibleForApprovalSelection(allApprovedUnconfirmedBlocks);
@@ -364,9 +368,8 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     private Set<BlockWrap> findWhereCurrentlyIneligible(Set<BlockWrap> blocksToAdd) {
-        return new HashSet<BlockWrap>();
-//        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
-//                .collect(Collectors.toSet());
+        return blocksToAdd.stream().filter(b -> b.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -468,11 +471,23 @@ public class ValidatorService {
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
+        HashSet<BlockWrap> cutoffBlocks = new HashSet<>();
         for (BlockWrap winningBlock : initialBlocks) {
-            if (!blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock, cutoffHeight))
-                throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
+            try {
+                HashSet<BlockWrap> newBlocks = new HashSet<>();
+                if (!blockService.addRequiredUnconfirmedBlocksTo(newBlocks, winningBlock, cutoffHeight))
+                    throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
+                winningBlocks.addAll(newBlocks);
+            } catch (VerificationException e) {
+                blocksToAdd.add(winningBlock);
+            }
             blockService.addConfirmedApproversTo(winningBlocks, winningBlock);
         }
+        
+        for (BlockWrap b : cutoffBlocks) {
+            blockService.removeBlockAndApproversFrom(winningBlocks, b);
+        }
+        
         HashSet<BlockWrap> losingBlocks = new HashSet<>(winningBlocks);
 
         // Sort conflicts internally by descending rating, then cumulative
@@ -530,6 +545,7 @@ public class ValidatorService {
             }
         }
 
+        // TODO why does this contain confirmed blocks
         losingBlocks.removeAll(winningBlocks);
 
         return losingBlocks;
@@ -1815,6 +1831,7 @@ public class ValidatorService {
         }
 
         // Ensure fromHeight is starting from prevToHeight+1
+        // TODO ensure this collects only blocks in block list or in milestone
         if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Invalid fromHeight");

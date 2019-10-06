@@ -413,20 +413,32 @@ public class RewardService {
 
                 // Build milestone forwards.
                 for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
+                    
+                    long cutoffHeight = blockService.getCutoffHeight();
+                    RewardInfo currRewardInfo = RewardInfo.parse(newMilestoneBlock.getBlock().getTransactions().get(0).getData());
+                    Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
+                    
+                    for (Sha256Hash hash : milestoneSet) {
+                        BlockWrap block = store.getBlockWrap(hash);
+                        if (block == null)
+                            throw new VerificationException("Referenced block is null.");
+                        if (block.getBlock().getHeight() <= cutoffHeight)
+                            throw new VerificationException("Referenced blocks are below cutoff height.");
 
-                    // If my predecessors are still not fully
-                    // solid or invalid, there must be something wrong.
-                    // Already checked, hence reject block.
-                    Set<Sha256Hash> allRequiredBlockHashes = blockService
-                            .getAllRequiredBlockHashes(newMilestoneBlock.getBlock());
-                    for (Sha256Hash requiredBlockHash : allRequiredBlockHashes) {
-                        if (store.getBlockEvaluation(requiredBlockHash).getSolid() != 2) {
-                            log.error("Predecessors are not solidified. This should not happen.");
+                        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+                        for (Sha256Hash reqHash : requiredBlocks) {
+                            BlockWrap req = store.getBlockWrap(reqHash);
+                            if (req == null)
+                                throw new VerificationException("Required block is null.");
 
-                            // Solidification forward with failState
-                            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
-                            runConsensusLogic(store.get(oldLongestChainEnd));
-                            return false;
+                            if (req != null && req.getBlockEvaluation().getMilestone() < 0
+                                    && !milestoneSet.contains(reqHash)) {
+                                log.error("Predecessors are not in milestone.");
+                                // Solidification forward with failState
+                                blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
+                                runConsensusLogic(store.get(oldLongestChainEnd));
+                                return false;
+                            }
                         }
                     }
 
@@ -440,13 +452,10 @@ public class RewardService {
 
                     // Check: If all is ok, try confirming this milestone.
                     if (solidityState.isSuccessState()) {
-
-                        long cutoffHeight = blockService.getCutoffHeight();
-                        RewardInfo currRewardInfo = RewardInfo.parse(newMilestoneBlock.getBlock().getTransactions().get(0).getData());
                         
                         // Find conflicts in the dependency set
                         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-                        for (Sha256Hash hash : currRewardInfo.getBlocks())
+                        for (Sha256Hash hash : milestoneSet)
                             allApprovedNewBlocks.add(store.getBlockWrap(hash));
                         allApprovedNewBlocks.add(newMilestoneBlock);
 

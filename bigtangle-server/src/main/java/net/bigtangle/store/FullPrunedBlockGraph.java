@@ -1131,6 +1131,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             break;
         case Invalid:
+            
             blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
             break;
         }

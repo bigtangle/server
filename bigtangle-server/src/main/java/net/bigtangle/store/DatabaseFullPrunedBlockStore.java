@@ -1588,7 +1588,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
             Block block = params.getDefaultSerializer().makeBlock(resultSet.getBytes("block"));
-            block.verifyHeader();
             return new BlockWrap(block, blockEvaluation, params);
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);

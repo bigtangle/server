@@ -41,6 +41,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
@@ -184,12 +185,12 @@ public class BlockService {
             Collection<Sha256Hash> otherBlocks, long cutoffHeight) throws BlockStoreException {
         if (block == null)
             return false;
-
-        if (block.getBlock().getHeight() <= cutoffHeight)
-            return true;
         
         if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
+
+        if (block.getBlock().getHeight() <= cutoffHeight)
+            throw new VerificationException("Block is cut off.");
          
         // Add this block and add all of its required  blocks.
         blocks.add(block.getBlockHash());
@@ -225,7 +226,7 @@ public class BlockService {
 
         // Cutoff
         if (block.getBlockEvaluation().getHeight() <= cutoffHeight)
-            return true;
+            throw new VerificationException("Block is cut off.");
 
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
