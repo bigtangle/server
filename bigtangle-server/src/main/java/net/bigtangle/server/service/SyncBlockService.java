@@ -6,6 +6,7 @@ package net.bigtangle.server.service;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -175,30 +176,34 @@ public class SyncBlockService {
         BigInteger unspent;
         BigInteger order;
     }
-    public void checkToken() throws JsonProcessingException, Exception {
-        String server = "http://localhost:8088/";
+    public void checkToken(String server, Map<String,Set<Tokensums> > result) throws JsonProcessingException, Exception {
+        //String server = "http://localhost:8088/";
+        Set<Tokensums> tokensumset = new HashSet<Tokensums>();
+        result.put(server, tokensumset);
+        
         Map<String, BigInteger> tokensums = tokensum(server);
+        
         Set<String> tokenids = tokensums.keySet();
 
         for (String tokenid : tokenids) {
             Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
                     tokenid);
 
-            checkToken(server, tokenid, tokensum);
+            checkToken(server, tokenid, tokensum,  result.get(server));
         }
     }
 
-    public void checkToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
+    public void checkToken(String server, String tokenid, Coin tokensum, Set<Tokensums> tokensums ) throws JsonProcessingException, Exception {
+   
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-        // log.info("getOutputsResponse : " + getOutputsResponse);
+ 
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
-        // Coin sumCoinbase = Coin.valueOf(0l, tokenid);
-        for (UTXO u : getOutputsResponse.getOutputs()) {
-
+       
+        for (UTXO u : getOutputsResponse.getOutputs()) { 
             if (u.isConfirmed() && !u.isSpent())
                 sumUnspent = sumUnspent.add(u.getValue());
         }

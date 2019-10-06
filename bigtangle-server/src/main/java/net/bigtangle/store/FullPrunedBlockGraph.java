@@ -78,7 +78,6 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SolidityState;
@@ -112,7 +111,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
- 
+
     @Autowired
     private RewardService rewardService;
     @Autowired
@@ -208,26 +207,28 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
-
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             chainlock.lock();
             try {
-                a= addChain(block, allowUnsolid, true);
+                a = addChain(block, allowUnsolid, true);
             } finally {
                 chainlock.unlock();
             }
         } else {
-             a= addNonChain(block, allowUnsolid);
-            
+            a = addNonChain(block, allowUnsolid); 
         }
- 
+        try {
+            updateTip(block);
+        } catch (Exception e) {
+            // ignore this, as it could be dead lock as delete two previous.
+            log.debug("", e);
+        }
         return a;
     }
 
-
     public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
-        
+
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
         block.verifyTransactions();
@@ -266,7 +267,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Accept the block
         try {
-             blockStore.beginDatabaseBatchWrite();
+            blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
             rewardService.runConsensusLogic(block);
             blockStore.commitDatabaseBatchWrite();
@@ -278,6 +279,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
         if (tryConnecting)
             tryConnectingOrphans();
+
         return true;
     }
 
@@ -442,7 +444,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
-//        Block block = blockWrap.getBlock();
+        // Block block = blockWrap.getBlock();
 
         // Cutoff
         if (blockEvaluation.getHeight() <= cutoffHeight)
@@ -456,10 +458,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
 
         // Connect all approved blocks first if not traversed already
-//        Set<Sha256Hash> allRequiredBlockHashes = blockService.getAllRequiredBlockHashes(block);
-//        for (Sha256Hash req : allRequiredBlockHashes) {
-//            confirmUntil(req, traversedBlockHashes, cutoffHeight);
-//        }
+        // Set<Sha256Hash> allRequiredBlockHashes =
+        // blockService.getAllRequiredBlockHashes(block);
+        // for (Sha256Hash req : allRequiredBlockHashes) {
+        // confirmUntil(req, traversedBlockHashes, cutoffHeight);
+        // }
 
         // Confirm the block
         confirmBlock(blockWrap);
@@ -1123,12 +1126,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } else {
                 // Else normal update
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
-
-                // Update tips table
-                blockStore.deleteTip(block.getPrevBlockHash());
-                blockStore.deleteTip(block.getPrevBranchBlockHash());
-                blockStore.deleteTip(block.getHash());
-                blockStore.insertTip(block.getHash());
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                 solidifyReward(block);
@@ -1141,6 +1138,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
             break;
         }
+    }
+
+    private void updateTip(Block block) throws BlockStoreException {
+        // Update tips table
+        blockStore.deleteTip(block.getPrevBlockHash());
+        blockStore.deleteTip(block.getPrevBranchBlockHash());
+        blockStore.deleteTip(block.getHash());
+        blockStore.insertTip(block.getHash());
     }
 
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
@@ -1883,12 +1888,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // This algorithm is kind of crappy, we should do a topo-sort then just
         // connect them in order, but for small
         // numbers of orphan blocks it does OK.
-    
+
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
-            if(orphanBlocks.size()> 0) {
-            log.debug("Orphan  size = {}", orphanBlocks.size());}
+            if (orphanBlocks.size() > 0) {
+                log.debug("Orphan  size = {}", orphanBlocks.size());
+            }
             Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();
