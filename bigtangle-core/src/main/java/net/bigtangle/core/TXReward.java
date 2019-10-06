@@ -31,7 +31,6 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
         this.chainLength = chainLength;
     }
 
-     
     public long getToHeight() {
         return toHeight;
     }
@@ -39,8 +38,6 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
     public void setToHeight(long toHeight) {
         this.toHeight = toHeight;
     }
-
-    
 
     public long getDifficulty() {
         return difficulty;
@@ -66,6 +63,10 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
         this.prevBlockHash = prevBlockHash;
     }
 
-    
+    @Override
+    public String toString() {
+        return "TXReward [toHeight=" + toHeight + ", \n prevBlockHash=" + prevBlockHash + ", \n difficulty="
+                + difficulty + ", \n chainLength=" + chainLength + "]";
+    }
 
 }

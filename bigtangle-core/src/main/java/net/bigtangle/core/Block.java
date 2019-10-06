@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CoinbaseDisallowedException;
@@ -607,6 +608,14 @@ public class Block extends Message {
             s.append("   ").append(transactions.size()).append(" transaction(s):\n");
             for (Transaction tx : transactions) {
                 s.append(tx);
+            }
+        }
+        if(blockType== Type.BLOCKTYPE_REWARD) {
+            try {
+                RewardInfo   rewardInfo = RewardInfo.parse(getTransactions().get(0).getData());
+                s.append(     rewardInfo.  toString());
+            } catch (Exception e) {
+               //ignore throw new RuntimeException(e);
             }
         }
         return s.toString();

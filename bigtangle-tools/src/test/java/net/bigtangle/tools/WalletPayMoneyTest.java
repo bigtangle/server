@@ -24,15 +24,15 @@ public class WalletPayMoneyTest extends AbstractIntegrationTest {
         this.wallet1();
         this.wallet2();
 
-        walletAppKit1.wallet().setServerURL(HTTPS_BIGTANGLE_DE);
-        walletAppKit2.wallet().setServerURL(HTTPS_BIGTANGLE_DE);
+        walletAppKit1.wallet().setServerURL(TESTSERVER1);
+        walletAppKit2.wallet().setServerURL(TESTSERVER1);
 
         // checkBalance(Coin.valueOf(100, testPub), wallet1Keys.get(0));
 
         List<WalletAppKit> walletAppKits = new ArrayList<WalletAppKit>();
         for (int i = 10; i < 20; i++) {
             WalletAppKit walletAppKit = this.createAndInitWallet("bigtangle" + i);
-            walletAppKit.wallet().setServerURL(HTTPS_BIGTANGLE_DE);
+            walletAppKit.wallet().setServerURL(TESTSERVER1);
             walletAppKits.add(walletAppKit);
         }
 

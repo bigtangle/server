@@ -14,12 +14,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 public class RewardInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 6516115233185538213L;
-
+    private long chainlength; 
     private long fromHeight; 
     private long toHeight; 
     private Sha256Hash prevRewardHash;
     private Set<Sha256Hash> blocks;
-    private long chainlength; 
+
     
     public RewardInfo() {
     }
@@ -92,5 +92,13 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         RewardInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, RewardInfo.class);
         return tokenInfo;
     }
+
+    @Override
+    public String toString() {
+        return "RewardInfo [chainlength=" + chainlength + ", \n fromHeight=" + fromHeight + ", \n toHeight=" + toHeight
+                + ", \n prevRewardHash=" + prevRewardHash + ", \n referenced block size =" + blocks.size() + "]";
+    }
+
+    
     
 }

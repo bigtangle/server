@@ -34,7 +34,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         super();
         maxTarget =  new BigInteger(
                 "578960377169117509212217050695880916496095398817113098493422368414323410");
-
+        
         maxTargetReward =  new BigInteger(
                 "5789603771691175092122170506958809164960953988171130984934223684143234");
 

@@ -4180,8 +4180,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private TXReward setReward(ResultSet resultSet) throws SQLException {
         return new TXReward(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
                 resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
+                Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
                 Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-                Sha256Hash.wrap(resultSet.getBytes("prevblockhash")), resultSet.getLong("difficulty"),
+                resultSet.getLong("difficulty"),
                 resultSet.getLong("chainlength"));
     }
 
