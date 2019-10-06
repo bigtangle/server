@@ -217,13 +217,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
         } else {
             a = addNonChain(block, allowUnsolid); 
-        }
-        try {
-            updateTip(block);
-        } catch (Exception e) {
-            // ignore this, as it could be dead lock as delete two previous.
-            log.debug("", e);
-        }
+        } 
+    
         return a;
     }
 
@@ -1126,6 +1121,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } else {
                 // Else normal update
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
+                updateTip(block);
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                 solidifyReward(block);
