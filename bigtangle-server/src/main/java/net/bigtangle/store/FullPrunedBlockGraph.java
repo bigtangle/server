@@ -265,7 +265,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Accept the block
         try {
-        //    blockStore.beginDatabaseBatchWrite();
+             blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
             mcmcService.runConsensusLogic(block);
             blockStore.commitDatabaseBatchWrite();
