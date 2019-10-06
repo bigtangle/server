@@ -185,14 +185,16 @@ public class BlockService {
             Collection<Sha256Hash> otherBlocks, long cutoffHeight) throws BlockStoreException {
         if (block == null)
             return false;
-        
+
         if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
 
-        if (block.getBlock().getHeight() <= cutoffHeight)
-            throw new VerificationException("Block is cut off.");
-         
-        // Add this block and add all of its required  blocks.
+        if (block.getBlock().getHeight() <= cutoffHeight) {
+            throw new VerificationException(
+                    "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
+        }
+
+        // Add this block and add all of its required blocks.
         blocks.add(block.getBlockHash());
 
         Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
@@ -225,9 +227,10 @@ public class BlockService {
             return true;
 
         // Cutoff
-        if (block.getBlockEvaluation().getHeight() <= cutoffHeight)
-            throw new VerificationException("Block is cut off.");
-
+        if (block.getBlockEvaluation().getHeight() <= cutoffHeight){
+            throw new VerificationException(
+                    "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
+        }
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
 
@@ -387,9 +390,9 @@ public class BlockService {
 
             try {
                 if (!blockgraph.add(block, allowUnsolid)) {
-//                    if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-//                        blockRequester.requestBlocks(block);
-//                    }
+                    // if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+                    // blockRequester.requestBlocks(block);
+                    // }
                 }
                 return Optional.of(block);
             } catch (Exception e) {
@@ -487,7 +490,7 @@ public class BlockService {
         }
         return prevMilestoneBlocks;
     }
-    
+
     /**
      * Returns all blocks that must be confirmed if this block is confirmed.
      * 
