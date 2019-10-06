@@ -1882,10 +1882,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // This algorithm is kind of crappy, we should do a topo-sort then just
         // connect them in order, but for small
         // numbers of orphan blocks it does OK.
-        log.debug("Orphan  size = {}", orphanBlocks.size());
+    
         int blocksConnectedThisRound;
         do {
             blocksConnectedThisRound = 0;
+            if(orphanBlocks.size()> 0) {
+            log.debug("Orphan  size = {}", orphanBlocks.size());}
             Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();

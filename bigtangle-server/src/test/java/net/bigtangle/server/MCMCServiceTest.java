@@ -227,7 +227,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // Make a fusing block
         Block rollingBlock = conflictBlock1.createNextBlock(conflictBlock2);
         blockGraph.add(rollingBlock, true);
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
@@ -266,7 +266,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true);
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
@@ -396,7 +396,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         // Let block 1 win
         createAndAddNextBlock(block1, block2);
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed());
@@ -577,7 +577,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block b14 = createAndAddNextBlock(b5link, b8link);
         Block bOrphan1 = createAndAddNextBlock(b1, b1);
         Block bOrphan5 = createAndAddNextBlock(b5link, b5link);
-       // unsolidBlockService.updateSolidity();
+       // syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());

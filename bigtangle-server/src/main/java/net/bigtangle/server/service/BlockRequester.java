@@ -225,7 +225,7 @@ public class BlockRequester {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
-                mcmcService.update();
+              //  mcmcService.update();
             }
             // mcmcService.updateMilestone();
         }

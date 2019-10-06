@@ -77,7 +77,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-       // unsolidBlockService. reCheckUnsolidBlock();
+       // syncBlockService. reCheckUnsolidBlock();
         rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         mcmcService.update();

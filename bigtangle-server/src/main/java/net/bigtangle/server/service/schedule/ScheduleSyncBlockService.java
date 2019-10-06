@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.service.UnsolidBlockService;
+import net.bigtangle.server.service.SyncBlockService;
 
 @Component
 @EnableAsync
-public class ScheduleUnsolidBlockService {
+public class ScheduleSyncBlockService {
     
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
     @Autowired
-    private UnsolidBlockService unsolidBlockService;
+    private SyncBlockService syncBlockService;
     @Autowired
     ServerConfiguration serverConfiguration;
     /*
@@ -32,7 +32,7 @@ public class ScheduleUnsolidBlockService {
     @Scheduled(fixedRate = 5000)
     public void updateUnsolideService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
-            unsolidBlockService.startSingleProcess();
+            syncBlockService.startSingleProcess();
         }
 
     }

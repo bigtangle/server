@@ -23,8 +23,8 @@ public class CompareServerTest extends AbstractIntegrationTest {
 
         while (true) {
             try {
-                //   testCheckToken(HTTPS_BIGTANGLE_LOCAL);
-              testCheckToken(HTTPS_BIGTANGLE_ORG);
+                  testCheckToken(TESTSERVER1);
+              testCheckToken(TESTSERVER2);
 
                 // diff(HTTPS_BIGTANGLE_ORG, HTTPS_BIGTANGLE_DE);
 

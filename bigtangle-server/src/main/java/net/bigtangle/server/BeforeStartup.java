@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.service.UnsolidBlockService;
+import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Component
@@ -30,12 +30,12 @@ public class BeforeStartup {
             store.create();
         }
         serverConfiguration.setServiceReady(true);
-         unsolidBlockService.startSingleProcess();
+         syncBlockService.startSingleProcess();
         blockStreamHandler.runStream();
       
     }
     @Autowired
-    private UnsolidBlockService unsolidBlockService;
+    private SyncBlockService syncBlockService;
   
     @Autowired
     private ServerConfiguration serverConfiguration;

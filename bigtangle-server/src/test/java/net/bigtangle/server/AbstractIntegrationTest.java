@@ -85,7 +85,7 @@ import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.server.service.UnsolidBlockService;
+import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
@@ -136,7 +136,7 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected TipsService tipsService;
     @Autowired
-    protected UnsolidBlockService unsolidBlockService;
+    protected SyncBlockService syncBlockService;
 
     @Autowired
     protected void prepareContextRoot(@Value("${local.server.port}") int port) {

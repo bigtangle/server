@@ -90,7 +90,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-       // unsolidBlockService. reCheckUnsolidBlock();
+       // syncBlockService. reCheckUnsolidBlock();
         rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         mcmcService.update();
@@ -748,7 +748,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
             blockGraph.add(b, true);
         for (Block b : blocksAdded) 
             blockGraph.add(b, true);
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());

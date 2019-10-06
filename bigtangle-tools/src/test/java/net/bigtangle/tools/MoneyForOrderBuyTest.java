@@ -45,7 +45,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(), 333300000l);
         }
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-        log.debug("block " + b.toString());
+        log.debug("block " + b==null? "block is null": b.toString());
 
     }
 

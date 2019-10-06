@@ -172,7 +172,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -193,7 +193,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -214,7 +214,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -250,7 +250,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -364,7 +364,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock);
 
         // After adding the missing dependency, should be solid
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -545,7 +545,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(block1);
-        unsolidBlockService.updateSolidity();
+        syncBlockService.updateSolidity();
         mcmcService.update();
         // After adding the missing dependency, should be solid
         assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 2);

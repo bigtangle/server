@@ -44,7 +44,7 @@ import net.bigtangle.utils.Threading;
  * </p>
  */
 @Service
-public class UnsolidBlockService {
+public class SyncBlockService {
 
     @Autowired
     protected FullPrunedBlockStore store;
@@ -63,13 +63,13 @@ public class UnsolidBlockService {
     @Autowired
     private MCMCService mcmcService;
 
-    private static final Logger log = LoggerFactory.getLogger(UnsolidBlockService.class);
+    private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
 
-    protected final ReentrantLock lock = Threading.lock("UnsolidBlockService");
+    protected final ReentrantLock lock = Threading.lock("syncBlockService");
 
     public void startSingleProcess() {
         if (!lock.tryLock()) {
-            log.debug(this.getClass().getName() + " UnsolidBlockService running. Returning...");
+            log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
 
@@ -150,8 +150,7 @@ public class UnsolidBlockService {
          */
         long cutoffHeight = blockService.getCutoffHeight();
         List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
-        log.debug(
-                "getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff Height: " + cutoffHeight);
+        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff Height: " + cutoffHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
                 Block req = blockService.getBlock(storedBlock.missingdependencyHash());
@@ -170,8 +169,13 @@ public class UnsolidBlockService {
         }
 
     }
-
-    public void testCheckToken() throws JsonProcessingException, Exception {
+    public class Tokensums  {
+        String tokenid;
+        BigInteger initial;
+        BigInteger unspent;
+        BigInteger order;
+    }
+    public void checkToken() throws JsonProcessingException, Exception {
         String server = "http://localhost:8088/";
         Map<String, BigInteger> tokensums = tokensum(server);
         Set<String> tokenids = tokensums.keySet();
@@ -180,11 +184,11 @@ public class UnsolidBlockService {
             Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
                     tokenid);
 
-            testCheckToken(server, tokenid, tokensum);
+            checkToken(server, tokenid, tokensum);
         }
     }
 
-    public void testCheckToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
+    public void checkToken(String server, String tokenid, Coin tokensum) throws JsonProcessingException, Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
@@ -210,15 +214,15 @@ public class UnsolidBlockService {
         log.info("  ordersum + : sumUnspent = " + sumUnspent.add(ordersum));
 
         if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if(!tokensum.equals(sumUnspent.add(ordersum))) {
-                log.warn("tokensum.equals(sumUnspent.add(ordersum)" );
-            } 
-    }else {
-            if(tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
-                log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0" ); 
+            if (!tokensum.equals(sumUnspent.add(ordersum))) {
+                log.warn("tokensum.equals(sumUnspent.add(ordersum)");
+            }
+        } else {
+            if (tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
+                log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0");
             }
         }
-     
+
     }
 
     public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {
