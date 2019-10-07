@@ -186,12 +186,10 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if (otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash())
-                )
+        if ( block.getBlockEvaluation().getMilestone() >=0 || otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
             return true;
-
-        if (block.getBlock().getHeight() <= cutoffHeight
-                &&  ! block.getBlock().isBLOCKTYPE_INITIAL()) {
+        // the block is in cutoff and not in chain
+        if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
             throw new VerificationException(
                     "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
         }
@@ -225,14 +223,13 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if (block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
+        if ( block.getBlockEvaluation().getMilestone() >=0 || block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
             return true;
 
         // Cutoff
-        if (block.getBlockEvaluation().getHeight() <= cutoffHeight
-                &&  ! block.getBlock().isBLOCKTYPE_INITIAL()){
-            throw new VerificationException(
-                    "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
+        if (block.getBlockEvaluation().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
+            throw new VerificationException("Block is cut off  and not in milestone  cutoff=" + getCutoffHeight()
+                    + " \n block: " + block.getBlock().toString());
         }
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
