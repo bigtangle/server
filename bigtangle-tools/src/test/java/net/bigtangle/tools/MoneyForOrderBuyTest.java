@@ -33,7 +33,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
-        for(int i=0;i<50; i++) {
+        for(int i=0;i<10; i++) {
         giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size() ).toAddress(networkParameters).toString(),
                 3333000000L/ LongMath.pow(2, j));
 
@@ -52,7 +52,7 @@ public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
         ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet2();
-        for(int i=0;i<50; i++) {
+        for(int i=0;i<10; i++) {
         giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
                 333300000l/ LongMath.pow(2, j));
         }

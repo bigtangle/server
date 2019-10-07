@@ -80,17 +80,17 @@ public class WalletPayMoneyTest extends AbstractIntegrationTest {
                 walletAppKit.wallet().importKey(ecKey);
 
                 String tokenid = Utils.HEX.encode(fromkey.getPubKey());
-                System.out.println(testPub);
-                System.out.println(tokenid);
+             //   System.out.println(testPub);
+             //   System.out.println(tokenid);
 
-                // walletAppKit1.wallet().pay(null, ecKey.toAddress(networkParameters), Coin.valueOf(2l, tokenid), "");
-                HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+                walletAppKit1.wallet().pay(null, ecKey.toAddress(networkParameters), Coin.valueOf(2l ), "");
+               /*  HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
                 giveMoneyResult.put(ecKey.toAddress(networkParameters).toBase58(), 10l);
                 
 
                 fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
                 walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-                
+                */
 //                walletAppKit.wallet().
 
                 WalletKeyBook walletKeyBook = new WalletKeyBook(ecKey, this.sumUTXOBalance(tokenid, ecKey));
