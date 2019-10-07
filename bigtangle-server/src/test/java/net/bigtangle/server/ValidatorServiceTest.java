@@ -35,7 +35,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
@@ -265,8 +264,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward
         // interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blocks1.add(rollingBlock);
         }
@@ -284,8 +283,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
         // Make more for next reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blocks2.add(rollingBlock);
         }
@@ -371,196 +370,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUnsolidMissingOrderReclaimOrderMatching() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<Block> premiseBlocks = new ArrayList<>();
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            premiseBlocks.add(block1);
-            this.blockGraph.add(block1, true);
-        }
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            premiseBlocks.add(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = rewardBlock1.createNextBlock(rewardBlock1);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-            this.blockGraph.add(block2, false);
-        }
-
-        // Now reset and readd all but dependency and unsolid block
-        store.resetStore();
-        for (Block b : premiseBlocks) {
-            blockGraph.add(b, false);
-        }
-
-        // Add block allowing unsolids
-        blockService.addConnected(block2.bitcoinSerialize(), true);
-
-        // Should not be solid
-        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
-
-        // Add missing dependency
-        blockService.saveBlock(rewardBlock1);
-        mcmcService.update();
-        // After adding the missing dependency, should be solid
-        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 2);
-        assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
-    }
-
-    @Test
-    public void testUnsolidMissingOrderReclaimOrder() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        List<Block> premiseBlocks = new ArrayList<>();
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            this.blockGraph.add(block1, true);
-        }
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            premiseBlocks.add(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        premiseBlocks.add(rewardBlock1);
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
-        premiseBlocks.add(fusingBlock);
-        blockGraph.add(fusingBlock, false);
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = block1.createNextBlock(rewardBlock1);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-            blockService.addConnected(block2.bitcoinSerialize(), false);
-        }
-
-        // Now reset and readd all but dependency and unsolid block
-        store.resetStore();
-        for (Block b : premiseBlocks) {
-            blockService.addConnected(b.bitcoinSerialize(), true);
-        }
-
-        // Add block allowing unsolids
-        blockService.addConnected(block2.bitcoinSerialize(), true);
-
-        // Should not be solid
-        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 0);
-
-        // Add missing dependency
-        blockService.saveBlock(block1);
-        syncBlockService.updateSolidity();
-        mcmcService.update();
-        // After adding the missing dependency, should be solid
-        assertTrue(store.getBlockWrap(block2.getHash()).getBlockEvaluation().getSolid() == 2);
-        assertTrue(store.getBlockWrap(block1.getHash()).getBlockEvaluation().getSolid() == 2);
-    }
-
-    @Test
     public void testSolidityPredecessorDifficultyInheritance() throws Exception {
         store.resetStore();
 
         // Generate blocks until passing first reward interval and second reward
         // interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
 
             // The difficulty should be equal to the previous difficulty
@@ -617,8 +434,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval and second reward
         // interval
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
 
             // The difficulty should be equal to the previous difficulty
@@ -636,7 +453,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // The consensus number should now be equal to the previous number + 1
         assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
 
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
+        for (int i = 0; i < 1; i++) {
             Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
 
             // The difficulty should be equal to the previous difficulty
@@ -1007,37 +824,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testSolidityRewardTxTooClose() throws Exception {
-        store.resetStore();
-        Block rollingBlock = networkParameters.getGenesisBlock();
-
-        // Generate blocks
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_REWARDED_HEIGHT_INTERVAL; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-        }
-
-        // Generate mining reward block with spending inputs
-        Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash(), true);
-
-        // Should not go through
-        try {
-            blockGraph.add(rewardBlock, false);
-
-            fail();
-        } catch (InvalidTransactionDataException e) {
-        }
-    }
-
-    @Test
     public void testSolidityRewardTxWrongDifficulty() throws Exception {
         store.resetStore();
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 20; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1049,11 +841,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rewardBlock.solve();
 
         // Should not go through
-        try {
-            blockGraph.add(rewardBlock, false);
-            fail();
-        } catch (InvalidTransactionDataException e) {
-        }
+        blockGraph.add(rewardBlock, false);
+        assertTrue(store.getBlockEvaluation(rewardBlock.getHash()).getSolid() < 0);
     }
 
     @Test
@@ -1062,8 +851,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1103,8 +892,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1131,8 +920,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1159,8 +948,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1186,8 +975,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
@@ -1209,13 +998,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         RewardInfo rewardInfo5 = RewardInfo.parse(testBlock5.getTransactions().get(0).getData());
         RewardInfo rewardInfo6 = RewardInfo.parse(testBlock6.getTransactions().get(0).getData());
         RewardInfo rewardInfo7 = RewardInfo.parse(testBlock7.getTransactions().get(0).getData());
-        rewardInfo1.setFromHeight(-1);
         rewardInfo2.setPrevRewardHash(null);
         rewardInfo3.setPrevRewardHash(getRandomSha256Hash());
         rewardInfo4.setPrevRewardHash(rollingBlock.getHash());
         rewardInfo5.setPrevRewardHash(rollingBlock.getHash());
-        rewardInfo6.setToHeight(12341324);
-        rewardInfo7.setToHeight(-1);
         testBlock1.getTransactions().get(0).setData(rewardInfo1.toByteArray());
         testBlock2.getTransactions().get(0).setData(rewardInfo2.toByteArray());
         testBlock3.getTransactions().get(0).setData(rewardInfo3.toByteArray());
@@ -1230,13 +1016,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         testBlock5.solve();
         testBlock6.solve();
         testBlock7.solve();
-
-        // Should not go through
-        try {
-            assertFalse(blockGraph.add(testBlock1, false));
-
-        } catch (InvalidTransactionDataException e) {
-        }
 
         try {
             blockGraph.add(testBlock2, false);
@@ -1254,16 +1033,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blockGraph.add(testBlock5, false);
             fail();
         } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(testBlock6, false);
-            fail();
-        } catch (InvalidTransactionDataException e) {
-        }
-        try {
-            blockGraph.add(testBlock7, false);
-            fail();
-        } catch (InvalidTransactionDataException e) {
         }
     }
 
@@ -3300,297 +3069,4 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
     }
 
-    @Test
-    public void testSolidityOrderReclaimOk() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            this.blockGraph.add(block1, true);
-        }
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
-        blockGraph.add(fusingBlock, false);
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rewardBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock(fusingBlock);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-        }
-
-        // Should go through
-        this.blockGraph.add(block2, false);
-    }
-
-    @Test
-    public void testSolidityOrderReclaimInvalidDependencyOrder() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            this.blockGraph.add(block1, true);
-        }
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate mining reward block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
-        blockGraph.add(fusingBlock, false);
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, rollingBlock1.getHash(), rewardBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock(fusingBlock);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-        }
-        mcmcService.update();
-        // Should not go through
-        try {
-            blockGraph.add(block2, false);
-            fail();
-        } catch (InvalidDependencyException e) {
-        }
-    }
-
-    @Test
-    public void testSolidityOrderReclaimInvalidDependencyOrderMatching() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            this.blockGraph.add(block1, true);
-        }
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block fusingBlock = rewardBlock1.createNextBlock(block1);
-        blockGraph.add(fusingBlock, false);
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rollingBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = fusingBlock.createNextBlock(fusingBlock);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-        }
-        mcmcService.update();
-        // Should not go through
-        try {
-            blockGraph.add(block2, false);
-            fail();
-        } catch (InvalidDependencyException e) {
-        }
-    }
-
-    @Test
-    public void testSolidityOrderReclaimInvalidDependencyOrderMatchingWrongHeight() throws Exception {
-        store.resetStore();
-
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-
-        Block block1 = null;
-        {
-            // Make a buy order for "test"s
-            Transaction tx = new Transaction(networkParameters);
-            OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
-            tx.setData(info.toByteArray());
-            tx.setDataClassName("OrderOpen");
-
-            // Create burning 2 BIG
-            List<UTXO> outputs = getBalance(false, testKey);
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-                    outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-            // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-            // amount, testKey));
-            tx.addOutput(
-                    new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-            TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-            Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-                    false);
-
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-            Script inputScript = ScriptBuilder.createInputScript(sig);
-            input.setScriptSig(inputScript);
-
-            // Create block with order
-            block1 = rewardBlock1.createNextBlock(rewardBlock1);
-            block1.addTransaction(tx);
-            block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-            block1.solve();
-            this.blockGraph.add(block1, true);
-        }
-
-        // Try order reclaim
-        Block block2 = null;
-        {
-            Transaction tx = new Transaction(networkParameters);
-            OrderReclaimInfo info = new OrderReclaimInfo(0, block1.getHash(), rollingBlock1.getHash());
-            tx.setData(info.toByteArray());
-
-            // Create block with order reclaim
-            block2 = block1.createNextBlock(block1);
-            block2.addTransaction(tx);
-            block2.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-            block2.solve();
-        }
-
-        // Should not go through
-        try {
-            blockGraph.add(block2, false);
-            // fail();
-        } catch (InvalidDependencyException e) {
-        }
-    }
 }

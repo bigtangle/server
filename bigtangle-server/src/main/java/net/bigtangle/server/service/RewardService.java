@@ -9,12 +9,10 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -36,13 +34,13 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
@@ -51,6 +49,7 @@ import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -250,60 +249,10 @@ public class RewardService {
     public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash)
             throws BlockStoreException {
 
-        // Count how many blocks from miners in the reward interval are approved
-        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
-        BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
         // Read previous reward block's data
         BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
         long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
-        long prevToHeight = store.getRewardToHeight(prevRewardHash);
         long prevDifficulty = prevRewardBlock.getBlock().getDifficultyTarget();
-        long fromHeight = prevToHeight + 1;
-        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(),
-                prevBranchBlock.getBlockEvaluation().getHeight()) - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
-
-        // Initialize
-        BlockWrap currentBlock = null, approvedBlock = null;
-        long currentHeight = Long.MAX_VALUE;
-        long totalRewardCount = 0;
-
-        // Go backwards by height
-        while ((currentBlock = blockQueue.poll()) != null) {
-            currentHeight = currentBlock.getBlockEvaluation().getHeight();
-
-            // Stop criterion: Block height lower than approved interval height
-            if (currentHeight < fromHeight)
-                break;
-
-            // If in relevant reward height interval, count it
-            if (currentHeight <= toHeight) {
-                totalRewardCount++;
-            }
-
-            // Continue with both approved blocks
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-            approvedBlock = store.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-        }
-
-        // New difficulty
-        long difficulty = calculateNextBlockDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                totalRewardCount);
 
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
@@ -312,12 +261,20 @@ public class RewardService {
         Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();        
         Set<Sha256Hash> prevMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
         long cutoffheight = blockService.getCutoffHeight(prevRewardHash);
-        
+
+        // Count how many blocks from miners in the reward interval are approved
+        BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
+        BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
         blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks, cutoffheight);
         blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks, cutoffheight);
-
+        long totalRewardCount = blocks.size() + 1;
+        
+        // New difficulty
+        long difficulty = calculateNextBlockDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
+                totalRewardCount);
+        
         // Build the type-specific tx data
-        RewardInfo rewardInfo = new RewardInfo(fromHeight, toHeight, prevRewardHash, blocks, currChainLength);
+        RewardInfo rewardInfo = new RewardInfo(prevRewardHash, blocks, currChainLength);
         tx.setData(rewardInfo.toByteArray());
         tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
         return new RewardBuilderResult(tx, difficulty);
@@ -396,19 +353,23 @@ public class RewardService {
                         .equals(splitPoint.getBlockHash())) {
 
                     // Sanity check:
-                    if (maxConfirmedRewardBlockHash.equals(networkParameters.getGenesisBlock().getHash()))
-                        throw new RuntimeException("Unset genesis. Shouldn't happen");
+                    if (maxConfirmedRewardBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
+                        log.error("Unset genesis. Shouldn't happen");
+                        // Solidification forward with failState
+                        blockGraph.solidifyBlock(newMilestoneBlocks.get(0).getBlock(), SolidityState.getFailState(), false);
+                        runConsensusLogic(store.get(oldLongestChainEnd));
+                        return false;
+                    }
 
                     // Unset the milestone of this one (where milestone =
                     // maxConfRewardblock.chainLength)
                     long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
-                    store.updateUnsetMilestone(milestoneNumber);
-
+                    List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber, milestoneNumber);
+                    
                     // Unconfirm anything not confirmed by milestone
-                    wipeBlocks = store.getWhereConfirmedNotMilestone();
                     traversedBlockHashes = new HashSet<>();
-                    for (Sha256Hash wipeBlock : wipeBlocks)
-                        blockGraph.unconfirm(wipeBlock, traversedBlockHashes);
+                    for (BlockWrap wipeBlock : blocksInMilestoneInterval)
+                        blockGraph.unconfirm(wipeBlock.getBlockHash(), traversedBlockHashes);
                 }
 
                 // Build milestone forwards.
@@ -418,29 +379,13 @@ public class RewardService {
                     RewardInfo currRewardInfo = RewardInfo.parse(newMilestoneBlock.getBlock().getTransactions().get(0).getData());
                     Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
                     
-                    for (Sha256Hash hash : milestoneSet) {
-                        BlockWrap block = store.getBlockWrap(hash);
-                        if (block == null)
-                            throw new VerificationException("Referenced block is null.");
-                        if (block.getBlock().getHeight() <= cutoffHeight)
-                            throw new VerificationException("Referenced blocks are below cutoff height.");
+                    // Check all referenced blocks have their requirements 
+                    if (!checkReferencedBlockRequirements(oldLongestChainEnd, newMilestoneBlock, cutoffHeight, milestoneSet))
+                        return false;
 
-                        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
-                        for (Sha256Hash reqHash : requiredBlocks) {
-                            BlockWrap req = store.getBlockWrap(reqHash);
-                            if (req == null)
-                                throw new VerificationException("Required block is null.");
-
-                            if (req != null && req.getBlockEvaluation().getMilestone() < 0
-                                    && !milestoneSet.contains(reqHash)) {
-                                log.error("Predecessors are not in milestone.");
-                                // Solidification forward with failState
-                                blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
-                                runConsensusLogic(store.get(oldLongestChainEnd));
-                                return false;
-                            }
-                        }
-                    }
+                    // Ensure the new difficulty and tx is set correctly
+                    if (!checkGeneratedReward(oldLongestChainEnd, newMilestoneBlock, currRewardInfo))
+                        return false;
 
                     // Sanity check: At this point, predecessors cannot be
                     // missing
@@ -460,24 +405,8 @@ public class RewardService {
                         allApprovedNewBlocks.add(newMilestoneBlock);
 
                         // If anything is already spent, no-go
-                        boolean anySpentInputs = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
-                                .flatMap(i -> i.stream()).anyMatch(c -> {
-                                    try {
-                                        return validatorService.hasSpentDependencies(c);
-                                    } catch (BlockStoreException e) {
-                                        e.printStackTrace();
-                                        return true;
-                                    }
-                                });
-//                        Optional<ConflictCandidate> spentInput = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
-//                                .flatMap(i -> i.stream()).filter(c -> {
-//                                    try {
-//                                        return validatorService.hasSpentDependencies(c);
-//                                    } catch (BlockStoreException e) {
-//                                        e.printStackTrace();
-//                                        return true;
-//                                    }
-//                                }).findFirst();
+                        boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks);
+//                        Optional<ConflictCandidate> spentInput = findFirstSpentInput(allApprovedNewBlocks);
 
                         // If any conflicts exist between the current set of
                         // blocks, no-go
@@ -497,24 +426,8 @@ public class RewardService {
                         }
 
                         // Otherwise, all predecessors exist and were at least
-                        // solid > 0,
-                        // so we should be able to confirm everything
+                        // solid > 0, so we should be able to confirm everything
                         blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), solidityState, true);
-//                        while (!allApprovedNewBlocks.isEmpty()) {
-//                            @SuppressWarnings("unchecked")
-//                            HashSet<BlockWrap> nowApprovedBlocks = (HashSet<BlockWrap>) allApprovedNewBlocks.clone();
-//                            validatorService.removeWhereIneligible(nowApprovedBlocks);
-//                            validatorService.removeWhereUsedOutputsUnconfirmed(nowApprovedBlocks);
-//
-//                            // Confirm the addable blocks and remove them from
-//                            // the list
-//                            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-//                            for (BlockWrap approvedBlock : nowApprovedBlocks)
-//                                blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
-//                                        cutoffHeight);
-//
-//                            allApprovedNewBlocks.removeAll(nowApprovedBlocks);
-//                        }
                         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
                         for (BlockWrap approvedBlock : allApprovedNewBlocks)
                             blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms,
@@ -548,6 +461,83 @@ public class RewardService {
             throw new RuntimeException(e);
         }
 
+        return true;
+    }
+
+    @SuppressWarnings("unused")
+    private Optional<ConflictCandidate> findFirstSpentInput(HashSet<BlockWrap> allApprovedNewBlocks) {
+        return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                .flatMap(i -> i.stream()).filter(c -> {
+                    try {
+                        return validatorService.hasSpentDependencies(c);
+                    } catch (BlockStoreException e) {
+                        e.printStackTrace();
+                        return true;
+                    }
+                }).findFirst();
+    }
+
+    private boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks) {
+        return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                .flatMap(i -> i.stream()).anyMatch(c -> {
+                    try {
+                        return validatorService.hasSpentDependencies(c);
+                    } catch (BlockStoreException e) {
+                        e.printStackTrace();
+                        return true;
+                    }
+                });
+    }
+
+    private boolean checkReferencedBlockRequirements(Sha256Hash oldLongestChainEnd, BlockWrap newMilestoneBlock,
+            long cutoffHeight, Set<Sha256Hash> milestoneSet) throws BlockStoreException {
+        for (Sha256Hash hash : milestoneSet) {
+            BlockWrap block = store.getBlockWrap(hash);
+            if (block == null)
+                throw new VerificationException("Referenced block is null.");
+            if (block.getBlock().getHeight() <= cutoffHeight)
+                throw new VerificationException("Referenced blocks are below cutoff height.");
+
+            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+            for (Sha256Hash reqHash : requiredBlocks) {
+                BlockWrap req = store.getBlockWrap(reqHash);
+                if (req == null)
+                    throw new VerificationException("Required block is null.");
+
+                if (req != null && req.getBlockEvaluation().getMilestone() < 0
+                        && !milestoneSet.contains(reqHash)) {
+                    log.error("Predecessors are not in milestone.");
+                    // Solidification forward with failState
+                    blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
+                    runConsensusLogic(store.get(oldLongestChainEnd));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean checkGeneratedReward(Sha256Hash oldLongestChainEnd, BlockWrap newMilestoneBlock,
+            RewardInfo currRewardInfo) throws BlockStoreException {
+        RewardBuilderResult result = makeReward(newMilestoneBlock.getBlock().getPrevBlockHash(), newMilestoneBlock.getBlock().getPrevBranchBlockHash(),
+                currRewardInfo.getPrevRewardHash());
+        if (newMilestoneBlock.getBlock().getDifficultyTarget() != result.getDifficulty()) {
+            log.error("Incorrect difficulty target");
+            // Solidification forward with failState
+            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
+            runConsensusLogic(store.get(oldLongestChainEnd));
+            return false;
+        }
+
+        // Fallback: Ensure everything is generated canonically
+        if (!newMilestoneBlock.getBlock().getTransactions().get(0).getHash().equals(result.getTx().getHash())) {
+            log.error("Predecessors are not in milestone.");
+            // Solidification forward with failState
+            blockGraph.solidifyBlock(newMilestoneBlock.getBlock(), SolidityState.getFailState(), false);
+            runConsensusLogic(store.get(oldLongestChainEnd));
+            return false;
+        }
+        
         return true;
     }
 

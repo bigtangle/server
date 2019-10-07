@@ -192,11 +192,6 @@ public abstract class NetworkParameters {
 
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
-    public static final long REWARD_MIN_HEIGHT_DIFFERENCE = 2;
-    public static final long REWARD_MIN_HEIGHT_INTERVAL = 10;
-    public static final long REWARD_MIN_REWARDED_HEIGHT_INTERVAL = REWARD_MIN_HEIGHT_INTERVAL
-            - REWARD_MIN_HEIGHT_DIFFERENCE;
-
 
     public static final int TARGET_TIMESPAN = 86400; // 1 day per  difficulty cycle
     public static final int TARGET_SPACING = 15; // 15 seconds per block.
@@ -234,7 +229,7 @@ public abstract class NetworkParameters {
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 
-        RewardInfo rewardInfo = new RewardInfo(-1l, 0l, Sha256Hash.ZERO_HASH, new HashSet<Sha256Hash>(), 0l);
+        RewardInfo rewardInfo = new RewardInfo(Sha256Hash.ZERO_HASH, new HashSet<Sha256Hash>(), 0l);
 
         coinbase.setData(rewardInfo.toByteArray());
         add(params, BigtangleCoinTotal, genesisPub, coinbase);

@@ -163,7 +163,7 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
             BlockWrap left, BlockWrap right, Sha256Hash prevRewardHash) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
-        long cutoffHeight = blockService.getCutoffHeight();
+        long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
         HashSet<Sha256Hash> currentNewMilestoneBlocks = new HashSet<Sha256Hash>();
         Set<Sha256Hash> pastMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
 

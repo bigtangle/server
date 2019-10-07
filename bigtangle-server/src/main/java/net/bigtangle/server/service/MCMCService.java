@@ -27,9 +27,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -126,20 +124,6 @@ public class MCMCService {
      */
 
     protected final ReentrantLock lock = Threading.lock("mcmcService");
-
-    /**
-     * the missing blocks are check, blocks behind the last confirmed blocks are
-     * removed.
-     * 
-     * @throws BlockStoreException
-     * @throws NoBlockException
-     */
-    public void cleanupNonSolidMissingBlocks() throws BlockStoreException, NoBlockException {
-        TXReward txReward = store.getMaxConfirmedReward();
-        store.deleteOldUnsolid(txReward.getToHeight());
-
-    }
-
 
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.

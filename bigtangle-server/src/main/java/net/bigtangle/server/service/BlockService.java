@@ -29,7 +29,6 @@ import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
@@ -191,7 +190,7 @@ public class BlockService {
         // the block is in cutoff and not in chain
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
             throw new VerificationException(
-                    "Block is cut off at " + getCutoffHeight() + " for block: " + block.getBlock().toString());
+                    "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
         }
 
         // Add this block and add all of its required blocks.
@@ -561,16 +560,6 @@ public class BlockService {
                 logger.error("Block was not checked: " + e.getLocalizedMessage());
             }
             predecessors.add(opInfo.getBlockHash());
-            break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            OrderReclaimInfo reclaimInfo = null;
-            try {
-                reclaimInfo = OrderReclaimInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
-            predecessors.add(reclaimInfo.getOrderBlockHash());
-            predecessors.add(reclaimInfo.getNonConfirmingMatcherBlockHash());
             break;
         default:
             throw new RuntimeException("No Implementation");

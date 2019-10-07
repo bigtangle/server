@@ -107,7 +107,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
-            + "   toheight bigint NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
@@ -116,17 +115,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   chainlength bigint NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
 
-
-
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
             + "    hash binary(32) NOT NULL,\n"
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ") ENGINE=InnoDB\n";
-
-    private static final String CREATE_CONFIRMATION_DEPENDENCY_TABLE = "CREATE TABLE confirmationdependency (\n"
-            + "    blockhash binary(32) NOT NULL,\n" 
-            + "    dependencyblockhash binary(32) NOT NULL,\n"
-            + "    CONSTRAINT confirmationdependency_pk PRIMARY KEY (blockhash, dependencyblockhash) \n"
-            + ")";
 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
                 // initial issuing block  hash
@@ -357,7 +348,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ORDERS_TABLE);
-        sqlStatements.add(CREATE_CONFIRMATION_DEPENDENCY_TABLE);
         sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);

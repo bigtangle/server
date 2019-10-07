@@ -14,20 +14,15 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 public class RewardInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 6516115233185538213L;
-    private long chainlength; 
-    private long fromHeight; 
-    private long toHeight; 
+    private long chainlength;
     private Sha256Hash prevRewardHash;
     private Set<Sha256Hash> blocks;
 
-    
     public RewardInfo() {
     }
-    
-    public RewardInfo(long fromHeight, long toHeight, Sha256Hash prevRewardHash, Set<Sha256Hash> blocks, long chainlength) {
+
+    public RewardInfo(Sha256Hash prevRewardHash, Set<Sha256Hash> blocks, long chainlength) {
         super();
-        this.fromHeight = fromHeight;
-        this.toHeight = toHeight;
         this.prevRewardHash = prevRewardHash;
         this.blocks = blocks;
         this.chainlength = chainlength;
@@ -37,24 +32,8 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         return serialVersionUID;
     }
 
-    public void setFromHeight(long fromHeight) {
-        this.fromHeight = fromHeight;
-    }
-
-    public void setToHeight(long toHeight) {
-        this.toHeight = toHeight;
-    }
-
     public void setPrevRewardHash(Sha256Hash prevRewardHash) {
         this.prevRewardHash = prevRewardHash;
-    }
-
-    public long getFromHeight() {
-        return fromHeight;
-    }
-
-    public long getToHeight() {
-        return toHeight;
     }
 
     public Sha256Hash getPrevRewardHash() {
@@ -87,6 +66,15 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         return new byte[0];
     }
 
+    public static RewardInfo parseChecked(byte[] buf) {
+        try {
+            return RewardInfo.parse(buf);
+        } catch (IOException e) {
+            // Cannot happen since checked before
+            throw new RuntimeException(e);
+        }
+    }
+
     public static RewardInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
         RewardInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, RewardInfo.class);
@@ -95,10 +83,8 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "RewardInfo [chainlength=" + chainlength + ", \n fromHeight=" + fromHeight + ", \n toHeight=" + toHeight
-                + ", \n prevRewardHash=" + prevRewardHash + ", \n referenced block size =" + blocks.size() + "]";
+        return "RewardInfo [chainlength=" + chainlength + ", \n prevRewardHash=" + prevRewardHash
+                + ", \n referenced block size =" + blocks.size() + "]";
     }
 
-    
-    
 }

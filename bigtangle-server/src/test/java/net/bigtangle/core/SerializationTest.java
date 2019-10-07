@@ -34,15 +34,13 @@ public class SerializationTest {
         Sha256Hash randomHash = getRandomSha256Hash();
         HashSet<Sha256Hash> blocks = new HashSet<Sha256Hash>();
         blocks.add(randomHash);
-        RewardInfo info1 = new RewardInfo(123, 456, randomHash, blocks, 2l);
+        RewardInfo info1 = new RewardInfo(randomHash, blocks, 2l);
         byte[] bytes1 = info1.toByteArray();
         RewardInfo info2 = RewardInfo.parse(bytes1);
         byte[] bytes2 = info2.toByteArray();
 
         assertArrayEquals(bytes1, bytes2);
-        assertEquals(info1.getFromHeight(), info2.getFromHeight());
         assertEquals(info1.getPrevRewardHash(), info2.getPrevRewardHash());
-        assertEquals(info1.getToHeight(), info2.getToHeight());
         assertEquals(info1.getChainlength(), info2.getChainlength());
         assertEquals(info1.getBlocks().toArray()[0], info2.getBlocks().toArray()[0]);
     }

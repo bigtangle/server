@@ -8,7 +8,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -171,8 +170,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL
-                + NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE + 1; i++) {
+        for (int i = 0; i < 1
+                + 1 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
         }
@@ -498,60 +497,4 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
     }
 
-    @Test
-    public void testConflictOrderReclaim() throws Exception {
-  
-      //  ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
-        List<Block> addedBlocks = new ArrayList<>();
-
-        // Make test token
-        Block token = resetAndMakeTestToken(testKey, addedBlocks);
-        String testTokenId = testKey.getPublicKeyAsHex();
-
-        // Open sell order for test tokens
-        Block order = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
-        // Execute order matching
-        Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks, token);
-
-        // Generate reclaim blocks
-        Block b1 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-        Block b2 = makeReclaim(order.getHash(), rewardBlock.getHash(), addedBlocks, order, rewardBlock);
-        mcmcService.update();
-        
-        // Ensure the relevant blocks are all confirmed
-        blockGraph.confirm(order.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());
-        blockGraph.confirm(rewardBlock.getHash(), new HashSet<Sha256Hash>(),  blockService.getCutoffHeight());
-
-        boolean hit1 = false;
-        boolean hit2 = false;
-        for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
-            if (hit1 && hit2)
-                break;
-        }
-        assertTrue(hit1);
-        assertTrue(hit2);
-
-        // After confirming one of them into the milestone, only that one block
-        // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(),  blockService.getCutoffHeight());
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
-        }
-
-        try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
-            fail();
-        } catch (VerificationException e) {
-            // Expected
-        }
-    }
 }

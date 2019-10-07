@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CoinbaseDisallowedException;
@@ -132,9 +131,8 @@ public class Block extends Message {
         BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), BLOCKTYPE_CROSSTANGLE(false,
                 NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
-        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // cancel-order
-        BLOCKTYPE_ORDER_RECLAIM(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Reclaim-orders
-
+        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // cancel-order
+        
         private boolean allowCoinbaseTransaction;
         private int maxSize;
         private boolean requiresCalculation;

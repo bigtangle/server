@@ -13,11 +13,9 @@ import org.apache.commons.lang3.NotImplementedException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 
 /**
  * Wraps a {@link Block} object with extra data from the db
@@ -112,10 +110,7 @@ public class BlockWrap {
             try {
                 TokenInfo tokenInfo = TokenInfo.parse(this.getBlock().getTransactions().get(0).getData());
                 blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));
-                
-                // Dynamic conflicts: if defining new domain, this domain name is also a conflict
-                if (tokenInfo.getToken().getTokentype() == TokenType.domainname.ordinal())
-                	blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
+            	blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
@@ -134,16 +129,7 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            try {
-                OrderReclaimInfo orderInfo = OrderReclaimInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromOrder(this, orderInfo));
-            } catch (IOException e) {
-                // Cannot happen since any blocks added already were checked.
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-            break;
+        
         default:
             throw new NotImplementedException("Blocktype not implemented!");
 

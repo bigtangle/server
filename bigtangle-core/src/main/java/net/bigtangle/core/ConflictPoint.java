@@ -7,8 +7,6 @@ package net.bigtangle.core;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.google.common.base.Objects;
 
 public class ConflictPoint {
@@ -22,39 +20,32 @@ public class ConflictPoint {
     @Nullable
     private Token connectedToken;
     @Nullable
-    private OrderReclaimInfo connectedOrder;
-    @Nullable
     private Token connectedDomainToken;
 
     private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-            Token connectedToken, OrderReclaimInfo connectedOrder, Token connectedDomainToken) {
+            Token connectedToken, Token connectedDomainToken) {
         super();
         this.type = type;
         this.connectedOutpoint = connectedOutpoint;
         this.connectedReward = reward;
         this.connectedToken = connectedToken;
-        this.connectedOrder = connectedOrder;
         this.connectedDomainToken = connectedDomainToken;
     }
 
     public static ConflictPoint fromTransactionOutpoint(TransactionOutPoint connectedOutpoint) {
-        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null, null);
+        return new ConflictPoint(ConflictType.TXOUT, connectedOutpoint, null, null, null);
     }
 
     public static ConflictPoint fromReward(RewardInfo reward) {
-        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null, null);
+        return new ConflictPoint(ConflictType.REWARDISSUANCE, null, reward, null, null);
     }
 
     public static ConflictPoint fromToken(Token token) {
-        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null, null);
-    }
-
-    public static ConflictPoint fromOrder(OrderReclaimInfo connectedOrder) {
-        return new ConflictPoint(ConflictType.ORDERRECLAIM, null, null, null, connectedOrder, null);
+        return new ConflictPoint(ConflictType.TOKENISSUANCE, null, null, token, null);
     }
 
     public static ConflictPoint fromDomainToken(Token token) {
-        return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, null, token);
+        return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, token);
     }
     
     @Override
@@ -77,13 +68,11 @@ public class ConflictPoint {
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
-		case ORDERRECLAIM:
-			return getConnectedOrder().getOrderBlockHash().equals(other.getConnectedOrder().getOrderBlockHash());
-        case DOMAINISSUANCE:
+		case DOMAINISSUANCE:
             return getConnectedDomainToken().getDomainNameBlockHash().equals(other.getConnectedDomainToken().getDomainNameBlockHash())
-                    && getConnectedDomainToken().getDomainName().equals(other.getConnectedDomainToken().getDomainName());
+                    && getConnectedDomainToken().getTokenname().equals(other.getConnectedDomainToken().getTokenname());
 		default:
-			throw new NotImplementedException("Conflicts not implemented.");
+			throw new RuntimeException("Conflicts not implemented.");
         }
     }
 
@@ -96,17 +85,15 @@ public class ConflictPoint {
             return Objects.hashCode(type, getConnectedToken().getTokenid(), getConnectedToken().getTokenindex());
         case TXOUT:
             return Objects.hashCode(type, getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
-		case ORDERRECLAIM:
-            return Objects.hashCode(type, getConnectedOrder().getOrderBlockHash());
         case DOMAINISSUANCE:
-            return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(), getConnectedDomainToken().getDomainName());
+            return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(), getConnectedDomainToken().getTokenname());
 		default:
-			throw new NotImplementedException("Conflicts not implemented.");
+			throw new RuntimeException("Conflicts not implemented.");
         }
     }
 
     public enum ConflictType {
-        TXOUT, TOKENISSUANCE, REWARDISSUANCE, ORDERRECLAIM, DOMAINISSUANCE
+        TXOUT, TOKENISSUANCE, REWARDISSUANCE, DOMAINISSUANCE
     }
 
     public ConflictType getType() {
@@ -123,10 +110,6 @@ public class ConflictPoint {
 
     public Token getConnectedToken() {
         return connectedToken;
-    }
-
-    public OrderReclaimInfo getConnectedOrder() {
-        return connectedOrder;
     }
 
     public Token getConnectedDomainToken() {

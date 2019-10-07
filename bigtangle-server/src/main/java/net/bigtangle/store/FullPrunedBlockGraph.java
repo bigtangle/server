@@ -52,7 +52,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
@@ -194,11 +193,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-            long toHeight = rewardInfo.getToHeight();
             long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
             long difficulty = calculateNextChainDifficulty(prevRewardHash, currChainLength, block.getTimeSeconds());
 
-            blockStore.insertReward(block.getHash(), toHeight, prevRewardHash, difficulty, currChainLength);
+            blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
 
         } catch (IOException e) {
             // Cannot happen when connecting
@@ -513,10 +511,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            tx = generateReclaimTX(block);
-            insertVirtualUTXOs(block, tx);
-            break;
         default:
             throw new RuntimeException("Not Implemented");
 
@@ -566,9 +560,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             confirmOrderOpen(block);
             break;
         case BLOCKTYPE_ORDER_CANCEL:
-            break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            confirmOrderReclaim(block);
             break;
         default:
             throw new RuntimeException("Not Implemented");
@@ -642,28 +633,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult);
-    }
-
-    private void confirmOrderReclaim(BlockWrap block) throws BlockStoreException {
-        // Set virtual outputs confirmed
-        confirmVirtualCoinbaseTransaction(block);
-
-        // Read the requested reclaim
-        OrderReclaimInfo info = null;
-        try {
-            info = OrderReclaimInfo.parse(block.getBlock().getTransactions().get(0).getData());
-        } catch (IOException e) {
-            // Cannot happen.
-            throw new RuntimeException(e);
-        }
-
-        // Set consumed order record to spent and set spender block to this
-        // block's hash
-        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, true, block.getBlock().getHash());
-
-        // Insert helper dependencies
-        blockStore.insertDependents(block.getBlock().getHash(), info.getOrderBlockHash());
-        blockStore.insertDependents(block.getBlock().getHash(), info.getNonConfirmingMatcherBlockHash());
     }
 
     private void confirmOrderOpen(BlockWrap block) throws BlockStoreException {
@@ -743,20 +712,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateAllTransactionOutputsConfirmed(block.getBlock().getHash(), true);
     }
 
-    /**
-     * Confirms the specified block and all approved blocks. This will connect
-     * all transactions of the block by marking used UTXOs spent and adding new
-     * UTXOs to the db.
-     * 
-     * @param blockHash
-     * @throws BlockStoreException
-     */
     public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
-        // Write to DB
-        unconfirmFrom(blockHash, traversedBlockHashes);
+        // If already unconfirmed, return
+        if (traversedBlockHashes.contains(blockHash))
+            return;
+
+        BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+        BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
+        Block block = blockWrap.getBlock();
+
+        // If already unconfirmed, return
+        if (!blockEvaluation.isConfirmed())
+            return;
+
+        // Then unconfirm the block itself
+        unconfirmBlockOutputs(block);
+
+        // Set unconfirmed
+        blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
+
+        // Keep track of unconfirmed blocks
+        traversedBlockHashes.add(blockHash);
     }
 
-    private void unconfirmFrom(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
+    public void unconfirmRecursive(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
@@ -774,10 +754,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         unconfirmDependents(block, traversedBlockHashes);
 
         // Then unconfirm the block itself
-        unconfirmBlock(block);
+        unconfirmBlockOutputs(block);
 
         // Set unconfirmed
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
 
         // Keep track of unconfirmed blocks
         traversedBlockHashes.add(blockHash);
@@ -786,23 +767,15 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
         // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
-            unconfirmFrom(approver, traversedBlockHashes);
+            unconfirmRecursive(approver, traversedBlockHashes);
         }
-
-        // Unconfirm all helper dependents
-        for (Sha256Hash dependent : blockStore.getDependents(block.getHash())) {
-            unconfirmFrom(dependent, traversedBlockHashes);
-        }
-
-        // Then clear own dependencies since no longer confirmed
-        blockStore.removeDependents(block.getHash());
 
         // Disconnect all transaction output dependents
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
                 if (utxo.isSpent()) {
-                    unconfirmFrom(
+                    unconfirmRecursive(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
                             traversedBlockHashes);
@@ -842,9 +815,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            unconfirmOrderReclaimDependents(block, traversedBlockHashes);
-            break;
         default:
             throw new RuntimeException("Not Implemented");
 
@@ -862,32 +832,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo != null && utxo.isSpent()) {
-                unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
+                unconfirmRecursive(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }
         }
     }
-
-    private void unconfirmOrderReclaimDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
-
-        // Disconnect all virtual transaction output dependents
-        Transaction tx = generateReclaimTX(block);
-        for (TransactionOutput txout : tx.getOutputs()) {
-            UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-            if (utxo.isSpent()) {
-                unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
-                        .getBlockHash(), traversedBlockHashes);
-            }
-        }
-    }
-
+    
     private void unconfirmOrderOpenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
 
         // Disconnect order record spender
         if (blockStore.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH)) {
-            unconfirmFrom(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes);
         }
     }
 
@@ -896,7 +852,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect token record spender
         if (blockStore.getTokenSpent(block.getHash())) {
-            unconfirmFrom(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
         }
 
         // If applicable: Disconnect all domain definitions that were based on
@@ -905,7 +861,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (token.getTokentype() == TokenType.domainname.ordinal()) {
             List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getDomainNameBlockHash());
             for (String b : dependents) {
-                unconfirmFrom(Sha256Hash.wrap(b), traversedBlockHashes);
+                unconfirmRecursive(Sha256Hash.wrap(b), traversedBlockHashes);
             }
         }
     }
@@ -915,7 +871,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Disconnect reward record spender
         if (blockStore.getRewardSpent(block.getHash())) {
-            unconfirmFrom(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
         }
 
         // Disconnect all virtual transaction output dependents
@@ -923,7 +879,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo != null && utxo.isSpent()) {
-                unconfirmFrom(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
+                unconfirmRecursive(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                         .getBlockHash(), traversedBlockHashes);
             }
         }
@@ -936,7 +892,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      *             if the block store had an underlying error or block does not
      *             exist in the block store at all.
      */
-    private void unconfirmBlock(Block block) throws BlockStoreException {
+    private void unconfirmBlockOutputs(Block block) throws BlockStoreException {
         // Unconfirm all transactions of the block
         for (Transaction tx : block.getTransactions()) {
             unconfirmTransaction(tx, block);
@@ -972,9 +928,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            unconfirmOrderReclaim(block);
-            break;
         default:
             throw new RuntimeException("Not Implemented");
 
@@ -1000,23 +953,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Update the matching history in db
         tickerService.removeMatchingEvents(matchingResult.outputTx, matchingResult.tokenId2Events);
-    }
-
-    private void unconfirmOrderReclaim(Block block) throws BlockStoreException {
-        // Read the requested reclaim
-        OrderReclaimInfo info = null;
-        try {
-            info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
-        } catch (IOException e) {
-            // Cannot happen.
-            throw new RuntimeException(e);
-        }
-
-        // Set consumed order record unspent
-        blockStore.updateOrderSpent(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH, false, null);
-
-        // Set virtual outputs unconfirmed
-        unconfirmVirtualCoinbaseTransaction(block);
     }
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
@@ -1234,8 +1170,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_CANCEL:
             connectCancelOrder(block);
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            break;
         default:
             break;
 
@@ -1335,19 +1269,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         TreeMap<ByteBuffer, TreeMap<String, Long>> pubKey2Proceeds = new TreeMap<>();
 
         // Get previous order matching block
-        Sha256Hash prevHash = null;
-        long fromHeight = 0;
-        long toHeight = 0;
-        try {
-            RewardInfo info = RewardInfo.parse(block.getTransactions().get(0).getData());
-            prevHash = info.getPrevRewardHash();
-            fromHeight = info.getFromHeight();
-            toHeight = info.getToHeight();
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        Sha256Hash prevHash = rewardInfo.getPrevRewardHash();
+        Set<Sha256Hash> collectedBlocks = rewardInfo.getBlocks();
         final Block prevMatchingBlock = blockStore.getBlockWrap(prevHash).getBlock();
 
         // Deterministic randomization
@@ -1360,7 +1284,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Set<OrderRecord> spentOrders = new HashSet<>(blockStore.getOrderMatchingIssuedOrders(prevHash).values());
         Set<OrderRecord> cancelledOrders = new HashSet<>();
 
-        for (BlockWrap b : collectConsumedOrdersAndOpsBlocks(block, fromHeight, toHeight)) {
+        for (Sha256Hash bHash : collectedBlocks) {
+            BlockWrap b = blockStore.getBlockWrap(bHash);
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
                 final Sha256Hash blockHash = b.getBlock().getHash();
 
@@ -1612,91 +1537,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return new OrderMatchingResult(spentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
-    private List<BlockWrap> collectConsumedOrdersAndOpsBlocks(Block block, long fromHeight, long toHeight)
-            throws BlockStoreException {
-        List<BlockWrap> relevantBlocks = new ArrayList<>();
-
-        Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = blockStore.getBlockWrap(block.getPrevBlockHash());
-        BlockWrap prevBranchBlock = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
-        // Initialize
-        BlockWrap currentBlock = null, approvedBlock = null;
-        long currentHeight;
-
-        // Go backwards by height
-        while ((currentBlock = blockQueue.poll()) != null) {
-            currentHeight = currentBlock.getBlockEvaluation().getHeight();
-
-            // Stop criterion: Block height lower than approved interval height
-            if (currentHeight < fromHeight)
-                continue;
-
-            // If in relevant reward height interval and a relevant block,
-            // collect it
-            if (currentHeight <= toHeight) {
-                if (currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL
-                        || currentBlock.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN)
-                    relevantBlocks.add(currentBlock);
-            }
-
-            // Continue with both approved blocks
-            approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-            approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
-            if (!blockQueue.contains(approvedBlock)) {
-                if (approvedBlock != null) {
-                    blockQueue.add(approvedBlock);
-                }
-            }
-        }
-
-        return relevantBlocks;
-    }
-
-    /**
-     * Deterministically create a reclaim tx for a lost order. Assumes the block
-     * is a valid reclaim block.
-     * 
-     * @return reclaim transaction
-     * @throws BlockStoreException
-     */
-    public Transaction generateReclaimTX(Block block) throws BlockStoreException {
-        // Read the requested reclaim
-        OrderReclaimInfo info = null;
-        try {
-            info = OrderReclaimInfo.parse(block.getTransactions().get(0).getData());
-        } catch (IOException e) {
-            // Cannot happen.
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-        // Read the order of the referenced block
-        OrderRecord order = blockStore.getOrder(info.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
-
-        // Build transaction returning the spent tokens
-        Transaction tx = new Transaction(networkParameters);
-        tx.addOutput(Coin.valueOf(order.getOfferValue(), order.getOfferTokenid()),
-                ECKey.fromPublicOnly(order.getBeneficiaryPubKey()));
-
-        // The input does not really need to be a valid signature, as long
-        // as it has the right general form and is slightly different for
-        // different tx
-        TransactionInput input = new TransactionInput(networkParameters, tx, Script
-                .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
-        tx.addInput(input);
-
-        return tx;
-    }
-
     /**
      * Deterministically creates a mining reward transaction based on the
      * previous blocks and previous reward transaction. DOES NOT CHECK FOR
@@ -1708,41 +1548,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
 
-        Sha256Hash prevRewardHash = null;
-        try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-            prevRewardHash = rewardInfo.getPrevRewardHash();
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        Set<Sha256Hash> candidateBlocks = rewardInfo.getBlocks();
 
         // Count how many blocks from miners in the reward interval are approved
         // and build rewards
         Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-
-        BlockWrap prevTrunkBlock = blockStore.getBlockWrap(block.getPrevBlockHash());
-        BlockWrap prevBranchBlock = blockStore.getBlockWrap(block.getPrevBranchBlockHash());
-        blockQueue.add(prevTrunkBlock);
-        blockQueue.add(prevBranchBlock);
-
-        // Read previous reward block's data
-        BlockWrap prevRewardBlock = blockStore.getBlockWrap(prevRewardHash);
-        long prevToHeight = 0;
-        try {
-            RewardInfo rewardInfo = RewardInfo.parse(prevRewardBlock.getBlock().getTransactions().get(0).getData());
-            prevToHeight = rewardInfo.getToHeight();
-        } catch (IOException e) {
-            // Cannot happen since checked before
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        for (Sha256Hash bHash : candidateBlocks) {
+            blockQueue.add(blockStore.getBlockWrap(bHash));
         }
-
-        long fromHeight = prevToHeight + 1;
-        long toHeight = Math.max(prevTrunkBlock.getBlockEvaluation().getHeight(),
-                prevBranchBlock.getBlockEvaluation().getHeight()) - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE;
 
         // Initialize
         Set<BlockWrap> currentHeightBlocks = new HashSet<>();
@@ -1760,36 +1575,31 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Go backwards by height
         while ((currentBlock = blockQueue.poll()) != null) {
 
-            // If we have reached a new height level, try trigger payout
+            // If we have reached a new height level, trigger payout
             // calculation
             if (currentHeight > currentBlock.getBlockEvaluation().getHeight()) {
 
-                // Calculate rewards if in reward interval height
-                if (currentHeight <= toHeight) {
-                    totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
-                            totalRewardCount);
-                }
+                // Calculate rewards
+                totalRewardCount = calculateHeightRewards(currentHeightBlocks, snapshotWeights, finalRewardCount,
+                        totalRewardCount);
 
                 // Finished with this height level, go to next level
                 currentHeightBlocks.clear();
-                long currentHeightTmp = currentHeight;
+                long currentHeight_ = currentHeight;
                 snapshotWeights.entrySet()
-                        .removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeightTmp);
+                        .removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeight_);
                 currentHeight = currentBlock.getBlockEvaluation().getHeight();
             }
 
-            // Stop criterion: Block height lower than approved interval height
-            if (currentHeight < fromHeight)
+            // Stop criterion: Block not in candidate list
+            if (!candidateBlocks.contains(currentBlock.getBlockHash()))
                 continue;
 
             // Add your own hash to approver hashes of current approver hashes
             snapshotWeights.get(currentBlock).add(currentBlock.getBlockHash());
 
-            // If in relevant reward height interval, count it
-            if (currentHeight <= toHeight) {
-                // Count the blocks of current height
-                currentHeightBlocks.add(currentBlock);
-            }
+            // Count the blocks of current height
+            currentHeightBlocks.add(currentBlock);
 
             // Continue with both approved blocks
             approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
@@ -1839,9 +1649,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // as it has the right general form and is slightly different for
         // different tx
         TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
-                prevTrunkBlock.getBlockHash().getBytes(), prevBranchBlock.getBlockHash().getBytes()));
+                block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
-        tx.setMemo(new MemoInfo("MiningRewardTX from height " + fromHeight + " to: " + toHeight));
+        tx.setMemo(new MemoInfo("MiningRewardTX"));
         return tx;
     }
 

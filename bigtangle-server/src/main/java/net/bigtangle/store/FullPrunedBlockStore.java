@@ -223,15 +223,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
-    public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException;
-
     public TXReward getMaxConfirmedReward() throws BlockStoreException;
 
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException;
 
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException;
-
-    public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException;
 
     public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException;
 
@@ -241,7 +237,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public long getRewardDifficulty(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash, long difficulty,
+    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty,
             long chainLength) throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
@@ -296,13 +292,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;
 
     public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
-
-    /* Dependencies */
-    public void removeDependents(Sha256Hash blockHash) throws BlockStoreException;
-
-    public void insertDependents(Sha256Hash blockHash, Sha256Hash dependencyBlockHash) throws BlockStoreException;
-
-    public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException;
 
     public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 

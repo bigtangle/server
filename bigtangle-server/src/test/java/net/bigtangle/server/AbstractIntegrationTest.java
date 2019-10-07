@@ -54,7 +54,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
@@ -82,10 +81,9 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.MCMCService;
-import net.bigtangle.server.service.OrderReclaimService;
 import net.bigtangle.server.service.RewardService;
-import net.bigtangle.server.service.TipsService;
 import net.bigtangle.server.service.SyncBlockService;
+import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
@@ -127,8 +125,6 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected RewardService rewardService;
 
-    @Autowired
-    protected OrderReclaimService ordeReclaimService;
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -236,51 +232,6 @@ public abstract class AbstractIntegrationTest {
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
 
-        return block;
-    }
-
-    protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching,
-            List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
-        return makeAndConfirmReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-    }
-
-    protected Block makeAndConfirmReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching,
-            List<Block> addedBlocks, Block predecessor) throws Exception {
-        Block block = makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-
-        // Confirm and return
-        long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     return block;
-    }
-
-    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks)
-            throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
-        return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor);
-    }
-
-    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
-            Block predecessor) throws Exception {
-        return makeReclaim(reclaimedOrder, missingOrderMatching, addedBlocks, predecessor, predecessor);
-    }
-
-    protected Block makeReclaim(Sha256Hash reclaimedOrder, Sha256Hash missingOrderMatching, List<Block> addedBlocks,
-            Block predecessor, Block branchPredecessor) throws Exception {
-        Block block = null;
-
-        // Make transaction
-        Transaction tx = new Transaction(networkParameters);
-        OrderReclaimInfo info = new OrderReclaimInfo(0, reclaimedOrder, missingOrderMatching);
-        tx.setData(info.toByteArray());
-
-        // Create block with order reclaim
-        block = predecessor.createNextBlock(branchPredecessor);
-        block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_RECLAIM);
-        block = adjustSolve(block);
-        this.blockGraph.add(block, true);
-        addedBlocks.add(block);
         return block;
     }
 
@@ -501,21 +452,9 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
-        // Generate blocks until passing interval
-        Block rollingBlock = predecessor;
-        long currHeight = store.getBlockEvaluation(predecessor.getHash()).getHeight();
-        long currMilestoneHeight = store.getRewardToHeight(store.getMaxConfirmedReward().getBlockHash());
-        long targetHeight = currMilestoneHeight + NetworkParameters.REWARD_MIN_HEIGHT_INTERVAL;
-        for (int i = 0; i < targetHeight - currHeight; i++) {
-            rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            rollingBlock = adjustSolve(rollingBlock);
-            blockGraph.add(rollingBlock, true);
-            addedBlocks.add(rollingBlock);
-        }
-
         // Generate matching block
         Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                predecessor.getHash(), predecessor.getHash());
         addedBlocks.add(block);
 
         // Confirm

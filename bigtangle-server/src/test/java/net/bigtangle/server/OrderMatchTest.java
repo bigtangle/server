@@ -49,46 +49,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     OrderTickerService tickerService;
 
     @Test
-    public void testOrderReclaimSchedule() throws Exception {
-        @SuppressWarnings({ "unused" })
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
-        ;
-        List<Block> addedBlocks = new ArrayList<>();
-
-        // Make test token
-        resetAndMakeTestToken(testKey, addedBlocks);
-        String testTokenId = testKey.getPublicKeyAsHex();
-
-        // Get current existing token amount
-        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
-        // Open lost sell order for test tokens
-        Block sell = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
-        // Execute order matching
-        Block match = makeAndConfirmOrderMatching(addedBlocks, networkParameters.getGenesisBlock());
-
-        // Fuse and let all be confirmed
-        Block fuse = createAndAddNextBlock(sell, match);
-        addedBlocks.add(fuse);
-
-        // Pass far enough to lose order
-        addedBlocks.add(makeAndConfirmOrderMatching(addedBlocks, fuse));
-        mcmcService.update();
-
-        // Try reclaiming
-        addedBlocks.addAll(ordeReclaimService.performOrderReclaimMaintenance());
-        mcmcService.update();
-
-        // Verify the tokens returned possession
-        assertHasAvailableToken(testKey, testKey.getPublicKeyAsHex(), 77777l);
-
-        // Verify token amount invariance
-        assertCurrentTokenAmountEquals(origTokenAmounts);
-    }
-
-    @Test
     public void orderTickerPrice() throws Exception {
       
         ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));

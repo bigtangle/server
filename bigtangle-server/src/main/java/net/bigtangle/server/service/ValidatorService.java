@@ -47,11 +47,9 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderReclaimInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
@@ -253,12 +251,10 @@ public class ValidatorService {
                 return store.getTokenSpent(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
             return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-        case ORDERRECLAIM:
-            OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            return store.getOrderSpent(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH);
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-            return store.getTokenSpent(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
+            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
+                    connectedDomainToken.getDomainNameBlockHash()) != null;
         default:
             throw new RuntimeException("Not Implemented");
         }
@@ -279,12 +275,6 @@ public class ValidatorService {
                 return store.getTokenConfirmed(connectedToken.getPrevblockhash());
         case REWARDISSUANCE:
             return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-        case ORDERRECLAIM:
-            OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            // To reclaim, not only must the order record be confirmed unspent,
-            // but the non-collecting issuing block must be confirmed too
-            return store.getOrderConfirmed(connectedOrder.getOrderBlockHash(), Sha256Hash.ZERO_HASH)
-                    && store.getBlockEvaluation(connectedOrder.getNonConfirmingMatcherBlockHash()).isConfirmed();
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
             return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
@@ -447,7 +437,7 @@ public class ValidatorService {
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockWrap b : conflictingConfirmedBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
-            blockGraph.unconfirm(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms);
+            blockGraph.unconfirmRecursive(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms);
         }
 
         // For candidates that have been eliminated (conflictingOutPoints in
@@ -659,19 +649,12 @@ public class ValidatorService {
             if (txRewardSpender == null)
                 return null;
             return store.getBlockWrap(txRewardSpender);
-        case ORDERRECLAIM:
-            OrderReclaimInfo connectedOrder = c.getConflictPoint().getConnectedOrder();
-            final Sha256Hash orderSpender = store.getOrderSpender(connectedOrder.getOrderBlockHash(),
-                    Sha256Hash.ZERO_HASH);
-            if (orderSpender == null)
-                return null;
-            return store.getBlockWrap(orderSpender);
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
 
             // The spender is always the one block with the same domainname and
             // predecessing domain tokenid that is confirmed
-            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getDomainName(),
+            return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
                     connectedDomainToken.getDomainNameBlockHash());
         default:
             throw new RuntimeException("No Implementation");
@@ -877,60 +860,8 @@ public class ValidatorService {
                 return opSolidityState;
             }
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            SolidityState recSolidityState = checkFormalOrderReclaimSolidity(block, throwExceptions);
-            if (!(recSolidityState.getState() == State.Success)) {
-                return recSolidityState;
-            }
-            break;
         default:
             throw new RuntimeException("No Implementation");
-        }
-
-        return SolidityState.getSuccessState();
-    }
-
-    private SolidityState checkFormalOrderReclaimSolidity(Block block, boolean throwExceptions)
-            throws BlockStoreException {
-        if (block.getTransactions().size() != 1) {
-            if (throwExceptions)
-                throw new IncorrectTransactionCountException();
-            return SolidityState.getFailState();
-        }
-
-        // No output creation
-        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
-            if (throwExceptions)
-                throw new TransactionOutputsDisallowedException();
-            return SolidityState.getFailState();
-        }
-
-        Transaction tx = block.getTransactions().get(0);
-        if (tx.getData() == null) {
-            if (throwExceptions)
-                throw new MissingTransactionDataException();
-            return SolidityState.getFailState();
-        }
-
-        OrderReclaimInfo info = null;
-        try {
-            info = OrderReclaimInfo.parse(tx.getData());
-        } catch (IOException e) {
-            if (throwExceptions)
-                throw new MalformedTransactionDataException();
-            return SolidityState.getFailState();
-        }
-
-        // NotNull checks
-        if (info.getOrderBlockHash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target txhash");
-            return SolidityState.getFailState();
-        }
-        if (info.getNonConfirmingMatcherBlockHash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target matcher hash");
-            return SolidityState.getFailState();
         }
 
         return SolidityState.getSuccessState();
@@ -1075,14 +1006,6 @@ public class ValidatorService {
         if (rewardInfo.getPrevRewardHash() == null) {
             if (throwExceptions)
                 throw new MissingDependencyException();
-            return SolidityState.getFailState();
-        }
-
-        // Ensure heights follow the rules
-        if (Math.subtractExact(rewardInfo.getToHeight(),
-                rewardInfo.getFromHeight()) < NetworkParameters.REWARD_MIN_REWARDED_HEIGHT_INTERVAL - 1) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid heights");
             return SolidityState.getFailState();
         }
 
@@ -1475,96 +1398,8 @@ public class ValidatorService {
                 return opSolidityState;
             }
             break;
-        case BLOCKTYPE_ORDER_RECLAIM:
-            SolidityState recSolidityState = checkFullOrderReclaimSolidity(block, height, throwExceptions);
-            if (!(recSolidityState.getState() == State.Success)) {
-                return recSolidityState;
-            }
-            break;
         default:
             throw new RuntimeException("No Implementation");
-        }
-
-        return SolidityState.getSuccessState();
-    }
-
-    private SolidityState checkFullOrderReclaimSolidity(Block block, long height, boolean throwExceptions)
-            throws BlockStoreException {
-        if (block.getTransactions().size() != 1) {
-            if (throwExceptions)
-                throw new IncorrectTransactionCountException();
-            return SolidityState.getFailState();
-        }
-
-        // No output creation
-        if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
-            if (throwExceptions)
-                throw new TransactionOutputsDisallowedException();
-            return SolidityState.getFailState();
-        }
-
-        Transaction tx = block.getTransactions().get(0);
-        if (tx.getData() == null) {
-            if (throwExceptions)
-                throw new MissingTransactionDataException();
-            return SolidityState.getFailState();
-        }
-
-        OrderReclaimInfo info = null;
-        try {
-            info = OrderReclaimInfo.parse(tx.getData());
-        } catch (IOException e) {
-            if (throwExceptions)
-                throw new MalformedTransactionDataException();
-            return SolidityState.getFailState();
-        }
-
-        // NotNull checks
-        if (info.getOrderBlockHash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target txhash");
-            return SolidityState.getFailState();
-        }
-        if (info.getNonConfirmingMatcherBlockHash() == null) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target matcher hash");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure the predecessing order block exists
-        BlockWrap orderBlock = store.getBlockWrap(info.getOrderBlockHash());
-        if (orderBlock == null) {
-            return SolidityState.from(info.getOrderBlockHash(), true);
-        }
-
-        // Ensure it is an order open block
-        if (orderBlock.getBlock().getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
-            if (throwExceptions)
-                throw new InvalidDependencyException("The given block does not open a reclaimable order.");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure the predecessing order matching block exists
-        BlockWrap orderMatchingBlock = store.getBlockWrap(info.getNonConfirmingMatcherBlockHash());
-        if (orderMatchingBlock == null) {
-            return SolidityState.from(info.getNonConfirmingMatcherBlockHash(), true);
-        }
-
-        // Ensure it is an order matching block
-        if (orderMatchingBlock.getBlock().getBlockType() != Type.BLOCKTYPE_REWARD) {
-            if (throwExceptions)
-                throw new InvalidDependencyException("The given matching block is not the right type.");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure the predecessing order matching block approves sufficient
-        // height, i.e. higher than the order opening
-        if (store.getRewardToHeight(info.getNonConfirmingMatcherBlockHash()) < orderBlock.getBlockEvaluation()
-                .getHeight()) {
-            if (throwExceptions)
-                throw new InvalidDependencyException(
-                        "The order matching block does not approve the given reclaim block height yet.");
-            return SolidityState.getFailState();
         }
 
         return SolidityState.getSuccessState();
@@ -1830,61 +1665,6 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        // Ensure fromHeight is starting from prevToHeight+1
-        // TODO ensure this collects only blocks in block list or in milestone
-        if (rewardInfo.getFromHeight() != store.getRewardToHeight(prevRewardHash) + 1) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid fromHeight");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure toHeights follow the rules
-        if (rewardInfo.getToHeight() != Math.max(storedPrev.getBlockEvaluation().getHeight(),
-                storedPrevBranch.getBlockEvaluation().getHeight()) - NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid toHeight");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure heights follow the rules
-        if (Math.subtractExact(rewardInfo.getToHeight(),
-                rewardInfo.getFromHeight()) < NetworkParameters.REWARD_MIN_REWARDED_HEIGHT_INTERVAL - 1) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid heights");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure we are sufficiently far away from the rewarded interval
-        if (height - rewardInfo.getToHeight() < NetworkParameters.REWARD_MIN_HEIGHT_DIFFERENCE) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too close to the rewarded interval");
-            return SolidityState.getFailState();
-        }
-
-        // Ensure the timestamps are correct
-        if (block.getTimeSeconds() != Math.max(storedPrev.getBlock().getTimeSeconds(),
-                storedPrevBranch.getBlock().getTimeSeconds())) {
-            if (throwExceptions)
-                throw new TimeReversionException();
-            return SolidityState.getFailState();
-        }
-
-        // Ensure the new difficulty is set correctly
-        RewardBuilderResult result = rewardService.makeReward(block.getPrevBlockHash(), block.getPrevBranchBlockHash(),
-                rewardInfo.getPrevRewardHash());
-        if (block.getDifficultyTarget() != result.getDifficulty()) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Incorrect difficulty target");
-            return SolidityState.getFailState();
-        }
-
-        // Fallback: Ensure everything is generated canonically
-        if (!block.getTransactions().get(0).getHash().equals(result.getTx().getHash())) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Incorrect Transaction");
-            return SolidityState.getFailState();
-        }
-
         return SolidityState.getSuccessState();
     }
 
@@ -2017,9 +1797,6 @@ public class ValidatorService {
                 // Previous issuance must exist to check solidity
                 prevToken = store.getTokenByBlockHash(currentToken.getToken().getPrevblockhash());
                 if (prevToken == null) {
-                    if (throwExceptions)
-                        // TODO
-                        return SolidityState.from( currentToken.getToken().getPrevblockhash(), true);
                     return SolidityState.from(currentToken.getToken().getPrevblockhash(), true);
                 }
 
@@ -2340,26 +2117,6 @@ public class ValidatorService {
             // Cannot happen
             e.printStackTrace();
             throw new RuntimeException(e);
-        }
-    }
-
-    /*
-     * check the height of the block, if the block is missing predecessors, then
-     * the height must be in a range to be accepted in unsolid blocks.
-     */
-    public void checkHeight(Block block) throws VerificationException, BlockStoreException {
-
-        List<TXReward> rewards = store.getAllConfirmedReward();
-        if (rewards.isEmpty())
-            return;
-        int index = rewards.size() - 1;
-        if (rewards.size() > 5) {
-            long maxH = rewards.get(index).getToHeight() - rewards.get(rewards.size() - 5).getToHeight();
-            if (Math.abs(block.getHeight() - rewards.get(index).getToHeight()) > maxH) {
-                throw new VerificationException("checkHeight failed block height:  " + block.getHeight()
-                        + " last rewards at height: " + rewards.get(index).getToHeight());
-            }
-
         }
     }
 

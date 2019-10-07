@@ -107,7 +107,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
     public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
 
-    public static String DROP_CONFIRMATION_DEPENDENCY_TABLE = "DROP TABLE IF EXISTS confirmationdependency";
     public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
     public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
@@ -198,13 +197,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE height <= ?";
     protected final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
     protected final String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash) VALUES (?)";
-
-    protected final String INSERT_DEPENDENTS_SQL = getInsert()
-            + " INTO confirmationdependency (blockhash, dependencyblockhash) VALUES (?, ?)";
-    protected final String SELECT_DEPENDENTS_SQL = "SELECT blockhash FROM confirmationdependency WHERE dependencyblockhash = ?"
-            + afterSelect();
-    protected final String REMOVE_DEPENDENCIES_SQL = "DELETE FROM confirmationdependency WHERE blockhash = ?"
-            + afterSelect();
 
     protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE hash = ?" + afterSelect();
@@ -401,16 +393,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /* REWARD BLOCKS */
     protected final String INSERT_TX_REWARD_SQL = getInsert()
-            + "  INTO txreward (blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    protected final String SELECT_TX_REWARD_TOHEIGHT_SQL = "SELECT toheight FROM txreward WHERE blockhash = ?";
-    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
+            + "  INTO txreward (blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
-    protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, toheight, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
+    protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=?";
-    protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.toheight, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
+    protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
             + "  JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1 AND chainlength="
             + "(SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)";
-    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, toheight, confirmed, "
+    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
             + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
             + "WHERE confirmed = 1 order by chainlength ";
 
@@ -673,7 +664,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_BATCHBLOCK_TABLE);
         sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(DROP_ORDERS_TABLE);
-        sqlStatements.add(DROP_CONFIRMATION_DEPENDENCY_TABLE);
         sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
         sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
@@ -905,7 +895,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             // Just fill the tables with some valid data
             // Reward output table
-            insertReward(params.getGenesisBlock().getHash(), 0, Sha256Hash.ZERO_HASH,
+            insertReward(params.getGenesisBlock().getHash(), Sha256Hash.ZERO_HASH,
                     Utils.encodeCompactBits(params.getMaxTargetReward()), 0);
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
@@ -3951,29 +3941,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public long getRewardToHeight(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_TOHEIGHT_SQL);
-            preparedStatement.setBytes(1, blockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getLong(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3997,20 +3964,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, long toHeight, Sha256Hash prevBlockHash, long difficulty,
+    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty,
             long chainLength) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(INSERT_TX_REWARD_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
-            preparedStatement.setLong(2, toHeight);
+            preparedStatement.setBoolean(2, false);
             preparedStatement.setBoolean(3, false);
-            preparedStatement.setBoolean(4, false);
-            preparedStatement.setBytes(5, null);
-            preparedStatement.setBytes(6, prevBlockHash.getBytes());
-            preparedStatement.setLong(7, difficulty);
-            preparedStatement.setLong(8, chainLength);
+            preparedStatement.setBytes(4, null);
+            preparedStatement.setBytes(5, prevBlockHash.getBytes());
+            preparedStatement.setLong(6, difficulty);
+            preparedStatement.setLong(7, chainLength);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
@@ -4178,7 +4144,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private TXReward setReward(ResultSet resultSet) throws SQLException {
         return new TXReward(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
-                resultSet.getBoolean("spent"), resultSet.getLong("toheight"),
+                resultSet.getBoolean("spent"), 
                 Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
                 Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
                 resultSet.getLong("difficulty"),
@@ -5251,32 +5217,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<Sha256Hash> getLostOrders(long toHeight) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        List<Sha256Hash> result = new ArrayList<>();
-        try {
-            preparedStatement = conn.get().prepareStatement(SELECT_LOST_ORDERS_BEFORE_SQL);
-            preparedStatement.setLong(1, toHeight);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                result.add(Sha256Hash.wrap(resultSet.getBytes(1)));
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -5863,83 +5803,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             return result;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void insertDependents(Sha256Hash blockHash, Sha256Hash dependencyBlockHash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(INSERT_DEPENDENTS_SQL);
-            s.setBytes(1, blockHash.getBytes());
-            s.setBytes(2, dependencyBlockHash.getBytes());
-            s.executeUpdate();
-        } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void removeDependents(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(REMOVE_DEPENDENCIES_SQL);
-            s.setBytes(1, blockHash.getBytes());
-            s.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Sha256Hash> getDependents(Sha256Hash blockHash) throws BlockStoreException {
-        List<Sha256Hash> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(SELECT_DEPENDENTS_SQL);
-            s.setBytes(1, blockHash.getBytes());
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                result.add(Sha256Hash.wrap(resultSet.getBytes(1)));
-            }
-            return result;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
         } catch (ProtocolException e) {
             // Corrupted database.
             throw new BlockStoreException(e);

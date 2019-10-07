@@ -7,7 +7,6 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
      */
     private static final long serialVersionUID = 1L;
 
-    private long toHeight;
     private Sha256Hash prevBlockHash;
 
     private long difficulty;
@@ -18,25 +17,16 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
 
     }
 
-    public TXReward(Sha256Hash hash, boolean confirmed, boolean spent, long toHeight, Sha256Hash prevBlockHash,
+    public TXReward(Sha256Hash hash, boolean confirmed, boolean spent, Sha256Hash prevBlockHash,
             Sha256Hash spenderblockhash, long difficulty, long chainLength) {
         super();
         this.setBlockHash(hash);
         this.setConfirmed(confirmed);
         this.setSpent(spent);
-        this.toHeight = toHeight;
         this.prevBlockHash = prevBlockHash;
         this.setSpenderBlockHash(spenderblockhash);
         this.difficulty = difficulty;
         this.chainLength = chainLength;
-    }
-
-    public long getToHeight() {
-        return toHeight;
-    }
-
-    public void setToHeight(long toHeight) {
-        this.toHeight = toHeight;
     }
 
     public long getDifficulty() {
@@ -65,7 +55,7 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "TXReward [toHeight=" + toHeight + ", \n prevBlockHash=" + prevBlockHash + ", \n difficulty="
+        return "TXReward [prevBlockHash=" + prevBlockHash + ", \n difficulty="
                 + difficulty + ", \n chainLength=" + chainLength + "]";
     }
 
