@@ -494,9 +494,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
             + "  INTO exchange_multisign (orderid, pubkey,sign) VALUES (?, ?,?)";
-    
-    protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
 
+    protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
+    protected String SELECT_EXCHANGE_SQL_A = "SELECT DISTINCT orderid, fromAddress, "
+            + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
+            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
+            + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND (fromAddress = ? OR toAddress = ? OR toOrderId in(SELECT DISTINCT em.orderid FROM exchange_multisign em WHERE pubkey=?)) "
+            + afterSelect();
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected LinkedBlockingQueue<Connection> allConnections;
@@ -770,8 +774,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private void logStack() {
 
     }
-
- 
 
     @Override
     public void close() {
@@ -3964,8 +3966,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty,
-            long chainLength) throws BlockStoreException {
+    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty, long chainLength)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -4144,10 +4146,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private TXReward setReward(ResultSet resultSet) throws SQLException {
         return new TXReward(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
-                resultSet.getBoolean("spent"), 
-                Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
-                Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-                resultSet.getLong("difficulty"),
+                resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
+                Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getLong("difficulty"),
                 resultSet.getLong("chainlength"));
     }
 
@@ -6122,6 +6122,50 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     preparedStatement.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        List<Exchange> list = new ArrayList<Exchange>();
+        String sql = SELECT_EXCHANGE_SQL_A;
+
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, address);
+            preparedStatement.setString(2, address);
+            preparedStatement.setString(3, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Exchange exchange = new Exchange();
+                exchange.setOrderid(resultSet.getString("orderid"));
+                exchange.setFromAddress(resultSet.getString("fromAddress"));
+                exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
+                exchange.setFromAmount(resultSet.getString("fromAmount"));
+                exchange.setToAddress(resultSet.getString("toAddress"));
+                exchange.setToTokenHex(resultSet.getString("toTokenHex"));
+                exchange.setToAmount(resultSet.getString("toAmount"));
+                exchange.setData(resultSet.getBytes("data"));
+                exchange.setToSign(resultSet.getInt("toSign"));
+                exchange.setFromSign(resultSet.getInt("fromSign"));
+                exchange.setToOrderId(resultSet.getString("toOrderId"));
+                exchange.setFromOrderId(resultSet.getString("fromOrderId"));
+                exchange.setMarket(resultSet.getString("market"));
+                list.add(exchange);
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
                 }
             }
         }

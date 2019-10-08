@@ -5,31 +5,30 @@
 package net.bigtangle.params;
 
 public enum ReqCmd {
-   //Block
+    // Block
     saveBlock, getBlockByHash, findBlockEvaluation, batchBlock,
-    
+
     getTip, adjustHeight,
-    //Chain
+    // Chain
     getMaxConfirmedReward, getAllConfirmedReward, blocksFromChainLength,
-    //Token
+    // Token
     searchTokens, getTokenById, getTokenIndex, getTokenSignByAddress,
 
-    getTokenSignByTokenid, signToken, getTokenSigns,   getTokenPermissionedAddresses, getDomainNameBlockHash,
-    //Block Order
+    getTokenSignByTokenid, signToken, getTokenSigns, getTokenPermissionedAddresses, getDomainNameBlockHash,
+    // Block Order
     getOrders, getOTCMarkets, getOrdersTicker, signOrder,
-    //Outputs
+    // Outputs
     getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,
-  
-    //payment 
+
+    // payment
     launchPayMultiSign, payMultiSign,
 
     getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
-    //Direct exchange
+    // Direct exchange
     getExchangeByOrderid, saveExchange,
-    
-    getUserData, userDataList,
-    //subtangle
+
+    getUserData, userDataList, getBatchExchange,
+    // subtangle
     regSubtangle, updateSubtangle;
 
-   
 }

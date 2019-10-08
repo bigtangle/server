@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +17,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ExchangeInfoResponse;
+import net.bigtangle.core.response.GetExchangeResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
@@ -26,6 +29,14 @@ public class ExchangeService {
     public AbstractResponse getExchangeByOrderid(String orderid) throws BlockStoreException {
         Exchange exchange = this.store.getExchangeInfoByOrderid(orderid);
         return ExchangeInfoResponse.create(exchange);
+    }
+
+    public AbstractResponse getBatchExchangeListByAddressListA(List<String> address) throws BlockStoreException {
+        List<Exchange> list = new ArrayList<Exchange>();
+        for (String s : address) {
+            list.addAll(this.store.getExchangeListWithAddressA(s));
+        }
+        return GetExchangeResponse.create(list);
     }
 
     public AbstractResponse saveExchange(Map<String, Object> request) throws BlockStoreException {

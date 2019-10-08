@@ -237,8 +237,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public long getRewardDifficulty(Sha256Hash hash) throws BlockStoreException;
 
-    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty,
-            long chainLength) throws BlockStoreException;
+    public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty, long chainLength)
+            throws BlockStoreException;
 
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException;
 
@@ -464,6 +464,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     Token getTokensByDomainname(String domainname) throws BlockStoreException;
 
     Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
+
+    public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException;
 
     void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
 

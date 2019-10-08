@@ -1,0 +1,142 @@
+"2019-09-26T04:53:13.830+0200" [main]
+				INFO  [o.s.b.t.c.SpringBootTestContextBootstrapper:308] - message: "Neither @ContextConfiguration nor @ContextHierarchy found for test class [net.bigtangle.subtangle.SubtangleIntegrationTests], using SpringBootContextLoader"
+"2019-09-26T04:53:13.863+0200" [main]
+				INFO  [o.s.t.c.support.AbstractContextLoader:264] - message: "Could not detect default resource locations for test class [net.bigtangle.subtangle.SubtangleIntegrationTests]: no resource found for suffixes {-context.xml, Context.groovy}."
+"2019-09-26T04:53:13.863+0200" [main]
+				INFO  [o.s.t.c.s.AnnotationConfigContextLoaderUtils:83] - message: "Could not detect default configuration classes for test class [net.bigtangle.subtangle.SubtangleIntegrationTests]: SubtangleIntegrationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration."
+"2019-09-26T04:53:16.015+0200" [main]
+				INFO  [o.s.b.t.c.SpringBootTestContextBootstrapper:247] - message: "Found @SpringBootConfiguration net.bigtangle.subtangle.ServerStart for test class net.bigtangle.subtangle.SubtangleIntegrationTests"
+"2019-09-26T04:53:17.280+0200" [main]
+				INFO  [o.s.b.t.c.SpringBootTestContextBootstrapper:177] - message: "Using TestExecutionListeners: [org.springframework.test.context.support.DependencyInjectionTestExecutionListener@5f8edcc5, org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener@7b02881e, org.springframework.test.context.support.DirtiesContextTestExecutionListener@1ebd319f]"
+"2019-09-26T04:53:21.884+0200" [main]
+				INFO  [n.b.subtangle.SubtangleIntegrationTests:50] - message: "Starting SubtangleIntegrationTests on 2011-20121217PZ with PID 8004 (started by Administrator in F:\git\bignetcoin\bigtangle-eth)"
+"2019-09-26T04:53:21.884+0200" [main]
+				DEBUG [n.b.subtangle.SubtangleIntegrationTests:53] - message: "Running with Spring Boot v2.1.4.RELEASE, Spring v5.1.6.RELEASE"
+"2019-09-26T04:53:21.884+0200" [main]
+				INFO  [n.b.subtangle.SubtangleIntegrationTests:675] - message: "No active profile set, falling back to default profiles: default"
+"2019-09-26T04:53:34.493+0200" [main]
+				INFO  [o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:330] - message: "Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$507628f] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)"
+"2019-09-26T04:53:36.179+0200" [main]
+				INFO  [o.s.b.web.embedded.tomcat.TomcatWebServer:90] - message: "Tomcat initialized with port(s): 0 (http)"
+"2019-09-26T04:53:36.351+0200" [main]
+				INFO  [org.apache.coyote.http11.Http11NioProtocol:173] - message: "Initializing ProtocolHandler ["http-nio-auto-1"]"
+"2019-09-26T04:53:36.445+0200" [main]
+				INFO  [org.apache.catalina.core.StandardService:173] - message: "Starting service [Tomcat]"
+"2019-09-26T04:53:36.445+0200" [main]
+				INFO  [org.apache.catalina.core.StandardEngine:173] - message: "Starting Servlet engine: [Apache Tomcat/9.0.17]"
+"2019-09-26T04:53:36.975+0200" [main]
+				INFO  [o.a.c.c.C.[Tomcat].[localhost].[/]:173] - message: "Initializing Spring embedded WebApplicationContext"
+"2019-09-26T04:53:36.975+0200" [main]
+				INFO  [o.s.web.context.ContextLoader:296] - message: "Root WebApplicationContext: initialization completed in 14919 ms"
+"2019-09-26T04:53:38.192+0200" [MLog-Init-Reporter]
+				INFO  [com.mchange.v2.log.MLog:212] - message: "MLog clients using slf4j logging."
+"2019-09-26T04:53:38.437+0200" [main]
+				INFO  [com.mchange.v2.c3p0.C3P0Registry:212] - message: "Initializing c3p0-0.9.5.4 [built 23-March-2019 23:00:48 -0700; debug? true; trace: 10]"
+"2019-09-26T04:53:40.746+0200" [main]
+				INFO  [net.bigtangle.core.Context:65] - message: "Creating  0.3.2 context."
+"2019-09-26T04:53:41.006+0200" [main]
+				DEBUG [net.bigtangle.server.BeforeStartup:27] - message: "server config: ServerConfiguration [requester=, port=0, debug=null, net=Unittest, mineraddress=mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG, serverurl=null, serverversion=0.3.0, clientversion=0.3.0, permissioned=false, permissionadmin=mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG, myserverblockOnly=false, permissionDomainname=[net.bigtangle.core.PermissionDomainname@61db86bf], serviceReady=false, createtable=true]"
+"2019-09-26T04:53:41.006+0200" [main]
+				INFO  [n.b.store.DatabaseFullPrunedBlockStore:627] - message: "com.mysql.jdbc.Driver loaded. "
+"2019-09-26T04:53:41.661+0200" [main]
+				DEBUG [n.b.store.DatabaseFullPrunedBlockStore:882] - message: "Thread name is main."
+"2019-09-26T04:53:41.661+0200" [main]
+				DEBUG [n.b.store.DatabaseFullPrunedBlockStore:890] - message: "	at net.bigtangle.store.DatabaseFullPrunedBlockStore.logStack(DatabaseFullPrunedBlockStore.java:883  ) 
+	at net.bigtangle.store.DatabaseFullPrunedBlockStore.maybeConnect(DatabaseFullPrunedBlockStore.java:874  ) 
+	at net.bigtangle.store.DatabaseFullPrunedBlockStore.create(DatabaseFullPrunedBlockStore.java:631  ) 
+	at net.bigtangle.server.BeforeStartup.run(BeforeStartup.java:30  ) 
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(NativeMethodAccessorImpl.java:-2  ) 
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62  ) 
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43  ) 
+	at java.lang.reflect.Method.invoke(Method.java:497  ) 
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleElement.invoke(InitDestroyAnnotationBeanPostProcessor.java:363  ) 
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:307  ) 
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:136  ) 
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:414  ) 
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1770  ) 
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:593  ) 
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:515  ) 
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:320  ) 
+	at org.springframework.beans.factory.support.AbstractBeanFactory$$Lambda$139/1201004240.getObject(null:-1  ) 
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222  ) 
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:318  ) 
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199  ) 
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:849  ) 
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:877  ) 
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:549  ) 
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:142  ) 
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:775  ) 
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:397  ) 
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316  ) 
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:127  ) 
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:99  ) 
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:117  ) 
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:108  ) 
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:118  ) 
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:83  ) 
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:246  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.createTest(SpringJUnit4ClassRunner.java:227  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner$1.runReflectiveCall(SpringJUnit4ClassRunner.java:289  ) 
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.methodBlock(SpringJUnit4ClassRunner.java:291  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:246  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:97  ) 
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290  ) 
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71  ) 
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288  ) 
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58  ) 
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268  ) 
+	at org.springframework.test.context.junit4.statements.RunBeforeTestClassCallbacks.evaluate(RunBeforeTestClassCallbacks.java:61  ) 
+	at org.springframework.test.context.junit4.statements.RunAfterTestClassCallbacks.evaluate(RunAfterTestClassCallbacks.java:70  ) 
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:363  ) 
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.run(SpringJUnit4ClassRunner.java:190  ) 
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:86  ) 
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:38  ) 
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:538  ) 
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:760  ) 
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:460  ) 
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:206  ) 
+"
+"2019-09-26T04:53:41.801+0200" [main]
+				INFO  [n.b.store.DatabaseFullPrunedBlockStore:638] - message: "setting table   Exists"
+"2019-09-26T04:53:41.833+0200" [main]
+				DEBUG [n.b.server.service.UnsolidBlockService:56] - message: " Start updateUnsolideServiceSingle: "
+"2019-09-26T04:53:41.848+0200" [main]
+				INFO  [net.bigtangle.core.Context:65] - message: "Creating  0.3.2 context."
+"2019-09-26T04:53:42.068+0200" [main]
+				DEBUG [n.b.server.service.UnsolidBlockService:63] - message: " end  updateUnsolideServiceSingle: "
+"2019-09-26T04:53:42.614+0200" [main]
+				INFO  [o.s.s.concurrent.ThreadPoolTaskExecutor:171] - message: "Initializing ExecutorService"
+"2019-09-26T04:53:42.629+0200" [main]
+				INFO  [o.s.s.concurrent.ThreadPoolTaskExecutor:171] - message: "Initializing ExecutorService 'taskExecutor'"
+"2019-09-26T04:53:44.517+0200" [main]
+				INFO  [com.hazelcast.instance.AddressPicker:49] - message: "[LOCAL] [dev] [3.12] Prefer IPv4 stack is true, prefer IPv6 addresses is false"
+"2019-09-26T04:53:44.752+0200" [main]
+				INFO  [com.hazelcast.instance.AddressPicker:49] - message: "[LOCAL] [dev] [3.12] Picked [192.168.0.6]:5701, using socket ServerSocket[addr=/0:0:0:0:0:0:0:0,localport=5701], bind any local is true"
+"2019-09-26T04:53:44.799+0200" [main]
+				INFO  [com.hazelcast.system:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Hazelcast 3.12 (20190409 - 915d83a) starting at [192.168.0.6]:5701"
+"2019-09-26T04:53:44.799+0200" [main]
+				INFO  [com.hazelcast.system:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Copyright (c) 2008-2019, Hazelcast, Inc. All Rights Reserved."
+"2019-09-26T04:53:45.844+0200" [main]
+				INFO  [c.h.s.i.o.impl.BackpressureRegulator:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Backpressure is disabled"
+"2019-09-26T04:53:47.935+0200" [main]
+				INFO  [com.hazelcast.instance.Node:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Creating MulticastJoiner"
+"2019-09-26T04:53:48.529+0200" [main]
+				INFO  [c.h.s.i.o.impl.OperationExecutorImpl:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Starting 4 partition threads and 3 generic threads (1 dedicated for priority tasks)"
+"2019-09-26T04:53:48.529+0200" [main]
+				INFO  [c.h.internal.diagnostics.Diagnostics:49] - message: "[192.168.0.6]:5701 [dev] [3.12] Diagnostics disabled. To enable add -Dhazelcast.diagnostics.enabled=true to the JVM arguments."
+"2019-09-26T04:53:48.529+0200" [main]
+				INFO  [com.hazelcast.core.LifecycleService:49] - message: "[192.168.0.6]:5701 [dev] [3.12] [192.168.0.6]:5701 is STARTING"
+"2019-09-26T04:53:51.721+0200" [main]
+				INFO  [c.h.internal.cluster.ClusterService:49] - message: "[192.168.0.6]:5701 [dev] [3.12] 
+
+Members {size:1, ver:1} [
+	Member [192.168.0.6]:5701 - bb192b2a-230c-4a79-a40e-2563c979f25d this
+]
+"
+"2019-09-26T04:53:51.942+0200" [main]
+				INFO  [com.hazelcast.core.LifecycleService:49] - message: "[192.168.0.6]:5701 [dev] [3.12] [192.168.0.6]:5701 is STARTED"
+"2019-09-26T04:53:53.798+0200" [main]
+				INFO  [o.s.s.concurrent.ThreadPoolTaskScheduler:171] - message: "Initializing ExecutorService 'taskScheduler'"
+"2019-09-26T04:53:54.019+0200" [main]
+				INFO  [o.s.b.a.endpoint.web.EndpointLinksResolver:59] - message: "Exposing 16 endpoint(s) beneath base path '/actuator'"
