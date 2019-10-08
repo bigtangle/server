@@ -41,7 +41,7 @@ public class Exchange implements java.io.Serializable {
     private String fromOrderId;
 
     private String market;
-
+    private String memo;
     private List<ExchangeMulti> exchangeMultis;
     private List<byte[]> sigs = new ArrayList<byte[]>();
 
@@ -202,5 +202,13 @@ public class Exchange implements java.io.Serializable {
 
     public void setSigs(List<byte[]> sigs) {
         this.sigs = sigs;
+    }
+
+    public String getMemo() {
+        return memo;
+    }
+
+    public void setMemo(String memo) {
+        this.memo = memo;
     }
 }

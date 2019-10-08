@@ -486,7 +486,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected String INSERT_EXCHANGE_SQL = getInsert()
             + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,memo) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
@@ -498,7 +498,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
     protected String SELECT_EXCHANGE_SQL_A = "SELECT DISTINCT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-            + "data, toSign, fromSign, toOrderId, fromOrderId, market "
+            + "data, toSign, fromSign, toOrderId, fromOrderId, market,memo "
             + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND (fromAddress = ? OR toAddress = ? OR toOrderId in(SELECT DISTINCT em.orderid FROM exchange_multisign em WHERE pubkey=?)) "
             + afterSelect();
     protected NetworkParameters params;
@@ -6155,6 +6155,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 exchange.setToOrderId(resultSet.getString("toOrderId"));
                 exchange.setFromOrderId(resultSet.getString("fromOrderId"));
                 exchange.setMarket(resultSet.getString("market"));
+                exchange.setMemo(resultSet.getString("memo"));
                 list.add(exchange);
             }
             return list;
@@ -6190,6 +6191,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(11, exchange.getToOrderId());
             preparedStatement.setString(12, exchange.getFromOrderId());
             preparedStatement.setString(13, exchange.getMarket());
+            preparedStatement.setString(14, exchange.getMemo());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
