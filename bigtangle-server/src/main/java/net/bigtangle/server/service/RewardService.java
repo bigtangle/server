@@ -582,8 +582,6 @@ public class RewardService {
 
         // Get all blocks approved by previous reward blocks
         long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
-        Set<Sha256Hash> allMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
-        allMilestoneBlocks.addAll(rewardInfo.getBlocks());
 
         for (Sha256Hash hash : rewardInfo.getBlocks()) {
             BlockWrap block = store.getBlockWrap(hash);
@@ -592,19 +590,25 @@ public class RewardService {
             if (block.getBlock().getHeight() <= cutoffHeight)
                 throw new VerificationException("Referenced blocks are below cutoff height.");
 
-            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
-            for (Sha256Hash reqHash : requiredBlocks) {
-                BlockWrap req = store.getBlockWrap(reqHash);
-                if (req == null && !allMilestoneBlocks.contains(reqHash))
-                    return false;
+            if (!checkRequiredBlocks(rewardInfo, block))
+                return false;
+        }
+        return true;
+    }
 
-                if (req != null && req.getBlockEvaluation().getSolid() >= 1
-                        && block.getBlockEvaluation().getSolid() == 0) {
-                    scanWaitingBlocks(req.getBlock(), rewardInfo.getBlocks());
-                }
+    private boolean checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block) throws BlockStoreException {
+        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+        for (Sha256Hash reqHash : requiredBlocks) {
+            BlockWrap req = store.getBlockWrap(reqHash);
+            // the required block must be in this referenced blocks or in
+            // milestone
+            if (req == null && !rewardInfo.getBlocks().contains(reqHash))
+                return false;
+            if (req != null && !rewardInfo.getBlocks().contains(req.getBlockHash())
+                    && req.getBlockEvaluation().getMilestone() < 0) {
+                return false;
             }
         }
-
         return true;
     }
 
