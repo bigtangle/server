@@ -291,6 +291,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   toOrderId varchar(255),\n"
             + "   fromOrderId varchar(255),\n" 
             + "   market varchar(255),\n" 
+            + "   memo varchar(255),\n" 
             + "   signInputData varbinary(5000),\n"
             + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
     
