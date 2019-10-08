@@ -600,6 +600,7 @@ public class Block extends Message {
         s.append("   previous: ").append(getPrevBlockHash()).append("\n");
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
         s.append("   merkle: ").append(getMerkleRoot()).append("\n");
+        s.append("   lastMiningRewardBlock: ").append(getLastMiningRewardBlock()).append("\n");
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         s.append("   difficulty target (nBits):    ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");

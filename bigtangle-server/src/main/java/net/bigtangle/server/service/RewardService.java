@@ -174,7 +174,6 @@ public class RewardService {
         // Make the new block
         block.addTransaction(result.getTx());
         block.setDifficultyTarget(result.getDifficulty());
-        block.setLastMiningRewardBlock(Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()) + 1);
 
         // Enforce timestamp equal to previous max for reward blocktypes
         block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
@@ -249,35 +248,33 @@ public class RewardService {
         // Build transaction for block
         Transaction tx = new Transaction(networkParameters);
 
-        // Get all blocks approved by previous reward blocks
         Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
-        Set<Sha256Hash> prevMilestoneBlocks = blockService.getPastMilestoneBlocks(prevRewardHash);
         long cutoffheight = blockService.getCutoffHeight(prevRewardHash);
 
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, prevMilestoneBlocks, cutoffheight);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, prevMilestoneBlocks, cutoffheight);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight);
         long totalRewardCount = blocks.size() + 1;
 
         // New difficulty
-        long difficulty = calculateNextBlockDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock, prevRewardBlock,
-                totalRewardCount);
+        long difficulty = calculateNextBlockDifficulty(prevDifficulty, prevTrunkBlock, prevBranchBlock,
+                prevRewardBlock.getBlock(), totalRewardCount);
 
         // Build the type-specific tx data
-        RewardInfo rewardInfo = new RewardInfo(prevRewardHash, blocks, currChainLength);
+        RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficulty, blocks, currChainLength);
         tx.setData(rewardInfo.toByteArray());
         tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
         return new RewardBuilderResult(tx, difficulty);
     }
 
     private long calculateNextBlockDifficulty(long prevDifficulty, BlockWrap prevTrunkBlock, BlockWrap prevBranchBlock,
-            BlockWrap prevRewardBlock, long totalRewardCount) {
+            Block prevRewardBlock, long totalRewardCount) {
         // The following equals current time by consensus rules
         long currentTime = Math.max(prevTrunkBlock.getBlock().getTimeSeconds(),
                 prevBranchBlock.getBlock().getTimeSeconds());
-        long timespan = Math.max(1, (currentTime - prevRewardBlock.getBlock().getTimeSeconds()));
+        long timespan = Math.max(1, (currentTime - prevRewardBlock.getTimeSeconds()));
 
         BigInteger prevTarget = Utils.decodeCompactBits(prevDifficulty);
         BigInteger newTarget = prevTarget.multiply(BigInteger.valueOf(NetworkParameters.TARGET_MAX_TPS));
@@ -315,7 +312,8 @@ public class RewardService {
         long maxChainLength = store.getRewardChainLength(oldLongestChainEnd);
         if (maxChainLength < currChainLength) {
 
-            // Find block to which to rollback (if at all) and all new chain blocks
+            // Find block to which to rollback (if at all) and all new chain
+            // blocks
             List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
             newMilestoneBlocks.add(store.getBlockWrap(newestBlock.getHash()));
             BlockWrap splitPoint = null;
@@ -351,7 +349,8 @@ public class RewardService {
                     return false;
                 }
 
-                // Unset the milestone of this one (where milestone = maxConfRewardblock.chainLength)
+                // Unset the milestone of this one (where milestone =
+                // maxConfRewardblock.chainLength)
                 long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
                 List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
                         milestoneNumber);
@@ -565,9 +564,8 @@ public class RewardService {
     }
 
     public boolean checkRewardReferencedBlocks(Block rewardBlock) throws BlockStoreException {
-        RewardInfo  
-            rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
-      
+        RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
+
         // Check previous reward blocks exist and get their approved sets
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         if (prevRewardHash == null)
@@ -580,12 +578,7 @@ public class RewardService {
                 && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
             throw new VerificationException("Previous block not reward block.");
 
-        // TODO prevent DoS by repeated add of unsolid reward blocks
-        // Check for PoW now since it is possible to do so
-        SolidityState state = validatorService.checkConsensusBlockPow(rewardBlock, true);
-        if (!state.isSuccessState()) {
-            return false;
-        }
+        checkRewardDifficulty(rewardBlock, rewardInfo, prevRewardBlock);
 
         // Get all blocks approved by previous reward blocks
         long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
@@ -613,5 +606,22 @@ public class RewardService {
         }
 
         return true;
+    }
+
+    private void checkRewardDifficulty(Block rewardBlock, RewardInfo rewardInfo, Block prevRewardBlock)
+            throws BlockStoreException {
+        // check the difficulty
+        // Count how many blocks from miners in the reward interval are approved
+        BlockWrap prevTrunkBlock = store.getBlockWrap(rewardBlock.getPrevBlockHash());
+        BlockWrap prevBranchBlock = store.getBlockWrap(rewardBlock.getPrevBranchBlockHash());
+
+        long totalRewardCount = rewardInfo.getBlocks().size() + 1;
+
+        // check difficulty
+        long difficulty = calculateNextBlockDifficulty(prevRewardBlock.getDifficultyTarget(), prevTrunkBlock,
+                prevBranchBlock, prevRewardBlock, totalRewardCount);
+        if (difficulty != rewardInfo.getDifficultyTargetReward()) {
+            throw new VerificationException("getDifficultyTargetReward does not match.");
+        }
     }
 }

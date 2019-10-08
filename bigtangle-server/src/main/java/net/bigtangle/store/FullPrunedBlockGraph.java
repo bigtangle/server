@@ -219,7 +219,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
         block.verifyTransactions();
-
+        validatorService.checkRewardBlockPow(block, true);
         // Check formal correctness of the block
         validatorService.checkFormalBlockSolidity(block, true);
 
@@ -1022,9 +1022,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Reward blocks follow different logic: If this is new, run
             // consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                solidifyReward(block); 
+                solidifyReward(block);
                 return;
-            } 
+            }
             // Insert other blocks into waiting list
             insertUnsolidBlock(block, solidityState);
             break;

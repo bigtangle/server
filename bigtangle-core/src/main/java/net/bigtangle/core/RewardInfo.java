@@ -17,13 +17,15 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     private long chainlength;
     private Sha256Hash prevRewardHash;
     private Set<Sha256Hash> blocks;
+    private long difficultyTargetReward;
 
     public RewardInfo() {
     }
 
-    public RewardInfo(Sha256Hash prevRewardHash, Set<Sha256Hash> blocks, long chainlength) {
+    public RewardInfo(Sha256Hash prevRewardHash,long difficultyTargetReward, Set<Sha256Hash> blocks, long chainlength) {
         super();
         this.prevRewardHash = prevRewardHash;
+        this.difficultyTargetReward=difficultyTargetReward;
         this.blocks = blocks;
         this.chainlength = chainlength;
     }
@@ -56,6 +58,15 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         this.chainlength = chainlength;
     }
 
+    
+    public long getDifficultyTargetReward() {
+        return difficultyTargetReward;
+    }
+
+    public void setDifficultyTargetReward(long difficultyTargetReward) {
+        this.difficultyTargetReward = difficultyTargetReward;
+    }
+
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
@@ -84,6 +95,7 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     @Override
     public String toString() {
         return "RewardInfo [chainlength=" + chainlength + ", \n prevRewardHash=" + prevRewardHash
+                + ", \n prevRewardDifficulty=" + difficultyTargetReward
                 + ", \n referenced block size =" + blocks.size() + "]";
     }
 

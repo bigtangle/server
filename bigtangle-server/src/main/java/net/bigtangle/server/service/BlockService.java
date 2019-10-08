@@ -180,12 +180,11 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
-            Collection<Sha256Hash> otherBlocks, long cutoffHeight) throws BlockStoreException {
+    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,  long cutoffHeight) throws BlockStoreException {
         if (block == null)
             return false;
-
-        if (block.getBlockEvaluation().getMilestone() >= 0 || otherBlocks.contains(block.getBlockHash())
+        //no block add if already added or in milestone
+        if (block.getBlockEvaluation().getMilestone() >= 0 
                 || blocks.contains(block.getBlockHash()))
             return true;
         // the block is in cutoff and not in chain
@@ -202,7 +201,7 @@ public class BlockService {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, otherBlocks, cutoffHeight))
+            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight))
                 return false;
         }
         return true;

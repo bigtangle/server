@@ -68,7 +68,6 @@ public abstract class NetworkParameters {
     /** Unit test network. */
     public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
 
-      
     protected Block genesisBlock;
     protected BigInteger maxTarget;
     protected BigInteger maxTargetReward;
@@ -120,11 +119,11 @@ public abstract class NetworkParameters {
      * The version number at the start of the network.
      */
     public static final long BLOCK_VERSION_GENESIS = 1;
-    
-    //block number can be taken in a reward block,
-    // MAX_BLOCKS_IN_REWARD  < MAX_DEFAULT_BLOCK_SIZE / 8  blockhash 4bytes =  
+
+    // block number can be taken in a reward block,
+    // MAX_BLOCKS_IN_REWARD < MAX_DEFAULT_BLOCK_SIZE / 8 blockhash 4bytes =
     public static final int MAX_BLOCKS_IN_REWARD = 4096;
-    
+
     /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
@@ -133,7 +132,7 @@ public abstract class NetworkParameters {
      * everyone to download/store it forever.
      */
     public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
-    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + MAX_BLOCKS_IN_REWARD * 200; 
+    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + MAX_BLOCKS_IN_REWARD * 200;
 
     /**
      * A "sigop" is a signature verification operation. Because they're
@@ -193,7 +192,8 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
 
-    public static final int TARGET_TIMESPAN = 86400; // 1 day per  difficulty cycle
+    public static final int TARGET_TIMESPAN = 86400; // 1 day per difficulty
+                                                     // cycle
     public static final int TARGET_SPACING = 15; // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
@@ -206,13 +206,11 @@ public abstract class NetworkParameters {
     // the other two thirds are for each inclusion into consensus and each block
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
-    
-  
+
     // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 6;
     public static final long ENTRYPOINT_CUTOFF = 3;
 
-    
     protected NetworkParameters() {
     }
 
@@ -229,7 +227,9 @@ public abstract class NetworkParameters {
         final ScriptBuilder inputBuilder = new ScriptBuilder();
         coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
 
-        RewardInfo rewardInfo = new RewardInfo(Sha256Hash.ZERO_HASH, new HashSet<Sha256Hash>(), 0l);
+        RewardInfo rewardInfo = new RewardInfo(Sha256Hash.ZERO_HASH,
+                Utils.encodeCompactBits(params.getMaxTargetReward().divide(BigInteger.valueOf(2))),
+                new HashSet<Sha256Hash>(), 0l);
 
         coinbase.setData(rewardInfo.toByteArray());
         add(params, BigtangleCoinTotal, genesisPub, coinbase);
@@ -382,7 +382,6 @@ public abstract class NetworkParameters {
     public BigInteger getMaxTarget() {
         return maxTarget;
     }
-
 
     /** Maximum target represents the easiest allowable proof of work. */
     public BigInteger getMaxTargetReward() {
