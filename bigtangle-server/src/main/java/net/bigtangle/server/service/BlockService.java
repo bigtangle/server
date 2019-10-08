@@ -185,7 +185,8 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if ( block.getBlockEvaluation().getMilestone() >=0 || otherBlocks.contains(block.getBlockHash()) || blocks.contains(block.getBlockHash()))
+        if (block.getBlockEvaluation().getMilestone() >= 0 || otherBlocks.contains(block.getBlockHash())
+                || blocks.contains(block.getBlockHash()))
             return true;
         // the block is in cutoff and not in chain
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
@@ -222,7 +223,8 @@ public class BlockService {
         if (block == null)
             return false;
 
-        if ( block.getBlockEvaluation().getMilestone() >=0 || block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
+        if (block.getBlockEvaluation().getMilestone() >= 0 || block.getBlockEvaluation().isConfirmed()
+                || blocks.contains(block))
             return true;
 
         // Cutoff
@@ -451,12 +453,9 @@ public class BlockService {
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo currRewardInfo;
-            try {
-                currRewardInfo = RewardInfo.parse(currRewardBlock.getBlock().getTransactions().get(0).getData());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            RewardInfo  
+                currRewardInfo = RewardInfo.parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
+           
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
 
@@ -473,12 +472,9 @@ public class BlockService {
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo currRewardInfo;
-            try {
-                currRewardInfo = RewardInfo.parse(currRewardBlock.getBlock().getTransactions().get(0).getData());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            RewardInfo 
+                currRewardInfo = RewardInfo.parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
+            
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
 
@@ -523,21 +519,12 @@ public class BlockService {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            RewardInfo rewardInfo = null;
-            try {
-                rewardInfo = RewardInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
+            RewardInfo rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData());
+
             predecessors.add(rewardInfo.getPrevRewardHash());
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            TokenInfo currentToken = null;
-            try {
-                currentToken = TokenInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
+            TokenInfo currentToken = TokenInfo.parseChecked(transactions.get(0).getData());
             predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
             if (currentToken.getToken().getPrevblockhash() != null)
                 predecessors.add(currentToken.getToken().getPrevblockhash());
@@ -553,12 +540,7 @@ public class BlockService {
         case BLOCKTYPE_ORDER_OPEN:
             break;
         case BLOCKTYPE_ORDER_CANCEL:
-            OrderCancelInfo opInfo = null;
-            try {
-                opInfo = OrderCancelInfo.parse(transactions.get(0).getData());
-            } catch (IOException e) {
-                logger.error("Block was not checked: " + e.getLocalizedMessage());
-            }
+            OrderCancelInfo opInfo = OrderCancelInfo.parseChecked(transactions.get(0).getData());
             predecessors.add(opInfo.getBlockHash());
             break;
         default:

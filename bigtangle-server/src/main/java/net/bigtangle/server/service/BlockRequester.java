@@ -87,12 +87,8 @@ public class BlockRequester {
     }
 
     public void requestBlocks(Block rewardBlock) {
-        RewardInfo rewardInfo;
-        try {
-            rewardInfo = RewardInfo.parse(rewardBlock.getTransactions().get(0).getData());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        RewardInfo rewardInfo  = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
+     
 
         String[] re = serverConfiguration.getRequester().split(",");
         List<String> badserver = new ArrayList<String>();

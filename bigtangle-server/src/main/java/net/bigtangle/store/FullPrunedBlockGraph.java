@@ -189,19 +189,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void solidifyReward(Block block) throws BlockStoreException {
-        try {
 
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-            Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-            long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
-            long difficulty = calculateNextChainDifficulty(prevRewardHash, currChainLength, block.getTimeSeconds());
+        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+        long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
+        long difficulty = calculateNextChainDifficulty(prevRewardHash, currChainLength, block.getTimeSeconds());
 
-            blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
-
-        } catch (IOException e) {
-            // Cannot happen when connecting
-            throw new RuntimeException(e);
-        }
+        blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
 
     public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
@@ -214,9 +208,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 chainlock.unlock();
             }
         } else {
-            a = addNonChain(block, allowUnsolid); 
-        } 
-    
+            a = addNonChain(block, allowUnsolid);
+        }
+
         return a;
     }
 
@@ -386,10 +380,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     @SuppressWarnings("unchecked")
-    private void synchronizationVOSData(byte[] data)
-            throws JsonParseException, JsonMappingException, IOException, BlockStoreException {
+    private void synchronizationVOSData(byte[] data) throws BlockStoreException {
         String jsonStr = new String(data);
-        HashMap<String, Object> map = Json.jsonmapper().readValue(jsonStr, HashMap.class);
+        HashMap<String, Object> map;
+        try {
+            map = Json.jsonmapper().readValue(jsonStr, HashMap.class);
+        } catch (IOException e) {
+            throw new BlockStoreException(e);
+        }
         String vosKey = (String) map.get("vosKey");
         String pubKey = (String) map.get("pubKey");
         VOSExecute vosExecute_ = this.blockStore.getVOSExecuteWith(vosKey, pubKey);
@@ -424,13 +422,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws JsonParseException
      */
     public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
-            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+            throws BlockStoreException {
         // Write to DB
         confirmUntil(blockHash, traversedBlockHashes, cutoffHeight);
     }
 
     private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
-            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+            throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -520,8 +518,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return Optional.ofNullable(matchingResult);
     }
 
-    private void confirmBlock(BlockWrap block)
-            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+    private void confirmBlock(BlockWrap block) throws BlockStoreException {
 
         // Update block's transactions in db
         for (final Transaction tx : block.getBlock().getTransactions()) {
@@ -590,14 +587,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmVOSExecute(BlockWrap block)
-            throws JsonParseException, JsonMappingException, IOException, BlockStoreException {
+    @SuppressWarnings("unchecked")
+    private void confirmVOSExecute(BlockWrap block) throws BlockStoreException {
         Transaction tx1 = block.getBlock().getTransactions().get(0);
         if (tx1.getData() != null && tx1.getDataSignature() != null) {
 
-            @SuppressWarnings("unchecked")
-            List<HashMap<String, Object>> multiSignBies = Json.jsonmapper().readValue(tx1.getDataSignature(),
-                    List.class);
+            List<HashMap<String, Object>> multiSignBies;
+            try {
+                multiSignBies = Json.jsonmapper().readValue(tx1.getDataSignature(), List.class);
+            } catch (IOException e) {
+                throw new BlockStoreException(e);
+            }
             Map<String, Object> multiSignBy = multiSignBies.get(0);
             byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
             byte[] data = tx1.getHash().getBytes();
@@ -725,7 +725,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (!blockEvaluation.isConfirmed())
             return;
 
-        // Then unconfirm the block itself
+        // Then unconfirm the block outputs
         unconfirmBlockOutputs(block);
 
         // Set unconfirmed
@@ -832,12 +832,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo != null && utxo.isSpent()) {
-                unconfirmRecursive(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
-                        .getBlockHash(), traversedBlockHashes);
+                unconfirmRecursive(blockStore
+                        .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                        traversedBlockHashes);
             }
         }
     }
-    
+
     private void unconfirmOrderOpenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
             throws BlockStoreException {
 
@@ -879,8 +880,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo != null && utxo.isSpent()) {
-                unconfirmRecursive(blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
-                        .getBlockHash(), traversedBlockHashes);
+                unconfirmRecursive(blockStore
+                        .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
+                        traversedBlockHashes);
             }
         }
     }
@@ -1020,11 +1022,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Reward blocks follow different logic: If this is new, run
             // consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                solidifyReward(block);
-
+                solidifyReward(block); 
                 return;
-            }
-
+            } 
             // Insert other blocks into waiting list
             insertUnsolidBlock(block, solidityState);
             break;
@@ -1067,7 +1067,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             break;
         case Invalid:
-            
+
             blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
             break;
         }
@@ -1586,8 +1586,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // Finished with this height level, go to next level
                 currentHeightBlocks.clear();
                 long currentHeight_ = currentHeight;
-                snapshotWeights.entrySet()
-                        .removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeight_);
+                snapshotWeights.entrySet().removeIf(e -> e.getKey().getBlockEvaluation().getHeight() == currentHeight_);
                 currentHeight = currentBlock.getBlockEvaluation().getHeight();
             }
 
@@ -1648,8 +1647,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // The input does not really need to be a valid signature, as long
         // as it has the right general form and is slightly different for
         // different tx
-        TransactionInput input = new TransactionInput(networkParameters, tx, Script.createInputScript(
-                block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
+        TransactionInput input = new TransactionInput(networkParameters, tx, Script
+                .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
         tx.setMemo(new MemoInfo("MiningRewardTX"));
         return tx;

@@ -993,15 +993,8 @@ public class ValidatorService {
         }
 
         // Check that the tx has correct data
-        RewardInfo rewardInfo;
-        try {
-            rewardInfo = RewardInfo.parse(transactions.get(0).getData());
-        } catch (IOException e) {
-            if (throwExceptions)
-                throw new MalformedTransactionDataException();
-            return SolidityState.getFailState();
-        }
-
+        RewardInfo 
+            rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData()); 
         // NotNull checks
         if (rewardInfo.getPrevRewardHash() == null) {
             if (throwExceptions)
@@ -1635,14 +1628,9 @@ public class ValidatorService {
         }
 
         // Check that the tx has correct data
-        RewardInfo rewardInfo;
-        try {
-            rewardInfo = RewardInfo.parse(transactions.get(0).getData());
-        } catch (IOException e) {
-            if (throwExceptions)
-                throw new MalformedTransactionDataException();
-            return SolidityState.getFailState();
-        }
+        RewardInfo  
+            rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData());
+        
 
         // NotNull checks
         if (rewardInfo.getPrevRewardHash() == null) {
@@ -2082,8 +2070,8 @@ public class ValidatorService {
 
     // Consensus blocks must check PoW immediately
     SolidityState checkConsensusBlockPow(Block block, boolean throwExceptions) throws BlockStoreException {
-        try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+     
+            RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
 
             // Check if the prev block is reward block
@@ -2112,12 +2100,7 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             else
                 return SolidityState.getSuccessState();
-
-        } catch (IOException e) {
-            // Cannot happen
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+ 
     }
 
     /**

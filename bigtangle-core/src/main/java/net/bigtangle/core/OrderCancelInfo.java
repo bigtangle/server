@@ -13,24 +13,21 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 // This object being part of a signed transaction's data legitimates it
 public class OrderCancelInfo implements java.io.Serializable {
 
-	private static final long serialVersionUID = 5955604810374397496L;
+    private static final long serialVersionUID = 5955604810374397496L;
 
-  
-	private Sha256Hash blockHash;
+    private Sha256Hash blockHash;
 
     public OrderCancelInfo() {
-		super();
-	}
+        super();
+    }
 
-	public OrderCancelInfo(  Sha256Hash initialBlockHash) {
-		super();
-	 
-	 
-		this.blockHash = initialBlockHash;
-	} 
+    public OrderCancelInfo(Sha256Hash initialBlockHash) {
+        super();
 
- 
-	public Sha256Hash getBlockHash() {
+        this.blockHash = initialBlockHash;
+    }
+
+    public Sha256Hash getBlockHash() {
         return blockHash;
     }
 
@@ -39,17 +36,17 @@ public class OrderCancelInfo implements java.io.Serializable {
     }
 
     public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
+        return serialVersionUID;
+    }
 
-	public byte[] toByteArray() {
+    public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
             return jsonStr.getBytes();
         } catch (Exception e) {
-           throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
- 
+
     }
 
     public static OrderCancelInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
@@ -57,5 +54,15 @@ public class OrderCancelInfo implements java.io.Serializable {
         OrderCancelInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderCancelInfo.class);
         return tokenInfo;
     }
-    
+
+    public static OrderCancelInfo parseChecked(byte[] buf) {
+        String jsonStr = new String(buf);
+        OrderCancelInfo tokenInfo;
+        try {
+            tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderCancelInfo.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return tokenInfo;
+    }
 }

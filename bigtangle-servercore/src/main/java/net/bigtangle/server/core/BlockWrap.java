@@ -96,21 +96,17 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_REWARD:
             // Dynamic conflicts: mining rewards spend the previous reward
-            try {
-                RewardInfo rewardInfo = RewardInfo.parse(this.getBlock().getTransactions().get(0).getData());
-                blockConflicts.add(ConflictCandidate.fromReward(this, rewardInfo));
-            } catch (IOException e) {
-                // Cannot happen since any blocks added already were checked.
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+
+            RewardInfo rewardInfo = RewardInfo.parseChecked(this.getBlock().getTransactions().get(0).getData());
+            blockConflicts.add(ConflictCandidate.fromReward(this, rewardInfo));
+
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Dynamic conflicts: tokens of same id and index conflict
             try {
                 TokenInfo tokenInfo = TokenInfo.parse(this.getBlock().getTransactions().get(0).getData());
                 blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));
-            	blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
+                blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 e.printStackTrace();
@@ -129,7 +125,7 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
-        
+
         default:
             throw new NotImplementedException("Blocktype not implemented!");
 
