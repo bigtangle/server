@@ -7,20 +7,22 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.params.ReqCmd;
@@ -30,16 +32,15 @@ import net.bigtangle.utils.OkHttp3Util;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RewardServiceTest extends AbstractIntegrationTest implements addBlocks {
 
-    public Block testReorgMiningReward(List<Block> blocksAddedAll) throws Exception {
+    public Block createReward(List<Block> blocksAddedAll) throws Exception {
         // test reward chain, longest chanin win
         // mcmc can not change the reward chain
         store.resetStore();
 
-        Block rollingBlock1 = addBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
-        // start on node 1
+        Block rollingBlock1 = addBlocks(5, blocksAddedAll);
+
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
         blocksAddedAll.add(rewardBlock1);
 
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
@@ -55,19 +56,18 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         return rewardBlock1;
     }
 
-    public Block testReorgMiningReward2(List<Block> blocksAddedAll) throws Exception {
+    public Block createReward2(List<Block> blocksAddedAll) throws Exception {
         // reset to start on node 2
         store.resetStore();
 
-        Block rollingBlock1 = addBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
+        Block rollingBlock1 = addBlocks(5, blocksAddedAll);
 
-        // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+        // Generate mining reward blocks
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
         blocksAddedAll.add(rewardBlock2);
         // add more reward to reward2
         // rewardBlock3 takes only referenced blocks not in reward2
-        Block b3 = addBlocks(10, rewardBlock2, blocksAddedAll);
+        Block b3 = addBlocks(10, blocksAddedAll);
         Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(), b3.getHash(),
                 b3.getHash());
         blocksAddedAll.add(rewardBlock3);
@@ -75,13 +75,13 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
     }
 
     @Test
-    public void testReorgMiningReward3() throws Exception {
-        List<Block> blocksAddedAll = new ArrayList<Block>();
+    //the switch to longest chain 
+    public void testReorgMiningReward() throws Exception { 
         List<Block> a1 = new ArrayList<Block>();
         List<Block> a2 = new ArrayList<Block>();
 
-        Block rewardBlock1 = testReorgMiningReward(a1);
-        Block rewardBlock3 = testReorgMiningReward2(a2);
+        Block rewardBlock1 = createReward(a1);
+        Block rewardBlock3 = createReward2(a2);
 
         store.resetStore();
         for (Block b : a1)
@@ -94,28 +94,24 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         for (Block b : a2)
             blockGraph.add(b, true);
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == -1);
+        
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == 2);
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+
+    }
+
+    @Test
+    // out of order added blocks will have the same results
+    public void testReorgMiningRewardShuffle() throws Exception {
+        List<Block> blocksAddedAll = new ArrayList<Block>();
+        List<Block> a1 = new ArrayList<Block>();
+        List<Block> a2 = new ArrayList<Block>();
+
+        Block rewardBlock1 = createReward(a1);
+        Block rewardBlock3 = createReward2(a2);
 
         store.resetStore();
-
-        // Check add in reverse order
-        Collections.reverse(blocksAddedAll);
-
-        store.resetStore();
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
-
-        mcmcService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
 
         // Check add in random order
         Collections.shuffle(blocksAddedAll);
@@ -128,7 +124,9 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         for (Block b : blocksAddedAll)
             blockGraph.add(b, true);
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == -1);
+        
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == 2);
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
 
         mcmcService.update();
@@ -138,7 +136,83 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
 
     }
 
-    private Block addBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException {
+    //test wrong chain with fixed graph and required blocks
+    @Test
+    public void testReorgMiningRewardWrong() throws Exception {
+        // reset to start on node 2
+        store.resetStore();
+        List<Block> blocksAddedAll = new ArrayList<Block>();
+        Block rewardBlock1 = createReward(blocksAddedAll); 
+    
+        Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
+
+        // Generate more mining reward blocks
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        blocksAddedAll.add(rewardBlock2);
+        // add more reward to reward2
+        // rewardBlock3 takes only referenced blocks not in reward2
+        Block b3 = addFixedBlocks(10, rewardBlock2, blocksAddedAll);
+        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(), b3.getHash(),
+                b3.getHash());
+        blocksAddedAll.add(rewardBlock3);
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1);
+        
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == -1);
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+
+    }
+    
+    //test  cutoff chains, reward should not take blocks behind the cutoff chain
+    @Test
+    public void testReorgMiningRewardCutoff() throws Exception {
+        // reset to start on node 2
+        store.resetStore();
+        List<Block> blocksAddedAll = new ArrayList<Block>();  
+        Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
+        
+        // Generate more mining reward blocks
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        blocksAddedAll.add(rewardBlock2);
+         for ( int i=0; i< NetworkParameters.MILESTONE_CUTOFF +5; i++) {
+               rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash()); 
+         }
+    
+         //create a long  block graph
+         Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll);
+       // rewardBlock3 takes the long block graph behind cutoff
+       Block   rewardBlock3 =  rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(),
+                 rollingBlock2.getHash(), rollingBlock2.getHash());
+       
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() >= 0);
+        
+        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == -1);
+        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+
+    }
+    
+    // generate a list of block using mcmc and return the last block
+    private Block addBlocks(int num, List<Block> blocksAddedAll)
+            throws BlockStoreException, JsonProcessingException, IOException {
+        // add more blocks using mcmc
+        Block rollingBlock1 = null;
+        for (int i = 0; i < num; i++) {
+            // rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            rollingBlock1 = networkParameters.getDefaultSerializer().makeBlock(data);
+            blockGraph.add(rollingBlock1, true);
+            blocksAddedAll.add(rollingBlock1);
+        }
+        return rollingBlock1;
+    }
+
+
+    private Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException {
         // add more blocks follow this startBlock
         Block rollingBlock1 = startBlock;
         for (int i = 0; i < num; i++) {
@@ -148,7 +222,6 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         }
         return rollingBlock1;
     }
-
     @Test
     public void blocksFromChainlength() throws Exception {
         // create some blocks
