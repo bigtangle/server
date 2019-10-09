@@ -98,6 +98,13 @@ public class PerformanceTest extends AbstractIntegrationTest {
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
     }
+    @Test
+    @Ignore
+    // must fix for testnet and mainnet
+    public void testGenesisBlockHash() throws Exception {
+        assertTrue(networkParameters.getGenesisBlock().getHash().toString()
+                .equals("f3f9fbb12f3a24e82f04ed3f8afe1dac7136830cd953bd96b25b1371cd11215c"));
 
+    }
     
 }

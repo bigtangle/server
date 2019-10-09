@@ -17,7 +17,7 @@ import net.bigtangle.core.NetworkParameters;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ResetTest extends AbstractIntegrationTest {
+public class DeleteTablesTest extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
 
@@ -28,8 +28,8 @@ public class ResetTest extends AbstractIntegrationTest {
 
     @Test
     // init
-    public void testReset() throws Exception {
-        store.resetStore();
+    public void deleteStore() throws Exception {
+        store.deleteStore();
     }
 
     @Test
