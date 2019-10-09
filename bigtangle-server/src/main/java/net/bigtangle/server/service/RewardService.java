@@ -376,10 +376,7 @@ public class RewardService {
 
                 // Sanity check: At this point, predecessors cannot be missing
                 SolidityState solidityState = validatorService.checkSolidity(newMilestoneBlock.getBlock(), false);
-                if (!solidityState.isSuccessState() && !solidityState.isFailState()) {
-                    log.error("The block is not failing or successful. This should not happen.");
-                    throw new RuntimeException("The block is not failing or successful. This should not happen.");
-                }
+                
 
                 // Check: If all is ok, try confirming this milestone.
                 if (solidityState.isSuccessState()) {
@@ -560,6 +557,7 @@ public class RewardService {
     }
 
     public boolean checkRewardReferencedBlocks(Block rewardBlock) throws BlockStoreException {
+        try {
         RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
 
         // Check previous reward blocks exist and get their approved sets
@@ -572,7 +570,7 @@ public class RewardService {
             return false;
         if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
                 && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
-            throw new VerificationException("Previous block not reward block.");
+            throw new VerificationException("Previous reward block is not reward block.");
 
         checkRewardDifficulty(rewardBlock, rewardInfo, prevRewardBlock);
 
@@ -590,6 +588,9 @@ public class RewardService {
                 return false;
         }
         return true;
+        }catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block) throws BlockStoreException {
@@ -601,7 +602,9 @@ public class RewardService {
             if (req == null && !rewardInfo.getBlocks().contains(reqHash))
                 return false;
             if (req != null && !rewardInfo.getBlocks().contains(req.getBlockHash())
-                    && req.getBlockEvaluation().getMilestone() < 0) {
+                    && req.getBlockEvaluation().getMilestone() < 0
+                    && ! req.getBlock().getHash().equals(rewardInfo.getPrevRewardHash())) {
+                log.debug("required is not ok" + req);
                 return false;
             }
         }
@@ -614,7 +617,11 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(rewardBlock.getPrevBlockHash());
         BlockWrap prevBranchBlock = store.getBlockWrap(rewardBlock.getPrevBranchBlockHash());
-
+        if(prevTrunkBlock==null)  
+        throw new VerificationException("Previous  block does not exists.");
+        if(prevBranchBlock==null)  
+            throw new VerificationException("prevBranchBlock  block does not exists.");
+        
         long totalRewardCount = rewardInfo.getBlocks().size() + 1;
 
         // check difficulty

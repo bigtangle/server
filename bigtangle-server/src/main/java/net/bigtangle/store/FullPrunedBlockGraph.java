@@ -226,8 +226,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (!rewardService.checkRewardReferencedBlocks(block)) {
             log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
-            if (tryConnecting)
+            if (tryConnecting) {
                 tryConnectingOrphans();
+            }
             return false;
         }
 
@@ -1718,7 +1719,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // False here ensures we don't recurse infinitely downwards when
                 // connecting huge chains.
                 log.info("Connected orphan {}", orphanBlock.block.getHash());
-                if (addChain(orphanBlock.block, false, false)) {
+                if (addChain(orphanBlock.block, true, false)) {
                     iter.remove();
                     blocksConnectedThisRound++;
                 }
