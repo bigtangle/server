@@ -1135,34 +1135,7 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-            // Check difficulty and latest consensus block is passed through
-            // correctly
-            if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
-                if (storedPrev.getBlock().getLastMiningRewardBlock() >= storedPrevBranch.getBlock()
-                        .getLastMiningRewardBlock()) {
-                    if (block.getLastMiningRewardBlock() != storedPrev.getBlock().getLastMiningRewardBlock()
-                            || block.getDifficultyTarget() != storedPrev.getBlock().getDifficultyTarget()) {
-                        if (throwExceptions)
-                            throw new DifficultyConsensusInheritanceException();
-                        return SolidityState.getFailState();
-                    }
-                } else {
-                    if (block.getLastMiningRewardBlock() != storedPrevBranch.getBlock().getLastMiningRewardBlock()
-                            || block.getDifficultyTarget() != storedPrevBranch.getBlock().getDifficultyTarget()) {
-                        if (throwExceptions)
-                            throw new DifficultyConsensusInheritanceException();
-                        return SolidityState.getFailState();
-                    }
-                }
-            } else {
-                if (block.getLastMiningRewardBlock() != Math.max(storedPrev.getBlock().getLastMiningRewardBlock(),
-                        storedPrevBranch.getBlock().getLastMiningRewardBlock()) + 1) {
-                    if (throwExceptions)
-                        throw new DifficultyConsensusInheritanceException();
-                    return SolidityState.getFailState();
-                }
-            }
-
+   
             // Check transactions are solid
             SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
                     throwExceptions);

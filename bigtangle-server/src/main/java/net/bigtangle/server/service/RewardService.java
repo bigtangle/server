@@ -341,24 +341,19 @@ public class RewardService {
                     .equals(splitPoint.getBlockHash())) {
 
                 // Sanity check:
-                if (maxConfirmedRewardBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
-                    log.error("Unset genesis. Shouldn't happen");
-                    // Solidification forward with failState
-                    blockGraph.solidifyBlock(newMilestoneBlocks.get(0).getBlock(), SolidityState.getFailState(), false);
-                    runConsensusLogic(store.get(oldLongestChainEnd));
-                    return false;
+                if (!maxConfirmedRewardBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
+
+                    // Unset the milestone of this one (where milestone =
+                    // maxConfRewardblock.chainLength)
+                    long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
+                    List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
+                            milestoneNumber);
+
+                    // Unconfirm anything not confirmed by milestone
+                    traversedBlockHashes = new HashSet<>();
+                    for (BlockWrap wipeBlock : blocksInMilestoneInterval)
+                        blockGraph.unconfirm(wipeBlock.getBlockHash(), traversedBlockHashes);
                 }
-
-                // Unset the milestone of this one (where milestone =
-                // maxConfRewardblock.chainLength)
-                long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
-                List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
-                        milestoneNumber);
-
-                // Unconfirm anything not confirmed by milestone
-                traversedBlockHashes = new HashSet<>();
-                for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-                    blockGraph.unconfirm(wipeBlock.getBlockHash(), traversedBlockHashes);
             }
 
             // Build milestone forwards.
