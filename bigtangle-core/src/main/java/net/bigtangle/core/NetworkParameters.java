@@ -215,8 +215,11 @@ public abstract class NetworkParameters {
     }
 
     public static Block createGenesis(NetworkParameters params) {
-        Block genesisBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS,
-                Block.Type.BLOCKTYPE_INITIAL.ordinal());
+        Block genesisBlock = new Block(params, 
+        Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH,  Block.Type.BLOCKTYPE_INITIAL.ordinal(),  0,
+        Utils.encodeCompactBits(params.getMaxTarget()), 0);
+        
+        
         genesisBlock.setTime(1532896109L);
 
         // 1 in 4 blocks shall be correct

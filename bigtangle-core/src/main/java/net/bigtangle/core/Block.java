@@ -157,31 +157,25 @@ public class Block extends Message {
     }
 
     Block(NetworkParameters params, long setVersion) {
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(), 0, 0,
+        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Block.Type.BLOCKTYPE_TRANSFER.ordinal(),  0,
                 Utils.encodeCompactBits(params.getMaxTarget()), 0);
     }
 
-    public Block(NetworkParameters params, long blockVersionGenesis, long type) {
-        this(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, type, 0, 0,
-                Utils.encodeCompactBits(params.getMaxTarget()), 0);
-    }
 
-    public Block(NetworkParameters params, Block r1, Block r2) {
-        this(params, r1.getHash(), r2.getHash(), Block.Type.BLOCKTYPE_TRANSFER.ordinal(),
+    public static Block createBlock(NetworkParameters networkParameters, Block r1, Block r2) {
+        Block block = new Block(networkParameters,   r1.getHash(), r2.getHash(), Block.Type.BLOCKTYPE_TRANSFER.ordinal(),
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()),
                 Math.max(r1.getLastMiningRewardBlock(), r2.getLastMiningRewardBlock()),
                 r1.getLastMiningRewardBlock() > r2.getLastMiningRewardBlock() ? r1.getDifficultyTarget()
-                        : r2.getDifficultyTarget(),
-                Math.max(r1.getHeight(), r2.getHeight()) + 1);
+                        : r2.getDifficultyTarget() );
+        block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
+        
+        return block;
     }
 
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, long blocktype,
-            long minTime, long lastMiningRewardBlock, long difficultyTarget, long height) {
-        this(params, prevBlockHash, prevBranchBlockHash, Type.values()[(int) blocktype], minTime, lastMiningRewardBlock,
-                difficultyTarget);
-    }
-
-    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, Type blocktype,
+ 
+ 
+    public Block(NetworkParameters params, Sha256Hash prevBlockHash, Sha256Hash prevBranchBlockHash, int blocktype,
             long minTime, long lastMiningRewardBlock, long difficultyTarget) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -194,7 +188,7 @@ public class Block extends Message {
         this.prevBlockHash = prevBlockHash;
         this.prevBranchBlockHash = prevBranchBlockHash;
 
-        this.blockType = blocktype;
+        this.blockType = Type.values()[(int)blocktype];
         this.minerAddress = new byte[20];
         length = NetworkParameters.HEADER_SIZE;
         this.transactions = new ArrayList<>();
@@ -1206,14 +1200,7 @@ public class Block extends Message {
 
     private static Random gen = new Random();
 
-    /**
-     * Returns a unsolved, valid empty block that builds on top of this one and
-     * the specified other Block.
-     * 
-     */
-    public Block createNextBlock(Block branchBlock, byte[] mineraddress) {
-        return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS, mineraddress);
-    }
+  
 
     public Block createNextBlock(Block branchBlock) {
         return createNextBlock(branchBlock, NetworkParameters.BLOCK_VERSION_GENESIS,

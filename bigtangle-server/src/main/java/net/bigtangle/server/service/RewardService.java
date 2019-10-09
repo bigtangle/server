@@ -166,7 +166,8 @@ public class RewardService {
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
 
-        Block block = new Block(networkParameters, r1, r2);
+        Block block = Block.createBlock(networkParameters,r1, r2);
+        
         block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
         block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
         block.setMinerAddress(

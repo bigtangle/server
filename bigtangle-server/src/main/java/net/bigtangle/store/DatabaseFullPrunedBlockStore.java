@@ -924,23 +924,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         updateBlockEvaluationConfirmed(b.getHash(), true);
 
     }
-
-    public static Block bcBlockHash(NetworkParameters params, long height) {
-        Block bcBlock = new Block(params, NetworkParameters.BLOCK_VERSION_GENESIS,
-                Block.Type.BLOCKTYPE_TOKEN_CREATION.ordinal());
-        bcBlock.setTime(1532896109L);
-
-        BigInteger diff = params.getMaxTarget();
-        bcBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
-
-        bcBlock.setNonce(0);
-        bcBlock.setHeight(height);
-        // genesisBlock.solve();
-
-        return bcBlock;
-
-    }
-
+ 
     public void saveGenesisTransactionOutput(Block block) throws BlockStoreException {
 
         for (TransactionOutput out : block.getTransactions().get(0).getOutputs()) {

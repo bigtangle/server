@@ -180,12 +180,12 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,  long cutoffHeight) throws BlockStoreException {
+    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
+            long cutoffHeight) throws BlockStoreException {
         if (block == null)
             return false;
-        //no block add if already added or in milestone
-        if (block.getBlockEvaluation().getMilestone() >= 0 
-                || blocks.contains(block.getBlockHash()))
+        // no block add if already added or in milestone
+        if (block.getBlockEvaluation().getMilestone() >= 0 || blocks.contains(block.getBlockHash()))
             return true;
         // the block is in cutoff and not in chain
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
@@ -336,8 +336,11 @@ public class BlockService {
         Block r1 = getBlock(tipsToApprove.getLeft());
         Block r2 = getBlock(tipsToApprove.getRight());
 
-        return r1.createNextBlock(r2,
-                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+        Block b = Block.createBlock(networkParameters, r1, r2);
+
+        b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+
+        return b;
     }
 
     public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
@@ -452,9 +455,9 @@ public class BlockService {
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo  
-                currRewardInfo = RewardInfo.parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
-           
+            RewardInfo currRewardInfo = RewardInfo
+                    .parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
+
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
 
@@ -471,9 +474,9 @@ public class BlockService {
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo 
-                currRewardInfo = RewardInfo.parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
-            
+            RewardInfo currRewardInfo = RewardInfo
+                    .parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
+
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
             prevMilestoneBlocks.add(currPrevRewardHash);
 
