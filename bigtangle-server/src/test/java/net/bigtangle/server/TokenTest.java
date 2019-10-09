@@ -63,7 +63,7 @@ example
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TokenDomainNameTest extends AbstractIntegrationTest {
+public class TokenTest extends AbstractIntegrationTest {
 
     @Test
     public void testCreateDomainToken() throws Exception {
@@ -126,7 +126,7 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(ImmutableList.of(walletKeys.get(2), walletKeys.get(3)),
-                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", aesKey, BigInteger.valueOf(678900000), "");
+                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", aesKey, BigInteger.valueOf(1), "");
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(walletKeys.get(3));
             keys.add(preKey);
@@ -209,6 +209,81 @@ public class TokenDomainNameTest extends AbstractIntegrationTest {
                 .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
     }
 
+    @Test
+    public void testGetTokennameConflict() throws Exception {
+
+        wallet1();
+        wallet2();
+
+        List<ECKey> walletKeys = wallet2Keys;
+        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        {
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey, "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+            }
+        }
+         
+     
+        {
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey, "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+            }
+        }
+        
+        mcmcService.update();  
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        log.info("getOutputsResponse : " + getOutputsResponse);
+
+        assertTrue(getOutputsResponse.getOutputs().size() ==1);
+        assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+                .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+               
+   
+
+    }
+    @Test
+    public void testGetTokenConflict() throws Exception {
+
+        testCreateToken(walletKeys.get(0));
+        //same token id and index
+        testCreateToken(walletKeys.get(0));
+        
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        log.info("getTokenById resp : " + resp);
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        log.info("getTokensResponse : " + getTokensResponse);
+        assertTrue(getTokensResponse.getTokens().size() > 0);
+
+        mcmcService.update();
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        log.info("getOutputsResponse : " + getOutputsResponse);
+
+        assertTrue(getOutputsResponse.getOutputs().size() > 0);
+        assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+                .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+               
+    }
+
+    
     @Test
     public void walletCreateDomain() throws Exception {
         store.resetStore();
