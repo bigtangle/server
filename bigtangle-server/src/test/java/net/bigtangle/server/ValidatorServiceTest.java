@@ -66,6 +66,7 @@ import net.bigtangle.core.exception.VerificationException.SigOpsException;
 import net.bigtangle.core.exception.VerificationException.TimeReversionException;
 import net.bigtangle.core.exception.VerificationException.TimeTravelerException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -560,7 +561,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     blockGraph.add(rollingBlock, false);
 
                     fail();
-                } catch (CoinbaseDisallowedException e) {
+                } catch (CoinbaseDisallowedException | UnsolidException e) {
                 }
         }
     }
@@ -841,8 +842,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rewardBlock.solve();
 
         // Should not go through
+        try {
         blockGraph.add(rewardBlock, false);
-        assertTrue(store.getBlockEvaluation(rewardBlock.getHash()).getSolid() < 0);
+        fail();
+        }catch(VerificationException e) {
+            
+        }
+ 
     }
 
     @Test

@@ -77,6 +77,7 @@ import net.bigtangle.core.exception.VerificationException.PreviousTokenDisallows
 import net.bigtangle.core.exception.VerificationException.SigOpsException;
 import net.bigtangle.core.exception.VerificationException.TimeReversionException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -1133,7 +1134,6 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
-   
             // Check transactions are solid
             SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
                     throwExceptions);
@@ -2032,43 +2032,44 @@ public class ValidatorService {
     }
 
     public SolidityState checkRewardBlockPow(Block block, boolean throwExceptions) throws BlockStoreException {
-
-        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
-
-        // Get difficulty from predecessors
-        BigInteger target = Utils.decodeCompactBits(rewardInfo.getDifficultyTargetReward());
-
-        // Check PoW
-        boolean allOk = false;
         try {
-            allOk = block.checkProofOfWork(throwExceptions, target);
-        } catch (VerificationException e) {
-            logger.warn("Failed to verify block: ", e);
-            logger.warn(block.getHashAsString());
-            throw e;
+            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            // Get difficulty from predecessors
+            BigInteger target = Utils.decodeCompactBits(rewardInfo.getDifficultyTargetReward());
+            // Check PoW
+            boolean allOk = false;
+            try {
+                allOk = block.checkProofOfWork(throwExceptions, target);
+            } catch (VerificationException e) {
+                logger.warn("Failed to verify block: ", e);
+                logger.warn(block.getHashAsString());
+                throw e;
+            }
+
+            if (!allOk)
+                return SolidityState.getFailState();
+            else
+                return SolidityState.getSuccessState();
+        } catch ( Exception e) {
+            throw new UnsolidException( );
         }
-
-        if (!allOk)
-            return SolidityState.getFailState();
-        else
-            return SolidityState.getSuccessState();
-
     }
+
     public SolidityState checkChainSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
 
         // Check the block fulfills PoW as chain
         checkRewardBlockPow(block, true);
-        
+
         // Check the chain block formally valid
         checkFormalBlockSolidity(block, true);
-        
+
         try {
-            SolidityState difficultyResult = rewardService.checkRewardDifficulty(block );
+            SolidityState difficultyResult = rewardService.checkRewardDifficulty(block);
             if (!difficultyResult.isSuccessState()) {
                 return difficultyResult;
             }
-            
-            SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block); 
+
+            SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block);
             if (!referenceResult.isSuccessState()) {
                 return referenceResult;
             }
@@ -2076,7 +2077,7 @@ public class ValidatorService {
             logger.warn("Block does not connect: {} ", block);
             return SolidityState.getFailState();
         }
-        
+
         return SolidityState.getSuccessState();
     }
 
