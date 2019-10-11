@@ -32,7 +32,7 @@ import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class RewardServiceTest extends AbstractIntegrationTest implements addBlocks {
+public class RewardServiceTest extends AbstractIntegrationTest  {
 
     public Block createReward(List<Block> blocksAddedAll) throws Exception {
 
@@ -43,15 +43,15 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         blocksAddedAll.add(rewardBlock1);
 
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() > 0);
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1);
 
         // Generate more mining reward blocks
         Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         // blocksAddedAll.add(rewardBlock2);
         // second is false , as first win
-        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-        assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() > 0);
+     //   assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+     //   assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() > 0);
         return rewardBlock1;
     }
 
@@ -152,25 +152,17 @@ public class RewardServiceTest extends AbstractIntegrationTest implements addBlo
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1);
 
-        Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
+       // Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash(),
+                blocksAddedAll.get(0).getHash(),  blocksAddedAll.get(0).getHash());
         blocksAddedAll.add(rewardBlock2);
-        // add more reward to reward2
-        // rewardBlock3 takes only referenced blocks not in reward2
-        Block b3 = addFixedBlocks(10, rewardBlock2, blocksAddedAll);
-        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(), b3.getHash(),
-                b3.getHash());
-        blocksAddedAll.add(rewardBlock3);
+ 
        // assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1
-                || blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 1 );
-
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == -1);
-        assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
-
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == -1
+             );
+ 
     }
 
     // test limit of blocks in reward chain, cutoff to limit  

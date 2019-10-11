@@ -1,5 +1,9 @@
 package net.bigtangle.core;
 
+import java.math.BigInteger;
+
+import net.bigtangle.core.exception.VerificationException;
+
 public class TXReward extends SpentBlock implements java.io.Serializable {
 
     /**
@@ -29,6 +33,38 @@ public class TXReward extends SpentBlock implements java.io.Serializable {
         this.chainLength = chainLength;
     }
 
+    
+
+    /**
+     * The number that is one greater than the largest representable SHA-256
+     * hash.
+     */
+    private static BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
+
+    /**
+     * Returns the work represented by this block.<p>
+     *
+     * Work is defined as the number of tries needed to solve a block in the
+     * average case. Consider a difficulty target that covers 5% of all possible
+     * hash values. Then the work of the block will be 20. As the target gets
+     * lower, the amount of work goes up.
+     */
+    public BigInteger getWork() throws VerificationException {
+        BigInteger target = getDifficultyTargetAsInteger();
+        return LARGEST_HASH.divide(target.add(BigInteger.ONE));
+    }
+    
+    /**
+     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
+     * target is represented using a compact form. If this form decodes to a value that is out of bounds, an exception
+     * is thrown.
+     */
+    public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
+        BigInteger target = Utils.decodeCompactBits(difficulty);
+        return target;
+    }
+
+    
     public long getDifficulty() {
         return difficulty;
     }

@@ -120,8 +120,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
-
-        blockGraph.add(blockService.askTransactionBlock(), false);
+ 
 
         {
             final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
@@ -243,6 +242,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         mcmcService.update();  
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -250,7 +250,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         assertTrue(getOutputsResponse.getOutputs().size() ==1);
         assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
-                .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+                .equals(Coin.valueOf(1, walletKeys.get(0).getPubKey())));
                
    
 

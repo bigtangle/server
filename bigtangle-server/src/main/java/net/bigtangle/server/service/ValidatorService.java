@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
@@ -704,7 +702,7 @@ public class ValidatorService {
                     throw new VerificationException("The used blocks are invalid.");
                 return SolidityState.getFailState();
             } else {
-                throw new NotImplementedException("not implemented");
+                throw new RuntimeException("not implemented");
             }
         }
 
@@ -2055,6 +2053,31 @@ public class ValidatorService {
         else
             return SolidityState.getSuccessState();
 
+    }
+    public SolidityState checkChainSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+
+        // Check the block fulfills PoW as chain
+        checkRewardBlockPow(block, true);
+        
+        // Check the chain block formally valid
+        checkFormalBlockSolidity(block, true);
+        
+        try {
+            SolidityState difficultyResult = rewardService.checkRewardDifficulty(block );
+            if (!difficultyResult.isSuccessState()) {
+                return difficultyResult;
+            }
+            
+            SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block); 
+            if (!referenceResult.isSuccessState()) {
+                return referenceResult;
+            }
+        } catch (VerificationException e) {
+            logger.warn("Block does not connect: {} ", block);
+            return SolidityState.getFailState();
+        }
+        
+        return SolidityState.getSuccessState();
     }
 
     /**

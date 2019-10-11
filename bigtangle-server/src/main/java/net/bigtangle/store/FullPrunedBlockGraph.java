@@ -218,12 +218,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
-        block.verifyTransactions();
-        validatorService.checkRewardBlockPow(block, true);
-        // Check formal correctness of the block
-        validatorService.checkFormalBlockSolidity(block, true);
+        // block.verifyTransactions();
 
-        if (!rewardService.checkRewardReferencedBlocks(block)) {
+        SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid);
+        
+        if (solidityState.isDirectlyMissing()) {
             log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
             if (tryConnecting) {
@@ -232,32 +231,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return false;
         }
 
-        SolidityState solidityState = validatorService.checkSolidity(block, true);
-
-        // If explicitly wanted (e.g. new block from local clients), this
-        // block must strictly be solid now.
-        if (!allowUnsolid) {
-            switch (solidityState.getState()) {
-            case MissingPredecessor:
-                throw new UnsolidException();
-            case MissingCalculation:
-            case Success:
-                break;
-            case Invalid:
-                throw new GenericInvalidityException();
-            }
-        }
-
-        // Sanity check: This should not happen because it should throw
-        // first.
-        if (solidityState.isFailState())
-            throw new GenericInvalidityException();
-
-        // Accept the block
+        //  save the block
         try {
             blockStore.beginDatabaseBatchWrite();
-            connect(block, solidityState);
-            rewardService.runConsensusLogic(block);
+            connectRewardBlock(block, solidityState);
             blockStore.commitDatabaseBatchWrite();
         } catch (BlockStoreException e) {
             blockStore.abortDatabaseBatchWrite();
@@ -277,7 +254,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         block.verifyHeader();
         block.verifyTransactions();
-        SolidityState solidityState = validatorService.checkSolidity(block, true);
+
+        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid);
 
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
@@ -292,12 +270,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 throw new GenericInvalidityException();
             }
         }
-
-        // Sanity check: This should not happen because it should throw
-        // first.
-        if (solidityState.isFailState())
-            throw new GenericInvalidityException();
-
+ 
+   
         // Accept the block
         try {
             blockStore.beginDatabaseBatchWrite();
@@ -310,6 +284,36 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.defaultDatabaseBatchWrite();
         }
         return true;
+    }
+
+    private void connectRewardBlock(final Block block, SolidityState solidityState)
+            throws BlockStoreException, VerificationException {
+
+        if( solidityState.isFailState()) {
+            connect(block, solidityState);
+            return;
+        }
+        Block head = blockStore.get(blockStore.getMaxConfirmedReward().getBlockHash());
+        if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
+            connect(block, solidityState);
+            rewardService.buildRewardChain(block);
+        } else {
+            // This block connects to somewhere other than the top of the best
+            // known chain. We treat these differently.
+  
+            boolean haveNewBestChain =block.getRewardInfo().getChainlength() >  head.getRewardInfo().getChainlength();
+                    //TODO check this block.getRewardInfo().moreWorkThan(head.getRewardInfo());
+            if (haveNewBestChain) {
+                log.info("Block is causing a re-organize");
+                connect(block, solidityState);
+                rewardService.handleNewBestChain(block);
+            } else {
+                // parallel chain, save as unconfirmed
+                connect(block, solidityState);
+                solidifyBlock(block, solidityState, false);
+            }
+
+        }
     }
 
     /**
@@ -1012,9 +1016,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess)
             throws BlockStoreException {
-        // Sanity check:
-        if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2 && !solidityState.isSuccessState())
-            throw new RuntimeException("Shouldn't happen");
 
         switch (solidityState.getState()) {
         case MissingCalculation:
@@ -1062,7 +1063,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                 solidifyReward(block);
-                // runConsensusLogic(block);
                 return;
             }
 
@@ -1706,7 +1706,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();
                 // Look up the blocks previous.
-                Block prev = blockStore.get(orphanBlock.block.getPrevBlockHash());
+                Block prev = blockStore.get(orphanBlock.block.getRewardInfo().getPrevRewardHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
                     // if (log.isDebugEnabled())

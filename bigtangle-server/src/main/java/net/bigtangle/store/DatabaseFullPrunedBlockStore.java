@@ -5817,6 +5817,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(3, inserttime);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
             throw new BlockStoreException(e);
         } finally {
             if (preparedStatement != null) {

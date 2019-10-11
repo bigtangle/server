@@ -8,8 +8,6 @@ package net.bigtangle.server.core;
 import java.io.IOException;
 import java.util.HashSet;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
@@ -127,7 +125,7 @@ public class BlockWrap {
             break;
 
         default:
-            throw new NotImplementedException("Blocktype not implemented!");
+            throw new RuntimeException("Blocktype not implemented!");
 
         }
     }
