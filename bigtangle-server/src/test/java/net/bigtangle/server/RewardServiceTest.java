@@ -160,7 +160,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         blocksAddedAll.add(rewardBlock2);
  
        // assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == -1
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 2
              );
  
     }

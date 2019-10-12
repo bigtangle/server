@@ -2023,6 +2023,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // this key
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
+         importKey(fromkey);
         return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,"", 3, 20000);
     }
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey, String memo)

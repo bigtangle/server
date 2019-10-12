@@ -286,7 +286,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = ? AND tokenindex = ? AND confirmed = true";
 
-    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE domainname = ? AND domainpredblockhash = ? AND confirmed = true";
+    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenname = ? AND domainpredblockhash = ? AND confirmed = true";
 
     protected final String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM tokens WHERE domainpredblockhash = ? AND confirmed = true";
 
@@ -2926,18 +2926,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred) throws BlockStoreException {
+    public BlockWrap getDomainIssuingConfirmedBlock(String tokenName, String domainPred) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
-            preparedStatement.setString(1, domainName);
+            preparedStatement.setString(1, tokenName);
             preparedStatement.setString(2, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
                 return null;
             }
-            return getBlockWrap(Sha256Hash.wrap(resultSet.getString(1)));
+            return getBlockWrap(Sha256Hash.wrap(resultSet.getBytes(1)));
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

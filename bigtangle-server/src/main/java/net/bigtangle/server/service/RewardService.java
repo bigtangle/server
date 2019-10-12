@@ -386,13 +386,17 @@ public class RewardService {
         Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
         long cutoffHeight = blockService.getCutoffHeight(currRewardInfo.getPrevRewardHash());
         // Check all referenced blocks have their requirements
-        checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight);
+        SolidityState solidityState = checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight);
+        if(!solidityState.isSuccessState())
+            throw new VerificationException(" checkReferencedBlockRequirements is failed: " + solidityState.toString());
 
         // Ensure the new difficulty and tx is set correctly
         checkGeneratedReward(newMilestoneBlock);
-
+        
         // Sanity check: At this point, predecessors cannot be missing
-        SolidityState solidityState = validatorService.checkSolidity(newMilestoneBlock, false);
+        solidityState = validatorService.checkSolidity(newMilestoneBlock, false);
+        if(!solidityState.isSuccessState())
+            throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString());
 
         // Unconfirm anything not confirmed by milestone
         List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
@@ -407,9 +411,9 @@ public class RewardService {
          allApprovedNewBlocks.add(store.getBlockWrap(newMilestoneBlock.getHash()));
 
         // If anything is already spent, no-go
-        boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks);
-          Optional<ConflictCandidate> spentInput =
-         findFirstSpentInput(allApprovedNewBlocks);
+         boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks);
+//          Optional<ConflictCandidate> spentInput =
+//         findFirstSpentInput(allApprovedNewBlocks);
 
           if (anySpentInputs ) {
               solidityState = SolidityState.getFailState();
@@ -420,6 +424,9 @@ public class RewardService {
         boolean anyCandidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
                 .flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
                 .anyMatch(l -> l.size() > 1);
+        List<List<ConflictCandidate>> candidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
+                .flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
+                .filter(l -> l.size() > 1).collect(Collectors.toList());
 
         // Did we fail? Then we stop now and rerun consensus
         // logic on the new longest chain.
@@ -775,13 +782,12 @@ public class RewardService {
             return store.getRewardDifficulty(prevRewardHash);
         }
 
-        // Get the block INTERVAL ago
-        Block oldBlock = null;
-        for (int i = 0; i < NetworkParameters.INTERVAL; i++) {
-            oldBlock = store.getBlockWrap(prevRewardHash).getBlock();
-           // prevRewardHash = blockStore.getRewardPrevBlockHash(oldBlock);
+        // Get the block INTERVAL ago 
+        for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) { 
+            prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
         }
-
+        Block oldBlock = store.get(prevRewardHash);
+        
         int timespan = (int) Math.max(1, (currentTime - oldBlock.getTimeSeconds()));
         long prevDifficulty = store.getRewardDifficulty(prevRewardHash);
 
@@ -798,7 +804,7 @@ public class RewardService {
 
         if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = networkParameters.getMaxTarget();
+            newTarget = networkParameters.getMaxTargetReward();
         }
 
         return Utils.encodeCompactBits(newTarget);

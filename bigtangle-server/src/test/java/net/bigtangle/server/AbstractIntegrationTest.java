@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -69,6 +70,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
@@ -107,9 +109,9 @@ public abstract class AbstractIntegrationTest {
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
 
-    WalletAppKit walletAppKit;
-    WalletAppKit walletAppKit1;
-    WalletAppKit walletAppKit2;
+    public WalletAppKit walletAppKit;
+    public WalletAppKit walletAppKit1;
+    public WalletAppKit walletAppKit2;
 
     protected final KeyParameter aesKey = null;
 
@@ -272,7 +274,8 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm and return
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        return block;
     }
 
     protected Block makeAndConfirmBlock(List<Block> addedBlocks, Block predecessor) throws Exception {
@@ -286,7 +289,8 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm and return
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        return block;
     }
 
     protected Block makeAndAddBlock(Block predecessor) throws Exception {
@@ -305,7 +309,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight); // mcmcService.update();
         return block;
 
     }
@@ -351,7 +355,8 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);   return block;
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        return block;
     }
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
@@ -361,7 +366,8 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  return block;
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        return block;
 
     }
 
@@ -408,7 +414,8 @@ public abstract class AbstractIntegrationTest {
         mcmcService.update();
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);  mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        mcmcService.update();
         return block;
 
     }
@@ -423,7 +430,7 @@ public abstract class AbstractIntegrationTest {
             Block predecessor) throws Exception {
         // Make an order op
         Transaction tx = new Transaction(networkParameters);
-        OrderCancelInfo info = new OrderCancelInfo( order.getHash());
+        OrderCancelInfo info = new OrderCancelInfo(order.getHash());
         tx.setData(info.toByteArray());
 
         // Legitimate it by signing
@@ -442,7 +449,8 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);     mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        mcmcService.update();
         return block;
     }
 
@@ -735,10 +743,11 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void testCreateToken(ECKey outKey) throws JsonProcessingException, Exception {
-        testCreateToken(outKey,"", networkParameters.getGenesisBlock().getHashAsString());
+        testCreateToken(outKey, "", networkParameters.getGenesisBlock().getHashAsString());
     }
 
-    protected Token testCreateToken(ECKey outKey, String domainName,  String domainpre) throws JsonProcessingException, Exception {
+    protected Token testCreateToken(ECKey outKey, String domainName, String domainpre)
+            throws JsonProcessingException, Exception {
         // ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
@@ -751,10 +760,9 @@ public abstract class AbstractIntegrationTest {
         Token token = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0, domainpre);
         token.setDomainName(domainName);
         tokenInfo.setToken(token);
-        
+
         // add MultiSignAddress item
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(token.getTokenid(), "", outKey.getPublicKeyAsHex()));
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(token.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
         PermissionedAddressesResponse permissionedAddressesResponse = this
@@ -1254,7 +1262,68 @@ public abstract class AbstractIntegrationTest {
 
         return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
     }
-    
 
+    public void sendEmpty() throws JsonProcessingException, Exception {
+        int c = needEmptyBlocks();
+        if (c > 0) {
+            sendEmpty(c);
+        }
+    }
 
+    public void sendEmpty(int c) throws JsonProcessingException, Exception {
+
+        for (int i = 0; i < c; i++) {
+            try {
+                send();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void send() throws JsonProcessingException, Exception {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+
+    }
+
+    private int needEmptyBlocks() throws Exception {
+        try {
+            List<BlockEvaluationDisplay> a = getBlockInfos();
+            // only parallel blocks with rating < 70 need empty to resolve
+            // conflicts
+            int res = 0;
+            for (BlockEvaluationDisplay b : a) {
+                if (b.getRating() < 70) {
+                    res += 1;
+                }
+            }
+
+            return res;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private List<BlockEvaluationDisplay> getBlockInfos() throws Exception {
+
+        String lastestAmount = "200";
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("lastestAmount", lastestAmount);
+        String response = OkHttp3Util.postString(contextRoot + "/" + ReqCmd.findBlockEvaluation.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        return getBlockEvaluationsResponse.getEvaluations();
+    }
 }
