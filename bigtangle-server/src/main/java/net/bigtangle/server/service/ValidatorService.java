@@ -687,7 +687,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    private SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+    public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
         final List<BlockWrap> allPredecessors = blockService.getAllRequirements(block);
         SolidityState missingCalculation = null;
         SolidityState missingDependency = null;
@@ -2050,8 +2050,8 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             else
                 return SolidityState.getSuccessState();
-        } catch ( Exception e) {
-            throw new UnsolidException( );
+        } catch (Exception e) {
+            throw new UnsolidException();
         }
     }
 
@@ -2063,19 +2063,14 @@ public class ValidatorService {
         // Check the chain block formally valid
         checkFormalBlockSolidity(block, true);
 
-        try {
-            SolidityState difficultyResult = rewardService.checkRewardDifficulty(block);
-            if (!difficultyResult.isSuccessState()) {
-                return difficultyResult;
-            }
+        SolidityState difficultyResult = rewardService.checkRewardDifficulty(block);
+        if (!difficultyResult.isSuccessState()) {
+            return difficultyResult;
+        }
 
-            SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block);
-            if (!referenceResult.isSuccessState()) {
-                return referenceResult;
-            }
-        } catch (VerificationException e) {
-            logger.warn("Block does not connect: {} ", block);
-            return SolidityState.getFailState();
+        SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block);
+        if (!referenceResult.isSuccessState()) {
+            return referenceResult;
         }
 
         return SolidityState.getSuccessState();

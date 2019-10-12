@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.server.compare;
 
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,65 +38,76 @@ import net.bigtangle.utils.OkHttp3Util;
 public class RewardService2Test extends AbstractIntegrationTest {
 
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
-        for (int j =1;j <3;j++) {
-        payMoneyToWallet1(j, blocksAddedAll); 
-        mcmcService.update();
+        for (int j = 1; j < 2; j++) {
+            payMoneyToWallet1(j, blocksAddedAll);
+            mcmcService.update();
+            sell(blocksAddedAll);
+            buy(blocksAddedAll);
         }
+
         // Generate mining reward block
         Block next = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash());
-        blocksAddedAll.add(next); 
+        blocksAddedAll.add(next);
 
         return next;
     }
 
- 
     @Test
     // the switch to longest chain
     public void testReorgMiningReward() throws Exception {
         List<Block> a1 = new ArrayList<Block>();
         List<Block> a2 = new ArrayList<Block>();
         // first chains
-        testToken();
-        Block r1= networkParameters.getGenesisBlock();
-        for(int i=0;i<35;i++) {
-            r1= createReward(r1,a1);
+        testToken(a1);
+        Block r1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 3; i++) {
+            r1 = createReward(r1, a1);
         }
+        log.debug(r1.toString());
         store.resetStore();
-        testToken();
+        testToken(a2);
         // second chain
-        Block   r2= networkParameters.getGenesisBlock();
-        for(int i=0;i<10;i++) {
-            r2= createReward(r2,a2);
+        Block r2 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 15; i++) {
+            r2 = createReward(r2, a2);
         }
-        // replay 
+        log.debug(r2.toString());
+        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+
+        // replay
         store.resetStore();
-        testToken();
+       
         // replay first chain
-        for (Block b : a1)
-            blockGraph.add(b, true);
+        for (Block b : a1) {
+            if (b != null)
+                blockGraph.add(b, true);
+        }
+        // check
+        assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
         // replay second chain
-        for (Block b : a2)
+        for (Block b : a2) {
+            if (b != null)
+                blockGraph.add(b, true);
             blockGraph.add(b, true);
- 
+        }
+        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+
     }
- 
 
-  
+    public void testToken(List<Block> blocksAddedAll) throws Exception {
 
-    public void testToken() throws Exception {
-
-        testCreateToken(walletAppKit.wallet().walletKeys().get(0));
+        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0)));
         mcmcService.update();
-//        testCreateToken(walletAppKit.wallet().walletKeys().get(1));
-//        mcmcService.update();
-//        testCreateToken(walletAppKit.wallet().walletKeys().get(2));
-//        mcmcService.update();
-//        testCreateToken(walletAppKit.wallet().walletKeys().get(3));
-//        mcmcService.update();
-  //      sendEmpty(20);
+        // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
+        // mcmcService.update();
+        // testCreateToken(walletAppKit.wallet().walletKeys().get(2));
+        // mcmcService.update();
+        // testCreateToken(walletAppKit.wallet().walletKeys().get(3));
+        // mcmcService.update();
+        // sendEmpty(20);
     }
 
-    public void sell() throws Exception {
+    public void sell(List<Block> blocksAddedAll) throws Exception {
 
         List<String> keyStrHex000 = new ArrayList<String>();
 
@@ -114,13 +127,13 @@ public class RewardService2Test extends AbstractIntegrationTest {
                     && utxo.getValue().getValue().signum() > 0
                     && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
                 walletAppKit.wallet().setServerURL(contextRoot);
-                walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, q, null, null);
+                blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, q, null, null));
 
             }
         }
     }
 
-    public void  payMoneyToWallet1(int j, List<Block> blocksAddedAll) throws Exception {
+    public void payMoneyToWallet1(int j, List<Block> blocksAddedAll) throws Exception {
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
@@ -128,9 +141,9 @@ public class RewardService2Test extends AbstractIntegrationTest {
             giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
                     3333000000L / LongMath.pow(2, j));
         }
-     
+
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-    //    log.debug("block " + (b == null ? "block is null" : b.toString()));
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
         blocksAddedAll.add(b);
     }
@@ -145,7 +158,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             try {
-                buy(orderRecord,blocksAddedAll);
+                buy(orderRecord, blocksAddedAll);
             } catch (InsufficientMoneyException e) {
                 Thread.sleep(4000);
             } catch (Exception e) {

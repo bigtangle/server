@@ -68,8 +68,6 @@ public class SyncBlockService {
     @Autowired
     FullPrunedBlockGraph blockgraph;
 
- 
-
     @Autowired
     private BlockService blockService;
 
@@ -91,7 +89,7 @@ public class SyncBlockService {
             log.debug(" Start  SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-                diff();
+            diff();
             // deleteOldUnsolidBlock();
             // updateSolidity();
             log.debug(" end SyncBlockService Single: ");
@@ -118,7 +116,7 @@ public class SyncBlockService {
             }
 
             if (storedBlock0 == null) {
-                byte[] re =  requestBlock(block.getPrevBlockHash());
+                byte[] re = requestBlock(block.getPrevBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
                     blockgraph.add(req, true);
@@ -133,7 +131,7 @@ public class SyncBlockService {
             }
 
             if (storedBlock1 == null) {
-                byte[] re =  requestBlock(block.getPrevBranchBlockHash());
+                byte[] re = requestBlock(block.getPrevBranchBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
                     blockgraph.add(req, true);
@@ -177,50 +175,51 @@ public class SyncBlockService {
                         rewardService.scanWaitingBlocks(req);
                     }
                 } else {
-                     requestBlock(storedBlock.missingdependencyHash());
+                    requestBlock(storedBlock.missingdependencyHash());
                 }
             }
         }
 
     }
-    public class Tokensums  {
+
+    public class Tokensums {
         String tokenid;
         BigInteger initial;
         BigInteger unspent;
         BigInteger order;
     }
-    public void checkToken(String server, Map<String,Set<Tokensums> > result) throws JsonProcessingException, Exception {
-        //String server = "http://localhost:8088/";
+
+    public void checkToken(String server, Map<String, Set<Tokensums>> result)
+            throws JsonProcessingException, Exception {
+        // String server = "http://localhost:8088/";
         Set<Tokensums> tokensumset = new HashSet<Tokensums>();
-        
-       
+
         result.put(server, tokensumset);
-        
-         
-        
+
         Map<String, BigInteger> tokensums = tokensum(server);
-        
+
         Set<String> tokenids = tokensums.keySet();
 
         for (String tokenid : tokenids) {
             Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
                     tokenid);
 
-            checkToken(server, tokenid, tokensum,  result.get(server));
+            checkToken(server, tokenid, tokensum, result.get(server));
         }
     }
 
-    public void checkToken(String server, String tokenid, Coin tokensum, Set<Tokensums> tokensums ) throws JsonProcessingException, Exception {
-   
+    public void checkToken(String server, String tokenid, Coin tokensum, Set<Tokensums> tokensums)
+            throws JsonProcessingException, Exception {
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
         String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
- 
+
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
-       
-        for (UTXO u : getOutputsResponse.getOutputs()) { 
+
+        for (UTXO u : getOutputsResponse.getOutputs()) {
             if (u.isConfirmed() && !u.isSpent())
                 sumUnspent = sumUnspent.add(u.getValue());
         }
@@ -272,7 +271,6 @@ public class SyncBlockService {
 
         return orderdataResponse.getAmountMap();
     }
-    
 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
@@ -300,8 +298,7 @@ public class SyncBlockService {
     }
 
     public void requestBlocks(Block rewardBlock) {
-        RewardInfo rewardInfo  = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
-     
+        RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
 
         String[] re = serverConfiguration.getRequester().split(",");
         List<String> badserver = new ArrayList<String>();
@@ -311,7 +308,7 @@ public class SyncBlockService {
                     requestBlocks(rewardInfo.getChainlength(), s);
                     requestBlock(rewardInfo.getPrevRewardHash());
                 } catch (Exception e) {
-                    log.debug(s, e); 
+                    log.debug(s, e);
                     badserver.add(s);
                 }
             }
@@ -434,7 +431,7 @@ public class SyncBlockService {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
-              //  mcmcService.update();
+                // mcmcService.update();
             }
             // mcmcService.updateMilestone();
         }

@@ -183,11 +183,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
-        // block.verifyTransactions();
+       block.verifyTransactions();
 
         SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid);
         
-        if (solidityState.isDirectlyMissing()) {
+        if (solidityState.isDirectlyMissing() ) {
             log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
             orphanBlocks.put(block.getHash(), new OrphanBlock(block));
             if (tryConnecting) {
@@ -195,6 +195,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             return false;
         }
+        
+        if (solidityState.isFailState()) {
+            return false;
+        }
+        
+        // Inherit solidity from predecessors if they are not solid
+        solidityState = validatorService.getMinPredecessorSolidity(block, false);
 
         //  save the block
         try {
@@ -218,9 +225,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
-        block.verifyTransactions();
+       block.verifyTransactions();
 
-        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid);
+       SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid);
 
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
