@@ -13,7 +13,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class OrderCancel extends AbstractIntegrationTest {
+public class OrderCancel extends HelpTest {
 
     // cancel all orders
 

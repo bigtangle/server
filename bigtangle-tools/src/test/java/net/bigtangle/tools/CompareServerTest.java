@@ -14,7 +14,7 @@ import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 
-public class CompareServerTest extends AbstractIntegrationTest {
+public class CompareServerTest extends HelpTest {
 
     private static final String CHECHNUMBER = "2000";
 

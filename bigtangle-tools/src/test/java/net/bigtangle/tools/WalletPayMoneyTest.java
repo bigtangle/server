@@ -15,7 +15,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 import net.bigtangle.kits.WalletAppKit;
 
-public class WalletPayMoneyTest extends AbstractIntegrationTest {
+public class WalletPayMoneyTest extends HelpTest {
 
     @Test
     public void pay() throws Exception {

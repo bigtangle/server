@@ -494,6 +494,7 @@ public class RewardService {
             // failed after this.
             if (cursor.getRewardInfo().getChainlength()> head.getRewardInfo().getChainlength()) {
                 store.commitDatabaseBatchWrite();
+                 store.beginDatabaseBatchWrite();
             }
         }
 
@@ -751,13 +752,55 @@ public class RewardService {
         if (prevBranchBlock == null)
             throw new VerificationException("prevBranchBlock  block does not exists.");
 
-        long totalRewardCount = rewardInfo.getBlocks().size() + 1;
-
+     
         // check difficulty
-        long difficulty = calculateNextBlockDifficulty(prevRewardBlock.getDifficultyTarget(), prevTrunkBlock,
-                prevBranchBlock, prevRewardBlock, totalRewardCount);
+        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+        long difficulty = calculateNextChainDifficulty(prevRewardHash, rewardInfo.getChainlength(), rewardBlock.getTimeSeconds());
+
+   
+        
         if (difficulty != rewardInfo.getDifficultyTargetReward()) {
             throw new VerificationException("getDifficultyTargetReward does not match.");
         }
+ 
+   
+        
+     
+    }
+    
+    public long calculateNextChainDifficulty(Sha256Hash prevRewardHash, long currChainLength, long currentTime)
+            throws BlockStoreException {
+
+        if (currChainLength % NetworkParameters.INTERVAL != 0) {
+            return store.getRewardDifficulty(prevRewardHash);
+        }
+
+        // Get the block INTERVAL ago
+        Block oldBlock = null;
+        for (int i = 0; i < NetworkParameters.INTERVAL; i++) {
+            oldBlock = store.getBlockWrap(prevRewardHash).getBlock();
+           // prevRewardHash = blockStore.getRewardPrevBlockHash(oldBlock);
+        }
+
+        int timespan = (int) Math.max(1, (currentTime - oldBlock.getTimeSeconds()));
+        long prevDifficulty = store.getRewardDifficulty(prevRewardHash);
+
+        // Limit the adjustment step.
+        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
+        if (timespan < targetTimespan / 4)
+            timespan = targetTimespan / 4;
+        if (timespan > targetTimespan * 4)
+            timespan = targetTimespan * 4;
+
+        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
+        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
+
+        if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
+            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            newTarget = networkParameters.getMaxTarget();
+        }
+
+        return Utils.encodeCompactBits(newTarget);
     }
 }

@@ -13,7 +13,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class OrderBuyTest extends AbstractIntegrationTest {
+public class OrderBuyTest extends HelpTest {
 
     // buy everthing in test
 

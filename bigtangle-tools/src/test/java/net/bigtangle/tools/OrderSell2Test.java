@@ -18,7 +18,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class OrderSell2Test extends AbstractIntegrationTest {
+public class OrderSell2Test extends HelpTest {
 
     @Test
     public void sellThread() throws Exception {

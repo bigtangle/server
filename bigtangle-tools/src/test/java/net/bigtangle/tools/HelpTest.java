@@ -50,7 +50,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public abstract class AbstractIntegrationTest {
+public abstract class HelpTest {
 
     public static final String HTTPS_BIGTANGLE_LOCAL = "http://localhost:8088/";
     public static boolean testnet = true;
@@ -89,7 +89,7 @@ public abstract class AbstractIntegrationTest {
 
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
-    public static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
+    public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
     
     public static String TESTSERVER1=   HTTPS_BIGTANGLE_ORG;
     

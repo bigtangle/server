@@ -12,7 +12,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 
-public class MoneyForOrderBuyTest extends AbstractIntegrationTest {
+public class MoneyForOrderBuyTest extends HelpTest {
 
     //pay money to all keys in other wallets
     @Test

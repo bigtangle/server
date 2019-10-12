@@ -101,6 +101,8 @@ public class MCMCService {
         } catch (Exception e) {
             log.debug("update  ", e);
             store.abortDatabaseBatchWrite();
+        }finally {
+            store.defaultDatabaseBatchWrite();
         }
         try {
             blockGraph.chainlock.lock();

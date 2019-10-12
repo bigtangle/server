@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.TokenInfo;
 
-public class FundsTests extends AbstractIntegrationTest {
+public class FundsTests extends HelpTest {
 
     private static final Logger log = LoggerFactory.getLogger(FundsTests.class);
 

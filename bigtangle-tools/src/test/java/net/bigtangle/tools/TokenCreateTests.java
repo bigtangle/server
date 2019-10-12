@@ -13,7 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
 
-public class TokenCreateTests extends AbstractIntegrationTest {
+public class TokenCreateTests extends HelpTest {
 
     private static final Logger log = LoggerFactory.getLogger(TokenCreateTests.class);
 

@@ -1408,6 +1408,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     public void resetStore() throws BlockStoreException {
         maybeConnect();
+        defaultDatabaseBatchWrite();
         try {
             deleteStore();
             createTables();

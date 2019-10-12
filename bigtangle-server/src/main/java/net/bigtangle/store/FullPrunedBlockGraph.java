@@ -8,7 +8,6 @@ package net.bigtangle.store;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -152,48 +151,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private long calculateNextChainDifficulty(Sha256Hash prevHash, long currChainLength, long currentTime)
-            throws BlockStoreException {
-
-        if (currChainLength % NetworkParameters.INTERVAL != 0) {
-            return blockStore.getRewardDifficulty(prevHash);
-        }
-
-        // Get the block INTERVAL ago
-        Block oldBlock = null;
-        for (int i = 0; i < NetworkParameters.INTERVAL; i++) {
-            oldBlock = blockStore.getBlockWrap(prevHash).getBlock();
-            prevHash = blockStore.getRewardPrevBlockHash(prevHash);
-        }
-
-        int timespan = (int) Math.max(1, (currentTime - oldBlock.getTimeSeconds()));
-        long prevDifficulty = blockStore.getRewardDifficulty(prevHash);
-
-        // Limit the adjustment step.
-        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
-
-        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
-
-        if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = networkParameters.getMaxTarget();
-        }
-
-        return Utils.encodeCompactBits(newTarget);
-    }
+    
 
     private void solidifyReward(Block block) throws BlockStoreException {
 
         RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
-        long difficulty = calculateNextChainDifficulty(prevRewardHash, currChainLength, block.getTimeSeconds());
+        long difficulty =rewardService. calculateNextChainDifficulty(prevRewardHash, currChainLength, block.getTimeSeconds());
 
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
