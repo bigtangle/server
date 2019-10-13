@@ -377,6 +377,9 @@ public class RewardService {
 
         // Ensure the new difficulty and tx is set correctly
         checkGeneratedReward(newMilestoneBlock);
+        
+        // Sanity check: No reward blocks are approved
+        checkContainsNoRewardBlocks(newMilestoneBlock);
 
         // Check: At this point, predecessors must be solid
         solidityState = validatorService.checkSolidity(newMilestoneBlock, false);
@@ -434,7 +437,9 @@ public class RewardService {
     }
 
     public void solidifyBlocks(RewardInfo currRewardInfo) throws BlockStoreException {
-        TreeSet<Block> referencedBlocks = new TreeSet<Block>(Comparator.comparingLong(b -> b.getHeight()));
+        Comparator<Block> comparator = Comparator.comparingLong((Block b) -> b.getHeight())
+                .thenComparing((Block b) -> b.getHash());
+        TreeSet<Block> referencedBlocks = new TreeSet<Block>(comparator);
         for (Sha256Hash hash : currRewardInfo.getBlocks()) {
             referencedBlocks.add(store.get(hash));
         }
@@ -464,9 +469,9 @@ public class RewardService {
         }
 
         log.info("Re-organize after split at height {}", splitPoint.getHeight());
-        log.info("Old chain head: {}", head);
-        log.info("New chain head: {}", newChainHead);
-        log.info("Split at block: {}", splitPoint);
+        log.info("Old chain head: \n {}", head);
+        log.info("New chain head: \n {}", newChainHead);
+        log.info("Split at block: \n {}", splitPoint);
         // Then build a list of all blocks in the old part of the chain and the
         // new part.
         LinkedList<Block> oldBlocks = new   LinkedList<Block> ();
@@ -613,6 +618,16 @@ public class RewardService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    private void checkContainsNoRewardBlocks(Block newMilestoneBlock) throws BlockStoreException {
+
+        RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
+        for (Sha256Hash hash : currRewardInfo.getBlocks()) {
+            BlockWrap block = store.getBlockWrap(hash);
+            if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
+                throw new VerificationException("Reward block approves other reward blocks");
+        }
     }
 
     private void checkGeneratedReward(Block newMilestoneBlock) throws BlockStoreException {
