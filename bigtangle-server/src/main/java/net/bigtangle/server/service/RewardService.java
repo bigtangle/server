@@ -427,13 +427,10 @@ public class RewardService {
         // solid > 0, so we should be able to confirm everything
         blockGraph.solidifyBlock(newMilestoneBlock, solidityState, true);
         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-        for (BlockWrap approvedBlock : allApprovedNewBlocks)
-            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight);
-
-        // Set the milestone on all confirmed non-milestone
-        // blocks
         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
-        store.updateAllConfirmedToMilestone(milestoneNumber);
+        for (BlockWrap approvedBlock : allApprovedNewBlocks)
+            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight, milestoneNumber);
+
     }
 
     public void solidifyBlocks(RewardInfo currRewardInfo) throws BlockStoreException {

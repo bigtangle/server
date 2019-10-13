@@ -232,7 +232,7 @@ public abstract class AbstractIntegrationTest {
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
 
         return block;
     }
@@ -274,7 +274,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm and return
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
     }
 
@@ -289,7 +289,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm and return
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
     }
 
@@ -309,7 +309,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1); // mcmcService.update();
         return block;
 
     }
@@ -355,7 +355,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
     }
 
@@ -366,7 +366,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
 
     }
@@ -414,7 +414,7 @@ public abstract class AbstractIntegrationTest {
         mcmcService.update();
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         mcmcService.update();
         return block;
 
@@ -449,7 +449,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         long cutoffHeight = blockService.getCutoffHeight();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         mcmcService.update();
         return block;
     }

@@ -298,10 +298,10 @@ public class MCMCService {
             // VALIDITY CHECKS
             validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);
 
-            // Finally add the resolved new milestone blocks to the milestone
+            // Finally add the resolved new blocks to the confirmed set
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight);
+                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight, -1);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())

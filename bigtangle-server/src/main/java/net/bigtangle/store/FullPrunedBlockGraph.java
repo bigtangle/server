@@ -393,18 +393,13 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * 
      * @param blockHash
      * @param cutoffHeight
+     * @param milestoneNumber 
      * @throws BlockStoreException
      * @throws IOException
      * @throws JsonMappingException
      * @throws JsonParseException
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
-            throws BlockStoreException {
-        // Write to DB
-        confirmUntil(blockHash, traversedBlockHashes, cutoffHeight);
-    }
-
-    private void confirmUntil(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight)
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight, long milestoneNumber)
             throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
@@ -424,6 +419,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set confirmed
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
+        blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
         // Connect all approved blocks first if not traversed already
         // Set<Sha256Hash> allRequiredBlockHashes =
