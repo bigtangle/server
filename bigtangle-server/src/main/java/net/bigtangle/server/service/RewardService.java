@@ -601,9 +601,6 @@ public class RewardService {
             if (block.getBlock().getHeight() <= cutoffHeight)
                 throw new VerificationException("Referenced blocks are below cutoff height.");
 
-            
-            // TODO disallow reward blocks
-            
             Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
             for (Sha256Hash reqHash : requiredBlocks) {
                 BlockWrap req = store.getBlockWrap(reqHash);

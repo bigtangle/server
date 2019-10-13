@@ -166,7 +166,6 @@ public class TipsService {
         long prevMilestoneNumber = store.getRewardChainLength(prevRewardHash);
         HashSet<Sha256Hash> currentNewMilestoneBlocks = new HashSet<Sha256Hash>();
 
-        // TODO disallow reward blocks
         // Initialize approved blocks
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
