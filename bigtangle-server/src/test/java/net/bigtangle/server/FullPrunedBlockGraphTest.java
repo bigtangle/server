@@ -84,7 +84,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         mcmcService.update();
 
@@ -260,7 +260,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
 
         // Confirm
@@ -613,7 +613,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock11 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock11 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
@@ -991,7 +991,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-        Block rewardBlock11 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock11 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
@@ -1007,7 +1007,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock11.getHash(),
+        Block rewardBlock2 = rewardService.createReward(rewardBlock11.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm
@@ -1063,7 +1063,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // Confirm

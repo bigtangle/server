@@ -59,6 +59,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
@@ -252,7 +253,7 @@ public class ValidatorService {
         case DOMAINISSUANCE:
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
             return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
-                    connectedDomainToken.getDomainNameBlockHash()) != null;
+                    connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
         default:
             throw new RuntimeException("Not Implemented");
         }
@@ -653,7 +654,7 @@ public class ValidatorService {
             // The spender is always the one block with the same domainname and
             // predecessing domain tokenid that is confirmed
             return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
-                    connectedDomainToken.getDomainNameBlockHash());
+                    connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex());
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -1134,6 +1135,27 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
 
+            // Check difficulty and latest consensus block is passed through
+            // correctly
+            if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
+                if (storedPrev.getBlock().getLastMiningRewardBlock() >= storedPrevBranch.getBlock()
+                        .getLastMiningRewardBlock()) {
+                    if (block.getLastMiningRewardBlock() != storedPrev.getBlock().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrev.getBlock().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();
+                    }
+                } else {
+                    if (block.getLastMiningRewardBlock() != storedPrevBranch.getBlock().getLastMiningRewardBlock()
+                            || block.getDifficultyTarget() != storedPrevBranch.getBlock().getDifficultyTarget()) {
+                        if (throwExceptions)
+                            throw new DifficultyConsensusInheritanceException();
+                        return SolidityState.getFailState();
+                    }
+                }
+            } 
+            
             // Check transactions are solid
             SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
                     throwExceptions);
@@ -2063,6 +2085,24 @@ public class ValidatorService {
         // Check the chain block formally valid
         checkFormalBlockSolidity(block, true);
 
+        BlockWrap prevTrunkBlock = store.getBlockWrap(block.getPrevBlockHash());
+        BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
+        if (prevTrunkBlock == null)
+            SolidityState.from(block.getPrevBlockHash(), true);
+        if (prevBranchBlock == null)
+            SolidityState.from(block.getPrevBranchBlockHash(), true);
+
+        long difficulty = rewardService.calculateNextBlockDifficulty(block.getRewardInfo());
+        if (difficulty != block.getDifficultyTarget()) {
+            throw new VerificationException("calculateNextBlockDifficulty does not match.");
+        }
+        
+        if (block.getLastMiningRewardBlock() != block.getRewardInfo().getChainlength()) {
+            if (throwExceptions)
+                throw new DifficultyConsensusInheritanceException();
+            return SolidityState.getFailState();
+        }
+
         SolidityState difficultyResult = rewardService.checkRewardDifficulty(block);
         if (!difficultyResult.isSuccessState()) {
             return difficultyResult;
@@ -2073,6 +2113,9 @@ public class ValidatorService {
             return referenceResult;
         }
 
+        // Solidify referenced blocks
+        rewardService.solidifyBlocks(block.getRewardInfo());
+        
         return SolidityState.getSuccessState();
     }
 

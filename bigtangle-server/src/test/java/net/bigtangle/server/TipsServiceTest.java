@@ -177,9 +177,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward blocks
-        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block b2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
 
         for (int i = 0; i < 5; i++) {

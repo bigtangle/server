@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.compare;
+package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
 
@@ -30,7 +30,6 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
@@ -46,7 +45,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block next = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash());
+        Block next = rewardService.createReward(rewardBlock1.getHash());
         blocksAddedAll.add(next);
 
         return next;

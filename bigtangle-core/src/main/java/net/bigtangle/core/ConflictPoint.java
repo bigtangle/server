@@ -11,7 +11,7 @@ import com.google.common.base.Objects;
 
 public class ConflictPoint {
     private ConflictType type;
-    
+
     /** Null if not conflict of corresponding type */
     @Nullable
     private TransactionOutPoint connectedOutpoint;
@@ -47,7 +47,7 @@ public class ConflictPoint {
     public static ConflictPoint fromDomainToken(Token token) {
         return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, token);
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -55,7 +55,7 @@ public class ConflictPoint {
         if (o == null || getClass() != o.getClass())
             return false;
         ConflictPoint other = (ConflictPoint) o;
-        
+
         if (other.type != type)
             return false;
 
@@ -63,16 +63,18 @@ public class ConflictPoint {
         case REWARDISSUANCE:
             return getConnectedReward().getPrevRewardHash().equals(other.getConnectedReward().getPrevRewardHash());
         case TOKENISSUANCE:
-                return getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid())
-                        && getConnectedToken().getTokenindex() == other.getConnectedToken().getTokenindex();
+            return getConnectedToken().getTokenid().equals(other.getConnectedToken().getTokenid())
+                    && getConnectedToken().getTokenindex() == other.getConnectedToken().getTokenindex();
         case TXOUT:
             return getConnectedOutpoint().getIndex() == other.getConnectedOutpoint().getIndex()
                     && getConnectedOutpoint().getHash().equals(other.getConnectedOutpoint().getHash());
-		case DOMAINISSUANCE:
-            return getConnectedDomainToken().getDomainNameBlockHash().equals(other.getConnectedDomainToken().getDomainNameBlockHash())
-                    && getConnectedDomainToken().getTokenname().equals(other.getConnectedDomainToken().getTokenname());
-		default:
-			throw new RuntimeException("Conflicts not implemented.");
+        case DOMAINISSUANCE:
+            return getConnectedDomainToken().getDomainNameBlockHash()
+                    .equals(other.getConnectedDomainToken().getDomainNameBlockHash())
+                    && getConnectedDomainToken().getTokenname().equals(other.getConnectedDomainToken().getTokenname())
+                    && getConnectedDomainToken().getTokenindex() == other.getConnectedDomainToken().getTokenindex();
+        default:
+            throw new RuntimeException("Conflicts not implemented.");
         }
     }
 
@@ -86,9 +88,10 @@ public class ConflictPoint {
         case TXOUT:
             return Objects.hashCode(type, getConnectedOutpoint().getIndex(), getConnectedOutpoint().getHash());
         case DOMAINISSUANCE:
-            return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(), getConnectedDomainToken().getTokenname());
-		default:
-			throw new RuntimeException("Conflicts not implemented.");
+            return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(),
+                    getConnectedDomainToken().getTokenname(), getConnectedDomainToken().getTokenindex());
+        default:
+            throw new RuntimeException("Conflicts not implemented.");
         }
     }
 

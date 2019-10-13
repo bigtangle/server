@@ -48,7 +48,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
         blockGraph.add(fusingBlock, true);
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         mcmcService.update();
 
@@ -57,9 +57,9 @@ public class PerformanceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
-        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock3 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash());
         mcmcService.update();
 
@@ -79,7 +79,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
             blockGraph.add(rollingBlock, true);
         }
        // syncBlockService. reCheckUnsolidBlock();
-        rewardService.createAndAddMiningRewardBlock(rewardBlock3.getHash(),
+        rewardService.createReward(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         mcmcService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());

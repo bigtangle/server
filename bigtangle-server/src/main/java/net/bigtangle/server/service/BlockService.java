@@ -367,8 +367,7 @@ public class BlockService {
         try {
             // logger.debug(" bytes " +bytes.length);
             return addConnected(Gzip.decompress(bytes), true);
-        } catch (DifficultyTargetException e) {
-
+        } catch (VerificationException e) { 
             return null;
         } catch (Exception e) {
             logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);

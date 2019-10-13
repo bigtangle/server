@@ -95,9 +95,9 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward blocks
-        Block b1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
-        Block b2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         createAndAddNextBlock(b2, b1);
 
@@ -412,9 +412,9 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward blocks
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         createAndAddNextBlock(rewardBlock1, rewardBlock2);
 
@@ -635,7 +635,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1; i++) {
             rollingBlock = createAndAddNextBlock(rollingBlock, rollingBlock);
         }
-        rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         mcmcService.update();

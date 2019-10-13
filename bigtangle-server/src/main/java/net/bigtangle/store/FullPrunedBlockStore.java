@@ -269,7 +269,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenindex) throws BlockStoreException;
 
-    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred) throws BlockStoreException;
+    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred, long index) throws BlockStoreException;
 
     public List<String> getDomainDescendantConfirmedBlocks(String domainPred) throws BlockStoreException;
 

@@ -276,7 +276,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
         mcmcService.update();
 
@@ -295,7 +295,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible second mining reward block
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
+        Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash());
         blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight());
 
@@ -390,7 +390,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // The difficulty should now not be equal to the previous difficulty
@@ -448,7 +448,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Generate eligible mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         // The consensus number should now be equal to the previous number + 1
@@ -525,7 +525,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
             rollingBlock.solve();
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, false);
             fail();
         } catch (TimeReversionException e) {
         }
@@ -675,8 +675,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Again but with incorrect input script
         try {
             tx1.getInput(0).setScriptSig(new Script(new byte[0]));
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                    networkParameters.getGenesisBlock(), tx1);
+            Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1.addTransaction(tx1);
+            block1 = adjustSolve(block1);
+            this.blockGraph.add(block1, false);
             fail();
         } catch (ScriptException e) {
         }
@@ -739,8 +741,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
             tx2.getOutput(0).getValue().setValue(tx2.getOutput(0).getValue().getValue().add(BigInteger.valueOf(1)));
-            createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-                    networkParameters.getGenesisBlock(), tx2);
+            Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+            block1.addTransaction(tx2);
+            block1 = adjustSolve(block1);
+            this.blockGraph.add(block1, false);
             fail();
         } catch (InvalidTransactionException e) {
         }

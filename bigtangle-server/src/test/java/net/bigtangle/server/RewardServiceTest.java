@@ -39,14 +39,14 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         Block rollingBlock1 = addBlocks(5, blocksAddedAll);
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
+        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash());
         blocksAddedAll.add(rewardBlock1);
 
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         // blocksAddedAll.add(rewardBlock2);
         // second is false , as first win
@@ -58,12 +58,12 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
     public Block createReward2(List<Block> blocksAddedAll) throws Exception {
         addBlocks(5, blocksAddedAll);
         // Generate mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash());
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash());
         blocksAddedAll.add(rewardBlock2);
         // add more reward to reward2
         // rewardBlock3 takes only referenced blocks not in reward2
         addBlocks(1, blocksAddedAll);
-        Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash());
+        Block rewardBlock3 = rewardService.createReward(rewardBlock2.getHash());
         blocksAddedAll.add(rewardBlock3);
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 1);
@@ -155,7 +155,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
        // Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock1.getHash(),
+        Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(),
                 blocksAddedAll.get(0).getHash(),  blocksAddedAll.get(0).getHash());
         blocksAddedAll.add(rewardBlock2);
  
@@ -174,7 +174,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
                 networkParameters.getGenesisBlock(), blocksAddedAll);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
        // assertTrue( rewardBlock2.getBlocks().size() <=NetworkParameters.MAX_BLOCKS_IN_REWARD);
         assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
@@ -190,18 +190,18 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createAndAddMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         blocksAddedAll.add(rewardBlock2);
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF + 5; i++) {
-            rewardBlock2 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash());
+            rewardBlock2 = rewardService.createReward(rewardBlock2.getHash());
         }
 
         // create a long block graph
         Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll);
         // rewardBlock3 takes the long block graph behind cutoff
         try {
-            Block rewardBlock3 = rewardService.createAndAddMiningRewardBlock(rewardBlock2.getHash(),
+            Block rewardBlock3 = rewardService.createReward(rewardBlock2.getHash(),
                     rollingBlock2.getHash(), rollingBlock2.getHash());
             fail();
         } catch (VerificationException e) {
