@@ -290,10 +290,10 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         ECKey myKey = walletAppKit2.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-        testCreateToken(walletKeys.get(0));
+        testCreateToken(walletKeys.get(0),"test");
 
         mcmcService.update();
-        testCreateToken(walletKeys.get(1));
+        testCreateToken(walletKeys.get(1), "test2");
 
         mcmcService.update();
         payToken(200, yourKey, walletKeys.get(0).getPubKey(),walletAppKit1.wallet());

@@ -41,7 +41,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.exception.VerificationException.DifficultyTargetException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -177,16 +176,22 @@ public class BlockService {
      * somewhere, returns false.
      * 
      * @param blocks
+     * @param prevMilestoneNumber 
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
     public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
-            long cutoffHeight) throws BlockStoreException {
+            long cutoffHeight, long prevMilestoneNumber) throws BlockStoreException {
         if (block == null)
             return false;
+        
+        if (blocks.contains(block.getBlockHash()))
+                return true;
+        
         // no block add if already added or in milestone
-        if (block.getBlockEvaluation().getMilestone() >= 0 || blocks.contains(block.getBlockHash()))
+        if (block.getBlockEvaluation().getMilestone() >= 0 && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
             return true;
+            
         // the block is in cutoff and not in chain
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
             throw new VerificationException(
@@ -201,7 +206,7 @@ public class BlockService {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight))
+            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight, prevMilestoneNumber))
                 return false;
         }
         return true;

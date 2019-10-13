@@ -163,16 +163,18 @@ public class TipsService {
             BlockWrap left, BlockWrap right, Sha256Hash prevRewardHash) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
         long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
+        long prevMilestoneNumber = store.getRewardChainLength(prevRewardHash);
         HashSet<Sha256Hash> currentNewMilestoneBlocks = new HashSet<Sha256Hash>();
-      
+
+        // TODO disallow reward blocks
         // Initialize approved blocks
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left,   cutoffHeight))
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left,   cutoffHeight, prevMilestoneNumber))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right,   cutoffHeight))
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right,   cutoffHeight, prevMilestoneNumber))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
 
         // Necessary: Initial test if the prototype's
@@ -191,7 +193,7 @@ public class TipsService {
                 // Terminate if next left approves too many new milestone blocks 
                 @SuppressWarnings("unchecked")
                 HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
-                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight))
+                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight, prevMilestoneNumber))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
                 if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                     nextLeft = left;
@@ -211,7 +213,7 @@ public class TipsService {
                 // Terminate if next right approves too many new milestone blocks 
                 @SuppressWarnings("unchecked")
                 HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
-                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight))
+                if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight, prevMilestoneNumber))
                     throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
                 if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                     nextRight = right;
@@ -235,7 +237,7 @@ public class TipsService {
             // Terminate if next left approves too many new milestone blocks 
             @SuppressWarnings("unchecked")
             HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
-            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft,   cutoffHeight))
+            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft,   cutoffHeight, prevMilestoneNumber))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
             if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                 nextLeft = left;
@@ -253,7 +255,7 @@ public class TipsService {
             // Terminate if next right approves too many new milestone blocks 
             @SuppressWarnings("unchecked")
             HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
-            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight))
+            if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight, prevMilestoneNumber))
                 throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
             if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                 nextRight = right;

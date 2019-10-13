@@ -188,7 +188,7 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testGetTokenById() throws Exception {
 
-        testCreateToken(walletKeys.get(0));
+        testCreateToken(walletKeys.get(0), "test");
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
@@ -258,9 +258,9 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testGetTokenConflict() throws Exception {
 
-        testCreateToken(walletKeys.get(0));
+        testCreateToken(walletKeys.get(0),"test");
         // same token id and index
-        testCreateToken(walletKeys.get(0));
+        testCreateToken(walletKeys.get(0), "test");
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
@@ -315,13 +315,13 @@ public class TokenTest extends AbstractIntegrationTest {
         // all token has the same name, but different id, tokenname and
         // domainBlockHash are unique
 
-        testCreateToken(walletAppKit.wallet().walletKeys().get(0));
+        testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test");
         mcmcService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(1));
+        testCreateToken(walletAppKit.wallet().walletKeys().get(1),"test");
         mcmcService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(2));
+        testCreateToken(walletAppKit.wallet().walletKeys().get(2),"test");
         mcmcService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(3));
+        testCreateToken(walletAppKit.wallet().walletKeys().get(3),"test");
         mcmcService.update();
         sendEmpty(20);
         //only one is ok.

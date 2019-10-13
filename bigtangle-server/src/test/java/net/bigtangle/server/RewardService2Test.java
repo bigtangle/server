@@ -95,7 +95,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
     public void testToken(List<Block> blocksAddedAll) throws Exception {
 
-        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0)));
+        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0),"test"));
         mcmcService.update();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
         // mcmcService.update();

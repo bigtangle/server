@@ -742,11 +742,11 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
     }
 
-    protected Block testCreateToken(ECKey outKey) throws JsonProcessingException, Exception {
-      return  testCreateToken(outKey, "", networkParameters.getGenesisBlock().getHashAsString());
+    protected Block testCreateToken(ECKey outKey, String tokennameName) throws JsonProcessingException, Exception {
+      return  testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString());
     }
 
-    protected Block testCreateToken(ECKey outKey, String domainName, String domainpre)
+    protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre)
             throws JsonProcessingException, Exception {
         // ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
@@ -757,8 +757,8 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         BigInteger amount = basecoin.getValue();
 
-        Token token = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "", 1, 0, amount, true, 0, domainpre);
-        token.setDomainName(domainName);
+        Token token = Token.buildSimpleTokenInfo(true, null, tokenid, tokennameName, "", 1, 0, amount, true, 0, domainpre);
+        token.setDomainName(tokennameName);
         tokenInfo.setToken(token);
 
         // add MultiSignAddress item

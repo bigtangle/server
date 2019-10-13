@@ -32,7 +32,7 @@ public class ServerConfiguration {
     private String clientversion;
     private Boolean permissioned;
     private String permissionadmin;
-
+    private int solveRewardduration=30; //in seconds
     private Boolean myserverblockOnly = false;
 
     private List<PermissionDomainname> permissionDomainname = ImmutableList
@@ -173,6 +173,14 @@ public class ServerConfiguration {
 
     public void setServerurl(String serverurl) {
         this.serverurl = serverurl;
+    }
+
+    public int getSolveRewardduration() {
+        return solveRewardduration;
+    }
+
+    public void setSolveRewardduration(int solveRewardduration) {
+        this.solveRewardduration = solveRewardduration;
     }
 
     @Override

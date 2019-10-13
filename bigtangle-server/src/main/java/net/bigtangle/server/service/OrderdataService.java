@@ -31,10 +31,7 @@ public class OrderdataService {
 
     public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid)
             throws BlockStoreException {
-
-        if("02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a".equals(tokenid)) {
-             int a=1;
-        }
+    
         List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses, tokenid);
 
         HashSet<String> orderBlockHashs = new HashSet<String>();

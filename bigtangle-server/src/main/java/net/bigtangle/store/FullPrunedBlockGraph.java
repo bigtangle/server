@@ -208,7 +208,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.beginDatabaseBatchWrite();
             connectRewardBlock(block, solidityState);
             blockStore.commitDatabaseBatchWrite();
-        } catch (BlockStoreException e) {
+        } catch ( Exception e) {
             blockStore.abortDatabaseBatchWrite();
             throw e;
         } finally {
@@ -246,10 +246,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
    
         // Accept the block
         try {
-            blockStore.beginDatabaseBatchWrite();
+             blockStore.beginDatabaseBatchWrite();
             connect(block, solidityState);
             blockStore.commitDatabaseBatchWrite();
-        } catch (BlockStoreException e) {
+        } catch (Exception e) {
             blockStore.abortDatabaseBatchWrite();
             throw e;
         } finally {

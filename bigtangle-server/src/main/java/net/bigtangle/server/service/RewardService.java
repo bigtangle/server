@@ -193,7 +193,7 @@ public class RewardService {
         blockService.adjustHeightRequiredBlocks(block);
         final BigInteger chainTargetFinal = chainTarget;
 
-        final Duration timeout = Duration.ofSeconds(30);
+        final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -262,8 +262,8 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength);
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
                 prevRewardBlock.getBlock().getTimeSeconds());
@@ -282,7 +282,7 @@ public class RewardService {
         difficultyChain = difficultyChain.multiply(BigInteger.valueOf(NetworkParameters.TARGET_SPACING));
 
         if (difficultyChain.compareTo(networkParameters.getMaxTarget()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", difficultyChain.toString(16));
+         //   log.info("Difficulty hit proof of work limit: {}", difficultyChain.toString(16));
             difficultyChain = networkParameters.getMaxTarget();
         }
         
@@ -472,7 +472,10 @@ public class RewardService {
         log.info("Split at block: {}", splitPoint);
         // Then build a list of all blocks in the old part of the chain and the
         // new part.
-        final LinkedList<Block> oldBlocks = getPartialChain(head, splitPoint);
+        LinkedList<Block> oldBlocks = new   LinkedList<Block> ();
+        if(!head.getHash().equals(splitPoint.getHash())) { 
+            oldBlocks  = getPartialChain(head, splitPoint);
+        }
         final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint);
         // Disconnect each transaction in the previous best chain that is no
         // longer in the new best chain
@@ -596,6 +599,9 @@ public class RewardService {
             if (block.getBlock().getHeight() <= cutoffHeight)
                 throw new VerificationException("Referenced blocks are below cutoff height.");
 
+            
+            // TODO disallow reward blocks
+            
             Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
             for (Sha256Hash reqHash : requiredBlocks) {
                 BlockWrap req = store.getBlockWrap(reqHash);
