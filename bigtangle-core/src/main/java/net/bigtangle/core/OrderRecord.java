@@ -7,15 +7,15 @@ package net.bigtangle.core;
 
 import java.util.Arrays;
 
-public class OrderRecord extends SpentBlock  {
+public class OrderRecord extends SpentBlock {
 
     private static final long serialVersionUID = -2331665478149550684L;
- 
+
     // order matching block
     private Sha256Hash issuingMatcherBlockHash;
     private long offerValue;
     private String offerTokenid;
- 
+
     private long targetValue;
     private String targetTokenid;
     // owner public key of the order
@@ -24,55 +24,53 @@ public class OrderRecord extends SpentBlock  {
     private String beneficiaryAddress;
 
     // order will be traded until this time
-    private Long validToTime; 
+    private Long validToTime;
     // order will be traded after this time
     private Long validFromTime;
     // Side can be calculated as Big Coin as only base trading coin
     private Side side;
 
-    
     /*
      * for wallet set the order status from cancel
      */
-    
+
     private boolean cancelPending;
     private long cancelPendingTime;
-  
-    
+
     public OrderRecord() {
     }
 
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
-            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime,  Long validFromTime,
-            String side, String beneficiaryAddress) {
+            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, String side,
+            String beneficiaryAddress) {
         super();
-        this.setBlockHash ( initialBlockHash);
+        this.setBlockHash(initialBlockHash);
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
         this.offerValue = offerValue;
         this.offerTokenid = offerTokenid;
-        this.setConfirmed (confirmed);
-        this.setSpent( spent);
-        this.setSpenderBlockHash( spenderBlockHash);
+        this.setConfirmed(confirmed);
+        this.setSpent(spent);
+        this.setSpenderBlockHash(spenderBlockHash);
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
         this.validToTime = validToTime;
- 
+
         this.validFromTime = validFromTime;
-        try {
-            this.side = Side.valueOf(side);
-        } catch (Exception e) {
-            this.side = null;
-        }
+        this.side = Side.valueOf(side);
         this.beneficiaryAddress = beneficiaryAddress;
+    }
+
+    public static OrderRecord cloneOrderRecord(OrderRecord old) {
+        return new OrderRecord(old.getBlockHash(), old.issuingMatcherBlockHash, old.offerValue, old.offerTokenid,
+                old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
+                old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress);
     }
 
     public long price() {
         return getTargetValue() / getOfferValue();
     }
-
-     
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;
@@ -82,7 +80,6 @@ public class OrderRecord extends SpentBlock  {
         return blockTime >= validFromTime;
     }
 
-     
     public Sha256Hash getIssuingMatcherBlockHash() {
         return issuingMatcherBlockHash;
     }
@@ -106,7 +103,7 @@ public class OrderRecord extends SpentBlock  {
     public void setOfferTokenid(String offerTokenid) {
         this.offerTokenid = offerTokenid;
     }
-  
+
     public long getTargetValue() {
         return targetValue;
     }
@@ -139,7 +136,6 @@ public class OrderRecord extends SpentBlock  {
         this.validToTime = validToTime;
     }
 
-  
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
@@ -168,7 +164,6 @@ public class OrderRecord extends SpentBlock  {
         this.beneficiaryAddress = beneficiaryAddress;
     }
 
-     
     public boolean isCancelPending() {
         return cancelPending;
     }
@@ -190,8 +185,8 @@ public class OrderRecord extends SpentBlock  {
         return "OrderRecord [issuingMatcherBlockHash=" + issuingMatcherBlockHash + ", offerValue=" + offerValue
                 + ", offerTokenid=" + offerTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
                 + ", beneficiaryPubKey=" + Arrays.toString(beneficiaryPubKey) + ", beneficiaryAddress="
-                + beneficiaryAddress + ", validToTime=" + validToTime +   ", validFromTime="
-                + validFromTime + ", side=" + side + "]";
+                + beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime=" + validFromTime + ", side="
+                + side + "]";
     }
 
 }

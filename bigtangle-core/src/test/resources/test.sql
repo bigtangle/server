@@ -9,7 +9,7 @@ select * from txreward order by chainlength desc;
 SELECT block, height, blocktype FROM blocks WHERE milestone>9;
 select * from blocks where height < 750 ;
 select * from blocks order by height desc limit 500 ;
-select * from blocks where height < 370 order by height desc limit 500 ;
+select * from blocks where height < 12480 order by height desc limit 500 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
 select * from blocks where confirmed=1 order by height desc limit 500 ;
@@ -46,6 +46,7 @@ select * from ordercancel
 update blocks set milestone=0    where height=0
 select * from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
+select * from outputs where blockhash = 0x0000005905850e7c22237aa0d089b550202c0fec6a70ab3d155eda4f8b5857f2;
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
 

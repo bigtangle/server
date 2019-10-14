@@ -187,6 +187,59 @@ public class SyncBlockService {
         BigInteger initial;
         BigInteger unspent;
         BigInteger order;
+        @Override
+        public String toString() {
+            return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
+                    + order + "]";
+        }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + getEnclosingInstance().hashCode();
+            result = prime * result + ((initial == null) ? 0 : initial.hashCode());
+            result = prime * result + ((order == null) ? 0 : order.hashCode());
+            result = prime * result + ((tokenid == null) ? 0 : tokenid.hashCode());
+            result = prime * result + ((unspent == null) ? 0 : unspent.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Tokensums other = (Tokensums) obj;
+            if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
+                return false;
+            if (initial == null) {
+                if (other.initial != null)
+                    return false;
+            } else if (!initial.equals(other.initial))
+                return false;
+            if (order == null) {
+                if (other.order != null)
+                    return false;
+            } else if (!order.equals(other.order))
+                return false;
+            if (tokenid == null) {
+                if (other.tokenid != null)
+                    return false;
+            } else if (!tokenid.equals(other.tokenid))
+                return false;
+            if (unspent == null) {
+                if (other.unspent != null)
+                    return false;
+            } else if (!unspent.equals(other.unspent))
+                return false;
+            return true;
+        }
+        private SyncBlockService getEnclosingInstance() {
+            return SyncBlockService.this;
+        }
+        
     }
 
     public void checkToken(String server, Map<String, Set<Tokensums>> result)
@@ -223,27 +276,24 @@ public class SyncBlockService {
             if (u.isConfirmed() && !u.isSpent())
                 sumUnspent = sumUnspent.add(u.getValue());
         }
+        Tokensums t = new Tokensums();
 
         Coin ordersum = ordersum(tokenid, server);
+        t.tokenid = tokenid;
+        t.unspent = sumUnspent.getValue();
+        t.order = ordersum.getValue();
+        t.initial = tokensum.getValue();
 
-        log.info("sumUnspent : " + sumUnspent);
-        log.info("ordersum : " + ordersum);
-        // log.info("sumCoinbase : " + sumCoinbase);
-
-        log.info("tokensum : " + tokensum);
-
-        log.info("  ordersum + : sumUnspent = " + sumUnspent.add(ordersum));
-
-        if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-            if (!tokensum.equals(sumUnspent.add(ordersum))) {
-                log.warn("tokensum.equals(sumUnspent.add(ordersum)");
-            }
-        } else {
-            if (tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
-                log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0");
-            }
-        }
-
+        // if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+        // if (!tokensum.equals(sumUnspent.add(ordersum))) {
+        // log.warn("tokensum.equals(sumUnspent.add(ordersum)");
+        // }
+        // } else {
+        // if (tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
+        // log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0");
+        // }
+        // }
+        tokensums.add(t);
     }
 
     public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {

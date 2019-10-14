@@ -19,8 +19,8 @@ import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.core.response.OrderTickerResponse;
-import net.bigtangle.store.FullPrunedBlockGraph.OrderMatchingResult;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.OrderMatchingResult;
 
 /**
  * This service provides informations on current exchange rates
@@ -32,14 +32,14 @@ public class OrderTickerService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public void addMatchingEvents(OrderMatchingResult orderMatchingResult) throws BlockStoreException {
+    public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash) throws BlockStoreException {
         // collect the spend order volumn and ticker to write to database
         // Map<String, MatchResult> matchResultList = new HashMap<String,
         // MatchResult>();
         for (Entry<String, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
             for (Event event : entry.getValue()) {
                 if (event instanceof Match) {
-                    MatchResult f = new MatchResult(orderMatchingResult.getOutputTx().getHashAsString(), entry.getKey(),
+                    MatchResult f = new MatchResult(transactionHash , entry.getKey(),
                             ((OrderBookEvents.Match) event).price, ((OrderBookEvents.Match) event).executedQuantity,
                             System.currentTimeMillis());
                     store.insertMatchingEvent(f);

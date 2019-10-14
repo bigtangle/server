@@ -24,8 +24,8 @@ public class WalletPayMoneyTest extends HelpTest {
         this.wallet1();
         this.wallet2();
 
-        walletAppKit1.wallet().setServerURL(TESTSERVER1);
-        walletAppKit2.wallet().setServerURL(TESTSERVER1);
+        walletAppKit1.wallet().setServerURL(TESTSERVER2);
+        walletAppKit2.wallet().setServerURL(TESTSERVER2);
 
         // checkBalance(Coin.valueOf(100, testPub), wallet1Keys.get(0));
 

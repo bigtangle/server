@@ -10,6 +10,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -60,6 +61,7 @@ import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.OrderMatchingResult;
 import net.bigtangle.utils.Threading;
 
 /**
@@ -143,13 +145,12 @@ public class RewardService {
         return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws Exception {
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
         return createReward(prevRewardHash, prevTrunk, prevBranch, false);
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws Exception {
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, boolean override)
+            throws Exception {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
         if (block != null)
@@ -176,9 +177,6 @@ public class RewardService {
         block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
         block.setMinerAddress(
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-        
-        // Make the new block
-        block.addTransaction(result.getTx());
 
         RewardInfo currRewardInfo = RewardInfo.parseChecked(result.getTx().getData());
         block.setLastMiningRewardBlock(currRewardInfo.getChainlength());
@@ -190,6 +188,12 @@ public class RewardService {
         if (Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) {
             chainTarget = Utils.decodeCompactBits(result.getDifficulty());
         }
+
+        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(block, currRewardInfo);
+        currRewardInfo.setOrdermatchingResult(ordermatchresult.toByteArray());
+        result.getTx().setData(currRewardInfo.toByteArray());
+        block.addTransaction(result.getTx());
+
         blockService.adjustHeightRequiredBlocks(block);
         final BigInteger chainTargetFinal = chainTarget;
 
@@ -269,6 +273,7 @@ public class RewardService {
                 prevRewardBlock.getBlock().getTimeSeconds());
 
         // Build the type-specific tx data
+
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
         tx.setData(rewardInfo.toByteArray());
         tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
@@ -282,10 +287,11 @@ public class RewardService {
         difficultyChain = difficultyChain.multiply(BigInteger.valueOf(NetworkParameters.TARGET_SPACING));
 
         if (difficultyChain.compareTo(networkParameters.getMaxTarget()) > 0) {
-         //   log.info("Difficulty hit proof of work limit: {}", difficultyChain.toString(16));
+            // log.info("Difficulty hit proof of work limit: {}",
+            // difficultyChain.toString(16));
             difficultyChain = networkParameters.getMaxTarget();
         }
-        
+
         return Utils.encodeCompactBits(difficultyChain);
     }
 
@@ -377,7 +383,7 @@ public class RewardService {
 
         // Ensure the new difficulty and tx is set correctly
         checkGeneratedReward(newMilestoneBlock);
-        
+
         // Sanity check: No reward blocks are approved
         checkContainsNoRewardBlocks(newMilestoneBlock);
 
@@ -432,7 +438,8 @@ public class RewardService {
         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
         for (BlockWrap approvedBlock : allApprovedNewBlocks)
-            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight, milestoneNumber);
+            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight,
+                    milestoneNumber);
 
     }
 
@@ -474,9 +481,9 @@ public class RewardService {
         log.info("Split at block: \n {}", splitPoint);
         // Then build a list of all blocks in the old part of the chain and the
         // new part.
-        LinkedList<Block> oldBlocks = new   LinkedList<Block> ();
-        if(!head.getHash().equals(splitPoint.getHash())) { 
-            oldBlocks  = getPartialChain(head, splitPoint);
+        LinkedList<Block> oldBlocks = new LinkedList<Block>();
+        if (!head.getHash().equals(splitPoint.getHash())) {
+            oldBlocks = getPartialChain(head, splitPoint);
         }
         final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint);
         // Disconnect each transaction in the previous best chain that is no
@@ -636,11 +643,16 @@ public class RewardService {
         if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
             throw new VerificationException("Incorrect difficulty target");
         }
-        if (!newMilestoneBlock.getTransactions().get(0).getHash().equals(result.getTx().getHash())) {
-            throw new VerificationException("Transaction is wrong");
 
-        }
+        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock);
+         OrderMatchingResult old = OrderMatchingResult.parseChecked(currRewardInfo.getOrdermatchingResult());
 
+         Transaction tx1 = ordermatchresult.getOutputTx(networkParameters);
+         Transaction tx2 = old.getOutputTx(networkParameters);
+         if (!Arrays.equals(ordermatchresult.getOutputTx(), old.getOutputTx())){
+             throw new VerificationException("OrderMatchingResult transactions output is wrong."); 
+         }
+        
     }
 
     public boolean solidifyWaiting(Block block) throws BlockStoreException {
