@@ -287,7 +287,7 @@ public class BlockEvaluationController {
         String address = addressComboBox1.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
-            
+
             List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
@@ -298,7 +298,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT+ "/"+ ReqCmd.findBlockEvaluation.name(),
+        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
@@ -341,7 +341,7 @@ public class BlockEvaluationController {
         alert.setTitle("");
         alert.setHeaderText(null);
         alert.setResizable(true);
-        String blockinfo = BlockFormat.block2string(re,  Main.params);
+        String blockinfo = BlockFormat.block2string(re, Main.params);
         alert.setContentText(blockinfo);
 
         alert.showAndWait();
@@ -354,7 +354,7 @@ public class BlockEvaluationController {
         String address = addressComboBox.getValue();
         List<String> addresses = new ArrayList<String>();
         if (address == null || address.equals("")) {
-           
+
             List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
             for (ECKey key : keys) {
                 addresses.add(key.toAddress(Main.params).toString());
@@ -404,8 +404,10 @@ public class BlockEvaluationController {
             heightColumn.setCellValueFactory(new MapValueFactory("height"));
 
             milestoneColumn.setCellValueFactory(new MapValueFactory("milestone"));
-            milestoneDepthColumn.setCellValueFactory(new MapValueFactory("milestoneDepth"));
-            maintainedColumn.setCellValueFactory(new MapValueFactory("maintained"));
+            // milestoneDepthColumn.setCellValueFactory(new
+            // MapValueFactory("milestoneDepth"));
+            // maintainedColumn.setCellValueFactory(new
+            // MapValueFactory("maintained"));
 
             milestoneLastUpdateTimeColumn.setCellValueFactory(new MapValueFactory("milestoneLastUpdateTime"));
             insertTimeColumn.setCellValueFactory(new MapValueFactory("insertTime"));
