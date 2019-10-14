@@ -55,6 +55,9 @@ OUTPUTS
 select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
 select * from orders   ;
+
+select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
+
 select * from txreward   ;
 select * from matching   ;
 select * from  multisignaddress

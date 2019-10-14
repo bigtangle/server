@@ -14,53 +14,65 @@ import net.bigtangle.core.Utils;
 
 public class MoneyForOrderBuyTest extends HelpTest {
 
-    //pay money to all keys in other wallets
+    // pay money to all keys in other wallets
     @Test
-    public void payMoney () throws Exception {
-        int i=0;
+    public void payMoney() throws Exception {
+        int i = 0;
         while (true) {
             try {
-            payMoneyToWallet1(i);
-            Thread.sleep(10000);
-            payMoneyToWallet2(i);
-            if(i >30) {i=0;} else {i+=1;} 
-            }catch (Exception e) {
-                log.debug(" " ,e);
+             //   payMoneyToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+                payTokenToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+                payTokenToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+                if (i > 30) {
+                    i = 0;
+                } else {
+                    i += 1;
+                }
+            } catch (Exception e) {
+                log.debug(" ", e);
             }
         }
     }
-    public void payMoneyToWallet1(int j) throws Exception {
-        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+    public void payMoneyToWallet1(int j, ECKey fromkey) throws Exception {
+        // ECKey fromkey =
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
-        for(int i=0;i<10; i++) {
-        giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size() ).toAddress(networkParameters).toString(),
-                3333000000L/ LongMath.pow(2, j));
+        for (int i = 0; i < 10; i++) {
+            giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+                    3333000000L / LongMath.pow(2, j));
 
         }
-        List<UTXO> l = walletAppKit1.wallet().calculateAllSpendCandidatesUTXO(null, false);
-        for(UTXO u: l) {
-        log.debug(u.toString());
+        for (int i = 0; i < 10; i++) {
+            giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+                    333300000l / LongMath.pow(2, j));
         }
+
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-        log.debug("block " + (b==null? "block is null": b.toString()));
-
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
     }
 
-   
-    public void payMoneyToWallet2(int j) throws Exception {
-        ECKey fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+    public void payTokenToWallet1(int j, ECKey fromkey) throws Exception {
+        // ECKey fromkey =
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        wallet2();
-        for(int i=0;i<10; i++) {
-        giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
-                333300000l/ LongMath.pow(2, j));
-        }
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-        log.debug("block " + (b==null? "block is null": b.toString()));
+        wallet1();
+        for (int i = 0; i < 10; i++) {
+            giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+                    666L / LongMath.pow(2, j));
 
+        }
+        for (int i = 0; i < 10; i++) {
+            giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+                    555l / LongMath.pow(2, j));
+        }
+
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey, fromkey.getPubKey(), "", 3,
+                1000);
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
     }
 
- 
-    
 }

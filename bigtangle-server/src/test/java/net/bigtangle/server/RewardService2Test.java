@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Block;
@@ -30,6 +33,7 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.server.service.SyncBlockService.Tokensums;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
@@ -63,6 +67,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
             r1 = createReward(r1, a1);
         }
         log.debug(r1.toString());
+        checkSum();
         store.resetStore();
         testToken(a2);
         // second chain
@@ -70,12 +75,13 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (int i = 0; i < 15; i++) {
             r2 = createReward(r2, a2);
         }
+        checkSum();
         log.debug(r2.toString());
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
         // replay
         store.resetStore();
-       
+
         // replay first chain
         for (Block b : a1) {
             if (b != null)
@@ -91,11 +97,22 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
+        checkSum();
+    }
+
+    private void checkSum() throws JsonProcessingException, Exception {
+        Map<String, Map<String, Tokensums>> result = new HashMap<String, Map<String, Tokensums>>();
+
+        syncBlockService.checkToken(contextRoot, result);
+        Map<String, Tokensums> r11 = result.get(contextRoot);
+        for (Entry<String, Tokensums> a : r11.entrySet()) {
+            assertTrue(" " + a.toString() , a.getValue().check());
+        }
     }
 
     public void testToken(List<Block> blocksAddedAll) throws Exception {
 
-        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0),"test"));
+        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
         mcmcService.update();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
         // mcmcService.update();

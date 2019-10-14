@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -187,11 +186,22 @@ public class SyncBlockService {
         BigInteger initial;
         BigInteger unspent;
         BigInteger order;
+
         @Override
         public String toString() {
             return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
                     + order + "]";
         }
+
+        public boolean check() {
+            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid)) {
+                return initial.compareTo(unspent.add(order)) < 0;
+            } else {
+                return initial.compareTo(unspent.add(order)) == 0;
+            }
+
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -203,6 +213,7 @@ public class SyncBlockService {
             result = prime * result + ((unspent == null) ? 0 : unspent.hashCode());
             return result;
         }
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj)
@@ -236,16 +247,17 @@ public class SyncBlockService {
                 return false;
             return true;
         }
+
         private SyncBlockService getEnclosingInstance() {
             return SyncBlockService.this;
         }
-        
+
     }
 
-    public void checkToken(String server, Map<String, Set<Tokensums>> result)
+    public void checkToken(String server, Map<String, Map<String, Tokensums>> result)
             throws JsonProcessingException, Exception {
         // String server = "http://localhost:8088/";
-        Set<Tokensums> tokensumset = new HashSet<Tokensums>();
+        Map<String, Tokensums> tokensumset = new HashMap<String, Tokensums>();
 
         result.put(server, tokensumset);
 
@@ -261,7 +273,7 @@ public class SyncBlockService {
         }
     }
 
-    public void checkToken(String server, String tokenid, Coin tokensum, Set<Tokensums> tokensums)
+    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums)
             throws JsonProcessingException, Exception {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -293,7 +305,7 @@ public class SyncBlockService {
         // log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0");
         // }
         // }
-        tokensums.add(t);
+        tokensums.put(tokenid, t);
     }
 
     public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {

@@ -592,8 +592,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders) {
         try {
-            for (OrderRecord o : orders)
+            for (OrderRecord o : orders) {
                 blockStore.insertOrder(o);
+            }
         } catch (BlockStoreException e) {
             // Expected after reorgs
             log.warn("Probably reinserting orders: ", e);
@@ -1282,6 +1283,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
             processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
         }
+        
+        for (OrderRecord o : remainingOrders.values())
+            o.setDefault( ); 
 
         // Make deterministic tx with proceeds
         Transaction tx = createOrderPayoutTransaction(block, payouts);

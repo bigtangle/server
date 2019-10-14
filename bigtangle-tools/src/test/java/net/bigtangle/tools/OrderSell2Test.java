@@ -59,6 +59,7 @@ public class OrderSell2Test extends HelpTest {
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
                     && utxo.getValue().getValue().signum() > 0
+                    && !utxo.isSpendPending()
                     && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
                 wallet.setServerURL(url);
                 wallet.sellOrder(null, utxo.getTokenId(), 10000000, q, null, null);

@@ -1696,30 +1696,30 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // All Spend Candidates as List<UTXO>
     public List<UTXO> calculateAllSpendCandidatesUTXO(KeyParameter aesKey, boolean multisigns) throws IOException {
-     
-            List<UTXO> candidates = new ArrayList<UTXO>();
-            List<String> pubKeyHashs = new ArrayList<String>();
-            for (ECKey ecKey : walletKeys(aesKey)) {
-                pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-            }
-            String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
-                    Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
-            GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
-            for (UTXO output : getOutputsResponse.getOutputs()) {
-                if (!checkSpendpending(output)) {
-                    if (multisigns) {
+        List<UTXO> candidates = new ArrayList<UTXO>();
+        List<String> pubKeyHashs = new ArrayList<String>();
+        for (ECKey ecKey : walletKeys(aesKey)) {
+            pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        }
+        String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
+                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
+
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
+        for (UTXO output : getOutputsResponse.getOutputs()) {
+            if (!checkSpendpending(output)) {
+                if (multisigns) {
+                    candidates.add(output);
+                } else {
+                    if (!output.isMultiSig()) {
                         candidates.add(output);
-                    } else {
-                        if (!output.isMultiSig()) {
-                            candidates.add(output);
-                        }
                     }
                 }
             }
-            Collections.shuffle(candidates);
-            return candidates;
-    
+        }
+        Collections.shuffle(candidates);
+        return candidates;
+
     }
 
     public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
@@ -1970,7 +1970,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
 
-       //+1 for domain name
+        // +1 for domain name
         token.setSignnumber(token.getSignnumber() + 1);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2010,7 +2010,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String dataHex = (String) result.get("dataHex");
 
         Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
-        adjust. solve();
+        adjust.solve();
 
         OkHttp3Util.post(serverurl + ReqCmd.signToken.name(), adjust.bitcoinSerialize());
         return adjust;
@@ -2023,19 +2023,23 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // this key
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-         importKey(fromkey);
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,"", 3, 20000);
+        importKey(fromkey);
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "", 3, 20000);
     }
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey, String memo)
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+            String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo, 3,
+                20000);
+    }
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
+            byte[] tokenid, String memo, int repeat, int sleep)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,memo, 3, 20000);
-    }
-    private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-           String memo, int repeat, int sleep) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         // int sleep = 60000;
         try {
-            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo);
+            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, tokenid, memo);
         } catch (InsufficientMoneyException e) {
             log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
@@ -2044,14 +2048,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     Thread.sleep(sleep);
                 } catch (InterruptedException e1) {
                 }
-                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey,memo, repeat, sleep);
+                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, tokenid, memo, repeat, sleep);
             }
         }
         return null;
 
     }
 
- 
     // pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
     private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
@@ -2084,7 +2087,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(multispent);
 
-         return solveAndPost(rollingBlock);
+        return solveAndPost(rollingBlock);
     }
 
     // check the token id is on the server
@@ -2157,7 +2160,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String dataHex = (String) result.get("dataHex");
 
         Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
-        adjust. solve();
+        adjust.solve();
         // check the valid to time must be at least the block creation time
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), adjust.bitcoinSerialize());
         return adjust;
@@ -2208,7 +2211,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
-   
         return solveAndPost(block);
     }
 
@@ -2234,9 +2236,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
 
-
         return solveAndPost(block);
-       
+
     }
 
     public Block paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
@@ -2301,7 +2302,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         request.tx.setMemo(new MemoInfo(memo));
         completeTx(request, aesKey);
-        block.addTransaction(request.tx); 
+        block.addTransaction(request.tx);
 
         return solveAndPost(block);
     }
@@ -2348,8 +2349,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    public void publishDomainName(ECKey signKey, String tokenid, String tokenname ,
-            KeyParameter aesKey,  String description) throws Exception {
+    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, KeyParameter aesKey,
+            String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
 
@@ -2357,29 +2358,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         walletKeys.add(signKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname,   domainNameBlockHash, aesKey,
-                  description, signnumber);
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
+                signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-             KeyParameter aesKey, BigInteger amount, String description) throws Exception {
+            KeyParameter aesKey, BigInteger amount, String description) throws Exception {
         GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname,   domainNameBlockHash, aesKey,
-                 description, signnumber);
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
+                signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
-           String domainNameBlockHash, KeyParameter aesKey, 
-            String description, int signnumber) throws Exception {
+            String domainNameBlockHash, KeyParameter aesKey, String description, int signnumber) throws Exception {
 
-         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
+        TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
-        long tokenindex_ = tokenIndexResponse.getTokenindex(); 
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
 
-        Token tokens = Token.buildDomainnameTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokenname, description, signnumber,
-                tokenindex_,   false,   null, domainNameBlockHash);
+        Token tokens = Token.buildDomainnameTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokenname,
+                description, signnumber, tokenindex_, false, null, domainNameBlockHash);
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2390,7 +2390,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        saveToken(tokenInfo, Coin.valueOf(1,tokenid), signKey, aesKey);
+        saveToken(tokenInfo, Coin.valueOf(1, tokenid), signKey, aesKey);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2411,9 +2411,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 PermissionedAddressesResponse.class);
         return permissionedAddressesResponse;
     }
+
     public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname) throws Exception {
-    return getDomainNameBlockHash(domainname, "");
+        return getDomainNameBlockHash(domainname, "");
     }
+
     public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname, String token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
@@ -2463,8 +2465,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        
-        block=  adjustSolveAndSign(block);
+
+        block = adjustSolveAndSign(block);
     }
 
     public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,
