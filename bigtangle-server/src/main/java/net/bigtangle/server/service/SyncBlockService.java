@@ -190,7 +190,7 @@ public class SyncBlockService {
         @Override
         public String toString() {
             return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
-                    + order + "]";
+                    + order + " unspent.add(order) = " +unspent.add(order) + "]";
         }
 
         public boolean check() {
@@ -202,6 +202,9 @@ public class SyncBlockService {
 
         }
 
+        public BigInteger unspentOrderSum() {
+           return unspent.add(order);
+        }
         @Override
         public int hashCode() {
             final int prime = 31;

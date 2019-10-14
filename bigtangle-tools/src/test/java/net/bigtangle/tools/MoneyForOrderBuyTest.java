@@ -20,7 +20,7 @@ public class MoneyForOrderBuyTest extends HelpTest {
         int i = 0;
         while (true) {
             try {
-             //   payMoneyToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+                 payMoneyToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
                 payTokenToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
                 payTokenToWallet1(i, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
                 if (i > 30) {

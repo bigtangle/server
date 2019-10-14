@@ -38,7 +38,7 @@ public class CompareTest {
     
     public static String TESTSERVER1 = HTTPS_BIGTANGLE_ORG;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_LOCAL;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     @Autowired
     protected SyncBlockService syncBlockService;
@@ -83,8 +83,10 @@ public class CompareTest {
             Tokensums t = r2.get(a.getKey());
             assertTrue(" " + t.toString() ,t.check());
             if (txreward2.size() == txreward.size()) {
-                log.debug(" txreward2.size " + txreward2.size() + "  \n  txreward.size  " + txreward.size());
-                assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t, t1.equals(t));
+                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t, t1.equals(t)
+                         || t1.unspentOrderSum() .equals(t.unspentOrderSum()));
+               //  log.debug(" txreward2.size " + txreward2.size() + "  \n  txreward.size  " + txreward.size());
+                 
             }
         }
         
