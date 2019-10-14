@@ -36,6 +36,7 @@ import net.bigtangle.core.Side;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.params.TestParams;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.OkHttp3Util;
 import okhttp3.OkHttpClient;
@@ -45,14 +46,14 @@ public class SendEmptyBlock {
     private static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
     private static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
     private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
-    public static NetworkParameters params = MainNetParams.get();
+    public static NetworkParameters params = TestParams.get();
 
     OkHttpClient client = new OkHttpClient();
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
     public String CONTEXT_ROOT = 
-            "https://test.bigtangle.de/";
+            "http://localhost:8088/";
 
      //"http://localhost:8088/";//
     public static void main(String[] args) throws Exception {

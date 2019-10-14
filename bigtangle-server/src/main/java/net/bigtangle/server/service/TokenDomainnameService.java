@@ -40,7 +40,7 @@ public class TokenDomainnameService {
      * @return
      * @throws BlockStoreException
      */
-    @Cacheable("queryDomainnameTokenPermissionedAddresses")
+     
     public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash)
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
