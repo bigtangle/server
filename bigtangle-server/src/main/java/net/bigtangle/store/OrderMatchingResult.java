@@ -6,21 +6,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 
 public class OrderMatchingResult {
     Set<OrderRecord> spentOrders;
-    byte[] outputTx;
-    Collection<OrderRecord> remainingOrders;
-    @JsonIgnore
+    Transaction outputTx;
+    Collection<OrderRecord> remainingOrders; 
     Map<String, List<Event>> tokenId2Events;
 
     public OrderMatchingResult() {
@@ -30,41 +28,21 @@ public class OrderMatchingResult {
     public OrderMatchingResult(Set<OrderRecord> spentOrders, Transaction outputTx,
             Collection<OrderRecord> remainingOrders, Map<String, List<Event>> tokenId2Events) {
         this.spentOrders = spentOrders;
-        this.outputTx = outputTx.bitcoinSerialize();
+        this.outputTx = outputTx;
         this.remainingOrders = remainingOrders;
         this.tokenId2Events = tokenId2Events;
 
     }
 
-    public Transaction getOutputTx(NetworkParameters networkParameters) {
-        return (Transaction) networkParameters.getDefaultSerializer().makeTransaction(getOutputTx());
+    /*
+     * This is unique for OrderMatchingResul
+     */
+    public Sha256Hash getOrderMatchingResultHash( ) {
+        return  getOutputTx().getHash();
     }
 
-    public byte[] toByteArray() {
-        try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-
-    public static OrderMatchingResult parseChecked(byte[] buf) {
-        try {
-            return OrderMatchingResult.parse(buf);
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static OrderMatchingResult parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        OrderMatchingResult tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderMatchingResult.class);
-        return tokenInfo;
-    }
-
+ 
+ 
     public Set<OrderRecord> getSpentOrders() {
         return spentOrders;
     }
@@ -73,15 +51,16 @@ public class OrderMatchingResult {
         this.spentOrders = spentOrders;
     }
 
-    public byte[] getOutputTx() {
-        return outputTx;
-    }
+ 
+    public Transaction getOutputTx() {
+		return outputTx;
+	}
 
-    public void setOutputTx(byte[] outputTx) {
-        this.outputTx = outputTx;
-    }
+	public void setOutputTx(Transaction outputTx) {
+		this.outputTx = outputTx;
+	}
 
-    public Collection<OrderRecord> getRemainingOrders() {
+	public Collection<OrderRecord> getRemainingOrders() {
         return remainingOrders;
     }
 

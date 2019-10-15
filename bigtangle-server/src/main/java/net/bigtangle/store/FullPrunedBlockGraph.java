@@ -427,7 +427,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Get list of consumed orders, virtual order matching tx and newly
             // generated remaining order book
             matchingResult = generateOrderMatching(block);
-            tx = (Transaction) networkParameters.getDefaultSerializer().makeTransaction(matchingResult.getOutputTx());
+            tx =matchingResult.getOutputTx();
 
             insertVirtualUTXOs(block, tx);
             insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
@@ -570,7 +570,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
-                actualCalculationResult.getOutputTx(networkParameters).getHashAsString());
+                actualCalculationResult.getOutputTx().getHashAsString(), block.getBlock().getTimeSeconds() );
     }
 
     private void confirmOrderOpen(BlockWrap block) throws BlockStoreException {
@@ -767,8 +767,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult matchingResult = generateOrderMatching(block);
 
         // Disconnect all virtual transaction output dependents
-        Transaction tx = (Transaction) networkParameters.getDefaultSerializer()
-                .makeTransaction(matchingResult.getOutputTx());
+        Transaction tx =  matchingResult.getOutputTx();
         ;
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
@@ -896,7 +895,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Update the matching history in db
         tickerService.removeMatchingEvents(
-                (Transaction) networkParameters.getDefaultSerializer().makeTransaction(matchingResult.getOutputTx()),
+                matchingResult.getOutputTx(),
                 matchingResult.tokenId2Events);
     }
 

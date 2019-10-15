@@ -21,7 +21,7 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     private Sha256Hash prevRewardHash;
     private Set<Sha256Hash> blocks;
     private long difficultyTargetReward;
-    private byte[] ordermatchingResult;
+    private Sha256Hash ordermatchingResult;
     
     public RewardInfo() {
     }
@@ -107,16 +107,17 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     public void setDifficultyTargetReward(long difficultyTargetReward) {
         this.difficultyTargetReward = difficultyTargetReward;
     }
+ 
 
-    public byte[] getOrdermatchingResult() {
-        return ordermatchingResult;
-    }
+    public Sha256Hash getOrdermatchingResult() {
+		return ordermatchingResult;
+	}
 
-    public void setOrdermatchingResult(byte[] ordermatchingResult) {
-        this.ordermatchingResult = ordermatchingResult;
-    }
+	public void setOrdermatchingResult(Sha256Hash ordermatchingResult) {
+		this.ordermatchingResult = ordermatchingResult;
+	}
 
-    public byte[] toByteArray() {
+	public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
             return jsonStr.getBytes();

@@ -32,7 +32,7 @@ public class OrderTickerService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash) throws BlockStoreException {
+    public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash, long matchBlockTime) throws BlockStoreException {
         // collect the spend order volumn and ticker to write to database
         // Map<String, MatchResult> matchResultList = new HashMap<String,
         // MatchResult>();
@@ -41,7 +41,7 @@ public class OrderTickerService {
                 if (event instanceof Match) {
                     MatchResult f = new MatchResult(transactionHash , entry.getKey(),
                             ((OrderBookEvents.Match) event).price, ((OrderBookEvents.Match) event).executedQuantity,
-                            System.currentTimeMillis());
+                            matchBlockTime);
                     store.insertMatchingEvent(f);
                 }
             }

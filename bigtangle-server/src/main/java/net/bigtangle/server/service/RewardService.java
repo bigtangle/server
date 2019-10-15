@@ -10,7 +10,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -190,7 +189,7 @@ public class RewardService {
         }
 
         OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(block, currRewardInfo);
-        currRewardInfo.setOrdermatchingResult(ordermatchresult.toByteArray());
+        currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
         result.getTx().setData(currRewardInfo.toByteArray());
         block.addTransaction(result.getTx());
 
@@ -645,11 +644,9 @@ public class RewardService {
         }
 
         OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock);
-         OrderMatchingResult old = OrderMatchingResult.parseChecked(currRewardInfo.getOrdermatchingResult());
-
-         Transaction tx1 = ordermatchresult.getOutputTx(networkParameters);
-         Transaction tx2 = old.getOutputTx(networkParameters);
-         if (!Arrays.equals(ordermatchresult.getOutputTx(), old.getOutputTx())){
+    
+         //Only check the Hash of OrderMatchingResult
+         if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())){
              throw new VerificationException("OrderMatchingResult transactions output is wrong."); 
          }
         
