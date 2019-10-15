@@ -8,6 +8,7 @@ package net.bigtangle.store;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1211,7 +1212,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo) throws BlockStoreException {
-        TreeMap<ByteBuffer, TreeMap<String, Long>> payouts = new TreeMap<>();
+        TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
 
         // Get previous order matching block
         Sha256Hash prevHash = rewardInfo.getPrevRewardHash();
@@ -1291,17 +1292,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
-    private Transaction createOrderPayoutTransaction(Block block, TreeMap<ByteBuffer, TreeMap<String, Long>> payouts) {
+    private Transaction createOrderPayoutTransaction(Block block, TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts) {
         Transaction tx = new Transaction(networkParameters);
-        for (Entry<ByteBuffer, TreeMap<String, Long>> payout : payouts.entrySet()) {
+        for (Entry<ByteBuffer, TreeMap<String, BigInteger>> payout : payouts.entrySet()) {
             byte[] beneficiaryPubKey = payout.getKey().array();
 
-            for (Entry<String, Long> tokenProceeds : payout.getValue().entrySet()) {
+            for (Entry<String, BigInteger> tokenProceeds : payout.getValue().entrySet()) {
                 String tokenId = tokenProceeds.getKey();
-                long proceedsValue = tokenProceeds.getValue();
+                BigInteger proceedsValue = tokenProceeds.getValue();
 
-                if (proceedsValue != 0)
-                    tx.addOutput(Coin.valueOf(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
+                if (proceedsValue.signum() != 0)
+                    tx.addOutput( new Coin(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
             }
         }
 
@@ -1312,7 +1313,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return tx;
     }
 
-    private void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, Long>> payouts,
+    private void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
             HashMap<Sha256Hash, OrderRecord> remainingOrders, ArrayList<OrderRecord> orderId2Order,
             Map<String, List<Event>> tokenId2Events, Entry<String, OrderBook> orderBook) {
         String tokenId = orderBook.getKey();
@@ -1344,7 +1345,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void processIncomingSell(TreeMap<ByteBuffer, TreeMap<String, Long>> payouts,
+    private void processIncomingSell(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
             HashMap<Sha256Hash, OrderRecord> remainingOrders, String tokenId, OrderRecord restingOrder,
             OrderRecord incomingOrder, byte[] restingPubKey, byte[] incomingPubKey, long executedPrice,
             long executedAmount) {
@@ -1375,7 +1376,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void processIncomingBuy(TreeMap<ByteBuffer, TreeMap<String, Long>> payouts,
+    private void processIncomingBuy(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
             HashMap<Sha256Hash, OrderRecord> remainingOrders, String tokenId, OrderRecord restingOrder,
             OrderRecord incomingOrder, byte[] restingPubKey, byte[] incomingPubKey, long executedPrice,
             long executedAmount) {
@@ -1408,7 +1409,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void payoutCancelledOrders(TreeMap<ByteBuffer, TreeMap<String, Long>> payouts,
+    private void payoutCancelledOrders(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
             Set<OrderRecord> cancelledOrders) {
         for (OrderRecord o : cancelledOrders) {
             byte[] beneficiaryPubKey = o.getBeneficiaryPubKey();
@@ -1419,19 +1420,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void payout(TreeMap<ByteBuffer, TreeMap<String, Long>> payouts, byte[] beneficiaryPubKey,
+    private void payout(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts, byte[] beneficiaryPubKey,
             String offerTokenid, long offerValue) {
-        TreeMap<String, Long> proceeds = payouts.get(ByteBuffer.wrap(beneficiaryPubKey));
+        TreeMap<String, BigInteger> proceeds = payouts.get(ByteBuffer.wrap(beneficiaryPubKey));
         if (proceeds == null) {
             proceeds = new TreeMap<>();
             payouts.put(ByteBuffer.wrap(beneficiaryPubKey), proceeds);
         }
-        Long offerTokenProceeds = proceeds.get(offerTokenid);
+        BigInteger offerTokenProceeds = proceeds.get(offerTokenid);
         if (offerTokenProceeds == null) {
-            offerTokenProceeds = 0L;
+            offerTokenProceeds = BigInteger.ZERO;
             proceeds.put(offerTokenid, offerTokenProceeds);
         }
-        proceeds.put(offerTokenid, offerTokenProceeds + offerValue);
+        proceeds.put(offerTokenid, offerTokenProceeds.add(BigInteger.valueOf(offerValue)));
     }
 
     private void cancelOrderstoCancelled(List<OrderCancelInfo> cancels,
