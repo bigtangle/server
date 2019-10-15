@@ -15,44 +15,48 @@ import net.bigtangle.wallet.Wallet;
 
 public class OrderCancel extends HelpTest {
 
-    // cancel all orders
+	// cancel all orders
 
-    @Test
-    public void cancel() throws Exception {
+	@Test
+	public void cancel() throws Exception {
 
-        importKeys(walletAppKit2.wallet());
-        importKeys(walletAppKit1.wallet());
+		importKeys(walletAppKit2.wallet());
+		importKeys(walletAppKit1.wallet());
 
-        while (true) {
+		while (true) {
 
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+			HashMap<String, Object> requestParam = new HashMap<String, Object>();
+			String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-            OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+			OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+			int count = 0;
 
-            for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-                cancel(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
-                cancel(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
+			for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+				if (!orderRecord.isCancelPending()) {
+					count += 1;
+					cancel(TESTSERVER1, walletAppKit1.wallet(), orderRecord);
+					// cancel(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
+				}
+			}
+			log.debug(" Total Order size = " + orderdataResponse.getAllOrdersSorted().size() + " canceled ordrs ="
+					+ count);
+		}
 
-            }
+	}
 
-        }
+	public void cancel(String url, Wallet w, OrderRecord orderRecord) throws Exception {
 
-    }
+		if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+			w.setServerURL(url);
+			for (ECKey ecKey : w.walletKeys()) {
+				if (orderRecord.getBeneficiaryPubKey().equals(ecKey.getPubKey())) {
+					w.cancelOrder(orderRecord.getBlockHash(), ecKey);
+					break;
+				}
+			}
+		}
 
-    public void cancel(String url, Wallet w, OrderRecord orderRecord) throws Exception {
-
-        if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-            w.setServerURL(url);
-            for (ECKey ecKey : w.walletKeys()) {
-                if (orderRecord.getBeneficiaryPubKey().equals(ecKey.getPubKey())) {
-                    w.cancelOrder(orderRecord.getBlockHash(), ecKey);
-                    break;
-                }
-            }
-        }
-
-    }
+	}
 
 }

@@ -12,20 +12,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.TXReward;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.SyncBlockService.Tokensums;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 // @Ignore
 public class CompareTest {
     public static boolean testnet = true;
@@ -40,12 +35,18 @@ public class CompareTest {
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
-    @Autowired
-    protected SyncBlockService syncBlockService;
-
+    SyncBlockService syncBlockService;
+    
     @Test
     public void diffThread() throws Exception {
 
+    	syncBlockService= new 	SyncBlockService();
+    	
+        System.setProperty("https.proxyHost",
+         "anwproxy.anwendungen.localnet.de");
+        System.setProperty("https.proxyPort", "3128");
+
+    	
         while (true) {
             try {
                 testComapre();
