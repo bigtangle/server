@@ -377,7 +377,7 @@ public class OrderController extends ExchangeController {
 			@Override
 			public void changed(ObservableValue observable, Object oldValue, Object newValue) {
 				Map<String, Object> rowData = orderTable.getSelectionModel().getSelectedItem();
-				if ((Boolean) rowData.get("cancelPending")){
+				if (newValue!=null && rowData != null && (Boolean) rowData.get("cancelPending")){
 					cancelButton.setDisable(true);
 				}
 				else {

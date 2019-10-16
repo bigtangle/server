@@ -155,10 +155,6 @@ public class SyncBlockService {
 
     public void updateSolidity()
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-
-        /*
-         * Cutoff window around current chain.
-         */
         long cutoffHeight = blockService.getCutoffHeight();
         List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
         log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff Height: " + cutoffHeight);
@@ -190,7 +186,7 @@ public class SyncBlockService {
         @Override
         public String toString() {
             return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
-                    + order + " unspent.add(order) = " +unspent.add(order) + "]";
+                    + order + " unspent.add(order) = " + unspent.add(order) + "]";
         }
 
         public boolean check() {
@@ -203,56 +199,7 @@ public class SyncBlockService {
         }
 
         public BigInteger unspentOrderSum() {
-           return unspent.add(order);
-        }
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + getEnclosingInstance().hashCode();
-            result = prime * result + ((initial == null) ? 0 : initial.hashCode());
-            result = prime * result + ((order == null) ? 0 : order.hashCode());
-            result = prime * result + ((tokenid == null) ? 0 : tokenid.hashCode());
-            result = prime * result + ((unspent == null) ? 0 : unspent.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Tokensums other = (Tokensums) obj;
-            if (!getEnclosingInstance().equals(other.getEnclosingInstance()))
-                return false;
-            if (initial == null) {
-                if (other.initial != null)
-                    return false;
-            } else if (!initial.equals(other.initial))
-                return false;
-            if (order == null) {
-                if (other.order != null)
-                    return false;
-            } else if (!order.equals(other.order))
-                return false;
-            if (tokenid == null) {
-                if (other.tokenid != null)
-                    return false;
-            } else if (!tokenid.equals(other.tokenid))
-                return false;
-            if (unspent == null) {
-                if (other.unspent != null)
-                    return false;
-            } else if (!unspent.equals(other.unspent))
-                return false;
-            return true;
-        }
-
-        private SyncBlockService getEnclosingInstance() {
-            return SyncBlockService.this;
+            return unspent.add(order);
         }
 
     }
@@ -292,22 +239,11 @@ public class SyncBlockService {
                 sumUnspent = sumUnspent.add(u.getValue());
         }
         Tokensums t = new Tokensums();
-
         Coin ordersum = ordersum(tokenid, server);
         t.tokenid = tokenid;
         t.unspent = sumUnspent.getValue();
         t.order = ordersum.getValue();
         t.initial = tokensum.getValue();
-
-        // if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
-        // if (!tokensum.equals(sumUnspent.add(ordersum))) {
-        // log.warn("tokensum.equals(sumUnspent.add(ordersum)");
-        // }
-        // } else {
-        // if (tokensum.compareTo(sumUnspent.add(ordersum)) <= 0) {
-        // log.warn("tokensum.compareTo(sumUnspent.add(ordersum)) <= 0");
-        // }
-        // }
         tokensums.put(tokenid, t);
     }
 
@@ -390,8 +326,8 @@ public class SyncBlockService {
         String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
-        log.debug("blocks: " + blockbytelist.getBlockbytelist().size() + " remote chain requestBlocks  at:  "
-                + chainlength + " at server: " + s);
+        log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " remote chainlength  :  " + chainlength
+                + " at server: " + s);
         List<Block> sortedBlocks = new ArrayList<Block>();
         for (byte[] data : blockbytelist.getBlockbytelist()) {
             sortedBlocks.add(networkParameters.getDefaultSerializer().makeBlock(data));
@@ -462,17 +398,19 @@ public class SyncBlockService {
                         aMaxConfirmedReward.aTXReward = aTXReward;
                     }
                 }
+                diffMaxConfirmedReward(aMaxConfirmedReward);
             }
+
         }
-        diffMaxConfirmedReward(aMaxConfirmedReward);
+
     }
 
     /*
-     * check difference to remote server2 and get it. ask the remote
+     * check difference to remote servers and does sync. ask the remote
      * getMaxConfirmedReward to compare the my getMaxConfirmedReward if the
      * remote has length > my length, then find the get the list of confirmed
      * chains data. match the block hash to find the sync chain length, then
-     * sync the chain data from
+     * sync the chain data.
      */
     public void diffMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
         TXReward my = store.getMaxConfirmedReward();
@@ -480,10 +418,6 @@ public class SyncBlockService {
             return;
         log.debug("  remote chain lenght  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
                 + aMaxConfirmedReward.server + " my chain lenght " + my.getChainLength());
-        // sync all chain data d
-
-        // Comparator<TXReward>chainlengthID=(TXReward o1,TXReward
-        // o2)->o1.getChainLength()>o2.getChainLength()?1:0));
 
         if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()) {
 
@@ -492,15 +426,14 @@ public class SyncBlockService {
             List<TXReward> mylist = store.getAllConfirmedReward();
             Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
-            log.debug(" start sync remote chain   " + re.getChainLength() + " to "
+            log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
-                // mcmcService.update();
             }
-            // mcmcService.updateMilestone();
+
         }
-        log.debug(" finish difference check " + aMaxConfirmedReward.server + "  ");
+        log.debug(" finish sync " + aMaxConfirmedReward.server + "  ");
     }
 
     public class SortbyBlock implements Comparator<Block> {
@@ -519,18 +452,15 @@ public class SyncBlockService {
     }
 
     private TXReward findSync(List<TXReward> remotes, List<TXReward> mylist) throws Exception {
-
         for (TXReward my : mylist) {
             TXReward f = findSync(remotes, my);
             if (f != null)
                 return f;
-
         }
         return null;
     }
 
     private TXReward findSync(List<TXReward> remotes, TXReward my) throws Exception {
-
         for (TXReward b1 : remotes) {
             if (b1.getBlockHash().equals(my.getBlockHash())) {
                 return b1;
