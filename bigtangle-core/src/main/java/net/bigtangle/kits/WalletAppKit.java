@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import net.bigtangle.core.Context;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.wallet.DeterministicSeed;
@@ -342,19 +343,8 @@ public class WalletAppKit extends AbstractIdleService {
         return loadWallet(shouldReplayWallet, new FileInputStream(vWalletFile));
     }
 
-    protected Wallet createWallet() {
-        KeyChainGroup kcg;
-        if (restoreFromSeed != null)
-            kcg = new KeyChainGroup(params, restoreFromSeed);
-        else
-            kcg = new KeyChainGroup(params);
-
-        kcg.setLookaheadSize(0);
-        if (walletFactory != null) {
-            return walletFactory.create(params, kcg);
-        } else {
-            return new Wallet(params, kcg); // default
-        }
+    protected Wallet createWallet() { 
+        return  Wallet.fromKeys(params, new ECKey()); // default
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {
