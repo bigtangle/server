@@ -136,10 +136,9 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
-            // System.setProperty("java.net.useSystemProxies", "true");
-            // System.setProperty("https.proxyHost",
-            // "anwproxy.anwendungen.localnet.de");
-            // System.setProperty("https.proxyPort", "3128");
+      //      System.setProperty("https.proxyHost",
+      //              "anwproxy.anwendungen.localnet.de");
+      //             System.setProperty("https.proxyPort", "3128");
             realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
@@ -477,7 +476,7 @@ public class Main extends Application {
 
         List<String> addressList = new ArrayList<String>();
         ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name(), false);
-
+        if( contactInfo ==null) return addressList;
         List<Contact> list = contactInfo.getContactList();
         for (Contact contact : list) {
             addressList.add(contact.getName() + "," + contact.getAddress());
@@ -936,7 +935,7 @@ public class Main extends Application {
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
             ECKey pubKeyTo = null;
-
+            if(issuedKeys==null || issuedKeys.isEmpty()) return null;
             pubKeyTo = issuedKeys.get(0);
 
             if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
