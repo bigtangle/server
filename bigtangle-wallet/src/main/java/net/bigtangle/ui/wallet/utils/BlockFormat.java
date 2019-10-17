@@ -5,11 +5,13 @@ import com.google.common.base.Strings;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.script.Script;
 import net.bigtangle.ui.wallet.Main;
@@ -40,9 +42,18 @@ public class BlockFormat {
         if (block.getMinerAddress() != null)
             s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))
                     .append("\n");
-
+        s.append("   chain length: ").append(block.getLastMiningRewardBlock()).append("\n");
         s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlockType()).append("\n");
 
+        if(block.getBlockType().equals(Type.BLOCKTYPE_REWARD)) {
+            try {
+                RewardInfo   rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+                s.append(     rewardInfo.  toString());
+            } catch (Exception e) {
+               //ignore throw new RuntimeException(e);
+            }
+        }
+        
         return s.toString();
 
     }
@@ -85,7 +96,7 @@ public class BlockFormat {
                     if (in.getValue() != null)
                         s.append(" ").append(in.getValue().toString());
                     s.append("\n          ");
-                    s.append(Main.getText("connectedOutput"));
+                    s.append(Main.getText("connectedOutput") + ": ");
                     final TransactionOutPoint outpoint = in.getOutpoint();
                     s.append(outpoint.toString());
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
