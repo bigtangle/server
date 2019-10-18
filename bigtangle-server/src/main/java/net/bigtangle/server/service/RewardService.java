@@ -99,7 +99,7 @@ public class RewardService {
             // log.info("performRewardVoting time {} ms.",
             // watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
-            // logger.debug(" Infeasible performRewardVoting: ", e1);
+              log.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
             log.error("create Reward end  ", e);
         } finally {
