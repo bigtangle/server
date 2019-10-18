@@ -94,9 +94,10 @@ public class RewardService {
 
         try {
             log.info("create Reward  started");
-           // Stopwatch watch = Stopwatch.createStarted();
+            // Stopwatch watch = Stopwatch.createStarted();
             createReward();
-           // log.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            // log.info("performRewardVoting time {} ms.",
+            // watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
             // logger.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
@@ -112,13 +113,13 @@ public class RewardService {
      * 
      * @return the new block or block voted on
      * @throws Exception
-     */ 
+     */
 
-    public Block createReward() throws Exception { 
+    public Block createReward() throws Exception {
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
-        Block reward= createReward(prevRewardHash);
+        Block reward = createReward(prevRewardHash);
         if (reward != null) {
-            log.info(" reward block is created: " + reward);
+            log.debug(" reward block is created: " + reward);
         }
         return reward;
     }
@@ -182,11 +183,11 @@ public class RewardService {
 
         final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
         ExecutorService executor = Executors.newSingleThreadExecutor();
-
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
+                log.debug(" reward block solve started: ");
                 block.solve(chainTargetFinal);
                 return "";
             }
@@ -628,12 +629,12 @@ public class RewardService {
         }
 
         OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock);
-    
-         //Only check the Hash of OrderMatchingResult
-         if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())){
-             throw new VerificationException("OrderMatchingResult transactions output is wrong."); 
-         }
-        
+
+        // Only check the Hash of OrderMatchingResult
+        if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
+            throw new VerificationException("OrderMatchingResult transactions output is wrong.");
+        }
+
     }
 
     public boolean solidifyWaiting(Block block) throws BlockStoreException {
