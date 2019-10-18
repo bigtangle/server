@@ -5,14 +5,14 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Set;
-
- 
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class RewardInfo extends DataClass implements java.io.Serializable {
 
@@ -118,13 +118,25 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
 	}
 
 	public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
+            DataOutputStream dos = new DataOutputStream(baos);
+            
+            dos.writeLong(chainlength);
+            dos.write(prevRewardHash.getBytes());
+            dos.writeInt(blocks.size());
+            for (Sha256Hash bHash : blocks) 
+                dos.write(bHash.getBytes());
+            dos.writeLong(difficultyTargetReward);
+            dos.writeBoolean(ordermatchingResult != null);
+            if (ordermatchingResult != null)
+                dos.write(ordermatchingResult.getBytes());
+            
+            dos.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return new byte[0];
+        return baos.toByteArray();
     }
 
     public static RewardInfo parseChecked(byte[] buf) {
@@ -136,10 +148,33 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         }
     }
 
-    public static RewardInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        RewardInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, RewardInfo.class);
-        return tokenInfo;
+    public static RewardInfo parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+        byte[] hbuf = new byte[32];
+        
+        RewardInfo r = new RewardInfo();
+        r.chainlength = dis.readLong();
+        dis.readFully(hbuf);
+        r.prevRewardHash = Sha256Hash.wrap(hbuf);
+        int blocksSize = dis.readInt();
+        r.blocks = new HashSet<>();
+        for (int i = 0; i < blocksSize; ++i) {
+            hbuf = new byte[32];
+            dis.readFully(hbuf);
+            r.blocks.add(Sha256Hash.wrap(hbuf));
+        }
+        r.difficultyTargetReward = dis.readLong();
+        boolean hasOrderMatching = dis.readBoolean();
+        if (hasOrderMatching) {
+            hbuf = new byte[32];
+            dis.readFully(hbuf);
+            r.ordermatchingResult = Sha256Hash.wrap(hbuf);
+        } 
+        
+        dis.close();
+        bain.close();
+        return r;
     }
 
     @Override
