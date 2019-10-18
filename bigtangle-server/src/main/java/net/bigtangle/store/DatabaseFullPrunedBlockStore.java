@@ -227,7 +227,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_SOLID_TIPS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
             + " blocks.height, milestone, milestonelastupdate,  inserttime,  block, solid, confirmed FROM blocks "
             + "INNER JOIN tips ON tips.hash=blocks.hash" + afterSelect();
-    protected final String UPDATE_CUTOFF_TIPS_SQL = "delete FROM tips where heigth <=? ";
+    protected final String UPDATE_CUTOFF_TIPS_SQL = "delete FROM tips where height <=? ";
         
     
     protected final String SELECT_CONFIRMED_BLOCKS_OF_HEIGHT_HIGHER_THAN_SQL = "SELECT hash "
@@ -1788,20 +1788,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     
     @Override
     public void updateTip(long cutoff) throws BlockStoreException {
-        PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-        maybeConnect();
+           maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_TIPS_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-
-                Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
-                blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
-            }
+            preparedStatement = conn.get().prepareStatement(UPDATE_CUTOFF_TIPS_SQL);
+            preparedStatement.setLong(1, cutoff);
+            preparedStatement.executeUpdate(); 
             
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
