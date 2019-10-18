@@ -29,7 +29,7 @@ public class ScheduleRewardService {
     @Autowired
     ServerConfiguration serverConfiguration;
     
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRate = 10000)
     public void updateReward() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
