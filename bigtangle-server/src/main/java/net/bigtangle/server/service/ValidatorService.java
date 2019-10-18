@@ -2114,7 +2114,7 @@ public class ValidatorService {
         }
 
         // Solidify referenced blocks
-      //  rewardService.solidifyBlocks(block.getRewardInfo());
+        rewardService.solidifyBlocks(block.getRewardInfo());
         
         return SolidityState.getSuccessState();
     }

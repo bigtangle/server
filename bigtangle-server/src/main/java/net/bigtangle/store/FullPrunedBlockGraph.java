@@ -167,6 +167,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Inherit solidity from predecessors if they are not solid
         solidityState = validatorService.getMinPredecessorSolidity(block, false);
 
+        // Sanity check
+        if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+            return false;
+        }
+        
         // save the block
         try {
             blockStore.beginDatabaseBatchWrite();

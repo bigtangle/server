@@ -416,8 +416,8 @@ public class SyncBlockService {
         TXReward my = store.getMaxConfirmedReward();
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
-        log.debug("  remote chain lenght  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
-                + aMaxConfirmedReward.server + " my chain lenght " + my.getChainLength());
+        log.debug("  remote chain length  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
+                + aMaxConfirmedReward.server + " my chain length " + my.getChainLength());
 
         if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()) {
 
@@ -428,7 +428,7 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength() + 1; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
+            for (long i = re.getChainLength() ; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
                 requestBlocks(i, aMaxConfirmedReward.server);
             }
 

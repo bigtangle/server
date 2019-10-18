@@ -31,9 +31,9 @@ public class CompareTest {
     public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org/";
     public static String HTTPS_BIGTANGLE_LOCAL = "http://"  + "localhost:8088/";
     
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_ORG;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_LOCAL;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
     
@@ -42,9 +42,9 @@ public class CompareTest {
 
     	syncBlockService= new 	SyncBlockService();
     	
-        System.setProperty("https.proxyHost",
-         "anwproxy.anwendungen.localnet.de");
-        System.setProperty("https.proxyPort", "3128");
+//        System.setProperty("https.proxyHost",
+//         "anwproxy.anwendungen.localnet.de");
+//        System.setProperty("https.proxyPort", "3128");
 
     	
         while (true) {
