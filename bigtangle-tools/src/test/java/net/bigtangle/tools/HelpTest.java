@@ -91,9 +91,9 @@ public abstract class HelpTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
     
-    public static String TESTSERVER1=   HTTPS_BIGTANGLE_LOCAL;
+    public static String TESTSERVER1=   HTTPS_BIGTANGLE_DE;
     
-     public static String TESTSERVER2=   HTTPS_BIGTANGLE_LOCAL;
+     public static String TESTSERVER2=   HTTPS_BIGTANGLE_ORG;
      
     public String contextRoot = TESTSERVER1;
             // "http://localhost:8088/";
