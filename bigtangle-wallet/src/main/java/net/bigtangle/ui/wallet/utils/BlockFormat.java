@@ -42,7 +42,7 @@ public class BlockFormat {
         if (block.getMinerAddress() != null)
             s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))
                     .append("\n");
-        s.append(Main.getText("chainlength")+ ": " ).append(block.getLastMiningRewardBlock()).append("\n");
+        s.append("   " +Main.getText("chainlength")+ ": " ).append(block.getLastMiningRewardBlock()).append("\n");
         s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlockType()).append("\n");
 
         if(block.getBlockType().equals(Type.BLOCKTYPE_REWARD)) {
