@@ -1061,7 +1061,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(4, end);
             ResultSet results = s.executeQuery();
             while (results.next()) {
-                re.add(results.getBytes("block"));
+                re.add(Gzip.decompress(results.getBytes("block")));
             }
             return re;
         } catch (Exception ex) {
@@ -4949,7 +4949,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (resultSet.next()) {
                 BatchBlock batchBlock = new BatchBlock();
                 batchBlock.setHash(Sha256Hash.wrap(resultSet.getBytes("hash")));
-                batchBlock.setBlock(resultSet.getBytes("block"));
+                batchBlock.setBlock(Gzip.decompress(resultSet.getBytes("block")));
                 batchBlock.setInsertTime(resultSet.getDate("inserttime"));
                 list.add(batchBlock);
             }
