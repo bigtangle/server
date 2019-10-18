@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.google.common.base.Stopwatch;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -51,7 +49,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -96,14 +93,14 @@ public class RewardService {
         }
 
         try {
-            log.info("performRewardVoting  started");
-            Stopwatch watch = Stopwatch.createStarted();
-            performRewardVoting();
-            log.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("create Reward  started");
+           // Stopwatch watch = Stopwatch.createStarted();
+            createReward();
+           // log.info("performRewardVoting time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
             // logger.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
-            log.error("performRewardVoting ", e);
+            log.error("create Reward end  ", e);
         } finally {
             lock.unlock();
         }
@@ -115,28 +112,15 @@ public class RewardService {
      * 
      * @return the new block or block voted on
      * @throws Exception
-     */
-    public void performRewardVoting() {
-        // Make new one
-        try {
-            Block reward = createReward();
-            if (reward != null) {
-                log.info(" reward block is created: " + reward);
-            }
-        } catch (InvalidTransactionDataException e) {
-            // This is not a problem
-        } catch (Exception e) {
-            // This is not a problem
-            log.debug("", e);
-        }
-    }
+     */ 
 
-    public Block createReward() throws Exception {
-        log.info("createReward  started");
-
+    public Block createReward() throws Exception { 
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
-        return createReward(prevRewardHash);
-
+        Block reward= createReward(prevRewardHash);
+        if (reward != null) {
+            log.info(" reward block is created: " + reward);
+        }
+        return reward;
     }
 
     public Block createReward(Sha256Hash prevRewardHash) throws Exception {

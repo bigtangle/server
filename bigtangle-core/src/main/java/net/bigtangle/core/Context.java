@@ -62,12 +62,13 @@ public class Context {
      * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
-        log.info("Creating  context." );
+        log.trace("Creating  context." );
         
         this.params = params;
         lastConstructed = this;
         // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
         slot.set(this);
+     
     }
 
     /**

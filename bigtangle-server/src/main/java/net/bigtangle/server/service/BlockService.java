@@ -41,6 +41,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -375,7 +377,7 @@ public class BlockService {
         } catch (VerificationException e) { 
             return null;
         } catch (Exception e) {
-            logger.warn("addConnectedFromKafka with sendkey:" + key.toString(), e);
+            logger.debug("addConnectedFromKafka with sendkey:" + key.toString(), e);
             return null;
         }
 
@@ -402,7 +404,10 @@ public class BlockService {
                     // }
                 }
                 return Optional.of(block);
-            } catch (Exception e) {
+            }catch (ProofOfWorkException | UnsolidException e) {
+                return Optional.empty();
+            }
+            catch (Exception e) {
                 logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
                         + block.getHeight() + " block: " + block.toString(), e);
                 return Optional.empty();
