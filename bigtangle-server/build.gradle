@@ -79,7 +79,7 @@ dependencies {
 
 mainClassName = "net.bigtangle.server.ServerStart"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
-applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx8g"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO",  "-Xdebug", "-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y", "-Xmx8g"]
 
 jar {
     manifest {
