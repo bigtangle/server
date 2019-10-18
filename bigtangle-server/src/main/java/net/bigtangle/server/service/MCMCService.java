@@ -93,21 +93,22 @@ public class MCMCService {
         Context context = new Context(params);
         Context.propagate(context);
         // cleanupNonSolidMissingBlocks();
-        try { 
+        try {
             store.beginDatabaseBatchWrite();
+            updateTips();
             updateWeightAndDepth();
             updateRating();
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);
             store.abortDatabaseBatchWrite();
-        }finally {
+        } finally {
             store.defaultDatabaseBatchWrite();
         }
         try {
             blockGraph.chainlock.lock();
-           
-           store.beginDatabaseBatchWrite();
+
+            store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
@@ -312,5 +313,8 @@ public class MCMCService {
         }
     }
 
-
+    private void updateTips() throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+        long cutoffHeight = blockService.getCutoffHeight();
+        store.updateTip(cutoffHeight);
+    }
 }

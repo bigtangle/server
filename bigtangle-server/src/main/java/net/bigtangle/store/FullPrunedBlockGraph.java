@@ -557,17 +557,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
+        
         for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
-            blockStore.updateOrderSpent(o.getBlockHash(), o.getIssuingMatcherBlockHash(), true,
-                    block.getBlock().getHash());
+           o.setSpent( true);
+           o.setSpenderBlockHash( block.getBlock().getHash());
         }
-
+        blockStore.updateOrderSpent(actualCalculationResult.getSpentOrders());
+        
         // Set virtual outputs confirmed
         confirmVirtualCoinbaseTransaction(block);
 
         // Set new orders confirmed
-        for (OrderRecord o : actualCalculationResult.getRemainingOrders())
-            blockStore.updateOrderConfirmed(o.getBlockHash(), o.getIssuingMatcherBlockHash(), true);
+       
+            blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders());
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
@@ -1014,10 +1016,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void updateTip(Block block) throws BlockStoreException {
         // Update tips table
-        blockStore.deleteTip(block.getPrevBlockHash());
-        blockStore.deleteTip(block.getPrevBranchBlockHash());
-        blockStore.deleteTip(block.getHash());
-        blockStore.insertTip(block.getHash());
+        Set<Sha256Hash> deleteTip= new HashSet<Sha256Hash>();
+        deleteTip.add(block.getPrevBlockHash());
+        deleteTip.add(block.getPrevBranchBlockHash());
+        deleteTip.add(block.getHash());
+ 
+        blockStore.insertTip(block.getHash(), block.getHeight());
     }
 
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
@@ -1049,6 +1053,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                                 prevOut.getIndex(), true, System.currentTimeMillis());
                 }
             }
+            List<UTXO> utxos = new ArrayList<UTXO>();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
                 String fromAddress = "";
@@ -1067,7 +1072,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
-                blockStore.addUnspentTransactionOutput(newOut);
+                utxos.add(newOut);
                 if (script.isSentToMultiSig()) {
 
                     for (ECKey ecKey : script.getPubKeys()) {
@@ -1077,6 +1082,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     }
                 }
             }
+            blockStore.addUnspentTransactionOutput(utxos);
         }
     }
 

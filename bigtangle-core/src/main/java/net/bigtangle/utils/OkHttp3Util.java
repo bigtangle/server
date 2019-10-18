@@ -4,14 +4,11 @@
  *******************************************************************************/
 package net.bigtangle.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -99,7 +96,7 @@ public class OkHttp3Util {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
 
-            String resp = decompress(response.body().bytes());
+            String resp = Gzip.decompressString(response.body().bytes());
             // logger.debug(resp);
             checkResponse(resp, url);
             return resp;
@@ -139,7 +136,7 @@ public class OkHttp3Util {
             if (!response.isSuccessful()) {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
-            String resp = decompress(response.body().bytes());
+            String resp = Gzip.decompressString(response.body().bytes());
             checkResponse(resp, url);
             return resp;
         } finally {
@@ -175,14 +172,6 @@ public class OkHttp3Util {
 
     }
 
-    /*
-     * private static OkHttpClient getOkHttpClientSafe(String pubkey, String
-     * signHex, String contentHex) { OkHttpClient client = new
-     * OkHttpClient.Builder().connectTimeout(timeoutMinute, TimeUnit.MINUTES)
-     * .writeTimeout(timeoutMinute, TimeUnit.MINUTES).readTimeout(timeoutMinute,
-     * TimeUnit.MINUTES) .addInterceptor(new BasicAuthInterceptor(pubkey,
-     * signHex, contentHex)).build(); return client; }
-     */
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {
 
@@ -261,30 +250,6 @@ public class OkHttp3Util {
                     gzipSink.close();
                 }
             };
-        }
-    }
-
-    public static String decompress(byte[] contentBytes) throws IOException {
-        if (contentBytes.length == 0)
-            return "";
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(contentBytes));
-        try {
-
-            byte[] buffer = new byte[1024];
-            int length;
-
-            // Read from the compressed source file and write the
-            // decompress file.
-            while ((length = gzis.read(buffer)) > 0) {
-                out.write(buffer, 0, length);
-            }
-            // logger.debug("decompress " + contentBytes.length + " to " +
-            // out.size());
-            return out.toString();
-        } finally {
-            out.close();
-            gzis.close();
         }
     }
 

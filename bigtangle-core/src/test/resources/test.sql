@@ -64,7 +64,10 @@ select * from  multisignaddress
 select * from  multisign
 MCMC 
 select * from tips   ;
-
+select count(*) from tips   ;
+SELECT blocks.hash, rating, depth, cumulativeweight,   height, milestone, milestonelastupdate, 
+inserttime,  block, solid, confirmed FROM blocks 
+             INNER JOIN tips ON tips.hash=blocks.hash where milestone <0
 HELPER
 select * from tokenserial   ;
 

@@ -59,8 +59,8 @@ import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.server.service.OutputService;
-import net.bigtangle.server.utils.Gzip;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.utils.Gzip;
 
 @RestController
 @RequestMapping("/")

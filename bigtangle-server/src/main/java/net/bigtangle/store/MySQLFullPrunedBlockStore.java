@@ -117,6 +117,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
             + "    hash binary(32) NOT NULL,\n"
+            + "    height bigint NOT NULL,\n" 
             + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ") ENGINE=InnoDB\n";
 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
@@ -314,6 +315,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
+    private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
+
+    
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params,
@@ -367,6 +371,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
+        sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
         return sqlStatements;
     }
 

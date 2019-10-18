@@ -15,67 +15,63 @@ import net.bigtangle.wallet.Wallet;
 
 public class OrderBuyTest extends HelpTest {
 
-	// buy everthing in test
+    // buy everthing in test
 
-	@Test
-	public void buy() throws Exception {
+    @Test
+    public void buy() throws Exception {
 
-		importKeys(walletAppKit2.wallet());
-		importKeys(walletAppKit1.wallet());
+        importKeys(walletAppKit2.wallet());
+        importKeys(walletAppKit1.wallet());
 
-		while (true) {
+        while (true) {
 
-			HashMap<String, Object> requestParam = new HashMap<String, Object>();
-			String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
-					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-			OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+            OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
 
-			int i = 0;
-			log.debug("getAllOrdersSorted size = " + orderdataResponse.getAllOrdersSorted().size());
-			for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-				if (!orderRecord.isCancelPending() 
-						&& !NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-					try {
-						if (i % 2 == 0) {
-							if (isWallet1Token(orderRecord, orderdataResponse)) {
-								buy(HTTPS_BIGTANGLE_DE, walletAppKit2.wallet(), orderRecord);
-							} else {
-								buy(HTTPS_BIGTANGLE_DE, walletAppKit1.wallet(), orderRecord);
-							}
-						} else {
-							if (isWallet1Token(orderRecord, orderdataResponse)) {
-								buy(HTTPS_BIGTANGLE_ORG, walletAppKit2.wallet(), orderRecord);
-							} else {
-								buy(HTTPS_BIGTANGLE_ORG, walletAppKit1.wallet(), orderRecord);
-							}
-						}
-						i += 1;
+            int i = 0;
+            for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+                try {
+                    if (i % 2 == 0) {
+                        if (isWallet1Token(orderRecord, orderdataResponse)) {
+                            buy(TESTSERVER1, walletAppKit2.wallet(), orderRecord);
+                        } else {
+                            buy(TESTSERVER2, walletAppKit1.wallet(), orderRecord);
+                        }
+                    } else {
+                        if (isWallet1Token(orderRecord, orderdataResponse)) {
+                            buy(TESTSERVER1, walletAppKit2.wallet(), orderRecord);
+                        } else {
+                            buy(TESTSERVER2, walletAppKit1.wallet(), orderRecord);
+                        }
+                    }
+                    i += 1;
+                } catch (InsufficientMoneyException e) {
+                    Thread.sleep(4000);
+                } catch (Exception e) {
+                    log.debug("", e);
+                }
+            }
 
-					} catch (InsufficientMoneyException e) {
-						Thread.sleep(4000);
-					} catch (Exception e) {
-						log.debug("", e);
-					}
-				}
-			}
-		}
+        }
 
-	}
+    }
 
-	private boolean isWallet1Token(OrderRecord orderRecord, OrderdataResponse orderdataResponse) {
-		return orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokenname().contains("test-1");
+    private boolean isWallet1Token(OrderRecord orderRecord, OrderdataResponse orderdataResponse) {
+        return orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokenname().contains("test-1");
 
-	}
+    }
 
-	public void buy(String url, Wallet w, OrderRecord orderRecord) throws Exception {
+    public void buy(String url, Wallet w, OrderRecord orderRecord) throws Exception {
 
-		if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-			// sell order and make buy
-			long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-			w.setServerURL(url);
-			w.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(), null, null);
-		}
+        if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+            // sell order and make buy
+            long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
+            w.setServerURL(url);
+            w.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(), null, null);
+        }
 
-	}
+    }
 }

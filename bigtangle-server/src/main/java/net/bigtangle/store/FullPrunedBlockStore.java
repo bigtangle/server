@@ -6,6 +6,7 @@
 package net.bigtangle.store;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -101,7 +102,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * TransactionOutputs
      */
     void addUnspentTransactionOutput(UTXO out) throws BlockStoreException;
-
+    void addUnspentTransactionOutput(List<UTXO > utxos) throws BlockStoreException;
     /**
      * <p>
      * Begins/Commits/Aborts a database transaction.
@@ -134,9 +135,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void deleteStore() throws BlockStoreException;
 
     public void create() throws BlockStoreException;
-
-    public long getMaxImportTime() throws BlockStoreException;
-
+  
     /* Blocks */
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
@@ -166,6 +165,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
     public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
+    public void  updateTip(long cutoffHeight) throws BlockStoreException;
 
     /* Block Evaluation */
     public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
@@ -183,9 +183,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
 
-    public void deleteTip(Sha256Hash blockhash) throws BlockStoreException;
+    public void deleteTip(Set<Sha256Hash> blockhash) throws BlockStoreException;
 
-    public void insertTip(Sha256Hash blockhash) throws BlockStoreException;
+    public void insertTip(Sha256Hash blockhash,long heigth) throws BlockStoreException;
 
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
@@ -216,6 +216,12 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException;
+
+    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords)
+            throws BlockStoreException;
+
+    
+    public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
 
     public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
             Sha256Hash spenderBlockHash) throws BlockStoreException;

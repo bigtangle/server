@@ -18,7 +18,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.bigtangle.server.utils.Gzip;
+import net.bigtangle.utils.Gzip;
 
 public class KafkaMessageProducer {
 

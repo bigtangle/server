@@ -23,7 +23,7 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.TestParams;
-import net.bigtangle.server.utils.Gzip;
+import net.bigtangle.utils.Gzip;
 
 public class UtilsTest {
 
