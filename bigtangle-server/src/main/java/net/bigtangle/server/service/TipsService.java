@@ -171,9 +171,9 @@ public class TipsService {
             throw new InfeasiblePrototypeException("The given starting points are insolid");
         if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left,   cutoffHeight, prevMilestoneNumber, false))
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left,   cutoffHeight, prevMilestoneNumber, true))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
-        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right,   cutoffHeight, prevMilestoneNumber,false))
+        if (!blockService.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right,   cutoffHeight, prevMilestoneNumber,true))
             throw new InfeasiblePrototypeException("The given starting points are insolid");
 
         // Necessary: Initial test if the prototype's
