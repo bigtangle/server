@@ -142,16 +142,34 @@ public class BlockService {
      * @param block
      * @throws BlockStoreException
      */
-    // TODO iterative instead of recursive
-    public void removeBlockAndApproversFrom(Collection<BlockWrap> evaluations, BlockWrap block)
+    public void removeBlockAndApproversFrom(Collection<BlockWrap> blocks, BlockWrap startingBlock)
             throws BlockStoreException {
-        if (!evaluations.contains(block))
-            return;
 
-        // Remove this block and remove its approvers
-        evaluations.remove(block);
-        for (Sha256Hash approver : store.getSolidApproverBlockHashes(block.getBlock().getHash())) {
-            removeBlockAndApproversFrom(evaluations, store.getBlockWrap(approver));
+        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
+        Set<Sha256Hash> blockQueueSet = new HashSet<>();
+        blockQueue.add(startingBlock);
+        blockQueueSet.add(startingBlock.getBlockHash());
+        
+        while (!blockQueue.isEmpty()) {
+            BlockWrap block = blockQueue.poll();
+            blockQueueSet.remove(block.getBlockHash());
+
+            // Nothing to remove further if not in set
+            if (!blocks.contains(block))
+                continue;
+                
+            // Remove this block.
+            blocks.remove(block);
+
+            // Queue all of its approver blocks if not already queued.
+            for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
+                if (!blockQueueSet.contains(req)) {
+                    BlockWrap pred = store.getBlockWrap(req);
+                    blockQueueSet.add(req);
+                    blockQueue.add(pred);
+                }
+            }
         }
     }
 
@@ -163,17 +181,34 @@ public class BlockService {
      * @param evaluation
      * @throws BlockStoreException
      */
-    // TODO iterative instead of recursive
-    public void addConfirmedApproversTo(Collection<BlockWrap> evaluations, BlockWrap evaluation)
+    public void addConfirmedApproversTo(Collection<BlockWrap> blocks, BlockWrap startingBlock)
             throws BlockStoreException {
-        if (!evaluation.getBlockEvaluation().isConfirmed() || evaluations.contains(evaluation))
-            return;
 
-        // Add this block and add all of its milestone approvers
-        evaluations.add(evaluation);
-        for (Sha256Hash approverHash : store
-                .getSolidApproverBlockHashes(evaluation.getBlockEvaluation().getBlockHash())) {
-            addConfirmedApproversTo(evaluations, store.getBlockWrap(approverHash));
+        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
+        Set<Sha256Hash> blockQueueSet = new HashSet<>();
+        blockQueue.add(startingBlock);
+        blockQueueSet.add(startingBlock.getBlockHash());
+        
+        while (!blockQueue.isEmpty()) {
+            BlockWrap block = blockQueue.poll();
+            blockQueueSet.remove(block.getBlockHash());
+
+            // Nothing added if already in set or not confirmed
+            if (!block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
+                continue;
+                
+            // Add this block.
+            blocks.add(block);
+
+            // Queue all of its confirmed approver blocks if not already queued.
+            for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
+                if (!blockQueueSet.contains(req)) {
+                    BlockWrap pred = store.getBlockWrap(req);
+                    blockQueueSet.add(req);
+                    blockQueue.add(pred);
+                }
+            }
         }
     }
 
@@ -252,34 +287,49 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    // TODO iterative instead of recursive
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block, long cutoffHeight)
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock, long cutoffHeight)
             throws BlockStoreException {
-        if (block == null)
-            return false;
 
-        if (block.getBlockEvaluation().getMilestone() >= 0 || block.getBlockEvaluation().isConfirmed()
-                || blocks.contains(block))
-            return true;
+        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
+        Set<Sha256Hash> blockQueueSet = new HashSet<>();
+        blockQueue.add(startingBlock);
+        blockQueueSet.add(startingBlock.getBlockHash());
+        boolean notMissingAnything = true; 
+        
+        while (!blockQueue.isEmpty()) {
+            BlockWrap block = blockQueue.poll();
+            blockQueueSet.remove(block.getBlockHash());
 
-        // Cutoff
-        if (block.getBlockEvaluation().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-            throw new VerificationException("Block is cut off  and not in milestone  cutoff=" + getCutoffHeight()
-                    + " \n block: " + block.getBlock().toString());
+            // Nothing added if already in set or confirmed
+            if (block.getBlockEvaluation().getMilestone() >= 0 || block.getBlockEvaluation().isConfirmed()
+                    || blocks.contains(block))
+                continue;
+                
+            // Check if the block is in cutoff and not in chain
+            if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
+                throw new CutoffException("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+            }
+
+            // Add this block.
+            blocks.add(block);
+
+            // Queue all of its required blocks if not already queued.
+            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock())) {
+                if (!blockQueueSet.contains(req)) {
+                    BlockWrap pred = store.getBlockWrap(req);
+                    if (pred == null) {
+                        notMissingAnything = false;
+                        continue;
+                    } else {
+                        blockQueueSet.add(req);
+                        blockQueue.add(pred);
+                    }
+                }
+            }
         }
         
-        // Add this block and add all of its required unconfirmed blocks
-        blocks.add(block);
-
-        Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
-        for (Sha256Hash req : allRequiredBlockHashes) {
-            BlockWrap pred = store.getBlockWrap(req);
-            if (pred == null)
-                return false;
-            if (!addRequiredUnconfirmedBlocksTo(blocks, pred, cutoffHeight))
-                return false;
-        }
-        return true;
+        return notMissingAnything;
     }
 
     @SuppressWarnings("unchecked")
