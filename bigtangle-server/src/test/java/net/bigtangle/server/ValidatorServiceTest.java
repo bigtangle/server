@@ -486,7 +486,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         mcmcService.update();
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
-                    rollingBlock.getHash(), true);
+                    rollingBlock.getHash());
             failingBlock.setLastMiningRewardBlock(123);
             failingBlock.solve();
             blockGraph.add(failingBlock, false);

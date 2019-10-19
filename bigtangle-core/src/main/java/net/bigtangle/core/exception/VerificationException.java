@@ -244,4 +244,9 @@ public class VerificationException extends RuntimeException {
             super(msg);
         }
     }
+    public static class CutoffException extends VerificationException {
+        public CutoffException(String msg) {
+            super(msg);
+        }
+    }
 }

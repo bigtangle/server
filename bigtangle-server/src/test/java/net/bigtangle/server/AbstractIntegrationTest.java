@@ -1260,7 +1260,7 @@ public abstract class AbstractIntegrationTest {
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
-        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, override);
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch );
     }
 
     public void sendEmpty() throws JsonProcessingException, Exception {

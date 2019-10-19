@@ -41,6 +41,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
@@ -200,7 +201,7 @@ public class BlockService {
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
             
          if(throwException) {
-            throw new VerificationException(
+            throw new CutoffException(
                     "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
          }else {
              return false;

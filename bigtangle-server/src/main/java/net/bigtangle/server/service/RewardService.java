@@ -49,6 +49,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -99,7 +100,7 @@ public class RewardService {
             // log.info("performRewardVoting time {} ms.",
             // watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (VerificationException e1) {
-              log.debug(" Infeasible performRewardVoting: ", e1);
+            log.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
             log.error("create Reward end  ", e);
         } finally {
@@ -125,8 +126,15 @@ public class RewardService {
     }
 
     public Block createReward(Sha256Hash prevRewardHash) throws Exception {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
-        return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+        try {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
+            return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
+        } catch (CutoffException e) {
+            // fall back to use prev reward as tip
+            log.debug(" fall back to use prev reward as tip: ");
+            Block prevreward = store.get(prevRewardHash);
+            return createReward(prevRewardHash, prevreward.getHash(), prevreward.getHash());
+        }
     }
 
     public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
@@ -136,7 +144,7 @@ public class RewardService {
     public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, boolean override)
             throws Exception {
 
-        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, override);
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
         if (block != null)
             blockService.saveBlock(block);
         return block;
@@ -144,11 +152,6 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, false);
-    }
-
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
         RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash);
 
@@ -250,8 +253,9 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,false);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,false);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
+                false);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, false);
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
                 prevRewardBlock.getBlock().getTimeSeconds());
