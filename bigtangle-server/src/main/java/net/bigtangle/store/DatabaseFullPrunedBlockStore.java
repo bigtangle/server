@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
@@ -1729,8 +1730,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException {
-        HashSet<BlockWrap> storedBlockHashes = new HashSet<>();
+    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException {
+        Comparator<BlockWrap> comparator = Comparator.comparingLong((BlockWrap b) -> b.getBlock().getHeight())
+                .thenComparing((BlockWrap b) -> b.getBlock().getHash());
+        TreeSet<BlockWrap> storedBlockHashes = new TreeSet<>(comparator);
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

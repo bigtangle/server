@@ -158,6 +158,17 @@ public abstract class AbstractIntegrationTest {
         this.checkTokenAssertTrue(tokenid, domainname);
     }
 
+    protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException {
+        // add more blocks follow this startBlock
+        Block rollingBlock1 = startBlock;
+        for (int i = 0; i < num; i++) {
+            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+            blockGraph.add(rollingBlock1, true);
+            blocksAddedAll.add(rollingBlock1);
+        }
+        return rollingBlock1;
+    }
+
     public void checkTokenAssertTrue(String tokenid, String domainname) throws Exception {
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);

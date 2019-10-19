@@ -165,23 +165,6 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
  
     }
 
-    // test limit of blocks in reward chain, cutoff to limit  
-   // @Test
-    public void testMiningRewardTooLarge() throws Exception {
-
-        List<Block> blocksAddedAll = new ArrayList<Block>();
-        Block rollingBlock1 = addFixedBlocks(NetworkParameters.MAX_BLOCKS_IN_REWARD + 10,
-                networkParameters.getGenesisBlock(), blocksAddedAll);
-
-        // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-       // assertTrue( rewardBlock2.getBlocks().size() <=NetworkParameters.MAX_BLOCKS_IN_REWARD);
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 1);
-
-    }
-
     // test cutoff chains, reward should not take blocks behind the cutoff chain
     @Test
     public void testReorgMiningRewardCutoff() throws Exception {
@@ -225,17 +208,6 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
                     Json.jsonmapper().writeValueAsString(requestParam));
             rollingBlock1 = networkParameters.getDefaultSerializer().makeBlock(data);
             rollingBlock1.solve();
-            blockGraph.add(rollingBlock1, true);
-            blocksAddedAll.add(rollingBlock1);
-        }
-        return rollingBlock1;
-    }
-
-    private Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException {
-        // add more blocks follow this startBlock
-        Block rollingBlock1 = startBlock;
-        for (int i = 0; i < num; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
             blockGraph.add(rollingBlock1, true);
             blocksAddedAll.add(rollingBlock1);
         }

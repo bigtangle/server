@@ -7,11 +7,13 @@ package net.bigtangle.server.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -140,6 +142,7 @@ public class BlockService {
      * @param block
      * @throws BlockStoreException
      */
+    // TODO iterative instead of recursive
     public void removeBlockAndApproversFrom(Collection<BlockWrap> evaluations, BlockWrap block)
             throws BlockStoreException {
         if (!evaluations.contains(block))
@@ -160,6 +163,7 @@ public class BlockService {
      * @param evaluation
      * @throws BlockStoreException
      */
+    // TODO iterative instead of recursive
     public void addConfirmedApproversTo(Collection<BlockWrap> evaluations, BlockWrap evaluation)
             throws BlockStoreException {
         if (!evaluation.getBlockEvaluation().isConfirmed() || evaluations.contains(evaluation))
@@ -185,41 +189,57 @@ public class BlockService {
      * @param throwException 
      * @throws BlockStoreException
      */
-    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
+    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
             long cutoffHeight, long prevMilestoneNumber, boolean throwException) throws BlockStoreException {
-        if (block == null)
-            return false;
-        
-        if (blocks.contains(block.getBlockHash()))
-                return true;
-        
-        // no block add if already added or in milestone
-        if (block.getBlockEvaluation().getMilestone() >= 0 && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
-            return true;
-            
-        // the block is in cutoff and not in chain
-        if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-            
-         if(throwException) {
-            throw new CutoffException(
-                    "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
-         }else {
-             return false;
-         }
-        }
 
-        // Add this block and add all of its required blocks.
-        blocks.add(block.getBlockHash());
+        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
+                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
+        Set<Sha256Hash> blockQueueSet = new HashSet<>();
+        blockQueue.add(startingBlock);
+        blockQueueSet.add(startingBlock.getBlockHash());
+        boolean notMissingAnything = true; 
+        
+        while (!blockQueue.isEmpty()) {
+            BlockWrap block = blockQueue.poll();
+            blockQueueSet.remove(block.getBlockHash());
 
-        Set<Sha256Hash> allRequiredBlockHashes = getAllRequiredBlockHashes(block.getBlock());
-        for (Sha256Hash req : allRequiredBlockHashes) {
-            BlockWrap pred = store.getBlockWrap(req);
-            if (pred == null)
-                return false;
-            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight, prevMilestoneNumber,throwException))
-                return false;
+            // Nothing added if already in set
+            if (blocks.contains(block.getBlockHash()))
+                continue;
+                
+            // Nothing added if already in milestone
+            if (block.getBlockEvaluation().getMilestone() >= 0 && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
+                continue;
+                
+            // Check if the block is in cutoff and not in chain
+            if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
+                if (throwException) {
+                    throw new CutoffException("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+                } else {
+                    notMissingAnything = false;
+                    continue;
+                }
+            }
+
+            // Add this block.
+            blocks.add(block.getBlockHash());
+
+            // Queue all of its required blocks if not already queued.
+            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock())) {
+                if (!blockQueueSet.contains(req)) {
+                    BlockWrap pred = store.getBlockWrap(req);
+                    if (pred == null) {
+                        notMissingAnything = false;
+                        continue;
+                    } else {
+                        blockQueueSet.add(req);
+                        blockQueue.add(pred);
+                    }
+                }
+            }
         }
-        return true;
+        
+        return notMissingAnything;
     }
 
     /**
@@ -232,6 +252,7 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
+    // TODO iterative instead of recursive
     public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap block, long cutoffHeight)
             throws BlockStoreException {
         if (block == null)
@@ -246,6 +267,7 @@ public class BlockService {
             throw new VerificationException("Block is cut off  and not in milestone  cutoff=" + getCutoffHeight()
                     + " \n block: " + block.getBlock().toString());
         }
+        
         // Add this block and add all of its required unconfirmed blocks
         blocks.add(block);
 

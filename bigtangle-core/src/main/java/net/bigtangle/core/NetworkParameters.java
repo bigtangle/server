@@ -122,7 +122,7 @@ public abstract class NetworkParameters {
 
     // block number can be taken in a reward block,
     // MAX_BLOCKS_IN_REWARD < MAX_DEFAULT_BLOCK_SIZE / 8 blockhash 4bytes =
-    public static final int MAX_BLOCKS_IN_REWARD = 4096;
+    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 4096;
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
@@ -132,7 +132,7 @@ public abstract class NetworkParameters {
      * everyone to download/store it forever.
      */
     public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
-    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + MAX_BLOCKS_IN_REWARD * 200;
+    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + TARGET_MAX_BLOCKS_IN_REWARD * 200;
 
     /**
      * A "sigop" is a signature verification operation. Because they're

@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -294,7 +295,7 @@ public class MCMCService {
         for (int i = 0; i < numberUpdates; i++) {
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
-            HashSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight);
+            TreeSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight);
 
             // VALIDITY CHECKS
             validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);

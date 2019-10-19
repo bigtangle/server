@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -299,8 +300,6 @@ public class ValidatorService {
         }).findFirst().isPresent();
     }
 
-    // disallow unconfirmed prev UTXOs and spent UTXOs if
-    // unmaintained (unundoable) spend
     /**
      * Resolves all conflicts such that the confirmed set is compatible with all
      * blocks remaining in the set of blocks.
@@ -310,7 +309,10 @@ public class ValidatorService {
      * @param cutoffHeight
      * @throws BlockStoreException
      */
-    public void resolveAllConflicts(Set<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
+    public void resolveAllConflicts(TreeSet<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
+        // Cutoff: Remove if predecessors neither in milestone nor to be confirmed 
+        removeWhereCutoff(blocksToAdd);
+        
         // Remove ineligible blocks, i.e. only reward blocks
         // since they follow a different logic
         removeWhereIneligible(blocksToAdd);
@@ -330,6 +332,28 @@ public class ValidatorService {
         // Remove blocks and their approvers that have at least one input
         // with its corresponding output no longer confirmed
         removeWhereUsedOutputsUnconfirmed(blocksToAdd);
+    }
+
+
+    /**
+     * Remove blocks from blocksToAdd that miss their required predecessors, 
+     * i.e. the predecessors are not confirmed or in blocksToAdd.
+     * 
+     * @param blocksToAdd
+     * @throws BlockStoreException
+     */
+    private void removeWhereCutoff(TreeSet<BlockWrap> blocksToAdd) throws BlockStoreException {
+        Iterator<BlockWrap> iterator = blocksToAdd.iterator();
+        while (iterator.hasNext()) {
+            BlockWrap b = iterator.next();
+            List<BlockWrap> allRequirements = blockService.getAllRequirements(b.getBlock());
+            for (BlockWrap req : allRequirements) {
+                if (!req.getBlockEvaluation().isConfirmed() && !blocksToAdd.contains(req)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -460,23 +484,11 @@ public class ValidatorService {
         HashSet<BlockWrap> initialBlocks = conflictingOutPoints.stream().map(c -> c.getBlock())
                 .collect(Collectors.toCollection(HashSet::new));
         HashSet<BlockWrap> winningBlocks = new HashSet<>(blocksToAdd);
-        HashSet<BlockWrap> cutoffBlocks = new HashSet<>();
         for (BlockWrap winningBlock : initialBlocks) {
-            try {
-                HashSet<BlockWrap> newBlocks = new HashSet<>();
-                if (!blockService.addRequiredUnconfirmedBlocksTo(newBlocks, winningBlock, cutoffHeight))
-                    throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
-                winningBlocks.addAll(newBlocks);
-            } catch (VerificationException e) {
-                blocksToAdd.add(winningBlock);
-            }
+            if (!blockService.addRequiredUnconfirmedBlocksTo(winningBlocks, winningBlock, cutoffHeight))
+                throw new RuntimeException("Shouldn't happen: Block is solid but missing predecessors. ");
             blockService.addConfirmedApproversTo(winningBlocks, winningBlock);
         }
-
-        for (BlockWrap b : cutoffBlocks) {
-            blockService.removeBlockAndApproversFrom(winningBlocks, b);
-        }
-
         HashSet<BlockWrap> losingBlocks = new HashSet<>(winningBlocks);
 
         // Sort conflicts internally by descending rating, then cumulative
@@ -534,7 +546,6 @@ public class ValidatorService {
             }
         }
 
-        // TODO why does this contain confirmed blocks
         losingBlocks.removeAll(winningBlocks);
 
         return losingBlocks;

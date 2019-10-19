@@ -7,6 +7,9 @@ package net.bigtangle.server.compare;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,13 +18,46 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.server.AbstractIntegrationTest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Ignore
 public class PerformanceTest extends AbstractIntegrationTest { 
+
+    // Test limit of blocks in reward chain 
+    @Test
+    public void testMiningRewardTooLarge() throws Exception {
+
+        List<Block> blocksAddedAll = new ArrayList<Block>();
+        Block rollingBlock1 = addFixedBlocks(NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD + 10,
+                networkParameters.getGenesisBlock(), blocksAddedAll);
+
+        // Generate more mining reward blocks
+        final Pair<Sha256Hash, Sha256Hash> validatedRewardBlockPair = tipsService.getValidatedRewardBlockPair(networkParameters.getGenesisBlock().getHash());
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
+                validatedRewardBlockPair.getLeft(), validatedRewardBlockPair.getRight());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 1);
+        assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash()).getMilestone() == -1);
+    }
+
+    // Test cutoff to limit  
+    // TODO @Test
+    public void testMiningRewardCutoff() throws Exception {
+
+        List<Block> blocksAddedAll = new ArrayList<Block>();
+        Block rollingBlock1 = addFixedBlocks(NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD + 10,
+                networkParameters.getGenesisBlock(), blocksAddedAll);
+
+        // Generate more mining reward blocks
+        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash()).getMilestone() == 1);
+        assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash()).getMilestone() == -1);
+    }
     
     @Test
     public void testReorgMiningRewardLong() throws Exception {

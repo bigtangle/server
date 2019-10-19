@@ -201,7 +201,7 @@ public class TipsService {
                         prevMilestoneNumber, false))
                     throw new InfeasiblePrototypeException(
                             "Shouldn't happen: block is missing predecessors but was approved.");
-                if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
                     nextLeft = left;
                     break;
                 }
@@ -226,7 +226,7 @@ public class TipsService {
                         prevMilestoneNumber, false))
                     throw new InfeasiblePrototypeException(
                             "Shouldn't happen: block is missing predecessors but was approved.");
-                if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+                if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
                     nextRight = right;
                     break;
                 }
@@ -254,7 +254,7 @@ public class TipsService {
                     prevMilestoneNumber, false))
                 throw new InfeasiblePrototypeException(
                         "Shouldn't happen: block is missing predecessors but was approved.");
-            if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+            if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
                 nextLeft = left;
                 break;
             }
@@ -275,7 +275,7 @@ public class TipsService {
                     prevMilestoneNumber, false))
                 throw new InfeasiblePrototypeException(
                         "Shouldn't happen: block is missing predecessors but was approved.");
-            if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
+            if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
                 nextRight = right;
                 break;
             }

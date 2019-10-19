@@ -231,15 +231,20 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
-                false);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, false);
+        try {
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true);
+        } catch (CutoffException e) {
+            e.printStackTrace();
+            blocks = new HashSet<Sha256Hash>();
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, false);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, false);
+        }
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
                 prevRewardBlock.getBlock().getTimeSeconds());
 
         // Build the type-specific tx data
-
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
         tx.setData(rewardInfo.toByteArray());
         tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));

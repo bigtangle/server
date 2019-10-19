@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.TreeSet;
 
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
@@ -164,7 +165,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
-    public HashSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
+    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
     public void  updateTip(long cutoffHeight) throws BlockStoreException;
 
     /* Block Evaluation */
