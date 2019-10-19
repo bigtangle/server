@@ -250,8 +250,8 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,false);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,false);
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
                 prevRewardBlock.getBlock().getTimeSeconds());

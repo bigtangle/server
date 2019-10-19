@@ -175,15 +175,17 @@ public class BlockService {
     /**
      * Recursively adds the specified block and its approved blocks to the
      * collection if the blocks are not in the collection. if a block is missing
-     * somewhere, returns false.
+     * somewhere, returns false. throwException will be true, if it required the validation for consensus.
+     * Otherwise, it does ignore the cutoff blocks. 
      * 
      * @param blocks
      * @param prevMilestoneNumber 
      * @param milestoneEvaluation
+     * @param throwException 
      * @throws BlockStoreException
      */
     public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap block,
-            long cutoffHeight, long prevMilestoneNumber) throws BlockStoreException {
+            long cutoffHeight, long prevMilestoneNumber, boolean throwException) throws BlockStoreException {
         if (block == null)
             return false;
         
@@ -196,8 +198,13 @@ public class BlockService {
             
         // the block is in cutoff and not in chain
         if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
+            
+         if(throwException) {
             throw new VerificationException(
                     "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+         }else {
+             return false;
+         }
         }
 
         // Add this block and add all of its required blocks.
@@ -208,7 +215,7 @@ public class BlockService {
             BlockWrap pred = store.getBlockWrap(req);
             if (pred == null)
                 return false;
-            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight, prevMilestoneNumber))
+            if (!addRequiredNonContainedBlockHashesTo(blocks, pred, cutoffHeight, prevMilestoneNumber,throwException))
                 return false;
         }
         return true;
