@@ -9,8 +9,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigInteger;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -43,7 +40,6 @@ import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -60,7 +56,6 @@ import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.OrderMatchingResult;
-import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -86,26 +81,13 @@ public class RewardService {
     protected NetworkParameters networkParameters;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    protected final ReentrantLock lock = Threading.lock("RewardService");
-
+    // createReward is time boxed and can run parallel.
     public void startSingleProcess() {
-        if (!lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  RewardService running. Returning...");
-            return;
-        }
-
         try {
             log.info("create Reward  started");
-            // Stopwatch watch = Stopwatch.createStarted();
             createReward();
-            // log.info("performRewardVoting time {} ms.",
-            // watch.elapsed(TimeUnit.MILLISECONDS));
-        } catch (VerificationException e1) {
-            log.debug(" Infeasible performRewardVoting: ", e1);
         } catch (Exception e) {
             log.error("create Reward end  ", e);
-        } finally {
-            lock.unlock();
         }
 
     }
@@ -132,18 +114,13 @@ public class RewardService {
             return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
         } catch (CutoffException | InfeasiblePrototypeException e) {
             // fall back to use prev reward as tip
-            log.debug(" fall back to use prev reward as tip: ");
+            log.debug(" fall back to use prev reward as tip: ", e);
             Block prevreward = store.get(prevRewardHash);
             return createReward(prevRewardHash, prevreward.getHash(), prevreward.getHash());
         }
     }
 
     public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
-        return createReward(prevRewardHash, prevTrunk, prevBranch, false);
-    }
-
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, boolean override)
-            throws Exception {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
         if (block != null)
@@ -283,78 +260,8 @@ public class RewardService {
 
         return Utils.encodeCompactBits(difficultyChain);
     }
-
-    public boolean runConsensusLogic(Block newestBlock) throws BlockStoreException {
-
-        RewardInfo rewardInfo = RewardInfo.parseChecked(newestBlock.getTransactions().get(0).getData());
-        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-        long currChainLength = store.getRewardChainLength(prevRewardHash) + 1;
-
-        // chain head
-        TXReward chainHead = store.getMaxConfirmedReward();
-        long maxChainLength = chainHead.getChainLength();
-
-        if (maxChainLength < currChainLength) {
-
-            // Find block to which to rollback (if at all) and all new chain
-            // blocks
-            List<BlockWrap> newMilestoneBlocks = new ArrayList<>();
-            newMilestoneBlocks.add(store.getBlockWrap(newestBlock.getHash()));
-            BlockWrap splitPoint = null;
-            Sha256Hash prevHash = prevRewardHash;
-            for (int i = 0; i <= currChainLength; i++) {
-                splitPoint = store.getBlockWrap(prevHash);
-                prevHash = store.getRewardPrevBlockHash(prevHash);
-
-                if (store.getRewardConfirmed(splitPoint.getBlockHash()))
-                    break;
-
-                newMilestoneBlocks.add(splitPoint);
-            }
-            Collections.reverse(newMilestoneBlocks);
-
-            // Unconfirm anything not confirmed by milestone
-            List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
-            HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
-            for (Sha256Hash wipeBlock : wipeBlocks)
-                blockGraph.unconfirm(wipeBlock, traversedBlockHashes);
-
-            // Rollback to split point
-            Sha256Hash maxConfirmedRewardBlockHash;
-            while (!(maxConfirmedRewardBlockHash = store.getMaxConfirmedReward().getBlockHash())
-                    .equals(splitPoint.getBlockHash())) {
-
-                // Sanity check:
-                if (!maxConfirmedRewardBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
-
-                    // Unset the milestone of this one (where milestone =
-                    // maxConfRewardblock.chainLength)
-                    long milestoneNumber = store.getRewardChainLength(maxConfirmedRewardBlockHash);
-                    List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
-                            milestoneNumber);
-
-                    // Unconfirm anything not confirmed by milestone
-                    traversedBlockHashes = new HashSet<>();
-                    for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-                        blockGraph.unconfirm(wipeBlock.getBlockHash(), traversedBlockHashes);
-                }
-            }
-
-            return buildChainForwards(chainHead, newMilestoneBlocks);
-        }
-
-        return true;
-    }
-
-    private boolean buildChainForwards(TXReward chainHead, List<BlockWrap> newMilestoneBlocks)
-            throws BlockStoreException {
-        // Build milestone forwards.
-        for (BlockWrap newMilestoneBlock : newMilestoneBlocks) {
-
-            buildRewardChain(newMilestoneBlock.getBlock());
-        }
-        return true;
-    }
+ 
+ 
 
     public void buildRewardChain(Block newMilestoneBlock) throws BlockStoreException {
 
