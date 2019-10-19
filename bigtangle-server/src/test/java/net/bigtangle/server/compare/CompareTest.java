@@ -33,7 +33,7 @@ public class CompareTest {
     
     public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_LOCAL;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
     

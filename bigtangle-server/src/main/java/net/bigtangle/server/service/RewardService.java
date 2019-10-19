@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Stopwatch;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -130,7 +132,7 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-
+        Stopwatch watch = Stopwatch.createStarted();
         RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash);
 
         Block r1 = blockService.getBlock(prevTrunk);
@@ -161,7 +163,12 @@ public class RewardService {
 
         blockService.adjustHeightRequiredBlocks(block);
         final BigInteger chainTargetFinal = chainTarget;
+        log.debug("prepare Reward time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        return rewardSolve(block, chainTargetFinal);
+    }
 
+    private Block rewardSolve(Block block, final BigInteger chainTargetFinal)
+            throws InterruptedException, ExecutionException {
         final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
