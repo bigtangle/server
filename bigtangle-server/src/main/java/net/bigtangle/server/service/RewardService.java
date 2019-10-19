@@ -50,6 +50,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
+import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -129,7 +130,7 @@ public class RewardService {
         try {
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
             return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
-        } catch (CutoffException e) {
+        } catch (CutoffException | InfeasiblePrototypeException e) {
             // fall back to use prev reward as tip
             log.debug(" fall back to use prev reward as tip: ");
             Block prevreward = store.get(prevRewardHash);

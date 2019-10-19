@@ -193,7 +193,7 @@ public class TipsService {
                 @SuppressWarnings("unchecked")
                 HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
                 if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight, prevMilestoneNumber,false))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
                 if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                     nextLeft = left;
                     break;
@@ -202,7 +202,7 @@ public class TipsService {
                 // Otherwise, go left
                 left = nextLeft;
                 if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
                 currentNewMilestoneBlocks = nextNewMilestoneBlocks;
 
                 // Perform next steps
@@ -213,7 +213,7 @@ public class TipsService {
                 @SuppressWarnings("unchecked")
                 HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
                 if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight, prevMilestoneNumber,false))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
                 if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                     nextRight = right;
                     break;
@@ -222,7 +222,7 @@ public class TipsService {
                 // Go right
                 right = nextRight;
                 if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
                 currentNewMilestoneBlocks = nextNewMilestoneBlocks;
 
                 // Perform next steps
@@ -237,7 +237,7 @@ public class TipsService {
             @SuppressWarnings("unchecked")
             HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
             if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft,   cutoffHeight, prevMilestoneNumber,false))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                 nextLeft = left;
                 break;
@@ -246,7 +246,7 @@ public class TipsService {
             // Go left
             left = nextLeft;
             if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             currentNewMilestoneBlocks = nextNewMilestoneBlocks;
             nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
@@ -255,7 +255,7 @@ public class TipsService {
             @SuppressWarnings("unchecked")
             HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
             if (!blockService.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight,  cutoffHeight, prevMilestoneNumber,false))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             if (nextNewMilestoneBlocks.size() > NetworkParameters.MAX_BLOCKS_IN_REWARD) {
                 nextRight = right;
                 break;
@@ -264,7 +264,7 @@ public class TipsService {
             // Go right
             right = nextRight;
             if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             currentNewMilestoneBlocks = nextNewMilestoneBlocks;
             nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
@@ -339,7 +339,7 @@ public class TipsService {
                 // Go left
                 left = nextLeft;
                 if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
                 nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
@@ -348,7 +348,7 @@ public class TipsService {
                 // Go right
                 right = nextRight;
                 if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
-                    throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                    throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
 
                 // Perform next steps
                 nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
@@ -360,13 +360,13 @@ public class TipsService {
         while (nextLeft != left) {
             left = nextLeft;
             if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             nextLeft = performValidatedStep(left, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
         while (nextRight != right) {
             right = nextRight;
             if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight))
-                throw new RuntimeException("Shouldn't happen: block is missing predecessors but was approved.");
+                throw new InfeasiblePrototypeException("Shouldn't happen: block is missing predecessors but was approved.");
             nextRight = performValidatedStep(right, currentApprovedUnconfirmedBlocks, cutoffHeight);
         }
 
