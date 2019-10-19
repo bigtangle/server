@@ -160,7 +160,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
 
-    public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException;
+    public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException;
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
@@ -495,7 +495,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
 
-    List<BlockWrap> getRatingEntryPoints() throws BlockStoreException;
+    List<BlockWrap> getEntryPoints() throws BlockStoreException;
 
     List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
 

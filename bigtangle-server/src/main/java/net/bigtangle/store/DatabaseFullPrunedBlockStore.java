@@ -1870,7 +1870,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<BlockWrap> getRatingEntryPoints() throws BlockStoreException {
+    public List<BlockWrap> getEntryPoints() throws BlockStoreException {
         long currChainLength = getMaxConfirmedReward().getChainLength();
         long minChainLength = Math.max(0, currChainLength - NetworkParameters.ENTRYPOINT_CUTOFF);
         List<BlockWrap> resultQueue = new ArrayList<BlockWrap>();
@@ -1903,7 +1903,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public PriorityQueue<BlockWrap> getRatingEntryPointsAscending() throws BlockStoreException {
+    public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException {
         long currChainLength = getMaxConfirmedReward().getChainLength();
         long minChainLength = Math.max(0, currChainLength - NetworkParameters.ENTRYPOINT_CUTOFF);
         PriorityQueue<BlockWrap> resultQueue = new PriorityQueue<BlockWrap>(

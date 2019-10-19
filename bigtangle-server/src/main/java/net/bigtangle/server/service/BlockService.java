@@ -298,12 +298,8 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public List<BlockWrap> getRatingEntryPointCandidates() throws BlockStoreException {
-        return store.getRatingEntryPoints();
-    }
-
-    public List<BlockWrap> getValidationEntryPointCandidates() throws BlockStoreException {
-        return store.getRatingEntryPoints();
+    public List<BlockWrap> getEntryPointCandidates() throws BlockStoreException {
+        return store.getEntryPoints();
     }
 
     public void broadcastBlock(Block block) {
