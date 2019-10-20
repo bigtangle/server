@@ -1008,7 +1008,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         RewardInfo rewardInfo5 = RewardInfo.parse(testBlock5.getTransactions().get(0).getData());
         RewardInfo rewardInfo6 = RewardInfo.parse(testBlock6.getTransactions().get(0).getData());
         RewardInfo rewardInfo7 = RewardInfo.parse(testBlock7.getTransactions().get(0).getData());
-        rewardInfo2.setPrevRewardHash(null);
         rewardInfo3.setPrevRewardHash(getRandomSha256Hash());
         rewardInfo4.setPrevRewardHash(rollingBlock.getHash());
         rewardInfo5.setPrevRewardHash(rollingBlock.getHash());
@@ -1027,12 +1026,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         testBlock6.solve();
         testBlock7.solve();
 
-        try {
-            blockGraph.add(testBlock2, false);
-
-            fail();
-        } catch (MissingDependencyException e) {
-        }
         assertFalse(blockGraph.add(testBlock3, false));
         try {
             blockGraph.add(testBlock4, false);
