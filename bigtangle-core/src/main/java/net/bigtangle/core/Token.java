@@ -10,6 +10,17 @@ public class Token extends SpentBlock implements java.io.Serializable {
 
     private static final long serialVersionUID = 6992138619113601243L;
 
+    
+    // Token config
+    public static final long TOKEN_MAX_ISSUANCE_NUMBER = Integer.MAX_VALUE;
+    public static final int TOKEN_MAX_NAME_LENGTH = 60;
+    public static final int TOKEN_MAX_DESC_LENGTH = 500;
+    public static final int TOKEN_MAX_URL_LENGTH = 100;
+    public static final int TOKEN_MAX_ID_LENGTH = 100;
+    public static final int TOKEN_MAX_LANGUAGE_LENGTH = 2;
+    public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
+    public static final int TOKEN_MAX_DECIMAL = 18;
+    
     public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop, int decimals,
             String predecessingDomainBlockHash) {

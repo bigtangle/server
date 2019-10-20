@@ -57,16 +57,14 @@ import net.bigtangle.utils.MonetaryFormat;
  */
 public abstract class NetworkParameters {
 
-    // TODO Mainnet parameters: higher difficulty
-
     /**
      * The string returned by getId() for the main, production network where
      * people trade things.
      */
-    public static final String ID_MAINNET = "net.bigtangle";
+    public static final String ID_MAINNET = "Mainnet";
 
     /** Unit test network. */
-    public static final String ID_UNITTESTNET = "net.bigtangle.unittest";
+    public static final String ID_UNITTESTNET = "Test";
 
     protected Block genesisBlock;
     protected BigInteger maxTarget;
@@ -100,7 +98,9 @@ public abstract class NetworkParameters {
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
-    // Consensus settings
+    protected   String genesisPub;
+
+    // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD = 70;
     public static final int CONFIRMATION_LOWER_THRESHOLD = 67;
     public static final int NUMBER_RATING_TIPS = 100;
@@ -120,9 +120,8 @@ public abstract class NetworkParameters {
      */
     public static final long BLOCK_VERSION_GENESIS = 1;
 
-    // block number can be taken in a reward block,
-    // MAX_BLOCKS_IN_REWARD < MAX_DEFAULT_BLOCK_SIZE / 8 blockhash 4bytes =
-    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 4096;
+    // block number can be taken in a reward block
+    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 10000;
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
@@ -148,11 +147,6 @@ public abstract class NetworkParameters {
     public static final long ALLOWED_TIME_DRIFT = 5 * 60;
 
     /**
-     * The maximum returned search blocks to the request.
-     */
-    public static final long ALLOWED_SEARCH_BLOCKS = 10000;
-
-    /**
      * How many bytes are required to represent a block header WITHOUT the
      * trailing 00 length byte.
      */
@@ -168,22 +162,8 @@ public abstract class NetworkParameters {
     // Transaction setting
     public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
 
-    // Token config
-    public static final long TOKEN_MAX_ISSUANCE_NUMBER = Integer.MAX_VALUE;
-    public static final int TOKEN_MAX_NAME_LENGTH = 60;
-    public static final int TOKEN_MAX_DESC_LENGTH = 500;
-    public static final int TOKEN_MAX_URL_LENGTH = 100;
-    public static final int TOKEN_MAX_ID_LENGTH = 100;
-    public static final int TOKEN_MAX_LANGUAGE_LENGTH = 2;
-    public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
-    public static final int TOKEN_MAX_DECIMAL = 18;
     // max time of an order in seconds
     public static final long ORDER_TIMEOUT_MAX = 8 * 60 * 60;
-
-    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-
-    public static String genesisPub = testPub;
 
     // 100 billions as Value
     public static BigInteger BigtangleCoinTotal = BigInteger.valueOf(LongMath.pow(10, 11 + BIGTANGLE_DECIMAL));
@@ -202,27 +182,23 @@ public abstract class NetworkParameters {
     // per interval of length target_spacing, the reward is:
     public static final long TARGET_INTERVAL_REWARD = TARGET_YEARLY_MINING_PAYOUT * TARGET_SPACING / 31536000;
     // a third always comes directly from the consensus blocks:
-    public static final long CONSENSUS_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3;
+    public static final long REWARD_AMOUNT_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3;
     // the other two thirds are for each inclusion into consensus and each block
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
 
     // MCMC will take only the blocks back to this confirmed reward block
-    public static final int MILESTONE_CUTOFF = 6;
-    public static final long ENTRYPOINT_CUTOFF = 3;
+    public static final int MILESTONE_CUTOFF = 20;
+     
 
     protected NetworkParameters() {
     }
 
     public static Block createGenesis(NetworkParameters params) {
-        Block genesisBlock = new Block(params, 
-        Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH,  Block.Type.BLOCKTYPE_INITIAL.ordinal(),  0, 0,
-        Utils.encodeCompactBits(params.getMaxTarget()));
-        
-        
+        Block genesisBlock = new Block(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH,
+                Block.Type.BLOCKTYPE_INITIAL.ordinal(), 0, 0, Utils.encodeCompactBits(params.getMaxTarget()));
         genesisBlock.setTime(1532896109L);
 
-        // 1 in 4 blocks shall be correct
         BigInteger diff = params.getMaxTarget();
         genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
 
@@ -235,12 +211,10 @@ public abstract class NetworkParameters {
                 new HashSet<Sha256Hash>(), 0l);
 
         coinbase.setData(rewardInfo.toByteArray());
-        add(params, BigtangleCoinTotal, genesisPub, coinbase);
+        add(params, BigtangleCoinTotal, params.genesisPub, coinbase);
         genesisBlock.addTransaction(coinbase);
         genesisBlock.setNonce(0);
         genesisBlock.setHeight(0);
-        // genesisBlock.solve();
-
         return genesisBlock;
 
     }

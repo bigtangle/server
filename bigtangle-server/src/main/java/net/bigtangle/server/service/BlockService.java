@@ -150,7 +150,7 @@ public class BlockService {
         Set<Sha256Hash> blockQueueSet = new HashSet<>();
         blockQueue.add(startingBlock);
         blockQueueSet.add(startingBlock.getBlockHash());
-        
+
         while (!blockQueue.isEmpty()) {
             BlockWrap block = blockQueue.poll();
             blockQueueSet.remove(block.getBlockHash());
@@ -158,7 +158,7 @@ public class BlockService {
             // Nothing to remove further if not in set
             if (!blocks.contains(block))
                 continue;
-                
+
             // Remove this block.
             blocks.remove(block);
 
@@ -189,7 +189,7 @@ public class BlockService {
         Set<Sha256Hash> blockQueueSet = new HashSet<>();
         blockQueue.add(startingBlock);
         blockQueueSet.add(startingBlock.getBlockHash());
-        
+
         while (!blockQueue.isEmpty()) {
             BlockWrap block = blockQueue.poll();
             blockQueueSet.remove(block.getBlockHash());
@@ -197,7 +197,7 @@ public class BlockService {
             // Nothing added if already in set or not confirmed
             if (!block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
                 continue;
-                
+
             // Add this block.
             blocks.add(block);
 
@@ -215,13 +215,13 @@ public class BlockService {
     /**
      * Recursively adds the specified block and its approved blocks to the
      * collection if the blocks are not in the collection. if a block is missing
-     * somewhere, returns false. throwException will be true, if it required the validation for consensus.
-     * Otherwise, it does ignore the cutoff blocks. 
+     * somewhere, returns false. throwException will be true, if it required the
+     * validation for consensus. Otherwise, it does ignore the cutoff blocks.
      * 
      * @param blocks
-     * @param prevMilestoneNumber 
+     * @param prevMilestoneNumber
      * @param milestoneEvaluation
-     * @param throwException 
+     * @param throwException
      * @throws BlockStoreException
      */
     public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
@@ -232,8 +232,8 @@ public class BlockService {
         Set<Sha256Hash> blockQueueSet = new HashSet<>();
         blockQueue.add(startingBlock);
         blockQueueSet.add(startingBlock.getBlockHash());
-        boolean notMissingAnything = true; 
-        
+        boolean notMissingAnything = true;
+
         while (!blockQueue.isEmpty()) {
             BlockWrap block = blockQueue.poll();
             blockQueueSet.remove(block.getBlockHash());
@@ -241,15 +241,17 @@ public class BlockService {
             // Nothing added if already in set
             if (blocks.contains(block.getBlockHash()))
                 continue;
-                
+
             // Nothing added if already in milestone
-            if (block.getBlockEvaluation().getMilestone() >= 0 && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
+            if (block.getBlockEvaluation().getMilestone() >= 0
+                    && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
                 continue;
-                
+
             // Check if the block is in cutoff and not in chain
             if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
                 if (throwException) {
-                    throw new CutoffException("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+                    throw new CutoffException(
+                            "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
                 } else {
                     notMissingAnything = false;
                     continue;
@@ -273,7 +275,7 @@ public class BlockService {
                 }
             }
         }
-        
+
         return notMissingAnything;
     }
 
@@ -287,16 +289,16 @@ public class BlockService {
      * @param milestoneEvaluation
      * @throws BlockStoreException
      */
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock, long cutoffHeight)
-            throws BlockStoreException {
+    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,
+            long cutoffHeight) throws BlockStoreException {
 
         PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
         Set<Sha256Hash> blockQueueSet = new HashSet<>();
         blockQueue.add(startingBlock);
         blockQueueSet.add(startingBlock.getBlockHash());
-        boolean notMissingAnything = true; 
-        
+        boolean notMissingAnything = true;
+
         while (!blockQueue.isEmpty()) {
             BlockWrap block = blockQueue.poll();
             blockQueueSet.remove(block.getBlockHash());
@@ -305,10 +307,11 @@ public class BlockService {
             if (block.getBlockEvaluation().getMilestone() >= 0 || block.getBlockEvaluation().isConfirmed()
                     || blocks.contains(block))
                 continue;
-                
+
             // Check if the block is in cutoff and not in chain
             if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-                throw new CutoffException("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+                throw new CutoffException(
+                        "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
             }
 
             // Add this block.
@@ -328,7 +331,7 @@ public class BlockService {
                 }
             }
         }
-        
+
         return notMissingAnything;
     }
 
@@ -338,7 +341,8 @@ public class BlockService {
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height);
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
+                serverConfiguration.getMaxserachblocks());
         HashSet<String> hashSet = new HashSet<String>();
         // filter
         for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
@@ -450,7 +454,7 @@ public class BlockService {
         try {
             // logger.debug(" bytes " +bytes.length);
             return addConnected(Gzip.decompress(bytes), true);
-        } catch (VerificationException e) { 
+        } catch (VerificationException e) {
             return null;
         } catch (Exception e) {
             logger.debug("addConnectedFromKafka with sendkey:" + key.toString(), e);
@@ -480,10 +484,9 @@ public class BlockService {
                     // }
                 }
                 return Optional.of(block);
-            }catch (ProofOfWorkException | UnsolidException e) {
+            } catch (ProofOfWorkException | UnsolidException e) {
                 return Optional.empty();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
                         + block.getHeight() + " block: " + block.toString(), e);
                 return Optional.empty();

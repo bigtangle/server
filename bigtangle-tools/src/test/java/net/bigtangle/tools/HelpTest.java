@@ -317,8 +317,8 @@ public abstract class HelpTest {
         walletAppKit1.wallet().setServerURL(contextRoot);
         walletAppKit1.wallet().saveToken(tokenInfo, basecoin, key, null);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
 
         walletAppKit1.wallet().multiSign(tokenid, genesiskey, null);
     }

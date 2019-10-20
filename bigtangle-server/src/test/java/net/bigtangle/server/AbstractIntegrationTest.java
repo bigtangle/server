@@ -143,8 +143,8 @@ public abstract class AbstractIntegrationTest {
 
     protected static ECKey outKey = new ECKey();
     protected static ECKey outKey2 = new ECKey();
-    protected static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-    protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
 
     public void testCreateDomainToken() throws Exception {
@@ -1022,8 +1022,8 @@ public abstract class AbstractIntegrationTest {
         MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
         String pubKeyHex = multiSignAddress.getPubKeyHex();
         pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), this.walletKeyData.get(pubKeyHex), aesKey);
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         pullBlockDoMultiSign(tokenInfo.getToken().getTokenid(), genesiskey, null);
 
         return block;
@@ -1084,8 +1084,8 @@ public abstract class AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode( testPriv),
+                Utils.HEX.decode(testPub));
         ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash, aesKey);
         byte[] buf2 = party2Signature.encodeToDER();
         multiSignBy0 = new MultiSignBy();
@@ -1153,8 +1153,8 @@ public abstract class AbstractIntegrationTest {
         ECKey outKey = this.walletKeyData.get(pubKeyHex);
         this.pullBlockDoMultiSign(tokenid, outKey, aesKey);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode( testPriv),
+                Utils.HEX.decode(testPub));
         this.pullBlockDoMultiSign(tokenid, genesiskey, null);
     }
 

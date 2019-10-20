@@ -1281,7 +1281,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) {
 
                         tokenInfo5.getToken().setDescription(
-                                new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_DESC_LENGTH]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1294,7 +1294,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) {
 
                         tokenInfo5.getToken().setDescription(
-                                new String(new char[NetworkParameters.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_DESC_LENGTH + 1]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1451,7 +1451,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     @Override
                     public void preApply(TokenInfo tokenInfo5) {
 
-                        tokenInfo5.getToken().setTokenindex(NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER + 1);
+                        tokenInfo5.getToken().setTokenindex(Token.TOKEN_MAX_ISSUANCE_NUMBER + 1);
                     }
 
                     @Override
@@ -1491,7 +1491,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) {
 
                         tokenInfo5.getToken().setTokenname(
-                                new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_NAME_LENGTH]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1505,7 +1505,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) {
 
                         tokenInfo5.getToken().setTokenname(
-                                new String(new char[NetworkParameters.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_NAME_LENGTH + 1]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1567,7 +1567,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) {
 
                         tokenInfo5.getToken().setDomainName(
-                                new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_URL_LENGTH]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1580,7 +1580,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     public void preApply(TokenInfo tokenInfo5) { // 30
 
                         tokenInfo5.getToken().setDomainName(
-                                new String(new char[NetworkParameters.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
+                                new String(new char[Token.TOKEN_MAX_URL_LENGTH + 1]).replace("\0", "A"));
                     }
 
                     @Override
@@ -1808,8 +1808,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 multiSignBy0.setSignature(Utils.HEX.encode(buf1));
                 multiSignBies.add(multiSignBy0);
 
-                ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                        Utils.HEX.decode(NetworkParameters.testPub));
+                ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                        Utils.HEX.decode(testPub));
                 ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
                 byte[] buf2 = party2Signature.encodeToDER();
                 multiSignBy0 = new MultiSignBy();
@@ -1881,8 +1881,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
         byte[] buf2 = party2Signature.encodeToDER();
         multiSignBy0 = new MultiSignBy();

@@ -41,7 +41,7 @@ import net.bigtangle.utils.OkHttp3Util;
 public class RewardService2Test extends AbstractIntegrationTest {
 
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
-        for (int j = 1; j < 2; j++) {
+        for (int j = 1; j < 3; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
             mcmcService.update();
             sell(blocksAddedAll);
@@ -94,6 +94,21 @@ public class RewardService2Test extends AbstractIntegrationTest {
             if (b != null)
                 blockGraph.add(b, true);
             blockGraph.add(b, true);
+        }
+        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+
+        checkSum();
+        
+        //replay second and then replay first
+        store.resetStore();
+        for (Block b : a2) {
+            if (b != null)
+                blockGraph.add(b, true);
+            blockGraph.add(b, true);
+        }
+        for (Block b : a1) {
+            if (b != null)
+                blockGraph.add(b, true);
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 

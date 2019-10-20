@@ -310,9 +310,10 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public void resolveAllConflicts(TreeSet<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
-        // Cutoff: Remove if predecessors neither in milestone nor to be confirmed 
+        // Cutoff: Remove if predecessors neither in milestone nor to be
+        // confirmed
         removeWhereCutoff(blocksToAdd);
-        
+
         // Remove ineligible blocks, i.e. only reward blocks
         // since they follow a different logic
         removeWhereIneligible(blocksToAdd);
@@ -334,9 +335,8 @@ public class ValidatorService {
         removeWhereUsedOutputsUnconfirmed(blocksToAdd);
     }
 
-
     /**
-     * Remove blocks from blocksToAdd that miss their required predecessors, 
+     * Remove blocks from blocksToAdd that miss their required predecessors,
      * i.e. the predecessors are not confirmed or in blocksToAdd.
      * 
      * @param blocksToAdd
@@ -1165,8 +1165,8 @@ public class ValidatorService {
                         return SolidityState.getFailState();
                     }
                 }
-            } 
-            
+            }
+
             // Check transactions are solid
             SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
                     throwExceptions);
@@ -1993,34 +1993,34 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Not allowed");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getTokenindex() > NetworkParameters.TOKEN_MAX_ISSUANCE_NUMBER) {
+        if (currentToken.getToken().getTokenindex() > Token.TOKEN_MAX_ISSUANCE_NUMBER) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too many token issuances");
             return SolidityState.getFailState();
         }
 
         if (currentToken.getToken().getDescription() != null
-                && currentToken.getToken().getDescription().length() > NetworkParameters.TOKEN_MAX_DESC_LENGTH) {
+                && currentToken.getToken().getDescription().length() > Token.TOKEN_MAX_DESC_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long description");
             return SolidityState.getFailState();
         }
 
         if (currentToken.getToken().getTokenid() != null
-                && currentToken.getToken().getTokenid().length() > NetworkParameters.TOKEN_MAX_ID_LENGTH) {
+                && currentToken.getToken().getTokenid().length() > Token.TOKEN_MAX_ID_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long tokenid");
             return SolidityState.getFailState();
         }
 
         if (currentToken.getToken().getLanguage() != null
-                && currentToken.getToken().getLanguage().length() > NetworkParameters.TOKEN_MAX_LANGUAGE_LENGTH) {
+                && currentToken.getToken().getLanguage().length() > Token.TOKEN_MAX_LANGUAGE_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long language");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getClassification() != null && currentToken.getToken().getClassification()
-                .length() > NetworkParameters.TOKEN_MAX_CLASSIFICATION_LENGTH) {
+        if (currentToken.getToken().getClassification() != null
+                && currentToken.getToken().getClassification().length() > Token.TOKEN_MAX_CLASSIFICATION_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long classification");
             return SolidityState.getFailState();
@@ -2030,12 +2030,12 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Token name cannot be null.");
         }
         if (currentToken.getToken().getTokenname() != null
-                && currentToken.getToken().getTokenname().length() > NetworkParameters.TOKEN_MAX_NAME_LENGTH) {
+                && currentToken.getToken().getTokenname().length() > Token.TOKEN_MAX_NAME_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long token name");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getDecimals() >= NetworkParameters.TOKEN_MAX_DECIMAL
+        if (currentToken.getToken().getDecimals() >= Token.TOKEN_MAX_DECIMAL
                 || currentToken.getToken().getDecimals() < 0) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("decimals must be bewteen 0 and 18 ");
@@ -2043,14 +2043,14 @@ public class ValidatorService {
         }
 
         if ((currentToken.getToken().getAmount() + "").length()
-                + currentToken.getToken().getDecimals() > NetworkParameters.TOKEN_MAX_DECIMAL) {
+                + currentToken.getToken().getDecimals() > Token.TOKEN_MAX_DECIMAL) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("amount with decimal must be bewteen 0 and 10**19 ");
             return SolidityState.getFailState();
         }
 
         if (currentToken.getToken().getDomainName() != null
-                && currentToken.getToken().getDomainName().length() > NetworkParameters.TOKEN_MAX_URL_LENGTH) {
+                && currentToken.getToken().getDomainName().length() > Token.TOKEN_MAX_URL_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long domainname");
             return SolidityState.getFailState();
@@ -2107,7 +2107,7 @@ public class ValidatorService {
         if (difficulty != block.getDifficultyTarget()) {
             throw new VerificationException("calculateNextBlockDifficulty does not match.");
         }
-        
+
         if (block.getLastMiningRewardBlock() != block.getRewardInfo().getChainlength()) {
             if (throwExceptions)
                 throw new DifficultyConsensusInheritanceException();
@@ -2126,7 +2126,7 @@ public class ValidatorService {
 
         // Solidify referenced blocks
         rewardService.solidifyBlocks(block.getRewardInfo());
-        
+
         return SolidityState.getSuccessState();
     }
 

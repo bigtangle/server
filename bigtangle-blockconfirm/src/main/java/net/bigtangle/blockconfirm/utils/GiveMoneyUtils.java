@@ -20,13 +20,15 @@ import net.bigtangle.wallet.Wallet;
 
 @Component
 public class GiveMoneyUtils {
+    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+    public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 
     @PostConstruct
     public void init() {
         String contextRoot = serverConfiguration.getServerURL();
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub)));
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode( testPriv),
+                Utils.HEX.decode( testPub)));
 
         payWallet = Wallet.fromKeys(networkParameters, keys);
         payWallet.setServerURL(contextRoot);
@@ -46,8 +48,8 @@ public class GiveMoneyUtils {
         }
         LOGGER.info("  start giveMoneyResult : " + giveMoneyResult + " ");
 
-        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode( testPub));
         return payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
 
     }

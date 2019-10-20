@@ -1595,7 +1595,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         Transaction tx = new Transaction(networkParameters);
 
         // Reward the consensus block with the static reward
-        tx.addOutput(Coin.SATOSHI.times(NetworkParameters.CONSENSUS_BLOCK_REWARD), consensusBlockMiner);
+        tx.addOutput(Coin.SATOSHI.times(NetworkParameters.REWARD_AMOUNT_BLOCK_REWARD), consensusBlockMiner);
 
         // Reward twice: once the consensus block, once the normal block maker
         // of good quantiles

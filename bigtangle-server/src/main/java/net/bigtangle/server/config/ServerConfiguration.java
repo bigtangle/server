@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,12 +12,13 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableList;
 
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PermissionDomainname;
 
 @Component
 @ConfigurationProperties(prefix = "server")
 public class ServerConfiguration {
+
+    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 
     private String requester;
 
@@ -32,11 +34,10 @@ public class ServerConfiguration {
     private String clientversion;
     private Boolean permissioned;
     private String permissionadmin;
-    private int solveRewardduration=30; //in seconds
+    private int solveRewardduration = 30; // in seconds
     private Boolean myserverblockOnly = false;
-
-    private List<PermissionDomainname> permissionDomainname = ImmutableList
-            .of(new PermissionDomainname(NetworkParameters.testPub, ""));
+    private long maxserachblocks = 10000;
+    private List<String> permissionDomainname = ImmutableList.of(testPub);
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
@@ -160,11 +161,11 @@ public class ServerConfiguration {
     }
 
     public List<PermissionDomainname> getPermissionDomainname() {
-        return permissionDomainname;
-    }
-
-    public void setPermissionDomainname(List<PermissionDomainname> permissionDomainname) {
-        this.permissionDomainname = permissionDomainname;
+        ArrayList<PermissionDomainname> rootPermission = new ArrayList<PermissionDomainname>();
+        for (String s : permissionDomainname) {
+            rootPermission.add(new PermissionDomainname(s, ""));
+        }
+        return rootPermission;
     }
 
     public String getServerurl() {
@@ -183,6 +184,14 @@ public class ServerConfiguration {
         this.solveRewardduration = solveRewardduration;
     }
 
+    public long getMaxserachblocks() {
+        return maxserachblocks;
+    }
+
+    public void setMaxserachblocks(long maxserachblocks) {
+        this.maxserachblocks = maxserachblocks;
+    }
+
     @Override
     public String toString() {
         return "ServerConfiguration [requester=" + requester + ", port=" + port + ", debug=" + debug + ", net=" + net
@@ -191,5 +200,5 @@ public class ServerConfiguration {
                 + permissionadmin + ", myserverblockOnly=" + myserverblockOnly + ", permissionDomainname="
                 + permissionDomainname + ", serviceReady=" + serviceReady + ", createtable=" + createtable + "]";
     }
-    
+
 }

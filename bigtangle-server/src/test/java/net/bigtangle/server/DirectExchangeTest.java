@@ -162,8 +162,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
     public void testGiveMoney() throws Exception {
         store.resetStore();
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         List<UTXO> balance1 = getBalance(false, genesiskey);
         log.info("balance1 : " + balance1);
         // two utxo to spent
@@ -189,8 +189,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     public void testWalletImportKeyGiveMoney() throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub)));
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub)));
 
         Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
@@ -229,8 +229,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     public void testWalletBatchGiveMoney() throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub)));
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub)));
 
         Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);

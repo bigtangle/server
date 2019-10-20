@@ -30,6 +30,7 @@ import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletUtil;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.TestParams;
+import net.bigtangle.server.AbstractIntegrationTest;
 
 public class WalletUtilTest {
 
@@ -123,8 +124,8 @@ public class WalletUtilTest {
     // transfer the coin to address
     public void walletSingleKey() throws Exception {
 
-        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(AbstractIntegrationTest.testPriv),
+                Utils.HEX.decode(AbstractIntegrationTest.testPub));
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(from);
         Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
@@ -133,8 +134,8 @@ public class WalletUtilTest {
     @Test(expected = ArithmeticException.class)
     public void checkDecimal() throws Exception {
 
-        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey from = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(AbstractIntegrationTest.testPriv),
+                Utils.HEX.decode(AbstractIntegrationTest.testPub));
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(from);
         Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);

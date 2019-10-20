@@ -96,7 +96,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     // FIXME @Test
     public void testBlockDamage() throws Exception {
         ECKey outKey = new ECKey();
-        ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPublicOnly(Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, genesiskey);
         TransactionOutput transactionOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);

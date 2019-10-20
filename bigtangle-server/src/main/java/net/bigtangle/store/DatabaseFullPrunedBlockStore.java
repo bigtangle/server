@@ -1875,7 +1875,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<BlockWrap> getEntryPoints() throws BlockStoreException {
         long currChainLength = getMaxConfirmedReward().getChainLength();
-        long minChainLength = Math.max(0, currChainLength - NetworkParameters.ENTRYPOINT_CUTOFF);
+        long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
         List<BlockWrap> resultQueue = new ArrayList<BlockWrap>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -1908,7 +1908,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException {
         long currChainLength = getMaxConfirmedReward().getChainLength();
-        long minChainLength = Math.max(0, currChainLength - NetworkParameters.ENTRYPOINT_CUTOFF);
+        long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
         PriorityQueue<BlockWrap> resultQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
         maybeConnect();
@@ -3109,7 +3109,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
-            long height) throws BlockStoreException {
+            long height,long maxblocks) throws BlockStoreException {
 
         String sql = "";
         StringBuffer stringBuffer = new StringBuffer();
@@ -3120,11 +3120,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " where height >= " + height;
             sql += " ORDER BY insertTime desc ";
             Long a = Long.valueOf(lastestAmount);
-            // TODO paging
-            if (a > NetworkParameters.ALLOWED_SEARCH_BLOCKS) {
-                a = NetworkParameters.ALLOWED_SEARCH_BLOCKS;
+            if (a > maxblocks) {
+                a = maxblocks;
             }
-            sql += " LIMIT " + a;
+            sql += " LIMIT " + maxblocks;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
                     + " blocks.height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, blocks.confirmed"

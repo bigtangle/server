@@ -311,7 +311,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
 
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
-            long height) throws BlockStoreException;
+            long height, long maxblocks) throws BlockStoreException;
 
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(String blockhash, String lastestAmount)
             throws BlockStoreException;

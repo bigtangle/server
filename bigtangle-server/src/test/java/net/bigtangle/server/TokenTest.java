@@ -305,8 +305,8 @@ public class TokenTest extends AbstractIntegrationTest {
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(2), aesKey);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(NetworkParameters.testPriv),
-                Utils.HEX.decode(NetworkParameters.testPub));
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         this.walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
     }
 
