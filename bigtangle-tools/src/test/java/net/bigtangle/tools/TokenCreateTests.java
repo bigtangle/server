@@ -39,8 +39,7 @@ public class TokenCreateTests extends HelpTest {
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(JPYTokenPriv), Utils.HEX.decode(JPYTokenPub)),
                 "JPY", 2, null, "Japan Yuan");
-        testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(GOLDTokenPriv),
-                Utils.HEX.decode(GOLDTokenPub)), "GOLD", 0, null, "Gold ETF");
+
     }
    
 }
