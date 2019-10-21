@@ -68,9 +68,8 @@ public class ScheduleOrderService {
             }
         }
 
-        // if Status=PAID then check block valuation with rating > 75, set
-        // Status=CONFIRM
-        // searchBlockByBlockHash
+        // if Status=PAID then check block valuation in milestone, set  Status=CONFIRM
+ 
         deposits = this.store.queryDepositByStatus("PAID");
         List<Vm_deposit> subDeposits = new ArrayList<Vm_deposit>();
         for (Vm_deposit vm_deposit : deposits) {
@@ -92,7 +91,7 @@ public class ScheduleOrderService {
                 }
                 // otherwise do again the
                 // giveMoneyUtils.batchGiveMoneyToECKeyList,
-                // timeout = 60 minutes rating < 75
+                // timeout = 60 minutes
                 else {
                     Date date = new Date(blockEvaluations.get(0).getInsertTime());
                     if (DateUtils.addMinutes(date, 60).before(new Date())) {
