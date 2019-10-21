@@ -26,7 +26,6 @@ import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;

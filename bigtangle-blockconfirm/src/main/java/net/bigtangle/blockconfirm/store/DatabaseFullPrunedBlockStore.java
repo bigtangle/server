@@ -187,7 +187,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     public void resetDepositPaid() throws BlockStoreException {
-        String sql = "update vm_deposit set status = 'RESET' ";
+        String sql = "update vm_deposit set status = 'RESET', blockhash = null ";
         maybeConnect();
         PreparedStatement s = null;
         try {
