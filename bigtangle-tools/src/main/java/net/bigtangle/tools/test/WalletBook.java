@@ -1,4 +1,4 @@
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import java.util.ArrayList;
 import java.util.List;

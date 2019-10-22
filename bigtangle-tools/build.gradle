@@ -26,14 +26,9 @@ dependencies {
       /**
      * test dependencies
      */
- 
-    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
-    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
-    testCompile group: 'junit', name: 'junit',version:ver.junit
-    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
-        testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
-    runtime group:'io.micrometer', name:'micrometer-registry-prometheus', version:ver.spring_metrics_promet
-     
+  
+    compile group: 'junit', name: 'junit',version:ver.junit
+       
 }
 
 mainClassName = "net.bigtangle.tools.Simulator"

@@ -1,7 +1,6 @@
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import java.util.HashMap;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -9,7 +8,6 @@ import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 
 public class MoneyForOrderBuyTest extends HelpTest {

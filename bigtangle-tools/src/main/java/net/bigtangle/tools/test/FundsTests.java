@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import java.util.List;
 

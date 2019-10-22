@@ -1,4 +1,4 @@
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;

@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -90,14 +90,14 @@ public abstract class HelpTest {
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
-    
-    public static String TESTSERVER1=   HTTPS_BIGTANGLE_DE;
-    
-     public static String TESTSERVER2=   HTTPS_BIGTANGLE_ORG;
-     
+
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
+
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
+
     public String contextRoot = TESTSERVER1;
-            // "http://localhost:8088/";
-           // "https://test.bigtangle.de/";
+    // "http://localhost:8088/";
+    // "https://test.bigtangle.de/";
 
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
@@ -349,9 +349,9 @@ public abstract class HelpTest {
         String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-      //  log.info("getOutputsResponse : " + getOutputsResponse);
+        // log.info("getOutputsResponse : " + getOutputsResponse);
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
-      //  Coin sumCoinbase = Coin.valueOf(0l, tokenid);
+        // Coin sumCoinbase = Coin.valueOf(0l, tokenid);
         for (UTXO u : getOutputsResponse.getOutputs()) {
 
             if (u.isConfirmed() && !u.isSpent())
@@ -371,14 +371,13 @@ public abstract class HelpTest {
         if (!tokenid.equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
             assertTrue(tokensum.equals(sumUnspent.add(ordersum)));
         else {
-            assertTrue(tokensum.compareTo(sumUnspent.add(ordersum)) <=0);
+            assertTrue(tokensum.compareTo(sumUnspent.add(ordersum)) <= 0);
         }
         // assertTrue(sumCoinbase.equals(sumUnspent.add(ordersum)));
         // assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
         // .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
 
     }
- 
 
     public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();

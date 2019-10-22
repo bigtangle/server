@@ -1,4 +1,4 @@
-package net.bigtangle.tools;
+package net.bigtangle.tools.test;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -23,7 +23,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class OrderSell2Test extends HelpTest {
+public class OrderSellTest extends HelpTest {
 
     @Test
     public void sellThread() throws Exception {
