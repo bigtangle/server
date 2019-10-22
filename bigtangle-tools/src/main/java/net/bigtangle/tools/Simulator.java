@@ -9,8 +9,8 @@ import net.bigtangle.tools.test.OrderSellTest;
 public class Simulator {
 
     public static void main(String[] args) {
-        System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-        System.setProperty("https.proxyPort", "3128");
+     //   System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+     //   System.setProperty("https.proxyPort", "3128");
 
         new Thread(new Runnable() {
             public void run() {

@@ -110,14 +110,14 @@ public abstract class HelpTest {
 
     NetworkParameters networkParameters = MainNetParams.get();
 
-    boolean deleteWlalletFile = false;
+    boolean deleteWlalletFile = true;
 
     @Before
     public void setUp() throws Exception {
         // System.setProperty("https.proxyHost",
         // "anwproxy.anwendungen.localnet.de");
         // System.setProperty("https.proxyPort", "3128");
-
+        mkdir();
         wallet1();
         wallet2();
         // emptyBlocks(10);
@@ -154,6 +154,13 @@ public abstract class HelpTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
     }
 
+    
+    protected void mkdir() throws Exception {
+        File f = new File("./logs" );
+        if (!f.exists()) 
+               f.mkdirs();
+        }
+   
     protected void wallet1() throws Exception {
         KeyParameter aesKey = null;
         // delete first
