@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
-import org.mockito.internal.stubbing.answers.ThrowsException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
