@@ -3118,7 +3118,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (a > maxblocks) {
                 a = maxblocks;
             }
-            sql += " LIMIT " + maxblocks;
+            sql += " LIMIT " + a;
         } else {
             sql += "SELECT blocks.hash, rating, depth, cumulativeweight, "
                     + " blocks.height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, blocks.confirmed"

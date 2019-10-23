@@ -36,7 +36,7 @@ public class ServerConfiguration {
     private String permissionadmin;
     private int solveRewardduration = 30; // in seconds
     private Boolean myserverblockOnly = false;
-    private long maxserachblocks = 100;
+    private long maxserachblocks = 5000;
     private List<String> permissionDomainname = ImmutableList.of(testPub);
 
     // does not reply all service request until service is set ready
