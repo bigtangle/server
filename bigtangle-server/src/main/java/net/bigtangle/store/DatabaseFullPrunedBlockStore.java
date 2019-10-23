@@ -461,12 +461,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders ORDER BY blockhash, collectinghash";
 
-    protected final String SELECT_AVAILABLE_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE confirmed=1 AND spent=? ORDER BY blockhash, collectinghash";
-    protected final String SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL = "SELECT blockhash, collectinghash, offercoinvalue, offertokenid, "
-            + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress"
-            + " FROM orders WHERE confirmed=1 AND spent=? ";
-
+    protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
+            + " FROM orders WHERE confirmed=1 AND spent=0 ";
+   
     protected final String SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
             + " WHERE confirmed=1 AND spent=0 AND offertokenid=? " + " ORDER BY targetcoinvalue / offercoinvalue ASC"
             + " LIMIT ?";
@@ -474,10 +471,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " WHERE confirmed=1 AND spent=0 AND targettokenid=? " + " ORDER BY offercoinvalue / targetcoinvalue DESC"
             + " LIMIT ?";
 
-    protected final String SELECT_MY_CLOSED_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000 "
-            + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
-            + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
+ 
+    
     protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
             + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
     protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
@@ -5496,105 +5491,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+ 
+
+   
 
     @Override
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent) throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get().prepareStatement(SELECT_AVAILABLE_ORDERS_SORTED_SQL);
-            s.setBoolean(1, spent);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses)
-            throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        String sql = SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL;
-        String orderby = " ORDER BY blockhash, collectinghash";
-        if (address != null && !address.trim().isEmpty()) {
-            sql += " AND beneficiaryaddress=? ";
-        }
-        if (addresses != null && !addresses.isEmpty()) {
-            sql += " AND beneficiaryaddress in (";
-            String temp = "";
-            for (String addr : addresses) {
-                temp += ",'" + addr + "'";
-            }
-            sql += temp.substring(1) + ")";
-        }
-        sql += orderby;
-        PreparedStatement s = null;
-        try {
-            // log.debug(sql);
-            s = conn.get().prepareStatement(sql);
-            s.setBoolean(1, spent);
-            if (address != null && !address.trim().isEmpty()) {
-                s.setString(2, address);
-            }
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses,
+    public List<OrderRecord> getAllOpenOrdersSorted ( List<String> addresses,
             String tokenid) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
-        String sql = SELECT_MY_AVAILABLE_ORDERS_SORTED_SQL;
-        String orderby = " ORDER BY blockhash, collectinghash";
-
-        if (address != null && !address.trim().isEmpty()) {
-            sql += " AND beneficiaryaddress=? ";
-        }
+        String sql = SELECT_OPEN_ORDERS_SORTED_SQL;
+        String orderby = " ORDER BY blockhash, collectinghash"; 
+     
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND (offertokenid=? or targettokenid=?)";
         }
@@ -5612,10 +5520,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // log.debug(sql);
             s = conn.get().prepareStatement(sql);
             int i = 1;
-            s.setBoolean(i++, spent);
-            if (address != null && !address.trim().isEmpty()) {
-                s.setString(i++, address);
-            }
+    
             if (tokenid != null && !tokenid.trim().isEmpty()) {
                 s.setString(i++, tokenid);
                 s.setString(i++, tokenid);
@@ -5729,14 +5634,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecord> getMyClosedOrders(String address) throws BlockStoreException {
+    public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_CLOSED_ORDERS_SQL + LIMIT_5000);
-            s.setString(1, address);
-            s.setString(2, address);
+            
+           
+            String myaddress = " in (";
+            for (String addr : addresses) {
+                myaddress += ",'" + addr + "'";
+            }
+            myaddress += myaddress.substring(1) + ")";
+      
+            String  sql= "SELECT " + ORDER_TEMPLATE + " FROM orders "
+                    + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress 
+                    + " AND collectinghash=0x0000000000000000000000000000000000000000000000000000000000000000 "
+                    + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
+                    + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress
+                    + ")";
+                    
+                    
+            s = conn.get().prepareStatement(sql);
+        ;
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);
@@ -5769,7 +5689,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL + LIMIT_5000);
+            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL );
             s.setString(1, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {

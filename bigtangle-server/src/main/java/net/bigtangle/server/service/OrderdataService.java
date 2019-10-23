@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,16 +24,23 @@ public class OrderdataService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public AbstractResponse getOrderdataList(boolean spent) throws BlockStoreException {
-
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent);
-        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
-    }
-
     public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid)
             throws BlockStoreException {
-    
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(spent, address, addresses, tokenid);
+        if (addresses == null)
+            addresses = new ArrayList<String>();
+        if (address != null && !"".equals(address)) {
+            addresses.add(address);
+        }
+        if (!spent) {
+            return getAllOpenOrders(addresses, tokenid);
+        } else {
+            // only my closed orders
+            return getMyClosedOrders(addresses);
+        }
+    }
+
+    private AbstractResponse getAllOpenOrders(List<String> addresses, String tokenid) throws BlockStoreException {
+        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(addresses, tokenid);
 
         HashSet<String> orderBlockHashs = new HashSet<String>();
         for (OrderRecord orderRecord : allOrdersSorted) {
@@ -52,6 +60,12 @@ public class OrderdataService {
                 orderRecord.setCancelPending(false);
             }
         }
+
+        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
+    }
+
+    private AbstractResponse getMyClosedOrders(List<String> addresses) throws BlockStoreException {
+        List<OrderRecord> allOrdersSorted = store.getMyClosedOrders(addresses);
 
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
     }

@@ -530,7 +530,7 @@ public abstract class AbstractIntegrationTest {
 
     protected void addCurrentOrderTokens(HashMap<String, Long> hashMap) throws BlockStoreException {
         // Adds the token values of open orders to the hashMap
-        List<OrderRecord> orders = store.getAllAvailableOrdersSorted(false);
+        List<OrderRecord> orders = store.getAllOpenOrdersSorted(null, null);
         for (OrderRecord o : orders) {
             String tokenId = o.getOfferTokenid();
             if (!hashMap.containsKey(tokenId))
@@ -552,7 +552,7 @@ public abstract class AbstractIntegrationTest {
 
     protected void showOrders() throws BlockStoreException {
         // Snapshot current state
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
+        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null); 
         for (OrderRecord o : allOrdersSorted) {
             log.debug(o.toString());
         }
@@ -561,7 +561,7 @@ public abstract class AbstractIntegrationTest {
     protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // Snapshot current state
-        List<OrderRecord> allOrdersSorted = store.getAllAvailableOrdersSorted(false);
+        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
         Map<Block, Boolean> blockConfirmed = new HashMap<>();
         for (Block b : addedBlocks) {
@@ -574,7 +574,7 @@ public abstract class AbstractIntegrationTest {
             blockGraph.add(b, true);
         }
         mcmcService.update();
-        List<OrderRecord> allOrdersSorted2 = store.getAllAvailableOrdersSorted(false);
+        List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
         assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
         assertEquals(allUTXOsSorted.toString(), allUTXOsSorted2.toString());

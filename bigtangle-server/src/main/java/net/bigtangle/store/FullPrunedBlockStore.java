@@ -284,14 +284,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     public void updateTokenConfirmed(Sha256Hash blockhash, boolean confirmed) throws BlockStoreException;
-
-    /* For tests */
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent) throws BlockStoreException;
-
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses)
-            throws BlockStoreException;
-
-    public List<OrderRecord> getAllAvailableOrdersSorted(boolean spent, String address, List<String> addresses,
+ 
+    public List<OrderRecord> getAllOpenOrdersSorted(  List<String> addresses,
             String tokenid) throws BlockStoreException;
 
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
@@ -444,7 +438,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
-    List<OrderRecord> getMyClosedOrders(String address) throws BlockStoreException;
+   
 
     List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
 
@@ -499,5 +493,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<BlockWrap> getEntryPoints() throws BlockStoreException;
 
     List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
+
+    List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException;
 
 }

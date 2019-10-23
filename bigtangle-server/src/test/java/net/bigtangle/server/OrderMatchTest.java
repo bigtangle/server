@@ -50,8 +50,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void orderTickerPrice() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -84,7 +85,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertEquals(1000l, tickerService.getLastMatchingEvents(a).getTickers().get(0).getPrice());
 
         // Verify deterministic overall execution
-        
 
         // check the method of client service
 
@@ -92,8 +92,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void orderTickerSearchAPI() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -106,10 +107,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -126,18 +127,19 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
-       for(MatchResult m:  orderTickerResponse.getTickers()) {
-           assertTrue(m.getTokenid().equals(  testTokenId));
-           assertTrue(m.getExecutedQuantity() == 99);
-           //TODO check the execute ordering. price is 1000 or 1001
-           assertTrue(m.getPrice() == 1000 ||m.getPrice() == 1001 );
-       }
+        for (MatchResult m : orderTickerResponse.getTickers()) {
+            assertTrue(m.getTokenid().equals(testTokenId));
+            assertTrue(m.getExecutedQuantity() == 99);
+            // TODO check the execute ordering. price is 1000 or 1001
+            assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
+        }
     }
 
     @Test
     public void orderTickerSearch() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -180,13 +182,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getBlockHash());
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void buy() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -218,13 +221,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void sell() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -253,13 +257,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void multiLevelBuy() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -293,13 +298,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void multiLevelSell() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -333,13 +339,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void partialBuy() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -368,13 +375,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void partialSell() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -403,13 +411,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void partialBidFill() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -430,7 +439,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -442,13 +451,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void partialAskFill() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -468,7 +478,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -480,13 +490,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void cancel() throws Exception {
-      
-        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -511,13 +522,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void cancelTwoStep() throws Exception {
-     
-    //    ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        // ECKey genesisKey =
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -545,13 +558,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void effectiveCancel() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -584,15 +598,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void testValidFromTime() throws Exception {
         final int waitTime = 5000;
 
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -619,7 +633,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Coin amount = Coin.valueOf(sellAmount, testTokenId);
         List<UTXO> outputs = getBalance(false, testKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
-                .filter(out -> out.getValue().getValue().compareTo( amount.getValue())> 0).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo(amount.getValue()) > 0).collect(Collectors.toList());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -636,7 +650,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block=adjustSolve(block);
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
@@ -667,7 +681,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
@@ -698,7 +712,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Coin amount = Coin.valueOf(sellAmount, testTokenId);
         List<UTXO> outputs = getBalance(false, testKey).stream()
                 .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(testTokenId))
-                .filter(out -> out.getValue().getValue() .compareTo( amount.getValue())> 0).collect(Collectors.toList());
+                .filter(out -> out.getValue().getValue().compareTo(amount.getValue()) > 0).collect(Collectors.toList());
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
         // amount, testKey));
@@ -715,7 +729,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block=adjustSolve(block);
+        block = adjustSolve(block);
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
@@ -730,13 +744,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void testAllOrdersSpent() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -769,13 +784,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void testReorgMatching() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -809,8 +825,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testMultiMatching1() throws Exception {
-      
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -841,13 +858,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
+
     }
 
     @Test
     public void testMultiMatching3() throws Exception {
-   
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
@@ -889,10 +907,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify deterministic overall execution
-        
 
         // Bonus: check open and closed orders
-        List<OrderRecord> closedOrders = store.getMyClosedOrders(genesisKey.toAddress(networkParameters).toBase58());
+        List<String> a = new ArrayList<String>();
+        a.add(genesisKey.toAddress(networkParameters).toBase58());
+        List<OrderRecord> closedOrders = store.getMyClosedOrders(a);
         List<OrderRecord> openOrders = store
                 .getMyRemainingOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
         List<OrderRecord> initialOrders = store
@@ -905,8 +924,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testMultiMatching4() throws Exception {
-       
-        ECKey genesisKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
         ;
         List<Block> addedBlocks = new ArrayList<>();
