@@ -52,18 +52,18 @@ public class SendEmptyBlock {
 
     private static final Logger log = LoggerFactory.getLogger(SendEmptyBlock.class);
 
-    public String CONTEXT_ROOT = 
-            "http://localhost:8088/";
+    public String CONTEXT_ROOT = "http://localhost:8088/";
 
-     //"http://localhost:8088/";//
+    // "http://localhost:8088/";//
     public static void main(String[] args) throws Exception {
-     //    System.setProperty("https.proxyHost",
-      //   "anwproxy.anwendungen.localnet.de");
-      //  System.setProperty("https.proxyPort", "3128");
+        // System.setProperty("https.proxyHost",
+        // "anwproxy.anwendungen.localnet.de");
+        // System.setProperty("https.proxyPort", "3128");
         SendEmptyBlock sendEmptyBlock = new SendEmptyBlock();
-        if(args.length > 0) sendEmptyBlock.CONTEXT_ROOT = args[0];
+        if (args.length > 0)
+            sendEmptyBlock.CONTEXT_ROOT = args[0];
         while (true) {
-           
+
             int c = sendEmptyBlock.needEmptyBlocks(sendEmptyBlock.CONTEXT_ROOT);
             if (c > 0) {
                 for (int i = 0; i < c; i++) {
@@ -102,7 +102,7 @@ public class SendEmptyBlock {
             // conflicts
             int res = 0;
             for (BlockEvaluationDisplay b : a) {
-                if (b.getRating() < 70 || b.getMilestone() <0) {
+                if (b.getRating() < 70) {
                     res += 1;
                 }
             }
