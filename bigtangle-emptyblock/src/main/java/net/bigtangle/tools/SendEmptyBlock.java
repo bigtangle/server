@@ -31,21 +31,15 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
-import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.TestParams;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.OkHttp3Util;
 import okhttp3.OkHttpClient;
 
 public class SendEmptyBlock {
 
-    private static final String HTTPS_BIGTANGLE_INFO = "https://bigtangle.info/";
-    private static final String HTTPS_BIGTANGLE_DE = "https://bigtangle.de/";
-    private static final String HTTPS_BIGTANGLE_ORG = "https://bigtangle.org/";
+    
     public static NetworkParameters params = TestParams.get();
 
     OkHttpClient client = new OkHttpClient();
@@ -71,8 +65,8 @@ public class SendEmptyBlock {
                     try {
                         sendEmptyBlock.send();
                     } catch (Exception e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+
+                       log.debug("",e);
                     }
 
                 }
@@ -102,14 +96,10 @@ public class SendEmptyBlock {
             // conflicts
             int res = 0;
             for (BlockEvaluationDisplay b : a) {
-                if (b.getRating() < 70) {
+                if (b.getRating() < 70 && b.getMilestone() <0 ) {
                     res += 1;
                 }
             }
-            if (getOrders(server)) {
-                res += 20;
-            }
-            // empty blocks
 
             return res;
         } catch (Exception e) {
@@ -130,24 +120,5 @@ public class SendEmptyBlock {
         return getBlockEvaluationsResponse.getEvaluations();
     }
 
-    private boolean getOrders(String server) throws Exception {
-        boolean orderbuy = false;
-        boolean ordersell = false;
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            if (Side.BUY.equals(orderRecord.getSide())) {
-                orderbuy = true;
-            } else {
-                ordersell = true;
-            }
-            if (orderbuy && ordersell)
-                return true;
-        }
-        return false;
-    }
+    
 }

@@ -93,7 +93,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (Block b : a2) {
             if (b != null)
                 blockGraph.add(b, true);
-            blockGraph.add(b, true);
+  
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
@@ -104,7 +104,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (Block b : a2) {
             if (b != null)
                 blockGraph.add(b, true);
-            blockGraph.add(b, true);
+  
         }
         for (Block b : a1) {
             if (b != null)

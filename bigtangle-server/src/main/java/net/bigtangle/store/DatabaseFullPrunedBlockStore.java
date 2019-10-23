@@ -3635,7 +3635,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    private String buildINList(Set<String> datalist) {
+    private String buildINList(Collection<String> datalist) {
         String in = "";
         for (String d : datalist) {
             in += "'" + d + "',";
@@ -5508,11 +5508,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         if (addresses != null && !addresses.isEmpty()) {
             sql += " AND beneficiaryaddress in (";
-            String temp = "";
-            for (String addr : addresses) {
-                temp += ",'" + addr + "'";
-            }
-            sql += temp.substring(1) + ")";
+             
+            sql += buildINList(addresses) + ")";
         }
         sql += orderby;
         PreparedStatement s = null;
@@ -5642,10 +5639,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             
            
             String myaddress = " in (";
-            for (String addr : addresses) {
-                myaddress += ",'" + addr + "'";
-            }
-            myaddress += myaddress.substring(1) + ")";
+           
+            myaddress += buildINList(addresses) + ")";
       
             String  sql= "SELECT " + ORDER_TEMPLATE + " FROM orders "
                     + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress 
