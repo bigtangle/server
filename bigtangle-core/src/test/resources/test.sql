@@ -58,7 +58,8 @@ select * from orders   ;
 
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
-select * from txreward   ;
+select * from txreward  order by chainlength desc ;
+select count(*) from txreward   ;
 select * from matching   ;
 select * from  multisignaddress
 select * from  multisign

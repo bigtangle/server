@@ -1025,7 +1025,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         deleteTip.add(block.getPrevBlockHash());
         deleteTip.add(block.getPrevBranchBlockHash());
         deleteTip.add(block.getHash());
- 
+        blockStore.deleteTip(deleteTip);
         blockStore.insertTip(block.getHash(), block.getHeight());
     }
 

@@ -88,7 +88,7 @@ public class SyncBlockService {
             log.debug(" Start  SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            diff();
+            sync();
             // deleteOldUnsolidBlock();
             // updateSolidity();
             log.debug(" end SyncBlockService Single: ");
@@ -318,15 +318,20 @@ public class SyncBlockService {
 
     public void requestBlocks(long chainlength, String s)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
+        requestBlocks(chainlength,chainlength, s);
+    }
+    public void requestBlocks(long chainlengthstart,long chainlengthend,  String s)
+            throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("start", chainlength + "");
-        requestParam.put("end", chainlength + "");
+        requestParam.put("start", chainlengthstart + "");
+        requestParam.put("end", chainlengthend + "");
 
         String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
-        log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " remote chainlength  :  " + chainlength
+        log.debug("block size: " + blockbytelist.getBlockbytelist().size()
+                + " remote chain start: " + chainlengthstart  + " end: " +chainlengthend
                 + " at server: " + s);
         List<Block> sortedBlocks = new ArrayList<Block>();
         for (byte[] data : blockbytelist.getBlockbytelist()) {
@@ -382,7 +387,7 @@ public class SyncBlockService {
         TXReward aTXReward;
     }
 
-    public void diff() throws Exception {
+    public void sync() throws Exception {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
@@ -398,7 +403,7 @@ public class SyncBlockService {
                         aMaxConfirmedReward.aTXReward = aTXReward;
                     }
                 }
-                diffMaxConfirmedReward(aMaxConfirmedReward);
+                syncMaxConfirmedReward(aMaxConfirmedReward);
             }
 
         }
@@ -412,7 +417,7 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void diffMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
         TXReward my = store.getMaxConfirmedReward();
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
@@ -428,8 +433,8 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength() ; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i++) {
-                requestBlocks(i, aMaxConfirmedReward.server);
+            for (long i = re.getChainLength() ; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i+=100) {
+                requestBlocks(i,i+100, aMaxConfirmedReward.server);
             }
 
         }
