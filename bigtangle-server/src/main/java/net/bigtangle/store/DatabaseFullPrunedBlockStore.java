@@ -1251,6 +1251,36 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public boolean getOutputConfirmation(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement( "SELECT  confirmed "
+                    + "FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? "
+);
+            s.setBytes(1, hash.getBytes());
+            // index is actually an unsigned int
+            s.setLong(2, index);
+            s.setBytes(3, blockHash.getBytes());
+            ResultSet results = s.executeQuery();
+            if (!results.next()) {
+                return false;
+            } 
+            return results.getBoolean("confirmed");
+       
+    } catch (SQLException ex) {
+        throw new BlockStoreException(ex);
+    } finally {
+        if (s != null) {
+            try {
+                s.close();
+            } catch (SQLException e) {
+                throw new BlockStoreException("Failed to close PreparedStatement");
+            }
+        }
+    }
+}
+    @Override
     public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;

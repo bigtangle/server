@@ -435,7 +435,7 @@ public class BlockService {
     }
 
     public boolean getUTXOConfirmed(TransactionOutPoint txout) throws BlockStoreException {
-        return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isConfirmed();
+        return store.getOutputConfirmation(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
     }
 
     public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) throws BlockStoreException {

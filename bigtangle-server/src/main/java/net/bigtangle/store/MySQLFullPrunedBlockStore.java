@@ -316,6 +316,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
+    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone) USING HASH";
 
     
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
@@ -372,6 +373,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
+        sqlStatements.add(  CREATE_BLOCKS_MILESTONE_INDEX);
         return sqlStatements;
     }
 

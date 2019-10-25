@@ -21,6 +21,7 @@ package net.bigtangle.core;
 
 import java.util.List;
 
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 
 /**
@@ -38,4 +39,6 @@ public interface UTXOProvider {
   
 
     List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException;
+
+    boolean getOutputConfirmation(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException;
 }

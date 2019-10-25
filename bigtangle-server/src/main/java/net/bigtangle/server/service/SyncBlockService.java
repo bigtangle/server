@@ -434,7 +434,7 @@ public class SyncBlockService {
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength() ; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i+=100) {
-                requestBlocks(i,i+100, aMaxConfirmedReward.server);
+                requestBlocks(i,i+99, aMaxConfirmedReward.server);
             }
 
         }
