@@ -2,8 +2,6 @@ package net.bigtangle.tools.test;
 
 import java.util.HashMap;
 
-import org.junit.Test;
-
 import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Block;
@@ -12,9 +10,9 @@ import net.bigtangle.core.Utils;
 
 public class MoneyForOrderBuyTest extends HelpTest {
 
-    // pay money to all keys in other wallets
-    @Test
+
     public void payMoney() throws Exception {
+        setUp();
         int i = 0;
         while (true) {
             try {

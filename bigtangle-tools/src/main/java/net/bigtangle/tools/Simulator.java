@@ -1,7 +1,5 @@
 package net.bigtangle.tools;
 
-import org.junit.runner.JUnitCore;
-
 import net.bigtangle.tools.test.MoneyForOrderBuyTest;
 import net.bigtangle.tools.test.OrderBuyTest;
 import net.bigtangle.tools.test.OrderSellTest;
@@ -14,9 +12,12 @@ public class Simulator {
 
         new Thread(new Runnable() {
             public void run() {
-                JUnitCore junit = new JUnitCore();
-                // Result result =
-                junit.run(OrderSellTest.class);
+                try {
+                    ( new OrderSellTest()).sellThread();
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } ;
 
             }
         }).start();
@@ -24,29 +25,28 @@ public class Simulator {
         
         new Thread(new Runnable() {
             public void run() {
-                JUnitCore junit = new JUnitCore();
-                // Result result =
-                junit.run(MoneyForOrderBuyTest.class);
+                try {
+                    ( new MoneyForOrderBuyTest()).payMoney();
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
 
             }
         }).start();
       
         new Thread(new Runnable() {
             public void run() {
-                JUnitCore junit = new JUnitCore();
-                // Result result =
-                junit.run(OrderBuyTest.class);
+              try {
+                (new OrderBuyTest()).buy();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            };
 
             }
         }).start();
         
-        new Thread(new Runnable() {
-            public void run() {
-                JUnitCore junit = new JUnitCore();
-                // Result result =
-                junit.run(OrderSellTest.class);
-
-            }
-        }).start();
+ 
     }
 }
