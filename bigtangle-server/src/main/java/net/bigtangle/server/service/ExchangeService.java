@@ -47,9 +47,9 @@ public class ExchangeService {
         String toAddress = (String) request.get("toAddress");
         String toTokenHex = (String) request.get("toTokenHex");
         String toAmount = (String) request.get("toAmount");
-        String dataHex = (String) request.get("dataHex");
-        byte[] data = new byte[0];
-        Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, data);
+        //String dataHex = (String) request.get("dataHex");
+        //byte[] data = Utils.HEX.decode(dataHex);
+        Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, new byte[0]);
         exchange.setOrderid(orderid);
         exchange.setFromSign(1);
         this.store.saveExchange(exchange);
