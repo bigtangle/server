@@ -219,7 +219,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = true AND rating <= "
+            + "  FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = true AND rating < "
             + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD + afterSelect();
 
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE

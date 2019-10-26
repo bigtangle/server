@@ -101,9 +101,11 @@ public abstract class NetworkParameters {
     protected   String genesisPub;
 
     // MCMC settings
-    public static final int CONFIRMATION_UPPER_THRESHOLD = 70;
-    public static final int CONFIRMATION_LOWER_THRESHOLD = 67;
-    public static final int NUMBER_RATING_TIPS = 100;
+    public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 70;
+    public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 67;
+    public static final int NUMBER_RATING_TIPS = 30;
+    public static final int CONFIRMATION_UPPER_THRESHOLD = CONFIRMATION_UPPER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS / 100;
+    public static final int CONFIRMATION_LOWER_THRESHOLD = CONFIRMATION_LOWER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS / 100;
 
     // Token ID for System Coin
     public static final String BIGTANGLE_TOKENID_STRING = "bc";

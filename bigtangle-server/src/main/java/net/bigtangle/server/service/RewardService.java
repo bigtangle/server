@@ -102,6 +102,7 @@ public class RewardService {
      */
 
     public Block createReward() throws Exception {
+
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
         Block reward = createReward(prevRewardHash);
         if (reward != null) {
@@ -112,7 +113,10 @@ public class RewardService {
 
     public Block createReward(Sha256Hash prevRewardHash) throws Exception {
         try {
+            Stopwatch watch = Stopwatch.createStarted();
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
+            log.debug("  getValidatedRewardBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            
             return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
         } catch (CutoffException | InfeasiblePrototypeException e) {
             // fall back to use prev reward as tip
@@ -184,6 +188,7 @@ public class RewardService {
         try {
             handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
+            log.debug(" reward solve Timeout  ");
             handler.cancel(true);
             return null;
         } finally {
