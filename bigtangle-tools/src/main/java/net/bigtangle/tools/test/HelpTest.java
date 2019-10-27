@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.tools.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.junit.Before;
@@ -33,7 +31,6 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.UTXO;
@@ -122,28 +119,8 @@ public abstract class HelpTest {
         wallet2();
         // emptyBlocks(10);
     }
-
-    protected void assertHasAvailableToken(ECKey testKey, String tokenId_, Long amount) throws Exception {
-        // Asserts that the given ECKey possesses the given amount of tokens
-        List<UTXO> balance = getBalance(false, testKey);
-        HashMap<String, Long> hashMap = new HashMap<>();
-        for (UTXO o : balance) {
-            String tokenId = Utils.HEX.encode(o.getValue().getTokenid());
-            if (!hashMap.containsKey(tokenId))
-                hashMap.put(tokenId, 0L);
-            hashMap.put(tokenId, hashMap.get(tokenId) + o.getValue().getValue().longValue());
-        }
-
-        assertEquals(amount, hashMap.get(tokenId_));
-    }
-
-    protected Sha256Hash getRandomSha256Hash() {
-        byte[] rawHashBytes = new byte[32];
-        new Random().nextBytes(rawHashBytes);
-        Sha256Hash sha256Hash = Sha256Hash.wrap(rawHashBytes);
-        return sha256Hash;
-    }
-
+ 
+ 
     public void importKeys(Wallet w) throws Exception {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));

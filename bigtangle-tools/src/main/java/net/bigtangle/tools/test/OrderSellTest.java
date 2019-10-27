@@ -24,10 +24,9 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
 public class OrderSellTest extends HelpTest {
-
-    @Test
+ 
     public void sellThread() throws Exception {
-
+        setUp();
         importKeys(walletAppKit2.wallet());
         importKeys(walletAppKit1.wallet());
 

@@ -2,8 +2,6 @@ package net.bigtangle.tools.test;
 
 import java.util.HashMap;
 
-import org.junit.Test;
-
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
@@ -17,9 +15,9 @@ public class OrderBuyTest extends HelpTest {
 
     // buy everthing in test
 
-    @Test
+   
     public void buy() throws Exception {
-
+        setUp();
         importKeys(walletAppKit2.wallet());
         importKeys(walletAppKit1.wallet());
 

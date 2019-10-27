@@ -6,8 +6,8 @@ server:
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
     
-  serverURL: ${SERVERURL:https://bigtangle.info/}
-  reset: ${RESET:false}
+  serverURL: ${SERVERURL:http:/localhost:8088/}
+  reset: ${RESET:true}
 
 spring:
     mvc:

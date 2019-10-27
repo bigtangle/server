@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,6 +59,7 @@ import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.OrderMatchingResult;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -83,13 +85,28 @@ public class RewardService {
     protected NetworkParameters networkParameters;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Scheduled update function that updates the Tangle
+     * 
+     * @throws BlockStoreException
+     */
+
+    protected final ReentrantLock lock = Threading.lock("RewardService");
+    
     // createReward is time boxed and can run parallel.
     public void startSingleProcess() {
+        if (!lock.tryLock()) {
+            log.debug(this.getClass().getName() + "  RewardService running. Returning...");
+            return;
+        }
+
         try {
             log.info("create Reward  started");
             createReward();
         } catch (Exception e) {
             log.error("create Reward end  ", e);
+        }   finally {
+            lock.unlock();
         }
 
     }

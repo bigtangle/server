@@ -335,24 +335,13 @@ public class BlockService {
         return notMissingAnything;
     }
 
-    @SuppressWarnings("unchecked")
-    // TODO cache last blocks, but add evict @Cacheable("searchBlock")
     public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
+        @SuppressWarnings("unchecked")
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
         List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
                 serverConfiguration.getMaxserachblocks());
-        HashSet<String> hashSet = new HashSet<String>();
-        // filter
-        for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
-            BlockEvaluation blockEvaluation = iterator.next();
-            if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
-                iterator.remove();
-            } else {
-                hashSet.add(blockEvaluation.getBlockHexStr());
-            }
-        }
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
@@ -361,16 +350,7 @@ public class BlockService {
         String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(blockhash, lastestAmount);
-        HashSet<String> hashSet = new HashSet<String>();
-        // filter
-        for (Iterator<BlockEvaluationDisplay> iterator = evaluations.iterator(); iterator.hasNext();) {
-            BlockEvaluation blockEvaluation = iterator.next();
-            if (hashSet.contains(blockEvaluation.getBlockHexStr())) {
-                iterator.remove();
-            } else {
-                hashSet.add(blockEvaluation.getBlockHexStr());
-            }
-        }
+
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
@@ -410,7 +390,6 @@ public class BlockService {
         this.store.deleteMyserverblocks(prevhash);
     }
 
-    // TODO @Cacheable("blocksFromChainLength")
     public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
@@ -418,7 +397,7 @@ public class BlockService {
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
-    public Block askTransactionBlock() throws Exception {
+    public Block getTip() throws Exception {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = getBlock(tipsToApprove.getLeft());
         Block r2 = getBlock(tipsToApprove.getRight());

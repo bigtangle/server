@@ -77,7 +77,7 @@ public class ScheduleOrderService {
                 continue;
             }
             Map<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("blockhash", vm_deposit.getBlockhash());
+            requestParam.put("hashHex", vm_deposit.getBlockhash());
             String response = OkHttp3Util.postString(
                     scheduleConfiguration.getServerURL() + ReqCmd.getBlockByHash.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));

@@ -117,7 +117,7 @@ public class DispatcherController {
             checkReady(httpServletResponse, httprequest);
             switch (reqCmd0000) {
             case getTip: {
-                Block rollingBlock = blockService.askTransactionBlock();
+                Block rollingBlock = blockService.getTip();
                 register(rollingBlock);
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);

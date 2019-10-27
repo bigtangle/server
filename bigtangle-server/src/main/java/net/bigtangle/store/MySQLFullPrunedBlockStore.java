@@ -14,15 +14,14 @@ import net.bigtangle.core.exception.BlockStoreException;
 
 /**
  * <p>
- * A full pruned block store using the MySQL database engine. As an added bonus
- * an address index is calculated.
+ * A full pruned block store using the MySQL database engine.
  * </p>
  */
 
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
-    private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
+    private static final String DATABASE_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://"; // "jdbc:log4jdbc:mysql://";
 
     // create table SQL
@@ -114,11 +113,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   difficulty bigint NOT NULL,\n" 
             + "   chainlength bigint NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
-
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
-            + "    hash binary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n" 
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ") ENGINE=InnoDB\n";
 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
                 // initial issuing block  hash
@@ -316,9 +310,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
-    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone) USING HASH";
+    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)";
+    private static final String CREATE_txreard_chainlength_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength) ";
 
-    
+  
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params,
@@ -339,7 +334,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
-        sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
         sqlStatements.add(CREATE_MATCHING_TABLE);
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
@@ -373,7 +367,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
-        sqlStatements.add(  CREATE_BLOCKS_MILESTONE_INDEX);
+        sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
+        sqlStatements.add(CREATE_txreard_chainlength_INDEX);
         return sqlStatements;
     }
 

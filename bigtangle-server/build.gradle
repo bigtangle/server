@@ -22,13 +22,10 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
     compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot   
- 
+
   	compile group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version:  ver.spring_boot
-   
-   
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.8'
-  //  compile group: 'org.aspectj', name: 'aspectjrt',   version:ver.aspectjrt
-  //  compile group: 'org.aspectj', name: 'aspectjweaver', version:ver.aspectjweaver
+
    	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
  
  	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
@@ -42,25 +39,13 @@ dependencies {
  
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
     
-    compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12'
-    //compile("com.hazelcast:hazelcast-spring:3.7.4")
-    
-    // https://mvnrepository.com/artifact/com.mchange/c3p0
+    compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12.3'
+ 
 	compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.4'
-
-   //   compile group: 'com.mchange', name: 'c3p0', version:  ver.c3p0
+ 
     compile project(':bigtangle-servercore')
     // compile project(':bigtangle-pool')
-  //  compile group: 'net.javacrumbs.shedlock', name: 'shedlock-spring', version: '2.4.0'
-   //  compile group: 'net.javacrumbs.shedlock', name: 'shedlock-provider-jdbc-template', version: '2.4.0'
-
-   // compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.0'
-  //  compile group: ( 'com.github.adejanovski', name: 'cassandra-jdbc-wrapper', version: '3.3.0') {  
-  //     exclude group: "org.apache.cassandra", module: "cassandra-clientutil"
-  //   }
- 
-    
-   //  
+   
     /**
      * test dependencies
      */

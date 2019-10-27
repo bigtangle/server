@@ -5,6 +5,7 @@
 package net.bigtangle.server.service.schedule;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class ScheduleSyncBlockService {
      * read data from table oder by insert time, use add Block to check again,
      * if missing previous, it may request network for the blocks
      */
+    @Async
     @Scheduled(fixedRate = 5000)
     public void updateUnsolideService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
