@@ -114,11 +114,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   chainlength bigint NOT NULL,\n" 
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
 
-    private static final String CREATE_TIPS_TABLE = "CREATE TABLE tips (\n" 
-            + "    hash binary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n" 
-            + "    CONSTRAINT tips_pk PRIMARY KEY (hash) USING HASH \n" + ") ENGINE=InnoDB\n";
-
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
                 // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
@@ -339,7 +334,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
-        sqlStatements.add(CREATE_TIPS_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
         sqlStatements.add(CREATE_MATCHING_TABLE);
         sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);

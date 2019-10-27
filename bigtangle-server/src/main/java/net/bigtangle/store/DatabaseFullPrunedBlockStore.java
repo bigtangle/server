@@ -94,7 +94,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_UNSOLIDBLOCKS_TABLE = "DROP TABLE IF EXISTS unsolidblocks";
     public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS outputs";
     public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
-    public static String DROP_TIPS_TABLE = "DROP TABLE IF EXISTS tips";
     public static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
     public static String DROP_MATCHING_TABLE = "DROP TABLE IF EXISTS matching";
     public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
@@ -198,8 +197,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String DELETE_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE hash = ?";
     protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE height <= ?";
-    protected final String DELETE_TIP_SQL = "DELETE FROM tips WHERE hash = ?";
-    protected final String INSERT_TIP_SQL = getInsert() + "  INTO tips (hash , height) VALUES (?,?)";
 
     protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE hash = ?" + afterSelect();
@@ -225,10 +222,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
 
-    protected final String SELECT_SOLID_TIPS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_SOLID_BLOCKS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
             + " blocks.height, milestone, milestonelastupdate,  inserttime,  block, solid, confirmed FROM blocks "
-            + "INNER JOIN tips ON tips.hash=blocks.hash" + afterSelect();
-    protected final String UPDATE_CUTOFF_TIPS_SQL = "delete FROM tips where height <=? ";
+            + " WHERE height > ? " + afterSelect();
 
     protected final String SELECT_CONFIRMED_BLOCKS_OF_HEIGHT_HIGHER_THAN_SQL = "SELECT hash "
             + "FROM blocks WHERE height >= ? AND confirmed = 1 " + afterSelect();
@@ -650,7 +646,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
         sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
-        sqlStatements.add(DROP_TIPS_TABLE);
         sqlStatements.add(DROP_TOKENS_TABLE);
         sqlStatements.add(DROP_MATCHING_TABLE);
         sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
@@ -904,9 +899,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     NetworkParameters.BigtangleCoinTotal, true, NetworkParameters.BIGTANGLE_DECIMAL, "");
             insertToken(params.getGenesisBlock().getHash(), bigtangle);
             updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
-
-            // Tip table
-            insertTip(params.getGenesisBlock().getHash(), 0);
+            
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1811,35 +1804,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateTip(long cutoff) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_CUTOFF_TIPS_SQL);
-            preparedStatement.setLong(1, cutoff);
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException {
+    public PriorityQueue<BlockWrap> getSolidBlocksDescending(long cutoffHeight) throws BlockStoreException {
         PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_TIPS_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_SQL);
+            preparedStatement.setLong(1, cutoffHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -2405,54 +2377,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException e) {
             if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
                 throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteTip(Set<Sha256Hash> blockhashs) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-
-            preparedStatement = conn.get().prepareStatement(DELETE_TIP_SQL);
-            for (Sha256Hash blockhash : blockhashs) {
-                preparedStatement.setBytes(1, blockhash.getBytes());
-                preparedStatement.addBatch();
-            }
-
-            preparedStatement.executeBatch();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void insertTip(Sha256Hash blockhash, long heigth) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-            preparedStatement = conn.get().prepareStatement(INSERT_TIP_SQL);
-            preparedStatement.setBytes(1, blockhash.getBytes());
-            preparedStatement.setLong(2, heigth);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
         } finally {
             if (preparedStatement != null) {
                 try {

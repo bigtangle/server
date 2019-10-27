@@ -159,14 +159,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException;
 
-    public PriorityQueue<BlockWrap> getSolidTipsDescending() throws BlockStoreException;
+    public PriorityQueue<BlockWrap> getSolidBlocksDescending(long cutoffHeight) throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException;
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
     public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
-    public void  updateTip(long cutoffHeight) throws BlockStoreException;
 
     /* Block Evaluation */
     public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
@@ -183,10 +182,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException;
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
-
-    public void deleteTip(Set<Sha256Hash> blockhash) throws BlockStoreException;
-
-    public void insertTip(Sha256Hash blockhash,long heigth) throws BlockStoreException;
 
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
