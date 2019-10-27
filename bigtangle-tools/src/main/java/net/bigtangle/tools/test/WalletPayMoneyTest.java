@@ -18,7 +18,15 @@ import net.bigtangle.kits.WalletAppKit;
 public class WalletPayMoneyTest extends HelpTest {
 
     @Test
-    public void pay() throws Exception {
+    public void pay()     {
+    try {
+        payDo();
+    } catch (Exception e) {
+        // TODO Auto-generated catch block
+      log.debug("", e);
+    }
+    }
+  public void payDo() throws Exception {
         importKeys(walletAppKit2.wallet());
         //importKeys(walletAppKit1.wallet());
         this.wallet1();

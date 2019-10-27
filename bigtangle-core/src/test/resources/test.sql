@@ -1,4 +1,4 @@
-select * from blocks   ;
+select * from blocks  where milestone <0 ;
 select * from unsolidblocks order by height;
 select * from orders   ;
 select count( *) from blocks   ;
