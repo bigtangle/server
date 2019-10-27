@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,17 +17,30 @@ import net.bigtangle.kits.WalletAppKit;
 public class WalletPayMoneyTest extends HelpTest {
 
     @Test
-    public void pay()     {
-    try {
-        payDo();
-    } catch (Exception e) {
-        // TODO Auto-generated catch block
-      log.debug("", e);
+    public void pay() {
+        try {
+            payDo();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            log.debug("", e);
+        }
     }
+
+    public void payWithSeptup() {
+  
+        try {
+            setUp();
+            payDo();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            log.debug("", e);
+        }
     }
-  public void payDo() throws Exception {
+
+    
+    public void payDo() throws Exception {
         importKeys(walletAppKit2.wallet());
-        //importKeys(walletAppKit1.wallet());
+        // importKeys(walletAppKit1.wallet());
         this.wallet1();
         this.wallet2();
 
@@ -64,7 +76,7 @@ public class WalletPayMoneyTest extends HelpTest {
         }
 
         private WalletBook walletBook;
-        
+
         @Override
         public void run() {
             while (true) {
@@ -88,18 +100,24 @@ public class WalletPayMoneyTest extends HelpTest {
                 walletAppKit.wallet().importKey(ecKey);
 
                 String tokenid = Utils.HEX.encode(fromkey.getPubKey());
-             //   System.out.println(testPub);
-             //   System.out.println(tokenid);
+                // System.out.println(testPub);
+                // System.out.println(tokenid);
 
-                walletAppKit1.wallet().pay(null, ecKey.toAddress(networkParameters), Coin.valueOf(2l ), "");
-               /*  HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-                giveMoneyResult.put(ecKey.toAddress(networkParameters).toBase58(), 10l);
-                
-
-                fromkey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-                walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
-                */
-//                walletAppKit.wallet().
+                walletAppKit1.wallet().pay(null, ecKey.toAddress(networkParameters), Coin.valueOf(2l), "");
+                /*
+                 * HashMap<String, Long> giveMoneyResult = new HashMap<String,
+                 * Long>();
+                 * giveMoneyResult.put(ecKey.toAddress(networkParameters).
+                 * toBase58(), 10l);
+                 * 
+                 * 
+                 * fromkey =
+                 * ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(
+                 * testPriv), Utils.HEX.decode(testPub));
+                 * walletAppKit1.wallet().payMoneyToECKeyList(null,
+                 * giveMoneyResult, fromkey);
+                 */
+                // walletAppKit.wallet().
 
                 WalletKeyBook walletKeyBook = new WalletKeyBook(ecKey, this.sumUTXOBalance(tokenid, ecKey));
                 walletBook.addWalletKeyBook(walletKeyBook);

@@ -23,17 +23,14 @@ public class BeforeStartup {
  
     @PostConstruct
     public void run() throws Exception {
-        //may cleanup of project in mixed eclipse   false in test 
+      
         logger.debug("server config: "+ serverConfiguration.toString());
-
+        //false in test 
         if (serverConfiguration.getCreatetable()) {
             store.create();
-        }
-     
-        serverConfiguration.setServiceReady(true);
-        serverConfiguration.setUpdateTip(false);
-         syncBlockService.startSingleProcess();
-         serverConfiguration.setUpdateTip(true);
+        } 
+        serverConfiguration.setServiceReady(true); 
+        syncBlockService.startSingleProcess(); 
         blockStreamHandler.runStream();
     
       

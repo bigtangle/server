@@ -28,7 +28,7 @@ public class OrderBuyTest extends HelpTest {
                     Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
             OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-
+           if( orderdataResponse.getAllOrdersSorted().isEmpty())   Thread.sleep(4000);
             int i = 0;
             for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
                 try {
