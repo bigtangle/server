@@ -1005,7 +1005,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } else {
                 // Else normal update
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
-                updateTip(block);
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                 solidifyReward(block);
@@ -1017,20 +1016,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
             break;
-        }
-    }
-
-    private void updateTip(Block block) throws BlockStoreException {
-
-        if (serverConfiguration.getUpdateTip()) {
-
-            // Update tips table
-            Set<Sha256Hash> deleteTip = new HashSet<Sha256Hash>();
-            deleteTip.add(block.getPrevBlockHash());
-            deleteTip.add(block.getPrevBranchBlockHash());
-            deleteTip.add(block.getHash());
-            blockStore.deleteTip(deleteTip);
-            blockStore.insertTip(block.getHash(), block.getHeight());
         }
     }
 

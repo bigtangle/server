@@ -96,7 +96,6 @@ public class MCMCService {
         // cleanupNonSolidMissingBlocks();
         try {
             store.beginDatabaseBatchWrite();
-            updateTips();
             updateWeightAndDepth();
             updateRating();
             store.commitDatabaseBatchWrite();
@@ -139,7 +138,8 @@ public class MCMCService {
     private void updateWeightAndDepth() throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+        long cutoffHeight = blockService.getCutoffHeight();
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksDescending(cutoffHeight);
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
@@ -150,7 +150,6 @@ public class MCMCService {
         }
 
         BlockWrap currentBlock = null;
-        long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             Sha256Hash currentBlockHash = currentBlock.getBlockHash();
 
@@ -207,6 +206,7 @@ public class MCMCService {
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
         Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
+        long cutoffHeight = blockService.getCutoffHeight();
 
         // Initialize all approvers as UUID
         for (BlockWrap selectedTip : selectedTips) {
@@ -223,7 +223,7 @@ public class MCMCService {
 
         // Begin from the highest solid height tips plus selected tips and go
         // backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidTipsDescending();
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksDescending(cutoffHeight);
         HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
         selectedTipSet.removeAll(blockQueue);
         blockQueue.addAll(selectedTipSet);
@@ -233,7 +233,6 @@ public class MCMCService {
         }
 
         BlockWrap currentBlock = null;
-        long cutoffHeight = blockService.getCutoffHeight();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained
             if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
@@ -312,10 +311,5 @@ public class MCMCService {
             if (i == WARNING_MILESTONE_UPDATE_LOOPS)
                 log.warn("High amount of milestone updates per scheduled update. Can't keep up or reorganizing!");
         }
-    }
-
-    private void updateTips() throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
-        long cutoffHeight = blockService.getCutoffHeight();
-        store.updateTip(cutoffHeight);
     }
 }
