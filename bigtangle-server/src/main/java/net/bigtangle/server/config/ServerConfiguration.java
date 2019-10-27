@@ -42,14 +42,15 @@ public class ServerConfiguration {
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
     private Boolean createtable = true;
- 
+    
+    private double  alphaMCMC = -0.05;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+                
             }
         }
         return serviceReady;
@@ -195,6 +196,14 @@ public class ServerConfiguration {
         this.maxserachblocks = maxserachblocks;
     }
  
+
+    public double getAlphaMCMC() {
+        return alphaMCMC;
+    }
+
+    public void setAlphaMCMC(double alphaMCMC) {
+        this.alphaMCMC = alphaMCMC;
+    }
 
     @Override
     public String toString() {

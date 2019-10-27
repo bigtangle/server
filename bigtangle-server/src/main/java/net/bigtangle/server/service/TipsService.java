@@ -31,11 +31,14 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.DatabaseFullPrunedBlockStore;
 
 @Service
 public class TipsService {
+     
+
     private final Logger log = LoggerFactory.getLogger(TipsService.class);
 
     @Autowired
@@ -46,7 +49,9 @@ public class TipsService {
     protected NetworkParameters networkParameters;
     @Autowired
     private ValidatorService validatorService;
-
+    @Autowired
+    private ServerConfiguration serverConfiguration;
+    
     private static Random seed = new Random();
 
     private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -466,7 +471,7 @@ public class TipsService {
             // Calculate the unnormalized transition weights
             for (int i = 0; i < candidates.size(); i++) {
                 // Calculate transition weights
-                transitionWeights[i] = Math.exp(-0.005
+                transitionWeights[i] = Math.exp(serverConfiguration.getAlphaMCMC()
                         * (currentCumulativeWeight - candidates.get(i).getBlockEvaluation().getCumulativeWeight()));
                 transitionWeightSum += transitionWeights[i];
             }
