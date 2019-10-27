@@ -10,8 +10,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
     }
 
     public BlockEvaluationDisplay(BlockEvaluation other) {
-        super(other);
-        // TODO Auto-generated constructor stub
+        super(other); 
     }
 
     public Type getBlockType() {
@@ -27,7 +26,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
             int blocktype, long solid, boolean confirmed) {
         BlockEvaluationDisplay blockEvaluation = new BlockEvaluationDisplay();
         blockEvaluation.setBlockHash(blockhash);
-        blockEvaluation.setRating(rating);
+        blockEvaluation.setNormalizeRating(rating);
         blockEvaluation.setDepth(depth);
         blockEvaluation.setCumulativeWeight(cumulativeWeight);
 
@@ -45,6 +44,10 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         setBlockType(Type.values()[blocktype]);
     }
 
+    public void setNormalizeRating(long rating) {
+        setRating(rating *100 / NetworkParameters.NUMBER_RATING_TIPS);
+    }
+    
     /**
      * 
      */

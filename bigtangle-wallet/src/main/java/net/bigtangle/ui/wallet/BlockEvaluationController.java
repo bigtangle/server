@@ -374,7 +374,7 @@ public class BlockEvaluationController {
 
         ObservableList<Map> allData = FXCollections.observableArrayList();
         if (blockEvaluations != null && !blockEvaluations.isEmpty()) {
-            for (BlockEvaluation blockEvaluation : blockEvaluations) {
+            for (BlockEvaluationDisplay blockEvaluation : blockEvaluations) {
                 Map<String, Object> dataRow = new HashMap<>();
                 dataRow.put("hash",
                         blockEvaluation.getBlockHash() == null ? "" : blockEvaluation.getBlockHash().toString());
@@ -385,7 +385,7 @@ public class BlockEvaluationController {
 
                 dataRow.put("milestone", blockEvaluation.getMilestone());
                 dataRow.put("milestoneDepth", "");
-                dataRow.put("maintained", "");
+                dataRow.put("blocktype", blockEvaluation.getBlockType().name());
 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 java.util.Date date = new Date(blockEvaluation.getMilestoneLastUpdateTime());

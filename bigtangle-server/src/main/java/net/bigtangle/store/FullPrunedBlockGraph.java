@@ -76,6 +76,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
@@ -115,6 +116,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private RewardService rewardService;
     @Autowired
     private OrderTickerService tickerService;
+    @Autowired
+    ServerConfiguration serverConfiguration;
 
     private void solidifyReward(Block block) throws BlockStoreException {
 
@@ -171,7 +174,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
             return false;
         }
-        
+
         // save the block
         try {
             blockStore.beginDatabaseBatchWrite();
@@ -433,7 +436,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Get list of consumed orders, virtual order matching tx and newly
             // generated remaining order book
             matchingResult = generateOrderMatching(block);
-            tx =matchingResult.getOutputTx();
+            tx = matchingResult.getOutputTx();
 
             insertVirtualUTXOs(block, tx);
             insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
@@ -562,23 +565,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock());
 
         // All consumed order records are now spent by this block
-        
+
         for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
-           o.setSpent( true);
-           o.setSpenderBlockHash( block.getBlock().getHash());
+            o.setSpent(true);
+            o.setSpenderBlockHash(block.getBlock().getHash());
         }
         blockStore.updateOrderSpent(actualCalculationResult.getSpentOrders());
-        
+
         // Set virtual outputs confirmed
         confirmVirtualCoinbaseTransaction(block);
 
         // Set new orders confirmed
-       
-            blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders());
+
+        blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders());
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
-                actualCalculationResult.getOutputTx().getHashAsString(), block.getBlock().getTimeSeconds() );
+                actualCalculationResult.getOutputTx().getHashAsString(), block.getBlock().getTimeSeconds());
     }
 
     private void confirmOrderOpen(BlockWrap block) throws BlockStoreException {
@@ -775,7 +778,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult matchingResult = generateOrderMatching(block);
 
         // Disconnect all virtual transaction output dependents
-        Transaction tx =  matchingResult.getOutputTx();
+        Transaction tx = matchingResult.getOutputTx();
         ;
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
@@ -902,9 +905,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateOrderConfirmed(o.getBlockHash(), o.getIssuingMatcherBlockHash(), false);
 
         // Update the matching history in db
-        tickerService.removeMatchingEvents(
-                matchingResult.getOutputTx(),
-                matchingResult.tokenId2Events);
+        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.tokenId2Events);
     }
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
@@ -1020,13 +1021,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void updateTip(Block block) throws BlockStoreException {
-        // Update tips table
-        Set<Sha256Hash> deleteTip= new HashSet<Sha256Hash>();
-        deleteTip.add(block.getPrevBlockHash());
-        deleteTip.add(block.getPrevBranchBlockHash());
-        deleteTip.add(block.getHash());
-        blockStore.deleteTip(deleteTip);
-        blockStore.insertTip(block.getHash(), block.getHeight());
+
+        if (serverConfiguration.getUpdateTip()) {
+
+            // Update tips table
+            Set<Sha256Hash> deleteTip = new HashSet<Sha256Hash>();
+            deleteTip.add(block.getPrevBlockHash());
+            deleteTip.add(block.getPrevBranchBlockHash());
+            deleteTip.add(block.getHash());
+            blockStore.deleteTip(deleteTip);
+            blockStore.insertTip(block.getHash(), block.getHeight());
+        }
     }
 
     protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
@@ -1294,16 +1299,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
             processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
         }
-        
+
         for (OrderRecord o : remainingOrders.values())
-            o.setDefault( ); 
+            o.setDefault();
 
         // Make deterministic tx with proceeds
         Transaction tx = createOrderPayoutTransaction(block, payouts);
         return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
-    private Transaction createOrderPayoutTransaction(Block block, TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts) {
+    private Transaction createOrderPayoutTransaction(Block block,
+            TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts) {
         Transaction tx = new Transaction(networkParameters);
         for (Entry<ByteBuffer, TreeMap<String, BigInteger>> payout : payouts.entrySet()) {
             byte[] beneficiaryPubKey = payout.getKey().array();
@@ -1313,7 +1319,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 BigInteger proceedsValue = tokenProceeds.getValue();
 
                 if (proceedsValue.signum() != 0)
-                    tx.addOutput( new Coin(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
+                    tx.addOutput(new Coin(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
             }
         }
 
@@ -1481,19 +1487,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             BlockWrap b = blockStore.getBlockWrap(bHash);
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
                 final Sha256Hash blockHash = b.getBlock().getHash();
-
                 OrderRecord order = blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
                 newOrders.put(blockHash, OrderRecord.cloneOrderRecord(order));
                 spentOrders.add(order);
 
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
-                OrderCancelInfo info = null;
-                try {
-                    info = OrderCancelInfo.parse(b.getBlock().getTransactions().get(0).getData());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
+                OrderCancelInfo info = OrderCancelInfo.parseChecked(b.getBlock().getTransactions().get(0).getData());
                 cancels.add(info);
             }
         }

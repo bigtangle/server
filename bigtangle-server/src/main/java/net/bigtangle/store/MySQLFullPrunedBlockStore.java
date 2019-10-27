@@ -14,15 +14,14 @@ import net.bigtangle.core.exception.BlockStoreException;
 
 /**
  * <p>
- * A full pruned block store using the MySQL database engine. As an added bonus
- * an address index is calculated.
+ * A full pruned block store using the MySQL database engine.
  * </p>
  */
 
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
-    private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
+    private static final String DATABASE_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://"; // "jdbc:log4jdbc:mysql://";
 
     // create table SQL
@@ -316,9 +315,10 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
-    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone) USING HASH";
+    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)";
+    private static final String CREATE_txreard_chainlength_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength) ";
 
-    
+  
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params,
@@ -373,7 +373,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
-        sqlStatements.add(  CREATE_BLOCKS_MILESTONE_INDEX);
+        sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
+        sqlStatements.add(CREATE_txreard_chainlength_INDEX);
         return sqlStatements;
     }
 

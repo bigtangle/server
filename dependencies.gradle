@@ -16,7 +16,7 @@ ext {
             jsr305:'2.0.1',
             jcip_annotations:'1.0',
             scrypt:'1.4.0',
-            mysql_connector_java:'5.1.33',
+            mysql_connector_java:'8.0.18',
             okhttp:'3.12.5',
             easymock:'3.2',
             spongycastlecore:'1.51.0.0',

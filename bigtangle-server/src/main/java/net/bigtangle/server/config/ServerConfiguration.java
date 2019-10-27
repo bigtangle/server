@@ -42,7 +42,8 @@ public class ServerConfiguration {
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
     private Boolean createtable = true;
-
+    private Boolean updateTip = true;
+    
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -59,6 +60,8 @@ public class ServerConfiguration {
         serviceReady = true;
     }
 
+    
+    
     public synchronized void setServiceWait() {
 
         serviceReady = false;
@@ -190,6 +193,14 @@ public class ServerConfiguration {
 
     public void setMaxserachblocks(long maxserachblocks) {
         this.maxserachblocks = maxserachblocks;
+    }
+
+    public Boolean getUpdateTip() {
+        return updateTip;
+    }
+
+    public void setUpdateTip(Boolean updateTip) {
+        this.updateTip = updateTip;
     }
 
     @Override

@@ -29,9 +29,13 @@ public class BeforeStartup {
         if (serverConfiguration.getCreatetable()) {
             store.create();
         }
+     
         serverConfiguration.setServiceReady(true);
+        serverConfiguration.setUpdateTip(false);
          syncBlockService.startSingleProcess();
+         serverConfiguration.setUpdateTip(true);
         blockStreamHandler.runStream();
+    
       
     }
     @Autowired
