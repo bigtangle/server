@@ -1,4 +1,4 @@
-select * from blocks  where milestone <0 ;
+select * from blocks  where milestone <0 order by height desc ;
 select * from unsolidblocks order by height;
 select * from orders   ;
 select count( *) from blocks   ;
@@ -9,7 +9,7 @@ select * from txreward order by chainlength desc;
 SELECT block, height, blocktype FROM blocks WHERE milestone>9;
 select * from blocks where height < 750 ;
 select * from blocks order by height desc limit 500 ;
-select * from blocks where height < 9000 order by height desc limit 500 ;
+select * from blocks where height < 4000 order by height desc limit 500 ;
 select * from blocks join unsolidblocks on blocks.hash = unsolidblocks.hash order by blocks.height asc limit 100 ;
 select * from blocks order by inserttime desc limit 1000  ;
 select * from blocks where confirmed=1 order by height desc limit 500 ;

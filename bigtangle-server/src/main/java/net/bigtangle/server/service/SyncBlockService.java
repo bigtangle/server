@@ -85,13 +85,13 @@ public class SyncBlockService {
         }
 
         try {
-            log.debug(" Start  SyncBlockService Single: ");
+          //  log.debug(" Start  SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
             sync();
             // deleteOldUnsolidBlock();
             // updateSolidity();
-            log.debug(" end SyncBlockService Single: ");
+          //  log.debug(" end SyncBlockService Single: ");
         } catch (Exception e) {
             log.warn("SyncBlockService ", e);
         } finally {

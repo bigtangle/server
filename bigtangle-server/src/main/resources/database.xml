@@ -10,7 +10,7 @@
 	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
 		destroy-method="close">
 		<property name="driverClass"
-			value="com.mysql.cj.jdbc.Driver" />
+			value="com.mysql.jdbc.Driver" />
 		<property name="jdbcUrl" value="jdbc:mysql://${DB_HOSTNAME:localhost}:${DB_PORT:3306}/${DB_NAME:info}?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true" />
 		<property name="user"
 			value="${DB_USERNAME:root}" />

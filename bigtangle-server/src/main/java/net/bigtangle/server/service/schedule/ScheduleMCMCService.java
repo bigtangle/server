@@ -33,7 +33,7 @@ public class ScheduleMCMCService {
     public void updatemcmcService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start SchedulemcmcService: ");
+            //    logger.debug(" Start SchedulemcmcService: ");
                 mcmcService.startSingleProcess();
   
             } catch (Exception e) {

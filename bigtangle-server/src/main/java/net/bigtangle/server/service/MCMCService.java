@@ -63,7 +63,7 @@ public class MCMCService {
         }
 
         try {
-            log.info("mcmcService  started");
+         //   log.info("mcmcService  started");
             Stopwatch watch = Stopwatch.createStarted();
             update();
             log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));

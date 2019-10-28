@@ -128,8 +128,8 @@ public class Block extends Message {
         BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts
         BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Governance
         BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-file
-        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), BLOCKTYPE_CROSSTANGLE(false,
-                NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet-to-permissioned
+        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts execution
+        BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet to permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
         BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // cancel-order
         
