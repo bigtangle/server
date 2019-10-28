@@ -42,7 +42,7 @@ public class MoneyForOrderBuyTest extends HelpTest {
 
         }
         for (int i = 0; i < 10; i++) {
-            giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+            giveMoneyResult.put(wallet2Keys.get(i % wallet2Keys.size()).toAddress(networkParameters).toString(),
                     333300000l / LongMath.pow(2, j));
         }
 
@@ -62,7 +62,7 @@ public class MoneyForOrderBuyTest extends HelpTest {
 
         }
         for (int i = 0; i < 10; i++) {
-            giveMoneyResult.put(wallet2Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
+            giveMoneyResult.put(wallet2Keys.get(i % wallet2Keys.size()).toAddress(networkParameters).toString(),
                     555l / LongMath.pow(2, j));
         }
 
