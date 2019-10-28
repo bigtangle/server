@@ -15,7 +15,7 @@ import net.bigtangle.server.service.HeathCheckService;
 
 @Component
 @EnableAsync
-public class ScheduleHeathCheckService {
+public class ScheduleHealthCheckService {
     
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
