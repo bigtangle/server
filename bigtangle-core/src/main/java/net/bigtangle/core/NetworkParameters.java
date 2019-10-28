@@ -98,14 +98,16 @@ public abstract class NetworkParameters {
     protected Map<Long, Sha256Hash> checkpoints = new HashMap<Long, Sha256Hash>();
     protected transient MessageSerializer defaultSerializer = null;
 
-    protected   String genesisPub;
+    protected String genesisPub;
 
     // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 70;
     public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 67;
     public static final int NUMBER_RATING_TIPS = 30;
-    public static final int CONFIRMATION_UPPER_THRESHOLD = CONFIRMATION_UPPER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS / 100;
-    public static final int CONFIRMATION_LOWER_THRESHOLD = CONFIRMATION_LOWER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS / 100;
+    public static final int CONFIRMATION_UPPER_THRESHOLD = CONFIRMATION_UPPER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS
+            / 100;
+    public static final int CONFIRMATION_LOWER_THRESHOLD = CONFIRMATION_LOWER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS
+            / 100;
 
     // Token ID for System Coin
     public static final String BIGTANGLE_TOKENID_STRING = "bc";
@@ -174,8 +176,9 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
 
-    public static final int TARGET_TIMESPAN = 3*60 * 60; // 1 day per difficulty
-                                                     // cycle
+    public static final int TARGET_TIMESPAN = 3 * 60 * 60; // 1 day per
+                                                           // difficulty
+    // cycle
     public static final int TARGET_SPACING = 15; // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
@@ -191,7 +194,6 @@ public abstract class NetworkParameters {
 
     // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 20;
-     
 
     protected NetworkParameters() {
     }
@@ -199,17 +201,13 @@ public abstract class NetworkParameters {
     public static Block createGenesis(NetworkParameters params) {
         Block genesisBlock = new Block(params, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH,
                 Block.Type.BLOCKTYPE_INITIAL.ordinal(), 0, 0, Utils.encodeCompactBits(params.getMaxTarget()));
-        genesisBlock.setTime(1532896109L);
-
-        BigInteger diff = params.getMaxTarget();
-        genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(diff.divide(BigInteger.valueOf(2))));
-
+        genesisBlock.setTime(1532896109L); 
+        genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(params.getMaxTarget())); 
         Transaction coinbase = new Transaction(params);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
-        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram()));
-
+        coinbase.addInput(new TransactionInput(params, coinbase, inputBuilder.build().getProgram())); 
         RewardInfo rewardInfo = new RewardInfo(Sha256Hash.ZERO_HASH,
-                Utils.encodeCompactBits(params.getMaxTargetReward().divide(BigInteger.valueOf(2))),
+                Utils.encodeCompactBits(params.getMaxTargetReward()),
                 new HashSet<Sha256Hash>(), 0l);
 
         coinbase.setData(rewardInfo.toByteArray());

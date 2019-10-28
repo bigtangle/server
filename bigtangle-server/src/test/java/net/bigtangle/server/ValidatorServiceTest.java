@@ -370,63 +370,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
 
-    @Test
-    public void testSolidityPredecessorDifficultyInheritance() throws Exception {
-        store.resetStore();
-
-        // Generate blocks until passing first reward interval and second reward
-        // interval
-        Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 1
-                + 1 + 1; i++) {
-            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
-
-            // The difficulty should be equal to the previous difficulty
-            assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
-
-            rollingBlock = rollingBlockNew;
-            blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
-        }
-
-        // Generate eligible mining reward block
-        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
-
-        // The difficulty should now not be equal to the previous difficulty
-        assertNotEquals(rollingBlock.getDifficultyTarget(), rewardBlock1.getDifficultyTarget());
-
-        rollingBlock = rewardBlock1;
-        for (int i = 0; i < 3; i++) {
-            Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
-
-            // The difficulty should be equal to the previous difficulty
-            assertEquals(rollingBlock.getDifficultyTarget(), rollingBlockNew.getDifficultyTarget());
-
-            rollingBlock = rollingBlockNew;
-            blockGraph.add(rollingBlock, true);
-        }
-
-        try {
-            Block failingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
-            failingBlock.setDifficultyTarget(networkParameters.getGenesisBlock().getDifficultyTarget());
-            failingBlock.solve();
-            blockGraph.add(failingBlock, false);
-            // fail();
-        } catch (DifficultyConsensusInheritanceException e) {
-            // Expected
-        }
-
-        try {
-            Block failingBlock = networkParameters.getGenesisBlock().createNextBlock(rollingBlock);
-            failingBlock.setDifficultyTarget(networkParameters.getGenesisBlock().getDifficultyTarget());
-            failingBlock.solve();
-            blockGraph.add(failingBlock, false);
-            // fail();
-        } catch (DifficultyConsensusInheritanceException e) {
-            // Expected
-        }
-    }
+ 
 
     @Test
     public void testSolidityPredecessorConsensusInheritance() throws Exception {
@@ -842,13 +786,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate mining reward block with spending inputs
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash());
-        rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget());
-        rewardBlock.solve();
+        rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget()*2);
 
         // Should not go through
         try {
-        blockGraph.add(rewardBlock, false);
-        fail();
+            rewardBlock.solve();
+            blockGraph.add(rewardBlock, false);
+            fail();
         }catch(VerificationException e) {
             
         }
