@@ -34,7 +34,7 @@ public class ServerConfiguration {
     private String clientversion;
     private Boolean permissioned;
     private String permissionadmin;
-    private int solveRewardduration = 30; // in seconds
+    private int solveRewardduration = 50; // in seconds
     private Boolean myserverblockOnly = false;
     private long maxserachblocks = 5000;
     private List<String> permissionDomainname = ImmutableList.of(testPub);

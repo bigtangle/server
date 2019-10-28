@@ -50,7 +50,7 @@ public class HeathCheckService {
     protected final ReentrantLock lock = Threading.lock("HeathCheckService");
 
     public void startSingleProcess() {
-        if (!lock.tryLock()) {
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             log.debug(this.getClass().getName() + "  HeathCheckService running. Returning...");
             return;
         }

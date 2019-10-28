@@ -16,6 +16,7 @@ select * from blocks where confirmed=1 order by height desc limit 500 ;
 select * from orders where spent=0 and confirmed=1  ;
 
 
+select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 

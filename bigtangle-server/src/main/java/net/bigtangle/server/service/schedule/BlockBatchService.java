@@ -58,7 +58,7 @@ public class BlockBatchService {
     protected final ReentrantLock lock = Threading.lock("BlockBatchService");
 
     public void startSingleProcess() {
-        if (!lock.tryLock()) {
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             logger.debug(this.getClass().getName() + "  Update already running. Returning...");
             return;
         }

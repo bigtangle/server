@@ -57,7 +57,7 @@ public class MCMCService {
     private NetworkParameters params;
 
     public void startSingleProcess() {
-        if (!lock.tryLock()) {
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             log.debug(this.getClass().getName() + "  mcmcService running. Returning...");
             return;
         }

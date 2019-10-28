@@ -79,7 +79,7 @@ public class SyncBlockService {
     protected final ReentrantLock lock = Threading.lock("syncBlockService");
 
     public void startSingleProcess() {
-        if (!lock.tryLock()) {
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
@@ -438,7 +438,7 @@ public class SyncBlockService {
             }
 
         }
-        log.debug(" finish sync " + aMaxConfirmedReward.server + "  ");
+       // log.debug(" finish sync " + aMaxConfirmedReward.server + "  ");
     }
 
     public class SortbyBlock implements Comparator<Block> {

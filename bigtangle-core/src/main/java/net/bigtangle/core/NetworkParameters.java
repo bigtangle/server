@@ -174,7 +174,7 @@ public abstract class NetworkParameters {
     // Reward and Difficulty Synchronization
     public static final long REWARD_INITIAL_TX_REWARD = 10L;
 
-    public static final int TARGET_TIMESPAN = 86400; // 1 day per difficulty
+    public static final int TARGET_TIMESPAN = 3*60 * 60; // 1 day per difficulty
                                                      // cycle
     public static final int TARGET_SPACING = 15; // 15 seconds per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
