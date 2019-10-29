@@ -1067,13 +1067,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0);
                 newOut.setTime(System.currentTimeMillis() / 1000);
-                utxos.add(newOut);
-                if (script.isSentToMultiSig()) {
+                if (!newOut.isZero()) {
+                    utxos.add(newOut);
+                    if (script.isSentToMultiSig()) {
 
-                    for (ECKey ecKey : script.getPubKeys()) {
-                        String toaddress = ecKey.toAddress(params).toBase58();
-                        OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress, newOut.getIndex());
-                        this.blockStore.insertOutputsMulti(outputsMulti);
+                        for (ECKey ecKey : script.getPubKeys()) {
+                            String toaddress = ecKey.toAddress(params).toBase58();
+                            OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress,
+                                    newOut.getIndex());
+                            this.blockStore.insertOutputsMulti(outputsMulti);
+                        }
                     }
                 }
             }

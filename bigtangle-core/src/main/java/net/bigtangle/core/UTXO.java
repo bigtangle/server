@@ -65,6 +65,9 @@ public class UTXO extends SpentBlock{
     }
 
 
+    public   boolean isZero() {
+        return value.isZero();
+    }
     public void setSpendPendingTime(long spendPendingTime) {
         this.spendPendingTime = spendPendingTime;
     }
