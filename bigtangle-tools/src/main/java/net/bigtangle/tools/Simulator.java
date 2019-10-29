@@ -1,5 +1,6 @@
 package net.bigtangle.tools;
 
+import net.bigtangle.tools.test.HelpTest;
 import net.bigtangle.tools.test.MoneyForOrderBuyTest;
 import net.bigtangle.tools.test.OrderBuyTest;
 import net.bigtangle.tools.test.OrderSellTest;
@@ -29,10 +30,8 @@ public class Simulator {
                 try {
                     (new WalletPayMoneyTest()).payWithSeptup();
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-
             }
         }).start();
 
@@ -41,11 +40,9 @@ public class Simulator {
                 try {
                     (new OrderBuyTest()).buy();
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
+
                     e.printStackTrace();
                 }
-                ;
-
             }
         }).start();
 
@@ -57,8 +54,18 @@ public class Simulator {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-                ;
+            }
+        }).start();
 
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    (new SendEmptyBlock()).emptyblock(HelpTest.TESTSERVER1);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                ;
             }
         }).start();
 
