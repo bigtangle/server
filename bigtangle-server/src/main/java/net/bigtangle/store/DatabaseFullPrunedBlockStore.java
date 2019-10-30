@@ -1471,9 +1471,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             for (String sql : getDropTablesSQL()) {
                 Statement s = conn.get().createStatement();
                 try {
+                    
                     log.info("drop table : " + sql);
                     s.execute(sql);
-                } finally {
+                } catch (Exception e) {
+                    log.info("drop table : " + sql, e);
+                }
+                finally {
                     s.close();
                 }
             }
