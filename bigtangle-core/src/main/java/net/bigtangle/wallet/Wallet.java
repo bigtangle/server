@@ -1742,6 +1742,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         completeTx(req, candidates, true, getAddresses(aesKey));
     }
 
+    public void completeTx(SendRequest req, KeyParameter aesKey,List<TransactionOutput> candidates) throws InsufficientMoneyException, IOException {
+    
+        completeTx(req, candidates, true, getAddresses(aesKey));
+    }
+    
     public void completeTx(SendRequest req, List<TransactionOutput> candidates, boolean sign)
             throws InsufficientMoneyException {
         this.completeTx(req, candidates, sign, new HashMap<String, Address>());
@@ -2288,6 +2293,26 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new UTXOProviderException("no key in wallet is found for this address " + address);
     }
 
+    public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo,  List<TransactionOutput> candidates)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block block = params.getDefaultSerializer().makeBlock(data);
+
+        SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey = aesKey;
+
+        request.tx.setMemo(new MemoInfo(memo));
+        completeTx(request, aesKey,candidates);
+        block.addTransaction(request.tx);
+
+        return solveAndPost(block);
+    }
+
+    
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
@@ -2307,6 +2332,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
+    
     /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
@@ -2314,15 +2340,34 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block payPartsToOne(KeyParameter aesKey, Address destination, byte[] tokenid, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
+       return payPartsToOne(aesKey, destination, tokenid, memo, BigInteger.ZERO);
+    }
+
+    /*
+     * pay all small coins in a wallet to one destination. This destination can
+     * be in same wallet.
+     */
+    public Block payPartsToOne(KeyParameter aesKey, Address destination, byte[] tokenid, String memo, BigInteger low)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
 
+        List<TransactionOutput> candidates =  new ArrayList<TransactionOutput>();
+        
         Coin summe = Coin.valueOf(0, tokenid);
+        int size=0;
         for (UTXO u : l) {
-            if (Arrays.equals(u.getValue().getTokenid(), tokenid)) {
+            if (Arrays.equals(u.getValue().getTokenid(), tokenid) && size < NetworkParameters.MAX_DEFAULT_BLOCK_SIZE / 10000) {
+                if(low.signum() > 0 && u.getValue().getValue().compareTo(low) > 0) {
                 summe = summe.add(u.getValue());
+                
+                candidates.add(new FreeStandingTransactionOutput(this.params, u));
+                
+                size+=1;
+                }
             }
         }
-        return pay(aesKey, destination, summe, memo);
+        return pay(aesKey, destination, summe, memo, candidates);
     }
 
     public Block payMultiSignatures(KeyParameter aesKey, List<ECKey> keys, int signnum, Coin amount, String memo)
