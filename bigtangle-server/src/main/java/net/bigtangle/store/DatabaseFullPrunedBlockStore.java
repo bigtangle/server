@@ -3589,12 +3589,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     private String buildINList(Collection<String> datalist) {
-        String in = "";
-        for (String d : datalist) {
-            in += "'" + d + "',";
-        }
-        in = in.substring(0, in.length() - 1);
-        return in;
+        if(datalist ==null || datalist.isEmpty()) return "";
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String str : datalist)
+            stringBuffer.append(",").append("'" + str + "'"); 
+        return      stringBuffer.substring(1).toString()  ; 
     }
 
     @Override

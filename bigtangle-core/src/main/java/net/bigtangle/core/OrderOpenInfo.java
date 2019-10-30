@@ -6,6 +6,7 @@
 package net.bigtangle.core;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,15 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         String jsonStr = new String(buf);
         OrderOpenInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderOpenInfo.class);
         return tokenInfo;
+    }
+
+    
+    
+    @Override
+    public String toString() {
+        return "OrderOpenInfo  \n targetValue=" + targetValue + ", \n targetTokenid=" + targetTokenid 
+                + ", \n validToTime=" + validToTime + ",  \n validFromTime="
+                + validFromTime + ", \n beneficiaryAddress=" + beneficiaryAddress;
     }
 
     public Long getValidToTime() {

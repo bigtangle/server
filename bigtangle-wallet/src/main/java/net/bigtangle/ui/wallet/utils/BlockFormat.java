@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
@@ -18,12 +19,10 @@ import net.bigtangle.ui.wallet.Main;
 
 public class BlockFormat {
 
-    
     public static String block2string(Block block, NetworkParameters params) {
         StringBuilder s = new StringBuilder();
         s.append(Main.getText("blockhash") + ": ").append(block.getHashAsString()).append('\n');
-        if (block.getTransactions()
-                != null && block.getTransactions().size() > 0) {
+        if (block.getTransactions() != null && block.getTransactions().size() > 0) {
             s.append("   ").append(block.getTransactions().size()).append(" " + Main.getText("transaction") + ":\n");
             for (Transaction tx : block.getTransactions()) {
                 s.append(transaction2string(tx));
@@ -42,21 +41,31 @@ public class BlockFormat {
         if (block.getMinerAddress() != null)
             s.append("   " + Main.getText("mineraddress") + ": ").append(new Address(params, block.getMinerAddress()))
                     .append("\n");
-        s.append("   " +Main.getText("chainlength")+ ": " ).append(block.getLastMiningRewardBlock()).append("\n");
+        s.append("   " + Main.getText("chainlength") + ": ").append(block.getLastMiningRewardBlock()).append("\n");
         s.append("   " + Main.getText("blocktype") + ": ").append(block.getBlockType()).append("\n");
 
-        if(block.getBlockType().equals(Type.BLOCKTYPE_REWARD)) {
+        if (block.getBlockType().equals(Type.BLOCKTYPE_REWARD)) {
             try {
-                RewardInfo   rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
-                s.append(     rewardInfo.  toString());
+                RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+                s.append(rewardInfo.toString());
             } catch (Exception e) {
-               //ignore throw new RuntimeException(e);
+                // ignore throw new RuntimeException(e);
             }
         }
-        
+
+        if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+
+            try {
+                OrderOpenInfo info = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
+                s.append(info.toString());
+            } catch (Exception e) {
+                // ignore throw new RuntimeException(e);
+            }
+        }
         return s.toString();
 
     }
+
     public static String transaction2string(Transaction transaction) {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(transaction.getHashAsString()).append('\n');

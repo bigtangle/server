@@ -179,7 +179,7 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "RewardInfo [chainlength=" + chainlength + ", \n prevRewardHash=" + prevRewardHash
+        return "RewardInfo  \n chainlength=" + chainlength + ", \n prevRewardHash=" + prevRewardHash
                 + ", \n prevRewardDifficulty=" + difficultyTargetReward
                 + ", \n referenced block size =" + blocks.size() + "]";
     }

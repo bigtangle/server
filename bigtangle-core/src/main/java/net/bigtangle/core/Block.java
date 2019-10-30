@@ -616,6 +616,16 @@ public class Block extends Message {
                //ignore throw new RuntimeException(e);
             }
         }
+        if(blockType== Type.BLOCKTYPE_ORDER_OPEN) {
+        
+        try {
+           OrderOpenInfo info = OrderOpenInfo.parse(transactions.get(0).getData());
+            s.append(    info.  toString());
+        } catch (Exception e) {
+           //ignore throw new RuntimeException(e);
+        }
+        
+        }
         return s.toString();
     }
 
