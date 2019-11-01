@@ -31,7 +31,7 @@ public class OrderSellTest extends HelpTest {
         importKeys(walletAppKit1.wallet());
 
         List<UTXO> utxo = getUTXOs(TESTSERVER1, walletAppKit2.wallet());
-
+        log.debug("utxo size", utxo.size());
         while (true) {
             try {
                 sell(TESTSERVER1, walletAppKit2.wallet(), utxo);
@@ -56,7 +56,7 @@ public class OrderSellTest extends HelpTest {
                     && utxo.getValue().getValue().signum() > 0 && !utxo.isSpendPending()
                     && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
                 wallet.setServerURL(url);
-                wallet.sellOrder(null, utxo.getTokenId(), Math.abs((new Random()).nextInt() * 10000000 % 1000000000), q,
+                wallet.sellOrder(null, utxo.getTokenId(), 1000000+ Math.abs((new Random()).nextInt() / 1000000), q,
                         null, null);
 
             }

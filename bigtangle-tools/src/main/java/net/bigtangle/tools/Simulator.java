@@ -69,5 +69,29 @@ public class Simulator {
             }
         }).start();
 
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    (new SendEmptyBlock()).emptyblock(HelpTest.TESTSERVER2);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                ;
+            }
+        }).start();
+
+
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    (new SendEmptyBlock()).emptyblock(HelpTest.HTTPS_BIGTANGLE_INFO);
+                } catch (Exception e) {
+       
+                    e.printStackTrace();
+                }
+                ;
+            }
+        }).start();  
     }
 }

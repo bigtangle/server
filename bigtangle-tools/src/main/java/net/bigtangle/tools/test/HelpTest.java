@@ -49,12 +49,10 @@ import net.bigtangle.wallet.Wallet;
 public abstract class HelpTest {
 
     public static final String HTTPS_BIGTANGLE_LOCAL = "http://localhost:8088/";
-    public static boolean testnet = true;
-    public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "") + "bigtangle.de/";
-    public static String HTTPS_BIGTANGLE_INFO =
-            // HTTPS_BIGTANGLE_LOCAL;
-            "https://" + (testnet ? "test." : "") + "bigtangle.info/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org/";
+
+    public static String HTTPS_BIGTANGLE_DE = "https://test.bigtangle.de:8089/";
+    public static String HTTPS_BIGTANGLE_INFO = "https://test.bigtangle.info:8089/";
+    public static String HTTPS_BIGTANGLE_ORG = "https://test.bigtangle.org:8089/";
 
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";

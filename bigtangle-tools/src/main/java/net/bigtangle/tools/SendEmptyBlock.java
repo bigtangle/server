@@ -42,14 +42,14 @@ public class SendEmptyBlock {
 
 
     public void emptyblock(String CONTEXT_ROOT) throws Exception {
-
+        while(true) {
         int c = needEmptyBlocks(CONTEXT_ROOT);
         if (c > 0) {
             for (int i = 0; i < c; i++) {
                 send(CONTEXT_ROOT);
             }
         }
-
+        }
     }
 
     public void send(String CONTEXT_ROOT) throws JsonProcessingException, Exception {
