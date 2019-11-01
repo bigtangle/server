@@ -25,6 +25,10 @@ import net.bigtangle.wallet.Wallet;
 
 public class OrderSellTest extends HelpTest {
  
+    @Test
+    public void sell() throws Exception {
+        sellThread();
+    }
     public void sellThread() throws Exception {
         setUp();
         importKeys(walletAppKit2.wallet());

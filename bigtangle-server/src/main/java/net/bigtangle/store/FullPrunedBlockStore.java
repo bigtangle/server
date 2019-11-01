@@ -206,7 +206,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public OrderRecord getOrder(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException;
 
-    public void insertOrder(OrderRecord record) throws BlockStoreException;
+    public void insertOrder(Collection<OrderRecord> records) throws BlockStoreException;
 
     public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException;
 

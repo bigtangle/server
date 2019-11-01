@@ -5225,10 +5225,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void insertOrder(OrderRecord record) throws BlockStoreException {
+    public void insertOrder(Collection<OrderRecord> records) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
+            for( OrderRecord record: records ) {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
             preparedStatement.setBytes(1, record.getBlockHash().getBytes());
             preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
@@ -5245,7 +5246,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(12, record.getValidFromTime());
             preparedStatement.setString(13, record.getSide() == null ? null : record.getSide().name());
             preparedStatement.setString(14, record.getBeneficiaryAddress());
-            preparedStatement.executeUpdate();
+           
+            preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+            
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw new BlockStoreException(e);

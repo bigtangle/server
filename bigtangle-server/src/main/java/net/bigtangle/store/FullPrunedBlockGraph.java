@@ -603,9 +603,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders) {
         try {
-            for (OrderRecord o : orders) {
-                blockStore.insertOrder(o);
-            }
+
+            blockStore.insertOrder(orders);
+
         } catch (BlockStoreException e) {
             // Expected after reorgs
             log.warn("Probably reinserting orders: ", e);
@@ -1141,8 +1141,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
                     reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
                     reqInfo.getBeneficiaryAddress());
-
-            blockStore.insertOrder(record);
+            List<OrderRecord> orders = new ArrayList<OrderRecord>();
+            orders.add(record);
+            blockStore.insertOrder(orders);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
