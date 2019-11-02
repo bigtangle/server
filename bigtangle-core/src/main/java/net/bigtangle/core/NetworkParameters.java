@@ -125,7 +125,7 @@ public abstract class NetworkParameters {
     public static final long BLOCK_VERSION_GENESIS = 1;
 
     // block number can be taken in a reward block
-    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 10000;
+    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 50000;
 
     /**
      * A constant shared by the entire network: how large in bytes a block is
