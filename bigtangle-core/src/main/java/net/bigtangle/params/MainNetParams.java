@@ -37,7 +37,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "578960377169117509212217050695880916496095398817113098493422368414323410");
         //!!!this is initial value and used in genesis block hash, it can be changed only for height
         maxTargetReward =  new BigInteger(
-                "57896037716911750921221705069588091649609539881711309849342236841432341");
+                "5789603771691175092122170506958809164960953988171130984934223684143236");
 
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;

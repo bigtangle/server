@@ -179,7 +179,7 @@ public abstract class NetworkParameters {
     public static final int TARGET_TIMESPAN = 3 * 60 * 60; // 1 day per
                                                            // difficulty
     // cycle
-    public static final int TARGET_SPACING = 15; // 15 seconds per block.
+    public static final int TARGET_SPACING = 30; // seconds per chain block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
 
     public static final int TARGET_MAX_TPS = 100;
@@ -193,7 +193,7 @@ public abstract class NetworkParameters {
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
 
     // MCMC will take only the blocks back to this confirmed reward block
-    public static final int MILESTONE_CUTOFF = 20;
+    public static final int MILESTONE_CUTOFF = 40;
 
     protected NetworkParameters() {
     }

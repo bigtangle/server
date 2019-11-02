@@ -80,9 +80,9 @@ public class CompareTest {
         Map<String, Tokensums> r2 = result.get(TESTSERVER2);
         for (Entry<String, Tokensums> a : r1.entrySet()) {
             Tokensums t1 = a.getValue();
-            assertTrue(" " + t1.toString(), t1.check());
+            assertTrue(TESTSERVER1+" " + t1.toString(), t1.check());
             Tokensums t = r2.get(a.getKey());
-            assertTrue(" " + t.toString(), t.check());
+            assertTrue(TESTSERVER2+" " + t.toString(), t.check());
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
                         t1.equals(t) || t1.unspentOrderSum().equals(t.unspentOrderSum()));
