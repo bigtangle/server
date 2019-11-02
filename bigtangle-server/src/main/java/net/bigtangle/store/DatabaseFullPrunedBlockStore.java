@@ -5226,11 +5226,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void insertOrder(Collection<OrderRecord> records) throws BlockStoreException {
+        if(records==null) return;
+        
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            for( OrderRecord record: records ) {
             preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
+            for( OrderRecord record: records ) { 
             preparedStatement.setBytes(1, record.getBlockHash().getBytes());
             preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
             preparedStatement.setLong(3, record.getOfferValue());

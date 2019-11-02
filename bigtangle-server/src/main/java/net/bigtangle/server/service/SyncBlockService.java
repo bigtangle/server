@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -214,16 +215,16 @@ public class SyncBlockService {
         Map<String, BigInteger> tokensums = tokensum(server);
 
         Set<String> tokenids = tokensums.keySet();
-
+        OrderdataResponse orderdataResponse = orders(server);
         for (String tokenid : tokenids) {
             Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
                     tokenid);
 
-            checkToken(server, tokenid, tokensum, result.get(server));
+            checkToken(server, tokenid, tokensum, result.get(server),orderdataResponse);
         }
     }
 
-    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums)
+    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums,OrderdataResponse orderdataResponse)
             throws JsonProcessingException, Exception {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -239,7 +240,7 @@ public class SyncBlockService {
                 sumUnspent = sumUnspent.add(u.getValue());
         }
         Tokensums t = new Tokensums();
-        Coin ordersum = ordersum(tokenid, server);
+        Coin ordersum = ordersum(tokenid, server,orderdataResponse);
         t.tokenid = tokenid;
         t.unspent = sumUnspent.getValue();
         t.order = ordersum.getValue();
@@ -247,12 +248,8 @@ public class SyncBlockService {
         tokensums.put(tokenid, t);
     }
 
-    public Coin ordersum(String tokenid, String server) throws JsonProcessingException, Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+    public Coin ordersum(String tokenid, String server, OrderdataResponse orderdataResponse) throws JsonProcessingException, Exception {
+      //  OrderdataResponse orderdataResponse = orders(server);
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             if (orderRecord.getOfferTokenid().equals(tokenid)) {
@@ -260,6 +257,15 @@ public class SyncBlockService {
             }
         }
         return sumUnspent;
+    }
+
+    private OrderdataResponse orders(String server) throws IOException, JsonProcessingException, JsonMappingException {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        return orderdataResponse;
     }
 
     public Map<String, BigInteger> tokensum(String server) throws JsonProcessingException, Exception {
