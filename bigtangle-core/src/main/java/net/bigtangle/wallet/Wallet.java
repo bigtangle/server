@@ -2417,7 +2417,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 signnumber);
     }
 
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
+    public void publishDomainName(List<ECKey> multiSigns, ECKey signKey, String tokenid, String tokenname,
             String domainNameBlockHash, KeyParameter aesKey, String description, int signnumber) throws Exception {
 
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
@@ -2432,7 +2432,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
         tokenInfo.setMultiSignAddresses(multiSignAddresses);
 
-        for (ECKey ecKey : walletKeys) {
+        for (ECKey ecKey : multiSigns) {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 

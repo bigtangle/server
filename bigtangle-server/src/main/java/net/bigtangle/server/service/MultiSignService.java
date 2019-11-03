@@ -145,9 +145,7 @@ public class MultiSignService {
                     multiSign.setBlockbytes(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
                     store.saveMultiSign(multiSign);
-                } else {
-                    store.updateMultiSignBlockHash(tokenid, tokenindex, address, block.bitcoinSerialize());
-                }
+                } 
             }
             if (transaction.getDataSignature() != null) {
                 String jsonStr = new String(transaction.getDataSignature());

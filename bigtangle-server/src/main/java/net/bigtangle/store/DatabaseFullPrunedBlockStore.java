@@ -2503,19 +2503,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateOutputsSpendPendingSQL();
 
     @Override
-    public void updateTransactionOutputSpendPending(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index,
-            boolean b, long spendpendingtime) throws BlockStoreException {
+    public void updateTransactionOutputSpendPending( List<UTXO> utxos) throws BlockStoreException {
         maybeConnect();
+ 
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
-            preparedStatement.setBoolean(1, b);
-            preparedStatement.setLong(2, spendpendingtime);
-            preparedStatement.setBytes(3, prevTxHash.getBytes());
-            preparedStatement.setLong(4, index);
-            preparedStatement.setBytes(5, prevBlockHash.getBytes());
-
-            preparedStatement.executeUpdate();
+            for(UTXO u: utxos) {
+            preparedStatement.setBoolean(1, true);
+            preparedStatement.setLong(2,  System.currentTimeMillis());
+            preparedStatement.setBytes(3, u.getTxHash().getBytes());
+            preparedStatement.setLong(4, u.getIndex());
+            preparedStatement.setBytes(5,u.getBlockHash().getBytes());
+            preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -3191,6 +3193,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 multiSignAddress.setPosIndex(posIndex);
                 int tokenHolder = resultSet.getInt("tokenHolder");
                 multiSignAddress.setTokenHolder(tokenHolder);
+              //TODO   if(multiSignAddress.getTokenHolder() > 0)
                 list.add(multiSignAddress);
             }
             return list;
@@ -3655,6 +3658,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void saveMultiSign(MultiSign multiSign) throws BlockStoreException {
+        
+       if( multiSign.getTokenid()==null || "".equals(multiSign.getTokenid())){
+           return;
+       }
+        
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

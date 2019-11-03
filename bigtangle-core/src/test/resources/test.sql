@@ -56,7 +56,7 @@ OUTPUTS
 select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
 select * from orders   ;
-
+select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
 select * from txreward  order by chainlength desc ;

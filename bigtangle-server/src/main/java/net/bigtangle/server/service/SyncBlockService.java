@@ -86,13 +86,13 @@ public class SyncBlockService {
         }
 
         try {
-          //  log.debug(" Start  SyncBlockService Single: ");
+            // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
             sync();
             // deleteOldUnsolidBlock();
             // updateSolidity();
-          //  log.debug(" end SyncBlockService Single: ");
+            // log.debug(" end SyncBlockService Single: ");
         } catch (Exception e) {
             log.warn("SyncBlockService ", e);
         } finally {
@@ -220,12 +220,12 @@ public class SyncBlockService {
             Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
                     tokenid);
 
-            checkToken(server, tokenid, tokensum, result.get(server),orderdataResponse);
+            checkToken(server, tokenid, tokensum, result.get(server), orderdataResponse);
         }
     }
 
-    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums,OrderdataResponse orderdataResponse)
-            throws JsonProcessingException, Exception {
+    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums,
+            OrderdataResponse orderdataResponse) throws JsonProcessingException, Exception {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
@@ -240,7 +240,7 @@ public class SyncBlockService {
                 sumUnspent = sumUnspent.add(u.getValue());
         }
         Tokensums t = new Tokensums();
-        Coin ordersum = ordersum(tokenid, server,orderdataResponse);
+        Coin ordersum = ordersum(tokenid, server, orderdataResponse);
         t.tokenid = tokenid;
         t.unspent = sumUnspent.getValue();
         t.order = ordersum.getValue();
@@ -248,8 +248,9 @@ public class SyncBlockService {
         tokensums.put(tokenid, t);
     }
 
-    public Coin ordersum(String tokenid, String server, OrderdataResponse orderdataResponse) throws JsonProcessingException, Exception {
-      //  OrderdataResponse orderdataResponse = orders(server);
+    public Coin ordersum(String tokenid, String server, OrderdataResponse orderdataResponse)
+            throws JsonProcessingException, Exception {
+        // OrderdataResponse orderdataResponse = orders(server);
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             if (orderRecord.getOfferTokenid().equals(tokenid)) {
@@ -324,9 +325,10 @@ public class SyncBlockService {
 
     public void requestBlocks(long chainlength, String s)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
-        requestBlocks(chainlength,chainlength, s);
+        requestBlocks(chainlength, chainlength, s);
     }
-    public void requestBlocks(long chainlengthstart,long chainlengthend,  String s)
+
+    public void requestBlocks(long chainlengthstart, long chainlengthend, String s)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -336,9 +338,8 @@ public class SyncBlockService {
         String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
-        log.debug("block size: " + blockbytelist.getBlockbytelist().size()
-                + " remote chain start: " + chainlengthstart  + " end: " +chainlengthend
-                + " at server: " + s);
+        log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " remote chain start: " + chainlengthstart
+                + " end: " + chainlengthend + " at server: " + s);
         List<Block> sortedBlocks = new ArrayList<Block>();
         for (byte[] data : blockbytelist.getBlockbytelist()) {
             sortedBlocks.add(networkParameters.getDefaultSerializer().makeBlock(data));
@@ -439,12 +440,12 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength() ; i <= aMaxConfirmedReward.aTXReward.getChainLength(); i+=100) {
-                requestBlocks(i,i+99, aMaxConfirmedReward.server);
+            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i += 100) {
+                requestBlocks(i, i + 99, aMaxConfirmedReward.server);
             }
 
         }
-       // log.debug(" finish sync " + aMaxConfirmedReward.server + "  ");
+        // log.debug(" finish sync " + aMaxConfirmedReward.server + " ");
     }
 
     public class SortbyBlock implements Comparator<Block> {

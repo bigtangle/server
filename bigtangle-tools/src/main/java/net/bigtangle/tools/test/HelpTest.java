@@ -73,14 +73,17 @@ public abstract class HelpTest {
     public static String BTCTokenPub = "0352ac6c7fe48bff55b6976e70718a5c37fe9ddf5541473284bff2c72f51fb60e2";
     public static String BTCTokenPriv = "d82d565e4ad9e2c78610535cbe0a37d2e240192bf1d7f42f4276cd89351f45d0";
 
-    // 1Q5ysrjmeEjJKFBrnEJBSAs6vBHYzsmN2H
-    public static String GOLDTokenPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
-    public static String GOLDTokenPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
-
     // 13YjgF6Wa3v4i6NQQqn94XCg6CX79NVgWe
     public static String JPYTokenPub = "03e608ba3cbce11acc4a6b5e0b63b3381af7e9f50c1d43e6a6ce8cf16d3743891c";
     public static String JPYTokenPriv = "7a62e210952b6d49d545edb6fe4c322d68605c1b97102448a3439158ba9acd5f";
 
+ 
+    // 1Q5ysrjmeEjJKFBrnEJBSAs6vBHYzsmN2H
+    public static String NetDomainPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
+    public static String NetDomainPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
+
+    public static String NetBigtangleDomainPub = "02122251e6e3cdbe3e4bbaa4bc0dcc12014c6cf0388abac61bf2c972579d790a68";
+      public static String NetBigtangleDomainPriv = "dbee6582476dc44ac1e26c67733205ff4c50a1a6a6716667b4428b36f0dcb7bc";
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
@@ -127,6 +130,8 @@ public abstract class HelpTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(NetDomainPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(NetBigtangleDomainPriv)));
     }
 
     
@@ -290,7 +295,7 @@ public abstract class HelpTest {
 
         Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
                 description, 1, tokenindex_, basecoin.getValue(), false, 0,
-                networkParameters.getGenesisBlock().getHashAsString());
+                domainname);
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));

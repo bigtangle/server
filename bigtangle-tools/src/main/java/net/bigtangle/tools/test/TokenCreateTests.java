@@ -25,7 +25,7 @@ public class TokenCreateTests extends HelpTest {
     @Test
     public void testTokens() throws JsonProcessingException, Exception {
 
-        String domain = walletAppKit1.wallet().getDomainNameBlockHash("net", "token").getdomainNameBlockHash();
+        String domain = walletAppKit1.wallet().getDomainNameBlockHash("bigtangle.net", "token").getdomainNameBlockHash();
 
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
                 Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY");
@@ -49,16 +49,15 @@ public class TokenCreateTests extends HelpTest {
 
     @Test
     public void testDomain() throws Exception {
-        List<ECKey> walletKeys = wallet2Keys;
-
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
+        ECKey preKey =  ECKey.fromPrivate(Utils.HEX.decode(NetDomainPriv)); 
+ 
         {
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "net", null, "");
+            final String tokenid = preKey.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(preKey, tokenid, "net", null, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
+            keys.add(  ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
             }
@@ -66,17 +65,16 @@ public class TokenCreateTests extends HelpTest {
     }
 
     @Test
-    public void testDomain2() throws Exception {
-        List<ECKey> walletKeys = wallet2Keys;
-
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
+    public void testDomain2() throws Exception { 
+        ECKey preKey =  ECKey.fromPrivate(Utils.HEX.decode(NetBigtangleDomainPriv)); 
         {
-            final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.net", null, "");
-
+            final String tokenid = preKey.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(preKey, tokenid, "bigtangle.net", null, "");
+        
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
+            keys.add(  ECKey.fromPrivate(Utils.HEX.decode(NetDomainPriv)));
+            keys.add(  ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
             }

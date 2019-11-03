@@ -1038,16 +1038,19 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     private void connectUTXOs(Block block, List<Transaction> transactions) throws BlockStoreException {
         for (final Transaction tx : transactions) {
             boolean isCoinBase = tx.isCoinBase();
+            List<UTXO> spendPending = new ArrayList<UTXO>();
             if (!isCoinBase) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
                     UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
                             in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
-                    if (prevOut != null)
-                        blockStore.updateTransactionOutputSpendPending(prevOut.getBlockHash(), prevOut.getTxHash(),
-                                prevOut.getIndex(), true, System.currentTimeMillis());
+                    if (prevOut != null) {
+                        spendPending.add(prevOut);
+                    }
                 }
             }
+            blockStore.updateTransactionOutputSpendPending(spendPending);
+
             List<UTXO> utxos = new ArrayList<UTXO>();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());

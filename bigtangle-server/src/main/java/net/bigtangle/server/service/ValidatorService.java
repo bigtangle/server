@@ -1914,10 +1914,10 @@ public class ValidatorService {
     }
 
     private SolidityState checkDomainPermission(List<MultiSignAddress> permissionedAddresses,
-            List<MultiSignBy> multiSignBies, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
+            List<MultiSignBy> multiSignBies_0, int requiredSignatures, boolean throwExceptions, Sha256Hash txHash) {
 
         // Make original list inaccessible by cloning list
-        multiSignBies = new ArrayList<MultiSignBy>(multiSignBies);
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>(multiSignBies_0);
 
         // Get permissioned pubkeys wrapped to check for bytearray equality
         Set<ByteBuffer> permissionedPubKeys = new HashSet<ByteBuffer>();

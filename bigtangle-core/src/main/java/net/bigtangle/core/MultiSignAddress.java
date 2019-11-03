@@ -77,4 +77,11 @@ public class MultiSignAddress implements java.io.Serializable {
 
     public MultiSignAddress() {
     }
+
+    @Override
+    public String toString() {
+        return "MultiSignAddress [blockhash=" + blockhash + ", tokenid=" + tokenid + ", address=" + address
+                + ", pubKeyHex=" + pubKeyHex + ", posIndex=" + posIndex + ", tokenHolder=" + tokenHolder + "]";
+    }
+    
 }
