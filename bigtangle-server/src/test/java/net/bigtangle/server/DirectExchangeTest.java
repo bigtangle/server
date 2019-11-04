@@ -174,7 +174,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, genesiskey);
         mcmcService.update();
-
+        confirmationService.update();
         List<UTXO> balance = getBalance(false, genesiskey);
         log.info("balance : " + balance);
         for (UTXO utxo : balance) {
@@ -293,9 +293,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testCreateToken(walletKeys.get(0),"test");
 
         mcmcService.update();
+        confirmationService.update();
         testCreateToken(walletKeys.get(1), "test2");
 
         mcmcService.update();
+        confirmationService.update();
         payToken(200, yourKey, walletKeys.get(0).getPubKey(),walletAppKit1.wallet());
         payToken(300,myKey, walletKeys.get(1).getPubKey(),walletAppKit2.wallet());
         
@@ -549,7 +551,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         mcmcService.update();
-
+        confirmationService.update();
         int blocktype = (int) Block.Type.BLOCKTYPE_VOS.ordinal();
 
         List<String> pubKeyList = new ArrayList<String>();

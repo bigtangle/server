@@ -136,6 +136,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
 
         // mcmc can not change the status of chain
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
 
@@ -219,6 +220,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         // create some blocks
         // testReorgMiningReward();
         mcmcService.update();
+        confirmationService.update();
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("start", "0");
         request.put("end", "0");

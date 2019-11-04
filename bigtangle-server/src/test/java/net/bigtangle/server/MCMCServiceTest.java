@@ -41,6 +41,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testConflictTransactionalUTXO() throws Exception {
         store.resetStore();
         mcmcService.update();
+        confirmationService.update();
         // Generate two conflicting blocks
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
@@ -68,12 +69,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b1, b2);
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
@@ -102,12 +105,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b2, b1);
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
@@ -161,12 +166,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
@@ -216,12 +223,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
         syncBlockService.updateSolidity();
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
@@ -255,12 +264,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
         syncBlockService.updateSolidity();
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
@@ -285,6 +296,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         mcmcService.update();
+        confirmationService.update();
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate another issuance slightly different
@@ -303,12 +315,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed()
@@ -340,6 +354,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), doublespendTX);
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), doublespendTX);
@@ -350,7 +365,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b2, b2);
 
         mcmcService.update();
-
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
     }
@@ -373,6 +388,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         mcmcService.update();
+        confirmationService.update();
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Make another conflicting issuance that goes through
@@ -385,6 +401,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(block1, block2);
         syncBlockService.updateSolidity();
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(block2.getHash()).isConfirmed());
 
@@ -396,6 +413,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         }
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(block2.getHash()).isConfirmed());
     }
@@ -420,6 +438,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         // One of them shall win
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed()
@@ -434,6 +453,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block b2 = createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         Block b3 = createAndAddNextBlock(b1, b2);
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isConfirmed());
@@ -472,6 +492,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block bOrphan5 = createAndAddNextBlock(b5link, b5link);
         // syncBlockService.updateSolidity();
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isConfirmed());
@@ -500,6 +521,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b8link, b8link);
 
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isConfirmed());
@@ -521,6 +543,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // update that
         // should not change anything
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
@@ -623,6 +646,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash());
 
         mcmcService.update();
+        confirmationService.update();
         assertFalse(blockService.getBlockEvaluation(b5.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b6.getHash()).isConfirmed());
@@ -652,7 +676,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
         mcmcService.update();
-
+        
+        confirmationService.update();
         // Should go through
         assertTrue(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         Transaction tx1 = block1.getTransactions().get(0);
@@ -661,12 +686,13 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 1; i < 15; i++) {
+        for (int i = 1; i <  5; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
+            mcmcService.update();
+            confirmationService.update();
         }
-        mcmcService.update();
-
+     
         // Should be out
         assertFalse(blockService.getBlockEvaluation(block1.getHash()).isConfirmed());
         assertFalse(store.getTransactionOutput(block1.getHash(), tx1.getHash(), 0).isConfirmed());

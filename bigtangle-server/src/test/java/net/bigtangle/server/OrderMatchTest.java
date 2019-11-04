@@ -162,6 +162,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
         Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
         mcmcService.update();
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -291,6 +292,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
         mcmcService.update();
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -332,6 +334,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell orders for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         mcmcService.update();
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -443,7 +446,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -482,7 +485,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -984,6 +987,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         mcmcService.update();
+        confirmationService.update();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 

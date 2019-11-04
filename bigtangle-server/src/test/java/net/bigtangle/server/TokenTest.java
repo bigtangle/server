@@ -159,6 +159,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
         }
         mcmcService.update();
+        confirmationService.update();
         {
 
             Block token = testCreateToken(walletKeys.get(1), "de",
@@ -170,6 +171,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), keys.get(i), aesKey);
             }
             mcmcService.update();
+            confirmationService.update();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", currentToken.getToken().getTokenid());
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -200,6 +202,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         mcmcService.update();
+        confirmationService.update();
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -242,6 +245,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         mcmcService.update();
+        confirmationService.update();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
@@ -272,6 +276,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         mcmcService.update();
+        confirmationService.update();
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -317,12 +322,16 @@ public class TokenTest extends AbstractIntegrationTest {
 
         testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test");
         mcmcService.update();
+        confirmationService.update();
         testCreateToken(walletAppKit.wallet().walletKeys().get(1),"test");
         mcmcService.update();
+        confirmationService.update();
         testCreateToken(walletAppKit.wallet().walletKeys().get(2),"test");
         mcmcService.update();
+        confirmationService.update();
         testCreateToken(walletAppKit.wallet().walletKeys().get(3),"test");
         mcmcService.update();
+        confirmationService.update();
         sendEmpty(20);
         //only one is ok.
 

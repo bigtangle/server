@@ -46,7 +46,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         contactInfo0.setContactList(list);
 
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
-        //TODO encrypt and decrypt the contactInfo0 
+        // TODO encrypt and decrypt the contactInfo0
         transaction.setData(contactInfo0.toByteArray());
 
         Sha256Hash sighash = transaction.getHash();
@@ -66,7 +66,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
         mcmcService.update();
-
+        confirmationService.update();
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
@@ -97,7 +97,8 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 
         requestParam.clear();
-        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(), Json.jsonmapper().writeValueAsString(requestParam));
+        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
         block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
 
@@ -106,7 +107,7 @@ public class UserdataTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         mcmcService.update();
-
+        confirmationService.update();
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));

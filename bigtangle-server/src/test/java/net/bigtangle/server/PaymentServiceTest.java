@@ -82,6 +82,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         mcmcService.update();
+        confirmationService.update();
         checkBalance(amount0, wallet1Keys_part);
     }
 
@@ -183,6 +184,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters), NetworkParameters.BIGTANGLE_TOKENID,
                 "0,3");
         mcmcService.update();
+        confirmationService.update();
         ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(to);
         List<UTXO> ulist = getBalance(false, a);
@@ -206,6 +208,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
         mcmcService.update();
+        confirmationService.update();
     }
 
     private static String createDataSize(int msgSize) {

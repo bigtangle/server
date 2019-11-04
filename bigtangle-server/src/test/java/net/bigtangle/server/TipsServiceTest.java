@@ -129,7 +129,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
@@ -186,7 +186,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
@@ -204,7 +204,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // After confirming one of them into the milestone, only that one block
         // is now available
         mcmcService.update();
-
+        confirmationService.update();
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
@@ -262,7 +262,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(block1, block1);
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
@@ -336,7 +336,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(block1, block1);
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
@@ -396,7 +396,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
@@ -465,7 +465,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
         mcmcService.update();
-
+        confirmationService.update();
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {

@@ -87,7 +87,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         mcmcService.update();
-
+        confirmationService.update();
         // Should exist now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
@@ -265,7 +265,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
-
+        confirmationService.update();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
@@ -618,7 +618,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
-
+        confirmationService.update();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
@@ -996,7 +996,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
-
+        confirmationService.update();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
@@ -1068,7 +1068,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
-
+        confirmationService.update();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock.getHash()));

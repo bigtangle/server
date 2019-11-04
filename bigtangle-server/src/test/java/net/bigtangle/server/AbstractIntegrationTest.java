@@ -43,8 +43,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -82,6 +82,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ConfirmationService;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SyncBlockService;
@@ -123,7 +124,8 @@ public abstract class AbstractIntegrationTest {
     protected BlockService blockService;
     @Autowired
     protected MCMCService mcmcService;
-
+    @Autowired
+    protected ConfirmationService confirmationService;
     @Autowired
     protected RewardService rewardService;
 
@@ -365,6 +367,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         mcmcService.update();
+        confirmationService.update();
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
@@ -376,6 +379,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
+        confirmationService.update();
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         return block;
@@ -423,10 +427,12 @@ public abstract class AbstractIntegrationTest {
         block = adjustSolve(block);
         this.blockGraph.add(block, true);
         mcmcService.update();
+        confirmationService.update();
         addedBlocks.add(block);
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         mcmcService.update();
+        confirmationService.update();
         return block;
 
     }
@@ -459,9 +465,11 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true);
         addedBlocks.add(block);
         mcmcService.update();
+        confirmationService.update();
         long cutoffHeight = blockService.getCutoffHeight();
         blockGraph.confirm(block.getHash(), new HashSet<>(), cutoffHeight, -1);
         mcmcService.update();
+        confirmationService.update();
         return block;
     }
 
@@ -478,6 +486,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
+        confirmationService.update();
         return block;
     }
 
@@ -574,6 +583,7 @@ public abstract class AbstractIntegrationTest {
             blockGraph.add(b, true);
         }
         mcmcService.update();
+        confirmationService.update();
         List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
         assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
@@ -734,6 +744,7 @@ public abstract class AbstractIntegrationTest {
         // testCreateMarket();
         testInitTransferWallet();
         mcmcService.update();
+        confirmationService.update();
         // testInitTransferWalletPayToTestPub();
         List<UTXO> ux = getBalance();
         // assertTrue(!ux.isEmpty());
@@ -831,6 +842,7 @@ public abstract class AbstractIntegrationTest {
 
     protected void checkBalance(Coin coin, List<ECKey> a) throws Exception {
         mcmcService.update();
+        confirmationService.update();
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
@@ -855,7 +867,7 @@ public abstract class AbstractIntegrationTest {
         String tokenid = createFirstMultisignToken(keys, tokenInfo);
 
         mcmcService.update();
-
+        confirmationService.update();
         BigInteger amount = new BigInteger("200000");
         Coin basecoin = new Coin(amount, tokenid);
 

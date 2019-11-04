@@ -66,7 +66,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
         String sql = "select userid ,useraccount, amount,  d.status, pubkey " + "from vm_deposit d "
                 + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+                + "join wechatinvite w on a.email=w.wechatId ";
 
         maybeConnect();
         PreparedStatement s = null;
@@ -121,7 +121,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
         String sql = "select userid ,useraccount, amount,  d.status, pubkey,blockhash,address " + "from vm_deposit d "
                 + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId and w.pubkey is not null ";
+                + "join wechatinvite w on a.email=w.wechatId  ";
 
         maybeConnect();
         PreparedStatement s = null;
