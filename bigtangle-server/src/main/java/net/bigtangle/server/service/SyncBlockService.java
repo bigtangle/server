@@ -399,6 +399,7 @@ public class SyncBlockService {
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         for (String s : re) {
+            try {
             if (s != null && !"".equals(s)) {
                 TXReward aTXReward = getMaxConfirmedReward(s.trim());
                 if (aMaxConfirmedReward.aTXReward == null) {
@@ -412,7 +413,9 @@ public class SyncBlockService {
                 }
                 syncMaxConfirmedReward(aMaxConfirmedReward);
             }
-
+            }catch (Exception e) {
+                log.debug("",e);
+            }
         }
 
     }
