@@ -14,7 +14,9 @@ public class ScheduleConfiguration {
 
     @Value("${milestoneschedule.active:false}")
     boolean milestone_active;
-
+    @Value("${milestoneschedule.mining:false}")
+    boolean mining;
+    
     @Value("${blockBatchService.active:false}")
     boolean blockBatchService_active;
 
@@ -32,6 +34,14 @@ public class ScheduleConfiguration {
 
     public void setBlockBatchService_active(boolean blockBatchService_active) {
         this.blockBatchService_active = blockBatchService_active;
+    }
+
+    public boolean isMining() {
+        return mining;
+    }
+
+    public void setMining(boolean mining) {
+        this.mining = mining;
     }
 
   

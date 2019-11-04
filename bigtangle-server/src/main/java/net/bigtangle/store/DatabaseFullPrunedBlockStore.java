@@ -5285,7 +5285,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateOrderConfirmed(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
+    public void updateOrderConfirmed( 
+            Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -5309,13 +5310,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords) throws BlockStoreException {
+    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm ) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
             for (OrderRecord o : orderRecords) {
-                preparedStatement.setBoolean(1, true);
+                preparedStatement.setBoolean(1, confirm);
                 preparedStatement.setBytes(2, o.getBlockHash().getBytes());
                 preparedStatement.setBytes(3, o.getIssuingMatcherBlockHash().getBytes());
                 preparedStatement.addBatch();
@@ -5366,7 +5367,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_SPENT_SQL);
             for (OrderRecord o : orderRecords) {
-                preparedStatement.setBoolean(1, true);
+                preparedStatement.setBoolean(1, o.isSpent());
                 preparedStatement.setBytes(2,
                         o.getSpenderBlockHash() != null ? o.getSpenderBlockHash().getBytes() : null);
                 preparedStatement.setBytes(3, o.getBlockHash().getBytes());

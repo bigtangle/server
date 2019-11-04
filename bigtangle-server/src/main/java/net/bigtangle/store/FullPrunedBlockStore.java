@@ -214,7 +214,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException;
 
-    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords)
+    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm)
             throws BlockStoreException;
 
     

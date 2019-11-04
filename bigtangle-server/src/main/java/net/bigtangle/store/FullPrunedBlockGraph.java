@@ -389,8 +389,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (blockEvaluation.isConfirmed())
             return;
 
-        // Set confirmed
-        blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
+        // Set confirmed, only if it is not confirmed
+        if (!blockEvaluation.isConfirmed()) {
+            blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
+        }
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
         // Connect all approved blocks first if not traversed already
@@ -577,7 +579,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders confirmed
 
-        blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders());
+        blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(),true);
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
@@ -893,16 +895,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult matchingResult = generateOrderMatching(block);
 
         // All consumed order records are now unspent by this block
-        for (OrderRecord o : matchingResult.getSpentOrders()) {
-            blockStore.updateOrderSpent(o.getBlockHash(), o.getIssuingMatcherBlockHash(), false, null);
+        Set<OrderRecord> updateOrder= new HashSet<OrderRecord>(matchingResult.getSpentOrders());
+        for (OrderRecord o :updateOrder) {
+            o.setSpent(false);
+            o.setSpenderBlockHash(null);
         }
+        blockStore.updateOrderSpent(updateOrder);
 
         // Set virtual outputs unconfirmed
         unconfirmVirtualCoinbaseTransaction(block);
 
-        // Set new orders unconfirmed
-        for (OrderRecord o : matchingResult.getRemainingOrders())
-            blockStore.updateOrderConfirmed(o.getBlockHash(), o.getIssuingMatcherBlockHash(), false);
+     
+        blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
         tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.tokenId2Events);
@@ -910,6 +914,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
         // Set own output unconfirmed
+        
         blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, false);
     }
 

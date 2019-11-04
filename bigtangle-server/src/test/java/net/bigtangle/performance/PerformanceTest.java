@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server.compare;
+package net.bigtangle.performance;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
