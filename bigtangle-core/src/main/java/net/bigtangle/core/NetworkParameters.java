@@ -124,9 +124,7 @@ public abstract class NetworkParameters {
      */
     public static final long BLOCK_VERSION_GENESIS = 1;
 
-    // block number can be taken in a reward block
-    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 50000;
-
+ 
     /**
      * A constant shared by the entire network: how large in bytes a block is
      * allowed to be. One day we may have to upgrade everyone to change this, so
@@ -135,8 +133,7 @@ public abstract class NetworkParameters {
      * everyone to download/store it forever.
      */
     public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
-    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + TARGET_MAX_BLOCKS_IN_REWARD * 200;
-
+  
     /**
      * A "sigop" is a signature verification operation. Because they're
      * expensive we also impose a separate limit on the number in a block to
@@ -195,6 +192,12 @@ public abstract class NetworkParameters {
     // MCMC will take only the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 40;
 
+    // block number can be taken in a reward block, it can not be too large for build reward.
+    // about TARGET_MAX_TPS * TARGET_SPACING
+    public static final int TARGET_MAX_BLOCKS_IN_REWARD = 5000;
+    public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + TARGET_MAX_BLOCKS_IN_REWARD * 200;
+
+    
     protected NetworkParameters() {
     }
 
