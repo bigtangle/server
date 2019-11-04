@@ -26,11 +26,11 @@ public class CompareTest {
     public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "") + "bigtangle.de:8089/";
     public static String HTTPS_BIGTANGLE_INFO =
             // HTTPS_BIGTANGLE_LOCAL;
-            "https://" + (testnet ? "test." : "") + "bigtangle.info/";
+            "https://" + (testnet ? "test." : "") + "bigtangle.info:8089/";
     public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org:8089/";
     public static String HTTPS_BIGTANGLE_LOCAL = "http://" + "localhost:8088/";
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_ORG;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);

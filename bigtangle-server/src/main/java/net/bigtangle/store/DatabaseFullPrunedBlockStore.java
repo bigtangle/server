@@ -70,6 +70,8 @@ import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.DepthAndWeight;
+import net.bigtangle.server.service.Rating;
 import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.utils.Gzip;
 
@@ -2047,16 +2049,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void updateBlockEvaluationWeightAndDepth(Sha256Hash blockhash, long weight, long depth)
+    public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight)
             throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
-            preparedStatement.setLong(1, weight);
-            preparedStatement.setLong(2, depth);
-            preparedStatement.setBytes(3, blockhash.getBytes());
-            preparedStatement.executeUpdate();
+           for(DepthAndWeight d: depthAndWeight) {
+            preparedStatement.setLong(1, d.getWeight());
+            preparedStatement.setLong(2, d.getDepth());
+            preparedStatement.setBytes(3, d.getBlockHash().getBytes());
+            preparedStatement.addBatch();
+           }
+            preparedStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -2201,15 +2206,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getUpdateBlockEvaluationRatingSQL();
 
     @Override
-    public void updateBlockEvaluationRating(Sha256Hash blockhash, long i) throws BlockStoreException {
+    public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException {
 
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
             preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRatingSQL());
-            preparedStatement.setLong(1, i);
-            preparedStatement.setBytes(2, blockhash.getBytes());
-            preparedStatement.executeUpdate();
+            for(Rating r: ratings) {
+            preparedStatement.setLong(1, r.getRating());
+            preparedStatement.setBytes(2, r.getBlockhash().getBytes());
+            preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

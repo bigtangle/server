@@ -5,9 +5,11 @@
 package net.bigtangle.server.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -150,6 +152,7 @@ public class MCMCService {
         }
 
         BlockWrap currentBlock = null;
+        List<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
         while ((currentBlock = blockQueue.poll()) != null) {
             Sha256Hash currentBlockHash = currentBlock.getBlockHash();
 
@@ -169,11 +172,12 @@ public class MCMCService {
             subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch);
 
             // Update and dereference
-            store.updateBlockEvaluationWeightAndDepth(currentBlock.getBlockHash(),
-                    approvers.get(currentBlockHash).size(), depths.get(currentBlockHash));
+            depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(),
+                    approvers.get(currentBlockHash).size(), depths.get(currentBlockHash)));
             approvers.remove(currentBlockHash);
             depths.remove(currentBlockHash);
         }
+        store.updateBlockEvaluationWeightAndDepth(depthAndWeight); 
     }
 
     private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
@@ -233,6 +237,7 @@ public class MCMCService {
         }
 
         BlockWrap currentBlock = null;
+        List<Rating> ratings = new    ArrayList<Rating>();
         while ((currentBlock = blockQueue.poll()) != null) {
             // Abort if unmaintained
             if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
@@ -254,10 +259,12 @@ public class MCMCService {
 
             // Update your rating if solid
             if (currentBlock.getBlockEvaluation().getSolid() == 2)
-                store.updateBlockEvaluationRating(currentBlock.getBlockHash(),
-                        approvers.get(currentBlock.getBlockHash()).size());
+                ratings.add( new Rating(currentBlock.getBlockHash(),
+                        approvers.get(currentBlock.getBlockHash()).size()));
             approvers.remove(currentBlock.getBlockHash());
         }
+        store.updateBlockEvaluationRating(ratings);
+        
     }
 
     private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,

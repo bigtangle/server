@@ -40,6 +40,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.DepthAndWeight;
+import net.bigtangle.server.service.Rating;
 import net.bigtangle.server.service.SolidityState;
 
 /**
@@ -172,10 +174,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException;
 
-    public void updateBlockEvaluationWeightAndDepth(Sha256Hash blockHash, long weight, long depth)
+    public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight)
             throws BlockStoreException;
 
-    public void updateBlockEvaluationRating(Sha256Hash blockhash, long rating) throws BlockStoreException;
+    public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException;
 
     public void updateBlockEvaluationConfirmed(Sha256Hash blockhash, boolean confirmed) throws BlockStoreException;
 
