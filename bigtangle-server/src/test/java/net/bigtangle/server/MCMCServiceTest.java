@@ -661,7 +661,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         // Remove it from the milestone
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 1; i < 5; i++) {
+        for (int i = 1; i < 15; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
         }
