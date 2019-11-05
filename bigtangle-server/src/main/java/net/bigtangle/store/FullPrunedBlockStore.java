@@ -110,7 +110,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * <p>
      * Begins/Commits/Aborts a database transaction.
      * </p>
-     *
      * <p>
      * If abortDatabaseBatchWrite() is called by the same thread that called
      * beginDatabaseBatchWrite(), any data writes between this call and
@@ -150,12 +149,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
 
-    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
-
-    public List<Sha256Hash> getConfirmedBlocksOfHeightHigherThan(long height) throws BlockStoreException;
-
-    public List<Sha256Hash> getBlocksOfTimeHigherThan(long time) throws BlockStoreException;
-
+    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException; 
+    
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
@@ -260,9 +255,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException;
 
-    public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException;
-
-    public boolean getTokenAnySpent(String tokenId, long tokenindex) throws BlockStoreException;
+    public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException; 
 
     public boolean getTokenConfirmed(Sha256Hash blockHash) throws BlockStoreException;
 
@@ -285,8 +278,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             String tokenid) throws BlockStoreException;
 
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
-
-    public List<UTXO> getAllUTXOsSorted() throws BlockStoreException;
+ 
 
     public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
 
@@ -324,12 +316,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
 
-    public MultiSignAddress getMultiSignAddressInfo(String tokenid, String address) throws BlockStoreException;
+ 
 
     public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
             throws BlockStoreException;
-
-    public int getCountMultiSignByAlready(String tokenid, long tokenindex) throws BlockStoreException;
+ 
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws BlockStoreException;
@@ -354,8 +345,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
             throws BlockStoreException;
-
-    void deleteMultiSignAddressByTokenidAndBlockhash(String tokenid, String blockhash) throws BlockStoreException;
+ 
 
     void deleteMultiSign(String tokenid) throws BlockStoreException;
 

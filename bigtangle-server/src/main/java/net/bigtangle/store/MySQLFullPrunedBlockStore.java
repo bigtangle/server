@@ -290,8 +290,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   signInputData varbinary(5000),\n"
             + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
     
-    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
-//          + "   id varchar(255) NOT NULL,\n"
+    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = 
+            "CREATE TABLE exchange_multisign (\n"
           + "   orderid varchar(255) ,\n" 
           + "   pubkey varchar(255),\n"
           + "   signInputData varbinary(5000),\n"
@@ -301,17 +301,17 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
-    private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX = "CREATE INDEX outputs_addresstargetable_idx ON outputs (addresstargetable) USING HASH";
-    private static final String CREATE_OUTPUTS_HASH_INDEX = "CREATE INDEX outputs_hash_idx ON outputs (hash) USING HASH";
-
+   
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
+    
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
     private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
-    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)";
-    private static final String CREATE_txreard_chainlength_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength) ";
+    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
+    private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
+    private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
 
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
@@ -358,9 +358,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
-        sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);
-        sqlStatements.add(CREATE_OUTPUTS_HASH_INDEX);
+        sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX); 
+        sqlStatements.add(CREATE_BLOCKS_HEIGHT_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
@@ -368,7 +367,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
         sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
-        sqlStatements.add(CREATE_txreard_chainlength_INDEX);
+        sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
         return sqlStatements;
     }
 
@@ -428,4 +427,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getDropIndexsSQL() {
         return new ArrayList<String>();
     }
+
+  
 }
