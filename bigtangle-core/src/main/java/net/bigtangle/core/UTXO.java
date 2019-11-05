@@ -60,6 +60,10 @@ public class UTXO extends SpentBlock{
     public UTXO() {
     }
  
+    public String keyAsString() {
+        return  getBlockHashHex() +"-" +  Utils.HEX.encode(this.hash.getBytes()) + "-"+ index ;
+    }
+    
     public long getSpendPendingTime() {
         return spendPendingTime;
     }

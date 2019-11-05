@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.TXReward;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.SyncBlockService.Tokensums;
@@ -37,14 +38,13 @@ public class CompareTest {
     SyncBlockService syncBlockService;
 
     @Test
-    public void diffThread() throws Exception {
+    public void diffThread() throws Exception { 
+     //    System.setProperty("https.proxyHost",
+     //     "anwproxy.anwendungen.localnet.de");
+     //   System.setProperty("https.proxyPort", "3128");
 
         syncBlockService = new SyncBlockService();
-
-        // System.setProperty("https.proxyHost",
-        // "anwproxy.anwendungen.localnet.de");
-        // System.setProperty("https.proxyPort", "3128");
-
+        
         while (true) {
             try {
                 testComapre();
@@ -66,10 +66,9 @@ public class CompareTest {
 
         syncBlockService.checkToken(TESTSERVER1, result);
         syncBlockService.checkToken(TESTSERVER2, result);
-        log.debug(  "\n " + TESTSERVER2 + "txreward  " + txreward2.size() + "\n "
-                + txreward2.get(txreward2.size() - 1).getBlockHash() 
-                + "\n " + TESTSERVER1 + "   txreward  " + txreward.size() + "\n "
-                + txreward.get(txreward.size() - 1).getBlockHash());
+        log.debug("\n " + TESTSERVER2 + "txreward  " + txreward2.size() + "\n "
+                + txreward2.get(txreward2.size() - 1).getBlockHash() + "\n " + TESTSERVER1 + "   txreward  "
+                + txreward.size() + "\n " + txreward.get(txreward.size() - 1).getBlockHash());
         // log.debug(txreward2.toString());
         assertTrue("Math.abs(txreward2.size " + txreward2.size() + " - txreward.size{} ) < 20" + txreward.size(),
                 Math.abs(txreward2.size() - txreward.size()) < 20);
@@ -80,15 +79,15 @@ public class CompareTest {
         Map<String, Tokensums> r2 = result.get(TESTSERVER2);
         for (Entry<String, Tokensums> a : r1.entrySet()) {
             Tokensums t1 = a.getValue();
-            assertTrue(TESTSERVER1+" " + t1.toString(), t1.check());
+            assertTrue(TESTSERVER1 + " " + t1.toString(), t1.check());
             Tokensums t = r2.get(a.getKey());
-            assertTrue(TESTSERVER2+" " + t.toString(), t.check());
+            assertTrue(TESTSERVER2 + " " + t.toString(), t.check());
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
                         t1.equals(t) || t1.unspentOrderSum().equals(t.unspentOrderSum()));
                 // log.debug(" txreward2.size " + txreward2.size() + " \n
                 // txreward.size " + txreward.size());
-
+                compareUTXO(t1, t);
             }
         }
 
@@ -99,6 +98,18 @@ public class CompareTest {
 
         // assertTrue(TESTSERVER1 +" : " + r1.toString() +TESTSERVER2+ " : ",
         // r1.equals(r2));
+    }
+
+    private void compareUTXO(Tokensums t1, Tokensums t) {
+        for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
+            UTXO find = t1.getUtxos().get(a.getKey());
+            if (find == null) {
+                log.error(TESTSERVER1 + " not found " + a.getKey());
+            } else {
+                assertTrue("\n " + TESTSERVER1 + ": " +a.getValue().getValue().toString() + "\n " + TESTSERVER2 + ": " + find.getValue().toString() ,
+                        a.getValue().getValue().equals(find.getValue())) ;
+            }
+        }
     }
 
 }

@@ -183,7 +183,8 @@ public class SyncBlockService {
         BigInteger initial;
         BigInteger unspent;
         BigInteger order;
-
+        Map<String, UTXO> utxos = new HashMap<String, UTXO>();
+        
         @Override
         public String toString() {
             return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
@@ -201,6 +202,9 @@ public class SyncBlockService {
 
         public BigInteger unspentOrderSum() {
             return unspent.add(order);
+        }
+        public  Map<String, UTXO> getUtxos()  {
+            return utxos;
         }
 
     }
@@ -233,13 +237,19 @@ public class SyncBlockService {
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
 
+        Tokensums t = new Tokensums();
+        
         Coin sumUnspent = Coin.valueOf(0l, tokenid);
 
         for (UTXO u : getOutputsResponse.getOutputs()) {
-            if (u.isConfirmed() && !u.isSpent())
+            if (u.isConfirmed() && !u.isSpent()) {
                 sumUnspent = sumUnspent.add(u.getValue());
+                
+            }
+            
+           t. utxos.put(u.keyAsString(), u);
         }
-        Tokensums t = new Tokensums();
+ 
         Coin ordersum = ordersum(tokenid, server, orderdataResponse);
         t.tokenid = tokenid;
         t.unspent = sumUnspent.getValue();
