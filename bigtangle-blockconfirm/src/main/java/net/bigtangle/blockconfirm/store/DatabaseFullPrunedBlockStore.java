@@ -65,8 +65,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<Vm_deposit> queryDepositKeyFromOrderKey() throws BlockStoreException {
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
         String sql = "select userid ,useraccount, amount,  d.status, pubkey " + "from vm_deposit d "
-                + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId ";
+                + "join Account a on d.userid=a.id " + "join wechatinvite w on a.email=w.wechatId ";
 
         maybeConnect();
         PreparedStatement s = null;
@@ -82,19 +81,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 vm_deposit.setUseraccount(resultSet.getString("useraccount"));
                 // add only correct pub key to return list for transfer money
                 if (!"PAID".equalsIgnoreCase(vm_deposit.getStatus())
-                    //    && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus())
+                        // && !"PAYING".equalsIgnoreCase(vm_deposit.getStatus())
                         && !"CONFIRM".equalsIgnoreCase(vm_deposit.getStatus())) {
-                    boolean flag = true;
+                    // boolean flag = true;
                     String pubkey = resultSet.getString("pubkey");
                     try {
                         Address.fromBase58(MainNetParams.get(), pubkey);
                     } catch (Exception e) {
-                        // logger.debug("", e);
-                        flag = false;
+                        log.warn(vm_deposit.getUserid() + " pubkey is error", e);
+                        // flag = false;
                     }
-                    if (flag) {
-                        l.add(vm_deposit);
-                    }
+                    // if (flag) {
+                    l.add(vm_deposit);
+                    // }
 
                 }
 
@@ -120,8 +119,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<Vm_deposit> queryDepositByStatus(String status) throws BlockStoreException {
         List<Vm_deposit> l = new ArrayList<Vm_deposit>();
         String sql = "select userid ,useraccount, amount,  d.status, pubkey,blockhash,address " + "from vm_deposit d "
-                + "join Account a on d.userid=a.id "
-                + "join wechatinvite w on a.email=w.wechatId  ";
+                + "join Account a on d.userid=a.id " + "join wechatinvite w on a.email=w.wechatId  ";
 
         maybeConnect();
         PreparedStatement s = null;
@@ -160,7 +158,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void updateDepositStatus(Long id, String useraccount, String status, String blockhash) throws BlockStoreException {
+    public void updateDepositStatus(Long id, String useraccount, String status, String blockhash)
+            throws BlockStoreException {
         String sql = "update vm_deposit set status = ?, blockhash = ? where userid = ? and useraccount=?";
         maybeConnect();
         PreparedStatement s = null;
