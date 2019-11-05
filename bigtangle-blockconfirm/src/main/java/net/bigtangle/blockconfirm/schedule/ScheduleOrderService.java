@@ -23,11 +23,13 @@ import net.bigtangle.blockconfirm.bean.Vm_deposit;
 import net.bigtangle.blockconfirm.config.ScheduleConfiguration;
 import net.bigtangle.blockconfirm.store.FullPrunedBlockStore;
 import net.bigtangle.blockconfirm.utils.GiveMoneyUtils;
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
@@ -61,15 +63,23 @@ public class ScheduleOrderService {
             // only update, if money is given for order
 
             for (Vm_deposit d : deposits) {
-
-                this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID", b.getHashAsString());
-                logger.info("  update deposit : " + d.getUserid() + ", success");
+                if (d.getPubkey() == null || "".equals(d.getPubkey().trim())) {
+                    continue;
+                }
+                try {
+                    Address.fromBase58(MainNetParams.get(), d.getPubkey());
+                    this.store.updateDepositStatus(d.getUserid(), d.getUseraccount(), "PAID", b.getHashAsString());
+                    logger.info("  update deposit : " + d.getUserid() + ", success");
+                } catch (Exception e) {
+                    logger.warn(d.getUserid() + " pubkey address is error");
+                }
 
             }
         }
 
-        // if Status=PAID then check block valuation in milestone, set  Status=CONFIRM
- 
+        // if Status=PAID then check block valuation in milestone, set
+        // Status=CONFIRM
+
         deposits = this.store.queryDepositByStatus("PAID");
         List<Vm_deposit> subDeposits = new ArrayList<Vm_deposit>();
         for (Vm_deposit vm_deposit : deposits) {
@@ -113,15 +123,25 @@ public class ScheduleOrderService {
     private HashMap<String, Long> giveMoneyResult(List<Vm_deposit> l) throws BlockStoreException {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         for (Vm_deposit d : l) {
-            if (giveMoneyResult.containsKey(d.getPubkey())) {
-                long temp = giveMoneyResult.get(d.getPubkey());
-                BigInteger my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue();
-                giveMoneyResult.put(d.getPubkey(), my.longValue() + temp);
-            } else {
+            if (d.getPubkey() == null || "".equals(d.getPubkey().trim())) {
+                logger.warn(d.getUserid() + " pubkey address is null");
+                continue;
+            }
+            try {
+                Address.fromBase58(MainNetParams.get(), d.getPubkey());
 
-                giveMoneyResult.put(d.getPubkey(),
-                        MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue().longValue());
+                if (giveMoneyResult.containsKey(d.getPubkey())) {
+                    long temp = giveMoneyResult.get(d.getPubkey());
+                    BigInteger my = MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue();
+                    giveMoneyResult.put(d.getPubkey(), my.longValue() + temp);
+                } else {
 
+                    giveMoneyResult.put(d.getPubkey(),
+                            MonetaryFormat.FIAT.noCode().parse(d.getAmount().longValue() + "").getValue().longValue());
+
+                }
+            } catch (Exception e) {
+                logger.warn(d.getUserid() + " pubkey address is error");
             }
 
         }
