@@ -22,7 +22,7 @@ public class MemoInfo implements java.io.Serializable {
     public MemoInfo() {
     }
     public MemoInfo(String memo) {
-        List<KeyValue> keyvalues = new ArrayList<KeyValue>();
+         keyvalues = new ArrayList<KeyValue>();
         KeyValue kv= new KeyValue();
         kv.setKey(MEMO);
         kv.setKey(memo);

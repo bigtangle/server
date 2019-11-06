@@ -199,6 +199,38 @@ public class TransactionTest {
     }
 
    
+    @Test
+    public void testMemoUTXO() {
+       
+        tx.setMemo(new MemoInfo("Test:" + tx ));
+        boolean isCoinBase = tx.isCoinBase();
+        for (TransactionOutput out : tx.getOutputs()) {
+            Script script =new Script(new byte[0]);
+            String fromAddress = "";
+            try {
+                if (!isCoinBase) {
+                    fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();
+                }
+            } catch (ScriptException e) {
+                // No address found.
+            }
+            int minsignnumber = 1;
+            if (script.isSentToMultiSig()) {
+                minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+            }
+            UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
+                     "", null, fromAddress, tx.getMemo(),
+                    Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0);
+            newOut.setTime(System.currentTimeMillis() / 1000);
+            assertEquals(newOut.getMemo().contains("Test"), true);
+        }
+        
+      
+     
+        
+    }
+    
+    
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();

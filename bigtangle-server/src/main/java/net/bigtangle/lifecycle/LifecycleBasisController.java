@@ -22,7 +22,7 @@ public abstract class LifecycleBasisController {
         StatusCollector statusCollector = new StatusCollector();
         try {
             checkDefault(statusCollector);
-            checkCassandra(statusCollector);
+            checkDataStore(statusCollector);
             checkKafka(statusCollector);
             return buildLifecycleStatus(statusCollector);
         } catch (Exception exp) {
@@ -43,7 +43,7 @@ public abstract class LifecycleBasisController {
         return status;
     }
 
-    private StatusCollector checkCassandra(StatusCollector status) {
+    private StatusCollector checkDataStore(StatusCollector status) {
 
         try {
             FullPrunedBlockStore repository = findStore();
