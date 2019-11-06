@@ -84,7 +84,7 @@ public class CompareTest {
             assertTrue(TESTSERVER2 + " " + t.toString(), t.check());
             
             compareUTXO(t1, t);
-            
+            compareUTXO(t, t1);
             
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
