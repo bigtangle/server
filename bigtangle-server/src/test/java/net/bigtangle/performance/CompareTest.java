@@ -82,12 +82,16 @@ public class CompareTest {
             assertTrue(TESTSERVER1 + " " + t1.toString(), t1.check());
             Tokensums t = r2.get(a.getKey());
             assertTrue(TESTSERVER2 + " " + t.toString(), t.check());
+            
+            compareUTXO(t1, t);
+            
+            
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
                         t1.equals(t) || t1.unspentOrderSum().equals(t.unspentOrderSum()));
                 // log.debug(" txreward2.size " + txreward2.size() + " \n
                 // txreward.size " + txreward.size());
-                compareUTXO(t1, t);
+           
             }
         }
 
