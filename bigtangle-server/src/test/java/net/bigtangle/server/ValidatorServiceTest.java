@@ -6,7 +6,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -56,7 +55,6 @@ import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionException;
 import net.bigtangle.core.exception.VerificationException.MalformedTransactionDataException;
-import net.bigtangle.core.exception.VerificationException.MissingDependencyException;
 import net.bigtangle.core.exception.VerificationException.MissingTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.NegativeValueOutput;
 import net.bigtangle.core.exception.VerificationException.NotCoinbaseException;
@@ -345,7 +343,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block depBlock = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block depBlock = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
 
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -355,7 +353,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block = saveTokenUnitTest(tokenInfo2, coinbase, outKey, null);
+        Block block = saveTokenUnitTestWithTokenname(tokenInfo2, coinbase, outKey, null );
 
         store.resetStore();
 
@@ -1391,19 +1389,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                         return true;
 
                     }
-                }, new TestCase() { // 20
-                    @Override
-                    public void preApply(TokenInfo tokenInfo5) {
-
-                        tokenInfo5.getToken().setTokenindex(Token.TOKEN_MAX_ISSUANCE_NUMBER + 1);
-                    }
-
-                    @Override
-                    public boolean expectsException() {
-                        return true;
-
-                    }
-                }, new TestCase() {
+                },  new TestCase() {
                     // 21
                     @Override
                     public void preApply(TokenInfo tokenInfo5) {

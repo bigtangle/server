@@ -116,7 +116,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(1), null);
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, walletKeys.get(1), null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -144,7 +144,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, walletKeys.get(8), null);
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, walletKeys.get(8), null);
 
             block1 = pullBlockDoMultiSign(tokens.getTokenid(), walletKeys.get(1), null);
             // Should exist now
@@ -1151,7 +1151,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
             firstIssuance = block1.getHash();
         }
 
@@ -1171,7 +1171,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
             subseqIssuance = block1.getHash();
         }
 

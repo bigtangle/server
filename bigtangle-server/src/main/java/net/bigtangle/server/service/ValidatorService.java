@@ -2009,11 +2009,7 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Not allowed");
             return SolidityState.getFailState();
         }
-        if (currentToken.getToken().getTokenindex() > Token.TOKEN_MAX_ISSUANCE_NUMBER) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("Too many token issuances");
-            return SolidityState.getFailState();
-        }
+ 
 
         if (currentToken.getToken().getDescription() != null
                 && currentToken.getToken().getDescription().length() > Token.TOKEN_MAX_DESC_LENGTH) {
@@ -2049,19 +2045,6 @@ public class ValidatorService {
                 && currentToken.getToken().getTokenname().length() > Token.TOKEN_MAX_NAME_LENGTH) {
             if (throwExceptions)
                 throw new InvalidTransactionDataException("Too long token name");
-            return SolidityState.getFailState();
-        }
-        if (currentToken.getToken().getDecimals() >= Token.TOKEN_MAX_DECIMAL
-                || currentToken.getToken().getDecimals() < 0) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("decimals must be bewteen 0 and 18 ");
-            return SolidityState.getFailState();
-        }
-
-        if ((currentToken.getToken().getAmount() + "").length()
-                + currentToken.getToken().getDecimals() > Token.TOKEN_MAX_DECIMAL) {
-            if (throwExceptions)
-                throw new InvalidTransactionDataException("amount with decimal must be bewteen 0 and 10**19 ");
             return SolidityState.getFailState();
         }
 

@@ -232,7 +232,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         Block b1, b2;
@@ -309,7 +309,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
 
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -320,7 +320,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        Block b1 = saveTokenUnitTestWithTokenname (tokenInfo2, coinbase2, outKey, null);
 
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -330,7 +330,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null);
+        Block b2 = saveTokenUnitTestWithTokenname(tokenInfo3, coinbase3, outKey, null);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(block1, block1);

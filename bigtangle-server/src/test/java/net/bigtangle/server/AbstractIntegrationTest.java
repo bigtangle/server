@@ -91,6 +91,7 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -1006,11 +1007,19 @@ public abstract class AbstractIntegrationTest {
     // for unit tests
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
+        tokenInfo.getToken().setTokenname(UUIDUtil.randomUUID());
         return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
 
+    public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey )
+            throws Exception {
+        return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
+    }
+
+    
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws IOException, Exception {
+       
         Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
         OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
 

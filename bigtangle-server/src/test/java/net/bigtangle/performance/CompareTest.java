@@ -37,7 +37,7 @@ public class CompareTest {
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
 
-    @Test
+   // @Test
     public void diffThread() throws Exception { 
      //    System.setProperty("https.proxyHost",
      //     "anwproxy.anwendungen.localnet.de");
