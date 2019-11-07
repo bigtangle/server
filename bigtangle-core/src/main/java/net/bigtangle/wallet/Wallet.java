@@ -89,7 +89,7 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
-import net.bigtangle.core.response.GetDomainBlockHashResponse;
+import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
@@ -1956,9 +1956,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())) {
             final String domainname = token.getDomainName();
-            GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(domainname);
-            String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
-            token.setDomainNameBlockHash(domainNameBlockHash);
+            GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(domainname);
+            Token domainNameBlockHash = getDomainBlockHashResponse.getdomainNameToken();
+            token.setDomainNameBlockHash(domainNameBlockHash.getBlockHashHex());
+            token.setDomainName(domainNameBlockHash.getTokenname());
         }
 
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
@@ -2397,35 +2398,35 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public void publishDomainName(ECKey signKey, String tokenid, String tokenname, KeyParameter aesKey,
             String description) throws Exception {
-        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
-        String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
+        GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
+        Token domainName = getDomainBlockHashResponse.getdomainNameToken();
 
         List<ECKey> walletKeys = new ArrayList<ECKey>();
         walletKeys.add(signKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
-                signnumber);
+        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainName, aesKey, description, signnumber);
     }
 
     public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
             KeyParameter aesKey, BigInteger amount, String description) throws Exception {
-        GetDomainBlockHashResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
-        String domainNameBlockHash = getDomainBlockHashResponse.getdomainNameBlockHash();
+        GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
+        Token domainNameBlockHash = getDomainBlockHashResponse.getdomainNameToken();
         final int signnumber = walletKeys.size();
         this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
                 signnumber);
     }
 
     public void publishDomainName(List<ECKey> multiSigns, ECKey signKey, String tokenid, String tokenname,
-            String domainNameBlockHash, KeyParameter aesKey, String description, int signnumber) throws Exception {
+            Token domainNameBlockHash, KeyParameter aesKey, String description, int signnumber) throws Exception {
 
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
 
         long tokenindex_ = tokenIndexResponse.getTokenindex();
 
         Token tokens = Token.buildDomainnameTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokenname,
-                description, signnumber, tokenindex_, false, null, domainNameBlockHash);
+                description, signnumber, tokenindex_, false, domainNameBlockHash.getTokenname(),
+                domainNameBlockHash.getBlockHashHex());
         TokenInfo tokenInfo = new TokenInfo();
         tokenInfo.setToken(tokens);
 
@@ -2458,18 +2459,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return permissionedAddressesResponse;
     }
 
-    public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname) throws Exception {
+    public GetDomainTokenResponse getDomainNameBlockHash(String domainname) throws Exception {
         return getDomainNameBlockHash(domainname, "");
     }
 
-    public GetDomainBlockHashResponse getDomainNameBlockHash(String domainname, String token) throws Exception {
+    public GetDomainTokenResponse getDomainNameBlockHash(String domainname, String token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
         requestParam.put("token", token);
         String resp = OkHttp3Util.postString(serverurl + ReqCmd.getDomainNameBlockHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        GetDomainBlockHashResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
-                GetDomainBlockHashResponse.class);
+        GetDomainTokenResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
+                GetDomainTokenResponse.class);
         return getDomainBlockHashResponse;
     }
 

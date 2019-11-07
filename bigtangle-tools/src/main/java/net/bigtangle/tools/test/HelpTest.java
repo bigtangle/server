@@ -262,10 +262,10 @@ public abstract class HelpTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals,  Token domain  ,
             String description) throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, 100000, decimals, domainname, description);
+            createMultisignToken(key, new TokenInfo(), tokename, 100000, decimals, domain, description);
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -275,7 +275,7 @@ public abstract class HelpTest {
     }
 
     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals,
-            String domainname, String description)
+            Token domainname, String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
         String tokenid = key.getPublicKeyAsHex();
 
@@ -295,7 +295,8 @@ public abstract class HelpTest {
 
         Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
                 description, 1, tokenindex_, basecoin.getValue(), false, 0,
-                domainname);
+                domainname.getBlockHashHex());
+        tokens.setDomainName(domainname.getTokenname());
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));

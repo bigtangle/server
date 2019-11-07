@@ -163,7 +163,7 @@ public class TokenTest extends AbstractIntegrationTest {
         {
 
             Block token = testCreateToken(walletKeys.get(1), "de",
-                    walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameBlockHash());
+                    walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameToken().getBlockHashHex());
             TokenInfo currentToken = TokenInfo.parseChecked(token.getTransactions().get(0).getData());
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -300,11 +300,10 @@ public class TokenTest extends AbstractIntegrationTest {
         final String tokenid = new ECKey().getPublicKeyAsHex();
         final String tokenname = "bigtangle.de";
 
-        final String domainNameBlockHash = networkParameters.getGenesisBlock().getHashAsString();
-
+        
         // don't use the first key which is in the wallet
         ECKey signKey = this.walletKeys.get(3);
-        this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, "",
+        this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, Token.genesisToken(networkParameters), aesKey, "",
                 3);
 
         this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);

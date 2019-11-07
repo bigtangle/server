@@ -482,4 +482,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException;
 
+    boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
+
 }

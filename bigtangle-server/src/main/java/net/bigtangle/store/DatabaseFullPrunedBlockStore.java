@@ -274,6 +274,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenname = ? AND domainpredblockhash = ? AND tokenindex = ? AND confirmed = true";
 
+ 
+
+    
     protected final String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM tokens WHERE domainpredblockhash = ? AND confirmed = true";
 
     protected final String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM tokens WHERE blockhash = ?";
@@ -844,10 +847,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             updateRewardConfirmed(params.getGenesisBlock().getHash(), true);
 
             // create bigtangle Token output table
-            Token bigtangle = Token.buildSimpleTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                    NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0,
-                    NetworkParameters.BigtangleCoinTotal, true, NetworkParameters.BIGTANGLE_DECIMAL, "");
-            insertToken(params.getGenesisBlock().getHash(), bigtangle);
+          Token bigtangle =Token.genesisToken(params);
+            insertToken(bigtangle.getBlockHash(), bigtangle);
             updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
             
         } catch (VerificationException e) {
@@ -2782,6 +2783,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    @Override
+    public boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+        try {
+          String sql= "SELECT blockhash FROM tokens WHERE tokenname = ? AND domainpredblockhash = ?  ";
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, tokenname);
+            preparedStatement.setString(2, domainpre);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return true;
+            }else {
+                return false;
+            }
+            
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
     @Override
     public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;

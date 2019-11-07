@@ -252,7 +252,7 @@ public class DispatcherController {
                 break;
             case signToken: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-                this.multiSignService.multiSign(block, false);
+                this.multiSignService.signTokenAndSaveBlock(block, false);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
             }
                 break;

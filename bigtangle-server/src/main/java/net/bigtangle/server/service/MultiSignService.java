@@ -168,14 +168,14 @@ public class MultiSignService {
         }
     }
 
-    public void multiSign(Block block, boolean allowConflicts) throws Exception {
+    public void signTokenAndSaveBlock(Block block, boolean allowConflicts) throws Exception {
         try {
-            // TODO check set true
+            validatorService.checkTokenUnique(block);
             if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block);
                 blockService.saveBlock(block);
             } else {
-                // data save only on this server, not in block.
+                // data save only on this server for multi signs, not in block.
                 this.saveMultiSign(block);
             }
         } catch (InsufficientSignaturesException e) {

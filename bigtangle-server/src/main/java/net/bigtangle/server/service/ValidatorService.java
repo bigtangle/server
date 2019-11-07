@@ -36,6 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
@@ -1013,6 +1016,7 @@ public class ValidatorService {
     }
 
     public SolidityState checkFormalTokenSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
+
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1089,6 +1093,18 @@ public class ValidatorService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    public void checkTokenUnique(Block block)
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+        /*
+         * Token is unique with token name and domain
+         */
+        TokenInfo currentToken = TokenInfo.parse(block.getTransactions().get(0).getData());
+        if (store.getTokennameAndDomain(currentToken.getToken().getTokenname(),
+                currentToken.getToken().getDomainNameBlockHash()) && currentToken.getToken().getTokenindex() == 0) {
+            throw new VerificationException(" Token name and domain exists.");
+        }
     }
 
     /*

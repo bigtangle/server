@@ -21,6 +21,16 @@ public class Token extends SpentBlock implements java.io.Serializable {
     public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
     public static final int TOKEN_MAX_DECIMAL = 18;
     
+    public static Token genesisToken(NetworkParameters params) {
+      Token  genesisToken= Token.buildSimpleTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+            NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0,
+            NetworkParameters.BigtangleCoinTotal, true, NetworkParameters.BIGTANGLE_DECIMAL, "");
+        genesisToken.setBlockHash(params.getGenesisBlock().getHash());
+        genesisToken.setTokentype(TokenType.currency.ordinal());
+     return genesisToken;
+             
+    }
+    
     public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid, String tokenname,
             String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop, int decimals,
             String predecessingDomainBlockHash) {
