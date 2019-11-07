@@ -67,7 +67,7 @@ public class ConfirmationService {
  
         try { 
             store.beginDatabaseBatchWrite();
-            updateConfirmed(10);
+            updateConfirmed(1);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("updateConfirmed ", e);
