@@ -21,9 +21,10 @@ public class MemoInfo implements java.io.Serializable {
 
     public MemoInfo() {
     }
+
     public MemoInfo(String memo) {
-         keyvalues = new ArrayList<KeyValue>();
-        KeyValue kv= new KeyValue();
+        keyvalues = new ArrayList<KeyValue>();
+        KeyValue kv = new KeyValue();
         kv.setKey(MEMO);
         kv.setKey(memo);
         keyvalues.add(kv);
@@ -39,6 +40,21 @@ public class MemoInfo implements java.io.Serializable {
     public static MemoInfo parse(String jsonStr) throws JsonParseException, JsonMappingException, IOException {
 
         return Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
+    }
+
+    public static String parseToString(String jsonStr) {
+        try {
+            MemoInfo m = Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
+            String s = "";
+            for (KeyValue keyvalue : m.getKeyvalues()) {
+                if(keyvalue.getValue() !=null&& keyvalue.getKey() !=null
+                        && !keyvalue.getKey().equals("null") )
+                s += keyvalue.getValue() + ": " + keyvalue.getValue() +" \n";
+            }
+            return s;
+        } catch (Exception e) {
+            return jsonStr;
+        }
     }
 
     public List<KeyValue> getKeyvalues() {

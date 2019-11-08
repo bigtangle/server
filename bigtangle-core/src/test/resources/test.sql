@@ -47,7 +47,7 @@ select * from ordercancel
 update blocks set milestone=0    where height=0
 select * from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
-select * from outputs where blockhash = 0x0000005905850e7c22237aa0d089b550202c0fec6a70ab3d155eda4f8b5857f2;
+select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
 

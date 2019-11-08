@@ -32,12 +32,11 @@ import net.bigtangle.script.Script;
 
 /**
  * A UTXO message contains the information necessary to check a spending
- * transaction and consensus logic. It does not stand for Unspent Transaction Output
- * but for Used Transaction Output, i.e. they are not necessarily unspent.
+ * transaction and consensus logic. It does not stand for Unspent Transaction
+ * Output but for Used Transaction Output, i.e. they are not necessarily
+ * unspent.
  */
-public class UTXO extends SpentBlock{
-
-
+public class UTXO extends SpentBlock {
 
     private Coin value;
     @JsonIgnore
@@ -48,34 +47,34 @@ public class UTXO extends SpentBlock{
     private String address;
     private String fromaddress;
     private String memo;
- 
+
     private boolean spendPending;
     private long spendPendingTime;
     private String tokenId;
 
- 
     private long minimumsign;
 
-     //JSON
+    // JSON
     public UTXO() {
     }
- 
-    public String keyAsString() {
-        return  getBlockHashHex() +"-" +  Utils.HEX.encode(this.hash.getBytes()) + "-"+ index ;
-    }
+
     
+    
+    public String keyAsString() {
+        return getBlockHashHex() + "-" + Utils.HEX.encode(this.hash.getBytes()) + "-" + index;
+    }
+
     public long getSpendPendingTime() {
         return spendPendingTime;
     }
 
-
-    public   boolean isZero() {
+    public boolean isZero() {
         return value.isZero();
     }
+
     public void setSpendPendingTime(long spendPendingTime) {
         this.spendPendingTime = spendPendingTime;
     }
-
 
     public void setScriptHex(String scriptHex) {
         this.script = new Script(Utils.HEX.decode(scriptHex));
@@ -84,7 +83,6 @@ public class UTXO extends SpentBlock{
     public void setHashHex(String hashHex) {
         this.hash = Sha256Hash.wrap(hashHex);
     }
-
 
     public void setValue(Coin value) {
         this.value = value;
@@ -105,6 +103,7 @@ public class UTXO extends SpentBlock{
     public void setAddress(String address) {
         this.address = address;
     }
+
     public boolean isMultiSig() {
         return minimumsign > 1l;
     }
@@ -160,14 +159,14 @@ public class UTXO extends SpentBlock{
         this.coinbase = coinbase;
         this.setBlockHash(blockhash);
         this.fromaddress = fromaddress;
-        this.memo = memo;
+        this.memo = MemoInfo.parseToString(memo);
         this.address = address;
         this.setSpent(spent);
         this.tokenId = tokenid;
-        this.setConfirmed ( confirmed);
+        this.setConfirmed(confirmed);
         this.spendPending = spendPending;
         this.minimumsign = minimumsign;
-        this.spendPendingTime=spendPendingTime;
+        this.spendPendingTime = spendPendingTime;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -197,8 +196,9 @@ public class UTXO extends SpentBlock{
             throw new EOFException();
         index = Utils.readUint32(indexBytes, 0);
 
-//        height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
-//                | ((in.read() & 0xFF) << 24);
+        // height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) |
+        // ((in.read() & 0xFF) << 16)
+        // | ((in.read() & 0xFF) << 24);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
@@ -255,17 +255,16 @@ public class UTXO extends SpentBlock{
         return address;
     }
 
-    @Override
-    public String toString() {
+    public String toStringShort() {
         return String.format(Locale.US, "UTXO %s (%s:%d)", value.toString(), hash, index);
     }
 
-  
-    public String toStringText() {
-        return "UTXO [value=" + value + ", script=" + script + ", hash=" + hash + ", index=" + index + ", coinbase="
-                + coinbase + ", address=" + address + ", fromaddress=" + fromaddress + ", memo=" + memo
-                + ", spendPending=" + spendPending + ", spendPendingTime=" + spendPendingTime + ", tokenId=" + tokenId
-                + ", minimumsign=" + minimumsign + "]";
+    @Override
+    public String toString() {
+        return "UTXO [value=" + value + ", \n script=" + script + ", \n hash=" + hash + ", \n index=" + index
+                + ", coinbase=" + coinbase + ", \n address=" + address + ", \n fromaddress=" + fromaddress
+                + ", \n memo=" + memo + ", \n spendPending=" + spendPending + ", \n spendPendingTime="
+                + spendPendingTime + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + "]";
     }
 
     @Override
@@ -282,11 +281,10 @@ public class UTXO extends SpentBlock{
         UTXO other = (UTXO) o;
         return getIndex() == other.getIndex() && getTxHash().equals(other.getTxHash());
     }
- 
- 
+
     public String getMemo() {
-        if(memo!=null && "{}".equals( memo.trim())) {
-            memo="";
+        if (memo != null && "{}".equals(memo.trim())) {
+            memo = "";
         }
         return memo;
     }
@@ -294,7 +292,7 @@ public class UTXO extends SpentBlock{
     public void setMemo(String memo) {
         this.memo = memo;
     }
- 
+
     public boolean isSpendPending() {
         return spendPending;
     }
@@ -310,5 +308,5 @@ public class UTXO extends SpentBlock{
     public void setMinimumsign(long minimumsign) {
         this.minimumsign = minimumsign;
     }
- 
+
 }

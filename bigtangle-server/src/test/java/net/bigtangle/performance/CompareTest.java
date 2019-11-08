@@ -109,8 +109,9 @@ public class CompareTest {
             if (find == null) {
                 List<UTXO> utxos1 = findFromBlockHash(t1, a.getValue().getBlockHashHex());
                 List<UTXO> utxos2 = findFromBlockHash(t, a.getValue().getBlockHashHex());
-                log.error("\n "+ TESTSERVER1 + " not found " + a.getValue().toStringText());
-                log.error("\n "+ utxos1 + utxos2);
+                log.error("\n "+  " not found " + a.getValue().toString());
+                log.error("\n "+ utxos1);
+                 log.error("\n "       + utxos2);
             } else {
                 assertTrue("\n " + TESTSERVER1 + ": " +a.getValue().getValue().toString() + "\n " + TESTSERVER2 + ": " + find.getValue().toString() ,
                         a.getValue().getValue().equals(find.getValue())) ;
