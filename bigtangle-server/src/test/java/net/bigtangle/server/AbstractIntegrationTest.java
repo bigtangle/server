@@ -766,7 +766,7 @@ public abstract class AbstractIntegrationTest {
         BigInteger amount = basecoin.getValue();
 
         Token token = Token.buildSimpleTokenInfo(true, null, tokenid, tokennameName, "", 1, 0, amount, true, 0, domainpre);
-        token.setDomainName(tokennameName);
+ 
         tokenInfo.setToken(token);
 
         // add MultiSignAddress item

@@ -162,7 +162,7 @@ public class TokenTest extends AbstractIntegrationTest {
         confirmationService.update();
         {
 
-            Block token = testCreateToken(walletKeys.get(1), "de",
+            Block token = testCreateToken(walletKeys.get(1), "mytest",
                     walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameToken().getBlockHashHex());
             TokenInfo currentToken = TokenInfo.parseChecked(token.getTransactions().get(0).getData());
             List<ECKey> keys = new ArrayList<ECKey>();
