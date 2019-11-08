@@ -254,7 +254,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             } else {
                 // parallel chain, save as unconfirmed
                 connect(block, solidityState);
-                solidifyBlock(block, solidityState, false);
             }
 
         }
@@ -1324,6 +1323,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         TransactionInput input = new TransactionInput(networkParameters, tx, Script
                 .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
+        tx.setMemo( new MemoInfo("Order Payout"));
         return tx;
     }
 

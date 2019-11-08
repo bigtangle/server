@@ -26,6 +26,7 @@ import static net.bigtangle.core.Utils.uint32ToByteStreamLE;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -303,12 +304,24 @@ public class Transaction extends ChildMessage {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] buf = unsafeBitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateDataSignatureLen()));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateMemoLen() - calculateDataSignatureLen()));
         }
         return hash;
     }
 
-    public int calculateDataSignatureLen() {
+    private int calculateMemoLen() {
+        int len = 4;
+        if (this.memo != null) {
+            try {
+                len += this.memo.getBytes("UTF-8").length;
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return len;
+    }
+
+    private int calculateDataSignatureLen() {
         int len = 4;
         if (this.dataSignature != null) {
             len += this.dataSignature.length;
@@ -569,14 +582,6 @@ public class Transaction extends ChildMessage {
 
         long len = readUint32();
         optimalEncodingMessageSize += 4;
-
-        if (len > 0) {
-            this.memo = new String(readBytes((int) len));
-            optimalEncodingMessageSize += len;
-        }
-
-        len = readUint32();
-        optimalEncodingMessageSize += 4;
         if (len > 0) {
             byte[] buf = readBytes((int) len);
             this.dataClassName = new String(buf);
@@ -597,6 +602,17 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += len;
         }
 
+        len = readUint32();
+        optimalEncodingMessageSize += 4;
+        if (len > 0) {
+            try {
+                this.memo = new String(readBytes((int) len), "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            optimalEncodingMessageSize += len;
+        }
+        
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
@@ -1183,13 +1199,6 @@ public class Transaction extends ChildMessage {
             out.bitcoinSerialize(stream);
 
         uint32ToByteStreamLE(lockTime, stream);
-        if (this.memo == null || this.memo.equals("")) {
-            uint32ToByteStreamLE(0L, stream);
-        } else {
-            byte[] membyte = this.memo.getBytes();
-            uint32ToByteStreamLE(membyte.length, stream);
-            stream.write(membyte);
-        }
         if (this.dataClassName == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
@@ -1211,6 +1220,14 @@ public class Transaction extends ChildMessage {
             stream.write(this.toAddressInSubtangle);
         }
 
+        if (this.memo == null) {
+            uint32ToByteStreamLE(0L, stream);
+        } else {
+            byte[] membyte = this.memo.getBytes("UTF-8");
+            uint32ToByteStreamLE(membyte.length, stream);
+            stream.write(membyte);
+        }
+        
         if (this.dataSignature == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {

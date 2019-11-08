@@ -111,35 +111,38 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         store.resetStore();
         blocksAddedAll.addAll(a1);
         blocksAddedAll.addAll(a2);
-        // Check add in random order
-        Collections.shuffle(blocksAddedAll);
+        
+        for (int i = 0; i < 50; i++) {
 
-        store.resetStore();
-        // add many times to get chain out of order
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true); 
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        for (Block b : blocksAddedAll)
-            blockGraph.add(b, true);
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == -1);
+            // Check add in random order
+            Collections.shuffle(blocksAddedAll);
 
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == 2);
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+            store.resetStore();
+            // add many times to get chain out of order
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true);
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true); 
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true);
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true);
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true);
+            for (Block b : blocksAddedAll)
+                blockGraph.add(b, true);
+            assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+            assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == -1);
 
-        // mcmc can not change the status of chain
-        mcmcService.update();
-        confirmationService.update();
-        assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+            assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).getMilestone() == 2);
+            assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
 
+            // mcmc can not change the status of chain
+            mcmcService.update();
+            confirmationService.update();
+            assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+            assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash()).isConfirmed());
+        }
     }
 
     // test wrong chain with fixed graph and required blocks

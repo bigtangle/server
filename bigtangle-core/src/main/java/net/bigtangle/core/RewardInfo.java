@@ -22,6 +22,7 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     private Set<Sha256Hash> blocks;
     private long difficultyTargetReward;
     private Sha256Hash ordermatchingResult;
+    private Sha256Hash miningResult;
     
     public RewardInfo() {
     }
@@ -109,6 +110,14 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
     }
  
 
+    public Sha256Hash getMiningResult() {
+        return miningResult;
+    }
+
+    public void setMiningResult(Sha256Hash miningResult) {
+        this.miningResult = miningResult;
+    }
+
     public Sha256Hash getOrdermatchingResult() {
 		return ordermatchingResult;
 	}
@@ -131,6 +140,9 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
             dos.writeBoolean(ordermatchingResult != null);
             if (ordermatchingResult != null)
                 dos.write(ordermatchingResult.getBytes());
+            dos.writeBoolean(miningResult != null);
+            if (miningResult != null)
+                dos.write(miningResult.getBytes());
             
             dos.close();
         } catch (IOException e) {
@@ -165,11 +177,19 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
             r.blocks.add(Sha256Hash.wrap(hbuf));
         }
         r.difficultyTargetReward = dis.readLong();
+        
         boolean hasOrderMatching = dis.readBoolean();
         if (hasOrderMatching) {
             hbuf = new byte[32];
             dis.readFully(hbuf);
             r.ordermatchingResult = Sha256Hash.wrap(hbuf);
+        } 
+        
+        boolean hasMiningReward = dis.readBoolean();
+        if (hasMiningReward) {
+            hbuf = new byte[32];
+            dis.readFully(hbuf);
+            r.miningResult = Sha256Hash.wrap(hbuf);
         } 
         
         dis.close();

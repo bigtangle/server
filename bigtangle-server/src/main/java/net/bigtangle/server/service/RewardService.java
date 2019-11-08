@@ -162,7 +162,8 @@ public class RewardService {
         block.setMinerAddress(
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(result.getTx().getData());
+        Transaction tx = result.getTx();
+        RewardInfo currRewardInfo = RewardInfo.parseChecked(tx.getData());
         block.setLastMiningRewardBlock(currRewardInfo.getChainlength());
         block.setDifficultyTarget(calculateNextBlockDifficulty(currRewardInfo));
 
@@ -173,10 +174,13 @@ public class RewardService {
             chainTarget = Utils.decodeCompactBits(result.getDifficulty());
         }
 
+        block.addTransaction(tx);
         OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(block, currRewardInfo);
         currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
-        result.getTx().setData(currRewardInfo.toByteArray());
-        block.addTransaction(result.getTx());
+        tx.setData(currRewardInfo.toByteArray());
+        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(block);
+        currRewardInfo.setMiningResult(miningTx.getHash());
+        tx.setData(currRewardInfo.toByteArray());
 
         blockService.adjustHeightRequiredBlocks(block);
         final BigInteger chainTargetFinal = chainTarget;
@@ -577,6 +581,12 @@ public class RewardService {
             throw new VerificationException("OrderMatchingResult transactions output is wrong.");
         }
 
+        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(newMilestoneBlock);
+
+        // Only check the Hash of OrderMatchingResult
+        if (!currRewardInfo.getMiningResult().equals(miningTx.getHash())) {
+            throw new VerificationException("generateVirtualMiningRewardTX transactions output is wrong.");
+        }
     }
 
     public boolean solidifyWaiting(Block block) throws BlockStoreException {
