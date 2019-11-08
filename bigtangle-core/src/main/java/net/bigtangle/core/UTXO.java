@@ -260,6 +260,14 @@ public class UTXO extends SpentBlock{
         return String.format(Locale.US, "UTXO %s (%s:%d)", value.toString(), hash, index);
     }
 
+  
+    public String toStringText() {
+        return "UTXO [value=" + value + ", script=" + script + ", hash=" + hash + ", index=" + index + ", coinbase="
+                + coinbase + ", address=" + address + ", fromaddress=" + fromaddress + ", memo=" + memo
+                + ", spendPending=" + spendPending + ", spendPendingTime=" + spendPendingTime + ", tokenId=" + tokenId
+                + ", minimumsign=" + minimumsign + "]";
+    }
+
     @Override
     public int hashCode() {
         return Objects.hashCode(getIndex(), getTxHash());

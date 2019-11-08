@@ -6,6 +6,7 @@ package net.bigtangle.performance;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,13 +32,13 @@ public class CompareTest {
     public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org:8089/";
     public static String HTTPS_BIGTANGLE_LOCAL = "http://" + "localhost:8088/";
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_ORG;
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
 
-   // @Test
+     @Test
     public void diffThread() throws Exception { 
      //    System.setProperty("https.proxyHost",
      //     "anwproxy.anwendungen.localnet.de");
@@ -89,31 +90,41 @@ public class CompareTest {
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
                         t1.equals(t) || t1.unspentOrderSum().equals(t.unspentOrderSum()));
-                // log.debug(" txreward2.size " + txreward2.size() + " \n
-                // txreward.size " + txreward.size());
-           
+          
             }
         }
 
         if (txreward2.size() == txreward.size())
             log.debug(" no difference \n" + r1.toString() + " \n " + r2.toString());
-        // log.debug(TESTSERVER1 + " : " + r1.toString());
-        // log.debug(TESTSERVER2 + " : " + r2.toString());
-
-        // assertTrue(TESTSERVER1 +" : " + r1.toString() +TESTSERVER2+ " : ",
-        // r1.equals(r2));
+ 
     }
 
-    private void compareUTXO(Tokensums t1, Tokensums t) {
+    private void compareUTXO(Tokensums t1, Tokensums t) {   
+        
+        log.debug( "\n "+ t1.toString() +"\n "
+        + TESTSERVER1 + " utxo size : " +t1.getUtxos().size() + "\n " + TESTSERVER2 + ": " + t.getUtxos().size()  );
+         
         for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
-            UTXO find = t1.getUtxos().get(a.getKey());
+            UTXO find = t.getUtxos().get(a.getKey());
             if (find == null) {
-                log.error(TESTSERVER1 + " not found " + a.getKey());
+                List<UTXO> utxos1 = findFromBlockHash(t1, a.getValue().getBlockHashHex());
+                List<UTXO> utxos2 = findFromBlockHash(t, a.getValue().getBlockHashHex());
+                log.error("\n "+ TESTSERVER1 + " not found " + a.getValue().toStringText());
+                log.error("\n "+ utxos1 + utxos2);
             } else {
                 assertTrue("\n " + TESTSERVER1 + ": " +a.getValue().getValue().toString() + "\n " + TESTSERVER2 + ": " + find.getValue().toString() ,
                         a.getValue().getValue().equals(find.getValue())) ;
             }
         }
+    }
+
+    private List<UTXO> findFromBlockHash(Tokensums t1, String blockHashHex) {
+        List<UTXO> res = new ArrayList<>();
+        for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
+            if (a.getKey().startsWith(blockHashHex))
+                res.add(a.getValue());
+        }
+        return res;
     }
 
 }
