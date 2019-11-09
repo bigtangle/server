@@ -5374,21 +5374,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
+        if(addresses==null || addresses.isEmpty()) return new ArrayList<OrderRecord>();
+                
         maybeConnect();
         PreparedStatement s = null;
         try {
 
-            String myaddress = " in (";
-
-            myaddress += buildINList(addresses) + ")";
+            String myaddress = " in (" +  buildINList(addresses) + ")";
 
             String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
                     + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND collectinghash="
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
-            s = conn.get().prepareStatement(sql);
-            ;
+            s = conn.get().prepareStatement(sql); 
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);

@@ -32,20 +32,20 @@ public class CompareTest {
     public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org:8089/";
     public static String HTTPS_BIGTANGLE_LOCAL = "http://" + "localhost:8088/";
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_ORG;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
 
-     @Test
-    public void diffThread() throws Exception { 
-     //    System.setProperty("https.proxyHost",
-     //     "anwproxy.anwendungen.localnet.de");
-     //   System.setProperty("https.proxyPort", "3128");
+    @Test
+    public void diffThread() throws Exception {
+        // System.setProperty("https.proxyHost",
+        // "anwproxy.anwendungen.localnet.de");
+        // System.setProperty("https.proxyPort", "3128");
 
         syncBlockService = new SyncBlockService();
-        
+
         while (true) {
             try {
                 testComapre();
@@ -73,8 +73,6 @@ public class CompareTest {
         // log.debug(txreward2.toString());
         assertTrue("Math.abs(txreward2.size " + txreward2.size() + " - txreward.size{} ) < 20" + txreward.size(),
                 Math.abs(txreward2.size() - txreward.size()) < 20);
-        // log.debug(result1.toString());
-        // log.debug(result2.toString());
 
         Map<String, Tokensums> r1 = result.get(TESTSERVER1);
         Map<String, Tokensums> r2 = result.get(TESTSERVER2);
@@ -83,38 +81,39 @@ public class CompareTest {
             assertTrue(TESTSERVER1 + " " + t1.toString(), t1.check());
             Tokensums t = r2.get(a.getKey());
             assertTrue(TESTSERVER2 + " " + t.toString(), t.check());
-            
+
             compareUTXO(t1, t);
             compareUTXO(t, t1);
-            
+
             if (txreward2.size() == txreward.size()) {
                 assertTrue("\n " + TESTSERVER1 + ": " + t1.toString() + "\n " + TESTSERVER2 + ": " + t,
                         t1.equals(t) || t1.unspentOrderSum().equals(t.unspentOrderSum()));
-          
+
             }
         }
 
         if (txreward2.size() == txreward.size())
             log.debug(" no difference \n" + r1.toString() + " \n " + r2.toString());
- 
+
     }
 
-    private void compareUTXO(Tokensums t1, Tokensums t) {   
-        
-        log.debug( "\n "+ t1.toString() +"\n "
-        + TESTSERVER1 + " utxo size : " +t1.getUtxos().size() + "\n " + TESTSERVER2 + ": " + t.getUtxos().size()  );
-         
+    private void compareUTXO(Tokensums t1, Tokensums t) {
+
+        log.debug("\n " + t1.toString() + "\n " + TESTSERVER1 + " utxo size : " + t1.getUtxos().size() + "\n "
+                + TESTSERVER2 + ": " + t.getUtxos().size());
+
         for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
             UTXO find = t.getUtxos().get(a.getKey());
             if (find == null) {
                 List<UTXO> utxos1 = findFromBlockHash(t1, a.getValue().getBlockHashHex());
                 List<UTXO> utxos2 = findFromBlockHash(t, a.getValue().getBlockHashHex());
-                log.error("\n "+  " not found " + a.getValue().toString());
-                log.error("\n "+ utxos1);
-                 log.error("\n "       + utxos2);
+                log.error("\n " + " not found " + a.getValue().toString());
+                log.error("\n " + utxos1);
+                log.error("\n " + utxos2);
             } else {
-                assertTrue("\n " + TESTSERVER1 + ": " +a.getValue().getValue().toString() + "\n " + TESTSERVER2 + ": " + find.getValue().toString() ,
-                        a.getValue().getValue().equals(find.getValue())) ;
+                if (!a.getValue().getValue().equals(find.getValue()))
+                    log.error("\n " + TESTSERVER1 + ": " + a.getValue().getValue().toString() + "\n " + TESTSERVER2
+                            + ": " + find.getValue().toString());
             }
         }
     }

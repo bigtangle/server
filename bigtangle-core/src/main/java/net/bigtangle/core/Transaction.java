@@ -734,7 +734,7 @@ public class Transaction extends ChildMessage {
             }
         } else {
             s.append("     ");
-            s.append("INCOMPLETE: No inputs!\n");
+        //    s.append("INCOMPLETE: No inputs!\n");
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
@@ -756,8 +756,8 @@ public class Transaction extends ChildMessage {
             }
             s.append('\n');
         }
-        if (purpose != null)
-            s.append("   purpose ").append(purpose).append('\n');
+        if (memo != null)
+            s.append("   memo ").append(memo).append('\n');
         return s.toString();
     }
 

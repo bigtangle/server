@@ -60,7 +60,7 @@ public class OrderSellTest extends HelpTest {
                     && utxo.getValue().getValue().signum() > 0 && !utxo.isSpendPending()
                     && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
                 wallet.setServerURL(url);
-                wallet.sellOrder(null, utxo.getTokenId(), 1000000+ Math.abs((new Random()).nextInt() / 1000000), q,
+                wallet.sellOrder(null, utxo.getTokenId(), 1000000+ Math.abs((new Random()).nextInt()  % 1000000), q,
                         null, null);
 
             }
