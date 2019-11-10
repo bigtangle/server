@@ -13,7 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 /*
- * help to set meo string as key value list
+ * help to set memo string as key value list
  */
 public class MemoInfo implements java.io.Serializable {
     private static final String MEMO = "memo";
