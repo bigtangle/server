@@ -44,6 +44,7 @@ public class ServerConfiguration {
     private Boolean createtable = true;
     
     private double  alphaMCMC = -0.05;
+    private Boolean runKafkaStream = false;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -205,13 +206,25 @@ public class ServerConfiguration {
         this.alphaMCMC = alphaMCMC;
     }
 
+    public Boolean getRunKafkaStream() {
+        return runKafkaStream;
+    }
+
+    public void setRunKafkaStream(Boolean runKafkaStream) {
+        this.runKafkaStream = runKafkaStream;
+    }
+
     @Override
     public String toString() {
         return "ServerConfiguration [requester=" + requester + ", port=" + port + ", debug=" + debug + ", net=" + net
                 + ", mineraddress=" + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion
                 + ", clientversion=" + clientversion + ", permissioned=" + permissioned + ", permissionadmin="
-                + permissionadmin + ", myserverblockOnly=" + myserverblockOnly + ", permissionDomainname="
-                + permissionDomainname + ", serviceReady=" + serviceReady + ", createtable=" + createtable + "]";
+                + permissionadmin + ", solveRewardduration=" + solveRewardduration + ", myserverblockOnly="
+                + myserverblockOnly + ", maxserachblocks=" + maxserachblocks + ", permissionDomainname="
+                + permissionDomainname + ", serviceReady=" + serviceReady + ", createtable=" + createtable
+                + ", alphaMCMC=" + alphaMCMC + ", runKafkaStream=" + runKafkaStream + "]";
     }
+
+ 
 
 }

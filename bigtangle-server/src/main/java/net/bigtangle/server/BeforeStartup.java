@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import net.bigtangle.kafka.BlockStreamHandler;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.store.FullPrunedBlockStore;
@@ -20,24 +21,30 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class BeforeStartup {
 
     private static final Logger logger = LoggerFactory.getLogger(BeforeStartup.class);
- 
+
     @PostConstruct
     public void run() throws Exception {
-      
-        logger.debug("server config: "+ serverConfiguration.toString());
-        //false in test 
+
+        logger.debug("server config: " + serverConfiguration.toString());
+        // set false in test
         if (serverConfiguration.getCreatetable()) {
             store.create();
-        } 
-        serverConfiguration.setServiceReady(true); 
-        syncBlockService.startSingleProcess(); 
-        blockStreamHandler.runStream();
-    
-      
+        }
+        serverConfiguration.setServiceReady(true);
+        if (scheduleConfiguration.isMilestone_active())
+            syncBlockService.startSingleProcess();
+        if (serverConfiguration.getRunKafkaStream()) {
+            blockStreamHandler.runStream();
+        }
+
     }
+
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
+
     @Autowired
     private SyncBlockService syncBlockService;
-  
+
     @Autowired
     private ServerConfiguration serverConfiguration;
     @Autowired
