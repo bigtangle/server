@@ -20,9 +20,6 @@
 package net.bigtangle.core;
 
 import java.beans.Transient;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,14 +43,18 @@ public class UTXO extends SpentBlock {
     private boolean coinbase;
     private String address;
     private String fromaddress;
-    private String memo;
+
 
     private boolean spendPending;
     private long spendPendingTime;
     private String tokenId;
 
     private long minimumsign;
-
+    //saved in database as JSON from MemoInfo, 
+    //but it is simple kv readable text from database to display in UI
+    private String memo;
+ 
+    
     // JSON
     public UTXO() {
     }
@@ -159,7 +160,7 @@ public class UTXO extends SpentBlock {
         this.coinbase = coinbase;
         this.setBlockHash(blockhash);
         this.fromaddress = fromaddress;
-        this.memo = MemoInfo.parseToString(memo);
+        this.memo = memo;
         this.address = address;
         this.setSpent(spent);
         this.tokenId = tokenid;
@@ -169,42 +170,7 @@ public class UTXO extends SpentBlock {
         this.spendPendingTime = spendPendingTime;
     }
 
-    public UTXO(InputStream in) throws IOException {
-        byte[] valueBytes = new byte[8];
-        if (in.read(valueBytes, 0, 8) != 8)
-            throw new EOFException();
-
-        byte[] tokenid = new byte[20];
-        if (in.read(tokenid) != 20)
-            throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0), tokenid);
-
-        int scriptBytesLength = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) | ((in.read() & 0xFF) << 16)
-                | ((in.read() & 0xFF) << 24);
-        byte[] scriptBytes = new byte[scriptBytesLength];
-        if (in.read(scriptBytes) != scriptBytesLength)
-            throw new EOFException();
-        script = new Script(scriptBytes);
-
-        byte[] hashBytes = new byte[32];
-        if (in.read(hashBytes) != 32)
-            throw new EOFException();
-        hash = Sha256Hash.wrap(hashBytes);
-
-        byte[] indexBytes = new byte[4];
-        if (in.read(indexBytes) != 4)
-            throw new EOFException();
-        index = Utils.readUint32(indexBytes, 0);
-
-        // height = ((in.read() & 0xFF)) | ((in.read() & 0xFF) << 8) |
-        // ((in.read() & 0xFF) << 16)
-        // | ((in.read() & 0xFF) << 24);
-
-        byte[] coinbaseByte = new byte[1];
-        in.read(coinbaseByte);
-        coinbase = coinbaseByte[0] == 1;
-    }
-
+ 
     /** The value which this Transaction output holds. */
     public Coin getValue() {
         return value;
@@ -264,7 +230,7 @@ public class UTXO extends SpentBlock {
         return "UTXO [value=" + value + ", \n script=" + script + ", \n hash=" + hash + ", \n index=" + index
                 + ", coinbase=" + coinbase + ", \n address=" + address + ", \n fromaddress=" + fromaddress
                 + ", \n memo=" + memo + ", \n spendPending=" + spendPending + ", \n spendPendingTime="
-                + spendPendingTime + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + "]";
+                + spendPendingTime + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + " \n ]";
     }
 
     @Override
@@ -283,9 +249,7 @@ public class UTXO extends SpentBlock {
     }
 
     public String getMemo() {
-        if (memo != null && "{}".equals(memo.trim())) {
-            memo = "";
-        }
+   
         return memo;
     }
 

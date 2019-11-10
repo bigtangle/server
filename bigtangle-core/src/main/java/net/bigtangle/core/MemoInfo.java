@@ -23,14 +23,14 @@ public class MemoInfo implements java.io.Serializable {
     }
 
     public MemoInfo(String memo) {
-        keyvalues = new ArrayList<KeyValue>();
-        KeyValue kv = new KeyValue();
-        kv.setKey(MEMO);
-        kv.setKey(memo);
-        keyvalues.add(kv);
+        kv = new ArrayList<KeyValue>();
+        KeyValue keyValue = new KeyValue();
+        keyValue.setKey(MEMO);
+        keyValue.setKey(memo);
+        kv.add(keyValue);
     }
 
-    private List<KeyValue> keyvalues;
+    private List<KeyValue> kv;
 
     public String toJson() throws JsonProcessingException {
         return Json.jsonmapper().writeValueAsString(this);
@@ -46,7 +46,7 @@ public class MemoInfo implements java.io.Serializable {
         try {
             MemoInfo m = Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
             String s = "";
-            for (KeyValue keyvalue : m.getKeyvalues()) {
+            for (KeyValue keyvalue : m.getKv()) {
                 if(keyvalue.getValue() !=null&& keyvalue.getKey() !=null
                         && !keyvalue.getKey().equals("null") )
                 s += keyvalue.getValue() + ": " + keyvalue.getValue() +" \n";
@@ -57,12 +57,13 @@ public class MemoInfo implements java.io.Serializable {
         }
     }
 
-    public List<KeyValue> getKeyvalues() {
-        return keyvalues;
+    public List<KeyValue> getKv() {
+        return kv;
     }
 
-    public void setKeyvalues(List<KeyValue> keyvalues) {
-        this.keyvalues = keyvalues;
+    public void setKv(List<KeyValue> kv) {
+        this.kv = kv;
     }
+ 
 
 }
