@@ -408,6 +408,8 @@ public class SyncBlockService {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
+        TXReward my = store.getMaxConfirmedReward();
+        log.debug( " my chain length " + my.getChainLength()); 
         for (String s : re) {
             try {
             if (s != null && !"".equals(s)) {
@@ -421,7 +423,7 @@ public class SyncBlockService {
                         aMaxConfirmedReward.aTXReward = aTXReward;
                     }
                 }
-                syncMaxConfirmedReward(aMaxConfirmedReward);
+                syncMaxConfirmedReward(aMaxConfirmedReward,my);
             }
             }catch (Exception e) {
                 log.debug("",e);
@@ -437,8 +439,8 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward) throws Exception {
-        TXReward my = store.getMaxConfirmedReward();
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward,  TXReward my ) throws Exception {
+     
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
         log.debug("  remote chain length  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "

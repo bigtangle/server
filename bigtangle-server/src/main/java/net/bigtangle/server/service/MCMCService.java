@@ -37,8 +37,7 @@ import net.bigtangle.utils.Threading;
 @Service
 public class MCMCService {
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
-    private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
-
+     
     @Autowired
     protected FullPrunedBlockGraph blockGraph;
     @Autowired
@@ -51,6 +50,13 @@ public class MCMCService {
 
     @Autowired
     private NetworkParameters params;
+    /**
+     * Scheduled update function that updates the Tangle
+     * 
+     * @throws BlockStoreException
+     */
+
+    protected final ReentrantLock lock = Threading.lock("mcmcService");
 
     public void startSingleProcess() {
         if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
@@ -69,23 +75,10 @@ public class MCMCService {
             lock.unlock();
         }
 
-    }
+    } 
+   
 
-    /**
-     * Scheduled update function that updates the Tangle
-     * 
-     * @throws BlockStoreException
-     */
-    public void update() throws BlockStoreException {
-        try {
-            update(Integer.MAX_VALUE);
-        } catch (InterruptedException | ExecutionException e) {
-            // ignore
-            log.debug("update  ", e);
-        }
-    }
-
-    public void update(int numberUpdates) throws InterruptedException, ExecutionException, BlockStoreException {
+    public void update() throws InterruptedException, ExecutionException, BlockStoreException {
 
         Context context = new Context(params);
         Context.propagate(context);
@@ -105,14 +98,7 @@ public class MCMCService {
 
     }
 
-    /**
-     * Scheduled update function that updates the Tangle
-     * 
-     * @throws BlockStoreException
-     */
-
-    protected final ReentrantLock lock = Threading.lock("mcmcService");
-
+ 
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
      * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks

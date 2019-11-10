@@ -547,14 +547,15 @@ public abstract class AbstractIntegrationTest {
 
     protected void showOrders() throws BlockStoreException {
         // Snapshot current state
-        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null); 
+        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null);
         for (OrderRecord o : allOrdersSorted) {
             log.debug(o.toString());
         }
     }
 
     protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks)
-            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
+            throws BlockStoreException, JsonParseException, JsonMappingException, IOException, InterruptedException,
+            ExecutionException {
         // Snapshot current state
         List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
@@ -751,7 +752,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block testCreateToken(ECKey outKey, String tokennameName) throws JsonProcessingException, Exception {
-      return  testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString());
+        return testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString());
     }
 
     protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre)
@@ -765,8 +766,9 @@ public abstract class AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(77777L, pubKey);
         BigInteger amount = basecoin.getValue();
 
-        Token token = Token.buildSimpleTokenInfo(true, null, tokenid, tokennameName, "", 1, 0, amount, true, 0, domainpre);
- 
+        Token token = Token.buildSimpleTokenInfo(true, null, tokenid, tokennameName, "", 1, 0, amount, true, 0,
+                domainpre);
+
         tokenInfo.setToken(token);
 
         // add MultiSignAddress item
@@ -788,8 +790,8 @@ public abstract class AbstractIntegrationTest {
         MultiSignAddress multiSignAddress = permissionedAddressesResponse.getMultiSignAddresses().get(0);
         String pubKeyHex = multiSignAddress.getPubKeyHex();
         ECKey ecKey = this.walletKeyData.get(pubKeyHex);
-        return   this.pullBlockDoMultiSign(tokenid, ecKey, aesKey);
-         
+        return this.pullBlockDoMultiSign(tokenid, ecKey, aesKey);
+
     }
 
     protected void testCreateMarket() throws JsonProcessingException, Exception {
@@ -1011,15 +1013,14 @@ public abstract class AbstractIntegrationTest {
         return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
 
-    public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey )
+    public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
         return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
 
-    
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
             Block overrideHash1, Block overrideHash2) throws IOException, Exception {
-       
+
         Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
         OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
 
@@ -1090,7 +1091,7 @@ public abstract class AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode( testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash, aesKey);
         byte[] buf2 = party2Signature.encodeToDER();
@@ -1159,7 +1160,7 @@ public abstract class AbstractIntegrationTest {
         ECKey outKey = this.walletKeyData.get(pubKeyHex);
         this.pullBlockDoMultiSign(tokenid, outKey, aesKey);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode( testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         this.pullBlockDoMultiSign(tokenid, genesiskey, null);
     }
@@ -1277,7 +1278,7 @@ public abstract class AbstractIntegrationTest {
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
-        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch );
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch);
     }
 
     public void sendEmpty() throws JsonProcessingException, Exception {
