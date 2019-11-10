@@ -33,6 +33,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBalancesResponse;
@@ -297,6 +298,7 @@ public abstract class HelpTest {
                 description, 1, tokenindex_, basecoin.getValue(), false, 0,
                 domainname.getBlockHashHex());
         tokens.setDomainName(domainname.getTokenname());
+        tokens.setTokentype(TokenType.currency.ordinal()); 
         tokenInfo.setToken(tokens);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
