@@ -52,6 +52,7 @@ import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
@@ -84,6 +85,8 @@ public class RewardService {
     @Autowired
     protected NetworkParameters networkParameters;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
 
     /**
      * Scheduled update function that updates the Tangle
@@ -92,17 +95,17 @@ public class RewardService {
      */
 
     protected final ReentrantLock lock = Threading.lock("RewardService");
-    
+
     // createReward is time boxed and can run parallel.
     public void startSingleProcess() {
-     
+
         try {
-          //  log.info("create Reward  started");
+            // log.info("create Reward started");
             createReward();
         } catch (Exception e) {
             log.error("create Reward end  ", e);
-        }   finally {
-         //   lock.unlock();
+        } finally {
+            // lock.unlock();
         }
 
     }
@@ -129,7 +132,7 @@ public class RewardService {
             Stopwatch watch = Stopwatch.createStarted();
             Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash);
             log.debug("  getValidatedRewardBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-            
+
             return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
         } catch (CutoffException | InfeasiblePrototypeException e) {
             // fall back to use prev reward as tip
@@ -143,7 +146,11 @@ public class RewardService {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
         if (block != null)
-            blockService.saveBlock(block);
+            if (scheduleConfiguration.isMining()) {
+                blockService.broadcastBlock(block);
+            } else {
+                blockService.saveBlock(block);
+            }
         return block;
     }
 
@@ -261,13 +268,17 @@ public class RewardService {
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
         try {
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true);
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
+                    true);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
+                    true);
         } catch (CutoffException e) {
             e.printStackTrace();
             blocks = new HashSet<Sha256Hash>();
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, false);
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, false);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
+                    false);
+            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
+                    false);
         }
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
@@ -294,8 +305,6 @@ public class RewardService {
 
         return Utils.encodeCompactBits(difficultyChain);
     }
- 
- 
 
     public void buildRewardChain(Block newMilestoneBlock) throws BlockStoreException {
 

@@ -13,6 +13,7 @@ server:
   permissioned: ${PERMISSIONED:false}
   permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
   myserverblockOnly: ${MYSERVERBLOCKONLY:false}
+  runKafkaStream: ${RUNKAFKASTREAM:true}
 
   
 db:
