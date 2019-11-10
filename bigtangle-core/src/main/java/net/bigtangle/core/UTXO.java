@@ -44,23 +44,21 @@ public class UTXO extends SpentBlock {
     private String address;
     private String fromaddress;
 
-
     private boolean spendPending;
     private long spendPendingTime;
     private String tokenId;
 
     private long minimumsign;
-    //saved in database as JSON from MemoInfo, 
-    //but it is simple kv readable text from database to display in UI
+    // saved in database as JSON from MemoInfo,
+    // but it is simple kv text from database to display in UI
     private String memo;
- 
-    
+    // transform to key value, for usage in application
+    private MemoInfo memoInfo;
+
     // JSON
     public UTXO() {
     }
 
-    
-    
     public String keyAsString() {
         return getBlockHashHex() + "-" + Utils.HEX.encode(this.hash.getBytes()) + "-" + index;
     }
@@ -160,7 +158,13 @@ public class UTXO extends SpentBlock {
         this.coinbase = coinbase;
         this.setBlockHash(blockhash);
         this.fromaddress = fromaddress;
-        this.memo = memo;
+        try {
+            this.memoInfo = MemoInfo.parse(memo);
+        } catch (Exception e) {
+            // IGNORE
+        }
+        this.memo = MemoInfo.parseToString(memo);
+
         this.address = address;
         this.setSpent(spent);
         this.tokenId = tokenid;
@@ -170,7 +174,6 @@ public class UTXO extends SpentBlock {
         this.spendPendingTime = spendPendingTime;
     }
 
- 
     /** The value which this Transaction output holds. */
     public Coin getValue() {
         return value;
@@ -249,7 +252,7 @@ public class UTXO extends SpentBlock {
     }
 
     public String getMemo() {
-   
+
         return memo;
     }
 
@@ -271,6 +274,14 @@ public class UTXO extends SpentBlock {
 
     public void setMinimumsign(long minimumsign) {
         this.minimumsign = minimumsign;
+    }
+
+    public MemoInfo getMemoInfo() {
+        return memoInfo;
+    }
+
+    public void setMemoInfo(MemoInfo memoInfo) {
+        this.memoInfo = memoInfo;
     }
 
 }
