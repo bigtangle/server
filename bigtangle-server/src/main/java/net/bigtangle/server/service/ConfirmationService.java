@@ -62,12 +62,15 @@ public class ConfirmationService {
 
     }
 
-   
+    
     public void update( ) throws BlockStoreException {
- 
+        update(1);
+    }
+   
+    public void update(int numberUpdates) throws BlockStoreException {
         try { 
             store.beginDatabaseBatchWrite();
-            updateConfirmed(1);
+            updateConfirmed(numberUpdates);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("updateConfirmed ", e);
@@ -75,7 +78,6 @@ public class ConfirmationService {
         } finally {
             store.defaultDatabaseBatchWrite();
         }
-
     }
 
     /**

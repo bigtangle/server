@@ -166,14 +166,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(5);
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(5);
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
@@ -223,14 +223,14 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         blockGraph.add(rollingBlock, true);
         syncBlockService.updateSolidity();
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(5);
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 || blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(5);
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash()).isConfirmed()
@@ -690,7 +690,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(5);
         }
      
         // Should be out
