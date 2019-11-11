@@ -81,7 +81,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -146,7 +146,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -279,7 +279,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -353,7 +353,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -413,7 +413,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
@@ -482,7 +482,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
 
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);

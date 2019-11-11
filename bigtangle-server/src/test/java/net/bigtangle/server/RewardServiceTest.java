@@ -46,7 +46,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).getMilestone() == 1);
 
         // Generate more mining reward blocks
-        Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
+        rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash());
         // blocksAddedAll.add(rewardBlock2);
         // second is false , as first win
@@ -188,7 +188,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll);
         // rewardBlock3 takes the long block graph behind cutoff
         try {
-            Block rewardBlock3 = rewardService.createReward(rewardBlock2.getHash(),
+            rewardService.createReward(rewardBlock2.getHash(),
                     rollingBlock2.getHash(), rollingBlock2.getHash());
             fail();
         } catch (VerificationException e) {

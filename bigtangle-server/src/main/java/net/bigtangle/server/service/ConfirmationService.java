@@ -110,7 +110,7 @@ public class ConfirmationService {
             // Finally add the resolved new blocks to the confirmed set
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight, -1);
+                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())

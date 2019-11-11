@@ -383,8 +383,7 @@ public class RewardService {
         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
         for (BlockWrap approvedBlock : allApprovedNewBlocks)
-            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, cutoffHeight,
-                    milestoneNumber);
+            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber);
 
     }
 
