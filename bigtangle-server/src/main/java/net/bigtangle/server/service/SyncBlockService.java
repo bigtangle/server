@@ -156,9 +156,11 @@ public class SyncBlockService {
 
     public void updateSolidity()
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        long cutoffHeight = blockService.getCutoffHeight();
-        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight);
-        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff Height: " + cutoffHeight);
+        long cutoffHeight = blockService.getCurrentCutoffHeight();
+        long maxHeight = blockService.getCurrentMaxHeight();
+        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight, maxHeight);
+        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() 
+        + " from cutoff height: " + cutoffHeight + " to max height: " + maxHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
                 Block req = blockService.getBlock(storedBlock.missingdependencyHash());

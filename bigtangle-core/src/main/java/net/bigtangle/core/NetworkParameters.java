@@ -189,13 +189,16 @@ public abstract class NetworkParameters {
     // itself:
     public static final long PER_BLOCK_REWARD = TARGET_INTERVAL_REWARD / 3 / TARGET_MAX_TPS / TARGET_SPACING;
 
-    // MCMC will take only the blocks back to this confirmed reward block
-    public static final int MILESTONE_CUTOFF = 40;
-
     // block number can be taken in a reward block, it can not be too large for build reward.
     // about TARGET_MAX_TPS * TARGET_SPACING
     public static final int TARGET_MAX_BLOCKS_IN_REWARD = 5000;
     public static final int MAX_REWARD_BLOCK_SIZE = MAX_DEFAULT_BLOCK_SIZE + TARGET_MAX_BLOCKS_IN_REWARD * 200;
+
+    // MCMC and reward milestones will only take the blocks back to this confirmed reward block
+    public static final int MILESTONE_CUTOFF = 40;
+    // Heuristic: MCMC will only continue up to this much above the current confirmed reward block
+    private static final int ESTIMATED_TANGLE_DIAMETER = 50;
+    public static final int FORWARD_BLOCK_HORIZON = TARGET_MAX_BLOCKS_IN_REWARD / ESTIMATED_TANGLE_DIAMETER * 2;
 
     
     protected NetworkParameters() {

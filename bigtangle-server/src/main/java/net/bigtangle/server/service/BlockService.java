@@ -543,14 +543,26 @@ public class BlockService {
         return result;
     }
 
-    public long getCutoffHeight() throws BlockStoreException {
+    public long getCurrentMaxHeight() throws BlockStoreException {
+        TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        return store.get(maxConfirmedReward.getBlockHash()).getHeight() + NetworkParameters.FORWARD_BLOCK_HORIZON;
+    }
+
+    public long getCurrentCutoffHeight() throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
-        TXReward confirmedAtHeightReward = store.getConfirmedAtHeightReward(chainlength);
+        TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
         return store.get(confirmedAtHeightReward.getBlockHash()).getHeight();
     }
 
-    public long getCutoffHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
+    public long getRewardMaxHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
+        return Long.MAX_VALUE;
+        // Block rewardBlock = store.get(prevRewardHash);
+        // return rewardBlock.getHeight() +
+        // NetworkParameters.FORWARD_BLOCK_HORIZON;
+    }
+
+    public long getRewardCutoffHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
         Set<Sha256Hash> prevMilestoneBlocks = new HashSet<Sha256Hash>();
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
@@ -567,25 +579,6 @@ public class BlockService {
             currPrevRewardHash = currRewardInfo.getPrevRewardHash();
         }
         return store.get(currPrevRewardHash).getHeight();
-    }
-
-    Set<Sha256Hash> getPastMilestoneBlocks(Sha256Hash prevRewardHash) throws BlockStoreException {
-        Set<Sha256Hash> prevMilestoneBlocks = new HashSet<Sha256Hash>();
-        Sha256Hash currPrevRewardHash = prevRewardHash;
-        for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
-            BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo currRewardInfo = RewardInfo
-                    .parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
-
-            prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
-            prevMilestoneBlocks.add(currPrevRewardHash);
-
-            if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
-                break;
-
-            currPrevRewardHash = currRewardInfo.getPrevRewardHash();
-        }
-        return prevMilestoneBlocks;
     }
 
     /**

@@ -204,10 +204,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_NONSOLID_MISSINGBLOCKS_SQL = "select   hash, "
             + "  inserttime,  reason,   missingdependency,   height,\n"
-            + "              directlymissing from unsolidblocks where height > ?";
+            + "              directlymissing from unsolidblocks where height > ? and height <= ?";
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = false AND height > ? AND rating >= "
+            + " FROM blocks WHERE solid=2 AND milestone = -1 AND confirmed = false AND height > ? AND height <= ? AND rating >= "
             + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
@@ -217,9 +217,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
 
-    protected final String SELECT_SOLID_BLOCKS_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
+    protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT blocks.hash, rating, depth, cumulativeweight, "
             + " blocks.height, milestone, milestonelastupdate,  inserttime,  block, solid, confirmed FROM blocks "
-            + " WHERE height > ? AND solid = 2 " + afterSelect();
+            + " WHERE height > ? AND height <= ? AND solid = 2 " + afterSelect();
 
     protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
             + "FROM blocks WHERE milestone = -1 AND confirmed = 1 " + afterSelect();
@@ -1582,13 +1582,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight) throws BlockStoreException {
+    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight, long maxHeight) throws BlockStoreException {
         List<UnsolidBlock> storedBlockHashes = new ArrayList<UnsolidBlock>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_MISSINGBLOCKS_SQL);
             preparedStatement.setLong(1, cutoffHeight);
+            preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 storedBlockHashes.add(new UnsolidBlock(resultSet.getBytes("hash"), resultSet.getLong("inserttime"),
@@ -1693,7 +1694,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException {
+    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight, long maxHeight) throws BlockStoreException {
         Comparator<BlockWrap> comparator = Comparator.comparingLong((BlockWrap b) -> b.getBlock().getHeight())
                 .thenComparing((BlockWrap b) -> b.getBlock().getHash());
         TreeSet<BlockWrap> storedBlockHashes = new TreeSet<>(comparator);
@@ -1702,6 +1703,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
             preparedStatement.setLong(1, cutoffHeight);
+            preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -1752,14 +1754,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public PriorityQueue<BlockWrap> getSolidBlocksDescending(long cutoffHeight) throws BlockStoreException {
+    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight) throws BlockStoreException {
         PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_SQL);
+            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL);
             preparedStatement.setLong(1, cutoffHeight);
+            preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -3854,7 +3857,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException {
+    public TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

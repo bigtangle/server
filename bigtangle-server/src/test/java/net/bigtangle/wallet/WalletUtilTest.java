@@ -24,7 +24,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletUtil;

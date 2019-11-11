@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -357,32 +354,23 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         this.blockStore.updateVOSExecute(vosExecute_);
     }
 
+
     /**
      * Adds the specified block and all approved blocks to the confirmed set.
      * This will connect all transactions of the block by marking used UTXOs
      * spent and adding new UTXOs to the db.
      * 
      * @param blockHash
-     * @param cutoffHeight
      * @param milestoneNumber
      * @throws BlockStoreException
-     * @throws IOException
-     * @throws JsonMappingException
-     * @throws JsonParseException
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long cutoffHeight,
-            long milestoneNumber) throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber) throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
 
         BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
         BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
-        // Block block = blockWrap.getBlock();
-
-        // Cutoff
-        if (blockEvaluation.getHeight() <= cutoffHeight)
-            return;
 
         // If already confirmed, return
         if (blockEvaluation.isConfirmed())
@@ -393,13 +381,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
         }
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
-
-        // Connect all approved blocks first if not traversed already
-        // Set<Sha256Hash> allRequiredBlockHashes =
-        // blockService.getAllRequiredBlockHashes(block);
-        // for (Sha256Hash req : allRequiredBlockHashes) {
-        // confirmUntil(req, traversedBlockHashes, cutoffHeight);
-        // }
 
         // Confirm the block
         confirmBlock(blockWrap);
