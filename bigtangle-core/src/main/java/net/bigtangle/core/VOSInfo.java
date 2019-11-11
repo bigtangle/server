@@ -5,6 +5,7 @@
 
 package net.bigtangle.core;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +27,11 @@ public class VOSInfo implements java.io.Serializable {
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
+            return jsonStr.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new byte[0];
+      
     }
 
     public VOSInfo parse(byte[] buf) {

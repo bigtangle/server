@@ -5,6 +5,8 @@
 
 package net.bigtangle.core;
 
+import java.nio.charset.StandardCharsets;
+
 public class VOS  extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 4616548968716699128L;
@@ -65,11 +67,11 @@ public class VOS  extends DataClass implements java.io.Serializable {
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
+            return jsonStr.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new byte[0];
+       
     }
 
     public String getFrequence() {

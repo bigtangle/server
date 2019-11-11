@@ -5,6 +5,7 @@
 
 package net.bigtangle.core;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -20,11 +21,11 @@ public class VOSExecute implements java.io.Serializable {
         map.put("dataHex", Utils.HEX.encode(this.data));
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(map);
-            return jsonStr.getBytes();
+            return jsonStr.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return new byte[0];
+       
     }
 
     private static final long serialVersionUID = -3458226955228069779L;

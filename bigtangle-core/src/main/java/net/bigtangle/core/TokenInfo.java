@@ -6,6 +6,7 @@
 package net.bigtangle.core;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class TokenInfo extends DataClass implements java.io.Serializable {
     public byte[] toByteArray() {
         try {
             String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
+            return jsonStr.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } 

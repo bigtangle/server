@@ -113,7 +113,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         validToTime = dis.readLong();
         validFromTime = dis.readLong();
         int size = dis.readInt();
-        beneficiaryPubKey = new byte[Sha256Hash.LENGTH];
+        beneficiaryPubKey = new byte[size];
         dis.readFully(beneficiaryPubKey);
         targetTokenid = Utils.readNBytesString(dis); 
         beneficiaryAddress = Utils.readNBytesString(dis); 

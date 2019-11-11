@@ -6,6 +6,7 @@ package net.bigtangle.server.service;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -275,7 +276,7 @@ public class SyncBlockService {
     private OrderdataResponse orders(String server) throws IOException, JsonProcessingException, JsonMappingException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
 
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         return orderdataResponse;
@@ -285,7 +286,7 @@ public class SyncBlockService {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
         String response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
 
         GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
 

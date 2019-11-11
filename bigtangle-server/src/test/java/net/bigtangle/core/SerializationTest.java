@@ -44,7 +44,7 @@ public class SerializationTest {
 
     @Test
     public void testOrderOpenInfoSerialization() throws IOException {
-        OrderOpenInfo info1 = new OrderOpenInfo(2l, "test1", getRandomSha256Hash().getBytes(), 3l, 4l, Side.SELL, "test2");
+        OrderOpenInfo info1 = new OrderOpenInfo(2l, "test1", new byte[] { 2 }, 3l, 4l, Side.SELL, "test2");
         OrderOpenInfo info2 = new OrderOpenInfo().parse(info1.toByteArray());
 
         assertArrayEquals(info1.toByteArray(), info2.toByteArray());
