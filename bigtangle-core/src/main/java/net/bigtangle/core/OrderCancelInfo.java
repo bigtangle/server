@@ -55,7 +55,9 @@ public class OrderCancelInfo implements java.io.Serializable {
     }
     
     public OrderCancelInfo parseDIS(DataInputStream dis) throws IOException {
-        blockHash = Sha256Hash.wrap(dis.readNBytes(Sha256Hash.LENGTH));
+        byte[] buf = new byte[Sha256Hash.LENGTH];
+        dis.readFully(buf);
+        blockHash = Sha256Hash.wrap(buf);
         
         return this;
     }

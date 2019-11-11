@@ -75,12 +75,12 @@ public class MyHomeAddress implements java.io.Serializable {
         ByteArrayInputStream bain = new ByteArrayInputStream(buf);
         DataInputStream dis = new DataInputStream(bain);
 
-        country = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        province = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        city = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        street = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        email = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        remark = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        country = Utils.readNBytesString(dis); 
+        province = Utils.readNBytesString(dis); 
+        city = Utils.readNBytesString(dis); 
+        street = Utils.readNBytesString(dis); 
+        email = Utils.readNBytesString(dis); 
+        remark = Utils.readNBytesString(dis); 
         
         dis.close();
         bain.close();

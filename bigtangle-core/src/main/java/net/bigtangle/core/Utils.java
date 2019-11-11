@@ -35,6 +35,7 @@ import net.bigtangle.utils.Base58;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -225,6 +226,16 @@ public class Utils {
                 (bytes[offset + 3] & 0xffl);
     }
 
+    public static  String readNBytesString(DataInputStream dis) throws IOException, UnsupportedEncodingException {
+        if (dis.readBoolean()) {
+            byte[] buf = new byte[dis.readInt()];
+            dis.readFully(buf);
+            return new String(buf, "UTF-8");
+        } else {
+            return null;
+        }
+    }
+    
     /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in big endian format. */
     public static int readUint16BE(byte[] bytes, int offset) {
         return ((bytes[offset] & 0xff) << 8) |

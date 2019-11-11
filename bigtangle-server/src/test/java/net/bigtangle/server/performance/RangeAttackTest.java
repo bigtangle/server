@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.performance;
+package net.bigtangle.server.performance;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,13 +21,26 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
 import net.bigtangle.server.AbstractIntegrationTest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class PerformanceTest extends AbstractIntegrationTest { 
+public class RangeAttackTest extends AbstractIntegrationTest { 
 
-    // Test limit of blocks in reward chain 
+    
+
+    @Before
+    public void setUp() throws Exception {
+        Utils.unsetMockClock();
+        
+        this.walletKeys();
+        this.initWalletKeysMapper();
+      
+    }
+    
+    
+    // Test limit of blocks in reward chain and build very long chain on local server and publish to network
     @Test
     public void testMiningRewardTooLarge() throws Exception {
 
@@ -90,6 +104,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
         confirmationService.update();
         // Mining reward block should go through
         mcmcService.update();
+        confirmationService.update();
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
 
         // Generate more mining reward blocks
@@ -99,6 +114,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
                 fusingBlock.getHash(), rollingBlock1.getHash());
         mcmcService.update();
         confirmationService.update();
+
         // No change
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash()).isConfirmed());

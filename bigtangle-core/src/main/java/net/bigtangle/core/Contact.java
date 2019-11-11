@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public class Contact {
     private String name = "";
@@ -56,8 +57,9 @@ public class Contact {
     }
     
     public Contact parseDIS(DataInputStream dis) throws IOException {
-        name = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
-        address = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        name = Utils.readNBytesString(dis); 
+        address = Utils.readNBytesString(dis); 
+        
         return this;
     }
 
