@@ -96,6 +96,7 @@ import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
+ 
 
 public class Main extends Application {
     public static NetworkParameters params = MainNetParams.get();
@@ -358,11 +359,11 @@ public class Main extends Application {
         if (!Locale.CHINESE.equals(locale)) {
 
             if ("".equals(IpAddress))
-                IpAddress = "https://bigtangle.de";
+                IpAddress = "https://p.bigtangle.de:8088";
         } else {
 
             if ("".equals(IpAddress))
-                IpAddress = "https://bigtangle.org";
+                IpAddress = "https://p.bigtangle.org:8088";
 
         }
 

@@ -14,7 +14,7 @@ server:
   permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
   myserverblockOnly: ${MYSERVERBLOCKONLY:false}
   runKafkaStream: ${RUNKAFKASTREAM:true}
-
+  createtable: ${CREATETABLE:true}
   
 db:
   dbtype: ${DBTYPE:mysql}

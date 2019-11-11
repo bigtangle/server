@@ -69,7 +69,7 @@ public class BlockBatchService {
             if (batchBlocks.isEmpty()) {
                 return;
             }
-            Block block = blockService.getTip();
+            Block block = blockService.getBlockPrototype();
             for (BatchBlock batchBlock : batchBlocks) {
                 byte[] payloadBytes = batchBlock.getBlock();
                 Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);

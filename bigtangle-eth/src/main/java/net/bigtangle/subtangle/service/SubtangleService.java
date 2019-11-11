@@ -62,7 +62,7 @@ public class SubtangleService {
                 }
                 Coin coinbase = output.getValue();
 
-                Block b = blockService.getTip();
+                Block b = blockService.getBlockPrototype();
                 b.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
                 b.addCoinbaseTransaction(signKey.getPubKey(), coinbase);
                 blockService.saveBlock(b);
@@ -94,7 +94,7 @@ public class SubtangleService {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        Block b = blockService.getTip();
+        Block b = blockService.getBlockPrototype();
         b.addTransaction(transaction);
         b.solve();
         this.blockService.saveBlock(b);
@@ -118,7 +118,7 @@ public class SubtangleService {
         transaction.addOutput(spendableOutput.getValue().subtract(amount), signKey);
         wallet.signTransaction(transaction, null);
 
-        Block b = blockService.getTip();
+        Block b = blockService.getBlockPrototype();
         b.addTransaction(transaction);
         b.solve();
         this.blockService.saveBlock(b);
