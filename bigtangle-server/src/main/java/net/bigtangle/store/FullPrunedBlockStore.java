@@ -156,13 +156,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException;
 
-    public PriorityQueue<BlockWrap> getSolidBlocksDescending(long cutoffHeight) throws BlockStoreException;
+    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException;
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
-    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight) throws BlockStoreException;
+    public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
     /* Block Evaluation */
     public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
@@ -391,7 +391,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
-    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight) throws BlockStoreException;
+    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
     void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
 
@@ -472,7 +472,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
 
-    TXReward getConfirmedAtHeightReward(long chainlength) throws BlockStoreException;
+    TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
 
     List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
 

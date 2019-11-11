@@ -214,7 +214,7 @@ public class ValidatorService {
      * @throws BlockStoreException
      */
     public boolean isEligibleForApprovalSelection(BlockWrap block, HashSet<BlockWrap> currentApprovedUnconfirmedBlocks,
-            long cutoffHeight) throws BlockStoreException {
+            long cutoffHeight, long maxHeight) throws BlockStoreException {
         // Any confirmed blocks are always compatible with the current
         // confirmeds
         if (block.getBlockEvaluation().isConfirmed())
@@ -222,6 +222,10 @@ public class ValidatorService {
 
         // Unchecked blocks are not allowed
         if (block.getBlockEvaluation().getSolid() < 2)
+            return false;
+        
+        // Above maxHeight is not allowed
+        if (block.getBlockEvaluation().getHeight() > maxHeight)
             return false;
 
         // Get sets of all / all new unconfirmed blocks when approving the
@@ -315,7 +319,7 @@ public class ValidatorService {
     public void resolveAllConflicts(TreeSet<BlockWrap> blocksToAdd, long cutoffHeight) throws BlockStoreException {
         // Cutoff: Remove if predecessors neither in milestone nor to be
         // confirmed
-        removeWhereCutoff(blocksToAdd);
+        removeWhereUnconfirmedRequirements(blocksToAdd);
 
         // Remove ineligible blocks, i.e. only reward blocks
         // since they follow a different logic
@@ -345,7 +349,7 @@ public class ValidatorService {
      * @param blocksToAdd
      * @throws BlockStoreException
      */
-    private void removeWhereCutoff(TreeSet<BlockWrap> blocksToAdd) throws BlockStoreException {
+    private void removeWhereUnconfirmedRequirements(TreeSet<BlockWrap> blocksToAdd) throws BlockStoreException {
         Iterator<BlockWrap> iterator = blocksToAdd.iterator();
         while (iterator.hasNext()) {
             BlockWrap b = iterator.next();

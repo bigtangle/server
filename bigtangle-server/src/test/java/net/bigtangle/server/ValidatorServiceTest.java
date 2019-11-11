@@ -230,7 +230,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
-        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
 
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
@@ -274,7 +274,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         // Generate eligible mining reward block
@@ -294,22 +294,22 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash());
-        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
 
         store.resetStore();
         for (Block b : blocks1) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         // Add block allowing unsolids
@@ -392,7 +392,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         // Generate eligible mining reward block
@@ -527,7 +527,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm 1
-        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
 
         // 1 should be confirmed now
         UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
@@ -581,7 +581,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(origUTXO.isSpent());
 
         // Confirm 2
-        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
 
         // 2 should be confirmed now
         utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
@@ -2504,7 +2504,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         Block block1 = null;
@@ -2623,7 +2623,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         Block block1 = null;
@@ -2712,7 +2712,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         Block block1 = null;
@@ -2781,7 +2781,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCutoffHeight(), -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), blockService.getCurrentCutoffHeight(), -1);
         }
 
         Block block1 = null;

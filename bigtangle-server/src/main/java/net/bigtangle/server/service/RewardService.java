@@ -266,7 +266,7 @@ public class RewardService {
         Transaction tx = new Transaction(networkParameters);
 
         Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
-        long cutoffheight = blockService.getCutoffHeight(prevRewardHash);
+        long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash);
 
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
@@ -277,6 +277,8 @@ public class RewardService {
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
                     true);
         } catch (CutoffException e) {
+            
+            // Robustness
             e.printStackTrace();
             blocks = new HashSet<Sha256Hash>();
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
@@ -314,7 +316,7 @@ public class RewardService {
 
         RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
         Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
-        long cutoffHeight = blockService.getCutoffHeight(currRewardInfo.getPrevRewardHash());
+        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash());
 
         // Check all referenced blocks have their requirements
         SolidityState solidityState = checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight);
@@ -670,7 +672,7 @@ public class RewardService {
                 throw new VerificationException("Previous reward block is not reward block.");
 
             // Get all blocks approved by previous reward blocks
-            long cutoffHeight = blockService.getCutoffHeight(prevRewardHash);
+            long cutoffHeight = blockService.getRewardCutoffHeight(prevRewardHash);
 
             for (Sha256Hash hash : rewardInfo.getBlocks()) {
                 BlockWrap block = store.getBlockWrap(hash);

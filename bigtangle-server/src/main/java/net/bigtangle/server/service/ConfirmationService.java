@@ -97,11 +97,12 @@ public class ConfirmationService {
         for (BlockEvaluation block : blocksToRemove)
             blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
 
-        long cutoffHeight = blockService.getCutoffHeight();
+        long cutoffHeight = blockService.getCurrentCutoffHeight();
+        long maxHeight = blockService.getCurrentMaxHeight();
         for (int i = 0; i < numberUpdates; i++) {
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
-            TreeSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight);
+            TreeSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight, maxHeight);
 
             // VALIDITY CHECKS
             validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);

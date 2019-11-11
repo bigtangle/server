@@ -8,8 +8,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +38,26 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MCMCServiceTest extends AbstractIntegrationTest {
+
+    // Test forward cutoff
+    @Test
+    public void testForwardCutoff() throws Exception {
+
+        List<Block> blocksAddedAll = new ArrayList<Block>();
+        Block rollingBlock1 = addFixedBlocks(NetworkParameters.FORWARD_BLOCK_HORIZON + 10,
+                networkParameters.getGenesisBlock(), blocksAddedAll);
+
+        // MCMC should not update this far out
+        mcmcService.update();
+        assertFalse(blockService.getBlockEvaluation(rollingBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash()).getRating() == 0);
+        
+        // Reward block should include it
+        final Pair<Sha256Hash, Sha256Hash> validatedRewardBlockPair = tipsService.getValidatedRewardBlockPair(networkParameters.getGenesisBlock().getHash());
+        rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
+                validatedRewardBlockPair.getLeft(), validatedRewardBlockPair.getRight());
+        assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash()).getMilestone() == 1);
+    }
 
     @Test
     public void testConflictTransactionalUTXO() throws Exception {

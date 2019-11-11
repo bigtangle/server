@@ -109,15 +109,16 @@ public class MCMCService {
     private void updateWeightAndDepth() throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        long cutoffHeight = blockService.getCutoffHeight();
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksDescending(cutoffHeight);
+        long cutoffHeight = blockService.getCurrentCutoffHeight();
+        long maxHeight = blockService.getCurrentMaxHeight();
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
-        // Initialize weight and depth of tips
-        for (BlockWrap tip : blockQueue) {
-            approvers.put(tip.getBlockHash(), new HashSet<>());
-            depths.put(tip.getBlockHash(), 0L);
+        // Initialize weight and depth of blocks
+        for (BlockWrap block : blockQueue) {
+            approvers.put(block.getBlockHash(), new HashSet<>());
+            depths.put(block.getBlockHash(), 0L);
         }
 
         BlockWrap currentBlock = null;
@@ -179,7 +180,8 @@ public class MCMCService {
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
         Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
-        long cutoffHeight = blockService.getCutoffHeight();
+        long cutoffHeight = blockService.getCurrentCutoffHeight();
+        long maxHeight = blockService.getCurrentMaxHeight();
 
         // Initialize all approvers as UUID
         for (BlockWrap selectedTip : selectedTips) {
@@ -196,7 +198,7 @@ public class MCMCService {
 
         // Begin from the highest solid height tips plus selected tips and go
         // backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksDescending(cutoffHeight);
+        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
         HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
         selectedTipSet.removeAll(blockQueue);
         blockQueue.addAll(selectedTipSet);
