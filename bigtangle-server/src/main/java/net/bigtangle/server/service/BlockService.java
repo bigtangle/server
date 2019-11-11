@@ -13,8 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -55,6 +57,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Gzip;
+import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
 
@@ -85,7 +88,11 @@ public class BlockService {
     protected TipsService tipService;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final int PROTOTYPE_CACHE_SIZE = 10;
 
+    private List<Block> prototypeCache = new ArrayList<>();
+    private long lastPrototypeCacheUpdate = 0;
+    
     // cache only binary block only
     @Cacheable("blocks")
     // nullable
@@ -396,15 +403,42 @@ public class BlockService {
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
-    public Block getTip() throws Exception {
+    protected final ReentrantLock lock = Threading.lock("blockService");
+    
+    protected final Random random = new Random();
+    
+    public Block getBlockPrototype() throws Exception {
+       return getNewBlockPrototype();
+    }
+    public Block getBlockPrototypeWithCache() throws Exception {
+        lock.lock();
+        try {
+            if (lastPrototypeCacheUpdate < System.currentTimeMillis() - 1000) {
+                prototypeCache.clear();
+                for (int i = 0; i < PROTOTYPE_CACHE_SIZE; i++) {
+                    Block newTip = getNewBlockPrototype();
+                    prototypeCache.add(newTip);
+                }
+                lastPrototypeCacheUpdate = System.currentTimeMillis();
+            }
+            return prototypeCache.get(random.nextInt(prototypeCache.size()));
+        } catch (Exception e) {
+            logger.error("getTip ", e);
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private Block getNewBlockPrototype() throws BlockStoreException, NoBlockException {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = getBlock(tipsToApprove.getLeft());
         Block r2 = getBlock(tipsToApprove.getRight());
-
+   
         Block b = Block.createBlock(networkParameters, r1, r2);
-
+   
         b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-
+   
         return b;
     }
 
