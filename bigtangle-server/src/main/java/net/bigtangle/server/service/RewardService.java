@@ -98,14 +98,18 @@ public class RewardService {
 
     // createReward is time boxed and can run parallel.
     public void startSingleProcess() {
-
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
+            log.debug(this.getClass().getName() + "  RewardService running. Returning...");
+            return;
+        }
+     
         try {
             // log.info("create Reward started");
             createReward();
         } catch (Exception e) {
             log.error("create Reward end  ", e);
         } finally {
-            // lock.unlock();
+             lock.unlock();
         }
 
     }
