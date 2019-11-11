@@ -174,7 +174,7 @@ public class RewardService {
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
         Transaction tx = result.getTx();
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(tx.getData());
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(tx.getData());
         block.setLastMiningRewardBlock(currRewardInfo.getChainlength());
         block.setDifficultyTarget(calculateNextBlockDifficulty(currRewardInfo));
 
@@ -314,7 +314,7 @@ public class RewardService {
 
     public void buildRewardChain(Block newMilestoneBlock) throws BlockStoreException {
 
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
         Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
         long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash());
 
@@ -543,7 +543,7 @@ public class RewardService {
     private SolidityState checkReferencedBlockRequirements(Block newMilestoneBlock, long cutoffHeight)
             throws BlockStoreException {
 
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
         for (Sha256Hash hash : currRewardInfo.getBlocks()) {
             BlockWrap block = store.getBlockWrap(hash);
@@ -570,7 +570,7 @@ public class RewardService {
 
     private void checkContainsNoRewardBlocks(Block newMilestoneBlock) throws BlockStoreException {
 
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
         for (Sha256Hash hash : currRewardInfo.getBlocks()) {
             BlockWrap block = store.getBlockWrap(hash);
             if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
@@ -580,7 +580,7 @@ public class RewardService {
 
     private void checkGeneratedReward(Block newMilestoneBlock) throws BlockStoreException {
 
-        RewardInfo currRewardInfo = RewardInfo.parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
         RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
                 newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash());
@@ -635,7 +635,7 @@ public class RewardService {
     }
 
     public SolidityState checkRewardDifficulty(Block rewardBlock) throws BlockStoreException {
-        RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
         // Check previous reward blocks exist and get their approved sets
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -656,7 +656,7 @@ public class RewardService {
 
     public SolidityState checkRewardReferencedBlocks(Block rewardBlock) throws BlockStoreException {
         try {
-            RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
+            RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
             // Check previous reward blocks exist and get their approved sets
             Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();

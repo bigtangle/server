@@ -191,13 +191,6 @@ public class TransactionTest {
         tx.addInput(ti);
         assertEquals(tx.toString().contains("[exception: "), true);
     }
-
-    @Test
-    public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(PARAMS);
-        assertEquals(tx.toString().contains("No inputs!"), true);
-    }
-
    
     @Test
     public void testMemoUTXO() {

@@ -29,9 +29,4 @@ public class PayMultiSignInfo {
     public void setPayMultiSignAddresses(List<PayMultiSignAddress> payMultiSignAddresses) {
         this.payMultiSignAddresses = payMultiSignAddresses;
     }
-    
-    public byte[] toByteArray() throws Exception {
-        String jsonStr = Json.jsonmapper().writeValueAsString(this);
-        return jsonStr.getBytes();
-    }
 }

@@ -5,37 +5,80 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class ContactInfo  extends DataClass implements java.io.Serializable {
     private static final long serialVersionUID = -1965429530354669140L;
     private List<Contact> contactList = new ArrayList<Contact>();
 
     public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
+            DataOutputStream dos = new DataOutputStream(baos);
+
+            dos.write(super.toByteArray());
+            
+            dos.writeInt(contactList.size());
+            for (Contact c : contactList)
+                dos.write(c.toByteArray());
+            
+            dos.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return new byte[0];
+        return baos.toByteArray();
     }
+    
+    @Override
+    public ContactInfo parseDIS(DataInputStream dis) throws IOException {
+        super.parseDIS(dis);
 
-    public ContactInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-
-        ContactInfo contactInfo = Json.jsonmapper().readValue(jsonStr, ContactInfo.class);
-        if (contactInfo == null)
-            return this;
-        this.contactList = contactInfo.getContactList();
-
+        contactList = new ArrayList<>();
+        int size = dis.readInt();
+        for (int i = 0; i < size; i++) {
+            contactList.add(new Contact().parseDIS(dis));
+        }
+        
         return this;
     }
+
+    public ContactInfo parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+        
+        dis.close();
+        bain.close();
+        return this;
+    }
+
+//    public byte[] toByteArray() {
+//        try {
+//            String jsonStr = Json.jsonmapper().writeValueAsString(this);
+//            return jsonStr.getBytes();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return new byte[0];
+//    }
+//
+//    public ContactInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+//        String jsonStr = new String(buf);
+//
+//        ContactInfo contactInfo = Json.jsonmapper().readValue(jsonStr, ContactInfo.class);
+//        if (contactInfo == null)
+//            return this;
+//        this.contactList = contactInfo.getContactList();
+//
+//        return this;
+//    }
 
     public List<Contact> getContactList() {
         return contactList;

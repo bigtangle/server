@@ -610,7 +610,7 @@ public class Block extends Message {
         }
         if(blockType== Type.BLOCKTYPE_REWARD) {
             try {
-                RewardInfo   rewardInfo = RewardInfo.parse(getTransactions().get(0).getData());
+                RewardInfo   rewardInfo = new RewardInfo().parse(getTransactions().get(0).getData());
                 s.append(     rewardInfo.  toString());
             } catch (Exception e) {
                //ignore throw new RuntimeException(e);
@@ -619,7 +619,7 @@ public class Block extends Message {
         if(blockType== Type.BLOCKTYPE_ORDER_OPEN) {
         
         try {
-           OrderOpenInfo info = OrderOpenInfo.parse(transactions.get(0).getData());
+           OrderOpenInfo info = new OrderOpenInfo().parse(transactions.get(0).getData());
             s.append(    info.  toString());
         } catch (Exception e) {
            //ignore throw new RuntimeException(e);
@@ -660,7 +660,7 @@ public class Block extends Message {
 
     
     public RewardInfo getRewardInfo() {
-    return RewardInfo.parseChecked(getTransactions().get(0).getData());
+    return new RewardInfo().parseChecked(getTransactions().get(0).getData());
     }
     
     /**

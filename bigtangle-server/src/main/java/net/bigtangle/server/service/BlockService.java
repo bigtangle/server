@@ -533,7 +533,7 @@ public class BlockService {
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             BlockWrap currRewardBlock = store.getBlockWrap(currPrevRewardHash);
-            RewardInfo currRewardInfo = RewardInfo
+            RewardInfo currRewardInfo = new RewardInfo()
                     .parseChecked(currRewardBlock.getBlock().getTransactions().get(0).getData());
 
             prevMilestoneBlocks.addAll(currRewardInfo.getBlocks());
@@ -580,12 +580,12 @@ public class BlockService {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            RewardInfo rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData());
+            RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
 
             predecessors.add(rewardInfo.getPrevRewardHash());
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            TokenInfo currentToken = TokenInfo.parseChecked(transactions.get(0).getData());
+            TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
             predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
             if (currentToken.getToken().getPrevblockhash() != null)
                 predecessors.add(currentToken.getToken().getPrevblockhash());
@@ -601,7 +601,7 @@ public class BlockService {
         case BLOCKTYPE_ORDER_OPEN:
             break;
         case BLOCKTYPE_ORDER_CANCEL:
-            OrderCancelInfo opInfo = OrderCancelInfo.parseChecked(transactions.get(0).getData());
+            OrderCancelInfo opInfo = new OrderCancelInfo().parseChecked(transactions.get(0).getData());
             predecessors.add(opInfo.getBlockHash());
             break;
         default:

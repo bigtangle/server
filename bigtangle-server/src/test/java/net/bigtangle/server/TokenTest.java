@@ -163,7 +163,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
             Block token = testCreateToken(walletKeys.get(1), "mytest",
                     walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameToken().getBlockHashHex());
-            TokenInfo currentToken = TokenInfo.parseChecked(token.getTransactions().get(0).getData());
+            TokenInfo currentToken = new TokenInfo().parseChecked(token.getTransactions().get(0).getData());
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {

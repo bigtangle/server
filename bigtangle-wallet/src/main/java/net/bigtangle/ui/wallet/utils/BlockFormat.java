@@ -46,7 +46,7 @@ public class BlockFormat {
 
         if (block.getBlockType().equals(Type.BLOCKTYPE_REWARD)) {
             try {
-                RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+                RewardInfo rewardInfo = new RewardInfo().parse(block.getTransactions().get(0).getData());
                 s.append(rewardInfo.toString());
             } catch (Exception e) {
                 // ignore throw new RuntimeException(e);
@@ -56,7 +56,7 @@ public class BlockFormat {
         if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
 
             try {
-                OrderOpenInfo info = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
+                OrderOpenInfo info = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
                 s.append(info.toString());
             } catch (Exception e) {
                 // ignore throw new RuntimeException(e);

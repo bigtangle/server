@@ -118,7 +118,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void solidifyReward(Block block) throws BlockStoreException {
 
-        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
         long difficulty = rewardService.calculateNextChainDifficulty(prevRewardHash, currChainLength,
@@ -1109,7 +1109,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void connectCancelOrder(Block block) throws BlockStoreException {
         try {
-            OrderCancelInfo info = OrderCancelInfo.parse(block.getTransactions().get(0).getData());
+            OrderCancelInfo info = new OrderCancelInfo().parse(block.getTransactions().get(0).getData());
             OrderCancel record = new OrderCancel(info.getBlockHash());
             record.setBlockHash(block.getHash());
             blockStore.insertCancelOrder(record);
@@ -1120,7 +1120,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void connectOrder(Block block) throws BlockStoreException {
         try {
-            OrderOpenInfo reqInfo = OrderOpenInfo.parse(block.getTransactions().get(0).getData());
+            OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
 
             Coin offer = validatorService.countBurnedToken(block);
             Side side = offer.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
@@ -1142,7 +1142,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         if (tx.getData() != null) {
             try {
                 byte[] buf = tx.getData();
-                TokenInfo tokenInfo = TokenInfo.parse(buf);
+                TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
                 // Correctly insert tokens
                 tokenInfo.getToken().setConfirmed(false);
@@ -1199,7 +1199,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     public OrderMatchingResult generateOrderMatching(Block block) throws BlockStoreException {
 
-        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
         return generateOrderMatching(block, rewardInfo);
     }
@@ -1470,7 +1470,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 spentOrders.add(order);
 
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
-                OrderCancelInfo info = OrderCancelInfo.parseChecked(b.getBlock().getTransactions().get(0).getData());
+                OrderCancelInfo info = new OrderCancelInfo().parseChecked(b.getBlock().getTransactions().get(0).getData());
                 cancels.add(info);
             }
         }
@@ -1487,7 +1487,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      */
     public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
 
-        RewardInfo rewardInfo = RewardInfo.parseChecked(block.getTransactions().get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
         Set<Sha256Hash> candidateBlocks = rewardInfo.getBlocks();
 
         // Count how many blocks from miners in the reward interval are approved

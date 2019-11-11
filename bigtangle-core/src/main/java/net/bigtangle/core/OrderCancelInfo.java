@@ -5,10 +5,11 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 // This object being part of a signed transaction's data legitimates it
 public class OrderCancelInfo implements java.io.Serializable {
@@ -40,29 +41,42 @@ public class OrderCancelInfo implements java.io.Serializable {
     }
 
     public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    public static OrderCancelInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        OrderCancelInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderCancelInfo.class);
-        return tokenInfo;
-    }
-
-    public static OrderCancelInfo parseChecked(byte[] buf) {
-        String jsonStr = new String(buf);
-        OrderCancelInfo tokenInfo;
-        try {
-            tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderCancelInfo.class);
+            DataOutputStream dos = new DataOutputStream(baos);
+            
+            dos.write(blockHash.getBytes());
+            
+            dos.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return baos.toByteArray();
+    }
+    
+    public OrderCancelInfo parseDIS(DataInputStream dis) throws IOException {
+        blockHash = Sha256Hash.wrap(dis.readNBytes(Sha256Hash.LENGTH));
+        
+        return this;
+    }
+
+    public OrderCancelInfo parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+        
+        dis.close();
+        bain.close();
+        return this;
+    }
+
+    public OrderCancelInfo parseChecked(byte[] buf) {
+        try {
+            return parse(buf);
+        } catch (IOException e) {
+            // Cannot happen since checked before
             throw new RuntimeException(e);
         }
-        return tokenInfo;
     }
 }

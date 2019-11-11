@@ -31,13 +31,13 @@ public class TokenInfo extends DataClass implements java.io.Serializable {
         } 
     }
 
-    public static TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+    public TokenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
         return Json.jsonmapper().readValue(jsonStr, TokenInfo.class);
     }
 
     //already check and is not allowed to have IOException
-    public static TokenInfo parseChecked(byte[] buf) {
+    public TokenInfo parseChecked(byte[] buf) {
         String jsonStr = new String(buf);
         try {
             return Json.jsonmapper().readValue(jsonStr, TokenInfo.class);

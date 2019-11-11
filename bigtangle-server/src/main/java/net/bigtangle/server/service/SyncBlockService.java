@@ -318,7 +318,7 @@ public class SyncBlockService {
     }
 
     public void requestBlocks(Block rewardBlock) {
-        RewardInfo rewardInfo = RewardInfo.parseChecked(rewardBlock.getTransactions().get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
         String[] re = serverConfiguration.getRequester().split(",");
         List<String> badserver = new ArrayList<String>();

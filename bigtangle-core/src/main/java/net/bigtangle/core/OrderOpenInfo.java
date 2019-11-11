@@ -5,20 +5,17 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     private static final long FROMTIME = System.currentTimeMillis() / 1000 - 5;
     private static final long serialVersionUID = 433387247051352702L;
-    private static final Logger logger = LoggerFactory.getLogger(OrderOpenInfo.class);
+    
     private long targetValue;
     private String targetTokenid;
     //public key is needed for verify 
@@ -27,7 +24,6 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private Long validToTime;
     // valid from this date, maximum is set in Network parameter
     private Long validFromTime;
-
     // owner public address of the order for query
     private String beneficiaryAddress;
     
@@ -79,22 +75,61 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     }
 
     public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
-            logger.error("Json.jsonmapper error" + this.toString(), e);
-            throw new RuntimeException(e);
+            DataOutputStream dos = new DataOutputStream(baos);
+            
+            dos.write(super.toByteArray());
+            
+            dos.writeLong(targetValue);
+            dos.writeLong(validToTime);
+            dos.writeLong(validFromTime);
+            dos.writeInt(beneficiaryPubKey.length);
+            dos.write(beneficiaryPubKey);
+
+            dos.writeBoolean(targetTokenid != null);
+            if (targetTokenid != null) {
+                dos.writeInt(targetTokenid.getBytes("UTF-8").length);
+                dos.write(targetTokenid.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(beneficiaryAddress != null);
+            if (beneficiaryAddress != null) {
+                dos.writeInt(beneficiaryAddress.getBytes("UTF-8").length);
+                dos.write(beneficiaryAddress.getBytes("UTF-8"));
+            }
+            
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return baos.toByteArray();
     }
-
-    public static OrderOpenInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-        OrderOpenInfo tokenInfo = Json.jsonmapper().readValue(jsonStr, OrderOpenInfo.class);
-        return tokenInfo;
-    }
-
     
+    public OrderOpenInfo parseDIS(DataInputStream dis) throws IOException {
+        super.parseDIS(dis);
+
+        targetValue = dis.readLong();
+        validToTime = dis.readLong();
+        validFromTime = dis.readLong();
+        int size = dis.readInt();
+        beneficiaryPubKey = dis.readNBytes(size);
+        targetTokenid = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        beneficiaryAddress = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        
+        return this;
+    }
+
+    public OrderOpenInfo parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+        
+        dis.close();
+        bain.close();
+        return this;
+    }    
     
     @Override
     public String toString() {

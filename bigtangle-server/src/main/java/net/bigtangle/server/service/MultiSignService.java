@@ -84,7 +84,7 @@ public class MultiSignService {
             map.put("address", multiSign.getAddress());
             Block block = this.networkParameters.getDefaultSerializer().makeBlock(multiSign.getBlockbytes());
             Transaction transaction = block.getTransactions().get(0);
-            TokenInfo tokenInfo = TokenInfo.parse(transaction.getData());
+            TokenInfo tokenInfo = new TokenInfo().parse(transaction.getData());
             map.put("signnumber", tokenInfo.getToken().getSignnumber());
             map.put("tokenname", tokenInfo.getToken().getTokenname());
 
@@ -117,7 +117,7 @@ public class MultiSignService {
             this.store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
-            TokenInfo tokenInfo = TokenInfo.parse(buf);
+            TokenInfo tokenInfo = new TokenInfo().parse(buf);
             final Token tokens = tokenInfo.getToken();
 
             // Enter the required multisign addresses

@@ -950,13 +950,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block testBlock5 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock6 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock7 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
-        RewardInfo rewardInfo1 = RewardInfo.parse(testBlock1.getTransactions().get(0).getData());
-        RewardInfo rewardInfo2 = RewardInfo.parse(testBlock2.getTransactions().get(0).getData());
-        RewardInfo rewardInfo3 = RewardInfo.parse(testBlock3.getTransactions().get(0).getData());
-        RewardInfo rewardInfo4 = RewardInfo.parse(testBlock4.getTransactions().get(0).getData());
-        RewardInfo rewardInfo5 = RewardInfo.parse(testBlock5.getTransactions().get(0).getData());
-        RewardInfo rewardInfo6 = RewardInfo.parse(testBlock6.getTransactions().get(0).getData());
-        RewardInfo rewardInfo7 = RewardInfo.parse(testBlock7.getTransactions().get(0).getData());
+        RewardInfo rewardInfo1 = new RewardInfo().parse(testBlock1.getTransactions().get(0).getData());
+        RewardInfo rewardInfo2 = new RewardInfo().parse(testBlock2.getTransactions().get(0).getData());
+        RewardInfo rewardInfo3 = new RewardInfo().parse(testBlock3.getTransactions().get(0).getData());
+        RewardInfo rewardInfo4 = new RewardInfo().parse(testBlock4.getTransactions().get(0).getData());
+        RewardInfo rewardInfo5 = new RewardInfo().parse(testBlock5.getTransactions().get(0).getData());
+        RewardInfo rewardInfo6 = new RewardInfo().parse(testBlock6.getTransactions().get(0).getData());
+        RewardInfo rewardInfo7 = new RewardInfo().parse(testBlock7.getTransactions().get(0).getData());
         rewardInfo3.setPrevRewardHash(getRandomSha256Hash());
         rewardInfo4.setPrevRewardHash(rollingBlock.getHash());
         rewardInfo5.setPrevRewardHash(rollingBlock.getHash());
@@ -1710,7 +1710,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < executors.length; i++) {
             // Modify the tokenInfo
-            TokenInfo tokenInfo = TokenInfo.parse(tokenInfo0.toByteArray());
+            TokenInfo tokenInfo = new TokenInfo().parse(tokenInfo0.toByteArray());
             executors[i].preApply(tokenInfo);
 
             // Make block including it

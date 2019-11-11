@@ -901,7 +901,7 @@ public class ValidatorService {
         // Check that the tx has correct data
         OrderOpenInfo orderInfo;
         try {
-            orderInfo = OrderOpenInfo.parse(transactions.get(0).getData());
+            orderInfo = new OrderOpenInfo().parse(transactions.get(0).getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -968,7 +968,7 @@ public class ValidatorService {
 
         OrderCancelInfo info = null;
         try {
-            info = OrderCancelInfo.parse(tx.getData());
+            info = new OrderCancelInfo().parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1008,7 +1008,7 @@ public class ValidatorService {
         }
 
         // Check that the tx has correct data
-        RewardInfo rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
         // NotNull checks
         if (rewardInfo.getPrevRewardHash() == null) {
             if (throwExceptions)
@@ -1042,7 +1042,7 @@ public class ValidatorService {
 
         TokenInfo currentToken = null;
         try {
-            currentToken = TokenInfo.parse(tx.getData());
+            currentToken = new TokenInfo().parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1104,7 +1104,7 @@ public class ValidatorService {
         /*
          * Token is unique with token name and domain
          */
-        TokenInfo currentToken = TokenInfo.parse(block.getTransactions().get(0).getData());
+        TokenInfo currentToken = new TokenInfo().parse(block.getTransactions().get(0).getData());
         if (store.getTokennameAndDomain(currentToken.getToken().getTokenname(),
                 currentToken.getToken().getDomainNameBlockHash()) && currentToken.getToken().getTokenindex() == 0) {
             throw new VerificationException(" Token name and domain exists.");
@@ -1437,7 +1437,7 @@ public class ValidatorService {
         // Check that the tx has correct data
         OrderOpenInfo orderInfo;
         try {
-            orderInfo = OrderOpenInfo.parse(transactions.get(0).getData());
+            orderInfo = new OrderOpenInfo().parse(transactions.get(0).getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1590,7 +1590,7 @@ public class ValidatorService {
 
         OrderCancelInfo info = null;
         try {
-            info = OrderCancelInfo.parse(tx.getData());
+            info = new OrderCancelInfo().parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -1648,7 +1648,7 @@ public class ValidatorService {
         }
 
         // Check that the tx has correct data
-        RewardInfo rewardInfo = RewardInfo.parseChecked(transactions.get(0).getData());
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
 
         // NotNull checks
         if (rewardInfo.getPrevRewardHash() == null) {
@@ -1697,7 +1697,7 @@ public class ValidatorService {
 
         TokenInfo currentToken = null;
         try {
-            currentToken = TokenInfo.parse(tx.getData());
+            currentToken = new TokenInfo().parse(tx.getData());
         } catch (IOException e) {
             if (throwExceptions)
                 throw new MalformedTransactionDataException();
@@ -2069,7 +2069,7 @@ public class ValidatorService {
 
     public SolidityState checkRewardBlockPow(Block block, boolean throwExceptions) throws BlockStoreException {
         try {
-            RewardInfo rewardInfo = RewardInfo.parse(block.getTransactions().get(0).getData());
+            RewardInfo rewardInfo = new RewardInfo().parse(block.getTransactions().get(0).getData());
             // Get difficulty from predecessors
             BigInteger target = Utils.decodeCompactBits(rewardInfo.getDifficultyTargetReward());
             // Check PoW

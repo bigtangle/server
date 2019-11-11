@@ -5,10 +5,11 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class MyHomeAddress implements java.io.Serializable {
     /**
@@ -23,29 +24,93 @@ public class MyHomeAddress implements java.io.Serializable {
     private String remark;
 
     public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes();
-        } catch (Exception e) {
+            DataOutputStream dos = new DataOutputStream(baos);
+
+            dos.writeBoolean(country != null);
+            if (country != null) {
+                dos.writeInt(country.getBytes("UTF-8").length);
+                dos.write(country.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(province != null);
+            if (province != null) {
+                dos.writeInt(province.getBytes("UTF-8").length);
+                dos.write(province.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(city != null);
+            if (city != null) {
+                dos.writeInt(city.getBytes("UTF-8").length);
+                dos.write(city.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(street != null);
+            if (street != null) {
+                dos.writeInt(street.getBytes("UTF-8").length);
+                dos.write(street.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(email != null);
+            if (email != null) {
+                dos.writeInt(email.getBytes("UTF-8").length);
+                dos.write(email.getBytes("UTF-8"));
+            }
+
+            dos.writeBoolean(remark != null);
+            if (remark != null) {
+                dos.writeInt(remark.getBytes("UTF-8").length);
+                dos.write(remark.getBytes("UTF-8"));
+            }
+            
+            dos.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return new byte[0];
+        return baos.toByteArray();
     }
 
-    public MyHomeAddress parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
+    public MyHomeAddress parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
 
-        MyHomeAddress myHomeAddress = Json.jsonmapper().readValue(jsonStr, MyHomeAddress.class);
-        if (myHomeAddress == null)
-            return this;
-        this.city = myHomeAddress.city;
-        this.country = myHomeAddress.country;
-        this.email = myHomeAddress.email;
-        this.province = myHomeAddress.province;
-        this.remark = myHomeAddress.remark;
-        this.street = myHomeAddress.street;
+        country = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        province = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        city = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        street = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        email = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        remark = dis.readBoolean() ? new String(dis.readNBytes(dis.readInt()), "UTF-8") : null;
+        
+        dis.close();
+        bain.close();
         return this;
     }
+
+//    public byte[] toByteArray() {
+//        try {
+//            String jsonStr = Json.jsonmapper().writeValueAsString(this);
+//            return jsonStr.getBytes();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return new byte[0];
+//    }
+//
+//    public MyHomeAddress parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+//        String jsonStr = new String(buf);
+//
+//        MyHomeAddress myHomeAddress = Json.jsonmapper().readValue(jsonStr, MyHomeAddress.class);
+//        if (myHomeAddress == null)
+//            return this;
+//        this.city = myHomeAddress.city;
+//        this.country = myHomeAddress.country;
+//        this.email = myHomeAddress.email;
+//        this.province = myHomeAddress.province;
+//        this.remark = myHomeAddress.remark;
+//        this.street = myHomeAddress.street;
+//        return this;
+//    }
 
     public String getCountry() {
         return country;

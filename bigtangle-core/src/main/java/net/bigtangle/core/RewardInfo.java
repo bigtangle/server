@@ -151,16 +151,16 @@ public class RewardInfo extends DataClass implements java.io.Serializable {
         return baos.toByteArray();
     }
 
-    public static RewardInfo parseChecked(byte[] buf) {
+    public RewardInfo parseChecked(byte[] buf) {
         try {
-            return RewardInfo.parse(buf);
+            return parse(buf);
         } catch (IOException e) {
             // Cannot happen since checked before
             throw new RuntimeException(e);
         }
     }
 
-    public static RewardInfo parse(byte[] buf) throws IOException {
+    public RewardInfo parse(byte[] buf) throws IOException {
         ByteArrayInputStream bain = new ByteArrayInputStream(buf);
         DataInputStream dis = new DataInputStream(bain);
         byte[] hbuf = new byte[32];
