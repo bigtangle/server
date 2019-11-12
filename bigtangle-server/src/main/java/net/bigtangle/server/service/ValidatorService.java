@@ -1869,8 +1869,11 @@ public class ValidatorService {
                     .queryDomainnameTokenMultiSignAddresses(
                             prevDomain == null ? networkParameters.getGenesisBlock().getHash()
                                     : prevDomain.getBlockHash());
-            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
-                    txSignatures.getMultiSignBies(), prevDomain == null ? 1 : prevDomain.getSignnumber(),
+            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,  
+                    txSignatures.getMultiSignBies(),1,
+                  //TODO remove the high level domain sign
+                    //only one sign of prev domain needed
+                    //prevDomain == null ? 1 : prevDomain.getSignnumber(),
                     throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
                 return domainPermission;

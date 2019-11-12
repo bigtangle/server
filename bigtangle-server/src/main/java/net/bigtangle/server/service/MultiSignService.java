@@ -180,6 +180,7 @@ public class MultiSignService {
             }
         } catch (InsufficientSignaturesException e) {
             this.saveMultiSign(block);
+           
         }
     }
 

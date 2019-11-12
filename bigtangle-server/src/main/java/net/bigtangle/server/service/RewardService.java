@@ -293,7 +293,7 @@ public class RewardService {
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
         tx.setData(rewardInfo.toByteArray());
-        tx.setMemo(new MemoInfo("RewardInfo:" + rewardInfo));
+        tx.setMemo(new MemoInfo("Reward"));
         return new RewardBuilderResult(tx, difficultyReward);
     }
 

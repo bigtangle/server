@@ -304,7 +304,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = ? limit 1";
 
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid "
-            + "FROM tokens WHERE tokenname = ? AND tokentype = 3  limit 1";
+            + "FROM tokens WHERE tokenname = ? AND tokentype = 3  AND confirmed = true limit 1";
 
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
 

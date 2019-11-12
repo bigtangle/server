@@ -2,7 +2,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -85,56 +82,43 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
         }
 
         {
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bc", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+       
             }
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
         }
 
         {
-            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+         
             }
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
         }
 
-        {
-            final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "www.bigtangle.bc", aesKey, "");
-            walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
-
-            List<ECKey> keys = new ArrayList<ECKey>();
-            keys.add(preKey);
-            keys.add(walletKeys.get(0));
-            for (int i = 0; i < keys.size(); i++) {
-                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
-            }
-        }
-
-        {
-            final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(ImmutableList.of(walletKeys.get(2), walletKeys.get(3)),
-                    walletKeys.get(2), tokenid, "info.www.bigtangle.bc", aesKey, BigInteger.valueOf(1), "");
-            List<ECKey> keys = new ArrayList<ECKey>();
-            keys.add(walletKeys.get(3));
-            keys.add(preKey);
-            keys.add(walletKeys.get(0));
-            keys.add(walletKeys.get(1));
-            for (int i = 0; i < keys.size(); i++) {
-                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
-            }
-        }
+ 
+    
     }
 
     @Test
@@ -157,6 +141,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
+        sendEmpty(10);
         mcmcService.update();
         confirmationService.update();
         {
@@ -168,7 +153,8 @@ public class TokenTest extends AbstractIntegrationTest {
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), keys.get(i), aesKey);
-            }
+                }
+            sendEmpty(10);
             mcmcService.update();
             confirmationService.update();
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -177,10 +163,10 @@ public class TokenTest extends AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
-            assertTrue(getTokensResponse.getTokens().size() == 1);
-            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@de"));
-            assertTrue(!getTokensResponse.getTokens().get(0).getDomainNameBlockHash()
-                    .equals(networkParameters.getGenesisBlock().getHashAsString()));
+            assertTrue(getTokensResponse.getTokens().size() == 2);
+            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@de")
+                    || getTokensResponse.getTokens().get(1).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@de"));
+    
 
         }
 
