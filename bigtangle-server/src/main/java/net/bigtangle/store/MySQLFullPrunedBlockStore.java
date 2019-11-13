@@ -317,7 +317,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
             String username, String password) throws BlockStoreException {
         super(params,
-                DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=utc",
+                DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC",
                 fullStoreDepth, username, password, null);
     }
 
