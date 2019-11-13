@@ -1965,7 +1965,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())
                 && !StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
-            Token domain = getDomainNameBlockHash(tokenInfo.getToken().getDomainName(), "token").getdomainNameToken();
+            Token domain = getDomainNameBlockHash(tokenInfo.getToken().getDomainName()).getdomainNameToken();
             token.setDomainNameBlockHash(domain.getBlockHashHex());
 
         }
