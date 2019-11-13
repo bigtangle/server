@@ -855,9 +855,10 @@ public class TokenController extends TokenBaseController {
         TokenInfo tokenInfo = new TokenInfo();
         Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid1.getValue().trim(), stockName1.getText().trim(),
                 stockDescription1.getText().trim(), 1, 0, MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                        Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF.getText())).getValue(),
-                true, 0, "de");
+                        Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF1.getText())).getValue(),
+                true, 0, null);
         tokens.setDomainName(urlTF.getText().trim());
+     
         tokenInfo.setToken(tokens);
         ECKey mykey = null;
         for (ECKey key : issuedKeys) {
@@ -868,7 +869,7 @@ public class TokenController extends TokenBaseController {
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", mykey.getPublicKeyAsHex()));
         Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF.getText()));
+                Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF1.getText()));
 
         Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
         GuiUtils.informationalAlert("", Main.getText("s_c_m"));
@@ -983,7 +984,7 @@ public class TokenController extends TokenBaseController {
         Token tokens = Token.buildSimpleTokenInfo(false,  tokenIndexResponse.getBlockhash(), Main.getString(map.get("tokenHex")).trim(),
                 Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
                 Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
-                (boolean) map.get("tokenstop"), Integer.parseInt(decimalsTF1.getText()), "de");
+                (boolean) map.get("tokenstop"), Integer.parseInt(decimalsTF1.getText()), null);
         tokens.setDomainName(Main.getString(map.get("url")).trim());
         tokenInfo.setToken(tokens);
 

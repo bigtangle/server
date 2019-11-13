@@ -1954,12 +1954,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey) throws Exception {
         final Token token = tokenInfo.getToken();
 
-        if (StringUtils.isBlank(token.getDomainNameBlockHash())) {
+        if (StringUtils.isBlank(token.getDomainNameBlockHash())
+                && StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
             final String domainname = token.getDomainName();
             GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(domainname);
             Token domainNameBlockHash = getDomainBlockHashResponse.getdomainNameToken();
             token.setDomainNameBlockHash(domainNameBlockHash.getBlockHashHex());
             token.setDomainName(domainNameBlockHash.getTokenname());
+        }
+
+        if (StringUtils.isBlank(token.getDomainNameBlockHash())
+                && !StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
+            Token domain = getDomainNameBlockHash(tokenInfo.getToken().getDomainName(), "token").getdomainNameToken();
+            token.setDomainNameBlockHash(domain.getBlockHashHex());
+
         }
 
         List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
