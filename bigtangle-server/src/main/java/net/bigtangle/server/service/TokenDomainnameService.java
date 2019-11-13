@@ -18,7 +18,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
-import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.DomainnameUtil;
 
@@ -27,8 +26,7 @@ public class TokenDomainnameService {
 
     @Autowired
     protected FullPrunedBlockStore store;
-    @Autowired
-    private ServerConfiguration serverConfiguration;
+ 
     @Autowired
     private NetworkParameters networkParameters;
 
@@ -44,7 +42,7 @@ public class TokenDomainnameService {
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
-            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainnameList()
+            for (Iterator<PermissionDomainname> iterator =networkParameters.getPermissionDomainnameList()
                     .iterator(); iterator.hasNext();) {
                 PermissionDomainname permissionDomainname = iterator.next();
                 ECKey ecKey = permissionDomainname.getOutKey();
@@ -77,7 +75,7 @@ public class TokenDomainnameService {
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
-            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainnameList()
+            for (Iterator<PermissionDomainname> iterator = networkParameters.getPermissionDomainnameList()
                     .iterator(); iterator.hasNext();) {
                 PermissionDomainname permissionDomainname = iterator.next();
                 ECKey ecKey = permissionDomainname.getOutKey();

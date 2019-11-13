@@ -9,11 +9,7 @@ import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-
-import com.google.common.collect.ImmutableList;
-
-import net.bigtangle.core.PermissionDomainname;
-
+ 
 @Component
 @ConfigurationProperties(prefix = "server")
 public class ServerConfiguration {
@@ -34,9 +30,7 @@ public class ServerConfiguration {
     private int solveRewardduration = 50; // in seconds
     private Boolean myserverblockOnly = false;
     private long maxserachblocks = 5000;
-    private List<String> permissionDomainname;
-    // = ImmutableList.of(testPub);
-
+  
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
     private Boolean createtable = true;
@@ -152,22 +146,7 @@ public class ServerConfiguration {
     public void setCreatetable(Boolean createtable) {
         this.createtable = createtable;
     }
-
-    public List<String> getPermissionDomainname() {
-        return permissionDomainname;
-    }
-
-    public void setPermissionDomainname(List<String> permissionDomainname) {
-        this.permissionDomainname = permissionDomainname;
-    }
-
-    public List<PermissionDomainname> getPermissionDomainnameList() {
-        ArrayList<PermissionDomainname> rootPermission = new ArrayList<PermissionDomainname>();
-        for (String s : permissionDomainname) {
-            rootPermission.add(new PermissionDomainname(s, ""));
-        }
-        return rootPermission;
-    }
+ 
 
     public String getServerurl() {
         return serverurl;
@@ -215,7 +194,7 @@ public class ServerConfiguration {
                 + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion + ", clientversion="
                 + clientversion + ", permissioned=" + permissioned + ", permissionadmin=" + permissionadmin
                 + ", solveRewardduration=" + solveRewardduration + ", myserverblockOnly=" + myserverblockOnly
-                + ", maxserachblocks=" + maxserachblocks + ", permissionDomainname=" + permissionDomainname
+                + ", maxserachblocks=" + maxserachblocks  
                 + ", serviceReady=" + serviceReady + ", createtable=" + createtable + ", alphaMCMC=" + alphaMCMC
                 + ", runKafkaStream=" + runKafkaStream + "]";
     }

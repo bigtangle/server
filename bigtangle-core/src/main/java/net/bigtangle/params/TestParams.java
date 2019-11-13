@@ -7,6 +7,8 @@ package net.bigtangle.params;
 
 import java.math.BigInteger;
 
+import com.google.common.collect.ImmutableList;
+
 /**
  * Parameters for the main production network on which people trade goods and
  * services.
@@ -19,7 +21,7 @@ public class TestParams extends AbstractBitcoinNetParams {
         id = ID_UNITTESTNET;
 
         maxTarget = new BigInteger("578960377169117509212217050695880916496095398817113098493422368414323410000");
-        maxTargetReward =  maxTarget.subtract(new BigInteger("100"));
+        maxTargetReward = maxTarget.subtract(new BigInteger("100"));
 
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;
@@ -32,6 +34,7 @@ public class TestParams extends AbstractBitcoinNetParams {
         bip32HeaderPriv = 0x0488ADE4; // The 4 byte header that serializes in
                                       // base58 to "xprv"
         genesisPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+        permissionDomainname = ImmutableList.of(genesisPub);
 
         // Equihash Settings
         equihashN = 100;

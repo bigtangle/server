@@ -99,7 +99,7 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     protected String genesisPub;
-
+    protected List<String> permissionDomainname;
     // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 70;
     public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 67;
@@ -491,5 +491,14 @@ public abstract class NetworkParameters {
         public int getBitcoinProtocolVersion() {
             return bitcoinProtocol;
         }
+    }
+    
+
+    public List<PermissionDomainname> getPermissionDomainnameList() {
+        ArrayList<PermissionDomainname> rootPermission = new ArrayList<PermissionDomainname>();
+        for (String s : permissionDomainname) {
+            rootPermission.add(new PermissionDomainname(s, ""));
+        }
+        return rootPermission;
     }
 }
