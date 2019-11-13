@@ -89,7 +89,8 @@ public abstract class HelpTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
-    public static String TESTSERVER1 =  HTTPS_BIGTANGLE_INFO;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
+            //"https://p.bigtangle.org:8088/";
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
 
@@ -264,9 +265,9 @@ public abstract class HelpTest {
 
     // create a token with multi sign
     protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals,  Token domain  ,
-            String description) throws JsonProcessingException, Exception {
+            String description, int amount) throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, 100000, decimals, domain, description);
+            createMultisignToken(key, new TokenInfo(), tokename, amount, decimals, domain, description);
 
         } catch (Exception e) {
             // TODO: handle exception

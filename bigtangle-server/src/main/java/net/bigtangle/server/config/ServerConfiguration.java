@@ -17,15 +17,12 @@ import net.bigtangle.core.PermissionDomainname;
 @Component
 @ConfigurationProperties(prefix = "server")
 public class ServerConfiguration {
-
-    public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-
+    // sync seeds for other servers
     private String requester;
-
+    // port of server
     private String port;
 
-    private Boolean debug;
-
+    // Mainnet or Test
     private String net;
 
     private String mineraddress;
@@ -37,21 +34,22 @@ public class ServerConfiguration {
     private int solveRewardduration = 50; // in seconds
     private Boolean myserverblockOnly = false;
     private long maxserachblocks = 5000;
-    private List<String> permissionDomainname = ImmutableList.of(testPub);
+    private List<String> permissionDomainname;
+    // = ImmutableList.of(testPub);
 
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
     private Boolean createtable = true;
-    
-    private double  alphaMCMC = -0.05;
+
+    private double alphaMCMC = -0.05;
     private Boolean runKafkaStream = false;
-    
+
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                
+
             }
         }
         return serviceReady;
@@ -62,8 +60,6 @@ public class ServerConfiguration {
         serviceReady = true;
     }
 
-    
-    
     public synchronized void setServiceWait() {
 
         serviceReady = false;
@@ -83,14 +79,6 @@ public class ServerConfiguration {
 
     public void setPort(String port) {
         this.port = port;
-    }
-
-    public Boolean getDebug() {
-        return debug;
-    }
-
-    public void setDebug(Boolean debug) {
-        this.debug = debug;
     }
 
     public String getNet() {
@@ -165,7 +153,15 @@ public class ServerConfiguration {
         this.createtable = createtable;
     }
 
-    public List<PermissionDomainname> getPermissionDomainname() {
+    public List<String> getPermissionDomainname() {
+        return permissionDomainname;
+    }
+
+    public void setPermissionDomainname(List<String> permissionDomainname) {
+        this.permissionDomainname = permissionDomainname;
+    }
+
+    public List<PermissionDomainname> getPermissionDomainnameList() {
         ArrayList<PermissionDomainname> rootPermission = new ArrayList<PermissionDomainname>();
         for (String s : permissionDomainname) {
             rootPermission.add(new PermissionDomainname(s, ""));
@@ -196,7 +192,6 @@ public class ServerConfiguration {
     public void setMaxserachblocks(long maxserachblocks) {
         this.maxserachblocks = maxserachblocks;
     }
- 
 
     public double getAlphaMCMC() {
         return alphaMCMC;
@@ -216,15 +211,13 @@ public class ServerConfiguration {
 
     @Override
     public String toString() {
-        return "ServerConfiguration [requester=" + requester + ", port=" + port + ", debug=" + debug + ", net=" + net
-                + ", mineraddress=" + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion
-                + ", clientversion=" + clientversion + ", permissioned=" + permissioned + ", permissionadmin="
-                + permissionadmin + ", solveRewardduration=" + solveRewardduration + ", myserverblockOnly="
-                + myserverblockOnly + ", maxserachblocks=" + maxserachblocks + ", permissionDomainname="
-                + permissionDomainname + ", serviceReady=" + serviceReady + ", createtable=" + createtable
-                + ", alphaMCMC=" + alphaMCMC + ", runKafkaStream=" + runKafkaStream + "]";
+        return "ServerConfiguration [requester=" + requester + ", port=" + port + ", net=" + net + ", mineraddress="
+                + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion + ", clientversion="
+                + clientversion + ", permissioned=" + permissioned + ", permissionadmin=" + permissionadmin
+                + ", solveRewardduration=" + solveRewardduration + ", myserverblockOnly=" + myserverblockOnly
+                + ", maxserachblocks=" + maxserachblocks + ", permissionDomainname=" + permissionDomainname
+                + ", serviceReady=" + serviceReady + ", createtable=" + createtable + ", alphaMCMC=" + alphaMCMC
+                + ", runKafkaStream=" + runKafkaStream + "]";
     }
-
- 
 
 }

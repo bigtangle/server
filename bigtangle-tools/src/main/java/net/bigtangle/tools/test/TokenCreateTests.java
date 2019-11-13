@@ -17,47 +17,53 @@ import net.bigtangle.core.Utils;
 
 public class TokenCreateTests extends HelpTest {
 
- 
-
     // 18TiXgUW913VFs3nqak6QAadTS7EYL6mGg
 
     @Test
     public void testTokens() throws JsonProcessingException, Exception {
 
-         Token domain = walletAppKit1.wallet().getDomainNameBlockHash("bigtangle", "token").getdomainNameToken();
+        Token domain = walletAppKit1.wallet().getDomainNameBlockHash("bigtangle", "token").getdomainNameToken();
 
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
-                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY");
-//        testCreateMultiSigToken(
-//                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BTCTokenPriv), Utils.HEX.decode(BTCTokenPub)),
-//                "BTC", 8, domain, "Bitcoin ETF");
-//        testCreateMultiSigToken(
-//                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(ETHTokenPriv), Utils.HEX.decode(ETHTokenPub)),
-//                "ETH", 8, domain, "Ethereum ETF");
+                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY", 1000000);
+        // testCreateMultiSigToken(
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BTCTokenPriv),
+        // Utils.HEX.decode(BTCTokenPub)),
+        // "BTC", 8, domain, "Bitcoin ETF");
+        // testCreateMultiSigToken(
+        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(ETHTokenPriv),
+        // Utils.HEX.decode(ETHTokenPub)),
+        // "ETH", 8, domain, "Ethereum ETF");
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(EURTokenPriv), Utils.HEX.decode(EURTokenPub)),
-                "EUR", 2, domain, "Euro");
+                "EUR", 2, domain, "Euro", 100000);
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(USDTokenPriv), Utils.HEX.decode(USDTokenPub)),
-                "USD", 2, domain, "US Dollar");
+                "USD", 2, domain, "US Dollar", 100000);
         testCreateMultiSigToken(
                 ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(JPYTokenPriv), Utils.HEX.decode(JPYTokenPub)),
-                "JPY", 2, domain, "Japan Yuan");
+                "JPY", 2, domain, "Japan Yuan", 100000000);
 
     }
 
- 
-
     @Test
-    public void testDomain2() throws Exception { 
-        ECKey preKey =  ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv)); 
+    public void testTokens1() throws JsonProcessingException, Exception {
+        Token domain = walletAppKit1.wallet().getDomainNameBlockHash("bigtangle", "token").getdomainNameToken();
+        testCreateMultiSigToken(
+                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(USDTokenPriv), Utils.HEX.decode(USDTokenPub)),
+                "USD", 2, domain, "US Dollar", 100000);
+
+    }
+    @Test
+    public void testDomain2() throws Exception {
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));
         {
             final String tokenid = preKey.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(preKey, tokenid, "bigtangle", null, "");
-        
+
             List<ECKey> keys = new ArrayList<ECKey>();
-            keys.add(preKey); 
-            keys.add(  ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+            keys.add(preKey);
+            keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
             }

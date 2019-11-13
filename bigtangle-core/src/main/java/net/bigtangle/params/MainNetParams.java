@@ -48,7 +48,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         bip32HeaderPub = 0x0488B21E; //The 4 byte header that serializes in base58 to "xpub".
         bip32HeaderPriv = 0x0488ADE4; //The 4 byte header that serializes in base58 to "xprv"
 
-        genesisPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
+        genesisPub = "03d6053241c5abca6621c238922e7473977320ef310be0a8538cc2df7ee5a0187c";
 
         
         // Equihash Settings

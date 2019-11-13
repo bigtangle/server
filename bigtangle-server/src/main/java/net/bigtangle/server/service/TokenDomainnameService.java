@@ -44,7 +44,7 @@ public class TokenDomainnameService {
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
-            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
+            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainnameList()
                     .iterator(); iterator.hasNext();) {
                 PermissionDomainname permissionDomainname = iterator.next();
                 ECKey ecKey = permissionDomainname.getOutKey();
@@ -77,7 +77,7 @@ public class TokenDomainnameService {
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
-            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainname()
+            for (Iterator<PermissionDomainname> iterator = this.serverConfiguration.getPermissionDomainnameList()
                     .iterator(); iterator.hasNext();) {
                 PermissionDomainname permissionDomainname = iterator.next();
                 ECKey ecKey = permissionDomainname.getOutKey();
