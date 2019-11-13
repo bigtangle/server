@@ -18,6 +18,7 @@ import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
+import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.OrderMatchingResult;
@@ -105,5 +106,10 @@ public class OrderTickerService {
             re.put(t.getTokenid(), t);
         }
         return re;
+    }
+
+    public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate) throws BlockStoreException {
+        List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, startDate, endDate, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
     }
 }
