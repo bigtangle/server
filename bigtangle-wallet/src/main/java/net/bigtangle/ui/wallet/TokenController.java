@@ -853,10 +853,12 @@ public class TokenController extends TokenBaseController {
     private void multiSinglePpublish(KeyParameter aesKey, List<ECKey> issuedKeys)
             throws JsonProcessingException, Exception {
         TokenInfo tokenInfo = new TokenInfo();
+        int decimals = Integer.parseInt(decimalsTF1.getText());
+        BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
+                Utils.HEX.decode(tokenid1.getValue()), decimals).getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid1.getValue().trim(), stockName1.getText().trim(),
-                stockDescription1.getText().trim(), 1, 0, MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                        Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF1.getText())).getValue(),
-                true, 0, null);
+                stockDescription1.getText().trim(), 1, 0, amount,
+                true, decimals, null);
         tokens.setDomainName(urlTF.getText().trim());
      
         tokenInfo.setToken(tokens);
@@ -869,7 +871,7 @@ public class TokenController extends TokenBaseController {
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", mykey.getPublicKeyAsHex()));
         Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF1.getText()));
+                Utils.HEX.decode(tokenid1.getValue()), decimals);
 
         Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
         GuiUtils.informationalAlert("", Main.getText("s_c_m"));
@@ -974,11 +976,10 @@ public class TokenController extends TokenBaseController {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Long tokenindex_ = tokenIndexResponse.getTokenindex();
-      ;
+        Long tokenindex_ = tokenIndexResponse.getTokenindex(); 
 
           BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()),
-                Integer.parseInt(decimalsTF.getText())).getValue();
+                Integer.parseInt(decimalsTF1.getText())).getValue();
         Coin basecoin = new Coin(amount, Main.getString(map.get("tokenHex")).trim());
 
         Token tokens = Token.buildSimpleTokenInfo(false,  tokenIndexResponse.getBlockhash(), Main.getString(map.get("tokenHex")).trim(),

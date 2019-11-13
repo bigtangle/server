@@ -134,10 +134,10 @@ public class TokenBaseController {
         log.debug(response);
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
-        List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("tokens");
+        List<Map<String, Object>> listTokens = (List<Map<String, Object>>) data.get("tokens");
         Map<String, Object> amountMap = (Map<String, Object>) data.get("amountMap");
-        if (list != null) {
-            for (Map<String, Object> map : list) {
+        if (listTokens != null) {
+            for (Map<String, Object> map : listTokens) {
                 // multiMap.put((String) map.get("tokenid"), (boolean)
                 // map.get("multiserial"));
                 // String temp = ((boolean) map.get("multiserial")) ?
