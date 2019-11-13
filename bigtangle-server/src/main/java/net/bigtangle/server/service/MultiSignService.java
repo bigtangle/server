@@ -67,7 +67,11 @@ public class MultiSignService {
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
             throws Exception {
-        return getMultiSignListWithTokenid(tokenid, new HashSet<String>(addresses), isSign);
+        HashSet<String> a = new HashSet<String>( );
+        if(addresses !=null) {
+            a= new HashSet<String>(addresses);
+        }
+        return getMultiSignListWithTokenid(tokenid,a, isSign);
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Set<String> addresses, boolean isSign)
