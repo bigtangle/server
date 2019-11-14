@@ -88,8 +88,13 @@ public class OrderTickerService {
      * @throws BlockStoreException
      */
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds) throws BlockStoreException {
-
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
+
+    }
+    
+    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds, count);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
     }
