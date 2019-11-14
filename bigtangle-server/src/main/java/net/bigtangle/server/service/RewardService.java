@@ -150,11 +150,11 @@ public class RewardService {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
         if (block != null)
-            if (scheduleConfiguration.isMining()) {
-                blockService.broadcastBlock(block);
-            } else {
+//            if (scheduleConfiguration.isMining()) {
+//                blockService.broadcastBlock(block);
+//            } else {
                 blockService.saveBlock(block);
-            }
+         //   }
         return block;
     }
 

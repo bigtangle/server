@@ -31,7 +31,7 @@ public class ScheduleRewardService {
     ServerConfiguration serverConfiguration;
     
     @Async
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 50000)
     public void updateReward() {
         if (scheduleConfiguration.isMining() && serverConfiguration.checkService()) {
             try {
