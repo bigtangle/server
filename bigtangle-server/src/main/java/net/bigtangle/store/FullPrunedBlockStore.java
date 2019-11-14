@@ -484,4 +484,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
+    List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate, int count) throws BlockStoreException;
+
 }

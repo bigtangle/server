@@ -373,9 +373,21 @@ public class DispatcherController {
             case getOrdersTicker: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                Long startDate = (Long) request.get("startDate");
+                Long endDate = (Long) request.get("endDate");
+                Integer count = (Integer) request.get("count");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
-                AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids);
-                this.outPrintJSONString(httpServletResponse, response);
+                if (count != null) {
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, count);
+                    this.outPrintJSONString(httpServletResponse, response);
+                } else if (startDate == null || endDate == null) {
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids);
+                    this.outPrintJSONString(httpServletResponse, response);
+                } else {
+                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, startDate / 1000,
+                            endDate / 1000);
+                    this.outPrintJSONString(httpServletResponse, response);
+                }
             }
                 break;
             case getTokenPermissionedAddresses: {

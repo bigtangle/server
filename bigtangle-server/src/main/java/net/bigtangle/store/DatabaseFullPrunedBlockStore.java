@@ -6012,5 +6012,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+    
+    @Override
+    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Long startDate, Long endDate, int count) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = SELECT_MATCHING_EVENT;
+            if (tokenIds == null || tokenIds.isEmpty()) {
+                sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
+
+            } else {
+                sql += " where tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   "
+                        + count;
+            }
+            preparedStatement = conn.get().prepareStatement(sql);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<MatchResult> list = new ArrayList<>();
+            while (resultSet.next()) {
+                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
+
+                        resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5)));
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
 
 }
