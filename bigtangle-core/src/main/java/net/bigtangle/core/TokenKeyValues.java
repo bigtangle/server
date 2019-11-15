@@ -23,6 +23,8 @@ public class TokenKeyValues implements java.io.Serializable {
 		if (keyvalues == null) {
 			keyvalues = new ArrayList<KeyValue>();
 			keyvalues.add(kv);
+		}else {
+		    keyvalues.add(kv);
 		}
 	}
 

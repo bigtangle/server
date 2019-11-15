@@ -47,9 +47,9 @@ public class MemoInfo implements java.io.Serializable {
             MemoInfo m = Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
             String s = "";
             for (KeyValue keyvalue : m.getKv()) {
-                if(keyvalue.getValue() !=null&& keyvalue.getKey() !=null
-                        && !keyvalue.getKey().equals("null") )
-                s += keyvalue.getKey() + ": " + keyvalue.getValue() +" \n";
+                if (keyvalue.getValue() != null && keyvalue.getKey() != null && !keyvalue.getKey().equals("null")) {
+                    s += keyvalue.getKey() + ": " + keyvalue.getValue() + " \n";
+                }
             }
             return s;
         } catch (Exception e) {
@@ -64,6 +64,5 @@ public class MemoInfo implements java.io.Serializable {
     public void setKv(List<KeyValue> kv) {
         this.kv = kv;
     }
- 
 
 }
