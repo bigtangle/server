@@ -7,6 +7,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.RewardInfo;
+import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -61,6 +62,18 @@ public class BlockFormat {
             } catch (Exception e) {
                 // ignore throw new RuntimeException(e);
             }
+        }
+        
+       
+        if (block.getBlockType() == Type.BLOCKTYPE_TOKEN_CREATION) {
+
+            try {
+                TokenInfo info = new TokenInfo().parse(block.getTransactions().get(0).getData());
+                s.append(info.toString());
+            } catch (Exception e) {
+                // ignore throw new RuntimeException(e);
+            }
+
         }
         return s.toString();
 
