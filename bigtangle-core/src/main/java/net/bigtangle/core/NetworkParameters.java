@@ -197,7 +197,7 @@ public abstract class NetworkParameters {
     // MCMC and reward milestones will only take the blocks back to this confirmed reward block
     public static final int MILESTONE_CUTOFF = 40;
     // Heuristic: MCMC will only continue up to this much above the current confirmed reward block
-    private static final int ESTIMATED_TANGLE_DIAMETER = 50;
+    private static final int ESTIMATED_TANGLE_DIAMETER = 2;
     public static final int FORWARD_BLOCK_HORIZON = TARGET_MAX_BLOCKS_IN_REWARD / ESTIMATED_TANGLE_DIAMETER * 2;
 
     
