@@ -18,6 +18,7 @@
 
 package net.bigtangle.tools;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,8 +97,14 @@ public class SendEmptyBlock {
             // conflicts
             int res = 0;
             for (BlockEvaluationDisplay b : a) {
-                if (b.getRating() < 70 && b.getMilestone() <0 ) {
+              
+                if (b.getRating() < 70 && b.getMilestone() <0 )
+                {   
+                    Block block =  getBlock(b.getBlockHexStr(), server);
+                    if( block.getTimeSeconds()  >  (System.currentTimeMillis() / 1000 - 60*60)) {
+               
                     res += 1;
+                    }
                 }
             }
 
@@ -118,6 +125,16 @@ public class SendEmptyBlock {
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
         return getBlockEvaluationsResponse.getEvaluations();
+    }
+
+    public Block getBlock(String hashHex, String serverurl) throws JsonProcessingException, IOException {
+
+        Map<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("hashHex", hashHex);
+
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getBlockByHash.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        return params.getDefaultSerializer().makeBlock(data);
     }
 
     
