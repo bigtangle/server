@@ -209,7 +209,7 @@ public class RewardService {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-                log.debug(" reward block solve started: ");
+                log.debug(" reward block solve started  : " + chainTargetFinal + " \n for block"  +block);
                 block.solve(chainTargetFinal);
                 return "";
             }
@@ -758,6 +758,11 @@ public class RewardService {
             newTarget = networkParameters.getMaxTargetReward();
         }
 
+        if (Utils.decodeCompactBits(prevDifficulty).compareTo(newTarget) != 0) {
+            log.info("Difficulty  change: {}", newTarget.toString(16));
+         
+        }
+        
         return Utils.encodeCompactBits(newTarget);
     }
 }
