@@ -179,7 +179,9 @@ public class RewardService {
         block.setDifficultyTarget(calculateNextBlockDifficulty(currRewardInfo));
 
         // Enforce timestamp equal to previous max for reward blocktypes
-        block.setTime(Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        long currentTime = Math.max(System.currentTimeMillis() / 1000, 
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        block.setTime(currentTime);
         BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
         if (Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) {
             chainTarget = Utils.decodeCompactBits(result.getDifficulty());
