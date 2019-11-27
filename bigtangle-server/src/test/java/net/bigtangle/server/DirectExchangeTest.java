@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +51,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.UserDataResponse;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -284,9 +286,28 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     @Test
     public void exchangeSignsServer() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
+        //testInitWallet();
+        //wallet1();
+        //wallet2();
+        
+        File f3 = new File("./logs/", "bigtangle3");
+        if (f3.exists()) {
+            f3.delete();
+        }
+        
+        File f4 = new File("./logs/", "bigtangle4");
+        if (f4.exists()) {
+            f4.delete();
+        }
+        
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
+        walletAppKit1.wallet().setServerURL(contextRoot);
+        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
+        
+        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
+        walletAppKit2.wallet().setServerURL(contextRoot);
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
+        
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         ECKey myKey = walletAppKit2.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
