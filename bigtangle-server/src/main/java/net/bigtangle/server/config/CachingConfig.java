@@ -24,7 +24,11 @@ public class CachingConfig {
         config.setInstanceName("hazelcast-instance")
                 .addMapConfig(new MapConfig().setName("configuration")
                         .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
-                        .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(3600));
+                        .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(3600)) 
+        .addMapConfig(new MapConfig().setName("priceticker")
+                .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
+                .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(2));
+
         return config;
 
     }

@@ -1181,7 +1181,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             List<TransactionInput> inputs = tx.getInputs();
             List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
-            checkState(outputs.size() > 0);
+            // Order checkState(outputs.size() > 0);
 
             KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, aesKey);
 
@@ -2036,25 +2036,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // address and amount and return the remainder back to fromkey.
     // and repeat 3 times and wait as there may be a transaction pending for
     // this key
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-        importKey(fromkey);
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, "", 3, 20000);
+ 
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult,  
+            String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 20000);
     }
 
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, NetworkParameters.BIGTANGLE_TOKENID, memo, 3,
-                20000);
-    }
-
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            byte[] tokenid, String memo, int repeat, int sleep)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+            String memo, int repeat, int sleep)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
         // int sleep = 60000;
         try {
-            return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, tokenid, memo);
+            return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo);
         } catch (InsufficientMoneyException e) {
             log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
@@ -2063,7 +2058,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     Thread.sleep(sleep);
                 } catch (InterruptedException e1) {
                 }
-                return payMoneyToECKeyList(aesKey, giveMoneyResult, fromkey, tokenid, memo, repeat, sleep);
+                return payMoneyToECKeyList(aesKey, giveMoneyResult,   tokenid, memo, repeat, sleep);
             }
         }
         return null;
@@ -2072,8 +2067,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     // pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
     // address and amount and return the remainder back to fromkey.
-    private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, ECKey fromkey,
-            byte[] tokenid, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
+    private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+            String memo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
         if (giveMoneyResult.isEmpty()) {
             return null;
@@ -2087,13 +2083,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multispent.addOutput(a, address);
             summe = summe.add(a);
         }
-        Coin amount = summe;
-        UTXO spendableUTXO = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, spendableUTXO);
+        Coin amount = summe.negate();
 
-        // rest to itself
-        multispent.addOutput(spendableOutput.getValue().subtract(amount), fromkey);
-        multispent.addInput(spendableUTXO.getBlockHash(), spendableOutput);
+        List<UTXO> coinList = getSpendableUTXO(aesKey, tokenid);
+        ECKey beneficiary = null;
+        for (UTXO u : coinList) {
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+            beneficiary = getECKey(aesKey, u.getAddress());
+            amount = spendableOutput.getValue().add(amount);
+            multispent.addInput(u.getBlockHash(), spendableOutput);
+            if (!amount.isNegative()) {
+                multispent.addOutput(amount, beneficiary);
+                break;
+            }
+        }
+        if (beneficiary == null || amount.isNegative()) {
+            throw new InsufficientMoneyException("");
+        }
+
         signTransaction(multispent, aesKey);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2137,20 +2144,30 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // add client check if the tokenid exists
         Token t = checkTokenId(tokenId);
         // Burn BIG to buy
-        Coin amount = Coin.valueOf(totalAmount(buyPrice, buyAmount, t.getDecimals()),
-                NetworkParameters.BIGTANGLE_TOKENID);
-        UTXO u = getSpendableUTXO(aesKey, amount);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
-        ECKey beneficiary = getECKey(aesKey, u.getAddress());
+        Coin amount = Coin
+                .valueOf(totalAmount(buyPrice, buyAmount, t.getDecimals()), NetworkParameters.BIGTANGLE_TOKENID)
+                .negate();
         Transaction tx = new Transaction(params);
+        List<UTXO> coinList = getSpendableUTXO(aesKey, NetworkParameters.BIGTANGLE_TOKENID);
+        ECKey beneficiary = null;
+        for (UTXO u : coinList) {
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+            beneficiary = getECKey(aesKey, u.getAddress());
+            amount = spendableOutput.getValue().add(amount);
+            tx.addInput(u.getBlockHash(), spendableOutput);
+            if (!amount.isNegative()) {
+                tx.addOutput(amount, beneficiary);
+                break;
+            }
+        }
+        if (beneficiary == null || amount.isNegative()) {
+            throw new InsufficientMoneyException("");
+        }
+
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
                 Side.BUY, beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
-
-        // BURN: amount and rest back to user
-        tx.addOutput(spendableOutput.getValue().subtract(amount), beneficiary);
-        tx.addInput(u.getBlockHash(), spendableOutput);
         signTransaction(tx, aesKey);
         // Create block with order
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -2192,29 +2209,47 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         throw new InsufficientMoneyException(amount.toString());
     }
 
+    private List<UTXO> getSpendableUTXO(KeyParameter aesKey, byte[] tokenid) throws IOException {
+        List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
+        List<UTXO> re = new ArrayList<UTXO>();
+        for (UTXO u : l) {
+            if (Arrays.equals(u.getValue().getTokenid(), tokenid)) {
+                re.add(u);
+            }
+        }
+        return re;
+    }
+
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
             Long validFromTime)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token t = checkTokenId(tokenId);
         long total = totalAmount(sellPrice, sellAmount, t.getDecimals());
         // Burn tokens to sell
-        Coin amount = Coin.valueOf(sellAmount, tokenId);
-
-        UTXO u = getSpendableUTXO(aesKey, amount);
-        ECKey beneficiary = getECKey(aesKey, u.getAddress());
-
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+        Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
         Transaction tx = new Transaction(params);
+
+        List<UTXO> coinList = getSpendableUTXO(aesKey, amount.getTokenid());
+        ECKey beneficiary = null;
+        for (UTXO u : coinList) {
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+            beneficiary = getECKey(aesKey, u.getAddress());
+            amount = spendableOutput.getValue().add(amount);
+            tx.addInput(u.getBlockHash(), spendableOutput);
+            if (!amount.isNegative()) {
+                tx.addOutput(amount, beneficiary);
+                break;
+            }
+        }
+        if (beneficiary == null || amount.isNegative()) {
+            throw new InsufficientMoneyException("");
+        }
+
         OrderOpenInfo info = new OrderOpenInfo(total, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
-
-        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-        // amount, testKey));
-        tx.addOutput(new TransactionOutput(params, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        tx.addInput(u.getBlockHash(), spendableOutput);
 
         signTransaction(tx, aesKey);
         // Create block with order

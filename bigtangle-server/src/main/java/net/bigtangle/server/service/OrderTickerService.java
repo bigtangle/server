@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.OrderRecord;
@@ -92,7 +93,7 @@ public class OrderTickerService {
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
     }
-    
+    @Cacheable(cacheNames  = "priceticker")
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds, count);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
@@ -112,7 +113,7 @@ public class OrderTickerService {
         }
         return re;
     }
-
+    @Cacheable(cacheNames  = "priceticker")
     public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate) throws BlockStoreException {
         List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, startDate, endDate, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));

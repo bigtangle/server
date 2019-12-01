@@ -740,7 +740,7 @@ public abstract class AbstractIntegrationTest {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(),
                 MonetaryFormat.FIAT.noCode().parse("33333").getValue().longValue());
-        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testInitTransferWallet");
     }
 
     protected Block testCreateToken(ECKey outKey, String tokennameName) throws JsonProcessingException, Exception {

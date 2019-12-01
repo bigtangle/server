@@ -50,7 +50,8 @@ public class GiveMoneyUtils {
 
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode( testPub));
-        return payWallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        payWallet.importKey(fromkey);
+        return payWallet.payMoneyToECKeyList(null, giveMoneyResult, "batchGiveMoneyToECKeyList");
 
     }
 

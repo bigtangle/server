@@ -60,7 +60,8 @@ select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
 select * from txreward  order by chainlength desc ;
-select count(*) from txreward   ;
+select count(distinct(difficulty)) from txreward   ;
+delete    from txreward where  difficulty <= 2490057664
 select * from matching   ;
 select * from  multisignaddress
 select * from  multisign

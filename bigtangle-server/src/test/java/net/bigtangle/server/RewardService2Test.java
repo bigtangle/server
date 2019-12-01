@@ -174,8 +174,8 @@ public class RewardService2Test extends AbstractIntegrationTest {
             giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
                     3333000000L / LongMath.pow(2, j));
         }
-
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        walletAppKit1.wallet().importKey(fromkey);
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1" );
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
         confirmationService.update();
@@ -212,4 +212,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
 
     }
+    
+ 
 }

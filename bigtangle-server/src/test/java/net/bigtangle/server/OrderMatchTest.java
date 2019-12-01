@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -15,6 +18,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -31,9 +36,13 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.InsufficientMoneyException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -113,7 +122,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
-        
+
         makeAndConfirmSellOrder(testKey, testTokenId, 1002, 100, addedBlocks);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -133,7 +142,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertTrue(orderTickerResponse.getTickers().size() > 0);
         for (MatchResult m : orderTickerResponse.getTickers()) {
             assertTrue(m.getTokenid().equals(testTokenId));
-          //  assertTrue(m.getExecutedQuantity() == 78|| m.getExecutedQuantity() == 22);
+            // assertTrue(m.getExecutedQuantity() == 78||
+            // m.getExecutedQuantity() == 22);
             // TODO check the execute ordering. price is 1000 or 1001
             assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
         }
@@ -196,7 +206,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(8);
-        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -997,4 +1006,99 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
     }
+
+    @Test
+    // test buy order with multiple inputs
+    public void testBuy() throws Exception {
+
+        File f3 = new File("./logs/", "bigtangle3");
+        if (f3.exists()) {
+            f3.delete();
+        }
+
+        File f4 = new File("./logs/", "bigtangle4");
+        if (f4.exists()) {
+            f4.delete();
+        }
+
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
+        walletAppKit1.wallet().setServerURL(contextRoot);
+        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
+
+        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
+        walletAppKit2.wallet().setServerURL(contextRoot);
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
+
+        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        payBig(fromkey);
+        payBig(fromkey);
+        payBig(fromkey);
+        payBig(fromkey);
+        payBig(fromkey);
+        
+        ECKey testKey = walletKeys.get(8);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        payTestToken(testKey);
+        payTestToken(testKey);
+        
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, 1, 100, null, null);
+        addedBlocks.add(block);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+
+        // Open buy order for test tokens
+        block = walletAppKit1.wallet().buyOrder(null, testTokenId, 1, 100, null, null);
+        addedBlocks.add(block);
+        mcmcService.update();
+        confirmationService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        showOrders();
+
+        // Verify the tokens changed possession
+        Coin coin = Coin.valueOf(100l, NetworkParameters.BIGTANGLE_TOKENID);
+        checkBalance(coin, wallet2Keys);
+        Coin coin2 = Coin.valueOf(100l, testKey.getPubKey());
+        checkBalance(coin2, wallet1Keys);
+ 
+    }
+
+    private void payBig(ECKey fromkey) throws JsonProcessingException, IOException, InsufficientMoneyException,
+            InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+
+        for (int i = 0; i < 10; i++) {
+            giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(), 123l);
+        }
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,  "payBig");
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+        mcmcService.update();
+        confirmationService.update();
+    }
+
+    private void payTestToken(ECKey testKey) throws JsonProcessingException, IOException, InsufficientMoneyException,
+            InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
+        Block b;
+        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
+
+        for (int i = 0; i < 10; i++) {
+            giveMoneyTestToken.put(wallet2Keys.get(i % wallet2Keys.size()).toAddress(networkParameters).toString(),
+                    88l);
+        }
+        b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken,   testKey.getPubKey(), "", 3,
+                1000);
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        mcmcService.update();
+        confirmationService.update();
+        // Open sell order for test tokens
+    }
+
 }
