@@ -121,8 +121,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
-        long difficulty = rewardService.calculateNextChainDifficulty(prevRewardHash, currChainLength,
-                block.getTimeSeconds());
+        long difficulty = rewardInfo.getDifficultyTargetReward();
 
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
