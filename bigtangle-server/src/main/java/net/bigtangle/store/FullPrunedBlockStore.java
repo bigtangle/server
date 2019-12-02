@@ -105,7 +105,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * TransactionOutputs
      */
     void addUnspentTransactionOutput(UTXO out) throws BlockStoreException;
-    void addUnspentTransactionOutput(List<UTXO > utxos) throws BlockStoreException;
+
+    void addUnspentTransactionOutput(List<UTXO> utxos) throws BlockStoreException;
+
     /**
      * <p>
      * Begins/Commits/Aborts a database transaction.
@@ -137,7 +139,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void deleteStore() throws BlockStoreException;
 
     public void create() throws BlockStoreException;
-  
+
     /* Blocks */
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
@@ -149,14 +151,15 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
 
-    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException; 
-    
+    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
+
     public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
 
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException;
 
-    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight) throws BlockStoreException;
+    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight)
+            throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException;
 
@@ -169,8 +172,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException;
 
-    public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight)
-            throws BlockStoreException;
+    public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException;
 
     public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException;
 
@@ -209,10 +211,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException;
 
-    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm)
-            throws BlockStoreException;
+    public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
 
-    
     public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
 
     public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
@@ -255,7 +255,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException;
 
-    public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException; 
+    public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException;
 
     public boolean getTokenConfirmed(Sha256Hash blockHash) throws BlockStoreException;
 
@@ -265,7 +265,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenindex) throws BlockStoreException;
 
-    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred, long index) throws BlockStoreException;
+    public BlockWrap getDomainIssuingConfirmedBlock(String domainName, String domainPred, long index)
+            throws BlockStoreException;
 
     public List<String> getDomainDescendantConfirmedBlocks(String domainPred) throws BlockStoreException;
 
@@ -273,12 +274,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     public void updateTokenConfirmed(Sha256Hash blockhash, boolean confirmed) throws BlockStoreException;
- 
-    public List<OrderRecord> getAllOpenOrdersSorted(  List<String> addresses,
-            String tokenid) throws BlockStoreException;
+
+    public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException;
 
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
- 
 
     public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
 
@@ -316,11 +315,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
 
- 
-
     public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
             throws BlockStoreException;
- 
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
             throws BlockStoreException;
@@ -345,7 +341,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
             throws BlockStoreException;
- 
 
     void deleteMultiSign(String tokenid) throws BlockStoreException;
 
@@ -424,8 +419,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
 
-   
-
     List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
 
     List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException;
@@ -458,6 +451,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void saveExchange(Exchange exchange) throws BlockStoreException;
 
+    void deleteExchange(String orderid) throws BlockStoreException;
+
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
     List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
@@ -484,6 +479,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
-    List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate, int count) throws BlockStoreException;
+    List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate, int count)
+            throws BlockStoreException;
 
 }
