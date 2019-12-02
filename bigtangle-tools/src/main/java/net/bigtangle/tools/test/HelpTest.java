@@ -42,8 +42,8 @@ import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.params.TestParams;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
@@ -89,10 +89,10 @@ public abstract class HelpTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
             //"https://p.bigtangle.org:8088/";
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
 
     public String contextRoot = TESTSERVER1;
     // "http://localhost:8088/";
@@ -108,7 +108,7 @@ public abstract class HelpTest {
     protected static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
 
-    NetworkParameters networkParameters = MainNetParams.get();
+    NetworkParameters networkParameters = TestParams.get();
 
     boolean deleteWlalletFile = true;
 
@@ -225,7 +225,7 @@ public abstract class HelpTest {
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         giveMoneyResult.put(wallet.walletKeys().get(1).toAddress(networkParameters).toString(), 3333333l);
-        wallet.payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        wallet.payMoneyToECKeyList(null, giveMoneyResult, "payToWallet");
     }
 
     protected void checkBalance(Coin coin, ECKey ecKey) throws Exception {

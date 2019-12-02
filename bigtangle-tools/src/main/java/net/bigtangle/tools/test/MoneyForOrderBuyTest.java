@@ -46,7 +46,7 @@ public class MoneyForOrderBuyTest extends HelpTest {
                     333300000l / LongMath.pow(2, j));
         }
 
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey);
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
         log.debug("block " + (b == null ? "block is null" : b.toString()));
     }
 
@@ -66,7 +66,7 @@ public class MoneyForOrderBuyTest extends HelpTest {
                     555l / LongMath.pow(2, j));
         }
 
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, fromkey, fromkey.getPubKey(), "", 3,
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,  fromkey.getPubKey(), "", 3,
                 1000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
     }
