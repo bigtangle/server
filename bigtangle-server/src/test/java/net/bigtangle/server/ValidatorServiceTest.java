@@ -491,7 +491,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 try {
                     // Build transaction
                     Transaction tx = new Transaction(networkParameters);
-                    tx.addOutput(Coin.COIN.times(2), walletKeys.get(8).toAddress(networkParameters));
+                    tx.addOutput(Coin.COIN.times(2), new ECKey().toAddress(networkParameters));
 
                     // The input does not really need to be a valid signature,
                     // as long
@@ -1779,7 +1779,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         store.resetStore();
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(8);
+        ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -2206,7 +2206,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 
         // Generate a subsequent issuance that does not work
-        byte[] pubKey2 = walletKeys.get(8).getPubKey();
+        byte[] pubKey2 = new ECKey().getPubKey();
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey2);
 

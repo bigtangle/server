@@ -168,7 +168,7 @@ public abstract class HelpTest {
     }
 
     protected WalletAppKit createAndInitWallet(String walletName) {
-        File f = new File("./logs/", walletName);
+        File f = new File("./logs/", walletName + ".wallet");
         if (f.exists() & deleteWlalletFile) {
             f.delete();
         }

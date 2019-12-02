@@ -95,7 +95,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
         wallet1Keys_part.add(wallet1Keys.get(0));
-        wallet1Keys_part.add(wallet1Keys.get(1));
+        wallet1Keys_part.add(new ECKey());
         createMultiSigns(wallet1Keys_part);
 
     }
@@ -172,7 +172,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
     // coins in wallet to one coin to address
     public void testPartsToOne() throws Exception {
 
-        ECKey to = wallet1Keys.get(1);
+        ECKey to =  new ECKey();
+        walletAppKit1.wallet().importKey(to);
         Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         testPartsToOne(aCoin, to);
         checkBalance(aCoin, to);

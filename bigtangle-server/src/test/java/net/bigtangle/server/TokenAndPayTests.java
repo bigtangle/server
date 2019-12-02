@@ -718,6 +718,15 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     
     @Test
     public void testMultiSigMultiSignSignatureSuccess() throws Exception {
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
@@ -786,6 +795,15 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     @Test
     public void testCreateSingleTokenIndexCheckTokenExist() throws Exception {
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         ECKey outKey = keys.get(6);
         byte[] pubKey = outKey.getPubKey();
@@ -985,8 +1003,17 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @Test
     public void testUpdateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
+        walletAppKit.wallet().importKey(new ECKey() );
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid = keys.get(7).getPublicKeyAsHex();
+        String tokenid =  new ECKey().getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();

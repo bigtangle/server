@@ -629,7 +629,7 @@ public abstract class AbstractIntegrationTest {
 
     protected void walletKeys() throws Exception {
         KeyParameter aesKey = null;
-        File f = new File("./logs/", "bigtangle");
+        File f = new File("./logs/", "bigtangle.wallet");
         if (f.exists())
             f.delete();
         walletAppKit = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle");
@@ -643,7 +643,7 @@ public abstract class AbstractIntegrationTest {
     protected void wallet1() throws Exception {
         KeyParameter aesKey = null;
         // delete first
-        File f = new File("./logs/", "bigtangle1");
+        File f = new File("./logs/", "bigtangle1.wallet");
         if (f.exists())
             f.delete();
         walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle1");
@@ -655,7 +655,7 @@ public abstract class AbstractIntegrationTest {
     protected void wallet2() throws Exception {
         KeyParameter aesKey = null;
         // delete first
-        File f = new File("./logs/", "bigtangle2");
+        File f = new File("./logs/", "bigtangle2.wallet");
         if (f.exists())
             f.delete();
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle2");
@@ -834,6 +834,22 @@ public abstract class AbstractIntegrationTest {
         assertTrue(myutxo != null);
         assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
         log.debug(myutxo.toString());
+    }
+
+    protected void checkBalanceSum(Coin coin, List<ECKey> a) throws Exception {
+        mcmcService.update();
+        confirmationService.update();
+        List<UTXO> ulist = getBalance(false, a);
+        
+        Coin sum = new Coin(0,coin.getTokenid());
+        for (UTXO u : ulist) {
+            if (coin.getTokenHex().equals(u.getTokenId())) {
+                sum=sum.add(u.getValue());
+                
+            }
+        }
+        assertTrue(coin.getValue().compareTo(sum.getValue())==0);
+        
     }
 
     // create a token with multi sign
