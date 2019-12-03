@@ -4,11 +4,13 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -33,6 +36,82 @@ import net.bigtangle.utils.OkHttp3Util;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RewardServiceTest extends AbstractIntegrationTest  {
+
+    // Test difficulty transition 
+    @Test
+    public void testDifficultyTransition1() throws Exception {
+
+    	long currentTime = networkParameters.getGenesisBlock().getTimeSeconds();
+    	
+    	// Reward exactly on target -> no difficulty change
+		Block rollingBlock = networkParameters.getGenesisBlock();
+		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
+			currentTime += NetworkParameters.TARGET_SPACING;
+	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		}
+
+		currentTime += NetworkParameters.TARGET_SPACING;
+        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger(), networkParameters.getGenesisBlock().getRewardInfo().getDifficultyTargetAsInteger());
+    }
+
+    // Test difficulty transition 
+    @Test
+    public void testDifficultyTransition2() throws Exception {
+
+    	long currentTime = networkParameters.getGenesisBlock().getTimeSeconds();
+    	
+    	// Rewards way too fast -> maximum difficulty change to higher difficulty    	
+		Block rollingBlock = networkParameters.getGenesisBlock();
+		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
+			currentTime += NetworkParameters.TARGET_SPACING / 8;
+	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		}
+
+		currentTime += NetworkParameters.TARGET_SPACING / 8;
+        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().multiply(BigInteger.valueOf(4)), networkParameters.getGenesisBlock().getRewardInfo().getDifficultyTargetAsInteger());
+    	Block highDifficultyBlock = rollingBlock;
+		
+    	// Rewards way too fast -> maximum difficulty change to higher difficulty    	
+		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
+			currentTime += NetworkParameters.TARGET_SPACING * 8;
+	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		}
+
+		currentTime += NetworkParameters.TARGET_SPACING * 8;
+        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().divide(BigInteger.valueOf(4)), highDifficultyBlock.getRewardInfo().getDifficultyTargetAsInteger());
+    }
+
+    // Test difficulty transition 
+    @Test
+    public void testDifficultyTransition3() throws Exception {
+
+    	long currentTime = networkParameters.getGenesisBlock().getTimeSeconds();
+    	
+    	// Rewards way too fast -> maximum difficulty change to higher difficulty    	
+		Block rollingBlock = networkParameters.getGenesisBlock();
+		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
+			currentTime += NetworkParameters.TARGET_SPACING / 2;
+	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		}
+
+		currentTime += NetworkParameters.TARGET_SPACING / 2;
+        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		assertTrue(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().compareTo(networkParameters.getGenesisBlock().getRewardInfo().getDifficultyTargetAsInteger()) < 0);
+    	Block highDifficultyBlock = rollingBlock;
+		
+    	// Rewards way too fast -> maximum difficulty change to higher difficulty    	
+		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
+			currentTime += NetworkParameters.TARGET_SPACING * 2;
+	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+		}
+
+		currentTime += NetworkParameters.TARGET_SPACING * 2;
+        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime);
+        assertTrue(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().compareTo(highDifficultyBlock.getRewardInfo().getDifficultyTargetAsInteger()) > 0);
+    }
 
     public Block createReward(List<Block> blocksAddedAll) throws Exception {
 
