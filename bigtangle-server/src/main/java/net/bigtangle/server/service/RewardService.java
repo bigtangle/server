@@ -755,10 +755,10 @@ public class RewardService {
 
         // Limit the adjustment step.
         int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
-        if (timespan < targetTimespan / 2)
-            timespan = targetTimespan / 2;
-        if (timespan > targetTimespan * 2)
-            timespan = targetTimespan * 2;
+        if (timespan < targetTimespan / 4)
+            timespan = targetTimespan / 4;
+        if (timespan > targetTimespan * 4)
+            timespan = targetTimespan * 4;
 
         BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
