@@ -147,8 +147,12 @@ public class RewardService {
     }
 
     public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
+        return createReward(prevRewardHash, prevTrunk, prevBranch, null);
+    }
 
-        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride) throws Exception {
+
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride);
         if (block != null)
 //            if (scheduleConfiguration.isMining()) {
 //                blockService.broadcastBlock(block);
@@ -160,6 +164,11 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null);        	
+    }
+
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride)
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         Stopwatch watch = Stopwatch.createStarted();
         
         Block r1 = blockService.getBlock(prevTrunk);
@@ -167,6 +176,8 @@ public class RewardService {
         
         long currentTime = Math.max(System.currentTimeMillis() / 1000, 
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        if (timeOverride != null)
+        	currentTime = timeOverride;
         RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime);
 
         Block block = Block.createBlock(networkParameters, r1, r2);
