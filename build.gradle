@@ -25,6 +25,8 @@ allprojects {
       
      mavenCentral()
       maven { url "https://dl.bintray.com/spark-jobserver/maven/" }
+      maven { url "https://repo.spring.io/plugins-release/" }
+      maven { url "https://dl.bintray.com/ethereum/maven/" }
      
     }
 

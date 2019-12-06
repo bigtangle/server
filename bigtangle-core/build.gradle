@@ -24,6 +24,8 @@ dependencies {
    // testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
     testCompile group: 'junit', name: 'junit',  version:ver.junit
     testCompile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+    compile group: 'org.ethereum', name: 'ethereumj-core', version: '1.7.2-RELEASE'
+    compile group: 'org.ethereum', name: 'rocksdbjni', version: '5.9.2'
 }
 
 apply plugin: 'maven-publish'
