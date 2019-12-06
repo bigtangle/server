@@ -80,8 +80,8 @@ public abstract class HelpTest {
 
  
     // 1Q5ysrjmeEjJKFBrnEJBSAs6vBHYzsmN2H
-    public static String NetDomainPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
-    public static String NetDomainPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
+    public static String ShopDomainPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
+    public static String ShopDomainPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
 
     public static String BigtangleDomainPub = "02122251e6e3cdbe3e4bbaa4bc0dcc12014c6cf0388abac61bf2c972579d790a68";
       public static String BigtangleDomainPriv = "dbee6582476dc44ac1e26c67733205ff4c50a1a6a6716667b4428b36f0dcb7bc";
@@ -132,7 +132,7 @@ public abstract class HelpTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)));
-        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(NetDomainPriv)));
+        w.importKey(ECKey.fromPrivate(Utils.HEX.decode(ShopDomainPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv)));
     }
 
