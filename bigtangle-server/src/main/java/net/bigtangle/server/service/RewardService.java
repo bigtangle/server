@@ -147,8 +147,12 @@ public class RewardService {
     }
 
     public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
+        return createReward(prevRewardHash, prevTrunk, prevBranch, null);
+    }
 
-        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch);
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride) throws Exception {
+
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride);
         if (block != null)
 //            if (scheduleConfiguration.isMining()) {
 //                blockService.broadcastBlock(block);
@@ -160,11 +164,21 @@ public class RewardService {
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        Stopwatch watch = Stopwatch.createStarted();
-        RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash);
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null);        	
+    }
 
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride)
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+        Stopwatch watch = Stopwatch.createStarted();
+        
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
+        
+        long currentTime = Math.max(System.currentTimeMillis() / 1000, 
+                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+        if (timeOverride != null)
+        	currentTime = timeOverride;
+        RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime);
 
         Block block = Block.createBlock(networkParameters, r1, r2);
 
@@ -179,8 +193,6 @@ public class RewardService {
         block.setDifficultyTarget(calculateNextBlockDifficulty(currRewardInfo));
 
         // Enforce timestamp equal to previous max for reward blocktypes
-        long currentTime = Math.max(System.currentTimeMillis() / 1000, 
-                Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         block.setTime(currentTime);
         BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevRewardHash));
         if (Utils.decodeCompactBits(result.getDifficulty()).compareTo(chainTarget) < 0) {
@@ -257,11 +269,10 @@ public class RewardService {
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
-    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash)
+    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash, long currentTime)
             throws BlockStoreException {
 
         // Read previous reward block's data
-        BlockWrap prevRewardBlock = store.getBlockWrap(prevRewardHash);
         long prevChainLength = store.getRewardChainLength(prevRewardHash);
 
         // Build transaction for block
@@ -290,7 +301,7 @@ public class RewardService {
         }
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
-                prevRewardBlock.getBlock().getTimeSeconds());
+                currentTime);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -585,7 +596,7 @@ public class RewardService {
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
         RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
-                newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash());
+                newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(), newMilestoneBlock.getTimeSeconds());
         if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
             throw new VerificationException("Incorrect difficulty target");
         }
@@ -751,7 +762,7 @@ public class RewardService {
 
         BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
+      newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
         if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));

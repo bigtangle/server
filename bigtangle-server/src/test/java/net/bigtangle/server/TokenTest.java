@@ -88,8 +88,8 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         {
-            final String tokenid = walletKeys.get(1).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bc", aesKey, "");
+            final String tokenid =new ECKey().getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "shop", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -103,8 +103,8 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         {
-            final String tokenid = walletKeys.get(2).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "bigtangle.bc", aesKey, "");
+            final String tokenid =new ECKey().getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "myshopname.shop", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -116,9 +116,7 @@ public class TokenTest extends AbstractIntegrationTest {
             mcmcService.update();
             confirmationService.update();
         }
-
  
-    
     }
 
     @Test
@@ -133,7 +131,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey, "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "shop", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -145,9 +143,28 @@ public class TokenTest extends AbstractIntegrationTest {
         mcmcService.update();
         confirmationService.update();
         {
+            ECKey key= new ECKey();
+            walletAppKit1.wallet().importKey(key) ;
+            walletAppKit1.wallet().importKey(preKey) ;
+            final String tokenid = key.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
 
-            Block token = testCreateToken(walletKeys.get(1), "mytest",
-                    walletAppKit1.wallet().getDomainNameBlockHash("de", "token").getdomainNameToken().getBlockHashHex());
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(key);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+         
+            }
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
+        }
+        
+        {
+
+            Block token = testCreateToken(new ECKey(), "myproduct",
+                    walletAppKit1.wallet().getDomainNameBlockHash("myshopname.shop", "token").getdomainNameToken().getBlockHashHex());
             TokenInfo currentToken = new TokenInfo().parseChecked(token.getTransactions().get(0).getData());
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -164,8 +181,8 @@ public class TokenTest extends AbstractIntegrationTest {
             GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
             assertTrue(getTokensResponse.getTokens().size() == 2);
-            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@de")
-                    || getTokensResponse.getTokens().get(1).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@de"));
+            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@myshopname.shop")
+                    || getTokensResponse.getTokens().get(1).getTokennameDisplay().equals(currentToken.getToken().getTokenname() + "@myshopname.shop"));
     
 
         }
@@ -278,21 +295,26 @@ public class TokenTest extends AbstractIntegrationTest {
         store.resetStore();
 
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(this.walletKeys.get(1));
-        keys.add(this.walletKeys.get(2));
-        keys.add(this.walletKeys.get(3));
+        ECKey outKey3 =new ECKey();
+        ECKey outKey4 = new ECKey();
+        ECKey signKey = new ECKey();
+        keys.add(outKey3);
+        keys.add(outKey4);
+        keys.add(signKey);
 
         final String tokenid = new ECKey().getPublicKeyAsHex();
         final String tokenname = "bigtangle.de";
 
         
         // don't use the first key which is in the wallet
-        ECKey signKey = this.walletKeys.get(3);
+       
         this.walletAppKit.wallet().publishDomainName(keys, signKey, tokenid, tokenname, Token.genesisToken(networkParameters), aesKey, "",
                 3);
 
-        this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(1), aesKey);
-        this.walletAppKit.wallet().multiSign(tokenid, this.walletKeys.get(2), aesKey);
+  
+        this.walletAppKit.wallet().multiSign(tokenid, outKey3, aesKey);
+  
+        this.walletAppKit.wallet().multiSign(tokenid, outKey4, aesKey);
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
@@ -308,13 +330,13 @@ public class TokenTest extends AbstractIntegrationTest {
         testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test");
         mcmcService.update();
         confirmationService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(1),"test");
+        testCreateToken(new ECKey(),"test");
         mcmcService.update();
         confirmationService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(2),"test");
+        testCreateToken(new ECKey(),"test");
         mcmcService.update();
         confirmationService.update();
-        testCreateToken(walletAppKit.wallet().walletKeys().get(3),"test");
+        testCreateToken(new ECKey(),"test");
         mcmcService.update();
         confirmationService.update();
         sendEmpty(20);

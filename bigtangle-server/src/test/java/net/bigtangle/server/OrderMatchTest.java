@@ -62,7 +62,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -104,7 +104,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -154,7 +154,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -205,7 +205,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -243,7 +243,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -279,7 +279,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -321,7 +321,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -363,7 +363,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -399,7 +399,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -435,7 +435,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -475,7 +475,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -514,7 +514,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -547,7 +547,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // ECKey genesisKey =
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -582,7 +582,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -623,7 +623,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -702,7 +702,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     public void testValidToTime() throws Exception {
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -768,7 +768,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -808,7 +808,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -844,7 +844,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -882,7 +882,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -943,7 +943,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
         ;
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -1011,12 +1011,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     // test buy order with multiple inputs
     public void testBuy() throws Exception {
 
-        File f3 = new File("./logs/", "bigtangle3");
+        File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
         }
 
-        File f4 = new File("./logs/", "bigtangle4");
+        File f4 = new File("./logs/", "bigtangle4.wallet");
         if (f4.exists()) {
             f4.delete();
         }
@@ -1028,31 +1028,37 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
         walletAppKit2.wallet().setServerURL(contextRoot);
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-
-        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-
-        payBig(fromkey);
-        payBig(fromkey);
-        payBig(fromkey);
-        payBig(fromkey);
-        payBig(fromkey);
-        
-        ECKey testKey = walletKeys.get(8);
+ 
+     
+ 
+      
+        ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
-
+ 
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
 
-        payTestToken(testKey);
-        payTestToken(testKey);
+        long amountToken = 88l;
+        //split token
+        payTestToken(testKey,amountToken);
+        payTestToken(testKey,amountToken);
+        checkBalanceSum(Coin.valueOf(2*amountToken   , testKey.getPubKey()), wallet2Keys);
         
-        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, 1, 100, null, null);
+        long tradeAmount = 100l;
+        long price=1;
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount , null, null);
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
 
+        long amount = 77l;
+        //split BIG
+        payBig(amount);
+        payBig(amount);
+        checkBalanceSum( Coin.valueOf(2*amount   , NetworkParameters.BIGTANGLE_TOKENID)
+                , wallet1Keys);
         // Open buy order for test tokens
-        block = walletAppKit1.wallet().buyOrder(null, testTokenId, 1, 100, null, null);
+        block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
@@ -1062,38 +1068,38 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();
 
-        // Verify the tokens changed possession
-        Coin coin = Coin.valueOf(100l, NetworkParameters.BIGTANGLE_TOKENID);
-        checkBalance(coin, wallet2Keys);
-        Coin coin2 = Coin.valueOf(100l, testKey.getPubKey());
-        checkBalance(coin2, wallet1Keys);
- 
+        // Verify the tokens changed position 
+        checkBalanceSum( Coin.valueOf(tradeAmount*price, NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys); 
+        
+        checkBalanceSum(Coin.valueOf(2*amountToken - tradeAmount , testKey.getPubKey()), wallet2Keys);
+       
+        checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet1Keys);
+        checkBalanceSum( Coin.valueOf(2*amount - tradeAmount*price , NetworkParameters.BIGTANGLE_TOKENID)
+                , wallet1Keys);
     }
+ 
 
-    private void payBig(ECKey fromkey) throws JsonProcessingException, IOException, InsufficientMoneyException,
+    private void payBig(long amount) throws JsonProcessingException, IOException, InsufficientMoneyException,
             InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
 
-        for (int i = 0; i < 10; i++) {
-            giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(), 123l);
-        }
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,  "payBig");
+        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), amount);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
         confirmationService.update();
     }
 
-    private void payTestToken(ECKey testKey) throws JsonProcessingException, IOException, InsufficientMoneyException,
-            InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
+    private void payTestToken(ECKey testKey, long amount)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
+            ExecutionException, BlockStoreException, UTXOProviderException {
         Block b;
         HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
 
-        for (int i = 0; i < 10; i++) {
-            giveMoneyTestToken.put(wallet2Keys.get(i % wallet2Keys.size()).toAddress(networkParameters).toString(),
-                    88l);
-        }
-        b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken,   testKey.getPubKey(), "", 3,
-                1000);
+        giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
+
+        b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcService.update();

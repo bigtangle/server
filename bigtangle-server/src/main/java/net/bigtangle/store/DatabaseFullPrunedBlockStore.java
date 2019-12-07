@@ -450,7 +450,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected String INSERT_EXCHANGE_SQL = getInsert()
             + "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
             + " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,memo) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+    protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE orderid=?";
     protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
             + " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
             + " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,signInputData FROM exchange WHERE orderid = ?";
@@ -1754,7 +1754,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight) throws BlockStoreException {
+    public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight)
+            throws BlockStoreException {
         PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
         maybeConnect();
@@ -2782,8 +2783,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, tokenname);
             preparedStatement.setString(2, domainpre);
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) { 
-                return  resultSet.getBoolean("confirmed") ;
+            if (resultSet.next()) {
+                return resultSet.getBoolean("confirmed");
             } else {
                 return false;
             }
@@ -5377,20 +5378,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
-        if(addresses==null || addresses.isEmpty()) return new ArrayList<OrderRecord>();
-                
+        if (addresses == null || addresses.isEmpty())
+            return new ArrayList<OrderRecord>();
+
         maybeConnect();
         PreparedStatement s = null;
         try {
 
-            String myaddress = " in (" +  buildINList(addresses) + ")";
+            String myaddress = " in (" + buildINList(addresses) + ")";
 
             String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
                     + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND collectinghash="
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
-            s = conn.get().prepareStatement(sql); 
+            s = conn.get().prepareStatement(sql);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);
@@ -5924,6 +5926,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public void deleteExchange(String orderid) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(DELETE_EXCHANGE_SQL);
+            preparedStatement.setString(1, orderid);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -6012,9 +6035,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
+
     @Override
-    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Long startDate, Long endDate, int count) throws BlockStoreException {
+    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Long startDate, Long endDate, int count)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -6023,8 +6047,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
 
             } else {
-                sql += " where tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   "
-                        + count;
+                sql += " where tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate
+                        + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
             preparedStatement = conn.get().prepareStatement(sql);
 

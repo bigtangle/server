@@ -290,12 +290,12 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         //wallet1();
         //wallet2();
         
-        File f3 = new File("./logs/", "bigtangle3");
+        File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
         }
         
-        File f4 = new File("./logs/", "bigtangle4");
+        File f4 = new File("./logs/", "bigtangle4.wallet");
         if (f4.exists()) {
             f4.delete();
         }

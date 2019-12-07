@@ -52,13 +52,13 @@ import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
+import net.bigtangle.server.service.OutputService;
 import net.bigtangle.server.service.PayMultiSignService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.UserDataService;
-import net.bigtangle.server.service.OutputService;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Gzip;
 
@@ -384,8 +384,8 @@ public class DispatcherController {
                     AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids);
                     this.outPrintJSONString(httpServletResponse, response);
                 } else {
-                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, startDate / 1000,
-                            endDate / 1000);
+                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids,
+                            startDate / 1000, endDate / 1000);
                     this.outPrintJSONString(httpServletResponse, response);
                 }
             }
@@ -427,6 +427,14 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.saveExchange(request);
+
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+            case deleteExchange: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = exchangeService.deleteExchange(request);
 
                 this.outPrintJSONString(httpServletResponse, response);
             }

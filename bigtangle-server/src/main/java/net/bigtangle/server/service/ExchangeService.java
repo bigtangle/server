@@ -47,13 +47,20 @@ public class ExchangeService {
         String toAddress = (String) request.get("toAddress");
         String toTokenHex = (String) request.get("toTokenHex");
         String toAmount = (String) request.get("toAmount");
-        //String dataHex = (String) request.get("dataHex");
-        //byte[] data = Utils.HEX.decode(dataHex);
-        Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, new byte[0]);
+        // String dataHex = (String) request.get("dataHex");
+        // byte[] data = Utils.HEX.decode(dataHex);
+        Exchange exchange = new Exchange(fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount,
+                new byte[0]);
         exchange.setOrderid(orderid);
         exchange.setFromSign(1);
         exchange.setMemo((String) request.get("memo"));
         this.store.saveExchange(exchange);
+        return AbstractResponse.createEmptyResponse();
+    }
+
+    public AbstractResponse deleteExchange(Map<String, Object> request) throws BlockStoreException {
+        String orderid = (String) request.get("orderid");
+        this.store.deleteExchange(orderid);
         return AbstractResponse.createEmptyResponse();
     }
 

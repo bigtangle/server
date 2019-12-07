@@ -47,11 +47,24 @@ public class TokenCreateTests extends HelpTest {
     }
 
     @Test
-    public void testTokens1() throws JsonProcessingException, Exception {
-        Token domain = walletAppKit1.wallet().getDomainNameBlockHash("bigtangle", "token").getdomainNameToken();
-        testCreateMultiSigToken(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(USDTokenPriv), Utils.HEX.decode(USDTokenPub)),
-                "USD", 2, domain, "US Dollar", 100000);
+    public void testMyshop() throws JsonProcessingException, Exception {
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(ShopDomainPriv));
+        final ECKey myshop =new ECKey();
+ 
+        walletAppKit1.wallet().publishDomainName(myshop, myshop.getPublicKeyAsHex(), "myshop.shop", null, "");
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(preKey); 
+        for (int i = 0; i < keys.size(); i++) {
+            walletAppKit1.wallet().multiSign( myshop.getPublicKeyAsHex(), keys.get(i), null);
+        }
+
+    }
+    @Test
+    public void testMyproduct() throws JsonProcessingException, Exception {
+
+        Token domain = walletAppKit1.wallet().getDomainNameBlockHash("myshop.shop", "token").getdomainNameToken();
+
+        testCreateMultiSigToken(new ECKey() , "My币", 2, domain, "My币", 1000000);
 
     }
     @Test
@@ -60,6 +73,21 @@ public class TokenCreateTests extends HelpTest {
         {
             final String tokenid = preKey.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(preKey, tokenid, "bigtangle", null, "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
+            }
+        }
+    }
+    @Test
+    public void testDomainShop() throws Exception {
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(ShopDomainPriv));
+        {
+            final String tokenid = preKey.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(preKey, tokenid, "shop", null, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);

@@ -51,7 +51,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  new ECKey()));
         TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
@@ -107,7 +107,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
         Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount, walletKeys.get(8)));
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  new ECKey()));
         TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);

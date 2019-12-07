@@ -86,8 +86,8 @@ import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.params.TestParams;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -99,8 +99,8 @@ import net.bigtangle.wallet.DeterministicSeed;
  
 
 public class Main extends Application {
-    public static NetworkParameters params = TestParams.get();
-    public static final String APP_NAME = "Bigtangle  Wallet  " + Main.version + "-10-16";
+    public static NetworkParameters params = MainNetParams.get();
+    public static final String APP_NAME = "Bigtangle  Wallet  " + Main.version + "-11-22";
     public static final String version = "0.3.5.0";
     public static String keyFileDirectory = ".";
     public static String keyFilePrefix = "bigtangle";

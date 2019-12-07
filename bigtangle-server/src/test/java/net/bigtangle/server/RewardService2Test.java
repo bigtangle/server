@@ -157,8 +157,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         long q = 8;
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
-                    && utxo.getValue().getValue().signum() > 0
-                    && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
+                   ) {
                 walletAppKit.wallet().setServerURL(contextRoot);
                 blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, q, null, null));
 
@@ -206,9 +205,11 @@ public class RewardService2Test extends AbstractIntegrationTest {
         if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
             // sell order and make buy
             long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-            walletAppKit1.wallet().setServerURL(contextRoot);
-            blocksAddedAll.add(walletAppKit1.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
+            walletAppKit.wallet().setServerURL(contextRoot);
+            blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                     orderRecord.getOfferValue(), null, null));
+            mcmcService.update();
+            confirmationService.update();
         }
 
     }

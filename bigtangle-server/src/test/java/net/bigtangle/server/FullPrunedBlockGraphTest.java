@@ -96,9 +96,10 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectTokenUTXOs() throws Exception {
         store.resetStore();
-        ;
-        byte[] pubKey = walletKeys.get(1).getPubKey();
-        System.out.println(Utils.HEX.encode(pubKey));
+ 
+        ECKey ecKey1 = new ECKey();
+        byte[] pubKey = ecKey1.getPubKey();
+       // System.out.println(Utils.HEX.encode(pubKey));
 
         // Generate an eligible issuance
         Sha256Hash firstIssuance;
@@ -112,11 +113,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
             tokenInfo.setToken(tokens);
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(1).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", ecKey1.getPublicKeyAsHex()));
 
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, walletKeys.get(1), null);
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, ecKey1, null);
             firstIssuance = block1.getHash();
 
             // Should exist now
@@ -137,16 +138,24 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                     1, amount, true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
             tokenInfo.setToken(tokens);
+            ECKey ecKey = new ECKey();
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(8).getPublicKeyAsHex()));
+                    .add(new MultiSignAddress(tokens.getTokenid(), "",ecKey.getPublicKeyAsHex()));
+            ECKey ecKey2 = new ECKey();
             tokenInfo.getMultiSignAddresses()
-                    .add(new MultiSignAddress(tokens.getTokenid(), "", walletKeys.get(9).getPublicKeyAsHex()));
-
+                    .add(new MultiSignAddress(tokens.getTokenid(), "", ecKey2.getPublicKeyAsHex()));
+            
+        ;
+           
             // This (saveBlock) calls milestoneUpdate currently, that's why we
             // need other blocks beforehand.
-            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, walletKeys.get(8), null);
+            ECKey outKey3 =  new ECKey();
+            walletAppKit.wallet().importKey(ecKey) ;
+            walletAppKit.wallet().importKey(ecKey2) ;
+            walletAppKit.wallet().importKey(outKey3) ;
+            Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey3, null);
 
-            block1 = pullBlockDoMultiSign(tokens.getTokenid(), walletKeys.get(1), null);
+            block1 = pullBlockDoMultiSign(tokens.getTokenid(), ecKey1, null);
             // Should exist now
             store.getTokenConfirmed(block1.getHash()); // Fine as
                                                        // long as it
@@ -171,7 +180,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Give it the legitimation of an order opening tx by finally signing
         // the hash
-        ECKey.ECDSASignature party1Signature = walletKeys.get(8).sign(tx.getHash(), null);
+        ECKey.ECDSASignature party1Signature = walletKeys.get(0).sign(tx.getHash(), null);
         byte[] buf1 = party1Signature.encodeToDER();
         tx.setDataSignature(buf1);
 
@@ -1130,7 +1139,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsToken() throws Exception {
         store.resetStore();
-        ECKey outKey = walletKeys.get(8);
+        ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -1194,7 +1203,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(8);
+        ECKey testKey = walletKeys.get(0);
 
         List<Block> addedBlocks = new ArrayList<>();
 
@@ -1216,7 +1225,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // Generate spending block
         Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
-        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, walletKeys.get(8), testTokenId, 50, addedBlocks,
+        Block utxoSpendingBlock = makeAndConfirmTransaction(genesisKey, new ECKey(), testTokenId, 50, addedBlocks,
                 betweenBlock);
 
         // Unconfirm order matching
