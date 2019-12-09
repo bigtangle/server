@@ -3025,37 +3025,29 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(String blockhash, String lastestAmount)
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
             throws BlockStoreException {
 
         String sql = "";
-        // if (!"0".equalsIgnoreCase(lastestAmount) &&
-        // !"".equalsIgnoreCase(lastestAmount)) {
+
         sql += "SELECT hash, rating, depth, cumulativeweight, "
                 + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
-                + "  FROM  blocks ";
-        if (blockhash != null && !"".equals(blockhash.trim())) {
-            sql += " WHERE hash=? ";
+                + "  FROM  blocks WHERE 1=1 ";
+        if (blockhashs != null && !blockhashs.isEmpty()) {
+            StringBuffer stringBuffer = new StringBuffer();
+            sql += " AND hash in";
+            for (String hash : blockhashs) {
+                stringBuffer.append(",").append("'" + hash + "'");
+            }
+            sql += "(" + stringBuffer.substring(1).toString() + ")";
         }
         sql += " ORDER BY insertTime desc ";
 
-        if (!"0".equalsIgnoreCase(lastestAmount) && !"".equalsIgnoreCase(lastestAmount)) {
-            Integer a = Integer.valueOf(lastestAmount);
-            if (a > 1000) {
-                a = 2000;
-            }
-            sql += " LIMIT " + a;
-        }
-
-        // }
         List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = conn.get().prepareStatement(sql);
-            if (blockhash != null && !"".equals(blockhash.trim())) {
-                preparedStatement.setBytes(1, Utils.HEX.decode(blockhash));
-            }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
