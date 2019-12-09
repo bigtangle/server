@@ -6,7 +6,7 @@ package net.bigtangle.params;
 
 public enum ReqCmd {
     // Block
-    saveBlock, getBlockByHash, findBlockEvaluation, batchBlock, blockEvaluationFromHashs,
+    saveBlock, getBlockByHash, findBlockEvaluation,searchBlockByBlockHashs, batchBlock, blockEvaluationFromHashs,
 
     getTip, adjustHeight,
     // Chain
