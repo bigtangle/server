@@ -1518,6 +1518,11 @@ public class Transaction extends ChildMessage {
         }
         unCache();
     }
+    
+    public void setMemoHexStr(String memoHex) {
+        this.memo = memoHex;
+        unCache();
+    }
 
     public byte[] getData() {
         return data;
