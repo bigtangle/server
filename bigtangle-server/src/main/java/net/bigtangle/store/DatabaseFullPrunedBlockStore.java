@@ -1051,7 +1051,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+               if( verifyHeader(block))
                 storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
@@ -1075,6 +1075,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    private boolean verifyHeader(Block block) {
+        try {
+        block.verifyHeader();
+        return true;
+        }catch (VerificationException e) {
+           return false;
+        }
+    }
+
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
         maybeConnect();
@@ -1088,7 +1097,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
@@ -1125,7 +1134,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
@@ -1709,7 +1718,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlockHashes;
@@ -1769,7 +1778,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-               //TODO check if  block.verifyHeader();
+                if( verifyHeader(block))
                 blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
             }
             return blocksByDescendingHeight;
@@ -1801,7 +1810,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlockHashes;
@@ -1834,7 +1843,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 resultQueue.add(new BlockWrap(block, blockEvaluation, params));
             }
             return resultQueue;
@@ -1868,7 +1877,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 resultQueue.add(new BlockWrap(block, blockEvaluation, params));
             }
             return resultQueue;
@@ -2202,7 +2211,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 Block block = params.getDefaultSerializer().makeZippedBlock(results.getBytes(1));
-                block.verifyHeader();
+                if( verifyHeader(block))
                 resultSet.add(block);
             }
             return resultSet;
