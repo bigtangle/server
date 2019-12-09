@@ -297,6 +297,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
           + "   signInputData varbinary(5000),\n"
           + "   sign integer\n"
           + "    ) ENGINE=InnoDB";
+    
+    private static final String CREATE_ACCESS_PERMISSION_TABLE = 
+            "CREATE TABLE access_permission (\n"
+          + "   accessToken varchar(255) ,\n" 
+          + "   pubKey varchar(255),\n"
+          + "   refreshTime bigint,\n"
+          + "   PRIMARY KEY (accessToken) ) ENGINE=InnoDB";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
@@ -352,6 +359,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         return sqlStatements;
     }
 

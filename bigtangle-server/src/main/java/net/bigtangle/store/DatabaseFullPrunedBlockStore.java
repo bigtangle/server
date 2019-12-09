@@ -116,6 +116,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
     public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
+    public static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -634,6 +635,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
         sqlStatements.add(DROP_EXCHANGE_TABLE);
         sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
+        sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
         return sqlStatements;
     }
 
