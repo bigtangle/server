@@ -1769,7 +1769,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                block.verifyHeader();
+               //TODO check if  block.verifyHeader();
                 blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
             }
             return blocksByDescendingHeight;

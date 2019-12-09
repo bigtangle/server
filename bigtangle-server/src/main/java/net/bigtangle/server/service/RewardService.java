@@ -746,7 +746,7 @@ public class RewardService {
 
         // Get the block INTERVAL ago
         for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
-            prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
+          prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
         }
         Block oldBlock = store.get(prevRewardHash);
 
@@ -770,7 +770,7 @@ public class RewardService {
         }
 
         if (Utils.decodeCompactBits(prevDifficulty).compareTo(newTarget) != 0) {
-            log.info("Difficulty  change: {}", newTarget.toString(16));
+            log.info("Difficulty  change from {} to: {}", prevDifficulty,  Utils.encodeCompactBits(newTarget));
          
         }
         
