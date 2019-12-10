@@ -18,6 +18,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -83,10 +85,16 @@ public class ECKeyEncryptTest extends AbstractIntegrationTest {
         
         long amount = 77l;
         Block b = payBig(wallet2Keys.get(0), amount, memoHex);
-        memoHex = b.getTransactions().get(0).getMemo();
+        String jsonString = b.getTransactions().get(0).getMemo();
+        
+        MemoInfo memoInfo = MemoInfo.parse(jsonString);
+        for (KeyValue keyValue : memoInfo.getKv()) {
+            if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
+                memoHex = keyValue.getValue();
+            }
+        }
         
         byte[] decryptedPayload = ECIESCoder.decrypt(testKey.getPrivKey(), Utils.HEX.decode(memoHex));
-        
         assertArrayEquals(decryptedPayload, payload);
     }
 

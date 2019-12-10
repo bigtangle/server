@@ -16,7 +16,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
  * help to set memo string as key value list
  */
 public class MemoInfo implements java.io.Serializable {
-    private static final String MEMO = "memo";
+    public static final String MEMO = "memo";
+    public static final String ENCRYPT = "encrypt";
     private static final long serialVersionUID = 6992138619113601243L;
 
     public MemoInfo() {
@@ -28,6 +29,19 @@ public class MemoInfo implements java.io.Serializable {
         keyValue.setKey(MEMO);
         keyValue.setValue(memo);
         kv.add(keyValue);
+    }
+    
+    public MemoInfo addEncryptMemo(String memo) {
+        if (kv == null) {
+            kv = new ArrayList<KeyValue>();
+        }
+        
+        KeyValue keyValue = new KeyValue();
+        keyValue.setKey(ENCRYPT);
+        keyValue.setValue(memo);
+        kv.add(keyValue);
+        
+        return this;
     }
 
     private List<KeyValue> kv;

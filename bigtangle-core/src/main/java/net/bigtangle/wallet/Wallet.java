@@ -2075,7 +2075,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             String memoHex, int repeat, int sleep)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         try {
-            return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, tokenid, memoHex);
+            return payMoneyToECKeyListMemoEncrypt(aesKey, giveMoneyResult, tokenid, memoHex);
         } catch (InsufficientMoneyException e) {
             log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
@@ -2138,16 +2138,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    private Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
-            String memoHex)
+    private Block payMoneyToECKeyListMemoEncrypt(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid, String memoHex)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
         Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
-        multispent.setMemoHexStr(memoHex);
+        multispent.setMemo(new MemoInfo().addEncryptMemo(memoHex));
         for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
             Coin a = Coin.valueOf(entry.getValue(), tokenid);
             Address address = Address.fromBase58(params, entry.getKey());
