@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.ethereum.crypto.ECIESCoder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.spongycastle.util.encoders.Hex;
@@ -23,6 +22,7 @@ import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.kits.WalletAppKit;
 
 @RunWith(SpringRunner.class)
