@@ -16,7 +16,7 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.Pack;
 
-public class EthereumIESEngine
+public class IESEngine
 {
     private final Digest hash;
     BasicAgreement agree;
@@ -44,7 +44,7 @@ public class EthereumIESEngine
      * @param hash   hash ing function
      * @param cipher the actual cipher
      */
-    public EthereumIESEngine(
+    public IESEngine(
             BasicAgreement agree,
             DerivationFunction kdf,
             Mac mac, Digest hash, BufferedBlockCipher cipher)
