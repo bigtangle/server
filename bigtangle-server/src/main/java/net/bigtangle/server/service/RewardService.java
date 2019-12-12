@@ -769,7 +769,7 @@ public class RewardService {
             newTarget = networkParameters.getMaxTargetReward();
         }
 
-        if (Utils.decodeCompactBits(prevDifficulty).compareTo(newTarget) != 0) {
+        if ( prevDifficulty != (Utils.encodeCompactBits(newTarget))  ) {
             log.info("Difficulty  change from {} to: {}", prevDifficulty,  Utils.encodeCompactBits(newTarget));
          
         }
