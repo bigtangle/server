@@ -92,7 +92,7 @@ public class BlockService {
 
     private List<Block> prototypeCache = new ArrayList<>();
     private long lastPrototypeCacheUpdate = 0;
-    
+
     // cache only binary block only
     @Cacheable("blocks")
     // nullable
@@ -350,11 +350,11 @@ public class BlockService {
                 serverConfiguration.getMaxserachblocks());
         return GetBlockEvaluationsResponse.create(evaluations);
     }
- 
-    public AbstractResponse searchBlockByBlockHash(Map<String, Object> request) throws BlockStoreException {
-        String blockhash = request.get("blockhash") == null ? "" : request.get("blockhash").toString();
-        String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(blockhash, lastestAmount);
+
+    public AbstractResponse searchBlockByBlockHashs(Map<String, Object> request) throws BlockStoreException {
+        @SuppressWarnings("unchecked")
+        List<String> blockhashs = (List<String>) request.get("blockhashs");
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluationsByhashs(blockhashs);
 
         return GetBlockEvaluationsResponse.create(evaluations);
     }
@@ -403,12 +403,13 @@ public class BlockService {
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     protected final ReentrantLock lock = Threading.lock("blockService");
-    
+
     protected final Random random = new Random();
-    
+
     public Block getBlockPrototype() throws Exception {
-       return getNewBlockPrototype();
+        return getNewBlockPrototype();
     }
+
     public Block getBlockPrototypeWithCache() throws Exception {
         lock.lock();
         try {
@@ -433,11 +434,11 @@ public class BlockService {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = getBlock(tipsToApprove.getLeft());
         Block r2 = getBlock(tipsToApprove.getRight());
-   
+
         Block b = Block.createBlock(networkParameters, r1, r2);
-   
+
         b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-   
+
         return b;
     }
 
