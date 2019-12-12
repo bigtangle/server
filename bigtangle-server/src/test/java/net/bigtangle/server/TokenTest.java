@@ -145,7 +145,7 @@ public class TokenTest extends AbstractIntegrationTest {
         {
             ECKey key= new ECKey();
             walletAppKit1.wallet().importKey(key) ;
-            walletAppKit1.wallet().importKey(preKey) ;
+         //   walletAppKit1.wallet().importKey(preKey) ;
             final String tokenid = key.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
 
@@ -163,7 +163,9 @@ public class TokenTest extends AbstractIntegrationTest {
         
         {
 
-            Block token = testCreateToken(new ECKey(), "myproduct",
+            ECKey key= new ECKey();
+            walletAppKit1.wallet().importKey(key) ;
+            Block token = testCreateToken(key, "myproduct",
                     walletAppKit1.wallet().getDomainNameBlockHash("myshopname.shop", "token").getdomainNameToken().getBlockHashHex());
             TokenInfo currentToken = new TokenInfo().parseChecked(token.getTransactions().get(0).getData());
             List<ECKey> keys = new ArrayList<ECKey>();
