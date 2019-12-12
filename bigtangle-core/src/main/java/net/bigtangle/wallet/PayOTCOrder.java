@@ -254,7 +254,7 @@ public class PayOTCOrder {
         return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
     }
 
-    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) {
+    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) throws Exception {
         Address fromAddress00 = new Address(this.wallet().getNetworkParameters(), fromAddress);
         Address toAddress00 = new Address(this.wallet().getNetworkParameters(), toAddress);
         byte[] buf = null;
@@ -293,8 +293,7 @@ public class PayOTCOrder {
             // walletAppKit.wallet().signTransaction(req);
             buf = req.tx.bitcoinSerialize();
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw e;
         }
         return makeSignTransactionBuffer(fromAddress, fromCoin, toAddress, toCoin, buf);
     }
