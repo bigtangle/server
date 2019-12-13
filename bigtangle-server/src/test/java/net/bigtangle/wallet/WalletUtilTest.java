@@ -51,27 +51,15 @@ public class WalletUtilTest {
 
     }
 
-    
-    
- 
-
-    
     @Test
     public void walletCreateEncryptTest() throws Exception {
 
-     
-        byte[] salt = "salt".getBytes();
-      //  random.nextBytes(salt);
-
-        KeySpec spec = new PBEKeySpec("password".toCharArray(), salt, 65536, 256); // AES-256
-        SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] key = f.generateSecret(spec).getEncoded();
-        
+        ECKey key = new ECKey();
         byte[] a = WalletUtil.createWallet(MainNetParams.get());
-        
-    
+
         byte[] b = WalletUtil.encrypt(key, a);
-        Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(WalletUtil.decrypt(key, b)), MainNetParams.get());
+        Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(WalletUtil.decrypt(key, b)),
+                MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() == 1);
@@ -83,7 +71,6 @@ public class WalletUtilTest {
 
     }
 
-    
     @Test
     public void setPassword() throws Exception {
 
@@ -92,7 +79,7 @@ public class WalletUtilTest {
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() > 0);
-      
+
         String oldPassword = "test";
         String password = "test";
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
@@ -108,17 +95,17 @@ public class WalletUtilTest {
         if (wallet.isEncrypted()) {
             wallet.decrypt(oldPassword);
         }
-       wallet.encrypt(scrypt, aesKey);
-       List<ECKey>   k2=wallet.walletKeys(aesKey);
-  
+        wallet.encrypt(scrypt, aesKey);
+        List<ECKey> k2 = wallet.walletKeys(aesKey);
+
         assertTrue(wallet.isEncrypted());
-      //  assertEquals(issuedKeys, k2);
+        // assertEquals(issuedKeys, k2);
         issuedKeys.stream().allMatch(num -> k2.contains(num));
     }
 
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
             .setN(32768).setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt())).build();
-    
+
     @Test
     // transfer the coin to address
     public void walletSingleKey() throws Exception {
@@ -128,8 +115,9 @@ public class WalletUtilTest {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(from);
         Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
-        assertEquals(wallet.walletKeys().size(), 1) ;
+        assertEquals(wallet.walletKeys().size(), 1);
     }
+
     @Test(expected = ArithmeticException.class)
     public void checkDecimal() throws Exception {
 
@@ -138,9 +126,9 @@ public class WalletUtilTest {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(from);
         Wallet wallet = Wallet.fromKeys(MainNetParams.get(), keys);
-        
+
         wallet.totalAmount(1, 1000, 6);
-        
+
     }
 
 }

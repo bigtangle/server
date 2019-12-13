@@ -3,6 +3,7 @@ package net.bigtangle.encrypt;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.math.BigInteger;
+import java.util.Random;
 
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -11,7 +12,7 @@ import net.bigtangle.core.ECKey;
 
 public class ECKeyEncryptTest {
 
-    private byte[] payload = Hex.decode("1122334455");
+    private byte[] payload =new String( new Random().nextLong()+"").getBytes();
 
     @Test
     public void importECKeyDecrypt() {

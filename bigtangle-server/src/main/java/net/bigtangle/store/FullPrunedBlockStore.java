@@ -294,8 +294,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
             long height, long maxblocks) throws BlockStoreException;
 
-    public List<BlockEvaluationDisplay> getSearchBlockEvaluations(String blockhash, String lastestAmount)
-            throws BlockStoreException;
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs) throws BlockStoreException;
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
             throws BlockStoreException;

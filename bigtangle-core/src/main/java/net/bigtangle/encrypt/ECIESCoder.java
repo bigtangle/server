@@ -32,8 +32,6 @@ import org.spongycastle.crypto.params.ParametersWithIV;
 import org.spongycastle.crypto.parsers.ECIESPublicKeyParser;
 import org.spongycastle.math.ec.ECPoint;
 
-import com.google.common.base.Throwables;
-
 import net.bigtangle.core.ECKey;
 
 
@@ -118,11 +116,11 @@ public class ECIESCoder {
         return iesEngine.processBlock(cipher, 0, cipher.length);
     }
 
-    public static byte[] encrypt(ECPoint toPub, byte[] plaintext) {
+    public static byte[] encrypt(ECPoint toPub, byte[] plaintext) throws InvalidCipherTextException, IOException {
         return encrypt(toPub, plaintext, null);
     }
 
-    public static byte[] encrypt(ECPoint toPub, byte[] plaintext, byte[] macData) {
+    public static byte[] encrypt(ECPoint toPub, byte[] plaintext, byte[] macData) throws InvalidCipherTextException, IOException {
 
         ECKeyPairGenerator eGen = new ECKeyPairGenerator();
         SecureRandom random = new SecureRandom();
@@ -147,18 +145,14 @@ public class ECIESCoder {
         gen.init(new ECKeyGenerationParameters(ECKey.CURVE, random));
 
         byte[] cipher;
-        try {
+        
             cipher = iesEngine.processBlock(plaintext, 0, plaintext.length, macData);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bos.write(pub.getEncoded(false));
             bos.write(IV);
             bos.write(cipher);
             return bos.toByteArray();
-        } catch (InvalidCipherTextException e) {
-            throw Throwables.propagate(e);
-        } catch (IOException e) {
-            throw Throwables.propagate(e);
-        }
+      
     }
 
     /**
