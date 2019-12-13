@@ -1,16 +1,13 @@
 package net.bigtangle.server.service;
 
-import java.io.IOException;
 import java.util.UUID;
 
-import org.spongycastle.crypto.InvalidCipherTextException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.SessionRandomNumResponse;
 import net.bigtangle.encrypt.ECIESCoder;
