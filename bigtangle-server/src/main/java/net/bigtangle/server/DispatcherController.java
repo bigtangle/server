@@ -1,6 +1,6 @@
 /*******************************************************************************
- *  Copyright   2018  Inasset GmbH. 
  *  
+ *  Copyright   2018  Inasset GmbH. 
  *******************************************************************************/
 package net.bigtangle.server;
 
@@ -47,6 +47,7 @@ import net.bigtangle.core.response.OkResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.AccessPermissionedService;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
@@ -99,6 +100,8 @@ public class DispatcherController {
     private ExchangeService exchangeService;
     @Autowired
     private RewardService rewardService;
+    @Autowired
+    private AccessPermissionedService accessPermissionedService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -458,7 +461,15 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = rewardService.getAllConfirmedReward(request);
-
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+                
+            case getSessionRandomNum: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubKey = (String) request.get("pubKey");
+                AbstractResponse response = this.accessPermissionedService.getSessionRandomNumResp(pubKey);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -600,16 +611,19 @@ public class DispatcherController {
                     }
                 }
             } else {
-                String pubkey = header.split("")[0];
-                String signHex = header.split("")[1];
-                // String contentHex = header.split("")[2];
+                String pubkey = header.split(",")[0];
+                String signHex = header.split(",")[1];
+                String accessToken = header.split(",")[2];
                 ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                // byte[] message = reverseBytes(HEX.decode(contentHex));
                 byte[] signOutput = Utils.HEX.decode(signHex);
-                flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
-
+                byte[] hashBuf = accessToken.getBytes();
+                flag = key.verify(hashBuf, signOutput);
+                
+                if (flag) {
+                    int count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken);
+                    flag = count > 0;
+                }
             }
-
         }
         return flag;
 

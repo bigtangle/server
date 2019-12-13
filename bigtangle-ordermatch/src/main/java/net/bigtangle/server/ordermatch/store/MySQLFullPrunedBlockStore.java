@@ -10,9 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.UTXOProviderException;
 
 /**
  * <p>

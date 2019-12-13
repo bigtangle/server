@@ -29,6 +29,6 @@ public enum ReqCmd {
 
     getUserData, userDataList, getBatchExchange,
     // subtangle
-    regSubtangle, updateSubtangle;
+    regSubtangle, updateSubtangle, getSessionRandomNum;
 
 }

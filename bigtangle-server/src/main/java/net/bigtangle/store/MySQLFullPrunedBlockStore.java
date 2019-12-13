@@ -300,7 +300,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     
     private static final String CREATE_ACCESS_PERMISSION_TABLE = 
             "CREATE TABLE access_permission (\n"
-          + "   accessToken varchar(255) ,\n" 
+          + "   codeHex varchar(255) ,\n" 
           + "   pubKey varchar(255),\n"
           + "   refreshTime bigint,\n"
           + "   PRIMARY KEY (accessToken) ) ENGINE=InnoDB";

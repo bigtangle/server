@@ -258,43 +258,39 @@ public class PayOTCOrder {
         Address fromAddress00 = new Address(this.wallet().getNetworkParameters(), fromAddress);
         Address toAddress00 = new Address(this.wallet().getNetworkParameters(), toAddress);
         byte[] buf = null;
-        try {
-            List<UTXO> outputs = new ArrayList<UTXO>();
-            outputs.addAll(
-                    this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
-            outputs.addAll(this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey),
-                    Utils.HEX.decode(toCoin.getTokenHex())));
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        outputs.addAll(
+                this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
+        outputs.addAll(this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey),
+                Utils.HEX.decode(toCoin.getTokenHex())));
 
-            SendRequest req = SendRequest.to(toAddress00, toCoin);
-            req.tx.addOutput(fromCoin, fromAddress00);
+        SendRequest req = SendRequest.to(toAddress00, toCoin);
+        req.tx.addOutput(fromCoin, fromAddress00);
 
-            // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
-            // req.tx.addOutput(toAmount , toAddress00 );
+        // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
+        // req.tx.addOutput(toAmount , toAddress00 );
 
-            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
+        req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
 
-            HashMap<String, Address> addressResult = new HashMap<String, Address>();
-            addressResult.put(fromCoin.getTokenHex(), toAddress00);
-            addressResult.put(toCoin.getTokenHex(), fromAddress00);
+        HashMap<String, Address> addressResult = new HashMap<String, Address>();
+        addressResult.put(fromCoin.getTokenHex(), toAddress00);
+        addressResult.put(toCoin.getTokenHex(), fromAddress00);
 
-            // addressResult.put((String) exchangemap.get("fromTokenHex"),
-            // toAddress00);
-            // addressResult.put((String) exchangemap.get("toTokenHex"),
-            // fromAddress00);
+        // addressResult.put((String) exchangemap.get("fromTokenHex"),
+        // toAddress00);
+        // addressResult.put((String) exchangemap.get("toTokenHex"),
+        // fromAddress00);
 
-            List<TransactionOutput> candidates = this.wallet().transforSpendCandidates(outputs);
-            this.wallet().setServerURL(this.serverURL);
-            this.wallet().completeTx(req, candidates, false, addressResult);
-            this.wallet().signTransaction(req);
+        List<TransactionOutput> candidates = this.wallet().transforSpendCandidates(outputs);
+        this.wallet().setServerURL(this.serverURL);
+        this.wallet().completeTx(req, candidates, false, addressResult);
+        this.wallet().signTransaction(req);
 
-            // walletAppKit.wallet().completeTx(req,
-            // walletAppKit.wallet().transforSpendCandidates(ulist), false,
-            // addressResult);
-            // walletAppKit.wallet().signTransaction(req);
-            buf = req.tx.bitcoinSerialize();
-        } catch (Exception e) {
-            throw e;
-        }
+        // walletAppKit.wallet().completeTx(req,
+        // walletAppKit.wallet().transforSpendCandidates(ulist), false,
+        // addressResult);
+        // walletAppKit.wallet().signTransaction(req);
+        buf = req.tx.bitcoinSerialize();
         return makeSignTransactionBuffer(fromAddress, fromCoin, toAddress, toCoin, buf);
     }
 
