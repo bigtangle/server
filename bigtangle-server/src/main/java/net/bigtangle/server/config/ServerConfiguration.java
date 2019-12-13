@@ -108,7 +108,7 @@ public class ServerConfiguration {
     }
 
     public Boolean getPermissioned() {
-        return permissioned;
+        return true;
     }
 
     public void setPermissioned(Boolean permissioned) {

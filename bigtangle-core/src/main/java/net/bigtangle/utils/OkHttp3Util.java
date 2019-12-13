@@ -254,4 +254,64 @@ public class OkHttp3Util {
         }
     }
 
+    public static String post(String url, byte[] b, String header) throws IOException {
+        logger.debug(url);
+        OkHttpClient client = getOkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
+        Request request = new Request.Builder().url(url).post(body).addHeader("accessToken", header).build();
+        
+        Response response = client.newCall(request).execute();
+        try {
+            if (!response.isSuccessful()) {
+                throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+            }
+
+            String resp = Gzip.decompressString(response.body().bytes());
+            // logger.debug(resp);
+            checkResponse(resp, url);
+            return resp;
+
+        } finally {
+            // client.cache().close();
+            response.close();
+            response.body().close();
+        }
+    }
+    
+    public static String postString(String url, String s, String header) throws IOException {
+        logger.debug(url);
+        logger.debug(header);
+        OkHttpClient client = getOkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
+        Request request = new Request.Builder().url(url).addHeader("accessToken", header).post(body).build();
+        Response response = client.newCall(request).execute();
+
+        try {
+            if (!response.isSuccessful()) {
+                throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
+            }
+            String resp = Gzip.decompressString(response.body().bytes());
+            checkResponse(resp, url);
+            return resp;
+        } finally {
+            response.close();
+            response.body().close();
+        }
+    }
+
+    public static byte[] postAndGetBlock(String url, String s, String header) throws IOException {
+        // return response.body().bytes();
+        String resp = postString(url, s, header);
+        if ("".equals(resp))
+            return null;
+
+        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        String dataHex = (String) result.get("dataHex");
+        if (dataHex != null) {
+            return Utils.HEX.decode(dataHex);
+        } else {
+            return null;
+        }
+    }
+
 }

@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
@@ -572,13 +573,15 @@ public class DispatcherController {
 
     private void checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
+        if (httprequest.getRequestURI().endsWith("getSessionRandomNum")) {
+            return;
+        }
         if (serverConfiguration.getPermissioned()) {
             if (!checkAuth(httpServletResponse, httprequest)) {
                 AbstractResponse resp = ErrorResponse.create(100);
                 resp.setMessage("no auth");
                 this.outPrintJSONString(httpServletResponse, resp);
                 return;
-
             }
         }
     }
@@ -596,45 +599,35 @@ public class DispatcherController {
     }
 
     public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest) {
-        String header = httprequest.getHeader("Authorization");
+        String header = httprequest.getHeader("accessToken");
         boolean flag = false;
         if (header != null && !header.trim().isEmpty()) {
             HttpSession session = httprequest.getSession(true);
-            if (session != null) {
-                if ("key_verified".equals(session.getAttribute("key_verify_flag"))) {
-                    flag = true;
-                } else {
-                    String pubkey = header.split("")[0];
-                    String signHex = header.split("")[1];
-                    // String contentHex = header.split("")[2];
-                    ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                    // byte[] message = reverseBytes(HEX.decode(contentHex));
-                    byte[] signOutput = Utils.HEX.decode(signHex);
-                    flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
-                    if (flag) {
-                        HttpSession a = httprequest.getSession(true);
-                        if (a != null) {
-                            a.setAttribute("key_verify_flag", "key_verified");
-                        }
-                    }
-                }
-            } else {
-                String pubkey = header.split(",")[0];
-                String signHex = header.split(",")[1];
-                String accessToken = header.split(",")[2];
-                ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-                byte[] signOutput = Utils.HEX.decode(signHex);
-                byte[] hashBuf = accessToken.getBytes();
-                flag = key.verify(hashBuf, signOutput);
-                
-                if (flag) {
-                    int count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken);
-                    flag = count > 0;
+            if ("key_verified".equals(session.getAttribute("key_verify_flag"))) {
+                flag = true;
+                return flag;
+            }
+            String pubkey = header.split(",")[0];
+            String signHex = header.split(",")[1];
+            String accessToken = header.split(",")[2];
+            ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
+
+            byte[] buf = Utils.HEX.decode(accessToken);
+            byte[] signature = Utils.HEX.decode(signHex);
+            flag = key.verify(buf, signature);
+
+            if (flag) {
+                int count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken);
+                flag = count > 0;
+            }
+            if (flag) {
+                HttpSession a = httprequest.getSession(true);
+                if (a != null) {
+                    a.setAttribute("key_verify_flag", "key_verified");
                 }
             }
         }
         return flag;
-
     }
 
     public void gzipBinary(HttpServletResponse httpServletResponse, AbstractResponse response) throws Exception {
