@@ -1052,8 +1052,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0);
-                newOut.setTime(System.currentTimeMillis() / 1000);
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,System.currentTimeMillis() / 1000);
+          
                 if (!newOut.isZero()) {
                     utxos.add(newOut);
                     if (script.isSentToMultiSig()) {
