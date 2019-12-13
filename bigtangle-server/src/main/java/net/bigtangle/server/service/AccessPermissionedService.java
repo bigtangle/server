@@ -1,7 +1,9 @@
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.UUID;
 
+import org.spongycastle.crypto.InvalidCipherTextException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +22,7 @@ public class AccessPermissionedService {
     @Autowired
     protected FullPrunedBlockStore store;
 
-    public AbstractResponse getSessionRandomNumResp(String pubKey) throws BlockStoreException {
+    public AbstractResponse getSessionRandomNumResp(String pubKey) throws Exception {
         ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKey));
 
         String message = UUID.randomUUID().toString();
