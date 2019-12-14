@@ -765,7 +765,7 @@ public class RewardService {
       newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
         if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+         //   log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
             newTarget = networkParameters.getMaxTargetReward();
         }
 

@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
  
@@ -37,7 +34,9 @@ public class ServerConfiguration {
 
     private double alphaMCMC = -0.05;
     private Boolean runKafkaStream = false;
-
+    //start sync from this checkpoint
+    private Long checkpoint=-1l ;
+    
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -186,6 +185,14 @@ public class ServerConfiguration {
 
     public void setRunKafkaStream(Boolean runKafkaStream) {
         this.runKafkaStream = runKafkaStream;
+    }
+
+    public Long getCheckpoint() {
+        return checkpoint;
+    }
+
+    public void setCheckpoint(Long checkpoint) {
+        this.checkpoint = checkpoint;
     }
 
     @Override

@@ -90,7 +90,7 @@ public class SyncBlockService {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            sync();
+            sync(-1l);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
@@ -103,6 +103,30 @@ public class SyncBlockService {
 
     }
 
+    public void startInit() {
+        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
+            log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
+            return;
+        }
+
+        try {
+            // log.debug(" Start SyncBlockService Single: ");
+            Context context = new Context(networkParameters);
+            Context.propagate(context);
+            sync(serverConfiguration.getCheckpoint());
+            // deleteOldUnsolidBlock();
+            // updateSolidity();
+            // log.debug(" end SyncBlockService Single: ");
+        } catch (Exception e) {
+            log.warn("SyncBlockService ", e);
+        } finally {
+            lock.unlock();
+            ;
+        }
+
+    }
+
+    
     public void requestPrev(Block block) {
         try {
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
@@ -407,11 +431,15 @@ public class SyncBlockService {
         TXReward aTXReward;
     }
 
-    public void sync() throws Exception {
+    public void sync(Long chainlength) throws Exception {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         TXReward my = store.getMaxConfirmedReward();
+        if(chainlength > -1) {
+            TXReward    my1 = store.getRewardConfirmedAtHeight(chainlength);
+            if(my1!=null) my=my1;
+        }
         log.debug( " my chain length " + my.getChainLength()); 
         for (String s : re) {
             try {
@@ -453,7 +481,12 @@ public class SyncBlockService {
 
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
             Collections.sort(remotes, new SortbyChain());
-            List<TXReward> mylist = store.getAllConfirmedReward();
+            List<TXReward> mylist = new ArrayList<TXReward>();
+            for(TXReward t: store.getAllConfirmedReward()) {
+                if(t.getChainLength() <= my.getChainLength()) {
+                    mylist.add(t);
+                }
+            } 
             Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "

@@ -32,7 +32,7 @@ public class BeforeStartup {
         }
         serverConfiguration.setServiceReady(true);
         if (scheduleConfiguration.isMilestone_active())
-            syncBlockService.startSingleProcess();
+            syncBlockService.startInit();
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
