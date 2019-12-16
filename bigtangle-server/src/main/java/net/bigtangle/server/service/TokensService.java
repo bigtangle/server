@@ -44,6 +44,12 @@ public class TokensService {
 
  
     public GetTokensResponse searchTokens(String name) throws BlockStoreException {
+        List<Token> list = new ArrayList<Token>(); 
+        list.addAll(store.getTokensList(name)); 
+        Map<String, BigInteger> map = store.getTokenAmountMap();
+        return GetTokensResponse.create(list, map);
+    }
+    public GetTokensResponse searchExchangeTokens(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         if (name != null && !"".equals(name.trim())) {
         list.addAll(store.getTokensList(name));
