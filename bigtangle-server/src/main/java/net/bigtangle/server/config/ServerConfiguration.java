@@ -105,7 +105,7 @@ public class ServerConfiguration {
     }
 
     public Boolean getPermissioned() {
-        return true;
+        return permissioned;
     }
 
     public void setPermissioned(Boolean permissioned) {
@@ -113,7 +113,7 @@ public class ServerConfiguration {
     }
 
     public String getPermissionadmin() {
-        return "14a4YnkmSCBGUqcmN2PX3tzxFthrDmyDXE";
+        return permissionadmin;
     }
 
     public void setPermissionadmin(String permissionadmin) {
