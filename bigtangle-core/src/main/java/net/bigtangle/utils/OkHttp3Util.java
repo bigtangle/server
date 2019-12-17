@@ -305,6 +305,7 @@ public class OkHttp3Util {
         if ("".equals(resp))
             return null;
 
+        @SuppressWarnings("unchecked")
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         String dataHex = (String) result.get("dataHex");
         if (dataHex != null) {

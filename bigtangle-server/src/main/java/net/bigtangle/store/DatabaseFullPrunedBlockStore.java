@@ -117,6 +117,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
     public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
     public static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
+    public static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
 
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
@@ -636,6 +637,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_EXCHANGE_TABLE);
         sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
         sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
+        sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
         return sqlStatements;
     }
 
@@ -6125,4 +6127,76 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
+    @Override
+    public void insertAccessGrant(String address) throws BlockStoreException {
+        String sql = "insert into access_grant (address, createTime) value (?,?)";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, address);
+            preparedStatement.setLong(2, System.currentTimeMillis());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteAccessGrant(String address) throws BlockStoreException {
+        String sql = "delete from access_grant where address = ?";
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement.setString(1, address);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountAccessGrantByAddress(String address) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement("select count(1) as count from access_grant where address = ?");
+            preparedStatement.setString(1, address);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("count");
+            }
+            return 0;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    
+    
 }

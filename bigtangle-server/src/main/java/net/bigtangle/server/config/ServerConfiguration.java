@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
  
@@ -108,7 +105,7 @@ public class ServerConfiguration {
     }
 
     public Boolean getPermissioned() {
-        return permissioned;
+        return true;
     }
 
     public void setPermissioned(Boolean permissioned) {
@@ -116,7 +113,7 @@ public class ServerConfiguration {
     }
 
     public String getPermissionadmin() {
-        return permissionadmin;
+        return "14a4YnkmSCBGUqcmN2PX3tzxFthrDmyDXE";
     }
 
     public void setPermissionadmin(String permissionadmin) {

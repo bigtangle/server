@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ import net.bigtangle.core.response.OkResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.AccessGrantService;
 import net.bigtangle.server.service.AccessPermissionedService;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ExchangeService;
@@ -83,7 +85,6 @@ public class DispatcherController {
     private MultiSignService multiSignService;
     @Autowired
     private PayMultiSignService payMultiSignService;
-
     @Autowired
     private SubtanglePermissionService subtanglePermissionService;
     @Autowired
@@ -102,6 +103,8 @@ public class DispatcherController {
     private RewardService rewardService;
     @Autowired
     private AccessPermissionedService accessPermissionedService;
+    @Autowired
+    private AccessGrantService accessGrantService;
 
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -115,9 +118,12 @@ public class DispatcherController {
 
             bodyByte = Gzip.decompress(contentBytes);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
-            if (serverConfiguration.getPermissioned())
-                checkPermission(httpServletResponse, httprequest);
-            checkReady(httpServletResponse, httprequest);
+            if (!checkPermission(httpServletResponse, httprequest)) {
+                return;
+            }
+            if (!checkReady(httpServletResponse, httprequest)) {
+                return;
+            }
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype();
@@ -472,13 +478,31 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-                
+
             case getSessionRandomNum: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String pubKey = (String) request.get("pubKey");
                 AbstractResponse response = this.accessPermissionedService.getSessionRandomNumResp(pubKey);
                 this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
+
+            case addAccessGrant: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubKey = (String) request.get("pubKey");
+                this.accessGrantService.addAccessGrant(pubKey);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+            }
+                break;
+
+            case deleteAccessGrant: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String pubKey = (String) request.get("pubKey");
+                this.accessGrantService.deleteAccessGrant(pubKey);
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
             }
                 break;
 
@@ -570,30 +594,55 @@ public class DispatcherController {
         }
     }
 
-    private void checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+    private boolean checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
+        if (!serverConfiguration.getPermissioned()) {
+            return true;
+        }
+
         if (httprequest.getRequestURI().endsWith("getSessionRandomNum")) {
-            return;
+            return true;
         }
-        if (serverConfiguration.getPermissioned()) {
-            if (!checkAuth(httpServletResponse, httprequest)) {
-                AbstractResponse resp = ErrorResponse.create(100);
-                resp.setMessage("no auth");
-                this.outPrintJSONString(httpServletResponse, resp);
-                return;
-            }
+
+        // check Permissionadmin
+        String header = httprequest.getHeader("accessToken");
+        String pubkey = header.split(",")[0];
+        byte[] pub = Utils.HEX.decode(pubkey);
+        ECKey ecKey = ECKey.fromPublicOnly(pub);
+
+        final String address = ecKey.toAddress(networkParameters).toBase58();
+        if (StringUtils.isNotBlank(serverConfiguration.getPermissionadmin())
+                && serverConfiguration.getPermissionadmin().equals(address)) {
+            return true;
         }
+        
+        int count = this.accessGrantService.getCountAccessGrantByAddress(address);
+        if (count == 0) {
+            AbstractResponse resp = ErrorResponse.create(100);
+            resp.setMessage("no auth");
+            this.outPrintJSONString(httpServletResponse, resp);
+            return false;
+        }
+        
+        if (!checkAuth(httpServletResponse, httprequest)) {
+            AbstractResponse resp = ErrorResponse.create(100);
+            resp.setMessage("no auth");
+            this.outPrintJSONString(httpServletResponse, resp);
+            return false;
+        }
+
+        return true;
     }
 
-    private void checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+    private boolean checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
             throws BlockStoreException, Exception {
         if (!serverConfiguration.checkService()) {
-
             AbstractResponse resp = ErrorResponse.create(103);
             resp.setMessage("service is not ready.");
             this.outPrintJSONString(httpServletResponse, resp);
-            return;
-
+            return false;
+        } else {
+            return true;
         }
     }
 

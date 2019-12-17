@@ -485,4 +485,10 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException;
 
+    void insertAccessGrant(String address) throws BlockStoreException;
+
+    void deleteAccessGrant(String address) throws BlockStoreException;
+
+    int getCountAccessGrantByAddress(String address) throws BlockStoreException;
+
 }

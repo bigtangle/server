@@ -304,6 +304,12 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
           + "   pubKey varchar(255),\n"
           + "   refreshTime bigint,\n"
           + "   PRIMARY KEY (accessToken) ) ENGINE=InnoDB";
+    
+    private static final String CREATE_ACCESS_GRANT_TABLE = 
+            "CREATE TABLE access_grant (\n"
+          + "   address varchar(255),\n"
+          + "   createTime bigint,\n"
+          + "   PRIMARY KEY (address) ) ENGINE=InnoDB";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
@@ -360,6 +366,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
+        sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         return sqlStatements;
     }
 
