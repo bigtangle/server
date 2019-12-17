@@ -491,4 +491,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     int getCountAccessGrantByAddress(String address) throws BlockStoreException;
 
+    List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException;
+
 }

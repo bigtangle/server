@@ -168,25 +168,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected final String SELECT_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-            + "spendpending , spendpendingtime, minimumsign FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ";
+            + "spendpending , spendpendingtime, minimumsign, time FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ";
 
     protected final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
             + " outputs.outputindex, coinbase, " + "  outputs.toaddress  as  toaddress,"
             + " outputsmulti.toaddress  as multitoaddress, " + "  addresstargetable, blockhash, tokenid, "
-            + " fromaddress, memo, spent, confirmed, spendpending,spendpendingtime,  minimumsign  "
+            + " fromaddress, memo, spent, confirmed, spendpending,spendpendingtime,  minimumsign, time  "
             + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
     protected final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress as toaddress , addresstargetable,"
-            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign "
+            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time "
             + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
             + " WHERE (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
     protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
-            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign"
+            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time "
             + " FROM outputs  WHERE   confirmed=true and spent= false and tokenid = ?";
 
     // Tables exist SQL.
@@ -446,7 +446,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
     // TODO remove test
     protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
-            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, hash, outputindex "
+            + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, time, hash, outputindex "
             + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
 
     protected String INSERT_EXCHANGE_SQL = getInsert()
@@ -872,10 +872,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (script.isSentToMultiSig()) {
                 minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
             }
+
             UTXO newOut = new UTXO(block.getTransactions().get(0).getHash(), out.getIndex(), out.getValue(), true,
                     script, script.getToAddress(params, true).toString(), block.getHash(), "",
                     block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
-                    true, false, minsignnumber, 0);
+                    true, false, minsignnumber, 0, block.getTimeSeconds());
             addUnspentTransactionOutput(newOut);
 
             if (script.isSentToMultiSig()) {
@@ -1055,8 +1056,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-               if( verifyHeader(block))
-                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
         } catch (SQLException ex) {
@@ -1081,10 +1082,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private boolean verifyHeader(Block block) {
         try {
-        block.verifyHeader();
-        return true;
-        }catch (VerificationException e) {
-           return false;
+            block.verifyHeader();
+            return true;
+        } catch (VerificationException e) {
+            return false;
         }
     }
 
@@ -1101,8 +1102,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
         } catch (SQLException ex) {
@@ -1138,8 +1139,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    storedBlocks.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlocks;
         } catch (SQLException ex) {
@@ -1270,11 +1271,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         long spendPendingTime = results.getLong("spendpendingtime");
         String tokenid = results.getString("tokenid");
         long minimumsign = results.getLong("minimumsign");
+        long time = results.getLong("time");
         if (minimumsign > 1) {
             address = results.getString("multitoaddress");
         }
         UTXO txout = new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
-                fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime);
+                fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time);
         return txout;
     }
 
@@ -1722,8 +1724,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlockHashes;
         } catch (SQLException ex) {
@@ -1782,8 +1784,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    blocksByDescendingHeight.add(new BlockWrap(block, blockEvaluation, params));
             }
             return blocksByDescendingHeight;
         } catch (SQLException ex) {
@@ -1814,8 +1816,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    storedBlockHashes.add(new BlockWrap(block, blockEvaluation, params));
             }
             return storedBlockHashes;
         } catch (SQLException ex) {
@@ -1847,8 +1849,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                resultQueue.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    resultQueue.add(new BlockWrap(block, blockEvaluation, params));
             }
             return resultQueue;
         } catch (SQLException ex) {
@@ -1881,8 +1883,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if( verifyHeader(block))
-                resultQueue.add(new BlockWrap(block, blockEvaluation, params));
+                if (verifyHeader(block))
+                    resultQueue.add(new BlockWrap(block, blockEvaluation, params));
             }
             return resultQueue;
         } catch (SQLException ex) {
@@ -2215,8 +2217,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 Block block = params.getDefaultSerializer().makeZippedBlock(results.getBytes(1));
-                if( verifyHeader(block))
-                resultSet.add(block);
+                if (verifyHeader(block))
+                    resultSet.add(block);
             }
             return resultSet;
         } catch (SQLException ex) {
@@ -2540,6 +2542,41 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+    public List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException {
+        List<Token> list = new ArrayList<Token>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String sql = SELECT_CONFIRMED_TOKENS_SQL;
+            if (domainname != null && !"".equals(domainname.trim())) {
+                sql += " AND (domainname = '" + domainname + "' )";
+            } 
+            sql += LIMIT_5000;
+            preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Token tokens = new Token();
+                setToken(resultSet, tokens);
+                list.add(tokens);
+            }
+            return list;
+        } catch (Exception ex) {
+
+            throw new BlockStoreException(ex);
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    
+    @Override
     public List<Token> getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         maybeConnect();
@@ -2548,7 +2585,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
-            }
+            } 
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4485,7 +4522,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException {
         String sql = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
-                + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
+                + " addresstargetable, blockhash, tokenid, fromaddress, memo, minimumsign, time, spent, confirmed, "
                 + " spendpending, spendpendingtime FROM outputs WHERE hash = ? and outputindex = ?";
 
         maybeConnect();
@@ -4500,23 +4537,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             // Parse it.
             Coin amount = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString("tokenid"));
-            byte[] scriptBytes = results.getBytes(2);
-            boolean coinbase = results.getBoolean(3);
-            String address = results.getString(4);
-            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes(6));
+            byte[] scriptBytes = results.getBytes("scriptbytes");
+            boolean coinbase = results.getBoolean("coinbase");
+            String address = results.getString("toaddress");
+            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes("blockhash"));
 
-            String fromaddress = results.getString(8);
-            String memo = results.getString(9);
-            boolean spent = results.getBoolean(10);
-            boolean confirmed = results.getBoolean(11);
-            boolean spendPending = results.getBoolean(12);
+            String fromaddress = results.getString("fromaddress");
+            String memo = results.getString("memo");
+            boolean spent = results.getBoolean("spent");
+            boolean confirmed = results.getBoolean("confirmed");
+            boolean spendPending = results.getBoolean("spendpending");
             String tokenid = results.getString("tokenid");
 
             // long outputindex = results.getLong("outputindex");
 
             UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, amount, coinbase, new Script(scriptBytes), address,
                     blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
-                    results.getLong("spendpendingtime"));
+                    results.getLong("spendpendingtime"), results.getLong("time"));
             return utxo;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -5520,7 +5557,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 long index = resultSet.getLong("outputindex");
                 UTXO txout = new UTXO(Sha256Hash.wrap(hash), index, amount, coinbase, new Script(scriptBytes), address,
                         blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
-                        resultSet.getLong("spendpendingtime"));
+                        resultSet.getLong("spendpendingtime"), resultSet.getLong("time"));
                 result.add(txout);
             }
             return result;

@@ -15,6 +15,7 @@ server:
   myserverblockOnly: ${MYSERVERBLOCKONLY:false}
   runKafkaStream: ${RUNKAFKASTREAM:true}
   createtable: ${CREATETABLE:true}
+  checkpoint: ${CHECKPOINT:-1}
    
 db:
   dbtype: ${DBTYPE:mysql}

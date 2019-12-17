@@ -12,7 +12,7 @@ public enum ReqCmd {
     // Chain
     getMaxConfirmedReward, getAllConfirmedReward, blocksFromChainLength,
     // Token
-    searchTokens, getTokenById, getTokenIndex, getTokenSignByAddress,
+    searchTokens, getTokenById, getTokenIndex, getTokenSignByAddress, searchExchangeTokens,
 
     getTokenSignByTokenid, signToken, getTokenSigns, getTokenPermissionedAddresses, getDomainNameBlockHash,
     // Block Order

@@ -150,7 +150,7 @@ public class UTXO extends SpentBlock {
      */
     public UTXO(Sha256Hash hash, long index, Coin value, boolean coinbase, Script script, String address,
             Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed,
-            boolean spendPending, long minimumsign, long spendPendingTime) {
+            boolean spendPending, long minimumsign, long spendPendingTime, long time) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -172,6 +172,7 @@ public class UTXO extends SpentBlock {
         this.spendPending = spendPending;
         this.minimumsign = minimumsign;
         this.spendPendingTime = spendPendingTime;
+        this.setTime(time);
     }
 
     /** The value which this Transaction output holds. */

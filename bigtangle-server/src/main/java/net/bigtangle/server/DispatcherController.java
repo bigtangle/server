@@ -170,7 +170,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
-
+            case searchExchangeTokens: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                GetTokensResponse response = tokensService.searchExchangeTokens((String) request.get("name"));
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
             case getOTCMarkets: {
                 AbstractResponse response = tokensService.getMarketTokensList();
                 this.outPrintJSONString(httpServletResponse, response);
