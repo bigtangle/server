@@ -67,6 +67,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -79,6 +80,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -2674,6 +2676,33 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
+    public Block createToken(ECKey key, String tokename, int decimals,  String domainname  ,
+            String description, BigInteger amount, boolean increment, KeyValue kv ) throws Exception {
+        
+        TokenInfo tokenInfo = new TokenInfo();
+        Token domain =  getDomainNameBlockHash(domainname, "token").getdomainNameToken();
+        String tokenid = key.getPublicKeyAsHex(); 
+        Coin basecoin = new Coin(amount, tokenid); 
+        HashMap<String, String> requestParam00 = new HashMap<String, String>();
+        requestParam00.put("tokenid", tokenid);
+        String resp2 = OkHttp3Util.postString(serverurl + ReqCmd.getTokenIndex.name(),
+                Json.jsonmapper().writeValueAsString(requestParam00));
+
+        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
+        long tokenindex_ = tokenIndexResponse.getTokenindex();
+
+        Token token = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
+                description, 1, tokenindex_, basecoin.getValue(), !increment, decimals,
+                domain.getBlockHashHex());
+        token.setDomainName(domain.getTokenname());
+        token.addKeyvalue(kv);
+       // tokens.setTokentype(TokenType.currency.ordinal()); 
+        tokenInfo.setToken(token);
+
+        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+       return saveToken(tokenInfo, basecoin, key, null);
+         
+    }
     public Block getBlock(String hashHex) throws JsonProcessingException, IOException {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();

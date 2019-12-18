@@ -13,27 +13,12 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.TokenInfo;
 
 public class FundsTests extends HelpTest {
 
     private static final Logger log = LoggerFactory.getLogger(FundsTests.class);
 
-    @Test
-    public void testInitFunds() throws JsonProcessingException, Exception {
-        // Setup transaction and signatures
-        long initprice = 100;
-        List<ECKey> keys = walletAppKit2.wallet().walletKeys(null);
-        // create the funds with unit 1000
-        createMultisignToken(keys.get(1), new TokenInfo(), "cryptofunds", 1000,0,null, "Funds");
-        // sell the unit for a price within the exchange
-
-        walletAppKit2.wallet().sellOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,
-                null);
-        walletAppKit1.wallet().buyOrder(null, keys.get(1).getPublicKeyAsHex(), initprice, 1000, null,
-                null);
-
-    }
+ 
     @Test
     public void testInitSellFunds() throws JsonProcessingException, Exception {
         // Setup transaction and signatures

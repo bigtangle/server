@@ -51,9 +51,9 @@ public abstract class HelpTest {
 
     public static final String HTTPS_BIGTANGLE_LOCAL = "http://localhost:8088/";
 
-    public static String HTTPS_BIGTANGLE_DE = "https://test.bigtangle.de:8089/";
-    public static String HTTPS_BIGTANGLE_INFO = "https://test.bigtangle.info:8089/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://test.bigtangle.org:8089/";
+    public static String HTTPS_BIGTANGLE_DE = "https://test.bigtangle.de/";
+    public static String HTTPS_BIGTANGLE_INFO = "https://test1.bigtangle.info/";
+    public static String HTTPS_BIGTANGLE_ORG = "https://test1.bigtangle.org/";
 
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
@@ -89,10 +89,10 @@ public abstract class HelpTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
             //"https://p.bigtangle.org:8088/";
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_INFO;
 
     public String contextRoot = TESTSERVER1;
     // "http://localhost:8088/";
@@ -114,9 +114,9 @@ public abstract class HelpTest {
 
     @Before
     public void setUp() throws Exception {
-        // System.setProperty("https.proxyHost",
-        // "anwproxy.anwendungen.localnet.de");
-        // System.setProperty("https.proxyPort", "3128");
+         System.setProperty("https.proxyHost",
+         "anwproxy.anwendungen.localnet.de");
+          System.setProperty("https.proxyPort", "3128");
         mkdir();
         wallet1();
         wallet2();
@@ -264,10 +264,21 @@ public abstract class HelpTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals,  Token domain  ,
-            String description, int amount) throws JsonProcessingException, Exception {
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals,  String domainname  ,
+            String description, BigInteger amount) throws JsonProcessingException, Exception {
         try {
-            createMultisignToken(key, new TokenInfo(), tokename, amount, decimals, domain, description);
+            walletAppKit1.wallet().setServerURL(contextRoot);
+            walletAppKit1.wallet().createToken(key, tokename, decimals, domainname, description, amount, true, null) ;
+
+            ECKey signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                    Utils.HEX.decode(testPub));
+
+            walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
+            
+            signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BigtangleDomainPriv),
+                    Utils.HEX.decode(testPub));
+            walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
+
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -276,46 +287,13 @@ public abstract class HelpTest {
 
     }
 
-    protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, int amount, int decimals,
+     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, BigInteger amount, int decimals,
             Token domainname, String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
-        String tokenid = key.getPublicKeyAsHex();
+       
 
-        Coin basecoin = Coin.valueOf(amount, tokenid);
-
-        // contextRoot = "http://localhost:8088/";
-
-        // TokenInfo tokenInfo = new TokenInfo();
-
-        HashMap<String, String> requestParam00 = new HashMap<String, String>();
-        requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
-                Json.jsonmapper().writeValueAsString(requestParam00));
-
-        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
-
-        Token tokens = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
-                description, 1, tokenindex_, basecoin.getValue(), false, 0,
-                domainname.getBlockHashHex());
-        tokens.setDomainName(domainname.getTokenname());
-        tokens.setTokentype(TokenType.currency.ordinal()); 
-        tokenInfo.setToken(tokens);
-
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-
-        walletAppKit1.wallet().setServerURL(contextRoot);
-        walletAppKit1.wallet().saveToken(tokenInfo, basecoin, key, null);
-
-        ECKey signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub));
-
-        walletAppKit1.wallet().multiSign(tokenid, signkey, null);
-        
-        signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BigtangleDomainPriv),
-                Utils.HEX.decode(testPub));
-        walletAppKit1.wallet().multiSign(tokenid, signkey, null);
-    }
+  
+           }
 
     public void testCheckToken(String server) throws JsonProcessingException, Exception {
         Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
