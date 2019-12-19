@@ -3445,7 +3445,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex,   Set<String> addresses, boolean isSign)
             throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
@@ -3455,7 +3455,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " AND address IN( " + buildINList(addresses) + " ) ";
         }
         if (tokenid != null && !tokenid.trim().isEmpty()) {
-            sql += " AND tokenid=?";
+            sql += " AND tokenid=? AND tokenindex = ? ";
         }
         if (!isSign) {
             sql += " AND sign = 0";
@@ -3466,6 +3466,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
+                preparedStatement.setInt(1, tokenindex);
             }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {

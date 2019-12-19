@@ -258,8 +258,10 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
+                String tokenindex = (String) request.get("tokenindex");
                 Boolean isSign = (Boolean) request.get("isSign");
-                AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
+                AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid, 
+                        tokenindex==null ? 0: Integer.valueOf(tokenindex),
                         (List<String>) request.get("addresses"), isSign == null ? false : isSign);
                 this.outPrintJSONString(httpServletResponse, response);
             }
