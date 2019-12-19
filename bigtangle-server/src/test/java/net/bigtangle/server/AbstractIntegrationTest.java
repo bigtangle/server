@@ -1218,6 +1218,7 @@ public abstract class AbstractIntegrationTest {
         String address = outKey.toAddress(networkParameters).toBase58();
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
+     
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 

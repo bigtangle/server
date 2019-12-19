@@ -70,12 +70,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
     @Test
     public void testCreateDomainToken() throws Exception {
-        store.resetStore();
-
-        wallet1();
-        wallet2();
-
-        List<ECKey> walletKeys = wallet2Keys;
+    
         ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
@@ -108,15 +103,12 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         {
-            final String tokenid = new ECKey().getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "myshopname.shop", aesKey, "");
+            ECKey key= new ECKey();
+            final String tokenid = key.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
 
-            List<ECKey> keys = new ArrayList<ECKey>();
-            keys.add(preKey);
-            for (int i = 0; i < keys.size(); i++) {
-                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+            walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
 
-            }
             sendEmpty(10);
             mcmcService.update();
             confirmationService.update();
@@ -145,8 +137,8 @@ public class TokenTest extends AbstractIntegrationTest {
 
             ECKey productkey = new ECKey();
             walletAppKit1.wallet().importKey(productkey);
-            Block block = walletAppKit1.wallet().createToken(productkey, "product", 0, "myshopname.shop", "test", BigInteger.ONE, true,
-                    null);
+            Block block = walletAppKit1.wallet().createToken(productkey, "product", 0, "myshopname.shop", "test",
+                    BigInteger.ONE, true, null);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
