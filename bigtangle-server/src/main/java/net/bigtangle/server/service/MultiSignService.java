@@ -193,7 +193,7 @@ public class MultiSignService {
             if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block);
                 blockService.saveBlock(block);
-                deleteMultiSign(block);
+               deleteMultiSign(block);
             } else {
                 // data save only on this server for multi signs, not in block.
                 this.saveMultiSign(block);

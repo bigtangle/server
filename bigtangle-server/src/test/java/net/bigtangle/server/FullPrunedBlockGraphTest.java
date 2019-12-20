@@ -155,7 +155,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             walletAppKit.wallet().importKey(outKey3) ;
             Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey3, null);
 
-            block1 = pullBlockDoMultiSign(tokens.getTokenid(), ecKey1, null);
+          //  block1 = pullBlockDoMultiSign(tokens.getTokenid(), ecKey1, null);
             // Should exist now
             store.getTokenConfirmed(block1.getHash()); // Fine as
                                                        // long as it

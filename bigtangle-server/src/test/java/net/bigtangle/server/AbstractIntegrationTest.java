@@ -1223,6 +1223,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        if(multiSignResponse.getMultiSigns().isEmpty()) return null;
         MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
 
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
