@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -99,7 +100,9 @@ public class OrderTickerService {
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
     }
-
+    @CacheEvict(cacheNames  = "priceticker")
+    public void evictAllCacheValues() {}
+    
     public Map<String, Token> getTokename(List<MatchResult> res) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (MatchResult d : res) {
