@@ -80,7 +80,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -1181,7 +1180,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         lock.lock();
         try {
             List<TransactionInput> inputs = tx.getInputs();
-            List<TransactionOutput> outputs = tx.getOutputs();
+            // List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
             // Order checkState(outputs.size() > 0);
 
@@ -2038,15 +2037,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // address and amount and return the remainder back to fromkey.
     // and repeat 3 times and wait as there may be a transaction pending for
     // this key
- 
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult,  
-            String memo)
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 20000);
     }
-    
-    public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult,  
-            String memo)
+
+    public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 20000);
     }
@@ -2066,13 +2063,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                     Thread.sleep(sleep);
                 } catch (InterruptedException e1) {
                 }
-                return payMoneyToECKeyList(aesKey, giveMoneyResult,   tokenid, memo, repeat, sleep);
+                return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, repeat, sleep);
             }
         }
         return null;
 
     }
-    
+
     public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
             String memoHex, int repeat, int sleep)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
@@ -2140,7 +2137,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    private Block payMoneyToECKeyListMemoEncrypt(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid, String memoHex)
+    private Block payMoneyToECKeyListMemoEncrypt(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult,
+            byte[] tokenid, String memoHex)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         if (giveMoneyResult.isEmpty()) {
             return null;
@@ -2182,7 +2180,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         return solveAndPost(rollingBlock);
     }
-    
+
     // check the token id is on the server
     // throw NoTokenException
     public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
@@ -2267,17 +2265,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // check the valid to time must be at least the block creation time
         OkHttp3Util.post(serverurl + ReqCmd.saveBlock.name(), adjust.bitcoinSerialize());
         return adjust;
-    }
-
-    private UTXO getSpendableUTXO(KeyParameter aesKey, Coin amount) throws IOException, InsufficientMoneyException {
-        List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
-        for (UTXO u : l) {
-            if (Arrays.equals(u.getValue().getTokenid(), amount.getTokenid())
-                    && u.getValue().getValue().compareTo(amount.getValue()) >= 0) {
-                return u;
-            }
-        }
-        throw new InsufficientMoneyException(amount.toString());
     }
 
     private List<UTXO> getSpendableUTXO(KeyParameter aesKey, byte[] tokenid) throws IOException {
@@ -2676,33 +2663,41 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    public Block createToken(ECKey key, String tokename, int decimals,  String domainname  ,
-            String description, BigInteger amount, boolean increment, KeyValue kv ) throws Exception {
-        
-        TokenInfo tokenInfo = new TokenInfo();
-        Token domain =  getDomainNameBlockHash(domainname, "token").getdomainNameToken();
-        String tokenid = key.getPublicKeyAsHex(); 
-        Coin basecoin = new Coin(amount, tokenid); 
+    public Block createToken(ECKey key, String domainname, boolean increment, Token token) throws Exception {
+        Token domain = getDomainNameBlockHash(domainname, "token").getdomainNameToken();
+        token.setDomainName(domain.getTokenname());
+        token.setDomainNameBlockHash(domain.getBlockHashHex());
+
+        String tokenid = key.getPublicKeyAsHex();
+
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(serverurl + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
-
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        long tokenindex_ = tokenIndexResponse.getTokenindex();
 
-        Token token = Token.buildSimpleTokenInfo(true, tokenIndexResponse.getBlockhash(), tokenid, tokename,
-                description, 1, tokenindex_, basecoin.getValue(), !increment, decimals,
-                domain.getBlockHashHex());
-        token.setDomainName(domain.getTokenname());
-        token.addKeyvalue(kv);
-       // tokens.setTokentype(TokenType.currency.ordinal()); 
+        token.setTokenindex(tokenIndexResponse.getTokenindex());
+        token.setPrevblockhash(tokenIndexResponse.getBlockhash());
+        TokenInfo tokenInfo = new TokenInfo();
+        // tokens.setTokentype(TokenType.currency.ordinal());
         tokenInfo.setToken(token);
 
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-       return saveToken(tokenInfo, basecoin, key, null);
-         
+        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
     }
+
+    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+            BigInteger amount, boolean increment, KeyValue kv) throws Exception {
+
+        String tokenid = key.getPublicKeyAsHex();
+
+        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
+                amount, !increment, decimals, "");
+        token.addKeyvalue(kv);
+        return createToken(key, domainname, increment, token);
+
+    }
+
     public Block getBlock(String hashHex) throws JsonProcessingException, IOException {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();

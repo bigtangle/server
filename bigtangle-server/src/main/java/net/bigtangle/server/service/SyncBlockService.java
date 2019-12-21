@@ -61,6 +61,8 @@ import net.bigtangle.utils.Threading;
 @Service
 public class SyncBlockService {
 
+    
+
     @Autowired
     protected FullPrunedBlockStore store;
 
@@ -491,8 +493,8 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i += 100) {
-                requestBlocks(i, i + 99, aMaxConfirmedReward.server);
+            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i += serverConfiguration.getSyncblocks()) {
+                requestBlocks(i, i + serverConfiguration.getSyncblocks() -1 , aMaxConfirmedReward.server);
             }
 
         }
