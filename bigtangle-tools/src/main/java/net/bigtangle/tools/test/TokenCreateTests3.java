@@ -15,7 +15,7 @@ public class TokenCreateTests3 extends HelpTest {
     @Test
     public void testTokens() throws JsonProcessingException, Exception {
  
-        walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+        walletAppKit1.wallet().setServerURL("https://p.bigtangle.de:8088/");
         walletAppKit1.wallet().getDomainNameBlockHash("test.shop") ;
   
     }

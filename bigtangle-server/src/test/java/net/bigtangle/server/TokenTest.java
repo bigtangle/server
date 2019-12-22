@@ -43,14 +43,14 @@ example
  tokenname=de
  domainname=""
  signatures: user + root 
- check: tokenname must be unique for tokentype domainname
+ check: tokenname +domainname must be unique    
  
  tokentype:domainname
  tokenname=bund.de
  domainname=de
  
  signatures: user + domainname of de
- check: tokenname must be unique for tokentype domainname
+ check: tokenname +domainname must be unique  
  
  
 ### other type of token must be have a domain name
