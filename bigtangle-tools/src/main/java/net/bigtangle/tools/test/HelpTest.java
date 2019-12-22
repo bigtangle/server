@@ -114,9 +114,9 @@ public abstract class HelpTest {
 
     @Before
     public void setUp() throws Exception {
-         System.setProperty("https.proxyHost",
-         "anwproxy.anwendungen.localnet.de");
-          System.setProperty("https.proxyPort", "3128");
+//         System.setProperty("https.proxyHost",
+//         "anwproxy.anwendungen.localnet.de");
+//          System.setProperty("https.proxyPort", "3128");
         mkdir();
         wallet1();
         wallet2();
