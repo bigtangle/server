@@ -83,9 +83,16 @@ public abstract class HelpTest {
     public static String ShopDomainPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
     public static String ShopDomainPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
 
+    
     public static String BigtangleDomainPub = "02122251e6e3cdbe3e4bbaa4bc0dcc12014c6cf0388abac61bf2c972579d790a68";
       public static String BigtangleDomainPriv = "dbee6582476dc44ac1e26c67733205ff4c50a1a6a6716667b4428b36f0dcb7bc";
-    // private static final String CONTEXT_ROOT_TEMPLATE =
+    
+      public static String  DomainComPriv =  "64a48e5a568e4498a51df1d35eced926b27d7bb29bfb0d4f6efb256c97381e07";
+ 
+      public static String  DomainComPub = "022d607a37d3d4467557a003189531a8198abb9967adec542edea70305b4785324";
+      
+      
+      // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
