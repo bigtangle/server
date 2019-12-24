@@ -1,12 +1,8 @@
 package net.bigtangle.tools.test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Test;
 
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Utils;
 
 public class ECKeyGen {
 

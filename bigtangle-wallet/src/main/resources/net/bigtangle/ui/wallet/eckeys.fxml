@@ -21,7 +21,9 @@
 				<Button defaultButton="true" layoutX="769.0" layoutY="154.0" mnemonicParsing="false" onAction="#addKey2wallet" prefHeight="23.0" prefWidth="87.0" text="%add_key" />
 				<TextField fx:id="newPrivateKeyTextField" layoutX="103.0" layoutY="154.0" prefHeight="23.0" prefWidth="641.0" />
 				<Label alignment="CENTER" layoutX="25.0" layoutY="158.0" prefHeight="15.0" prefWidth="78.0" text="%privatekey" textAlignment="CENTER" />
-		<Button defaultButton="true" layoutX="647.0" layoutY="649.0" mnemonicParsing="false" onAction="#showPrivateKey" text="%shwoPrivKey" />
+			<Button  layoutX="647.0" layoutY="649.0" mnemonicParsing="false" onAction="#showPrivateKey" text="%shwoPrivKey" />
+    		<Button  layoutX="100.0" layoutY="649.0" mnemonicParsing="false" onAction="#removeKey" text="%removeKey" />
+   
       <HBox alignment="CENTER" prefHeight="68.0" prefWidth="1000.0" styleClass="title-banner">
          <children>
             <Label alignment="CENTER" maxHeight="1.7976931348623157E308" prefHeight="66.0" prefWidth="139.0" styleClass="title-label" text="%Keys">
@@ -31,6 +33,6 @@
             </Label>
          </children>
       </HBox>
-      <Button defaultButton="true" layoutX="503.0" layoutY="649.0" mnemonicParsing="false" onAction="#newKey2wallet" text="%newkey" />
+      <Button defaultButton="true" layoutX="510.0" layoutY="649.0" mnemonicParsing="false" onAction="#newKey2wallet" text="%newkey" />
 	</children>
 </AnchorPane>

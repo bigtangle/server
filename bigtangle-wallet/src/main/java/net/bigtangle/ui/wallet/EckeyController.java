@@ -224,6 +224,12 @@ public class EckeyController {
         }
     }
 
+    public void removeKey(ActionEvent event) {
+        EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
+        ECKey key = ECKey.fromPrivate(Utils.HEX.decode( temp.getPrivkeyHex()) );
+        walletAppKit.wallet().removeKey(key);
+    }
+    
     public void showKey() {
         EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
         Alert alert = new Alert(AlertType.INFORMATION);
