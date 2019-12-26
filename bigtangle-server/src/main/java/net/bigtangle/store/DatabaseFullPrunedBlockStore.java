@@ -2548,7 +2548,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (domainname != null && !"".equals(domainname.trim())) {
                 sql += " AND (domainname = '" + domainname + "' )";
-            } 
+            }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2573,7 +2573,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    
     @Override
     public List<Token> getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
@@ -2583,7 +2582,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
-            } 
+            }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3076,34 +3075,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
             throws BlockStoreException {
 
+        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
+        if (blockhashs == null || blockhashs.isEmpty()) {
+            return result;
+        }
         String sql = "";
 
         sql += "SELECT hash, rating, depth, cumulativeweight, "
                 + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
-                + "  FROM  blocks WHERE 1=1 ";
-        if (blockhashs != null && !blockhashs.isEmpty()) {
-            StringBuffer stringBuffer = new StringBuffer();
-            sql += " AND hash in";
-            for (String hash : blockhashs) {
-                stringBuffer.append(",").append("'" + hash + "'");
-            }
-            sql += "(" + stringBuffer.substring(1).toString() + ")";
-        }
-        sql += " ORDER BY insertTime desc ";
+                + "  FROM  blocks WHERE hash = ? ";
 
-        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
-                        Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-                        resultSet.getLong(8), resultSet.getInt(9), resultSet.getLong("solid"),
-                        resultSet.getBoolean("confirmed"));
-                result.add(blockEvaluation);
+
+            for (String hash : blockhashs) {
+
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, Utils.HEX.decode(hash));
+                ResultSet resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
+                            Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
+                            resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
+                            resultSet.getLong(8), resultSet.getInt(9), resultSet.getLong("solid"),
+                            resultSet.getBoolean("confirmed"));
+                    result.add(blockEvaluation);
+                }
             }
             return result;
         } catch (SQLException ex) {
@@ -3445,8 +3443,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex,   Set<String> addresses, boolean isSign)
-            throws BlockStoreException {
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses,
+            boolean isSign) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
