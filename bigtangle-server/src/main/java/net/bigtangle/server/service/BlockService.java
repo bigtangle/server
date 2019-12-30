@@ -26,6 +26,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
@@ -644,4 +645,35 @@ public class BlockService {
 
         return predecessors;
     }
+
+    /*
+     * if a block is failed due to rating without conflict, it can be saved by
+     * setting new BlockPrototype.
+     */
+    public Block recreateBlock(Block oldblock) throws Exception {
+        if (oldblock.getTransactions().size() == 0) {
+            return oldblock;
+        }
+        Block block = getBlockPrototype();
+        for (Transaction transaction : oldblock.getTransactions()) {
+            block.addTransaction(transaction);
+        }
+        block.solve();
+        saveBlock(block);
+        return block;
+    }
+
+    /*
+     * failed blocks without conflict for retry 
+     */
+    public AbstractResponse findRetryBlocks(Map<String, Object> request)  throws BlockStoreException {
+            @SuppressWarnings("unchecked")
+            List<String> address = (List<String>) request.get("address");
+            String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
+            long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
+            List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
+                    serverConfiguration.getMaxserachblocks());
+            return GetBlockEvaluationsResponse.create(evaluations);
+        }
+
 }

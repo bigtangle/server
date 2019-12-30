@@ -173,7 +173,7 @@ public class OkHttp3Util {
 
     }
 
-    private static OkHttpClient getUnsafeOkHttpClient() {
+    public static OkHttpClient getUnsafeOkHttpClient() {
         try {
 
             X509TrustManager tr = new X509TrustManager() {

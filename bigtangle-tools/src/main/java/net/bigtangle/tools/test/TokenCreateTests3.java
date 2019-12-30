@@ -37,7 +37,8 @@ public class TokenCreateTests3 extends HelpTest {
         Map<String, Object> requestParam = new HashMap<String, Object>();
 
         List<String> blockhashs = new ArrayList<String>();
-        blockhashs.add("000019a19012fb15f6694f1807c377facbf1e3c75041dbb9a68276c605aaacdb");
+        blockhashs.add( 
+                "00004c2b55b4cb4d53c89a5524546354a15e85965b9827e330265d4264e31d14");
         requestParam.put("blockhashs", blockhashs);
 
         contextRoot = "https://p.bigtangle.org:8088/";
@@ -48,6 +49,6 @@ public class TokenCreateTests3 extends HelpTest {
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
         List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
-
+        System.out.print(blockEvaluations.toString());
     }
 }

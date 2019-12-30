@@ -8,7 +8,7 @@ public enum ReqCmd {
     // Block
     saveBlock, getBlockByHash, findBlockEvaluation,searchBlockByBlockHashs, batchBlock, blockEvaluationFromHashs,
 
-    getTip, adjustHeight,
+    getTip, adjustHeight,findRetryBlocks,
     // Chain
     getMaxConfirmedReward, getAllConfirmedReward, blocksFromChainLength,
     // Token

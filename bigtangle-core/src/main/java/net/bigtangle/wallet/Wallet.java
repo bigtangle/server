@@ -61,6 +61,7 @@ import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
+import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
@@ -86,6 +87,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
@@ -2708,6 +2710,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return params.getDefaultSerializer().makeBlock(data);
     }
 
+    /*
+     * if a block is failed due to rating without conflict, it can be saved by
+     * setting new BlockPrototype.
+     */
+    public Block retryBlocks(Block oldBlock ) throws BlockStoreException, Exception {
+       
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block block = params.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(oldBlock.getBlockType());
+                for (Transaction transaction : oldBlock.getTransactions()) {
+                block.addTransaction(transaction);
+          
+        }
+        if (block.getTransactions().size() == 0) {
+            return null ;
+        }
+        return solveAndPost(block);
+    }
     public boolean isAllowClientMining() {
         return allowClientMining;
     }

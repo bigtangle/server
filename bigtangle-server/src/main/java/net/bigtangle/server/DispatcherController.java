@@ -478,6 +478,13 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
+            case findRetryBlocks: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                AbstractResponse response = this.blockService.findRetryBlocks(request);
+                this.outPrintJSONString(httpServletResponse, response);
+            }
+                break;
 
             default:
                 break;
