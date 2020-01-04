@@ -94,13 +94,13 @@ public class OrderTickerService {
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
     }
-    @Cacheable(cacheNames  = "priceticker")
+    //@Cacheable(cacheNames  = "priceticker")
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds, count);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));
 
     }
-    @CacheEvict(cacheNames  = "priceticker")
+   // @CacheEvict(cacheNames  = "priceticker")
     public void evictAllCacheValues() {}
     
     public Map<String, Token> getTokename(List<MatchResult> res) throws BlockStoreException {
