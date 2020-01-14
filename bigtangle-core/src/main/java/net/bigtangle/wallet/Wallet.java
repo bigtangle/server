@@ -2680,10 +2680,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         token.setTokenindex(tokenIndexResponse.getTokenindex());
         token.setPrevblockhash(tokenIndexResponse.getBlockhash());
+        token.setTokenstop(!increment);
         TokenInfo tokenInfo = new TokenInfo();
         // tokens.setTokentype(TokenType.currency.ordinal());
         tokenInfo.setToken(token);
-
+      
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
         return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
     }
