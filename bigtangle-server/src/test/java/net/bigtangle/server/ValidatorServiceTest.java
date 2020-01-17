@@ -83,13 +83,28 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         Block b = r2.createNextBlock(r1);
-        b.setTime(1577836800); // 01/01/2020 @ 12:00am (UTC)
+        b.setTime(1587836800); //  
         b.solve();
         try {
             blockService.saveBlock(b);
             fail();
         } catch (TimeTravelerException e) {
         }
+    }
+
+    @Test
+    public void testAdjustTimestamp() throws Exception {
+        store.resetStore();
+
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
+        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        Block b = r2.createNextBlock(r1);
+        b.setTime(1567836800); //  
+        b.solve();
+      
+         blockService.adjustPrototyp(b);
+         blockService.saveBlock(b);
     }
 
     @Test
