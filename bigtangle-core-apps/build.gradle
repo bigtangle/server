@@ -1,5 +1,6 @@
  dependencies {
-    compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
+ 
+   compile group: 'com.codahale', name: 'shamir', version:'0.7.0'
     compile project(':bigtangle-core')
  
 }
