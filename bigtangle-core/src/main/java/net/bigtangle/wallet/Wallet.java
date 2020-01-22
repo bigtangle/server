@@ -61,7 +61,6 @@ import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
@@ -2437,6 +2436,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
+    public Block pay(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block block = params.getDefaultSerializer().makeBlock(data);
+
+        SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey = aesKey;
+
+        request.tx.setMemo(menoinfo);
+        completeTx(request, aesKey);
+        block.addTransaction(request.tx);
+
+        return solveAndPost(block);
+    }
+
     /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
@@ -2684,7 +2702,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         TokenInfo tokenInfo = new TokenInfo();
         // tokens.setTokentype(TokenType.currency.ordinal());
         tokenInfo.setToken(token);
-      
+
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
         return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
     }
@@ -2715,8 +2733,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * if a block is failed due to rating without conflict, it can be saved by
      * setting new BlockPrototype.
      */
-    public Block retryBlocks(Block oldBlock ) throws BlockStoreException, Exception {
-       
+    public Block retryBlocks(Block oldBlock) throws BlockStoreException, Exception {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
@@ -2724,15 +2741,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         Block block = params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(oldBlock.getBlockType());
-                for (Transaction transaction : oldBlock.getTransactions()) {
-                block.addTransaction(transaction);
-          
+        for (Transaction transaction : oldBlock.getTransactions()) {
+            block.addTransaction(transaction);
+
         }
         if (block.getTransactions().size() == 0) {
-            return null ;
+            return null;
         }
         return solveAndPost(block);
     }
+
     public boolean isAllowClientMining() {
         return allowClientMining;
     }
