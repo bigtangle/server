@@ -2067,7 +2067,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, repeat, sleep);
             }
         }
-        return null;
+           throw new InsufficientMoneyException("InsufficientMoneyException " + giveMoneyResult );
 
     }
 
