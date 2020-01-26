@@ -2913,7 +2913,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                storedBlocks.add(resultSet.getString(1));
+                storedBlocks.add(Utils.HEX.encode(resultSet.getBytes("blockhash")));
             }
             return storedBlocks;
         } catch (SQLException e) {
@@ -6111,10 +6111,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
     @Override
-    public List<Block> findRetryBlocks(long minHeigth  ) throws BlockStoreException {
-     
-       String sql  = "SELECT hash, rating, depth, cumulativeweight, "
+    public List<Block> findRetryBlocks(long minHeigth) throws BlockStoreException {
+
+        String sql = "SELECT hash, rating, depth, cumulativeweight, "
                 + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed , block"
                 + "  FROM   blocks ";
         sql += " where solid=true and confirmed=false and height >= " + minHeigth;
@@ -6125,9 +6126,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) { 
+            while (resultSet.next()) {
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                
+
                 result.add(block);
             }
             return result;

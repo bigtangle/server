@@ -2067,7 +2067,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, repeat, sleep);
             }
         }
-           throw new InsufficientMoneyException("InsufficientMoneyException " + giveMoneyResult );
+        throw new InsufficientMoneyException("InsufficientMoneyException " + giveMoneyResult);
 
     }
 
@@ -2096,6 +2096,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
             String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, getSpendableUTXO(aesKey, tokenid));
+    }
+
+    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+            String memo, List<UTXO> coinList)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
         if (giveMoneyResult.isEmpty()) {
             return null;
@@ -2111,7 +2117,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe.negate();
 
-        List<UTXO> coinList = getSpendableUTXO(aesKey, tokenid);
+        ;
         ECKey beneficiary = null;
         for (UTXO u : coinList) {
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
