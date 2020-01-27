@@ -42,14 +42,15 @@ public class Lottery {
     private List<UTXO> userUtxos;
     private BigInteger winnerAmount;
     private boolean macthed;
+    private ECKey accountKey;
     /*
      * start check balance and check to X amount and collect all user in lottery
      * list of (each ticket, address) compute random selection of winner pay to
      * winner address
      */
     public void start() throws Exception {
-        ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
-        List<UTXO> player = getBalance(ecKey);
+      //  ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
+        List<UTXO> player = getBalance(accountKey);
         userUtxos = new ArrayList<UTXO>();
         if (canTakeWinner(player, userUtxos)) {
             doTakeWinner();
@@ -249,6 +250,14 @@ public class Lottery {
 
     public void setMacthed(boolean macthed) {
         this.macthed = macthed;
+    }
+
+    public ECKey getAccountKey() {
+        return accountKey;
+    }
+
+    public void setAccountKey(ECKey accountKey) {
+        this.accountKey = accountKey;
     }
 
 }

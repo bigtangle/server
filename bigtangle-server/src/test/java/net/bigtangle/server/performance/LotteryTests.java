@@ -45,6 +45,9 @@ public class LotteryTests extends AbstractIntegrationTest {
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
     int usernumber =  Math.abs( new Random().nextInt())% 88;
     BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt())% 9999+"");
+    
+    private ECKey accountKey;
+    
     protected static final Logger log = LoggerFactory.getLogger(LotteryTests.class);
     @Test
     public void lottery() throws Exception {
@@ -58,15 +61,17 @@ public class LotteryTests extends AbstractIntegrationTest {
     }
     public void lotteryDo() throws Exception {
         walletAppKit1.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        accountKey= new ECKey();
+        walletAppKit1.wallet().importKey(accountKey);
 
         testTokens();
-        createUserPay();
+        createUserPay(accountKey);
         sendEmpty(10);
         mcmcService.update();
         confirmationService.update();
         Lottery startLottery = startLottery();
         while(!startLottery.isMacthed()) {
-            createUserPay();
+            createUserPay(accountKey);
             startLottery = startLottery();
         }
         checkResult(startLottery);
@@ -80,6 +85,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         startLottery.setParams(networkParameters);
         startLottery.setWalletAdmin(walletAppKit1); 
         startLottery.setWinnerAmount(winnerAmount);
+        startLottery.setAccountKey(accountKey);
         startLottery.start();
     
         sendEmpty(10);
@@ -104,22 +110,22 @@ public class LotteryTests extends AbstractIntegrationTest {
         log.debug(myutxo.toString());
     }
 
-    private void createUserPay() throws Exception {
+    private void createUserPay(ECKey accountKey) throws Exception {
         List<ECKey> ulist = payKeys();
         for (ECKey key : ulist) {
-            buyTicket(key);
+            buyTicket(key,accountKey);
         }
     }
 
     /*
      * pay money to the key and use the key to buy lottery
      */
-    public void buyTicket(ECKey key) throws Exception {
+    public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
         Wallet w =   Wallet.fromKeys(networkParameters,key);
         w.setServerURL(contextRoot);
         try {
         int satoshis = Math.abs(new Random().nextInt())% 1000 ;
-        w.pay(null, getAddress(), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), " buy ticket");
+        w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), " buy ticket");
         }catch (InsufficientMoneyException e) {
             // TODO: handle exception
         }
