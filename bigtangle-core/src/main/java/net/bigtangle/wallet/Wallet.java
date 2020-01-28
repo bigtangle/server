@@ -2096,20 +2096,58 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
             String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, getSpendableUTXO(aesKey, tokenid));
+        return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, getSpendableUTXO(aesKey, tokenid));
     }
 
-    public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
-            String memo, List<UTXO> coinList)
+    public Block payFromList(KeyParameter aesKey, String destination, Coin amount,
+    		String memo, List<UTXO> coinList)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         //split the coinList into sub list, there is limit for transactions in a block
         List<List<UTXO>> parts = chopped(coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD/4);
         Block re=null;
-        for(List<UTXO> part: parts) {
-          re = payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, part);
+       Coin restAmount=   amount ;
+        for(int i=0; i<  parts.size();i++) {
+        	 if(restAmount.isPositive()) {
+        		 amount= restAmount;
+        		 restAmount= Coin.valueOf(0, restAmount.getTokenid());
+          re = payFromListNoSplit(aesKey, destination,amount, restAmount, memo, part);
+        	 }
+        	 
+         
         }
         return  re;
     }
+    
+    //List<UTXO> coinList is not sufficiant for the amount and return 
+    public Block payFromListNoSplit(KeyParameter aesKey, String destination, Coin amount, Coin restAmount,
+            String memo, List<UTXO> coinList)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+ 
+     
+        Coin restAmount = amount.negate(); 
+        ECKey beneficiary = null;
+        for (UTXO u : coinList) {
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+            beneficiary = getECKey(aesKey, u.getAddress());
+            restAmount = spendableOutput.getValue().add(restAmount);
+            multispent.addInput(u.getBlockHash(), spendableOutput);
+            if (!restAmount.isNegative()) {
+                multispent.addOutput(restAmount, beneficiary);
+                break;
+            }
+        }
+    
+        signTransaction(multispent, aesKey);
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(multispent);
+
+        return solveAndPost(rollingBlock);
+    }
+
     
  // chops a list into non-view sublists of length L
     static <T> List<List<T>> chopped(List<T> list, final int L) {
