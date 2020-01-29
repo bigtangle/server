@@ -14,12 +14,9 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -28,16 +25,19 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
+import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 public class LotteryTests extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
@@ -63,7 +63,6 @@ public class LotteryTests extends AbstractIntegrationTest {
         walletAppKit1.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
         accountKey= new ECKey();
         walletAppKit1.wallet().importKey(accountKey);
-
         testTokens();
         createUserPay(accountKey);
         sendEmpty(10);
@@ -83,7 +82,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         startLottery.setTokenid(yuanTokenPub);
         startLottery.setCONTEXT_ROOT(contextRoot);
         startLottery.setParams(networkParameters);
-        startLottery.setWalletAdmin(walletAppKit1); 
+        startLottery.setWalletAdmin( walletAppKit1.wallet()); 
         startLottery.setWinnerAmount(winnerAmount);
         startLottery.setAccountKey(accountKey);
         startLottery.start();
@@ -181,5 +180,23 @@ public class LotteryTests extends AbstractIntegrationTest {
             log.warn("", e);
         }
 
+    }
+    
+    // get balance for the walletKeys
+    protected List<UTXO> getBalance(String address) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        List<String> keyStrHex000 = new ArrayList<String>();
+
+        keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            listUTXO.add(utxo);
+        }
+
+        return listUTXO;
     }
 }

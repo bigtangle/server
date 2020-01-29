@@ -116,7 +116,7 @@ public class OrderTickerService {
         }
         return re;
     }
-    @Cacheable(cacheNames  = "priceticker")
+    @Cacheable("priceticker")
     public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate) throws BlockStoreException {
         List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, startDate, endDate, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re));

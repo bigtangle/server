@@ -27,16 +27,16 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.response.GetBalancesResponse;
-import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.Wallet;
 
 public class Lottery {
 
   //  private static final Logger log = LoggerFactory.getLogger(Lottery.class);
     private String tokenid;
     public String context_root = "http://localhost:8088/";
-    private WalletAppKit walletAdmin;
+    private Wallet walletAdmin;
     private NetworkParameters params;
     private String winner;
     private List<UTXO> userUtxos;
@@ -58,7 +58,7 @@ public class Lottery {
     }
 
     private void doTakeWinner() throws Exception {
-        Token t = walletAdmin.wallet().checkTokenId(tokenid);
+        Token t = walletAdmin.checkTokenId(tokenid);
 
         List<String> userAddress = baseList(userUtxos, t);
 
@@ -71,9 +71,8 @@ public class Lottery {
         SecureRandom se = new SecureRandom(randomness);
 
         winner = userAddress.get(se.nextInt(userAddress.size()));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        giveMoneyResult.put(winner, sum().longValue());
-        batchGiveMoneyToECKeyList(giveMoneyResult, "win lottery", userUtxos);
+
+        batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
     }
 
     /*
@@ -141,11 +140,11 @@ public class Lottery {
     /*
      * TODO To enable parallel payment, we should use different from address
      */
-    public synchronized Block batchGiveMoneyToECKeyList(HashMap<String, Long> giveMoneyResult, String memo,
+    public synchronized Block batchGiveMoneyToECKeyList( String address, BigInteger amount, String memo,
             List<UTXO> userlist)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
-
-        return walletAdmin.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(tokenid), memo,
+    	
+        return walletAdmin.payFromList(null, address , new Coin(amount,Utils.HEX.decode(tokenid)), memo,
                 userlist);
 
     }
@@ -204,13 +203,14 @@ public class Lottery {
         this.params = params;
     }
 
-    public WalletAppKit getWalletAdmin() {
-        return walletAdmin;
-    }
+    public Wallet getWalletAdmin() {
+    	  return walletAdmin;
+     }
 
-    public void setWalletAdmin(WalletAppKit walletAdmin) {
+    public void setWalletAdmin(Wallet walletAdmin) {
         this.walletAdmin = walletAdmin;
-    }
+    }    
+ 
 
     public String getContext_root() {
         return context_root;

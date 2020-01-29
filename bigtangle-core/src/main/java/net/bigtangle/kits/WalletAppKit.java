@@ -46,7 +46,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.wallet.DeterministicSeed;
-import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletExtension;

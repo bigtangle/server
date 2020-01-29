@@ -118,14 +118,19 @@ public abstract class HelpTest {
 
     @Before
     public void setUp() throws Exception {
-//         System.setProperty("https.proxyHost",
-//         "anwproxy.anwendungen.localnet.de");
-//          System.setProperty("https.proxyPort", "3128");
+         proxy();
         mkdir();
         wallet1();
         wallet2();
         // emptyBlocks(10);
     }
+
+
+	private void proxy() {
+		System.setProperty("https.proxyHost",
+        "anwproxy.anwendungen.localnet.de");
+         System.setProperty("https.proxyPort", "3128");
+	}
  
  
     public void importKeys(Wallet w) throws Exception {

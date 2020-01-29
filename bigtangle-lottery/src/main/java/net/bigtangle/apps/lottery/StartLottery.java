@@ -34,7 +34,7 @@ public class StartLottery {
         WalletAppKit walletAdmin = new WalletAppKit(params, new File(args[1]), args[2]);
         walletAdmin.wallet().setServerURL(startLottery.context_root);
         // importKeys(walletAdmin.wallet());
-        startLottery.setWalletAdmin(walletAdmin);
+        startLottery.setWalletAdmin(walletAdmin.wallet());
 
         startLottery.setTokenid(CNYTOKENIDPROD);
         startLottery.setWinnerAmount(new BigInteger("100000"));
