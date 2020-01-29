@@ -306,7 +306,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = ? limit 1";
 
     protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid "
-            + "FROM tokens WHERE tokenname = ? AND tokentype = 3  AND confirmed = true limit 1";
+            + "FROM tokens WHERE tokenname = ?  AND confirmed = true limit 1";
 
     protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
 
@@ -2550,7 +2550,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (domainname != null && !"".equals(domainname.trim())) {
                 sql += " AND (domainname = '" + domainname + "' )";
-            } 
+            }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2575,7 +2575,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    
     @Override
     public List<Token> getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
@@ -2585,7 +2584,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
-            } 
+            }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2916,7 +2915,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setString(1, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                storedBlocks.add(resultSet.getString(1));
+                storedBlocks.add(Utils.HEX.encode(resultSet.getBytes("blockhash")));
             }
             return storedBlocks;
         } catch (SQLException e) {
@@ -3078,34 +3077,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
             throws BlockStoreException {
 
+        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
+        if (blockhashs == null || blockhashs.isEmpty()) {
+            return result;
+        }
         String sql = "";
 
         sql += "SELECT hash, rating, depth, cumulativeweight, "
                 + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
-                + "  FROM  blocks WHERE 1=1 ";
-        if (blockhashs != null && !blockhashs.isEmpty()) {
-            StringBuffer stringBuffer = new StringBuffer();
-            sql += " AND hash in";
-            for (String hash : blockhashs) {
-                stringBuffer.append(",").append("'" + hash + "'");
-            }
-            sql += "(" + stringBuffer.substring(1).toString() + ")";
-        }
-        sql += " ORDER BY insertTime desc ";
+                + "  FROM  blocks WHERE hash = ? ";
 
-        List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
-                        Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
-                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-                        resultSet.getLong(8), resultSet.getInt(9), resultSet.getLong("solid"),
-                        resultSet.getBoolean("confirmed"));
-                result.add(blockEvaluation);
+
+            for (String hash : blockhashs) {
+
+                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement.setBytes(1, Utils.HEX.decode(hash));
+                ResultSet resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
+                            Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
+                            resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
+                            resultSet.getLong(8), resultSet.getInt(9), resultSet.getLong("solid"),
+                            resultSet.getBoolean("confirmed"));
+                    result.add(blockEvaluation);
+                }
             }
             return result;
         } catch (SQLException ex) {
@@ -3447,8 +3445,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
-            throws BlockStoreException {
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses,
+            boolean isSign) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -3457,7 +3455,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             sql += " AND address IN( " + buildINList(addresses) + " ) ";
         }
         if (tokenid != null && !tokenid.trim().isEmpty()) {
-            sql += " AND tokenid=?";
+            sql += " AND tokenid=? AND tokenindex = ? ";
         }
         if (!isSign) {
             sql += " AND sign = 0";
@@ -3468,6 +3466,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
+                preparedStatement.setInt(1, tokenindex);
             }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -6116,6 +6115,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
+ 
     public void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException {
         String sql = "insert into access_permission (pubKey, accessToken, refreshTime) value (?,?,?)";
         maybeConnect();
@@ -6234,6 +6234,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-    
-    
+ 
+    public List<Block> findRetryBlocks(long minHeigth) throws BlockStoreException {
+
+        String sql = "SELECT hash, rating, depth, cumulativeweight, "
+                + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed , block"
+                + "  FROM   blocks ";
+        sql += " where solid=true and confirmed=false and height >= " + minHeigth;
+        sql += " ORDER BY insertTime desc ";
+        List<Block> result = new ArrayList<Block>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
+
+                result.add(block);
+            }
+            return result;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
+    }
+ 
 }

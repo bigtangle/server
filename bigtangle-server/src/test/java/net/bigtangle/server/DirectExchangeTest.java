@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
@@ -48,6 +49,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOS;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.UserDataResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -187,6 +189,41 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    public void testRatingRead() throws Exception {
+        store.resetStore();
+
+        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
+        List<UTXO> balance1 = getBalance(false, genesiskey);
+        log.info("balance1 : " + balance1);
+        // two utxo to spent
+        HashMap<String, Long> giveMoneyResult = new HashMap<>();
+        for (int i = 0; i < 3; i++) {
+            ECKey outKey = new ECKey();
+            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
+        }
+      Block b=  walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+        mcmcService.update();
+        confirmationService.update();
+       
+    Map<String, Object> requestParam = new HashMap<String, Object>();
+
+    List<String> blockhashs = new ArrayList<String>();
+    blockhashs.add(b.getHashAsString());
+    requestParam.put("blockhashs", blockhashs);
+ 
+    String response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
+            Json.jsonmapper().writeValueAsString(requestParam));
+
+    GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+            GetBlockEvaluationsResponse.class);
+    List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+
+    assertTrue(!blockEvaluations.isEmpty());
+    
+    }
+    
     @Test
 
     public void testWalletImportKeyGiveMoney() throws Exception {

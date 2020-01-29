@@ -223,7 +223,7 @@ public class ValidatorService {
         // Unchecked blocks are not allowed
         if (block.getBlockEvaluation().getSolid() < 2)
             return false;
-        
+
         // Above maxHeight is not allowed
         if (block.getBlockEvaluation().getHeight() > maxHeight)
             return false;
@@ -1766,12 +1766,6 @@ public class ValidatorService {
                 return SolidityState.from(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()), true);
             }
 
-            if (prevDomain.getTokentype() != TokenType.domainname.ordinal()) {
-                if (throwExceptions)
-                    throw new InvalidDependencyException("Domain predecessor is not a domain definition token");
-                return SolidityState.getFailState();
-            }
-
         }
         // Ensure signatures exist
         int signatureCount = 0;
@@ -1869,11 +1863,11 @@ public class ValidatorService {
                     .queryDomainnameTokenMultiSignAddresses(
                             prevDomain == null ? networkParameters.getGenesisBlock().getHash()
                                     : prevDomain.getBlockHash());
-            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,  
-                    txSignatures.getMultiSignBies(),1,
-                  //TODO remove the high level domain sign
-                    //only one sign of prev domain needed
-                    //prevDomain == null ? 1 : prevDomain.getSignnumber(),
+            SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
+                    txSignatures.getMultiSignBies(), 1,
+                    // TODO remove the high level domain sign
+                    // only one sign of prev domain needed
+                    // prevDomain == null ? 1 : prevDomain.getSignnumber(),
                     throwExceptions, tx.getHash());
             if (domainPermission != SolidityState.getSuccessState())
                 return domainPermission;
@@ -2016,7 +2010,6 @@ public class ValidatorService {
                 throw new InvalidTransactionDataException("Not allowed");
             return SolidityState.getFailState();
         }
- 
 
         if (currentToken.getToken().getDescription() != null
                 && currentToken.getToken().getDescription().length() > Token.TOKEN_MAX_DESC_LENGTH) {

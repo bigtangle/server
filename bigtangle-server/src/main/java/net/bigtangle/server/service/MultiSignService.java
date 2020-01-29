@@ -48,7 +48,9 @@ public class MultiSignService {
     protected NetworkParameters params;
     @Autowired
     protected TokenDomainnameService tokenDomainnameService;
-
+    @Autowired
+    private BlockService blockService;
+    
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address)
             throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
@@ -65,18 +67,18 @@ public class MultiSignService {
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
-    public AbstractResponse getMultiSignListWithTokenid(String tokenid, List<String> addresses, boolean isSign)
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex,  List<String> addresses, boolean isSign)
             throws Exception {
-        HashSet<String> a = new HashSet<String>( );
-        if(addresses !=null) {
-            a= new HashSet<String>(addresses);
+        HashSet<String> a = new HashSet<String>();
+        if (addresses != null) {
+            a = new HashSet<String>(addresses);
         }
-        return getMultiSignListWithTokenid(tokenid,a, isSign);
+        return getMultiSignListWithTokenid(tokenid,tokenindex, a, isSign);
     }
 
-    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Set<String> addresses, boolean isSign)
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid,  Integer tokenindex,Set<String> addresses, boolean isSign)
             throws Exception {
-        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, addresses, isSign);
+        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid,tokenindex, addresses, isSign);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
         for (MultiSign multiSign : multiSigns) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -149,7 +151,7 @@ public class MultiSignService {
                     multiSign.setBlockbytes(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
                     store.saveMultiSign(multiSign);
-                } 
+                }
             }
             if (transaction.getDataSignature() != null) {
                 String jsonStr = new String(transaction.getDataSignature());
@@ -172,22 +174,34 @@ public class MultiSignService {
         }
     }
 
+    public void deleteMultiSign(Block block) throws BlockStoreException, Exception {
+        try {
+
+            Transaction transaction = block.getTransactions().get(0);
+            byte[] buf = transaction.getData();
+            TokenInfo tokenInfo = new TokenInfo().parse(buf);
+            final Token token = tokenInfo.getToken();
+            this.store.deleteMultiSign(token.getTokenid());
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     public void signTokenAndSaveBlock(Block block, boolean allowConflicts) throws Exception {
         try {
             validatorService.checkTokenUnique(block);
             if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block);
                 blockService.saveBlock(block);
+               deleteMultiSign(block);
             } else {
                 // data save only on this server for multi signs, not in block.
                 this.saveMultiSign(block);
             }
         } catch (InsufficientSignaturesException e) {
             this.saveMultiSign(block);
-           
+
         }
     }
 
-    @Autowired
-    private BlockService blockService;
 }

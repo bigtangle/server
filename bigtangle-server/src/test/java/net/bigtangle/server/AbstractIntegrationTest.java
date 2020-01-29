@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluationDisplay;
@@ -711,6 +712,24 @@ public abstract class AbstractIntegrationTest {
         return listUTXO;
     }
 
+    // get balance for the walletKeys
+    protected List<UTXO> getBalance(String address) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        List<String> keyStrHex000 = new ArrayList<String>();
+
+        keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            listUTXO.add(utxo);
+        }
+
+        return listUTXO;
+    }
+
     protected List<UTXO> getBalance(boolean withZero, ECKey ecKey) throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(ecKey);
@@ -840,16 +859,16 @@ public abstract class AbstractIntegrationTest {
         mcmcService.update();
         confirmationService.update();
         List<UTXO> ulist = getBalance(false, a);
-        
-        Coin sum = new Coin(0,coin.getTokenid());
+
+        Coin sum = new Coin(0, coin.getTokenid());
         for (UTXO u : ulist) {
             if (coin.getTokenHex().equals(u.getTokenId())) {
-                sum=sum.add(u.getValue());
-                
+                sum = sum.add(u.getValue());
+
             }
         }
-        assertTrue(coin.getValue().compareTo(sum.getValue())==0);
-        
+        assertTrue(coin.getValue().compareTo(sum.getValue()) == 0);
+
     }
 
     // create a token with multi sign
@@ -1218,10 +1237,13 @@ public abstract class AbstractIntegrationTest {
         String address = outKey.toAddress(networkParameters).toBase58();
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
+
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        if (multiSignResponse.getMultiSigns().isEmpty())
+            return null;
         MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
 
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());

@@ -150,6 +150,9 @@ public class TokenBaseController {
                 if (tokentype == 2) {
                     temp1 = Main.getText("subtangle");
                 }
+                if (tokentype == 3) {
+                    temp1 = Main.getText("domainname");
+                }
                 String temp2 = ((boolean) map.get("tokenstop")) ? Main.getText("yes") : Main.getText("no");
                 // map.put("multiserial", temp);
                 map.put("asmarket", temp1);

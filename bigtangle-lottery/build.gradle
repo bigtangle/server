@@ -1,0 +1,42 @@
+
+ plugins {
+ 
+    id 'application'
+   
+}
+
+
+defaultTasks 'clean', 'build'
+
+distributions {
+    main {
+        contents {
+            baseName = "bigtangle-emptyblock"
+        }
+    }
+}
+
+dependencies {
+
+     compile project(':bigtangle-core')
+     compile project(':bigtangle-core-apps')
+ 
+      testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+    testCompile group: 'junit', name: 'junit',version:ver.junit
+    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
+        testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
+    runtime group:'io.micrometer', name:'micrometer-registry-prometheus', version:ver.spring_metrics_promet
+    
+}
+
+mainClassName = "net.bigtangle.apps.lottery"
+//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx2g"]
+
+jar {
+    manifest {
+        attributes("Main-Class": mainClassName)
+    }
+}
+ 

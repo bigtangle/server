@@ -36,6 +36,7 @@ public class ServerConfiguration {
     private Boolean runKafkaStream = false;
     //start sync from this checkpoint
     private Long checkpoint=-1l ;
+    private int syncblocks=500;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -193,6 +194,14 @@ public class ServerConfiguration {
 
     public void setCheckpoint(Long checkpoint) {
         this.checkpoint = checkpoint;
+    }
+
+    public int getSyncblocks() {
+        return syncblocks;
+    }
+
+    public void setSyncblocks(int syncblocks) {
+        this.syncblocks = syncblocks;
     }
 
     @Override

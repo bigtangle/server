@@ -294,6 +294,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
             long height, long maxblocks) throws BlockStoreException;
 
+    public List<Block> findRetryBlocks(long minheight) throws BlockStoreException;
+    
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs) throws BlockStoreException;
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
@@ -317,7 +319,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
             throws BlockStoreException;
 
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, Set<String> addresses, boolean isSign)
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses, boolean isSign)
             throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException;

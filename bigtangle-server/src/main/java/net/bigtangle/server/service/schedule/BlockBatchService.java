@@ -18,6 +18,7 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
@@ -65,31 +66,35 @@ public class BlockBatchService {
 
         logger.info("BlockBatchService start");
         try {
-            List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
-            if (batchBlocks.isEmpty()) {
-                return;
-            }
-            Block block = blockService.getBlockPrototype();
-            for (BatchBlock batchBlock : batchBlocks) {
-                byte[] payloadBytes = batchBlock.getBlock();
-                Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-                for (Transaction transaction : putBlock.getTransactions()) {
-                    block.addTransaction(transaction);
-                }
-            }
-            if (block.getTransactions().size() == 0) {
-                return;
-            }
-            block.solve();
-            blockService.saveBlock(block);
-            for (BatchBlock batchBlock : batchBlocks) {
-                this.store.deleteBatchBlock(batchBlock.getHash());
-            }
+            batchBlocks();
         } catch (Exception e) {
             logger.info("BlockBatchService error", e);
         } finally {
             lock.unlock();
         }
 
+    }
+
+    private void batchBlocks() throws BlockStoreException, Exception {
+        List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
+        if (batchBlocks.isEmpty()) {
+            return;
+        }
+        Block block = blockService.getBlockPrototype();
+        for (BatchBlock batchBlock : batchBlocks) {
+            byte[] payloadBytes = batchBlock.getBlock();
+            Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+            for (Transaction transaction : putBlock.getTransactions()) {
+                block.addTransaction(transaction);
+            }
+        }
+        if (block.getTransactions().size() == 0) {
+            return;
+        }
+        block.solve();
+        blockService.saveBlock(block);
+        for (BatchBlock batchBlock : batchBlocks) {
+            this.store.deleteBatchBlock(batchBlock.getHash());
+        }
     }
 }

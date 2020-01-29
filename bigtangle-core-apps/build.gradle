@@ -1,0 +1,7 @@
+ dependencies {
+ 
+   compile group: 'com.codahale', name: 'shamir', version:'0.7.0'
+    compile project(':bigtangle-core')
+ 
+}
+ 

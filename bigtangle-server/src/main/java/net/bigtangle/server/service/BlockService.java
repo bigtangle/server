@@ -406,7 +406,7 @@ public class BlockService {
 
     protected final Random random = new Random();
 
-    public Block getBlockPrototype() throws Exception {
+    public Block getBlockPrototype() throws BlockStoreException, NoBlockException {
         return getNewBlockPrototype();
     }
 
@@ -518,11 +518,26 @@ public class BlockService {
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 
-    public void adjustHeightRequiredBlocks(Block block) throws BlockStoreException {
+    public void adjustHeightRequiredBlocks(Block block) throws BlockStoreException, NoBlockException {
+        adjustPrototyp(block);
         long h = calcHeightRequiredBlocks(block);
         if (h > block.getHeight()) {
             logger.debug("adjustHeightRequiredBlocks" + block + " to " + h);
             block.setHeight(h);
+        }
+    }
+
+    public void adjustPrototyp(Block block) throws BlockStoreException, NoBlockException {
+        // two hours for just getBlockPrototype
+        int delaySeconds = 7200;
+
+        if (block.getTimeSeconds() < System.currentTimeMillis() / 1000 - delaySeconds) {
+            logger.debug("adjustPrototyp " + block    );
+            Block newblock = getBlockPrototype();
+            for (Transaction transaction : block.getTransactions()) {
+                newblock.addTransaction(transaction);
+            }
+            block = newblock;
         }
     }
 
@@ -644,4 +659,35 @@ public class BlockService {
 
         return predecessors;
     }
+
+    /*
+     * if a block is failed due to rating without conflict, it can be saved by
+     * setting new BlockPrototype.
+     */
+    public Block recreateBlock(Block oldblock) throws Exception {
+        if (oldblock.getTransactions().size() == 0) {
+            return oldblock;
+        }
+        Block block = getBlockPrototype();
+        for (Transaction transaction : oldblock.getTransactions()) {
+            block.addTransaction(transaction);
+        }
+        block.solve();
+        saveBlock(block);
+        return block;
+    }
+
+    /*
+     * failed blocks without conflict for retry
+     */
+    public AbstractResponse findRetryBlocks(Map<String, Object> request) throws BlockStoreException {
+        @SuppressWarnings("unchecked")
+        List<String> address = (List<String>) request.get("address");
+        String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
+        long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
+        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
+                serverConfiguration.getMaxserachblocks());
+        return GetBlockEvaluationsResponse.create(evaluations);
+    }
+
 }

@@ -88,6 +88,7 @@ import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.params.TestParams;
 import net.bigtangle.ui.wallet.controls.NotificationBarPane;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -119,7 +120,7 @@ public class Main extends Application {
     public static String versionserver = "https://bigtangle.org/";
     public static FXMLLoader loader;
 
-    public static String lang = "en";
+    public static String lang = "zh";
     public static String password = "";
     public static int numberOfEmptyBlocks = 3;
     public static boolean emptyBlocks = true;
