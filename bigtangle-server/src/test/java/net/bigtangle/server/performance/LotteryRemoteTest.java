@@ -40,8 +40,14 @@ public class LotteryRemoteTest {
 	public static String USDTokenPub = "02fbef0f3e1344f548abb7d4b6a799e372d2310ff13fe023b3ba0446f2e3f58e04";
 	public static String USDTokenPriv = "6fb4cb30d593536e3c54ac17bfaa311cb0e2bdf219c89483aa8d7185f6c5c3b7";
 
-	int usernumber = Math.abs(new Random().nextInt()) % 88;
-	BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
+	
+    // 1GZH9mf9w9K3nc58xR3dpTJUuJdiLnuwdW
+    public static String ETHTokenPub = "02b8b21c6341872dda1f3a4f26d0d887283ad99f342d1dc35552db39c830919722";
+    public static String ETHTokenPriv = "9eac170431a4c8cb188610cea2d40a3db5f656db5b52c0ac5aa9aa3a3fa8366f";
+
+    
+	int usernumber =88;
+	BigInteger winnerAmount = new BigInteger(  99 + "");
 	Wallet wallet;
 	public static String contextRoot = "https://test.bigtangle.de/";
 	private ECKey accountKey;
@@ -51,10 +57,10 @@ public class LotteryRemoteTest {
 	@Test
 	public void lottery() throws Exception {
 
-		proxy();
+		//proxy();
 
 		for (int i = 0; i < 1; i++) {
-			usernumber = Math.abs(new Random().nextInt()) % 8;
+			usernumber = Math.abs(new Random().nextInt()) % 30;
 			winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 99 + "");
 
 			lotteryDo();
@@ -69,7 +75,7 @@ public class LotteryRemoteTest {
 
 	public void lotteryDo() throws Exception {
 		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
-		accountKey = new ECKey();
+		accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
 		wallet.importKey(accountKey);
 		wallet.setServerURL(contextRoot);
 	 
@@ -146,10 +152,10 @@ public class LotteryRemoteTest {
 		Wallet w = Wallet.fromKeys(networkParameters, key);
 		w.setServerURL(contextRoot);
 		try {
-			int satoshis = Math.abs(new Random().nextInt()) % 1000;
+			int satoshis = Math.abs(new Random().nextInt()) % 5 +1;
 			w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(USDTokenPub)),
 					" buy ticket");
-		} catch (InsufficientMoneyException e) {
+		} catch (Exception e) {
 			// TODO: handle exception
 		}
 	}
@@ -164,9 +170,9 @@ public class LotteryRemoteTest {
 			userkeys.add(key);
 		}
 
-		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), "", 3, 20000);
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), " pay to user ", 3, 20000);
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
-
+	
 		return userkeys;
 	}
 

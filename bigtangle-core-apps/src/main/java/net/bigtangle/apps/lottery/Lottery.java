@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.math.LongMath;
 
@@ -33,7 +36,7 @@ import net.bigtangle.wallet.Wallet;
 
 public class Lottery {
 
-  //  private static final Logger log = LoggerFactory.getLogger(Lottery.class);
+     private static final Logger log = LoggerFactory.getLogger(Lottery.class);
     private String tokenid;
     public String context_root = "http://localhost:8088/";
     private Wallet walletAdmin;
@@ -72,7 +75,9 @@ public class Lottery {
 
         winner = userAddress.get(se.nextInt(userAddress.size()));
 
-        batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+        Block b = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
+        
     }
 
     /*

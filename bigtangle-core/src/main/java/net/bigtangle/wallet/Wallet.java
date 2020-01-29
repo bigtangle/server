@@ -2081,15 +2081,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// split the coinList into sub list, there is limit for transactions in a block
 		List<List<UTXO>> parts = chopped(coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
 		Block re = null;
-		Coin restAmount = amount;
+		Coin restAmount = amount.negate();
 		for (int i = 0; i < parts.size(); i++) {
-			if (!restAmount.isPositive()) {
-				amount = restAmount;
+			if (!restAmount.isPositive() ) {
+				amount = restAmount.negate();
 				restAmount = Coin.valueOf(0, restAmount.getTokenid());
 				re = payFromListNoSplit(aesKey, destination, amount, restAmount, memo, parts.get(i));
 			}
 		}
-		if (!restAmount.isPositive())
+		if (restAmount.isNegative())
 			throw new InsufficientMoneyException("");
 		return re;
 	}
