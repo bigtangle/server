@@ -57,17 +57,33 @@ public class LotteryRemoteTest {
 	@Test
 	public void lottery() throws Exception {
 
-		//proxy();
+		proxy();
 
 		for (int i = 0; i < 1; i++) {
-			usernumber = Math.abs(new Random().nextInt()) % 30;
-			winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 99 + "");
+			usernumber =10;
+			winnerAmount = new BigInteger(99 + "");
 
 			lotteryDo();
 			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
 		}
 	}
 
+	
+	@Test
+	public void paylist() throws Exception {
+
+		proxy();
+
+	Wallet	w = Wallet.fromKeys(networkParameters, 
+			 ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv))
+			 ); 
+		 w.setServerURL(contextRoot);
+		 
+	 w.payFromList(null, "1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5", Coin.valueOf(1234,USDTokenPub ), "test paylist");	
+	 
+	}
+
+	
 	private void proxy() {
 		System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
 		System.setProperty("https.proxyPort", "3128");
@@ -152,7 +168,7 @@ public class LotteryRemoteTest {
 		Wallet w = Wallet.fromKeys(networkParameters, key);
 		w.setServerURL(contextRoot);
 		try {
-			int satoshis = Math.abs(new Random().nextInt()) % 5 +1;
+			int satoshis = 10;
 			w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(USDTokenPub)),
 					" buy ticket");
 		} catch (Exception e) {

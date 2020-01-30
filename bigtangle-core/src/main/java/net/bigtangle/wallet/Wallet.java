@@ -2076,17 +2076,23 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, getSpendableUTXO(aesKey, tokenid));
 	}
 
-	public Block payFromList(KeyParameter aesKey, String destination, Coin amount, String memo, List<UTXO> coinList)
+	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo)
+			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+		return payFromList(aesKey, destination, amount, memo, getSpendableUTXO(aesKey, amount.getTokenid()));
+	}
+
+	
+	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo, List<UTXO> coinList)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 		// split the coinList into sub list, there is limit for transactions in a block
 		List<List<UTXO>> parts = chopped(coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
-		Block re = null;
+		List<Block> re = new ArrayList<Block>();
 		Coin restAmount = amount.negate();
 		for (int i = 0; i < parts.size(); i++) {
 			if (!restAmount.isPositive() ) {
 				amount = restAmount.negate();
 				restAmount = Coin.valueOf(0, restAmount.getTokenid());
-				re = payFromListNoSplit(aesKey, destination, amount, restAmount, memo, parts.get(i));
+				re.add(payFromListNoSplit(aesKey, destination, amount, restAmount, memo, parts.get(i)));
 			}
 		}
 		if (restAmount.isNegative())
@@ -2121,8 +2127,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				Json.jsonmapper().writeValueAsString(requestParam));
 		Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
 		rollingBlock.addTransaction(multispent);
-
-		return solveAndPost(rollingBlock);
+		return rollingBlock;
+		//return solveAndPost(rollingBlock);
 	}
 
 	// chops a list into non-view sublists of length L
