@@ -25,6 +25,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -56,7 +57,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -75,6 +75,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.SolidityState;
@@ -116,6 +117,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Autowired
     ServerConfiguration serverConfiguration;
 
+    @Autowired
+    private BlockService blockService;
+
     private void solidifyReward(Block block) throws BlockStoreException {
 
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
@@ -132,6 +136,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             chainlock.lock();
             try {
                 a = addChain(block, allowUnsolid, true);
+                updateConfirmed(1);
             } finally {
                 chainlock.unlock();
             }
@@ -353,7 +358,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         this.blockStore.updateVOSExecute(vosExecute_);
     }
 
-
     /**
      * Adds the specified block and all approved blocks to the confirmed set.
      * This will connect all transactions of the block by marking used UTXOs
@@ -363,7 +367,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param milestoneNumber
      * @throws BlockStoreException
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber) throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber)
+            throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -558,7 +563,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Set new orders confirmed
 
-        blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(),true);
+        blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(), true);
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
@@ -791,11 +796,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // If applicable: Disconnect all domain definitions that were based on
         // this domain
         Token token = blockStore.getTokenByBlockHash(block.getHash());
- 
-            List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getBlockHashHex());
-            for (String b : dependents) {
-                unconfirmRecursive(Sha256Hash.wrap(b), traversedBlockHashes);
-   
+
+        List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getBlockHashHex());
+        for (String b : dependents) {
+            unconfirmRecursive(Sha256Hash.wrap(b), traversedBlockHashes);
+
         }
     }
 
@@ -874,8 +879,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         OrderMatchingResult matchingResult = generateOrderMatching(block);
 
         // All consumed order records are now unspent by this block
-        Set<OrderRecord> updateOrder= new HashSet<OrderRecord>(matchingResult.getSpentOrders());
-        for (OrderRecord o :updateOrder) {
+        Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
+        for (OrderRecord o : updateOrder) {
             o.setSpent(false);
             o.setSpenderBlockHash(null);
         }
@@ -884,7 +889,6 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         // Set virtual outputs unconfirmed
         unconfirmVirtualCoinbaseTransaction(block);
 
-     
         blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
@@ -893,7 +897,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
         // Set own output unconfirmed
-        
+
         blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, false);
     }
 
@@ -1052,8 +1056,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 }
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
-                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,System.currentTimeMillis() / 1000);
-          
+                        Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
+                        System.currentTimeMillis() / 1000);
+
                 if (!newOut.isZero()) {
                     utxos.add(newOut);
                     if (script.isSentToMultiSig()) {
@@ -1303,7 +1308,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         TransactionInput input = new TransactionInput(networkParameters, tx, Script
                 .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
-        tx.setMemo( new MemoInfo("Order Payout"));
+        tx.setMemo(new MemoInfo("Order Payout"));
         return tx;
     }
 
@@ -1469,7 +1474,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 spentOrders.add(order);
 
             } else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
-                OrderCancelInfo info = new OrderCancelInfo().parseChecked(b.getBlock().getTransactions().get(0).getData());
+                OrderCancelInfo info = new OrderCancelInfo()
+                        .parseChecked(b.getBlock().getTransactions().get(0).getData());
                 cancels.add(info);
             }
         }
@@ -1684,6 +1690,35 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return hashes;
         } finally {
             chainlock.unlock();
+        }
+    }
+
+    private void updateConfirmed(int numberUpdates) throws BlockStoreException {
+        // First remove any blocks that should no longer be in the milestone
+        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+        for (BlockEvaluation block : blocksToRemove)
+            unconfirm(block.getBlockHash(), traversedUnconfirms);
+
+        long cutoffHeight = blockService.getCurrentCutoffHeight();
+        long maxHeight = blockService.getCurrentMaxHeight();
+        for (int i = 0; i < numberUpdates; i++) {
+            // Now try to find blocks that can be added to the milestone.
+            // DISALLOWS UNSOLID
+            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
+
+            // VALIDITY CHECKS
+            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);
+
+            // Finally add the resolved new blocks to the confirmed set
+            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+            for (BlockWrap block : blocksToAdd)
+                confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1);
+
+            // Exit condition: there are no more blocks to add
+            if (blocksToAdd.isEmpty())
+                break;
+
         }
     }
 }

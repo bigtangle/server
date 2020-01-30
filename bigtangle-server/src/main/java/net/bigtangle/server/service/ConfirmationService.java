@@ -52,7 +52,7 @@ public class ConfirmationService {
 
         try {
             Stopwatch watch = Stopwatch.createStarted();
-            update();
+           // update();
             log.info("ConfirmationService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("ConfirmationService ", e);
