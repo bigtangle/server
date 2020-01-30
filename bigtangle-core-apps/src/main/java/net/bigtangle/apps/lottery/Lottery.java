@@ -75,8 +75,11 @@ public class Lottery {
 
         winner = userAddress.get(se.nextInt(userAddress.size()));
 
-        Block b = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+        List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+      
+		for(Block b:bl) { 
         log.debug("block " + (b == null ? "block is null" : b.toString()));
+        }
         
     }
 
@@ -145,7 +148,7 @@ public class Lottery {
     /*
      * TODO To enable parallel payment, we should use different from address
      */
-    public synchronized Block batchGiveMoneyToECKeyList( String address, BigInteger amount, String memo,
+    public synchronized List<Block> batchGiveMoneyToECKeyList( String address, BigInteger amount, String memo,
             List<UTXO> userlist)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
     	
