@@ -75,8 +75,12 @@ public class Lottery {
 
         winner = userAddress.get(se.nextInt(userAddress.size()));
 
+        log.debug("winner " + winner + " user: " + userAddress);
+        
         List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
-      
+        if(bl.isEmpty()) {
+            log.error("payment of winner is failed");
+        }
 		for(Block b:bl) { 
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         }

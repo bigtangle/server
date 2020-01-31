@@ -1770,8 +1770,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 }
             }
 
-            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-                    value.toString(), req.feePerKb.toString());
+        //    log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
+        //            value.toString(), req.feePerKb.toString());
 
             // If any inputs have already been added, we don't need to get their
             // value from wallet
@@ -1825,7 +1825,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             // completed.
             // req.tx.setMemo(req.memo);
             req.completed = true;
-            log.info("  completed: {}", req.tx);
+            //log.info("  completed: {}", req.tx);
         } finally {
             lock.unlock();
         }
@@ -1856,7 +1856,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
-                log.info("  with {} change", bestChangeOutput.getValue().toString());
+               // log.info("  with {} change", bestChangeOutput.getValue().toString());
             }
         }
     }
@@ -2105,26 +2105,36 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo,
             List<UTXO> coinList)
+                    throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+        return payFromList(aesKey, destination, amount, memo, coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
+    }
+    
+    
+    public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo,
+            List<UTXO> coinList, int split)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         // split the coinList into sub list, there is limit for transactions in
         // a block
-        List<List<UTXO>> parts = chopped(coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
-        List<Block> re = new ArrayList<Block>(); 
+        Coin sum = sum(coinList);
+        if (sum.compareTo(amount) < 0)
+            throw new InsufficientMoneyException("to pay " + amount + " account sum: " + sum);
+        List<List<UTXO>> parts = chopped(coinList, split);
+        // NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
+        List<Block> re = new ArrayList<Block>();
         Coin payAmount = amount;
+        byte[] data = getTipData();
         for (int i = 0; i < parts.size(); i++) {
             Coin canPay = sum(parts.get(i));
+            re.add(payFromListNoSplit(aesKey, destination, canPay, memo, parts.get(i),
+                    params.getDefaultSerializer().makeBlock(data)));
             if (canPay.compareTo(payAmount) >= 0) {
-                re.add(payFromListNoSplit(aesKey, destination, canPay, memo, parts.get(i)));
-                payAmount = payAmount.subtract(canPay);
                 break;
-            } else {
-                re.add(payFromListNoSplit(aesKey, destination, canPay, memo, parts.get(i)));
-                payAmount = payAmount.subtract(canPay);
-            } 
+            }
+            payAmount = payAmount.subtract(canPay);
         }
-        if (payAmount.isPositive())
-            throw new InsufficientMoneyException("");
-        for(Block block: re) {
+
+        for (Block block : re) {
+            log.debug(" "+ block.toString());
             solveAndPost(block);
         }
         return re;
@@ -2141,7 +2151,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // List<UTXO> coinList may not pay the amount, the rest to be paid is
     // restAmount
     public Block payFromListNoSplit(KeyParameter aesKey, String destination, Coin amount, String memo,
-            List<UTXO> coinList)
+            List<UTXO> coinList, Block tipBlock)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
         Transaction multispent = new Transaction(params);
@@ -2155,20 +2165,27 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             restAmount = spendableOutput.getValue().add(restAmount);
             multispent.addInput(u.getBlockHash(), spendableOutput);
             if (!restAmount.isNegative()) {
+                if(restAmount.isPositive()) {
                 multispent.addOutput(restAmount, beneficiary);
+                }
                 break;
             }
         }
-
         signTransaction(multispent, aesKey);
+        tipBlock.addTransaction(multispent);
+        
+        return tipBlock;
+ 
+    }
 
+    private Block getTip() throws IOException, JsonProcessingException {
+        return params.getDefaultSerializer().makeBlock(getTipData());
+    }
+
+    private byte[] getTipData() throws IOException, JsonProcessingException {
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+        return OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
                 Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(multispent);
-        return rollingBlock;
-        // return solveAndPost(rollingBlock);
     }
 
     // chops a list into non-view sublists of length L
@@ -2422,11 +2439,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         byte[] buf1 = party1Signature.encodeToDER();
         tx.setDataSignature(buf1);
 
-        // Create block with order
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = params.getDefaultSerializer().makeBlock(data);
+        Block block = getTip();
 
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
@@ -2487,11 +2500,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             List<TransactionOutput> candidates)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        Block block = params.getDefaultSerializer().makeBlock(data);
+        Block block = getTip();
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
@@ -2506,11 +2515,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        Block block = params.getDefaultSerializer().makeBlock(data);
+        Block block = getTip();
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
@@ -2525,11 +2530,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        Block block = params.getDefaultSerializer().makeBlock(data);
+        Block block = getTip();
 
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;

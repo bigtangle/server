@@ -524,10 +524,9 @@ public class DispatcherController {
             default:
                 break;
             }
-        } catch (BlockStoreException e) {
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
-                    bodyByte.length);
-            logger.error("", e);
+        } catch (BlockStoreException e) { 
+            logger.error("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                    bodyByte.length, e);
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
@@ -541,10 +540,7 @@ public class DispatcherController {
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp);
         } catch (Throwable exception) {
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
-                    bodyByte.length);
-            logger.error("", exception);
-            logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte));
+            logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, bodyByte.length, exception);
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
             exception.printStackTrace(new PrintWriter(sw));

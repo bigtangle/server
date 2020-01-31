@@ -37,42 +37,44 @@ import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
- 
 public class LotteryTests extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
-    int usernumber =  Math.abs( new Random().nextInt())% 88;
-    BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt())% 9999+"");
-    
+    int usernumber = Math.abs(new Random().nextInt()) % 88;
+    BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
+
     private ECKey accountKey;
-    
+
     protected static final Logger log = LoggerFactory.getLogger(LotteryTests.class);
+
     @Test
     public void lottery() throws Exception {
-        for(int i=0; i<1;i++) {
-              usernumber =  Math.abs( new Random().nextInt())% 88;
-              winnerAmount = new BigInteger(Math.abs(new Random().nextInt())% 9999+"");
+        for (int i = 0; i < 18; i++) {
+            usernumber = Math.abs(new Random().nextInt()) % 88;
+            winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 
             lotteryDo();
-            log.debug("done iteration " +i + "usernumber=" +usernumber +" winnerAmount="+ winnerAmount );
+            log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
         }
     }
+
     public void lotteryDo() throws Exception {
         walletAppKit1.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-        accountKey= new ECKey();
+        accountKey = new ECKey();
         walletAppKit1.wallet().importKey(accountKey);
         testTokens();
         createUserPay(accountKey);
-        sendEmpty(10);
-        mcmcService.update();
-        confirmationService.update();
+        mcmc();
         Lottery startLottery = startLottery();
-        while(!startLottery.isMacthed()) {
+        while (!startLottery.isMacthed()) {
             createUserPay(accountKey);
             startLottery = startLottery();
         }
+        mcmc();
+        mcmc();
+        mcmc();
         checkResult(startLottery);
     }
 
@@ -82,37 +84,43 @@ public class LotteryTests extends AbstractIntegrationTest {
         startLottery.setTokenid(yuanTokenPub);
         startLottery.setCONTEXT_ROOT(contextRoot);
         startLottery.setParams(networkParameters);
-        startLottery.setWalletAdmin( walletAppKit1.wallet()); 
+        startLottery.setWalletAdmin(walletAppKit1.wallet());
         startLottery.setWinnerAmount(winnerAmount);
         startLottery.setAccountKey(accountKey);
         startLottery.start();
-    
-        sendEmpty(10);
-        mcmcService.update();
-        confirmationService.update();
-     return startLottery;
+
+        mcmc();
+        return startLottery;
     }
 
     private void checkResult(Lottery startLottery) throws Exception {
         Coin coin = new Coin(startLottery.sum(), yuanTokenPub);
 
         List<UTXO> users = getBalance(startLottery.getWinner());
-        UTXO myutxo = null;
+
+        Coin sum = Coin.valueOf(0, Utils.HEX.decode(yuanTokenPub));
         for (UTXO u : users) {
-            if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue().equals(u.getValue().getValue())) {
-                myutxo = u;
-                break;
+            if (coin.getTokenHex().equals(u.getTokenId())
+                    && u.getFromaddress().equals(accountKey.toAddress(networkParameters).toBase58())) {
+                sum = sum.add(u.getValue());
+
             }
         }
-        assertTrue(myutxo != null);
-        assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
-        log.debug(myutxo.toString());
+
+        assertTrue(sum != null);
+        if(startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) 
+        {
+            log.debug(sum.toString());
+        }
+        assertTrue(" "+ startLottery.getWinnerAmount()+ " sum="+sum.getValue(),
+                startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
+        
     }
 
     private void createUserPay(ECKey accountKey) throws Exception {
         List<ECKey> ulist = payKeys();
         for (ECKey key : ulist) {
-            buyTicket(key,accountKey);
+            buyTicket(key, accountKey);
         }
     }
 
@@ -120,12 +128,13 @@ public class LotteryTests extends AbstractIntegrationTest {
      * pay money to the key and use the key to buy lottery
      */
     public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
-        Wallet w =   Wallet.fromKeys(networkParameters,key);
+        Wallet w = Wallet.fromKeys(networkParameters, key);
         w.setServerURL(contextRoot);
         try {
-        int satoshis = Math.abs(new Random().nextInt())% 1000 ;
-        w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), " buy ticket");
-        }catch (InsufficientMoneyException e) {
+            int satoshis = Math.abs(new Random().nextInt()) % 1000;
+            w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),
+                    " buy ticket");
+        } catch (InsufficientMoneyException e) {
             // TODO: handle exception
         }
     }
@@ -140,13 +149,18 @@ public class LotteryTests extends AbstractIntegrationTest {
             userkeys.add(key);
         }
 
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "",
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user",
                 3, 20000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
-        sendEmpty(usernumber);
+        mcmc();
+        return userkeys;
+    }
+
+    private void mcmc()
+            throws JsonProcessingException, Exception, InterruptedException, ExecutionException, BlockStoreException {
+        sendEmpty(5);
         mcmcService.update();
         confirmationService.update();
-        return userkeys;
     }
 
     public void testTokens() throws JsonProcessingException, Exception {
@@ -155,9 +169,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
                 winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000l)));
-        sendEmpty(10);
-        mcmcService.update();
-        confirmationService.update();
+        mcmc();
     }
 
     public Address getAddress() {
@@ -181,7 +193,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         }
 
     }
-    
+
     // get balance for the walletKeys
     protected List<UTXO> getBalance(String address) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
