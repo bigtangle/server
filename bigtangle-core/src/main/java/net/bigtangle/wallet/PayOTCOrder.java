@@ -63,6 +63,15 @@ public class PayOTCOrder {
     private KeyParameter aesKey = null;
     private boolean sellFlag;
 
+    public PayOTCOrder(KeyParameter aesKey, Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
+        this.wallet = wallet;
+        this.orderid = orderid;
+        this.serverURL = serverURL;
+        this.marketURL = marketURL;
+        this.loadExchangeInfo();
+        this.aesKey=  aesKey;
+    }
+
     public PayOTCOrder(Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
         this.wallet = wallet;
         this.orderid = orderid;
