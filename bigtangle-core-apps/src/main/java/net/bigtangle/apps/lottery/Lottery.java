@@ -32,11 +32,12 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.UtilSort;
 import net.bigtangle.wallet.Wallet;
 
 public class Lottery {
 
-     private static final Logger log = LoggerFactory.getLogger(Lottery.class);
+    private static final Logger log = LoggerFactory.getLogger(Lottery.class);
     private String tokenid;
     public String context_root = "http://localhost:8088/";
     private Wallet walletAdmin;
@@ -46,14 +47,17 @@ public class Lottery {
     private BigInteger winnerAmount;
     private boolean macthed;
     private ECKey accountKey;
+
     /*
      * start check balance and check to X amount and collect all user in lottery
      * list of (each ticket, address) compute random selection of winner pay to
      * winner address
      */
     public void start() throws Exception {
-      //  ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
+        // ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
         List<UTXO> player = getBalance(accountKey);
+        // TODO 100 millions
+        new UtilSort().sortUTXO(player);
         userUtxos = new ArrayList<UTXO>();
         if (canTakeWinner(player, userUtxos)) {
             doTakeWinner();
@@ -76,15 +80,15 @@ public class Lottery {
         winner = userAddress.get(se.nextInt(userAddress.size()));
 
         log.debug("winner " + winner + " user: " + userAddress);
-        
+
         List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
-        if(bl.isEmpty()) {
+        if (bl.isEmpty()) {
             log.error("payment of winner is failed");
         }
-		for(Block b:bl) { 
-        log.debug("block " + (b == null ? "block is null" : b.toString()));
+        for (Block b : bl) {
+            log.debug("block " + (b == null ? "block is null" : b.toString()));
         }
-        
+
     }
 
     /*
@@ -133,7 +137,11 @@ public class Lottery {
         return sum;
     }
 
-    private boolean canTakeWinner(List<UTXO> player,   List<UTXO> userlist) {
+    /*
+     * condition for execute the lottery 1) no other pending payment 2) can do
+     * the send failed block again 3) the sum is ok
+     */
+    private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
 
         BigInteger sum = BigInteger.ZERO;
         for (UTXO u : player) {
@@ -141,23 +149,22 @@ public class Lottery {
                 sum = sum.add(u.getValue().getValue());
                 userlist.add(u);
                 if (sum.compareTo(winnerAmount) >= 0) {
-                    return macthed= true;
+                    return macthed = true;
                 }
             }
         }
-        return macthed=false;
+        return macthed = false;
 
     }
 
     /*
      * TODO To enable parallel payment, we should use different from address
      */
-    public synchronized List<Block> batchGiveMoneyToECKeyList( String address, BigInteger amount, String memo,
+    public synchronized List<Block> batchGiveMoneyToECKeyList(String address, BigInteger amount, String memo,
             List<UTXO> userlist)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
-    	
-        return walletAdmin.payFromList(null, address , new Coin(amount,Utils.HEX.decode(tokenid)), memo,
-                userlist);
+
+        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, userlist);
 
     }
 
@@ -175,10 +182,11 @@ public class Lottery {
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-        // String response = mvcResult.getResponse().getContentAsString();
+        // no pending utxo
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (utxo.getValue().getValue().signum() > 0) {
-                listUTXO.add(utxo);
+                if (!utxo.isSpendPending())
+                    listUTXO.add(utxo);
             }
         }
 
@@ -216,13 +224,12 @@ public class Lottery {
     }
 
     public Wallet getWalletAdmin() {
-    	  return walletAdmin;
-     }
+        return walletAdmin;
+    }
 
     public void setWalletAdmin(Wallet walletAdmin) {
         this.walletAdmin = walletAdmin;
-    }    
- 
+    }
 
     public String getContext_root() {
         return context_root;

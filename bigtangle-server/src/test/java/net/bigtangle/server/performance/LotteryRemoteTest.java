@@ -47,7 +47,7 @@ public class LotteryRemoteTest {
 	int usernumber =88;
 	BigInteger winnerAmount = new BigInteger(  99 + "");
 	Wallet wallet;
-	public static String contextRoot = "https://test.bigtangle.de/";
+	public static String contextRoot = "https://test.bigtangle.info:8089/";
 	private ECKey accountKey;
 
 	protected static final Logger log = LoggerFactory.getLogger(LotteryRemoteTest.class);
@@ -55,7 +55,7 @@ public class LotteryRemoteTest {
 	@Test
 	public void lottery() throws Exception {
 
-		proxy();
+	//	proxy();
 
 		for (int i = 0; i < 1; i++) {
 			usernumber =10;
@@ -67,7 +67,7 @@ public class LotteryRemoteTest {
 	}
 
 	
-	@Test
+	//@Test
 	public void paylist() throws Exception {
 
 		proxy();
@@ -119,20 +119,28 @@ public class LotteryRemoteTest {
 	}
 
 	private void checkResult(Lottery startLottery) throws Exception {
+        sendEmpty(5);
 		Coin coin = new Coin(startLottery.sum(), USDTokenPub);
 
 		List<UTXO> users = getBalance(startLottery.getWinner());
-		UTXO myutxo = null;
-		for (UTXO u : users) {
-			if (coin.getTokenHex().equals(u.getTokenId()) && coin.getValue().equals(u.getValue().getValue())) {
-				myutxo = u;
-				break;
-			}
-		}
-		assertTrue(myutxo != null);
-		assertTrue(myutxo.getAddress() != null && !myutxo.getAddress().isEmpty());
-		log.debug(myutxo.toString());
-	}
+		  Coin sum = Coin.valueOf(0, Utils.HEX.decode(USDTokenPub));
+
+		  for (UTXO u : users) {
+	            if (coin.getTokenHex().equals(u.getTokenId())
+	                    && u.getFromaddress().equals(accountKey.toAddress(networkParameters).toBase58())) {
+	                sum = sum.add(u.getValue());
+
+	            }
+	        }
+
+	        assertTrue(sum != null);
+	        if(startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) 
+	        {
+	            log.debug(sum.toString());
+	        }
+	        assertTrue(" "+ startLottery.getWinnerAmount()+ " sum="+sum.getValue(),
+	                startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
+	 	}
 
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
@@ -159,6 +167,31 @@ public class LotteryRemoteTest {
 		}
 	}
 
+    public void sendEmpty(int c) throws JsonProcessingException, Exception {
+
+        for (int i = 0; i < c; i++) {
+            try {
+                send();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void send() throws JsonProcessingException, Exception {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+
+    }
 	/*
 	 * pay money to the key and use the key to buy lottery
 	 */

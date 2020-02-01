@@ -489,7 +489,7 @@ public class SyncBlockService {
                     mylist.add(t);
                 }
             } 
-            Collections.sort(mylist, new SortbyChain());
+           
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());

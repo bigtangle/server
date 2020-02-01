@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1506,7 +1507,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (selection3 == null && selection2 == null && selection1 == null) {
             checkNotNull(valueMissing);
-            log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
+           // log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
             throw new InsufficientMoneyException(valueMissing.toString());
         }
 
@@ -2815,6 +2816,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         return params.getDefaultSerializer().makeBlock(data);
     }
+
+    
 
     /*
      * if a block is failed due to rating without conflict, it can be saved by
