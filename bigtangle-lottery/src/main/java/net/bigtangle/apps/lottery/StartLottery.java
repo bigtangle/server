@@ -39,7 +39,7 @@ public class StartLottery {
         startLottery.setAccountKey(ECKey.fromPrivate(Utils.HEX.decode(args[1])));
         startLottery.setParams(params);
         startLottery.setTokenid(tokenid);
-        startLottery.setWinnerAmount(new BigInteger("1000"));
+        startLottery.setWinnerAmount(new BigInteger(args[2]));
 
         while (true) {
             startLottery.start();
