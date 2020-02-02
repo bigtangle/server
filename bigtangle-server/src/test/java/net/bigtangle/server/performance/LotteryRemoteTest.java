@@ -32,140 +32,145 @@ import net.bigtangle.wallet.Wallet;
 
 public class LotteryRemoteTest {
 
-	private NetworkParameters networkParameters =TestParams.get();
+    private NetworkParameters networkParameters = TestParams.get();
 
-	// 1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5
-	public static String USDTokenPub = "02fbef0f3e1344f548abb7d4b6a799e372d2310ff13fe023b3ba0446f2e3f58e04";
-	public static String USDTokenPriv = "6fb4cb30d593536e3c54ac17bfaa311cb0e2bdf219c89483aa8d7185f6c5c3b7";
+    // 1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5
+    public static String USDTokenPub = "02fbef0f3e1344f548abb7d4b6a799e372d2310ff13fe023b3ba0446f2e3f58e04";
+    public static String USDTokenPriv = "6fb4cb30d593536e3c54ac17bfaa311cb0e2bdf219c89483aa8d7185f6c5c3b7";
 
-	
     // 1GZH9mf9w9K3nc58xR3dpTJUuJdiLnuwdW
     public static String ETHTokenPub = "02b8b21c6341872dda1f3a4f26d0d887283ad99f342d1dc35552db39c830919722";
     public static String ETHTokenPriv = "9eac170431a4c8cb188610cea2d40a3db5f656db5b52c0ac5aa9aa3a3fa8366f";
 
+    int usernumber = 88;
+    BigInteger winnerAmount = new BigInteger(99 + "");
+    long payamount = 10;
+    Wallet wallet;
+    public static String contextRoot = "https://test.bigtangle.info:8089/";
+    private ECKey accountKey;
+
+    protected static final Logger log = LoggerFactory.getLogger(LotteryRemoteTest.class);
+
+    @Test
+    public void pay() throws Exception {
+ 
+        wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
+        wallet.importKey(accountKey);
+        wallet.setServerURL(contextRoot);
+
+        // testTokens();
+        createUserPay(accountKey);
+    }
     
-	int usernumber =88;
-	BigInteger winnerAmount = new BigInteger(  99 + "");
-	Wallet wallet;
-	public static String contextRoot = "https://test.bigtangle.info:8089/";
-	private ECKey accountKey;
+//    @Test
+    public void lottery() throws Exception {
 
-	protected static final Logger log = LoggerFactory.getLogger(LotteryRemoteTest.class);
+        // proxy();
 
-	@Test
-	public void lottery() throws Exception {
+        for (int i = 0; i < 1; i++) {
+            usernumber = 10;
+            winnerAmount = new BigInteger(99 + "");
 
-	//	proxy();
+            lotteryDo();
+            log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
+        }
+    }
 
-		for (int i = 0; i < 1; i++) {
-			usernumber =10;
-			winnerAmount = new BigInteger(99 + "");
+    // @Test
+    public void paylist() throws Exception {
 
-			lotteryDo();
-			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
-		}
-	}
+        proxy();
 
-	
-	//@Test
-	public void paylist() throws Exception {
+        Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+        w.setServerURL(contextRoot);
 
-		proxy();
+        w.payFromList(null, "1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5", Coin.valueOf(1234, USDTokenPub), "test paylist");
 
-	Wallet	w = Wallet.fromKeys(networkParameters, 
-			 ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv))
-			 ); 
-		 w.setServerURL(contextRoot);
-		 
-	 w.payFromList(null, "1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5", Coin.valueOf(1234,USDTokenPub ), "test paylist");	
-	 
-	}
+    }
 
-	
-	private void proxy() {
-		System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
-		System.setProperty("https.proxyPort", "3128");
-	}
+    private void proxy() {
+        System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+        System.setProperty("https.proxyPort", "3128");
+    }
 
-	public void lotteryDo() throws Exception {
-		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
-		accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
-		wallet.importKey(accountKey);
-		wallet.setServerURL(contextRoot);
-	 
-		// testTokens();
-		createUserPay(accountKey);
+    public void lotteryDo() throws Exception {
+        wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+        accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
+        wallet.importKey(accountKey);
+        wallet.setServerURL(contextRoot);
 
-		Lottery startLottery = startLottery();
-		while (!startLottery.isMacthed()) {
-			createUserPay(accountKey);
-			startLottery = startLottery();
-		}
-		checkResult(startLottery);
-	}
+        // testTokens();
+        createUserPay(accountKey);
 
-	private Lottery startLottery()
-			throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
-		Lottery startLottery = new Lottery();
-		startLottery.setTokenid(USDTokenPub);
-		startLottery.setCONTEXT_ROOT(contextRoot);
-		startLottery.setParams(networkParameters);
-		startLottery.setWalletAdmin(wallet);
-		startLottery.setWinnerAmount(winnerAmount);
-		startLottery.setAccountKey(accountKey);
-		startLottery.start();
+        Lottery startLottery = startLottery();
+        while (!startLottery.isMacthed()) {
+            createUserPay(accountKey);
+            startLottery = startLottery();
+        }
+        checkResult(startLottery);
+    }
 
-		return startLottery;
-	}
+    private Lottery startLottery()
+            throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
+        Lottery startLottery = new Lottery();
+        startLottery.setTokenid(USDTokenPub);
+        startLottery.setContextRoot(contextRoot);
+        startLottery.setParams(networkParameters);
+        startLottery.setWinnerAmount(winnerAmount);
+        startLottery.setAccountKey(accountKey);
+        startLottery.start();
 
-	private void checkResult(Lottery startLottery) throws Exception {
+        return startLottery;
+    }
+
+    private void checkResult(Lottery startLottery) throws Exception {
         sendEmpty(5);
-		Coin coin = new Coin(startLottery.sum(), USDTokenPub);
+        Coin coin = new Coin(startLottery.sum(), USDTokenPub);
 
-		List<UTXO> users = getBalance(startLottery.getWinner());
-		  Coin sum = Coin.valueOf(0, Utils.HEX.decode(USDTokenPub));
+        List<UTXO> users = getBalance(startLottery.getWinner());
+        Coin sum = Coin.valueOf(0, Utils.HEX.decode(USDTokenPub));
 
-		  for (UTXO u : users) {
-	            if (coin.getTokenHex().equals(u.getTokenId())
-	                    && u.getFromaddress().equals(accountKey.toAddress(networkParameters).toBase58())) {
-	                sum = sum.add(u.getValue());
+        for (UTXO u : users) {
+            if (coin.getTokenHex().equals(u.getTokenId())
+                    && u.getFromaddress().equals(accountKey.toAddress(networkParameters).toBase58())) {
+                sum = sum.add(u.getValue());
 
-	            }
-	        }
+            }
+        }
 
-	        assertTrue(sum != null);
-	        if(startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) 
-	        {
-	            log.debug(sum.toString());
-	        }
-	        assertTrue(" "+ startLottery.getWinnerAmount()+ " sum="+sum.getValue(),
-	                startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
-	 	}
+        assertTrue(sum != null);
+        if (startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) {
+            log.debug(sum.toString());
+        }
+        assertTrue(" " + startLottery.getWinnerAmount() + " sum=" + sum.getValue(),
+                startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
+    }
 
-	// get balance for the walletKeys
-	protected List<UTXO> getBalance(String address) throws Exception {
-		List<UTXO> listUTXO = new ArrayList<UTXO>();
-		List<String> keyStrHex000 = new ArrayList<String>();
+    // get balance for the walletKeys
+    protected List<UTXO> getBalance(String address) throws Exception {
+        List<UTXO> listUTXO = new ArrayList<UTXO>();
+        List<String> keyStrHex000 = new ArrayList<String>();
 
-		keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
-		String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
-				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+        keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-		for (UTXO utxo : getBalancesResponse.getOutputs()) {
-			listUTXO.add(utxo);
-		}
+        for (UTXO utxo : getBalancesResponse.getOutputs()) {
+            listUTXO.add(utxo);
+        }
 
-		return listUTXO;
-	}
+        return listUTXO;
+    }
 
-	private void createUserPay(ECKey accountKey) throws Exception {
-		List<ECKey> ulist = payKeys();
-		for (ECKey key : ulist) {
-			buyTicket(key, accountKey);
-		}
-	}
+    private void createUserPay(ECKey accountKey) throws Exception {
+        List<ECKey> ulist = payKeys();
+        for (ECKey key : ulist) {
+            buyTicket(key, accountKey);
+        }
+    }
 
     public void sendEmpty(int c) throws JsonProcessingException, Exception {
 
@@ -192,35 +197,39 @@ public class LotteryRemoteTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
     }
-	/*
-	 * pay money to the key and use the key to buy lottery
-	 */
-	public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
-		Wallet w = Wallet.fromKeys(networkParameters, key);
-		w.setServerURL(contextRoot);
-		try {
-			int satoshis = 10;
-			w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(USDTokenPub)),
-					" buy ticket");
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
 
-	public List<ECKey> payKeys() throws Exception {
-		List<ECKey> userkeys = new ArrayList<ECKey>();
-		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+    /*
+     * pay money to the key and use the key to buy lottery
+     */
+    public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
+        Wallet w = Wallet.fromKeys(networkParameters, key);
+        w.setServerURL(contextRoot);
+        try {
 
-		for (int i = 0; i < usernumber; i++) {
-			ECKey key = new ECKey();
-			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue() );
-			userkeys.add(key);
-		}
+            w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(payamount, Utils.HEX.decode(USDTokenPub)),
+                    " buy ticket");
+        } catch (Exception e) {
+            // TODO: handle exception
+            log.debug("", e);
+        }
+    }
 
-		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), " pay to user ", 3, 20000);
-		log.debug("block " + (b == null ? "block is null" : b.toString()));
-	
-		return userkeys;
-	}
+    public List<ECKey> payKeys() throws Exception {
+        List<ECKey> userkeys = new ArrayList<ECKey>();
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+
+        for (int i = 0; i < usernumber; i++) {
+            ECKey key = new ECKey();
+            giveMoneyResult.put(key.toAddress(networkParameters).toString(),
+                   payamount );
+            userkeys.add(key);
+        }
+
+        Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), " pay to user ", 3,
+                20000);
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        return userkeys;
+    }
 
 }

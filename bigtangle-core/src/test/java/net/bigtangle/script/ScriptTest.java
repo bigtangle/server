@@ -99,6 +99,11 @@ public class ScriptTest {
     }
 
     @Test
+    public void  testAddress() {
+      log.debug( new Address(MainNetParams.get(), Utils.HEX.decode("bcdb06ac26dcdadb3b17859d14cf45ca285be9b9")).toString());
+    }
+    
+    @Test
     public void testMultiSig() throws Exception {
         List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
         assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());

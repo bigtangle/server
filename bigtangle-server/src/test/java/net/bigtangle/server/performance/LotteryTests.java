@@ -32,6 +32,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.utils.OkHttp3Util;
@@ -82,9 +83,9 @@ public class LotteryTests extends AbstractIntegrationTest {
             throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
         Lottery startLottery = new Lottery();
         startLottery.setTokenid(yuanTokenPub);
-        startLottery.setCONTEXT_ROOT(contextRoot);
+        startLottery.setContextRoot(contextRoot);
         startLottery.setParams(networkParameters);
-        startLottery.setWalletAdmin(walletAppKit1.wallet());
+ 
         startLottery.setWinnerAmount(winnerAmount);
         startLottery.setAccountKey(accountKey);
         startLottery.start();
@@ -211,4 +212,5 @@ public class LotteryTests extends AbstractIntegrationTest {
 
         return listUTXO;
     }
+ 
 }

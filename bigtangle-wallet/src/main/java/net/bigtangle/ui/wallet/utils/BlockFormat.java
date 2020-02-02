@@ -26,7 +26,7 @@ public class BlockFormat {
         if (block.getTransactions() != null && block.getTransactions().size() > 0) {
             s.append("   ").append(block.getTransactions().size()).append(" " + Main.getText("transaction") + ":\n");
             for (Transaction tx : block.getTransactions()) {
-                s.append(transaction2string(tx));
+                s.append(transaction2string(tx,params));
             }
         }
         s.append("   " + Main.getText("version") + ": ").append(block.getVersion());
@@ -79,7 +79,7 @@ public class BlockFormat {
 
     }
 
-    public static String transaction2string(Transaction transaction) {
+    public static String transaction2string(Transaction transaction, NetworkParameters params) {
         StringBuilder s = new StringBuilder();
         s.append("  ").append(transaction.getHashAsString()).append('\n');
 
@@ -147,6 +147,8 @@ public class BlockFormat {
             try {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
                 s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "");
+                s.append("\n ");
+                s.append(" address: ").append(out.getScriptPubKey().getToAddress(params)).append("\n");
                 s.append("\n ");
                 s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {

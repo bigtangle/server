@@ -39,7 +39,7 @@ public class Lottery {
 
     private static final Logger log = LoggerFactory.getLogger(Lottery.class);
     private String tokenid;
-    public String context_root = "http://localhost:8088/";
+    private String contextRoot = "http://localhost:8088/";
     private Wallet walletAdmin;
     private NetworkParameters params;
     private String winner;
@@ -47,7 +47,7 @@ public class Lottery {
     private BigInteger winnerAmount;
     private boolean macthed;
     private ECKey accountKey;
-
+    List<String> userAddress;
     /*
      * start check balance and check to X amount and collect all user in lottery
      * list of (each ticket, address) compute random selection of winner pay to
@@ -55,8 +55,10 @@ public class Lottery {
      */
     public void start() throws Exception {
         // ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
+        walletAdmin = Wallet.fromKeys(params, accountKey);
+        walletAdmin.setServerURL(contextRoot);
         List<UTXO> player = getBalance(accountKey);
-        // TODO 100 millions
+        // TODO 100 millions raw
         new UtilSort().sortUTXO(player);
         userUtxos = new ArrayList<UTXO>();
         if (canTakeWinner(player, userUtxos)) {
@@ -67,10 +69,10 @@ public class Lottery {
     private void doTakeWinner() throws Exception {
         Token t = walletAdmin.checkTokenId(tokenid);
 
-        List<String> userAddress = baseList(userUtxos, t);
+         userAddress = baseList(userUtxos, t);
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] buf = OkHttp3Util.postAndGetBlock(context_root + ReqCmd.getTip.name(),
+        byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block r1 = params.getDefaultSerializer().makeBlock(buf);
         // Deterministic randomization
@@ -79,7 +81,7 @@ public class Lottery {
 
         winner = userAddress.get(se.nextInt(userAddress.size()));
 
-        log.debug("winner " + winner + " user: " + userAddress);
+        log.debug("winner " + winner +" sum ="+sum()+ " \n user address size: " + userAddress.size());
 
         List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
         if (bl.isEmpty()) {
@@ -153,13 +155,11 @@ public class Lottery {
                 }
             }
         }
+        log.debug(" sum= " + sum);
         return macthed = false;
 
     }
 
-    /*
-     * TODO To enable parallel payment, we should use different from address
-     */
     public synchronized List<Block> batchGiveMoneyToECKeyList(String address, BigInteger amount, String memo,
             List<UTXO> userlist)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
@@ -177,14 +177,14 @@ public class Lottery {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.post(context_root + ReqCmd.getBalances.name(),
+        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
         // no pending utxo
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
-            if (utxo.getValue().getValue().signum() > 0) {
+            if (utxo.getValue().getValue().signum() > 0 || utxo.getTokenId().equals(tokenid)) {
                 if (!utxo.isSpendPending())
                     listUTXO.add(utxo);
             }
@@ -207,14 +207,7 @@ public class Lottery {
         this.tokenid = tokenid;
     }
 
-    public String getCONTEXT_ROOT() {
-        return context_root;
-    }
-
-    public void setCONTEXT_ROOT(String cONTEXT_ROOT) {
-        context_root = cONTEXT_ROOT;
-    }
-
+  
     public NetworkParameters getParams() {
         return params;
     }
@@ -223,20 +216,12 @@ public class Lottery {
         this.params = params;
     }
 
-    public Wallet getWalletAdmin() {
-        return walletAdmin;
-    }
-
-    public void setWalletAdmin(Wallet walletAdmin) {
-        this.walletAdmin = walletAdmin;
-    }
-
     public String getContext_root() {
-        return context_root;
+        return contextRoot;
     }
 
     public void setContext_root(String context_root) {
-        this.context_root = context_root;
+        this.contextRoot = context_root;
     }
 
     public String getWinner() {
@@ -249,6 +234,14 @@ public class Lottery {
 
     public List<UTXO> getUserUtxos() {
         return userUtxos;
+    }
+
+    public String getContextRoot() {
+        return contextRoot;
+    }
+
+    public void setContextRoot(String contextRoot) {
+        this.contextRoot = contextRoot;
     }
 
     public void setUserUtxos(List<UTXO> userUtxos) {
