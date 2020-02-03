@@ -4,6 +4,8 @@
  *******************************************************************************/
 package net.bigtangle.tools.test;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Token;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
@@ -50,5 +55,31 @@ public class TokenCreateTests3 extends HelpTest {
                 GetBlockEvaluationsResponse.class);
         List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
         System.out.print(blockEvaluations.toString());
+    }
+    
+    
+
+    @Test
+    public void historyUTXOList() throws Exception {
+        String addressString="15tzBMvBPobE4Jg5TeUCPtRFxLcJJF5YDY";
+        Map<String, String> param = new HashMap<String, String>();
+       
+        param.put("toaddress", addressString);
+        
+        String response = OkHttp3Util.postString("https://p.bigtangle.de:8088/" + ReqCmd.getOutputsHistory.name(),
+                Json.jsonmapper().writeValueAsString(param));
+        
+       
+        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        Map<String, Token> tokennames = balancesResponse.getTokennames();
+        int h=0;
+        int my=0;
+        for (UTXO utxo : balancesResponse.getOutputs()) {
+            if(utxo.isSpent()) {h++;}
+            
+   
+        }
+      //  assertTrue(h>0);
+        assertTrue(my==1);
     }
 }

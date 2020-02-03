@@ -118,7 +118,7 @@ public abstract class HelpTest {
 
     @Before
     public void setUp() throws Exception {
-         proxy();
+        // proxy();
         mkdir();
         wallet1();
         wallet2();

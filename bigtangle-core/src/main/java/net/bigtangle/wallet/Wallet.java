@@ -35,7 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1126,65 +1125,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * </p>
      */
     public void signTransaction(SendRequest req) {
+        signTransaction(req.tx, req.aesKey, req.missingSigsMode);
+    }
+
+    public void signTransaction(Transaction tx, KeyParameter aesKey, MissingSigsMode missingSigsMode) {
         lock.lock();
         try {
-            Transaction tx = req.tx;
+
             List<TransactionInput> inputs = tx.getInputs();
             List<TransactionOutput> outputs = tx.getOutputs();
             checkState(inputs.size() > 0);
             checkState(outputs.size() > 0);
-
-            KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, req.aesKey);
-
-            int numInputs = tx.getInputs().size();
-            for (int i = 0; i < numInputs; i++) {
-                TransactionInput txIn = tx.getInput(i);
-                if (txIn.getConnectedOutput() == null) {
-                    // Missing connected output, assuming already signed.
-                    continue;
-                }
-
-                Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
-                RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
-                // checkNotNull(redeemData, "Transaction exists in wallet that
-                // we cannot redeem: %s",
-                // txIn.getOutpoint().getHash());
-                if (redeemData != null)
-                    txIn.setScriptSig(
-                            scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
-            }
-
-            TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
-            for (TransactionSigner signer : signers) {
-                if (!signer.signInputs(proposal, maybeDecryptingKeyBag))
-                    log.info("{} returned false for the tx", signer.getClass().getName());
-            }
-
-            // resolve missing sigs if any
-            new MissingSigResolutionSigner(req.missingSigsMode).signInputs(proposal, maybeDecryptingKeyBag);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * <p>
-     * Given a transaction, attempts to sign it's inputs. This method expects
-     * transaction to have all necessary inputs connected or they will be
-     * ignored.
-     * </p>
-     * <p>
-     * Actual signing is done by pluggable {@link #signers} and it's not
-     * guaranteed that transaction will be complete in the end.
-     * </p>
-     */
-    public void signTransaction(Transaction tx, KeyParameter aesKey) {
-        lock.lock();
-        try {
-            List<TransactionInput> inputs = tx.getInputs();
-            // List<TransactionOutput> outputs = tx.getOutputs();
-            checkState(inputs.size() > 0);
-            // Order checkState(outputs.size() > 0);
 
             KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, aesKey);
 
@@ -1204,7 +1155,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 if (redeemData != null)
                     txIn.setScriptSig(
                             scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
-
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
@@ -1214,10 +1164,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
 
             // resolve missing sigs if any
-            new MissingSigResolutionSigner(MissingSigsMode.THROW).signInputs(proposal, maybeDecryptingKeyBag);
+            new MissingSigResolutionSigner(missingSigsMode).signInputs(proposal, maybeDecryptingKeyBag);
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * <p>
+     * Given a transaction, attempts to sign it's inputs. This method expects
+     * transaction to have all necessary inputs connected or they will be
+     * ignored.
+     * </p>
+     * <p>
+     * Actual signing is done by pluggable {@link #signers} and it's not
+     * guaranteed that transaction will be complete in the end.
+     * </p>
+     */
+    public void signTransaction(Transaction tx, KeyParameter aesKey) {
+        signTransaction(tx, aesKey, MissingSigsMode.THROW);
     }
 
     /**
@@ -1507,7 +1472,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (selection3 == null && selection2 == null && selection1 == null) {
             checkNotNull(valueMissing);
-           // log.warn("Insufficient value in wallet for send: needed {} more", valueMissing.toString());
+            // log.warn("Insufficient value in wallet for send: needed {} more",
+            // valueMissing.toString());
             throw new InsufficientMoneyException(valueMissing.toString());
         }
 
@@ -1771,8 +1737,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 }
             }
 
-        //    log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
-        //            value.toString(), req.feePerKb.toString());
+            // log.info("Completing send tx with {} outputs totalling {} and a
+            // fee of {}/kB", req.tx.getOutputs().size(),
+            // value.toString(), req.feePerKb.toString());
 
             // If any inputs have already been added, we don't need to get their
             // value from wallet
@@ -1826,7 +1793,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             // completed.
             // req.tx.setMemo(req.memo);
             req.completed = true;
-            //log.info("  completed: {}", req.tx);
+            // log.info(" completed: {}", req.tx);
         } finally {
             lock.unlock();
         }
@@ -1857,7 +1824,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
             if (bestChangeOutput != null) {
                 req.tx.addOutput(bestChangeOutput);
-               // log.info("  with {} change", bestChangeOutput.getValue().toString());
+                // log.info(" with {} change",
+                // bestChangeOutput.getValue().toString());
             }
         }
     }
@@ -2106,11 +2074,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo,
             List<UTXO> coinList)
-                    throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payFromList(aesKey, destination, amount, memo, coinList, NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
+            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+        return payFromList(aesKey, destination, amount, memo, coinList,
+                NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
     }
-    
-    
+
     public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, String memo,
             List<UTXO> coinList, int split)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
@@ -2135,7 +2103,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
 
         for (Block block : re) {
-            log.debug(" "+ block.toString());
+            log.debug(" " + block.toString());
             solveAndPost(block);
         }
         return re;
@@ -2166,17 +2134,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             restAmount = spendableOutput.getValue().add(restAmount);
             multispent.addInput(u.getBlockHash(), spendableOutput);
             if (!restAmount.isNegative()) {
-                if(restAmount.isPositive()) {
-                multispent.addOutput(restAmount, beneficiary);
+                if (restAmount.isPositive()) {
+                    multispent.addOutput(restAmount, beneficiary);
                 }
                 break;
             }
         }
         signTransaction(multispent, aesKey);
         tipBlock.addTransaction(multispent);
-        
+
         return tipBlock;
- 
+
     }
 
     private Block getTip() throws IOException, JsonProcessingException {
@@ -2816,8 +2784,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         return params.getDefaultSerializer().makeBlock(data);
     }
-
-    
 
     /*
      * if a block is failed due to rating without conflict, it can be saved by

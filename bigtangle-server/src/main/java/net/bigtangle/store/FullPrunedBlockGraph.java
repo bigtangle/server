@@ -1042,14 +1042,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             List<UTXO> utxos = new ArrayList<UTXO>();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
-                String fromAddress = "";
-                try {
-                    if (!isCoinBase) {
-                        fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();
-                    }
-                } catch (ScriptException e) {
-                    // No address found.
-                }
+                String fromAddress = fromAddress(tx, isCoinBase);
                 int minsignnumber = 1;
                 if (script.isSentToMultiSig()) {
                     minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
@@ -1074,6 +1067,30 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             }
             blockStore.addUnspentTransactionOutput(utxos);
         }
+    }
+
+    private String fromAddress(final Transaction tx, boolean isCoinBase) {
+        String fromAddress = "";
+        if (!isCoinBase) {
+            for (TransactionInput t : tx.getInputs()) {
+                try {
+                    if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
+                        fromAddress = t.getFromAddress().toBase58();
+                    } else {
+                        fromAddress = new Address(params,
+                                Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
+
+                    }
+
+                    if (!fromAddress.equals(""))
+                        return fromAddress;
+                } catch (Exception e) {
+                    // No address found.
+                }
+            }
+            return fromAddress;
+        }
+        return fromAddress;
     }
 
     private void connectTypeSpecificUTXOs(Block block) throws BlockStoreException {

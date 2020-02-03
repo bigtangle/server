@@ -1297,6 +1297,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 s.setBoolean(7, out.isCoinbase());
                 s.setBytes(8, out.getBlockHash() != null ? out.getBlockHash().getBytes() : null);
                 s.setString(9, Utils.HEX.encode(out.getValue().getTokenid()));
+                if((out.getFromaddress()==null ||"".equals(out.getFromaddress()))
+                        &&  !out.isCoinbase())
+                {
+                    log.debug(" no Fromaddress " +out.toString());
+                }
                 s.setString(10, out.getFromaddress());
                 s.setString(11, out.getMemo());
                 s.setBoolean(12, out.isSpent());

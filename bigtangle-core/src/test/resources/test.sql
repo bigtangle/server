@@ -74,9 +74,12 @@ inserttime,  block, solid, confirmed FROM blocks
 HELPER
 select * from tokenserial   ;
 
-select * from outputs where 
+select count(*) from outputs where 
  fromaddress!=''
 
+ select  * from outputs where toaddress='1DVMvugpdT2QuhhtUAiUU3cTBMxaDvCCud'
+ fromaddress='' and coinbase=false
+ 
 select * from blockevaluation   ;
 select * from multisign;
 select * from multisignaddress;
