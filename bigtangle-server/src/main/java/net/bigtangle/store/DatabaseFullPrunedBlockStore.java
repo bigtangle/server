@@ -1654,13 +1654,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 preparedStatement.setString(i++, fromaddress);
             }
             if (toaddress != null && !"".equals(toaddress.trim())) {
-                preparedStatement.setString(i++, fromaddress);
+                preparedStatement.setString(i++, toaddress);
             }
             if (starttime != null) {
                 preparedStatement.setLong(i++, starttime);
             }
             if (endtime != null) {
-                preparedStatement.setLong(i++, starttime);
+                preparedStatement.setLong(i++, endtime);
             }
             ResultSet results = preparedStatement.executeQuery();
             while (results.next()) {

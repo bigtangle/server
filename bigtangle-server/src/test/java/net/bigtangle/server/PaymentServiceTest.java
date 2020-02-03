@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -26,15 +28,18 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
@@ -159,15 +164,42 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
 
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
-        SendRequest request = SendRequest.to(walletKeys.get(1).toAddress(networkParameters), amount);
-        request.tx.setMemo(new MemoInfo(createDataSize(5000)));
+        Address address = walletKeys.get(0).toAddress(networkParameters);
+        SendRequest request = SendRequest.to(address, amount);
+       // request.tx.setMemo(new MemoInfo(createDataSize(5000)));
         walletAppKit.wallet().completeTx(request, null);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        sendEmpty(5);
+        mcmcService.update();
+        confirmationService.update();
+        //check the output histoty
+        historyUTXOList(address.toBase58(),amount);
     }
 
+    public void historyUTXOList(String addressString, Coin amount) throws Exception {
+        Map<String, String> param = new HashMap<String, String>();
+       
+        param.put("toaddress", addressString);
+        
+        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
+                Json.jsonmapper().writeValueAsString(param));
+        
+       
+        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        Map<String, Token> tokennames = balancesResponse.getTokennames();
+        int h=0;
+        int my=0;
+        for (UTXO utxo : balancesResponse.getOutputs()) {
+            if(utxo.isSpent()) {h++;}
+            if(amount.compareTo(utxo.getValue())==0) my=1;
+   
+        }
+      //  assertTrue(h>0);
+        assertTrue(my==1);
+    }
     @Test
     // coins in wallet to one coin to address
     public void testPartsToOne() throws Exception {

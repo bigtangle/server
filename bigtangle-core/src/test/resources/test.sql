@@ -75,7 +75,7 @@ HELPER
 select * from tokenserial   ;
 
 select * from outputs where 
-toaddress='1JDaRGBuHmqA31Uh1rWyQf8roButHWvoK3' or fromaddress='1JDaRGBuHmqA31Uh1rWyQf8roButHWvoK3'
+ fromaddress!=''
 
 select * from blockevaluation   ;
 select * from multisign;
