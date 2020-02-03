@@ -1634,7 +1634,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = "SELECT hash,outputindex, coinvalue, scriptbytes, toaddress ,"
                     + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-                    + "spendpending,time,spendpendingtime, minimumsign FROM outputs WHERE  spent=false ";
+                    + "spendpending,time,spendpendingtime, minimumsign FROM outputs WHERE  confirmed=true ";
 
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
                 sql += " AND fromaddress=?";
