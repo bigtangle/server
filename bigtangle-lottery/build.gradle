@@ -11,7 +11,7 @@ defaultTasks 'clean', 'build'
 distributions {
     main {
         contents {
-            baseName = "bigtangle-emptyblock"
+            baseName = "bigtangle-lottery"
         }
     }
 }
@@ -30,9 +30,9 @@ dependencies {
     
 }
 
-mainClassName = "net.bigtangle.apps.lottery"
+mainClassName = "net.bigtangle.apps.lottery.StartLottery"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
-applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx2g"]
+applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=DEBUG", "-Xmx2g"]
 
 jar {
     manifest {
