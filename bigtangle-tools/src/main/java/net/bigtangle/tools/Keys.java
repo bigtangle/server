@@ -26,7 +26,7 @@ public class Keys {
 
     public static void main(String[] args) throws IOException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnreadableWalletException {
         
-        WalletAppKit walletAppKit1 = new WalletAppKit(networkParameters, new File("/home/cui/walletkeys"), "201707040100000004");
+        WalletAppKit walletAppKit1 = new WalletAppKit(networkParameters, new File("/home/cui/Downloads"), "201707040100000004");
 
         List<ECKey> issuedKeys =  walletAppKit1.wallet().walletKeys(getAesKey(walletAppKit1.wallet(), args[0]));
        for (ECKey k:issuedKeys) {
