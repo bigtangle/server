@@ -23,7 +23,7 @@ public class StartLottery {
 
     // with context_root= https://p.bigtangle.org:8088/
     public static void main(String[] args) throws Exception {
- 
+        log.info("start StartLottery ");
         NetworkParameters params = MainNetParams.get();
         String tokenid=CNYTOKENIDPROD;
         Lottery startLottery = new Lottery();
