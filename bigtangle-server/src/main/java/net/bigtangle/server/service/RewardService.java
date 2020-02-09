@@ -224,7 +224,7 @@ public class RewardService {
                 return "";
             }
         });
-
+        Stopwatch watch = Stopwatch.createStarted();
         try {
             handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
@@ -234,7 +234,7 @@ public class RewardService {
         } finally {
             executor.shutdownNow();
         }
-
+        log.debug("Reward Solved time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         return block;
     }
 
@@ -768,7 +768,7 @@ public class RewardService {
         }
 
         if ( prevDifficulty != (Utils.encodeCompactBits(newTarget))  ) {
-            log.info("Difficulty  change from {} to: {}", prevDifficulty,  Utils.encodeCompactBits(newTarget));
+            log.info("Difficulty  change from {} to: {} and diff={}", prevDifficulty,  Utils.encodeCompactBits(newTarget), prevDifficulty -Utils.encodeCompactBits(newTarget));
          
         }
         

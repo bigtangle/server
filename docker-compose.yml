@@ -3,46 +3,40 @@ networks:
   bigtangle-bridged-network:
     driver: bridge
 services:
-  zookeeper-bigtangle:
-    image: wurstmeister/zookeeper
-    container_name: zookeeper-bigtangle
-    ports:
-    - 2181:2181
-    networks:
-    - bigtangle-bridged-network
-
-  kafka-bigtangle:
-    image: wurstmeister/kafka
-    container_name: kafka-bigtangle
-    ports:
-    - 9092:9092
-    networks:
-    - bigtangle-bridged-network
-    environment:
-      ADVERTISED_HOST: kafka-bigtangle
-      ADVERTISED_PORT: 9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-bigtangle:2181
-      KAFKA_CREATE_TOPICS: "Topic1:1:3,Topic2:1:1:compact"
   mysql-bigtangle:
-    image: registry.dasimi.com/mysql
+    image: bigtangle/mysql
     container_name: mysql-bigtangle
+    volumen:
+        /data/var/lib/mysql:/var/lib/mysql
     ports:
     - 3306:3306
     networks:
     - bigtangle-bridged-network
+    environment: 
+      MYSQL_ROOT_PASSWORD: testpassword 
+      MYSQL_DATABASE: info
+    
   bigtangle-server:
-    image: registry.dasimi.com/com.bigtangle/bigtangle.bigtangle-server
+    image: bigtangle/bigtangle-server
     container_name: bigtangle-server
     ports:
     - 8080:8080
     depends_on:
-    - kafka-bigtangle
     - mysql-bigtangle
     networks:
     - bigtangle-bridged-network
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka-bigtangle:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka.bigtangle.org:9092
       DB_HOSTNAME: mysql-bigtangle
-
+      DB_PASSWORD: testpassword
+      SERVER_PORT: 8088
+      DB_NAME: info
+      SERVICE_MILESTONE_ACTIVE: true
+      SERVER_MINERADDRESS: 1MxiDdUWQ5Aek872tJHpnGe7j75pwaGdZE
+      BOOT_STRAP_SERVERS: $KAFKA    
+      TOPIC_OUT_NAME: bigtangle
+      CONSUMERIDSUFFIX:  yourid.bigtangle-server
+      REQUESTER: https://p.bigtangle.org:8088, https://p.bigtangle.de:8088
+      SERVER_NET: Mainnet
       
 

@@ -6,6 +6,7 @@ package net.bigtangle.server;
 
 import javax.annotation.PostConstruct;
 
+import org.bitcoin.Secp256k1Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,7 @@ public class BeforeStartup {
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
-
+        Secp256k1Context.getContext();
     }
 
     @Autowired
