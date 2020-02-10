@@ -26,6 +26,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.response.AbstractResponse;
@@ -69,7 +70,7 @@ public class OutputService {
 
         return GetBalancesResponse.create(tokens, outputs, getTokename(outputs));
     }
- 
+
     @Autowired
     private NetworkParameters networkParameters;
 
@@ -157,8 +158,12 @@ public class OutputService {
 
     public GetOutputsResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
             throws Exception {
-        List<UTXO> outputs = this.store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
-
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        // no check valid adress
+        if ((fromaddress != null && !"".equals(fromaddress) && checkValidAddress(fromaddress))
+                || (toaddress != null && !"".equals(toaddress) && checkValidAddress(toaddress))) {
+            outputs = this.store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
+        }
         return GetOutputsResponse.create(outputs, getTokename(outputs));
     }
 
@@ -208,5 +213,21 @@ public class OutputService {
         }
 
         return re;
+    }
+
+    public boolean checkValidAddress(String address) {
+        try {
+            if (address != null) {
+                address = address.trim();
+                Address.fromBase58(networkParameters, address);
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (AddressFormatException e1) {
+
+            return false;
+        }
     }
 }
