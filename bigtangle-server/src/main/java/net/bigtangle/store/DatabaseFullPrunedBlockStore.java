@@ -170,12 +170,18 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
             + "spendpending , spendpendingtime, minimumsign, time FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ";
 
-    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
-            + " outputs.outputindex, coinbase, " + "  outputs.toaddress  as  toaddress,"
-            + " outputsmulti.toaddress  as multitoaddress, " + "  addresstargetable, blockhash, tokenid, "
-            + " fromaddress, memo, spent, confirmed, spendpending,spendpendingtime,  minimumsign, time  "
-            + " FROM outputs LEFT JOIN outputsmulti "
-            + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
+    protected final String SELECT_TRANSACTION_OUTPUTS_SQL_BASE = "SELECT " 
+            + "outputs.hash, coinvalue, scriptbytes, "
+          + " outputs.outputindex, coinbase, " + "  outputs.toaddress  as  toaddress,"
+          + " outputsmulti.toaddress  as multitoaddress, " + "  addresstargetable, blockhash, tokenid, "
+          + " fromaddress, memo, spent, confirmed, "
+          + "spendpending,spendpendingtime,  minimumsign, time  "
+          + " FROM outputs LEFT JOIN outputsmulti "
+          + " ON outputs.hash = outputsmulti.hash"
+          + " AND outputs.outputindex = outputsmulti.outputindex ";
+
+          
+    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = SELECT_TRANSACTION_OUTPUTS_SQL_BASE
             + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
     protected final String SELECT_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
@@ -776,36 +782,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             // beginDatabaseBatchWrite();
             // create all the database tables
-            for (String sql : getCreateTablesSQL()) {
-
-                log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql);
-
-                Statement s = conn.get().createStatement();
-                try {
-                    s.execute(sql);
-                } catch (Exception e) {
-                    log.debug("DatabaseFullPrunedBlockStore : CREATE table " + sql, e);
-
-                } finally {
-                    s.close();
-                }
-            }
+            updateTables(getCreateTablesSQL());
             // create all the database indexes
-            for (String sql : getCreateIndexesSQL()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
-                }
-                Statement s = conn.get().createStatement();
-                try {
-                    s.execute(sql);
-
-                } catch (Exception e) {
-                    log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql, e);
-
-                } finally {
-                    s.close();
-                }
-            }
+            updateTables(getCreateIndexesSQL());
             // insert the initial settings for this store
             PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
             ps.setString(1, VERSION_SETTING);
@@ -817,6 +796,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (Exception e) {
             log.error("", e);
             // this.abortDatabaseBatchWrite();
+        }
+    }
+
+    /*
+     * check version and update the tables
+     */
+    private synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
+        for (String sql : sqls) {
+            if (log.isDebugEnabled()) {
+                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
+            }
+            Statement s = conn.get().createStatement();
+            try {
+                s.execute(sql);
+
+            } catch (Exception e) {
+                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql, e);
+
+            } finally {
+                s.close();
+            }
         }
     }
 
@@ -1257,7 +1257,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private UTXO setUTXO(Sha256Hash hash, long index, ResultSet results) throws SQLException {
         // Parse it.
-        Coin coinvalue = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString("tokenid"));
+        Coin coinvalue = new Coin(new BigInteger(results.getBytes("coinvalue")), 
+                results.getString("tokenid"));
         byte[] scriptBytes = results.getBytes("scriptbytes");
         boolean coinbase = results.getBoolean("coinbase");
         String address = results.getString("toaddress");
@@ -1297,11 +1298,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 s.setBoolean(7, out.isCoinbase());
                 s.setBytes(8, out.getBlockHash() != null ? out.getBlockHash().getBytes() : null);
                 s.setString(9, Utils.HEX.encode(out.getValue().getTokenid()));
-                if((out.getFromaddress()==null ||"".equals(out.getFromaddress()))
-                        &&  !out.isCoinbase())
-                {
-                    log.debug(" no Fromaddress " +out.toString());
-                }
+//                if ((out.getFromaddress() == null || "".equals(out.getFromaddress())) && !out.isCoinbase()) {
+//                    log.debug(" no Fromaddress " + out.toString());
+//                }
                 s.setString(10, out.getFromaddress());
                 s.setString(11, out.getMemo());
                 s.setBoolean(12, out.isSpent());
@@ -1637,15 +1636,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = "SELECT hash,outputindex, coinvalue, scriptbytes, toaddress ,"
-                    + " addresstargetable, coinbase,blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-                    + "spendpending,time,spendpendingtime, minimumsign FROM outputs WHERE  confirmed=true ";
+            String sql = SELECT_TRANSACTION_OUTPUTS_SQL_BASE 
+                    + "WHERE  confirmed=true ";
 
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
-                sql += " AND fromaddress=?";
+                sql += " AND outputs.fromaddress=?";
             }
             if (toaddress != null && !"".equals(toaddress.trim())) {
-                sql += " AND toaddress=?";
+                sql += " AND outputs.toaddress=?";
             }
             if (starttime != null) {
                 sql += " AND time>=?";
@@ -6120,7 +6118,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
- 
+
     public void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException {
         String sql = "insert into access_permission (pubKey, accessToken, refreshTime) value (?,?,?)";
         maybeConnect();
@@ -6149,7 +6147,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement("select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
+            preparedStatement = conn.get().prepareStatement(
+                    "select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -6220,7 +6219,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement("select count(1) as count from access_grant where address = ?");
+            preparedStatement = conn.get()
+                    .prepareStatement("select count(1) as count from access_grant where address = ?");
             preparedStatement.setString(1, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -6239,7 +6239,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
- 
+
     public List<Block> findRetryBlocks(long minHeigth) throws BlockStoreException {
 
         String sql = "SELECT hash, rating, depth, cumulativeweight, "
@@ -6272,5 +6272,5 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
     }
- 
+
 }

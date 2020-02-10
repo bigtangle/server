@@ -314,7 +314,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
-   
+    private static final String CREATE_OUTPUTS_FROMADDRESS_INDEX = "CREATE INDEX outputs_fromaddress_idx ON outputs (fromaddress) USING HASH";
+    
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
     
@@ -342,7 +343,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.addAll( getCreateTablesSQL1());
+        sqlStatements.addAll( getCreateTablesSQL2());
+        return sqlStatements;
+    }
 
+    protected List<String> getCreateTablesSQL1() {
+        List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_BLOCKS_TABLE);
         sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
         sqlStatements.add(CREATE_OUTPUT_TABLE);
@@ -365,27 +372,45 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+ 
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateTablesSQL2() {
+        List<String> sqlStatements = new ArrayList<String>(); 
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         return sqlStatements;
     }
 
+    
     @Override
     protected List<String> getCreateIndexesSQL() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.addAll(getCreateIndexesSQL1());
+        sqlStatements.addAll(getCreateIndexesSQL2());
+        return sqlStatements;
+    }
+    
+    protected List<String> getCreateIndexesSQL1() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX); 
         sqlStatements.add(CREATE_BLOCKS_HEIGHT_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
         sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
         sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
+        sqlStatements.add( CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         return sqlStatements;
     }
-
+    protected List<String> getCreateIndexesSQL2() {
+        List<String> sqlStatements = new ArrayList<String>(); 
+        sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX); 
+        return sqlStatements;
+    }
     @Override
     protected List<String> getCreateSchemeSQL() {
         // do nothing
