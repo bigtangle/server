@@ -115,7 +115,7 @@ public class SyncBlockService {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            sync(serverConfiguration.getCheckpoint());
+            sync(-1l);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
