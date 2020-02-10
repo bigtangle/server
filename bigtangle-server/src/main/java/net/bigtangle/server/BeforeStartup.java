@@ -32,10 +32,11 @@ public class BeforeStartup {
             store.create();
         }
         //update tables to new version after initial setup
-        store.updateDatabse();
-        serverConfiguration.setServiceReady(true);
-        if (scheduleConfiguration.isMilestone_active())
+        store.updateDatabse(); 
+        if (scheduleConfiguration.isMilestone_active()) {
             syncBlockService.startInit();
+        }
+        serverConfiguration.setServiceReady(true);
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
