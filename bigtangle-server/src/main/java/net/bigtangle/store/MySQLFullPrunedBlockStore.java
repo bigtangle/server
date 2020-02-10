@@ -5,12 +5,14 @@
 
 package net.bigtangle.store;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
+ 
 
 /**
  * <p>
@@ -383,7 +385,18 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         return sqlStatements;
     }
 
+ 
+    public  void updateDatabse() throws BlockStoreException, SQLException  {
     
+       String ver = new String(getSettingValue("version"));
+       
+       if("03".equals(ver)) {
+           updateTables(getCreateTablesSQL2());
+           updateTables(getCreateIndexesSQL2());
+           dbupdateversion("05");
+       }
+      
+    }
     @Override
     protected List<String> getCreateIndexesSQL() {
         List<String> sqlStatements = new ArrayList<String>();

@@ -31,6 +31,8 @@ public class BeforeStartup {
         if (serverConfiguration.getCreatetable()) {
             store.create();
         }
+        //update tables to new version after initial setup
+        store.updateDatabse();
         serverConfiguration.setServiceReady(true);
         if (scheduleConfiguration.isMilestone_active())
             syncBlockService.startInit();
@@ -38,6 +40,7 @@ public class BeforeStartup {
             blockStreamHandler.runStream();
         }
         Secp256k1Context.getContext();
+      
     }
 
     @Autowired

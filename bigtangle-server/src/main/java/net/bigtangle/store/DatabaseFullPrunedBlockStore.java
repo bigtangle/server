@@ -122,7 +122,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
-
+ 
     protected final String SELECT_BLOCKS_SQL = "SELECT  height, block,  prevblockhash,prevbranchblockhash,mineraddress,"
             + "blocktype FROM blocks WHERE hash = ?" + afterSelect();
 
@@ -786,11 +786,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // create all the database indexes
             updateTables(getCreateIndexesSQL());
             // insert the initial settings for this store
-            PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
-            ps.setString(1, VERSION_SETTING);
-            ps.setBytes(2, "03".getBytes());
-            ps.execute();
-            ps.close();
+            dbversion("05");
             createNewStore(params);
 
         } catch (Exception e) {
@@ -800,19 +796,40 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /*
+     * initial    ps.setBytes(2, "03".getBytes());
+     */
+    private void dbversion(String version) throws SQLException {
+        PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
+        ps.setString(1, VERSION_SETTING);
+        ps.setBytes(2, version.getBytes());
+        ps.execute();
+        ps.close();
+    }
+
+  
+    protected void dbupdateversion(String version) throws SQLException {
+        PreparedStatement ps = conn.get().prepareStatement(UPDATE_SETTINGS_SQL);
+        ps.setString(2, VERSION_SETTING);
+        ps.setBytes(1, version.getBytes());
+        ps.execute();
+        ps.close();
+    }
+
+    
+    /*
      * check version and update the tables
      */
-    private synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
+    protected synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
         for (String sql : sqls) {
             if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql);
+                log.debug("DatabaseFullPrunedBlockStore :     " + sql);
             }
             Statement s = conn.get().createStatement();
             try {
                 s.execute(sql);
 
             } catch (Exception e) {
-                log.debug("DatabaseFullPrunedBlockStore : CREATE index " + sql, e);
+                log.debug("DatabaseFullPrunedBlockStore :     " + sql, e);
 
             } finally {
                 s.close();

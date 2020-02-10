@@ -194,4 +194,9 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
         return new ArrayList<String>();
     }
 
+    public  void updateDatabse(){
+        
+        
+    }
+
 }

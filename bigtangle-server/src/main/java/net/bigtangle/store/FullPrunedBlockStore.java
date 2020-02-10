@@ -6,6 +6,7 @@
 package net.bigtangle.store;
 
 import java.math.BigInteger;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -494,5 +495,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     int getCountAccessGrantByAddress(String address) throws BlockStoreException;
 
     List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException;
+
+    void updateDatabse() throws BlockStoreException, SQLException;
 
 }
