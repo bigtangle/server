@@ -416,6 +416,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         List<String> sqlStatements = new ArrayList<String>(); 
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
         return sqlStatements;
     }
 
@@ -456,6 +457,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateIndexesSQL2() {
         List<String> sqlStatements = new ArrayList<String>(); 
         sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX); 
+        sqlStatements.add(CREATE_CONTRACT_EVENT_COLLECTINGHASH_TABLE_INDEX); 
         return sqlStatements;
     }
     @Override

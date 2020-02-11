@@ -355,6 +355,18 @@ public abstract class AbstractIntegrationTest {
         return block;
     }
 
+    protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId,  BigInteger buyAmount, String contractTokenid,
+            List<Block> addedBlocks) throws Exception {
+
+        Block block = walletAppKit.wallet().payContract(null, tokenId,   buyAmount, null, null, contractTokenid);
+        addedBlocks.add(block);
+        mcmcService.update();
+        confirmationService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        return block;
+
+    }
+    
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
 
@@ -469,6 +481,21 @@ public abstract class AbstractIntegrationTest {
         return block;
     }
 
+    
+
+    protected Block makeAndConfirmContractExecution(List<Block> addedBlocks) throws Exception {
+        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+        
+        Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
+                predecessor.getHash(), predecessor.getHash());
+        addedBlocks.add(block);
+
+        // Confirm
+        mcmcService.update();
+        confirmationService.update();
+        return block;
+    }
+    
     protected void assertCurrentTokenAmountEquals(HashMap<String, Long> origTokenAmounts) throws BlockStoreException {
         assertCurrentTokenAmountEquals(origTokenAmounts, true);
     }

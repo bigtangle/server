@@ -2303,13 +2303,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return solveAndPost(block);
 	}
 
-	public Block payContract(KeyParameter aesKey, String tokenId, Coin payAmount, Long validToTime, Long validFromTim,
-			Long validFromTime, String contractTokenid) throws JsonProcessingException, IOException,
+	public Block payContract(KeyParameter aesKey, String tokenId, BigInteger payAmount, Long validToTime, Long validFromTime,
+			  String contractTokenid) throws JsonProcessingException, IOException,
 			InsufficientMoneyException, UTXOProviderException, NoTokenException {
 		// add client check if the tokenid exists
 		//Token t = checkTokenId(tokenId);
 		// Burn BIG to buy
-		Coin amount = payAmount.negate();
+		Coin amount =  new Coin(payAmount, tokenId).negate();
 		Transaction tx = new Transaction(params);
 		List<UTXO> coinList = getSpendableUTXO(aesKey, NetworkParameters.BIGTANGLE_TOKENID);
 		ECKey beneficiary = null;
@@ -2327,7 +2327,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throw new InsufficientMoneyException("");
 		}
 
-		ContractEventInfo info = new ContractEventInfo(payAmount.getValue(), tokenId, beneficiary.getPubKey(),
+		ContractEventInfo info = new ContractEventInfo(payAmount, tokenId, beneficiary.getPubKey(),
 				validToTime, validFromTime, contractTokenid, beneficiary.toAddress(params).toBase58());
 		tx.setData(info.toByteArray());
 		tx.setDataClassName("ContractEventInfo");
@@ -2340,7 +2340,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		// block = predecessor.createNextBlock();
 		block.addTransaction(tx);
-		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+		block.setBlockType(Type.BLOCKTYPE_CONTRACT_EVENT);
 
 		return solveAndPost(block);
 	}
