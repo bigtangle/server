@@ -58,6 +58,22 @@ public class SerializationTest {
     }
 
     @Test
+    public void testContractEventInfoSerialization() throws IOException {
+    	ContractEventInfo info1 = new ContractEventInfo( new BigInteger("1"), "test1", new byte[] { 2 }, 3l, 4l, "contracttokenid", "test2");
+    	ContractEventInfo info2 = new ContractEventInfo().parse(info1.toByteArray());
+
+        assertArrayEquals(info1.toByteArray(), info2.toByteArray());
+        assertEquals(info1.getBeneficiaryAddress(), info2.getBeneficiaryAddress());
+        assertArrayEquals(info1.getBeneficiaryPubKey(), info2.getBeneficiaryPubKey());
+        assertEquals(info1.getTargetTokenid(), info2.getTargetTokenid());
+        assertEquals(info1.getTargetValue(), info2.getTargetValue());
+        assertEquals(info1.getValidFromTime(), info2.getValidFromTime());
+        assertEquals(info1.getValidToTime(), info2.getValidToTime());
+        assertEquals(info1.getVersion(), info2.getVersion());
+    }
+
+    
+    @Test
     public void testOrderCancelInfoSerialization() throws IOException {
         OrderCancelInfo info1 = new OrderCancelInfo(getRandomSha256Hash());
         OrderCancelInfo info2 = new OrderCancelInfo().parse(info1.toByteArray());

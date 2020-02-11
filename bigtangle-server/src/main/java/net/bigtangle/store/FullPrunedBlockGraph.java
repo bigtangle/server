@@ -41,6 +41,8 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
+import net.bigtangle.core.ContractEventInfo;
+import net.bigtangle.core.ContractEventRecord;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
@@ -65,7 +67,6 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
@@ -82,6 +83,7 @@ import net.bigtangle.server.service.SolidityState;
 import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
+import net.bigtangle.store.data.OrderMatchingResult;
 
 /**
  * <p>
@@ -892,7 +894,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
-        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.tokenId2Events);
+        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.getTokenId2Events());
     }
 
     private void unconfirmOrderOpen(Block block) throws BlockStoreException {
@@ -1122,6 +1124,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_ORDER_CANCEL:
             connectCancelOrder(block);
             break;
+        case BLOCKTYPE_CONTRACT_EVENT:
+            connectContractEvent(block);
         default:
             break;
 
@@ -1158,6 +1162,21 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
+    private void connectContractEvent(Block block) throws BlockStoreException {
+        try {
+            ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
+      
+            ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
+            		reqInfo.getContractTokenid(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
+                    reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(),  
+                    reqInfo.getBeneficiaryAddress());
+            List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
+            orders.add(record);
+            blockStore.insertContractEvent(orders);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void connectToken(Block block) throws BlockStoreException {
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() != null) {

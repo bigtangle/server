@@ -1,4 +1,4 @@
-package net.bigtangle.store;
+package net.bigtangle.store.data;
 
 import java.util.Collection;
 import java.util.List;

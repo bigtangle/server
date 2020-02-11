@@ -13,7 +13,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.SubtangleResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.SubtangleStatus;
+import net.bigtangle.store.data.SubtangleStatus;
 
 @Service
 public class SubtanglePermissionService {

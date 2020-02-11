@@ -1,4 +1,4 @@
-package net.bigtangle.store;
+package net.bigtangle.store.data;
 
 public class SubtangleStatus {
     public static String wait="wait";

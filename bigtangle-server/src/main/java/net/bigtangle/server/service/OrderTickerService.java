@@ -23,7 +23,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.OrderMatchingResult;
+import net.bigtangle.store.data.OrderMatchingResult;
 
 /**
  * This service provides informations on current exchange rates

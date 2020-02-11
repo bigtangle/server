@@ -313,6 +313,39 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
           + "   createTime bigint,\n"
           + "   PRIMARY KEY (address) ) ENGINE=InnoDB";
 
+    
+
+    private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
+                // initial issuing block  hash
+            + "    blockhash binary(32) NOT NULL,\n" 
+                // ZEROHASH if confirmed by order blocks,
+                // issuing ordermatch blockhash if issued by ordermatch block
+            + "    collectinghash binary(32) NOT NULL,\n" 
+
+            + "    contractTokenid varchar(255),\n" 
+             + "   targetcoinvalue mediumblob,\n" 
+            + "    targettokenid varchar(255),\n" 
+                // public address
+            + "    beneficiaryaddress varchar(255),\n" 
+                // the pubkey that will receive the targettokens
+                // on completion or returned   tokens on cancels 
+            + "    beneficiarypubkey binary(33),\n"
+               // order is valid untill this time
+            + "    validToTime bigint,\n" 
+                // a number used to track operations on the
+                // order, e.g. increasing by one when refreshing
+                // order is valid after this time
+            + "    validFromTime bigint,\n" 
+            // true iff a order block of this order is confirmed
+            + "    confirmed boolean NOT NULL,\n" 
+            // true if used by a confirmed  ordermatch block (either
+            // returned or used for another orderoutput/output)
+            + "    spent boolean NOT NULL,\n" 
+            + "    spenderblockhash  binary(32),\n" 
+            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash, collectinghash) "
+            + " USING HASH \n" + ") ENGINE=InnoDB \n";
+
+    
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
@@ -328,6 +361,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
     private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
     private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
+    private static final String CREATE_CONTRACT_EVENT_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX contractevent_collectinghash_idx ON orders (collectinghash) USING btree";
 
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,

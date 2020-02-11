@@ -20,6 +20,7 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.ContractEventRecord;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -497,5 +498,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException;
 
     void updateDatabse() throws BlockStoreException, SQLException;
+
+	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
 }

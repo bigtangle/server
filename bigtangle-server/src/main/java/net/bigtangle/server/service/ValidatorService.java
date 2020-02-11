@@ -43,6 +43,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
@@ -55,7 +56,6 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -875,6 +875,12 @@ public class ValidatorService {
                 return opSolidityState;
             }
             break;
+        case BLOCKTYPE_CONTRACT_EVENT:
+            SolidityState check = checkFormalContractEventSolidity(block, throwExceptions);
+            if (!(check.getState() == State.Success)) {
+                return check;
+            }
+            break;
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -937,6 +943,78 @@ public class ValidatorService {
 
         if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
                 .equals(orderInfo.getBeneficiaryAddress())) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The address does not match with the given pubkey.");
+            return SolidityState.getFailState();
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+
+    private SolidityState checkFormalContractEventSolidity(Block block, boolean throwExceptions)
+            throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        if (transactions.size() != 1) {
+            if (throwExceptions)
+                throw new IncorrectTransactionCountException();
+            return SolidityState.getFailState();
+        }
+
+        if (transactions.get(0).getData() == null) {
+            if (throwExceptions)
+                throw new MissingTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // Check that the tx has correct data
+        ContractEventInfo contractEventInfo;
+        try {
+            contractEventInfo = new ContractEventInfo().parse(transactions.get(0).getData());
+        } catch (IOException e) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        if (!transactions.get(0).getDataClassName().equals("ContractEventInfo")) {
+            if (throwExceptions)
+                throw new MalformedTransactionDataException();
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (contractEventInfo.getTargetTokenid() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target tokenid");
+            return SolidityState.getFailState();
+        }
+
+        // NotNull checks
+        if (contractEventInfo.getContractTokenid() == null) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid contract tokenid");
+            return SolidityState.getFailState();
+        }
+
+        
+        // Check bounds for target coin values
+        if (contractEventInfo.getTargetValue().signum() < 0) {
+            if (throwExceptions)
+                throw new InvalidTransactionDataException("Invalid target value max: " + Long.MAX_VALUE);
+            return SolidityState.getFailState();
+        }
+
+        if (contractEventInfo.getValidToTime() > Math.addExact(contractEventInfo.getValidFromTime(),
+                NetworkParameters.ORDER_TIMEOUT_MAX)) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The given order's timeout is too long.");
+            return SolidityState.getFailState();
+        }
+
+        if (!ECKey.fromPublicOnly(contractEventInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
+                .equals(contractEventInfo.getBeneficiaryAddress())) {
             if (throwExceptions)
                 throw new InvalidOrderException("The address does not match with the given pubkey.");
             return SolidityState.getFailState();
@@ -1411,6 +1489,12 @@ public class ValidatorService {
                 return opSolidityState;
             }
             break;
+        case BLOCKTYPE_CONTRACT_EVENT:
+            SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions);
+            if (!(check.getState() == State.Success)) {
+                return check;
+            }
+            break;
         default:
             throw new RuntimeException("No Implementation");
         }
@@ -1418,6 +1502,10 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
+    private SolidityState checkFullContractEventSolidity(Block block, long height, boolean throwExceptions)
+            throws BlockStoreException {
+    	return checkFormalContractEventSolidity(block, throwExceptions);
+    }
     private SolidityState checkFullOrderOpenSolidity(Block block, long height, boolean throwExceptions)
             throws BlockStoreException {
         List<Transaction> transactions = block.getTransactions();
@@ -1522,7 +1610,7 @@ public class ValidatorService {
 
         return SolidityState.getSuccessState();
     }
-
+ 
     /**
      * Counts the number tokens that are being burned in this block. If multiple
      * tokens exist in the transaction, throws InvalidOrderException.
