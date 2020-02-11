@@ -30,9 +30,10 @@ public class BeforeStartup {
         // set false in test
         if (serverConfiguration.getCreatetable()) {
             store.create();
+            //update tables to new version after initial setup
+            store.updateDatabse(); 
         }
-        //update tables to new version after initial setup
-        store.updateDatabse(); 
+  
         if (scheduleConfiguration.isMilestone_active()) {
             syncBlockService.startInit();
         }
