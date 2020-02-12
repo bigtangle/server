@@ -62,7 +62,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -4572,130 +4571,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			}
 		}
 	}
-
-	@Override
-	public List<VOSExecute> getVOSExecuteList(String vosKey) throws BlockStoreException {
-		String sql = "SELECT vosKey, pubKey, execute, data, startDate, endDate FROM vosexecute WHERE vosKey = ?";
-		maybeConnect();
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = conn.get().prepareStatement(sql);
-			preparedStatement.setString(1, vosKey);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			List<VOSExecute> list = new ArrayList<VOSExecute>();
-			while (resultSet.next()) {
-				VOSExecute vosExecute = new VOSExecute();
-				vosExecute.setVosKey(resultSet.getString("vosKey"));
-				vosExecute.setPubKey(resultSet.getString("pubKey"));
-				vosExecute.setExecute(resultSet.getLong("execute"));
-				vosExecute.setData(resultSet.getBytes("data"));
-				vosExecute.setStartDate(resultSet.getDate("startDate"));
-				vosExecute.setEndDate(resultSet.getDate("endDate"));
-				list.add(vosExecute);
-			}
-			return list;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					throw new BlockStoreException("Failed to close PreparedStatement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public VOSExecute getVOSExecuteWith(String vosKey, String pubKey) throws BlockStoreException {
-		String sql = "SELECT vosKey, pubKey, execute, data, startDate, endDate FROM vosexecute WHERE vosKey = ? AND pubKey = ?";
-		maybeConnect();
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = conn.get().prepareStatement(sql);
-			preparedStatement.setString(1, vosKey);
-			preparedStatement.setString(2, pubKey);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			if (!resultSet.next()) {
-				return null;
-			}
-			VOSExecute vosExecute = new VOSExecute();
-			vosExecute.setVosKey(resultSet.getString("vosKey"));
-			vosExecute.setPubKey(resultSet.getString("pubKey"));
-			vosExecute.setExecute(resultSet.getLong("execute"));
-			vosExecute.setData(resultSet.getBytes("data"));
-			vosExecute.setStartDate(resultSet.getDate("startDate"));
-			vosExecute.setEndDate(resultSet.getDate("endDate"));
-			return vosExecute;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					throw new BlockStoreException("Failed to close PreparedStatement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void insertVOSExecute(VOSExecute vosExecute) throws BlockStoreException {
-		String sql = "INSERT INTO vosexecute (vosKey, pubKey, execute, data, startDate, endDate) VALUES (?, ?, ?, ?, ?, ?)";
-		maybeConnect();
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = conn.get().prepareStatement(sql);
-			preparedStatement.setString(1, vosExecute.getVosKey());
-			preparedStatement.setString(2, vosExecute.getPubKey());
-			preparedStatement.setLong(3, vosExecute.getExecute());
-			preparedStatement.setBytes(4, vosExecute.getData());
-			preparedStatement.setTimestamp(5, new java.sql.Timestamp(vosExecute.getStartDate().getTime()));
-			preparedStatement.setTimestamp(6, new java.sql.Timestamp(vosExecute.getEndDate().getTime()));
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException {
-		String sql = "UPDATE vosexecute SET execute = ?, data = ?, startDate = ?, endDate = ? WHERE vosKey = ? AND pubKey = ?";
-		maybeConnect();
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = conn.get().prepareStatement(sql);
-			preparedStatement.setLong(1, vosExecute.getExecute());
-			preparedStatement.setBytes(2, vosExecute.getData());
-			preparedStatement.setTimestamp(3, new java.sql.Timestamp(vosExecute.getStartDate().getTime()));
-			preparedStatement.setTimestamp(4, new java.sql.Timestamp(vosExecute.getEndDate().getTime()));
-
-			preparedStatement.setString(5, vosExecute.getVosKey());
-			preparedStatement.setString(6, vosExecute.getPubKey());
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
+ 
+   
+ 
 	@Override
 	public byte[] getSettingValue(String name) throws BlockStoreException {
 		PreparedStatement preparedStatement = null;

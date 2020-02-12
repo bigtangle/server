@@ -242,17 +242,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" 
             + ") ENGINE=InnoDB";
 
-    private static final String CREATE_VOSEXECUTE_TABLE = "CREATE TABLE vosexecute (\n"
-            + "    vosKey varchar(255) NOT NULL,\n" 
-            + "    pubKey varchar(255) NOT NULL,\n"
-            + "    execute bigint NOT NULL,\n" 
-            + "    data mediumblob NOT NULL,\n"
-            + "    startDate datetime NOT NULL,\n" 
-            + "    endDate datetime NOT NULL,\n"
-            + "   CONSTRAINT vosexecute_pk PRIMARY KEY (vosKey, pubKey) USING BTREE \n" 
-            + ") ENGINE=InnoDB";
-
-
+ 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash binary(32) NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n"
@@ -318,10 +308,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
                 // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
-                // ZEROHASH if confirmed by order blocks,
-                // issuing ordermatch blockhash if issued by ordermatch block
-            + "    collectinghash binary(32) NOT NULL,\n" 
-
             + "    contractTokenid varchar(255),\n" 
              + "   targetcoinvalue mediumblob,\n" 
             + "    targettokenid varchar(255),\n" 
@@ -345,7 +331,27 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash, collectinghash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
-    
+    private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
+        + "    contractTokenid varchar(255)  NOT NULL,\n" 
+        + "    tokenid varchar(255)  NOT NULL,\n" 
+        + "    coinvalue mediumblob, \n" 
+        //  block  hash of the last execution block
+        + "    blockhash binary(32) NOT NULL,\n" 
+        + "    height binary(32) NOT NULL,\n" 
+        + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contractTokenid, tokenid) "
+        + ") ENGINE=InnoDB \n";
+
+    private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
+            + "   blockhash binary(32) NOT NULL,\n" 
+            + "   contractTokenid varchar(255)  NOT NULL,\n" 
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash binary(32),\n" 
+            + "   prevblockhash binary(32) NOT NULL,\n" 
+            + "   difficulty bigint NOT NULL,\n" 
+            + "   chainlength bigint NOT NULL,\n" 
+            + "   resultdata blob NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
@@ -399,7 +405,6 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_USERDATA_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
         sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
-        sqlStatements.add(CREATE_VOSEXECUTE_TABLE);
         sqlStatements.add(CREATE_ORDER_CANCEL_TABLE);
         sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);

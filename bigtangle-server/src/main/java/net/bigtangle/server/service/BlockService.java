@@ -643,9 +643,9 @@ public class BlockService {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;

@@ -13,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -65,7 +64,6 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
@@ -330,36 +328,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         this.blockStore.updateUserData(userData);
     }
 
-    @SuppressWarnings("unchecked")
-    private void synchronizationVOSData(byte[] data) throws BlockStoreException {
-        String jsonStr = new String(data);
-        HashMap<String, Object> map;
-        try {
-            map = Json.jsonmapper().readValue(jsonStr, HashMap.class);
-        } catch (IOException e) {
-            throw new BlockStoreException(e);
-        }
-        String vosKey = (String) map.get("vosKey");
-        String pubKey = (String) map.get("pubKey");
-        VOSExecute vosExecute_ = this.blockStore.getVOSExecuteWith(vosKey, pubKey);
-        if (vosExecute_ == null) {
-            vosExecute_ = new VOSExecute();
-            vosExecute_.setVosKey(vosKey);
-            vosExecute_.setPubKey(pubKey);
-            vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
-            vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
-            vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
-            vosExecute_.setExecute(1);
-            this.blockStore.insertVOSExecute(vosExecute_);
-            return;
-        }
-        vosExecute_.setData(Utils.HEX.decode((String) map.get("dataHex")));
-        vosExecute_.setStartDate(new Date((Long) map.get("startDate")));
-        vosExecute_.setEndDate(new Date((Long) map.get("endDate")));
-        vosExecute_.setExecute(vosExecute_.getExecute() + 1);
-        this.blockStore.updateVOSExecute(vosExecute_);
-    }
-
+ 
     /**
      * Adds the specified block and all approved blocks to the confirmed set.
      * This will connect all transactions of the block by marking used UTXOs
@@ -435,9 +404,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;
@@ -481,11 +450,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_TRANSFER:
             break;
         case BLOCKTYPE_USERDATA:
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             confirmVOSOrUserData(block);
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
-            confirmVOSExecute(block);
+        case BLOCKTYPE_CONTRACT_EXECUTE:
+           // confirmVOSExecute(block);
             break;
         case BLOCKTYPE_ORDER_OPEN:
             confirmOrderOpen(block);
@@ -521,29 +490,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void confirmVOSExecute(BlockWrap block) throws BlockStoreException {
-        Transaction tx1 = block.getBlock().getTransactions().get(0);
-        if (tx1.getData() != null && tx1.getDataSignature() != null) {
-
-            List<HashMap<String, Object>> multiSignBies;
-            try {
-                multiSignBies = Json.jsonmapper().readValue(tx1.getDataSignature(), List.class);
-            } catch (IOException e) {
-                throw new BlockStoreException(e);
-            }
-            Map<String, Object> multiSignBy = multiSignBies.get(0);
-            byte[] pubKey = Utils.HEX.decode((String) multiSignBy.get("publickey"));
-            byte[] data = tx1.getHash().getBytes();
-            byte[] signature = Utils.HEX.decode((String) multiSignBy.get("signature"));
-            boolean success = ECKey.verify(data, signature, pubKey);
-            if (!success) {
-                throw new BlockStoreException("multisign signature error");
-            }
-            this.synchronizationVOSData(tx1.getData());
-
-        }
-    }
+ 
 
     private void confirmOrderMatching(BlockWrap block) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
@@ -744,9 +691,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             unconfirmOrderOpenDependents(block, traversedBlockHashes);
@@ -860,9 +807,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             unconfirmOrderOpen(block);
@@ -1114,9 +1061,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
-            break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             connectOrder(block);

@@ -859,9 +859,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
-            break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             SolidityState openSolidityState = checkFormalOrderOpenSolidity(block, throwExceptions);
@@ -1473,9 +1471,7 @@ public class ValidatorService {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
-            break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             SolidityState openSolidityState = checkFullOrderOpenSolidity(block, height, throwExceptions);

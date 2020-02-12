@@ -94,10 +94,8 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_REWARD:
             // Dynamic conflicts: mining rewards spend the previous reward
-
             RewardInfo rewardInfo = new RewardInfo().parseChecked(this.getBlock().getTransactions().get(0).getData());
             blockConflicts.add(ConflictCandidate.fromReward(this, rewardInfo));
-
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Dynamic conflicts: tokens of same id and index conflict
@@ -107,7 +105,6 @@ public class BlockWrap {
                 blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
-                e.printStackTrace();
                 throw new RuntimeException(e);
             }
             break;
@@ -115,9 +112,9 @@ public class BlockWrap {
             break;
         case BLOCKTYPE_USERDATA:
             break;
-        case BLOCKTYPE_VOS:
+        case BLOCKTYPE_CONTRACT_EVENT:
             break;
-        case BLOCKTYPE_VOS_EXECUTE:
+        case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
             break;

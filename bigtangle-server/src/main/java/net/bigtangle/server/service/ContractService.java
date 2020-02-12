@@ -22,8 +22,10 @@ import net.bigtangle.utils.Threading;
  * <p>
  * A ContractService provides service for create and validate the contract execution chain.
  * Contract is a token with code can be executed with inputs
- *  contract balance  +  contract event 
- *  Execution Result is new  contract balance + remain contract event 
+ *  contract account  +  contract event 
+ *  Execution Result is new  contract account
+ *  Contract execution is recoded in contractexection and every execution is point to prev execution and forms a blockchain.
+ *   
  * </p>
  */
 @Service

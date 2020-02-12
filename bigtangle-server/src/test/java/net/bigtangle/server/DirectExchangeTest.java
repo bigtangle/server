@@ -13,7 +13,6 @@ import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.MemoInfo;
@@ -46,12 +44,9 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.VOS;
-import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
-import net.bigtangle.core.response.UserDataResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
@@ -569,115 +564,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         checkBalance(coinbase, wallet.walletKeys(null));
     }
-
-    @Test
-    public void testSaveOVS() throws Exception {
-        ECKey outKey = new ECKey();
-
-        VOS vos = new VOS();
-        vos.setPubKey(outKey.getPublicKeyAsHex());
-        vos.setNodeNumber(1);
-        vos.setPrice(1);
-        vos.setFrequence("");
-        vos.setUrl("");
-        vos.setContent("test");
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_VOS);
-
-        Transaction coinbase = new Transaction(this.networkParameters);
-        coinbase.setDataClassName(DataClassName.VOS.name());
-        coinbase.setData(vos.toByteArray());
-
-        Sha256Hash sighash = coinbase.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setAddress(outKey.toAddress(this.networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-
-        block.addTransaction(coinbase);
-        block.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        mcmcService.update();
-        confirmationService.update();
-        int blocktype = (int) Block.Type.BLOCKTYPE_VOS.ordinal();
-
-        List<String> pubKeyList = new ArrayList<String>();
-        pubKeyList.add(outKey.getPublicKeyAsHex());
-
-        requestParam.clear();
-        requestParam.put("blocktype", blocktype);
-        requestParam.put("pubKeyList", pubKeyList);
-
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.userDataList.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
-        List<String> dataList = userDataResponse.getDataList();
-
-        assertEquals(dataList.size(), 1);
-
-        String jsonStr = dataList.get(0);
-        assertEquals(jsonStr, Utils.HEX.encode(vos.toByteArray()));
-    }
-
-    @Test
-    public void testSaveOVSExecuteBatch() {
-        for (int i = 0; i < 10; i++) {
-            try {
-                ECKey outKey = new ECKey();
-                this.testSaveOVSExecute(outKey);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
  
-
-    public void testSaveOVSExecute(ECKey outKey) throws Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = this.networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_VOS_EXECUTE);
-
-        Transaction coinbase = new Transaction(this.networkParameters);
-        VOSExecute vosExecute = new VOSExecute();
-        vosExecute.setVosKey(outKey.getPublicKeyAsHex());
-        vosExecute.setPubKey(outKey.getPublicKeyAsHex());
-        vosExecute.setStartDate(new Date());
-        vosExecute.setEndDate(new Date());
-        vosExecute.setData(new byte[] { 0x00, 0x00, 0x00, 0x00 });
-
-        coinbase.setData(vosExecute.toByteArray());
-
-        Sha256Hash sighash = coinbase.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
-
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setAddress(outKey.toAddress(this.networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        coinbase.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-
-        block.addTransaction(coinbase);
-        block.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-    }
+ 
+ 
 
     @Test
     public void createTransaction() throws Exception {

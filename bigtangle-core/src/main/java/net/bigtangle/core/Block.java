@@ -125,15 +125,14 @@ public class Block extends Message {
         BLOCKTYPE_REWARD(false, NetworkParameters.MAX_REWARD_BLOCK_SIZE, false), // Rewards
         BLOCKTYPE_TOKEN_CREATION(true, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // tokenissuance
         BLOCKTYPE_USERDATA(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-data
-        BLOCKTYPE_VOS(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts
+        BLOCKTYPE_CONTRACT_EVENT(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts
         BLOCKTYPE_GOVERNANCE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Governance
         BLOCKTYPE_FILE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // User-defined-file
-        BLOCKTYPE_VOS_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts execution
+        BLOCKTYPE_CONTRACT_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts execution
         BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet to permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
-        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // cancel-order
-    	BLOCKTYPE_CONTRACT_EVENT(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Contract Entry Event    
-    	
+        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // cancel-order
+     	
         private boolean allowCoinbaseTransaction;
         private int maxSize;
         private boolean requiresCalculation;

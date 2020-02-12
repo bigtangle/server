@@ -37,7 +37,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
-import net.bigtangle.core.VOSExecute;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
@@ -378,14 +377,6 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList)
             throws BlockStoreException;
-
-    List<VOSExecute> getVOSExecuteList(String vosKey) throws BlockStoreException;
-
-    VOSExecute getVOSExecuteWith(String vosKey, String pubKey) throws BlockStoreException;
-
-    void insertVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
-
-    void updateVOSExecute(VOSExecute vosExecute) throws BlockStoreException;
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
