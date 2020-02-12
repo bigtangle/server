@@ -214,7 +214,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks, int decimal)
             throws JsonProcessingException, Exception, BlockStoreException {
-        store.resetStore();
+     //   store.resetStore();
 
         // Make the "test" token
         Block block = null;

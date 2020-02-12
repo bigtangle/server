@@ -40,9 +40,6 @@ public class ContractTest extends AbstractIntegrationTest {
         makeAndConfirmPayContract(genesisKey,  NetworkParameters.BIGTANGLE_TOKENID_STRING , new BigInteger("1000"), testTokenId, addedBlocks);
        
 
-        // Execute order matching
-        makeAndConfirmOrderMatching(addedBlocks);
-        showOrders();
 
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);

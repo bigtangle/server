@@ -256,9 +256,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			+ "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress) "
 			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?)";
 	protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
-			+ "  INTO contractevent (blockhash, collectinghash,  contractTokenid, confirmed, spent, spenderblockhash, "
+			+ "  INTO contractevent (blockhash,   contracttokenid, confirmed, spent, spenderblockhash, "
 			+ "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime,  beneficiaryaddress) "
-			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?)";
+			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)";
 	protected final String INSERT_OrderCancel_SQL = getInsert()
 			+ " INTO ordercancel (blockhash, orderblockhash, confirmed, spent, spenderblockhash,time) "
 			+ " VALUES (?, ?, ?, ?, ?,?)";
@@ -5088,20 +5088,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			preparedStatement = conn.get().prepareStatement(INSERT_CONTRACT_EVENT_SQL);
 			for (ContractEventRecord record : records) {
 				preparedStatement.setBytes(1, record.getBlockHash().getBytes());
-				preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
-
-				preparedStatement.setString(3, record.getContractTokenid());
-				preparedStatement.setBoolean(4, record.isConfirmed());
-				preparedStatement.setBoolean(5, record.isSpent());
-				preparedStatement.setBytes(6,
+			
+				preparedStatement.setString(2, record.getContractTokenid());
+				preparedStatement.setBoolean(3, record.isConfirmed());
+				preparedStatement.setBoolean(4, record.isSpent());
+				preparedStatement.setBytes(5,
 						record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
-				preparedStatement.setBytes(7, record.getTargetValue().toByteArray());
-				preparedStatement.setString(8, record.getTargetTokenid());
-				preparedStatement.setBytes(9, record.getBeneficiaryPubKey());
-				preparedStatement.setLong(10, record.getValidToTime());
-				preparedStatement.setLong(11, record.getValidFromTime());
+				preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
+				preparedStatement.setString(7, record.getTargetTokenid());
+				preparedStatement.setBytes(8, record.getBeneficiaryPubKey());
+				preparedStatement.setLong(9, record.getValidToTime());
+				preparedStatement.setLong(10, record.getValidFromTime());
 
-				preparedStatement.setString(12, record.getBeneficiaryAddress());
+				preparedStatement.setString(11, record.getBeneficiaryAddress());
 
 				preparedStatement.addBatch();
 			}
