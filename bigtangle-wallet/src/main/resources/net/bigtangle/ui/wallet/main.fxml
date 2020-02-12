@@ -46,7 +46,7 @@
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#blockEvaluation" text="%Blocks" />
 				<Button defaultButton="true" mnemonicParsing="false" onAction="#eckeyList" text="%Keys" />
             <Button defaultButton="true" mnemonicParsing="false" onAction="#userdataList" text="%userdata" />
-            <Button defaultButton="true" mnemonicParsing="false" onAction="#vos" text="%vos" />
+    
 				<Button defaultButton="true" onAction="#settingsClicked" text="%Settings" />
 			</children>
 		</HBox>
