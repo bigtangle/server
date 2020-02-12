@@ -10,12 +10,16 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-public abstract class AbstractResponse {
+public abstract class AbstractResponse  {
+ 
 
-    private Integer errorcode;
+	private Integer errorcode;
 
     private String message;
 
+    private Integer duration;
+    
+ 
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
@@ -52,11 +56,9 @@ public abstract class AbstractResponse {
     }
 
     private static class Emptyness extends AbstractResponse {
+ 
     }
-
-    private Integer duration;
-    
-    public Integer getDuration() {
+   public Integer getDuration() {
         return duration == null ? 0 : this.duration;
     }
 

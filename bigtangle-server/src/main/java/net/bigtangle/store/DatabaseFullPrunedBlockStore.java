@@ -40,7 +40,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ContractEventRecord;
+import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
@@ -70,6 +70,7 @@ import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.store.data.ContractEventRecord;
 import net.bigtangle.store.data.DepthAndWeight;
 import net.bigtangle.store.data.Rating;
 import net.bigtangle.store.data.SolidityState;
@@ -93,33 +94,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 	public static final String VERSION_SETTING = "version";
 
 	// Drop table SQL.
-	public static String DROP_SETTINGS_TABLE = "DROP TABLE IF EXISTS settings";
-	public static String DROP_BLOCKS_TABLE = "DROP TABLE IF EXISTS blocks";
-	public static String DROP_UNSOLIDBLOCKS_TABLE = "DROP TABLE IF EXISTS unsolidblocks";
-	public static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS outputs";
-	public static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
-	public static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
-	public static String DROP_MATCHING_TABLE = "DROP TABLE IF EXISTS matching";
-	public static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
-	public static String DROP_MULTISIGNBY_TABLE = "DROP TABLE IF EXISTS multisignby";
-	public static String DROP_MULTISIGN_TABLE = "DROP TABLE IF EXISTS multisign";
-	public static String DROP_TX_REWARDS_TABLE = "DROP TABLE IF EXISTS txreward";
-	public static String DROP_USERDATA_TABLE = "DROP TABLE IF EXISTS userdata";
-	public static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE IF EXISTS paymultisign";
-	public static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS paymultisignaddress";
-	public static String DROP_VOSEXECUTE_TABLE = "DROP TABLE IF EXISTS vosexecute";
-	public static String DROP_ordercancel_TABLE = "DROP TABLE IF EXISTS ordercancel";
-	public static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
-	public static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
-	public static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
+	private static String DROP_SETTINGS_TABLE = "DROP TABLE IF EXISTS settings";
+	private static String DROP_BLOCKS_TABLE = "DROP TABLE IF EXISTS blocks";
+	private static String DROP_UNSOLIDBLOCKS_TABLE = "DROP TABLE IF EXISTS unsolidblocks";
+	private static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS outputs";
+	private static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
+	private static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
+	private static String DROP_MATCHING_TABLE = "DROP TABLE IF EXISTS matching";
+	private static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
+	private static String DROP_MULTISIGNBY_TABLE = "DROP TABLE IF EXISTS multisignby";
+	private static String DROP_MULTISIGN_TABLE = "DROP TABLE IF EXISTS multisign";
+	private static String DROP_TX_REWARDS_TABLE = "DROP TABLE IF EXISTS txreward";
+	private static String DROP_USERDATA_TABLE = "DROP TABLE IF EXISTS userdata";
+	private static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE IF EXISTS paymultisign";
+	private static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS paymultisignaddress";
+	private static String DROP_CONTRACT_EXECUTION_TABLE = "DROP TABLE IF EXISTS contractexecution";
+	private static String DROP_ordercancel_TABLE = "DROP TABLE IF EXISTS ordercancel";
+	private static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
+	private static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
+	private static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
 
-	public static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
-	public static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-	public static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
-	public static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
-	public static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
-	public static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
-
+	private static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
+	private static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
+	private static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
+	private static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
+	private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
+	private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
+	private static String DROP_CONTRACT_ACCOUNT_TABLE = "DROP TABLE contractaccount";
 	// Queries SQL.
 	protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
 	protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -473,6 +474,19 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			+ "FROM exchange e WHERE (toSign = false OR fromSign = false) AND "
 			+ "(fromAddress = ? OR toAddress = ? OR toOrderId in(SELECT DISTINCT em.orderid FROM exchange_multisign em WHERE pubkey=?)) "
 			+ afterSelect();
+	
+	protected final String SELECT_CONTRACT_EXECUTION_SQL = "SELECT blockhash, contracttokenid confirmed, spent, "
+			+ "spenderblockhash, prevblockhash, difficulty, chainlength ";
+
+	protected final String CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL = SELECT_CONTRACT_EXECUTION_SQL
+			+ " FROM contractexecution"
+			+ " WHERE confirmed = 1 AND  contracttokenid = ? "
+			+ " AND chainlength=(SELECT MAX(chainlength) FROM contractexecution WHERE confirmed=1 and contracttokenid=?)";
+	protected final String CONTRACT_EXECUTION_INSERT_SQL = getInsert()
+			+ "  INTO contractexecution (blockhash, contracttokenid, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) "
+			+ "VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+	
+	
 	protected NetworkParameters params;
 	protected ThreadLocal<Connection> conn;
 	protected LinkedBlockingQueue<Connection> allConnections;
@@ -627,7 +641,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		sqlStatements.add(DROP_USERDATA_TABLE);
 		sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
 		sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
-		sqlStatements.add(DROP_VOSEXECUTE_TABLE);
+		sqlStatements.add(DROP_CONTRACT_EXECUTION_TABLE);
 		sqlStatements.add(DROP_ordercancel_TABLE);
 		sqlStatements.add(DROP_BATCHBLOCK_TABLE);
 		sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
@@ -637,7 +651,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
 		sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
 		sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
-		  sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
+		sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
+		sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
 		return sqlStatements;
 	}
 
@@ -3955,6 +3970,31 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		}
 	}
 
+
+	@Override
+	public  ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = conn.get().prepareStatement(CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) { 
+				return setContractExecution(resultSet);
+			} else
+				return null; 
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					throw new BlockStoreException("Failed to close PreparedStatement");
+				}
+			}
+		}
+	}
+
 	@Override
 	public TXReward getMaxSolidReward() throws BlockStoreException {
 		maybeConnect();
@@ -4007,6 +4047,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 		}
 	}
 
+	private ContractExecution setContractExecution(ResultSet resultSet) throws SQLException {
+		return new ContractExecution(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getString("contracttokenid"), resultSet.getBoolean("confirmed"),
+				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
+				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getLong("difficulty"),
+				resultSet.getLong("chainlength"));
+	}
+	
 	private TXReward setReward(ResultSet resultSet) throws SQLException {
 		return new TXReward(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
 				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),

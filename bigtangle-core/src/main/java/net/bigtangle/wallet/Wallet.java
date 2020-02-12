@@ -66,6 +66,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ContractEventInfo;
+import net.bigtangle.core.ContractExecutionResult;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
@@ -2826,6 +2827,30 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			return null;
 		}
 		return solveAndPost(block);
+	}
+
+	public Block contractExecution(String tokenId, BigInteger payAmount, String beneficiary,
+			List<ContractEventInfo> contractEventRecords, String contractTokenid)
+			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
+		Transaction tx = new Transaction(params);
+		tx.addOutput(new Coin(payAmount, tokenId), new Address(params, beneficiary));
+
+		ContractExecutionResult info = new ContractExecutionResult(contractEventRecords, tx);
+		tx.setData(info.toByteArray());
+		tx.setDataClassName("ContractExecutionResult");
+
+		// Create block with ContractEventInfo
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+				Json.jsonmapper().writeValueAsString(requestParam));
+		Block block = params.getDefaultSerializer().makeBlock(data);
+
+		// block = predecessor.createNextBlock();
+		block.addTransaction(tx);
+		block.setBlockType(Type.BLOCKTYPE_CONTRACT_EXECUTE);
+
+		return solveAndPost(block);
+	
 	}
 
 	public boolean isAllowClientMining() {

@@ -4,6 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -11,11 +14,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Stopwatch;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.data.OrderMatchingResult;
 import net.bigtangle.utils.Threading;
 
 /**
@@ -29,7 +44,7 @@ import net.bigtangle.utils.Threading;
  * </p>
  */
 @Service
-public class ContractService {
+public class ContractExecutionService {
 
     @Autowired
     protected FullPrunedBlockStore store;
@@ -54,20 +69,19 @@ public class ContractService {
      * @throws BlockStoreException
      */
 
-    protected final ReentrantLock lock = Threading.lock("RewardService");
-
-    // createReward is time boxed and can run parallel.
+    protected final ReentrantLock lock = Threading.lock("ContractExecutionService");
+ 
     public void startSingleProcess() {
         if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  RewardService running. Returning...");
+            log.debug(this.getClass().getName() + "  ContractExecutionService running. Returning...");
             return;
         }
      
         try {
             // log.info("create Reward started");
-        //    createReward();
+        	//startContractExecution();
         } catch (Exception e) {
-            log.error("create Reward end  ", e);
+            log.error(" ContractExecution  end  ", e);
         } finally {
              lock.unlock();
         }
