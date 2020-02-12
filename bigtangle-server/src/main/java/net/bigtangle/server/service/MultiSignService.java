@@ -34,6 +34,7 @@ import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.data.SolidityState;
 import net.bigtangle.utils.UUIDUtil;
 
 @Service

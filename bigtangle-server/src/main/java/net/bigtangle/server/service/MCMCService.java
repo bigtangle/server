@@ -29,6 +29,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.data.DepthAndWeight;
+import net.bigtangle.store.data.Rating;
 import net.bigtangle.utils.Threading;
 
 /*

@@ -257,9 +257,12 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" 
             + ") ENGINE=InnoDB";
 
+    /*
+     * indicate of a server created block
+     */
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
             + "    prevhash binary(32) NOT NULL,\n" 
-            + " hash binary(32) NOT NULL,\n" 
+            + "    hash binary(32) NOT NULL,\n" 
             + "    inserttime bigint,\n"
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" 
             + ") ENGINE=InnoDB";
@@ -308,7 +311,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
                 // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
-            + "    contractTokenid varchar(255),\n" 
+            + "    contracttokenid varchar(255),\n" 
              + "   targetcoinvalue mediumblob,\n" 
             + "    targettokenid varchar(255),\n" 
                 // public address
@@ -316,34 +319,30 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 // the pubkey that will receive the targettokens
                 // on completion or returned   tokens on cancels 
             + "    beneficiarypubkey binary(33),\n"
-               // order is valid untill this time
+               //  valid until this time
             + "    validToTime bigint,\n" 
-                // a number used to track operations on the
-                // order, e.g. increasing by one when refreshing
-                // order is valid after this time
             + "    validFromTime bigint,\n" 
             // true iff a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
-            // true if used by a confirmed  ordermatch block (either
-            // returned or used for another orderoutput/output)
+            // true if used by a confirmed  block (either
+            // returned or used for another  )
             + "    spent boolean NOT NULL,\n" 
             + "    spenderblockhash  binary(32),\n" 
-            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash, collectinghash) "
+            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
     private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
-        + "    contractTokenid varchar(255)  NOT NULL,\n" 
+        + "    contracttokenid varchar(255)  NOT NULL,\n" 
         + "    tokenid varchar(255)  NOT NULL,\n" 
         + "    coinvalue mediumblob, \n" 
         //  block  hash of the last execution block
         + "    blockhash binary(32) NOT NULL,\n" 
-        + "    height binary(32) NOT NULL,\n" 
         + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contractTokenid, tokenid) "
         + ") ENGINE=InnoDB \n";
 
     private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
-            + "   contractTokenid varchar(255)  NOT NULL,\n" 
+            + "   contracttokenid varchar(255)  NOT NULL,\n" 
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
@@ -367,7 +366,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
     private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
     private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
-    private static final String CREATE_CONTRACT_EVENT_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX contractevent_collectinghash_idx ON orders (collectinghash) USING btree";
+    private static final String CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractevent_contracttokenid_idx ON orders (contractTokenid) USING btree";
+    private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON orders (contractTokenid) USING btree";
 
   
     public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
@@ -422,6 +422,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE);
         return sqlStatements;
     }
 
@@ -462,7 +464,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected List<String> getCreateIndexesSQL2() {
         List<String> sqlStatements = new ArrayList<String>(); 
         sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX); 
-        sqlStatements.add(CREATE_CONTRACT_EVENT_COLLECTINGHASH_TABLE_INDEX); 
+        sqlStatements.add(CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX); 
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX); 
         return sqlStatements;
     }
     @Override

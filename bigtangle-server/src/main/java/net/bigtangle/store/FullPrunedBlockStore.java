@@ -41,9 +41,9 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.DepthAndWeight;
-import net.bigtangle.server.service.Rating;
-import net.bigtangle.server.service.SolidityState;
+import net.bigtangle.store.data.DepthAndWeight;
+import net.bigtangle.store.data.Rating;
+import net.bigtangle.store.data.SolidityState;
 
 /**
  * <p>

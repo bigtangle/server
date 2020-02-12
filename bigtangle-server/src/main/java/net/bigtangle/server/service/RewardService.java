@@ -59,6 +59,7 @@ import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.data.OrderMatchingResult;
+import net.bigtangle.store.data.SolidityState;
 import net.bigtangle.utils.Threading;
 
 /**

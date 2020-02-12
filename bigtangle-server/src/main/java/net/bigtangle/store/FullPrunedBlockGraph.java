@@ -77,11 +77,11 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
-import net.bigtangle.server.service.SolidityState;
-import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.store.data.OrderMatchingResult;
+import net.bigtangle.store.data.SolidityState;
+import net.bigtangle.store.data.SolidityState.State;
 
 /**
  * <p>

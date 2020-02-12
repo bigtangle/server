@@ -88,9 +88,10 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
-import net.bigtangle.server.service.SolidityState.State;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.data.SolidityState;
+import net.bigtangle.store.data.SolidityState.State;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 @Service
