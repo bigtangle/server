@@ -25,6 +25,7 @@ dependencies {
  
        compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
     compile project(':bigtangle-core')
+     compile project(':bigtangle-core-apps')
    
 }
 
