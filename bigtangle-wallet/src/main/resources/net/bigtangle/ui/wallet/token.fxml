@@ -37,29 +37,42 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-								<Tab closable="false" text="%oncePublish">
-					<content>
-						<AnchorPane maxHeight="569.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="569.0" prefWidth="990.0" style="-fx-background-color: white;">
-							<children>
-								<Label layoutX="24.0" layoutY="82.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
-								<Label layoutX="24.0" layoutY="130.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
-								<TextArea fx:id="stockDescription" layoutX="279.0" layoutY="291.0" maxWidth="500.0" minWidth="500.0" prefHeight="200.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-								<TextField fx:id="stockAmount" layoutX="279.0" layoutY="126.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								<Button fx:id="save" alignment="CENTER" defaultButton="true" layoutX="627.0" layoutY="510.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
-								<Button fx:id="closeButton" cancelButton="true" layoutX="725.0" layoutY="510.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-								<Label contentDisplay="CENTER" layoutX="24.0" layoutY="291.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
-								<ComboBox fx:id="tokenid" editable="true" layoutX="279.0" layoutY="78.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-								<Label layoutX="24.0" layoutY="36.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
-								<TextField fx:id="stockName" layoutX="279.0" layoutY="32.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Label layoutX="24.0" layoutY="252.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
-                        <TextField fx:id="stockUrl" layoutX="279.0" layoutY="248.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <CheckBox fx:id="domainnametypeCheckBox" layoutX="279.0" layoutY="208.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="204.0" text="%domainnametype" />
-                        <TextField fx:id="decimalsTF" layoutX="279.0" layoutY="165.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label layoutX="24.0" layoutY="169.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%decimals" />
-							</children>
-						</AnchorPane>
-					</content>
-				</Tab>
+            <Tab fx:id="multiPublishTab2" closable="false" text="%identity">
+               <content>
+                  <AnchorPane maxHeight="569.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="569.0" prefWidth="990.0" style="-fx-background-color: white;">
+                     <children>
+                        <Label layoutX="24.0" layoutY="97.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
+                        <Label layoutX="24.0" layoutY="138.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%surname" GridPane.rowIndex="3" />
+                        <TextField fx:id="surname2id" layoutX="279.0" layoutY="134.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Button fx:id="save12" alignment="CENTER" defaultButton="true" layoutX="628.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveMultiToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
+                        <Button fx:id="closeButton14" cancelButton="true" layoutX="726.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="303.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofissue" GridPane.rowIndex="4" />
+                        <ComboBox fx:id="tokenid2id" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
+                        <TextField fx:id="tokenname2id" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <TextField fx:id="sex2id" layoutX="279.0" layoutY="250.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="254.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%sex" />
+                        <Label layoutX="24.0" layoutY="381.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
+                        <TextField fx:id="signnumberTF2id" layoutX="279.0" layoutY="377.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="1" />
+                        <Button defaultButton="true" layoutX="524.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSIgnAddress2id" prefWidth="120.0" text="%addSignPubkey" />
+                        <ChoiceBox fx:id="signAddrChoiceBox2id" layoutX="280.0" layoutY="482.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="415.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
+                        <Button defaultButton="true" layoutX="662.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddress2id" prefWidth="120.0" text="%removePubkey" />
+                        <TextField fx:id="signPubkeyTF2id" layoutX="279.0" layoutY="411.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                        <TextField fx:id="forenames2id" layoutX="279.0" layoutY="176.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="180.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%forenames" />
+                        <TextField fx:id="dateofissue2id" layoutX="280.0" layoutY="299.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <TextField fx:id="dateofexpiry2id" layoutX="279.0" layoutY="334.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="338.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofexpiry" />
+                        <Label layoutX="24.0" layoutY="212.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%photo" />
+                        <Button fx:id="save121" alignment="CENTER" defaultButton="true" layoutX="603.0" layoutY="208.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveMultiToken" prefHeight="23.0" prefWidth="108.0" text="%File" />
+                        <TextField fx:id="photo2id" layoutX="278.0" layoutY="208.0" maxWidth="500.0" minWidth="290.0" prefHeight="23.0" prefWidth="290.0" />
+                        <TextField fx:id="identificationnumber2id" layoutX="280.0" layoutY="23.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="27.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="175.0" text="%identificationnumber" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
 				
 				<Tab fx:id="multiPublishTab" closable="false" text="%multiPublish">
 					<content>
