@@ -63,7 +63,7 @@ import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenController extends TokenBaseController {
+public class TokenController extends TokenIdentityController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenController.class);
 
@@ -276,7 +276,7 @@ public class TokenController extends TokenBaseController {
         stockName1.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenid1.setValue(tokenid);
         String amountString = MonetaryFormat.FIAT.noCode()
-                .format( new Coin(tokenInfo.getToken().getAmount(), tokenid), tokenInfo.getToken().getDecimals())
+                .format(new Coin(tokenInfo.getToken().getAmount(), tokenid), tokenInfo.getToken().getDecimals())
                 .toString();
         stockAmount1.setText(amountString);
         tokenstopCheckBox.setSelected(tokenInfo.getToken().isTokenstop());
@@ -470,7 +470,7 @@ public class TokenController extends TokenBaseController {
                 tokenData.add(temp);
             }
         }
-        tokenid.setItems(tokenData);
+        tokenid2id.setItems(tokenData);
         tokenid1.setItems(tokenData);
         tokenid11.setItems(tokenData);
         marketid.setItems(tokenData);
@@ -537,8 +537,7 @@ public class TokenController extends TokenBaseController {
                 walletKeys.add(outKey);
                 BigInteger amount = new BigInteger(stockAmount.getText());
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, outKey, tokenid.getValue().trim(),
-                          stockUrl.getText().trim(), Main.getAesKey(), amount,
-                        stockDescription.getText().trim());
+                        stockUrl.getText().trim(), Main.getAesKey(), amount, stockDescription.getText().trim());
                 GuiUtils.informationalAlert("", Main.getText("s_c_m"));
                 Main.instance.controller.initTableView();
                 checkGuiThread();
@@ -550,7 +549,6 @@ public class TokenController extends TokenBaseController {
 
                 Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount.getText(),
                         Utils.HEX.decode(tokenid.getValue()), Integer.parseInt(decimalsTF.getText()));
-                
 
                 HashMap<String, String> requestParam00 = new HashMap<String, String>();
                 requestParam00.put("tokenid", tokenid.getValue().trim());
@@ -558,11 +556,11 @@ public class TokenController extends TokenBaseController {
                         Json.jsonmapper().writeValueAsString(requestParam00));
 
                 TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-                long tokenindex_ = tokenIndexResponse.getTokenindex(); 
+                long tokenindex_ = tokenIndexResponse.getTokenindex();
 
-                Token tokens = Token.buildSimpleTokenInfo(false, tokenIndexResponse.getBlockhash(), tokenid.getValue().trim(),
-                        stockName.getText().trim(), stockDescription.getText().trim(), 1, 0, basecoin.getValue(), true,
-                        Integer.parseInt(decimalsTF.getText()), null);
+                Token tokens = Token.buildSimpleTokenInfo(false, tokenIndexResponse.getBlockhash(),
+                        tokenid.getValue().trim(), stockName.getText().trim(), stockDescription.getText().trim(), 1, 0,
+                        basecoin.getValue(), true, Integer.parseInt(decimalsTF.getText()), null);
                 tokens.setDomainName(stockUrl.getText().trim());
                 tokenInfo.setToken(tokens);
 
@@ -802,8 +800,8 @@ public class TokenController extends TokenBaseController {
                 }
 
                 Main.walletAppKit.wallet().publishDomainName(walletKeys, walletKeys.get(0), tokenid1.getValue().trim(),
-                         urlTF.getText().trim(), Main.getAesKey(),
-                        new BigInteger(stockAmount1.getText()), stockDescription1.getText().trim());
+                        urlTF.getText().trim(), Main.getAesKey(), new BigInteger(stockAmount1.getText()),
+                        stockDescription1.getText().trim());
 
                 for (int i = 1; i < walletKeys.size(); i++) {
                     ECKey sighKey = walletKeys.get(i);
@@ -854,13 +852,12 @@ public class TokenController extends TokenBaseController {
             throws JsonProcessingException, Exception {
         TokenInfo tokenInfo = new TokenInfo();
         int decimals = Integer.parseInt(decimalsTF1.getText());
-        BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                Utils.HEX.decode(tokenid1.getValue()), decimals).getValue();
+        BigInteger amount = MonetaryFormat.FIAT.noCode()
+                .parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()), decimals).getValue();
         Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid1.getValue().trim(), stockName1.getText().trim(),
-                stockDescription1.getText().trim(), 1, 0, amount,
-                true, decimals, null);
+                stockDescription1.getText().trim(), 1, 0, amount, true, decimals, null);
         tokens.setDomainName(urlTF.getText().trim());
-     
+
         tokenInfo.setToken(tokens);
         ECKey mykey = null;
         for (ECKey key : issuedKeys) {
@@ -976,16 +973,16 @@ public class TokenController extends TokenBaseController {
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Long tokenindex_ = tokenIndexResponse.getTokenindex(); 
+        Long tokenindex_ = tokenIndexResponse.getTokenindex();
 
-          BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()),
-                Integer.parseInt(decimalsTF1.getText())).getValue();
+        BigInteger amount = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
+                Utils.HEX.decode(tokenid1.getValue()), Integer.parseInt(decimalsTF1.getText())).getValue();
         Coin basecoin = new Coin(amount, Main.getString(map.get("tokenHex")).trim());
 
-        Token tokens = Token.buildSimpleTokenInfo(false,  tokenIndexResponse.getBlockhash(), Main.getString(map.get("tokenHex")).trim(),
-                Main.getString(map.get("tokenname")).trim(), Main.getString(map.get("description")).trim(),
-                Integer.parseInt(this.signnumberTF.getText().trim()), tokenindex_, amount,
-                (boolean) map.get("tokenstop"), Integer.parseInt(decimalsTF1.getText()), null);
+        Token tokens = Token.buildSimpleTokenInfo(false, tokenIndexResponse.getBlockhash(),
+                Main.getString(map.get("tokenHex")).trim(), Main.getString(map.get("tokenname")).trim(),
+                Main.getString(map.get("description")).trim(), Integer.parseInt(this.signnumberTF.getText().trim()),
+                tokenindex_, amount, (boolean) map.get("tokenstop"), Integer.parseInt(decimalsTF1.getText()), null);
         tokens.setDomainName(Main.getString(map.get("url")).trim());
         tokenInfo.setToken(tokens);
 

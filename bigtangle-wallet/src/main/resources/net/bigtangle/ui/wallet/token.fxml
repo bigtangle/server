@@ -65,7 +65,7 @@
                         <TextField fx:id="dateofexpiry2id" layoutX="279.0" layoutY="334.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                         <Label contentDisplay="CENTER" layoutX="24.0" layoutY="338.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofexpiry" />
                         <Label layoutX="24.0" layoutY="212.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%photo" />
-                        <Button fx:id="save121" alignment="CENTER" defaultButton="true" layoutX="603.0" layoutY="208.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveMultiToken" prefHeight="23.0" prefWidth="108.0" text="%File" />
+                        <Button fx:id="save121" alignment="CENTER" defaultButton="true" layoutX="603.0" layoutY="208.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#selectFile" prefHeight="23.0" prefWidth="108.0" text="%File" />
                         <TextField fx:id="photo2id" layoutX="278.0" layoutY="208.0" maxWidth="500.0" minWidth="290.0" prefHeight="23.0" prefWidth="290.0" />
                         <TextField fx:id="identificationnumber2id" layoutX="280.0" layoutY="23.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                         <Label layoutX="24.0" layoutY="27.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="175.0" text="%identificationnumber" />

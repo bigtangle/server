@@ -48,7 +48,7 @@ import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenIdentityController {
+public class TokenIdentityController extends TokenBaseController{
 
     private static final Logger log = LoggerFactory.getLogger(TokenIdentityController.class);
 
