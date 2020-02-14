@@ -1,7 +1,13 @@
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.spongycastle.crypto.InvalidCipherTextException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -19,12 +26,17 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.data.identity.Identity;
+import net.bigtangle.data.identity.IdentityCore;
+import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -70,7 +82,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
     @Test
     public void testCreateDomainToken() throws Exception {
-    
+
         ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
@@ -103,7 +115,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         {
-            ECKey key= new ECKey();
+            ECKey key = new ECKey();
             final String tokenid = key.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
 
@@ -159,6 +171,88 @@ public class TokenTest extends AbstractIntegrationTest {
 
         }
 
+    }
+
+    @Test
+    public void testCreateIdentityTokenWithDomain() throws Exception {
+
+        createShopToken();
+
+        ECKey key = new ECKey();
+
+        walletAppKit1.wallet().importKey(key);
+        // walletAppKit1.wallet().importKey(preKey) ;
+        final String tokenid = key.getPublicKeyAsHex();
+        walletAppKit1.wallet().publishDomainName(key, tokenid, "id.shop", aesKey, "");
+        walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
+
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+
+        {
+
+            ECKey productkey = new ECKey();
+            KeyValue kv = setKeyValue(productkey);
+
+            walletAppKit1.wallet().importKey(productkey);
+            Block block = walletAppKit1.wallet().createToken(productkey, "identity", 0, "id.shop", "test",
+                    BigInteger.ONE, true, kv, TokenType.identity.ordinal());
+            TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+            walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
+            HashMap<String, Object> requestParam = new HashMap<String, Object>();
+            requestParam.put("tokenid", currentToken.getToken().getTokenid());
+            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+
+            assertTrue(getTokensResponse.getTokens().size() == 1);
+            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
+                    .equals(currentToken.getToken().getTokenname() + "@id.shop"));
+            Token token = getTokensResponse.getTokens().get(0);
+            KeyValue kvtemp = token.getTokenKeyValues().getKeyvalues().get(0);
+            String temp = kvtemp.getValue();
+            byte[] decryptedPayload = ECIESCoder.decrypt(productkey.getPrivKey(), Utils.HEX.decode(temp));
+            kv = new KeyValue();
+            kv.setKey("identity");
+            Identity identity = new Identity();
+            IdentityCore identityCore = new IdentityCore();
+            identityCore.setSurname("zhang");
+            identityCore.setForenames("san");
+            identityCore.setSex("man");
+            identityCore.setDateofissue("20200101");
+            identityCore.setDateofexpiry("20201231");
+            identity.setIdentityCore(identityCore);
+            identity.setIdentificationnumber("120123456789012345");
+            byte[] photo = readFile(new File("F:\\img\\cc_aes1.jpg"));
+            identity.setPhoto(photo);
+            assertArrayEquals(decryptedPayload, Json.jsonmapper().writeValueAsBytes(identity));
+        }
+
+    }
+
+    private KeyValue setKeyValue(ECKey key) throws InvalidCipherTextException, IOException {
+        KeyValue kv = new KeyValue();
+        kv.setKey("identity");
+        Identity identity = new Identity();
+        IdentityCore identityCore = new IdentityCore();
+        identityCore.setSurname("zhang");
+        identityCore.setForenames("san");
+        identityCore.setSex("man");
+        identityCore.setDateofissue("20200101");
+        identityCore.setDateofexpiry("20201231");
+        identity.setIdentityCore(identityCore);
+        identity.setIdentificationnumber("120123456789012345");
+        byte[] photo = readFile(new File("F:\\img\\cc_aes1.jpg"));
+        identity.setPhoto(photo);
+        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
+
+        kv.setValue(Utils.HEX.encode(cipher));
+        return kv;
     }
 
     @Test
@@ -398,5 +492,36 @@ public class TokenTest extends AbstractIntegrationTest {
         mcmcService.update();
         confirmationService.update();
         return currentToken;
+    }
+
+    public byte[] readFile(File file) {
+        byte[] buf = null;
+        if (file != null) {
+            ByteArrayOutputStream byteArrayOutputStream = null;
+            BufferedInputStream bufferedInputStream = null;
+            byteArrayOutputStream = new ByteArrayOutputStream((int) file.length());
+            try {
+                bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+                int buffSize = 1024;
+                byte[] buffer = new byte[buffSize];
+                int len = 0;
+                while (-1 != (len = bufferedInputStream.read(buffer, 0, buffSize))) {
+                    byteArrayOutputStream.write(buffer, 0, len);
+                }
+                buf = byteArrayOutputStream.toByteArray();
+            } catch (Exception e) {
+            } finally {
+                if (bufferedInputStream != null) {
+                    try {
+                        bufferedInputStream.close();
+                        if (byteArrayOutputStream != null) {
+                            byteArrayOutputStream.close();
+                        }
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        return buf;
     }
 }
