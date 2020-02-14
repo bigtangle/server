@@ -35,11 +35,13 @@ import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.data.identity.Identity;
 import net.bigtangle.data.identity.IdentityCore;
+import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -48,7 +50,7 @@ import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenIdentityController extends TokenBaseController{
+public class TokenIdentityController extends TokenBaseController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenIdentityController.class);
 
@@ -182,8 +184,26 @@ public class TokenIdentityController extends TokenBaseController{
                     outKey = key;
                 }
             }
+            KeyValue kv = new KeyValue();
+            kv.setKey("identity");
+            Identity identity = new Identity();
+            IdentityCore identityCore = new IdentityCore();
+            identityCore.setSurname(surname2id.getText());
+            identityCore.setForenames(forenames2id.getText());
+            identityCore.setSex(sex2id.getText());
+            identityCore.setDateofissue(dateofissue2id.getText());
+            identityCore.setDateofexpiry(dateofexpiry2id.getText());
+            identity.setIdentityCore(identityCore);
+            identity.setIdentificationnumber(identificationnumber2id.getText());
+            byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
+            identity.setPhoto(photo);
+            byte[] cipher = ECIESCoder.encrypt(outKey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
 
-            multiPublsih(issuedKeys);
+            kv.setValue(Utils.HEX.encode(cipher));
+            Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
+                    BigInteger.ONE, true, kv, TokenType.identity.ordinal());
+            TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+            Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
             // tabPane.getSelectionModel().clearAndSelect(4);
         } catch (IgnoreServiceException e) {
