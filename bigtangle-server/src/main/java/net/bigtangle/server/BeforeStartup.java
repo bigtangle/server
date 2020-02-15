@@ -33,7 +33,7 @@ public class BeforeStartup {
             //update tables to new version after initial setup
             store.updateDatabse(); 
         }
-  
+        Secp256k1Context.getContext();
         if (scheduleConfiguration.isMilestone_active()) {
             syncBlockService.startInit();
         }
@@ -41,7 +41,7 @@ public class BeforeStartup {
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
-        Secp256k1Context.getContext();
+  
       
     }
 

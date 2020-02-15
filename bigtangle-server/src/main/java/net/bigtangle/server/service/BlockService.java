@@ -661,23 +661,6 @@ public class BlockService {
     }
 
     /*
-     * if a block is failed due to rating without conflict, it can be saved by
-     * setting new BlockPrototype.
-     */
-    public Block recreateBlock(Block oldblock) throws Exception {
-        if (oldblock.getTransactions().size() == 0) {
-            return oldblock;
-        }
-        Block block = getBlockPrototype();
-        for (Transaction transaction : oldblock.getTransactions()) {
-            block.addTransaction(transaction);
-        }
-        block.solve();
-        saveBlock(block);
-        return block;
-    }
-
-    /*
      * failed blocks without conflict for retry
      */
     public AbstractResponse findRetryBlocks(Map<String, Object> request) throws BlockStoreException {

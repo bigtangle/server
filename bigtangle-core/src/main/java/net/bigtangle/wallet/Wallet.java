@@ -1625,29 +1625,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws IOException {
 
         List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
-
-        List<String> pubKeyHashs = new ArrayList<String>();
-
-        for (ECKey ecKey : walletKeys(aesKey)) {
-            pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+        for (UTXO output : calculateAllSpendCandidatesUTXO(aesKey, multisigns)) { 
+            candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
-
-        String response = OkHttp3Util.post(this.serverurl + ReqCmd.getOutputs.name(),
-                Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
-
-        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
-        for (UTXO output : getOutputsResponse.getOutputs()) {
-            if (multisigns) {
-                candidates.add(new FreeStandingTransactionOutput(this.params, output));
-            } else {
-                if (!output.isMultiSig()) {
-                    candidates.add(new FreeStandingTransactionOutput(this.params, output));
-                } else {
-                    log.debug(" warning MultiSig token in Wallet, but not inlcude in  SpendCandidates " + output);
-                }
-            }
-        }
-        Collections.shuffle(candidates);
         return candidates;
 
     }
@@ -2842,11 +2822,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return params.getDefaultSerializer().makeBlock(data);
     }
 
+    public Block retryBlock(String hashHex) throws BlockStoreException, JsonProcessingException, IOException {
+        return retryBlocks(getBlock(hashHex));
+    }
+
     /*
      * if a block is failed due to rating without conflict, it can be saved by
      * setting new BlockPrototype.
      */
-    public Block retryBlocks(Block oldBlock) throws BlockStoreException, Exception {
+    public Block retryBlocks(Block oldBlock) throws BlockStoreException, JsonProcessingException, IOException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip.name(),

@@ -228,7 +228,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
-
+     
+        
         ECKey outKey = new ECKey();
 
         for (int i = 0; i < 3; i++) {
@@ -256,6 +257,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             for (UTXO output : this.getBalance(true, outKey)) {
                 log.info("UTXO : " + output);
             }
+            mcmcService.update();
+            confirmationService.update();
         }
     }
 
