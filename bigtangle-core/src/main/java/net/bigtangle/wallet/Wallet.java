@@ -59,6 +59,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
+import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -1625,7 +1626,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws IOException {
 
         List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
-        for (UTXO output : calculateAllSpendCandidatesUTXO(aesKey, multisigns)) { 
+        for (UTXO output : calculateAllSpendCandidatesUTXO(aesKey, multisigns)) {
             candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
         return candidates;
@@ -2870,6 +2871,18 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         return solveAndPost(block);
 
+    }
+
+    public void changePassword(String password, String oldPassword) {
+
+        Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8).setN(32768)
+                .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt())).build();
+        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
+        KeyParameter aesKey = scrypt.deriveKey(password);
+        if (isEncrypted()) {
+            decrypt(oldPassword);
+        }
+        encrypt(scrypt, aesKey);
     }
 
     public boolean isAllowClientMining() {

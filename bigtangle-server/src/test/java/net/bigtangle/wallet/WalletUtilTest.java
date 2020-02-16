@@ -9,12 +9,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
+import java.util.Random;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -80,8 +77,10 @@ public class WalletUtilTest {
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() > 0);
 
-        String oldPassword = "test";
+        String oldPassword = "";
+        oldPassword +=     new Random().nextLong();
         String password = "test";
+        password+=  new Random().nextLong();
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
 
         KeyParameter aesKey = scrypt.deriveKey(password);
@@ -101,6 +100,16 @@ public class WalletUtilTest {
         assertTrue(wallet.isEncrypted());
         // assertEquals(issuedKeys, k2);
         issuedKeys.stream().allMatch(num -> k2.contains(num));
+        
+  
+        for(int i=0; i<10;i++) {
+            oldPassword= password;
+            password+=  new Random().nextLong();
+         wallet.changePassword(password,oldPassword);
+         
+        }
+ 
+        
     }
 
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
@@ -130,5 +139,5 @@ public class WalletUtilTest {
         wallet.totalAmount(1, 1000, 6);
 
     }
-
+   
 }
