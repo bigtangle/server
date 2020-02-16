@@ -532,7 +532,7 @@ public class BlockService {
         int delaySeconds = 7200;
 
         if (block.getTimeSeconds() < System.currentTimeMillis() / 1000 - delaySeconds) {
-            logger.debug("adjustPrototyp " + block    );
+            logger.debug("adjustPrototyp " + block);
             Block newblock = getBlockPrototype();
             for (Transaction transaction : block.getTransactions()) {
                 newblock.addTransaction(transaction);
@@ -673,4 +673,46 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
+    /*
+     * Transactions in a block may has spent output, It is not final that the
+     * reject of the block
+     * Return false, if there is possible conflict
+     */
+    public boolean checkPossibleConflict(Block block) throws BlockStoreException {
+        // All used transaction outputs
+        final List<Transaction> transactions = block.getTransactions();
+        for (final Transaction tx : transactions) {
+            if (!tx.isCoinBase()) {
+                for (int index = 0; index < tx.getInputs().size(); index++) {
+                    TransactionInput in = tx.getInputs().get(index);
+
+                    UTXO b = store.getTransactionOutput(in.getOutpoint().getBlockHash(), 
+                            in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
+                    if(b!=null && b.isConfirmed() && b.isSpent()) {
+                        //there is a confirmed output, conflict is very possible
+                        return false;
+                    }
+                    if(b!=null && !b.isConfirmed()
+                            && !checkSpendpending(b)) {
+                        //there is a not confirmed output, conflict may be  possible
+                        //check the time, if the output is stale
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    /*
+     * spendpending has timeout for 5 minute return false, if there is
+     * spendpending and timeout not
+     */
+    public boolean checkSpendpending(UTXO output)  {
+          int SPENTPENDINGTIMEOUT = 300000;
+        if (output.isSpendPending()) {
+            return (System.currentTimeMillis() - output.getSpendPendingTime()) > SPENTPENDINGTIMEOUT;
+        }
+        return true;
+
+    }
 }

@@ -41,7 +41,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
-
+import static org.junit.Assert.fail;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PaymentServiceTest extends AbstractIntegrationTest {
@@ -175,6 +175,43 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         confirmationService.update();
         //check the output histoty
         historyUTXOList(address.toBase58(),amount);
+    }
+
+    @Test
+    // transfer the coin to address
+    public void testPossibleConflict() throws Exception {
+        testInitWallet();
+        wallet1();
+        wallet2();
+
+        // get new Block to be used from server
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
+        Address address = walletKeys.get(0).toAddress(networkParameters);
+        SendRequest request = SendRequest.to(address, amount);
+       // request.tx.setMemo(new MemoInfo(createDataSize(5000)));
+        walletAppKit.wallet().completeTx(request, null);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        sendEmpty(5);
+        mcmcService.update();
+        confirmationService.update();
+        //check the output histoty
+        historyUTXOList(address.toBase58(),amount);
+        //retry the block throw possible conflict
+        try {
+        walletAppKit.wallet().retryBlocks(rollingBlock);
+        fail();
+        }catch (RuntimeException e) {
+            
+        }
+        
     }
 
     public void historyUTXOList(String addressString, Coin amount) throws Exception {

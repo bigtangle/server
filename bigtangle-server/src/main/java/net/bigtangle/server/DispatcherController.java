@@ -40,6 +40,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -594,11 +595,14 @@ public class DispatcherController {
                 resp.setMessage("server accept only his tip selection for validation");
                 this.outPrintJSONString(httpServletResponse, resp);
             } else {
+               if(! blockService.checkPossibleConflict(block)) throw new VerificationException("Conflict Possible");
                 blockService.saveBlock(block);
                 deleteRegisterBlock(block);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
+               
             }
         } else {
+            if(! blockService.checkPossibleConflict(block)) throw new VerificationException("Conflict Possible");
             blockService.saveBlock(block);
             deleteRegisterBlock(block);
             this.outPrintJSONString(httpServletResponse, OkResponse.create());
