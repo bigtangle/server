@@ -120,7 +120,7 @@ public class MultiSignService {
     }
 
     public void saveMultiSign(Block block) throws BlockStoreException, Exception {
-        blockService.checkBlockBeforeSave(block);
+     //   blockService.checkBlockBeforeSave(block);
         try {
             this.store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
