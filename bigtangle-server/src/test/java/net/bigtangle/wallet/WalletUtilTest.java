@@ -77,39 +77,30 @@ public class WalletUtilTest {
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() > 0);
 
-        String oldPassword = "";
-        oldPassword +=     new Random().nextLong();
-        String password = "test";
-        password+=  new Random().nextLong();
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
+        String oldPassword = "test";
+        oldPassword += new Random().nextLong();
 
-        KeyParameter aesKey = scrypt.deriveKey(password);
+        for (int i = 0; i < 10; i++) {
+            KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
 
-        // Write the target time to the wallet so we can make the
-        // progress bar work when entering the password.
+            KeyParameter aesKey = scrypt.deriveKey(oldPassword);
 
-        // The actual encryption part doesn't take very long as most
-        // private keys are derived on demand.
-        log.info("Key derived, now encrypting");
-        if (wallet.isEncrypted()) {
-            wallet.decrypt(oldPassword);
+            if (wallet.isEncrypted()) {
+                wallet.decrypt(oldPassword);
+            }
+            wallet.encrypt(scrypt, aesKey);
+            List<ECKey> k2 = wallet.walletKeys(aesKey);
+
+            assertTrue(wallet.isEncrypted());
+            // assertEquals(issuedKeys, k2);
+            issuedKeys.stream().allMatch(num -> k2.contains(num));
+            String password = "test";
+            password += new Random().nextLong();
+            wallet.changePassword(password, oldPassword);
+
+            oldPassword = password;
         }
-        wallet.encrypt(scrypt, aesKey);
-        List<ECKey> k2 = wallet.walletKeys(aesKey);
 
-        assertTrue(wallet.isEncrypted());
-        // assertEquals(issuedKeys, k2);
-        issuedKeys.stream().allMatch(num -> k2.contains(num));
-        
-  
-        for(int i=0; i<10;i++) {
-            oldPassword= password;
-            password+=  new Random().nextLong();
-         wallet.changePassword(password,oldPassword);
-         
-        }
- 
-        
     }
 
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8)
@@ -139,5 +130,5 @@ public class WalletUtilTest {
         wallet.totalAmount(1, 1000, 6);
 
     }
-   
+
 }

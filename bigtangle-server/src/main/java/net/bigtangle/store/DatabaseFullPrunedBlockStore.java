@@ -3486,7 +3486,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 			preparedStatement = conn.get().prepareStatement(sql);
 			if (tokenid != null && !tokenid.isEmpty()) {
 				preparedStatement.setString(1, tokenid.trim());
-				preparedStatement.setInt(1, tokenindex);
+				preparedStatement.setInt(2, tokenindex);
 			}
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {

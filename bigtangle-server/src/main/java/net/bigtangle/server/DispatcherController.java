@@ -270,9 +270,9 @@ public class DispatcherController {
                 String tokenid = (String) request.get("tokenid");
                 String tokenindex = (String) request.get("tokenindex");
                 Boolean isSign = (Boolean) request.get("isSign");
-                AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid, 
-                        tokenindex==null ? 0: Integer.valueOf(tokenindex),
-                        (List<String>) request.get("addresses"), isSign == null ? false : isSign);
+                AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
+                        tokenindex == null ? 0 : Integer.valueOf(tokenindex), (List<String>) request.get("addresses"),
+                        isSign == null ? false : isSign);
                 this.outPrintJSONString(httpServletResponse, response);
             }
                 break;
@@ -525,7 +525,7 @@ public class DispatcherController {
             default:
                 break;
             }
-        } catch (BlockStoreException e) { 
+        } catch (BlockStoreException e) {
             logger.error("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length, e);
             AbstractResponse resp = ErrorResponse.create(101);
@@ -595,14 +595,14 @@ public class DispatcherController {
                 resp.setMessage("server accept only his tip selection for validation");
                 this.outPrintJSONString(httpServletResponse, resp);
             } else {
-               if(! blockService.checkPossibleConflict(block)) throw new VerificationException("Conflict Possible");
+                blockService.checkBlockBeforeSave(block);
                 blockService.saveBlock(block);
                 deleteRegisterBlock(block);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create());
-               
+
             }
         } else {
-            if(! blockService.checkPossibleConflict(block)) throw new VerificationException("Conflict Possible");
+            blockService.checkBlockBeforeSave(block);
             blockService.saveBlock(block);
             deleteRegisterBlock(block);
             this.outPrintJSONString(httpServletResponse, OkResponse.create());
@@ -630,7 +630,7 @@ public class DispatcherController {
                 && serverConfiguration.getPermissionadmin().equals(address)) {
             return true;
         }
-        
+
         int count = this.accessGrantService.getCountAccessGrantByAddress(address);
         if (count == 0) {
             AbstractResponse resp = ErrorResponse.create(100);
@@ -638,7 +638,7 @@ public class DispatcherController {
             this.outPrintJSONString(httpServletResponse, resp);
             return false;
         }
-        
+
         if (!checkAuth(httpServletResponse, httprequest)) {
             AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage("no auth");

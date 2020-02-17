@@ -120,6 +120,7 @@ public class MultiSignService {
     }
 
     public void saveMultiSign(Block block) throws BlockStoreException, Exception {
+        blockService.checkBlockBeforeSave(block);
         try {
             this.store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
@@ -193,10 +194,11 @@ public class MultiSignService {
             validatorService.checkTokenUnique(block);
             if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block);
+          
                 blockService.saveBlock(block);
                deleteMultiSign(block);
             } else {
-                // data save only on this server for multi signs, not in block.
+                // data save only on this server for multi signs, not in block. 
                 this.saveMultiSign(block);
             }
         } catch (InsufficientSignaturesException e) {

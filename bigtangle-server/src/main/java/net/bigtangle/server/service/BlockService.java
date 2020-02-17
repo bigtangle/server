@@ -25,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -36,6 +39,7 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
@@ -45,6 +49,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
+import net.bigtangle.core.exception.VerificationException.MalformedTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
@@ -56,6 +61,9 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.data.SolidityState;
+import net.bigtangle.store.data.SolidityState.State;
+import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.CoinSelector;
@@ -673,10 +681,31 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
+    public void checkBlockBeforeSave(Block block) throws BlockStoreException {
+
+        block.verifyHeader();
+        if (!checkPossibleConflict(block))
+            throw new VerificationException("Conflict Possible");
+        checkDomainname(block);
+    }
+
+    public void checkDomainname(Block block) throws BlockStoreException {
+        switch (block.getBlockType()) {
+        case BLOCKTYPE_TOKEN_CREATION:
+            TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+            if (TokenType.domainname.ordinal() == currentToken.getToken().getTokentype()) {
+                if (!DomainValidator.getInstance().isValid(currentToken.getToken().getTokenname()))
+                    throw new VerificationException("Domain name is not valid.");
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
     /*
      * Transactions in a block may has spent output, It is not final that the
-     * reject of the block
-     * Return false, if there is possible conflict
+     * reject of the block Return false, if there is possible conflict
      */
     public boolean checkPossibleConflict(Block block) throws BlockStoreException {
         // All used transaction outputs
@@ -686,16 +715,17 @@ public class BlockService {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
                     TransactionInput in = tx.getInputs().get(index);
 
-                    UTXO b = store.getTransactionOutput(in.getOutpoint().getBlockHash(), 
-                            in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
-                    if(b!=null && b.isConfirmed() && b.isSpent()) {
-                        //there is a confirmed output, conflict is very possible
+                    UTXO b = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
+                            in.getOutpoint().getIndex());
+                    if (b != null && b.isConfirmed() && b.isSpent()) {
+                        // there is a confirmed output, conflict is very
+                        // possible
                         return false;
                     }
-                    if(b!=null && !b.isConfirmed()
-                            && !checkSpendpending(b)) {
-                        //there is a not confirmed output, conflict may be  possible
-                        //check the time, if the output is stale
+                    if (b != null && !b.isConfirmed() && !checkSpendpending(b)) {
+                        // there is a not confirmed output, conflict may be
+                        // possible
+                        // check the time, if the output is stale
                         return false;
                     }
                 }
@@ -703,12 +733,13 @@ public class BlockService {
         }
         return true;
     }
+
     /*
      * spendpending has timeout for 5 minute return false, if there is
      * spendpending and timeout not
      */
-    public boolean checkSpendpending(UTXO output)  {
-          int SPENTPENDINGTIMEOUT = 300000;
+    public boolean checkSpendpending(UTXO output) {
+        int SPENTPENDINGTIMEOUT = 300000;
         if (output.isSpendPending()) {
             return (System.currentTimeMillis() - output.getSpendPendingTime()) > SPENTPENDINGTIMEOUT;
         }
