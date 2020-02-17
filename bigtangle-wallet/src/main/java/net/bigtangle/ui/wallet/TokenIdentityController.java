@@ -200,8 +200,18 @@ public class TokenIdentityController extends TokenBaseController {
             byte[] cipher = ECIESCoder.encrypt(outKey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
 
             kv.setValue(Utils.HEX.encode(cipher));
+            List<MultiSignAddress>  addresses = new  ArrayList<MultiSignAddress>();
+           
+            if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
+                for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
+                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(),
+                            "", ecKey.getPublicKeyAsHex()));
+                }
+            }
+            
             Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
-                    BigInteger.ONE, true, kv, TokenType.identity.ordinal());
+                    BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
