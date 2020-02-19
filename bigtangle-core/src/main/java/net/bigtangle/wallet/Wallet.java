@@ -41,7 +41,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
@@ -859,24 +858,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    /**
-     * Prepares the wallet for a blockchain replay. Removes all transactions (as
-     * they would get in the way of the replay) and makes the wallet think it
-     * has never seen a block. {@link WalletEventListener#onWalletChanged} will
-     * be fired.
-     */
-    public void reset() {
-        lock.lock();
-        try {
+    /** 
 
-            saveLater();
-
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
      * Saves the wallet first to the given temp file, then renames to the dest
      * file.
      */
@@ -954,92 +937,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         saveToFile(temp, f);
     }
 
-    /**
-     * <p>
-     * Sets up the wallet to auto-save itself to the given file, using temp
-     * files with atomic renames to ensure consistency. After connecting to a
-     * file, you no longer need to save the wallet manually, it will do it
-     * whenever necessary. Protocol buffer serialization will be used.
-     * </p>
-     *
-     * <p>
-     * If delayTime is set, a background thread will be created and the wallet
-     * will only be saved to disk every so many time units. If no changes have
-     * occurred for the given time period, nothing will be written. In this way
-     * disk IO can be rate limited. It's a good idea to set this as otherwise
-     * the wallet can change very frequently, eg if there are a lot of
-     * transactions in it or during block sync, and there will be a lot of
-     * redundant writes. Note that when a new key is added, that always results
-     * in an immediate save regardless of delayTime. <b>You should still save
-     * the wallet manually when your program is about to shut down as the JVM
-     * will not wait for the background thread.</b>
-     * </p>
-     *
-     * <p>
-     * An event listener can be provided. If a delay >0 was specified, it will
-     * be called on a background thread with the wallet locked when an auto-save
-     * occurs. If delay is zero or you do something that always triggers an
-     * immediate save, like adding a key, the event listener will be invoked on
-     * the calling threads.
-     * </p>
-     *
-     * @param f
-     *            The destination file to save to.
-     * @param delayTime
-     *            How many time units to wait until saving the wallet on a
-     *            background thread.
-     * @param timeUnit
-     *            the unit of measurement for delayTime.
-     * @param eventListener
-     *            callback to be informed when the auto-save thread does things,
-     *            or null
-     */
-    public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
-            @Nullable WalletFiles.Listener eventListener) {
-        lock.lock();
-        try {
-            checkState(vFileManager == null, "Already auto saving this wallet.");
-            WalletFiles manager = new WalletFiles(this, f, delayTime, timeUnit);
-            if (eventListener != null)
-                manager.setListener(eventListener);
-            vFileManager = manager;
-            return manager;
-        } finally {
-            lock.unlock();
-        }
-    }
 
-    /**
-     * <p>
-     * Disables auto-saving, after it had been enabled with
-     * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, net.bigtangle.wallet.WalletFiles.Listener)}
-     * before. This method blocks until finished.
-     * </p>
-     */
-    public void shutdownAutosaveAndWait() {
-        lock.lock();
-        try {
-            WalletFiles files = vFileManager;
-            vFileManager = null;
-            checkState(files != null, "Auto saving not enabled.");
-            files.shutdownAndWait();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /** Requests an asynchronous save on a background thread */
-    protected void saveLater() {
-        WalletFiles files = vFileManager;
-        if (files != null)
-            files.saveLater();
-    }
-
-    /**
-     * If auto saving is enabled, do an immediate sync write to disk ignoring
-     * any delays.
-     */
-    protected void saveNow() {
+    public void saveNow() {
         WalletFiles files = vFileManager;
         if (files != null) {
             try {

@@ -77,8 +77,7 @@ public class WalletUtil {
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
             final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
             wallet = serializer.readWallet(params, null, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
+
         } finally {
             walletStream.close();
         }

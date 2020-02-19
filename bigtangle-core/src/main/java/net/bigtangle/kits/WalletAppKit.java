@@ -22,7 +22,6 @@
 package net.bigtangle.kits;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +30,6 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
@@ -99,9 +97,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected volatile Wallet vWallet;
 
     protected final File directory;
-    protected volatile File vWalletFile;
-
-    protected boolean useAutoSave = true;
+    protected volatile File vWalletFile; 
 
     protected boolean autoStop = true;
     protected InputStream checkpoints;
@@ -134,16 +130,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.filePrefix = checkNotNull(filePrefix);
     }
 
-    /**
-     * If true, the wallet will save itself to disk automatically whenever it
-     * changes.
-     */
-    public WalletAppKit setAutoSave(boolean value) {
-        checkState(state() == State.NEW, "Cannot call after startup");
-        useAutoSave = value;
-        return this;
-    }
-
+   
     /**
      * If true, will register a shutdown hook to stop the library. Defaults to
      * true.
@@ -306,16 +293,10 @@ public class WalletAppKit extends AbstractIdleService {
             wallet = loadWallet(false);
         }
 
-        if (useAutoSave) {
-            this.setupAutoSave(wallet);
-        }
-
+    
         return wallet;
     }
-
-    protected void setupAutoSave(Wallet wallet) {
-        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
-    }
+ 
 
     public Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream) throws Exception {
         Wallet wallet;
@@ -329,8 +310,7 @@ public class WalletAppKit extends AbstractIdleService {
             else
                 serializer = new WalletProtobufSerializer();
             wallet = serializer.readWallet(params, extArray, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
+    
         } finally {
             walletStream.close();
         }

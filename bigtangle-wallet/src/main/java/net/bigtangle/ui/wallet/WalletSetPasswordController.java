@@ -134,6 +134,7 @@ public class WalletSetPasswordController {
                 }
                 Main.walletAppKit.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
+                Main.walletAppKit.wallet().saveNow();
                 informationalAlert(Main.getText("passwordnotmatch2"), Main.getText("retyppassword2"));
                 overlayUI.done();
             }

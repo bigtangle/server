@@ -95,6 +95,7 @@ public class EckeyController {
             walletAppKit.wallet().importKeysAndEncrypt(Lists.newArrayList(newKey), password);
         }
         walletAppKit = new WalletAppKit(params, new File(Main.keyFileDirectory), Main.keyFilePrefix);
+        Main.walletAppKit.wallet().saveNow();
         try {
             initEcKeyList();
         } catch (Exception e) {
@@ -228,6 +229,7 @@ public class EckeyController {
         EckeyModel temp = issuedReceiveKeysTable.getSelectionModel().getSelectedItem();
         ECKey key = ECKey.fromPrivate(Utils.HEX.decode( temp.getPrivkeyHex()) );
         walletAppKit.wallet().removeKey(key);
+        Main.walletAppKit.wallet().saveNow();
     }
     
     public void showKey() {
