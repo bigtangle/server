@@ -1,0 +1,95 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>it.unisa.dia.gas</groupId>
+    <artifactId>jpbc</artifactId>
+    <packaging>pom</packaging>
+    <version>2.0.0</version>
+    <name>JPBC</name>
+    <url>http://gas.dia.unisa.it/</url>
+    <description>
+    </description>
+
+    <developers>
+        <developer>
+            <id>adecaro</id>
+            <name>Angelo De Caro</name>
+            <email>jpbclib@gmail.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>LGPL - GNU LESSER GENERAL PUBLIC LICENSE</name>
+            <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:svn:https://jpbc.svn.sourceforge.net/svnroot/jpbc/trunk</connection>
+        <developerConnection>scm:svn:https://jpbc.svn.sourceforge.net/svnroot/jpbc/trunk</developerConnection>
+        <url>http://jpbc.svn.sourceforge.net/viewvc/jpbc/trunk/</url>
+    </scm>
+
+    <modules>
+        <module>jpbc-api</module>
+        <module>jpbc-plaf</module>
+        <module>jpbc-mm</module>
+        <module>jpbc-pbc</module>
+        <module>jpbc-crypto</module>
+        <module>jpbc-test</module>
+        <module>jpbc-benchmark</module>
+        <module>jpbc-site-skin</module>
+      
+    </modules>
+
+ 
+ 
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+ 
+   	<build>
+ 
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.2</version>
+			</plugin>
+
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12.3</version>
+				<configuration>
+
+				</configuration>
+			</plugin>
+
+		</plugins>
+
+	</build>    
+</project>
