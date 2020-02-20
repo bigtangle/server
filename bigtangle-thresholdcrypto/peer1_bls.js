@@ -1,0 +1,9 @@
+{
+  "privatekey": "AmkSEMyj4nAPEKZ5Hj+BZZh3THk=",
+  "h": "PpH1RN0QMHkrX2Msnioe7ps3nuUGCuJZ4BbMPo0n0I5AicUNBerXIVdiPPCAhVzsv5extcz34iFS5OvURQyUgg9o/Pc6XTQfoWsqdkEHZJNpmQs7KSd0HGoeEUwIPEpONxpU/k4fV0EQp/kFv/1gw1t32DqXPR+i",
+  "verify": [
+    "MrZYXxNSPUQmMticfqkpW8KJBzo+XNDuZG2PMmnuw2u7mEt81K2XjGhnHoMFub6Knkmx9imhdB5L6zKnZUh3Qp6i/thPYPdCyLySPmaSzJFmAvKo1m8+eOObF3dmv0qrlnGspQ2hODuQLq5CVHex4QEv44zxA7+N",
+    "CPULbihugwZzIQ+BEp+WlYeu+GlXN0fZ9OXfzdf4vFD0ZiZLj4x5lk7iIEYU8ZBPcoaBYj0FanNZzuk1Oh72z7LZ4ImEz7mHRSr1GWpN+ZpBMtBOpIHpp7b/PCzJNWhWK/euewlrMgnjZQ5g9hyEVGecOlkQ561L",
+    "XHkTW/bk594pBoBgi6xBIQ9LTCMAD6n/lbKU5sqlBspT8DcPPLZC/l0KKbrouR/BFMpRINDSLanlkY/iBpBg3xB2ErJBviBEODsAHjrqq+5pRpC7R7lcUJEQ3MTOpDfWmPfbZAlyttux+o9AqjGhWg+puXs8V+E1"
+  ]
+}
