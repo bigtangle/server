@@ -858,8 +858,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    /** 
-
+    /**
+     * 
      * Saves the wallet first to the given temp file, then renames to the dest
      * file.
      */
@@ -936,7 +936,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         File temp = File.createTempFile("wallet", null, directory);
         saveToFile(temp, f);
     }
-
 
     public void saveNow() {
         WalletFiles files = vFileManager;
@@ -2664,7 +2663,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
-            List<MultiSignAddress>  addresses) throws Exception {
+            List<MultiSignAddress> addresses) throws Exception {
         Token domain = getDomainNameBlockHash(domainname, "token").getdomainNameToken();
         token.setDomainName(domain.getTokenname());
         token.setDomainNameBlockHash(domain.getBlockHashHex());
@@ -2684,7 +2683,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // tokens.setTokentype(TokenType.currency.ordinal());
         tokenInfo.setToken(token);
         tokenInfo.setMultiSignAddresses(addresses);
-      //  tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+        // tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid,
+        // "", key.getPublicKeyAsHex()));
         return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
     }
 
@@ -2696,9 +2696,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
         token.addKeyvalue(kv);
-        List<MultiSignAddress>  addresses = new  ArrayList<MultiSignAddress>();
+        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
         addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-        return createToken(key, domainname, increment, token,addresses);
+        return createToken(key, domainname, increment, token, addresses);
 
     }
 
@@ -2711,14 +2711,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 amount, !increment, decimals, "");
         token.addKeyvalue(kv);
         token.setTokentype(tokentype);
-        List<MultiSignAddress>  addresses = new  ArrayList<MultiSignAddress>();
+        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
         addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-        return createToken(key, domainname, increment, token,addresses);
+        return createToken(key, domainname, increment, token, addresses);
 
     }
 
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress>  addresses) throws Exception {
+            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses)
+            throws Exception {
 
         String tokenid = key.getPublicKeyAsHex();
 
@@ -2726,12 +2727,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 amount, !increment, decimals, "");
         token.addKeyvalue(kv);
         token.setTokentype(tokentype);
-        
-        return createToken(key, domainname, increment, token,addresses);
+
+        return createToken(key, domainname, increment, token, addresses);
 
     }
-   
-    
+
     public Block getBlock(String hashHex) throws JsonProcessingException, IOException {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -2774,7 +2774,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Transaction tx = new Transaction(params);
         tx.addOutput(new Coin(payAmount, tokenId), new Address(params, beneficiary));
 
-        ContractExecutionResult info = new ContractExecutionResult(contractEventRecords, tx);
+        ContractExecutionResult info = new ContractExecutionResult(contractEventRecords,
+                tx.bitcoinSerialize());
         tx.setData(info.toByteArray());
         tx.setDataClassName("ContractExecutionResult");
 
