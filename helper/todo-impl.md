@@ -19,7 +19,7 @@ before any release
 * Remove private data such as passwords/keys from source release
 
 eventually?
-* Deprecated 'Bitcoin' mentions to be removed
+* Deprecated '' mentions to be removed
 * No StoredBlock
 * BlockStatistics instead of BlockEvaluation
 * clear irrelevant TODOs, e.g. rename old bitcoin todos
@@ -539,44 +539,7 @@ https://m.bigtangle.net/pubic/qrpay.jsf?tokenid=bc&quantity=888&address=16nAV1cJ
 output
 qrcode with url
 https://m.bigtangle.net/wallet/pay.jsf?tokenid=bc&quantity=888&address=16nAV1cJSajuMo5XdtyMBMJBS4yj2d5rUQ&memo=人民币买别人的大网币
-										
-### interface to ethereum
-https://sgitario.github.io/blockchain-using-java/
-GO client and spring boot web3j
-https://github.com/ethereum/go-ethereum
-https://github.com/web3j/web3j
-https://etherscan.io/address/0x5b614e4f17a1938da6248d116cc32f4f17c35f99
-
-
- docker run -d --name ethereum-dev -p 8545:8545 -p 30303:30303 ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*" --dev
-
-
-61.181.128.236:8545
-
-
-61.181.128.230:8545
-docker rm -f ethereum
-docker run -d --name ethereum -p 8545:8545 -p 30303:30303 -v /data/vm/ethereum/root/.ethereum:/root/.ethereum  ethereum/client-go --rpc --rpcaddr "0.0.0.0" --rpcapi="db,eth,net,web3,personal" --rpccorsdomain "*"
  
- 
- 
-target:
-user send token to special account address and then create new token in bigtangle with new amount and give the token to the user address. use the subtangle functionality.
-
-UI
-	Token: ETH   select list from predefined ETH Token id and bigtangle Token id, for example ETH
-	TO ETH Address: display bigtangle ETH Address
-	Amount: amount from ETH Network
-	From ETH Address: user input
-	
-	To Bigtangle Address
-	
-    save the data in table Userpayoff  and track the status of the payment
-	
-	add function in blockconfirm to check the payment from and to ETH
-	if the payment is ok and then do the giveMoney with token in Bigtangle
-	add bank data for eth address
-	
 ### name service based on domain name
 
 ENS eliminates the need to copy or type long addresses. With ENS, you'll be able to send money to your friend at 'aardvark.eth' instead of '0x4cbe58c50480...'
