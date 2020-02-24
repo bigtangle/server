@@ -54,7 +54,7 @@ public class BLSDistKeyGenRunner extends SocketProtocolRunner {
 	public static void main(String[] args)
 			throws NumberFormatException, SocketProtocolRunnerException, ProtocolExecutionException, IOException {
 		HashStore<JSONStorageObject> storage = new HashStore<JSONStorageObject>(new JSONStorageObject(),
-				"./" + args[0] + "transcript.txt", "./" + args[0] + "storage.txt", 2000);
+				"./logs/" + args[0] + "transcript.txt", "./logs/" + args[0] + "storage.txt", 2000);
 		BLSDistKeyGenRunner dkgr = new BLSDistKeyGenRunner(args[0], Integer.parseInt(args[1]), args[2], true, storage);
 		dkgr.runProtocol();
 		try {
@@ -78,7 +78,7 @@ public class BLSDistKeyGenRunner extends SocketProtocolRunner {
 
 			future.get();
 			
-			keyData.writeToFile("./" + this.id.toLowerCase() + "_bls.js");
+			keyData.writeToFile("./logs/" + this.id.toLowerCase() + "_bls.js");
 			
 			
 			System.out.println("keydata:" + keyData);
