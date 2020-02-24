@@ -50,7 +50,7 @@ import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenIdentityController extends TokenBaseController {
+public class TokenIdentityController extends TokenSignsController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenIdentityController.class);
 
@@ -165,13 +165,6 @@ public class TokenIdentityController extends TokenBaseController {
 
             if (signnumberTF2id.getText() != null && !signnumberTF2id.getText().trim().isEmpty()
                     && signnumberTF2id.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF2id.getText().trim()) == 1) {
-
-                multiSinglePublish2id(Main.getAesKey(), issuedKeys);
-                return;
-            }
-            if (signnumberTF2id.getText() != null && !signnumberTF2id.getText().trim().isEmpty()
-                    && signnumberTF2id.getText().matches("[1-9]\\d*")
                     && Long.parseLong(signnumberTF2id.getText().trim()) > signAddrChoiceBox2id.getItems().size()) {
 
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
@@ -200,16 +193,15 @@ public class TokenIdentityController extends TokenBaseController {
             byte[] cipher = ECIESCoder.encrypt(outKey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
 
             kv.setValue(Utils.HEX.encode(cipher));
-            List<MultiSignAddress>  addresses = new  ArrayList<MultiSignAddress>();
-           
+            List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
+
             if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
                 for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
                     ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(),
-                            "", ecKey.getPublicKeyAsHex()));
+                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", ecKey.getPublicKeyAsHex()));
                 }
             }
-            
+
             Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
                     BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
@@ -219,141 +211,6 @@ public class TokenIdentityController extends TokenBaseController {
         } catch (IgnoreServiceException e) {
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
-        }
-    }
-
-    private void multiSinglePublish2id(KeyParameter aesKey, List<ECKey> issuedKeys)
-            throws JsonProcessingException, Exception {
-        TokenInfo tokenInfo = new TokenInfo();
-        int decimals = 1;
-        BigInteger amount = BigInteger.ZERO;
-        Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid2id.getValue().trim(),
-                tokenname2id.getText().trim(), "", 1, 0, amount, true, decimals, null);
-
-        tokenInfo.setToken(tokens);
-        ECKey mykey = null;
-        for (ECKey key : issuedKeys) {
-            if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
-                mykey = key;
-            }
-        }
-
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", mykey.getPublicKeyAsHex()));
-        Coin basecoin = MonetaryFormat.FIAT.noCode().parse("1", Utils.HEX.decode(tokenid2id.getValue()), decimals);
-
-        Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
-        GuiUtils.informationalAlert("", Main.getText("s_c_m"));
-        Main.instance.controller.initTableView();
-        checkGuiThread();
-        return;
-    }
-
-    private void multiPublsih(List<ECKey> issuedKeys) throws Exception {
-        ECKey outKey = null;
-
-        outKey = issuedKeys.get(0);
-
-        byte[] pubKey = outKey.getPubKey();
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("pubKeyHex", Utils.HEX.encode(pubKey));
-        requestParam.put("amount",
-                MonetaryFormat.FIAT.noCode().parse("1", Utils.HEX.decode(tokenid2id.getValue()), 0).getValue());
-        requestParam.put("tokenname", tokenname2id.getText());
-        requestParam.put("signnumber", signnumberTF2id.getText());
-        requestParam.put("tokenHex", tokenid2id.getValue());
-        requestParam.put("multiserial", true);
-        requestParam.put("asmarket", false);
-        requestParam.put("tokenstop", false);
-        noSignBlock(requestParam);
-        GuiUtils.informationalAlert("", Main.getText("s_c_m_sign"));
-        Main.instance.controller.initTableView();
-        checkGuiThread();
-    }
-
-    public void noSignBlock(HashMap<String, Object> map) throws Exception {
-
-        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
-
-        String CONTEXT_ROOT = Main.getContextRoot();
-
-        TokenInfo tokenInfo = new TokenInfo();
-
-        HashMap<String, String> requestParam00 = new HashMap<String, String>();
-        requestParam00.put("tokenid", Main.getString(map.get("tokenHex")).trim());
-        String resp2 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenIndex.name(),
-                Json.jsonmapper().writeValueAsString(requestParam00));
-
-        TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
-        Long tokenindex_ = tokenIndexResponse.getTokenindex();
-
-        BigInteger amount = BigInteger.ONE;
-        Coin basecoin = new Coin(amount, Main.getString(map.get("tokenHex")).trim());
-
-        Token tokens = Token.buildSimpleTokenInfo(false, tokenIndexResponse.getBlockhash(),
-                Main.getString(map.get("tokenHex")).trim(), Main.getString(map.get("tokenname")).trim(),
-                Main.getString(map.get("description")).trim(), Integer.parseInt(this.signnumberTF2id.getText().trim()),
-                tokenindex_, amount, (boolean) map.get("tokenstop"), 0, null);
-        tokenInfo.setToken(tokens);
-        KeyValue kv = new KeyValue();
-        kv.setKey("identity");
-        Identity identity = new Identity();
-        IdentityCore identityCore = new IdentityCore();
-        identityCore.setSurname(surname2id.getText());
-        identityCore.setForenames(forenames2id.getText());
-        identityCore.setSex(sex2id.getText());
-        identityCore.setDateofissue(dateofissue2id.getText());
-        identityCore.setDateofexpiry(dateofexpiry2id.getText());
-        identity.setIdentityCore(identityCore);
-        identity.setIdentificationnumber(identificationnumber2id.getText());
-        byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
-        identity.setPhoto(photo);
-        kv.setValue(Json.jsonmapper().writeValueAsString(identity));
-        tokens.addKeyvalue(kv);
-        if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
-            for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
-                ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(Main.getString(map.get("tokenHex")).trim(),
-                        "", ecKey.getPublicKeyAsHex()));
-            }
-        }
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = Main.params.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        ECKey key1 = null;
-
-        key1 = keys.get(0);
-
-        signAddrChoiceBox2id.getItems().add(key1.toAddress(Main.params).toBase58());
-        List<ECKey> myEcKeys = new ArrayList<ECKey>();
-        if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
-            ObservableList<String> addresses = signAddrChoiceBox2id.getItems();
-            for (ECKey ecKey : keys) {
-                // log.debug(ecKey.toAddress(Main.params).toBase58());
-                if (addresses.contains(ecKey.toAddress(Main.params).toBase58())) {
-                    myEcKeys.add(ecKey);
-                }
-            }
-            if (!myEcKeys.isEmpty()) {
-                key1 = myEcKeys.get(0);
-            }
-
-        }
-
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
-        block.solve();
-
-        // save block
-        String resp = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block.bitcoinSerialize());
-        @SuppressWarnings("unchecked")
-        HashMap<String, Object> respRes = Json.jsonmapper().readValue(resp, HashMap.class);
-        int errorcode = (Integer) respRes.get("errorcode");
-        if (errorcode > 0) {
-            String message = (String) respRes.get("message");
-            GuiUtils.informationalAlert("SIGN ERROR : " + message, Main.getText("ex_c_d1"));
-            throw new IgnoreServiceException();
         }
     }
 

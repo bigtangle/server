@@ -219,7 +219,7 @@ public class TokenController extends TokenIdentityController {
                 }
 
             });
-            initTableView();
+            initSearchResultTableView();
             initMultisignTableView();
             Main.walletAppKit.wallet().setServerURL(Main.getContextRoot());
         } catch (Exception e) {
@@ -541,7 +541,7 @@ public class TokenController extends TokenIdentityController {
                 GuiUtils.informationalAlert("", Main.getText("s_c_m"));
                 Main.instance.controller.initTableView();
                 checkGuiThread();
-                initTableView();
+                initSearchResultTableView();
                 overlayUI.done();
             } else {
 
@@ -590,7 +590,7 @@ public class TokenController extends TokenIdentityController {
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
-            initTableView();
+            initSearchResultTableView();
             overlayUI.done();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -669,7 +669,7 @@ public class TokenController extends TokenIdentityController {
             GuiUtils.informationalAlert("", Main.getText("s_c_m"));
             Main.instance.controller.initTableView();
             checkGuiThread();
-            initTableView();
+            initSearchResultTableView();
             initMultisignTableView();
             overlayUI.done();
             // tabPane.getSelectionModel().clearAndSelect(4);
@@ -764,13 +764,7 @@ public class TokenController extends TokenIdentityController {
                 GuiUtils.informationalAlert("", Main.getText("NoNumber"));
                 return;
             }
-            if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
-                    && signnumberTF.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF.getText().trim()) == 1) {
-
-                multiSinglePpublish(Main.getAesKey(), issuedKeys);
-                return;
-            }
+       
             if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
                     && signnumberTF.getText().matches("[1-9]\\d*")
                     && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
@@ -843,41 +837,12 @@ public class TokenController extends TokenIdentityController {
         GuiUtils.informationalAlert("", Main.getText("s_c_m_sign"));
         Main.instance.controller.initTableView();
         checkGuiThread();
-        initTableView();
+        initSearchResultTableView();
         initMultisignTableView();
         overlayUI.done();
     }
 
-    private void multiSinglePpublish(KeyParameter aesKey, List<ECKey> issuedKeys)
-            throws JsonProcessingException, Exception {
-        TokenInfo tokenInfo = new TokenInfo();
-        int decimals = Integer.parseInt(decimalsTF1.getText());
-        BigInteger amount = MonetaryFormat.FIAT.noCode()
-                .parse(stockAmount1.getText(), Utils.HEX.decode(tokenid1.getValue()), decimals).getValue();
-        Token tokens = Token.buildSimpleTokenInfo(false, null, tokenid1.getValue().trim(), stockName1.getText().trim(),
-                stockDescription1.getText().trim(), 1, 0, amount, true, decimals, null);
-        tokens.setDomainName(urlTF.getText().trim());
-
-        tokenInfo.setToken(tokens);
-        ECKey mykey = null;
-        for (ECKey key : issuedKeys) {
-            if (key.getPublicKeyAsHex().equalsIgnoreCase(tokens.getTokenid())) {
-                mykey = key;
-            }
-        }
-
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", mykey.getPublicKeyAsHex()));
-        Coin basecoin = MonetaryFormat.FIAT.noCode().parse(stockAmount1.getText(),
-                Utils.HEX.decode(tokenid1.getValue()), decimals);
-
-        Main.walletAppKit.wallet().saveToken(tokenInfo, basecoin, mykey, aesKey);
-        GuiUtils.informationalAlert("", Main.getText("s_c_m"));
-        Main.instance.controller.initTableView();
-        checkGuiThread();
-        initTableView();
-        overlayUI.done();
-        return;
-    }
+ 
 
     public void multiSign(ActionEvent event) {
         try {
@@ -954,7 +919,7 @@ public class TokenController extends TokenIdentityController {
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
         OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block0.bitcoinSerialize());
         Main.instance.controller.initTableView();
-        initTableView();
+        initSearchResultTableView();
         initMultisignTableView();
 
     }
