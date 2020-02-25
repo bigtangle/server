@@ -202,7 +202,7 @@ public class TokenIdentityController extends TokenSignsController {
                 }
             }
 
-            Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
+            Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0, "identity.shop", "identity",
                     BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());

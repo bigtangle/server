@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,20 +22,27 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
+import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSign;
+import net.bigtangle.core.MultiSignBy;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.response.MultiSignByRequest;
+import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenSignsController extends TokenSearchController{
-  
-    //sign table 
-    
-  
+public class TokenSignsController extends TokenSearchController {
+
+    // sign table
+
     @FXML
     public TableView<Map> tokenserialTable;
     @FXML
@@ -64,7 +72,6 @@ public class TokenSignsController extends TokenSearchController{
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokenSignsController.class);
 
-
     public void searchTokens(ActionEvent event) {
         try {
 
@@ -73,9 +80,6 @@ public class TokenSignsController extends TokenSearchController{
             GuiUtils.crashAlert(e);
         }
     }
-
- 
-
 
     @SuppressWarnings({ "unchecked" })
     public void initMultisignTableView() throws Exception {
@@ -117,5 +121,85 @@ public class TokenSignsController extends TokenSearchController{
         realSignnumColumn.setCellValueFactory(new MapValueFactory("signcount"));
         isSignAllColumn.setCellValueFactory(new MapValueFactory("isSignAll"));
         tokenserialTable.setItems(tokenData);
+    }
+
+    public void multiSign(ActionEvent event) {
+        try {
+            doMultiSign();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void doMultiSign() throws Exception {
+
+        List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
+
+        Map<String, Object> rowdata = tokenserialTable.getSelectionModel().getSelectedItem();
+        if (rowdata == null || rowdata.isEmpty()) {
+            GuiUtils.informationalAlert("", Main.getText("pleaseSelect"), "");
+            return;
+        }
+        if (!"0".equals(rowdata.get("sign").toString())) {
+            GuiUtils.informationalAlert("", Main.getText("mySignExist"), "");
+            return;
+        }
+        ECKey myKey = null;
+        for (ECKey ecKey : keys) {
+            if (rowdata.get("address").toString().equals((ecKey.toAddress(Main.params).toBase58()))) {
+                myKey = ecKey;
+                break;
+            }
+        }
+        String CONTEXT_ROOT = Main.getContextRoot();
+
+        HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
+        requestParam0.put("address", rowdata.get("address").toString());
+        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam0));
+        // log.debug(resp);
+
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        MultiSign multiSign000 = null;
+        for (MultiSign multiSign : multiSignResponse.getMultiSigns()) {
+            if (multiSign.getId().equals(rowdata.get("id").toString())) {
+                multiSign000 = multiSign;
+                break;
+            }
+        }
+
+        byte[] payloadBytes = Utils.HEX.decode((String) multiSign000.getBlockhashHex());
+        Block block0 = Main.params.getDefaultSerializer().makeBlock(payloadBytes);
+        Transaction transaction = block0.getTransactions().get(0);
+
+        List<MultiSignBy> multiSignBies = null;
+        if (transaction.getDataSignature() == null) {
+            multiSignBies = new ArrayList<MultiSignBy>();
+        } else {
+            MultiSignByRequest multiSignByRequest = Json.jsonmapper().readValue(transaction.getDataSignature(),
+                    MultiSignByRequest.class);
+            multiSignBies = multiSignByRequest.getMultiSignBies();
+        }
+        Sha256Hash sighash = transaction.getHash();
+
+        ECKey.ECDSASignature party1Signature = myKey.sign(sighash, Main.getAesKey());
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+
+        multiSignBy0.setTokenid(Main.getString(rowdata.get("tokenid")).trim());
+        multiSignBy0.setTokenindex(multiSign000.getTokenindex());
+        multiSignBy0.setAddress(rowdata.get("address").toString());
+        multiSignBy0.setPublickey(Utils.HEX.encode(myKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.signToken.name(), block0.bitcoinSerialize());
+        Main.instance.controller.initTableView();
+        initSearchResultTableView();
+        initMultisignTableView();
+
     }
 }
