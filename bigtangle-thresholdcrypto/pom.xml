@@ -39,9 +39,27 @@
 			<artifactId>bcprov-jdk15on</artifactId>
 			<version>1.64</version>
 		</dependency>
+	 
+		<dependency>
+			<groupId>it.unisa.dia.gas</groupId>
+			<artifactId>jpbc-pbc</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>it.unisa.dia.gas</groupId>
+			<artifactId>jpbc-crypto</artifactId>
+			<version>2.0.0</version>
+		</dependency>
 
 
+		<dependency>
+			<groupId>it.unisa.dia.gas</groupId>
+			<artifactId>jpbc-api</artifactId>
+			<version>2.0.0</version>
+		</dependency>
 
+ 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
@@ -49,7 +67,7 @@
 		</dependency>
 
 
- 
+
 
 	</dependencies>
 </project>
