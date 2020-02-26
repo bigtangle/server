@@ -437,4 +437,32 @@ public class TokenPublishController extends TokenIdentityController {
 
     }
 
+    public void addSIgnAddress(ActionEvent event) {
+        try {
+            addPubkey();
+            // showAddAddressDialog();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void addPubkey() {
+        String temp = signnumberTF.getText();
+        if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
+
+            int signnumber = Integer.parseInt(temp);
+            if (signnumber >= 1) {
+                String address = signPubkeyTF.getText();
+                if (address != null && !address.isEmpty() && !signAddrChoiceBox.getItems().contains(address)) {
+                    signAddrChoiceBox.getItems().add(address);
+                    signAddrChoiceBox.getSelectionModel().selectLast();
+                }
+            }
+        }
+        signPubkeyTF.setText("");
+    }
+
+    public void removeSignAddress(ActionEvent event) {
+        signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
+    }
 }

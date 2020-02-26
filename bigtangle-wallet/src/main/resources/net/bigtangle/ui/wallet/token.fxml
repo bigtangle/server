@@ -100,7 +100,7 @@
                               <ToggleGroup fx:id="tokentypeTG" />
                            </toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="domainRB" layoutX="382.0" layoutY="21.0" mnemonicParsing="false" text="%domaintype" toggleGroup="$tokentypeTG" />
+                        <RadioButton fx:id="domainRB" layoutX="382.0" layoutY="21.0" mnemonicParsing="false" text="%domainname" toggleGroup="$tokentypeTG" />
                         <RadioButton fx:id="marketRB" layoutX="495.0" layoutY="21.0" mnemonicParsing="false" text="%market" toggleGroup="$tokentypeTG" />
                         <RadioButton fx:id="subtangleRB" layoutX="607.0" layoutY="21.0" mnemonicParsing="false" text="%subtangle" toggleGroup="$tokentypeTG" />
                         <TextField fx:id="tokenamountTF" layoutX="279.0" layoutY="130.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />

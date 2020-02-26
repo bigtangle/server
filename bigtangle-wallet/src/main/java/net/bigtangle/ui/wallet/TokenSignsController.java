@@ -72,7 +72,7 @@ public class TokenSignsController extends TokenSearchController {
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokenSignsController.class);
 
-    public void searchTokens(ActionEvent event) {
+    public void searchTokenSerial(ActionEvent event) {
         try {
 
             initMultisignTableView();
