@@ -77,6 +77,7 @@ public class TokenIdentityController extends TokenSignsController {
     @FXML
     public ChoiceBox<String> signAddrChoiceBox2id;
 
+    @FXML
     public void initIdentityTab() {
         try {
             initCombobox2id();
@@ -186,11 +187,12 @@ public class TokenIdentityController extends TokenSignsController {
 
             if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
                 for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
-                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", ecKey.getPublicKeyAsHex()));
+                    // ECKey ecKey =
+                    // ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", pubKeyHex));
                 }
             }
-
+            addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", outKey.getPublicKeyAsHex()));
             Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0, "identity.shop",
                     "identity", BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());

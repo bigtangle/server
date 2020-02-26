@@ -110,6 +110,7 @@ public class TokenPublishController extends TokenIdentityController {
     public String tokenidString;
     public Main.OverlayUI overlayUI;
 
+    @FXML
     public void initPublishTab() {
         try {
             tokenRB.setUserData("token");
@@ -120,7 +121,6 @@ public class TokenPublishController extends TokenIdentityController {
             new TextFieldValidator(signnumberTF,
                     text -> !WTUtils.didThrow(() -> checkState(text.matches("[1-9]\\d*"))));
 
-            List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
             tokenidCB.getSelectionModel().selectedItemProperty().addListener((ov, oldv, newv) -> {
 
                 if (newv != null && !newv.isEmpty() && !signAddrChoiceBox.getItems().contains(newv)) {
@@ -133,11 +133,8 @@ public class TokenPublishController extends TokenIdentityController {
                 }
 
             });
-            initSearchResultTableView();
-            initMultisignTableView();
             Main.walletAppKit.wallet().setServerURL(Main.getContextRoot());
         } catch (Exception e) {
-            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
     }
@@ -180,8 +177,9 @@ public class TokenPublishController extends TokenIdentityController {
 
             if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
                 for (String pubKeyHex : signAddrChoiceBox.getItems()) {
-                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                    addresses.add(new MultiSignAddress(tokenidCB.getValue().trim(), "", ecKey.getPublicKeyAsHex()));
+                    // ECKey ecKey =
+                    // ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                    addresses.add(new MultiSignAddress(tokenidCB.getValue().trim(), "", pubKeyHex));
                 }
             }
             addresses.add(new MultiSignAddress(tokenidCB.getValue(), "", outKey.getPublicKeyAsHex()));

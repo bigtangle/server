@@ -16,15 +16,13 @@
 						<AnchorPane maxHeight="569.0" maxWidth="990.0" minHeight="550.0" minWidth="990.0" prefHeight="569.0" prefWidth="990.0" style="-fx-background-color: white;">
 							<children>
 								<Label layoutX="24.0" layoutY="97.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
-								<Label layoutX="24.0" layoutY="138.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_amount" GridPane.rowIndex="3" />
-								<TextArea fx:id="stockDescription1" layoutX="279.0" layoutY="303.0" maxHeight="100.0" maxWidth="500.0" minHeight="57.0" minWidth="500.0" prefHeight="57.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-								<TextField fx:id="stockAmount1" layoutX="279.0" layoutY="134.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								<Button fx:id="save1" alignment="CENTER" defaultButton="true" layoutX="628.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveMultiToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
+								<TextArea fx:id="tokendescriptionTF" layoutX="279.0" layoutY="303.0" maxHeight="100.0" maxWidth="500.0" minHeight="57.0" minWidth="500.0" prefHeight="57.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+								<Button fx:id="save1" alignment="CENTER" defaultButton="true" layoutX="628.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveVosToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
 								<Button fx:id="closeButton1" cancelButton="true" layoutX="726.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 								<Label contentDisplay="CENTER" layoutX="24.0" layoutY="303.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_description" GridPane.rowIndex="4" />
-								<ComboBox fx:id="tokenid1" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+								<ComboBox fx:id="tokenidCB" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 								<Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
-								<TextField fx:id="stockName1" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+								<TextField fx:id="tokennameTF" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 								<TextField fx:id="urlTF" layoutX="279.0" layoutY="250.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
 								<Label layoutX="24.0" layoutY="254.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
 								<Label layoutX="24.0" layoutY="381.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
@@ -34,8 +32,6 @@
                         <Label layoutX="24.0" layoutY="415.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
                         <Button defaultButton="true" layoutX="662.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddress" prefWidth="120.0" text="%removePubkey" />
                         <TextField fx:id="signPubkeyTF" layoutX="279.0" layoutY="411.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <TextField fx:id="decimalsTF1" layoutX="279.0" layoutY="176.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label layoutX="24.0" layoutY="180.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%decimals" />
                         <Label layoutX="24.0" layoutY="213.0" prefHeight="15.0" prefWidth="146.0" text="code" />
                         <TextField fx:id="vosfileTF" layoutX="279.0" layoutY="209.0" maxWidth="500.0" minWidth="220.0" prefHeight="23.0" prefWidth="220.0" />
                         <Button layoutX="512.0" layoutY="209.0" mnemonicParsing="false" onAction="#selectFile" prefHeight="23.0" prefWidth="118.0" text="%File" />

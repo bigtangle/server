@@ -16,6 +16,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
@@ -35,24 +36,27 @@ public class VosController {
     private static final Logger log = LoggerFactory.getLogger(VosController.class);
 
     @FXML
-    public TextField tokenname2id;
+    public TextField tokennameTF;
     @FXML
-    public ComboBox<String> tokenid2id;
-
+    public ComboBox<String> tokenidCB;
+    @FXML
+    public TextArea tokendescriptionTF;
     @FXML
     public TextField vosfileTF;
+    @FXML
+    public TextField urlTF;
 
     @FXML
-    public TextField signnumberTF2id;
+    public TextField signnumberTF;
 
     @FXML
-    public TextField signPubkeyTF2id;
+    public TextField signPubkeyTF;
     @FXML
-    public ChoiceBox<String> signAddrChoiceBox2id;
+    public ChoiceBox<String> signAddrChoiceBox;
 
     public Main.OverlayUI overlayUI;
 
-    public void saveIdentityToken(ActionEvent event) {
+    public void saveVosToken(ActionEvent event) {
         try {
 
             String CONTEXT_ROOT = Main.getContextRoot();
@@ -61,17 +65,17 @@ public class VosController {
 
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
 
-            if (signnumberTF2id.getText() == null || signnumberTF2id.getText().trim().isEmpty()) {
+            if (signnumberTF.getText() == null || signnumberTF.getText().trim().isEmpty()) {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
-            if (!signnumberTF2id.getText().matches("[1-9]\\d*")) {
+            if (!signnumberTF.getText().matches("[1-9]\\d*")) {
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
             }
-            if (signnumberTF2id.getText() != null && !signnumberTF2id.getText().trim().isEmpty()
-                    && signnumberTF2id.getText().matches("[1-9]\\d*")
-                    && Long.parseLong(signnumberTF2id.getText().trim()) > signAddrChoiceBox2id.getItems().size()) {
+            if (signnumberTF.getText() != null && !signnumberTF.getText().trim().isEmpty()
+                    && signnumberTF.getText().matches("[1-9]\\d*")
+                    && Long.parseLong(signnumberTF.getText().trim()) > signAddrChoiceBox.getItems().size()) {
 
                 GuiUtils.informationalAlert("", Main.getText("signnumberNoEq"), "");
                 return;
@@ -79,7 +83,7 @@ public class VosController {
 
             ECKey outKey = null;
             for (ECKey key : issuedKeys) {
-                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokenid2id.getValue().trim())) {
+                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokenidCB.getValue().trim())) {
                     outKey = key;
                 }
             }
@@ -92,27 +96,25 @@ public class VosController {
             kv.setValue(Utils.HEX.encode(cipher));
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 
-            if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
-                for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
-                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", ecKey.getPublicKeyAsHex()));
+            if (signAddrChoiceBox.getItems() != null && !signAddrChoiceBox.getItems().isEmpty()) {
+                for (String pubKeyHex : signAddrChoiceBox.getItems()) {
+                    // ECKey ecKey =
+                    // ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                    addresses.add(new MultiSignAddress(tokenidCB.getValue().trim(), "", pubKeyHex));
                 }
             }
-
-            Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
-                    BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
+            addresses.add(new MultiSignAddress(tokenidCB.getValue().trim(), "", outKey.getPublicKeyAsHex()));
+            Block block = Main.walletAppKit.wallet().createToken(outKey, tokennameTF.getText(), 0, urlTF.getText(),
+                    tokendescriptionTF.getText(), BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
             // tabPane.getSelectionModel().clearAndSelect(4);
-        }  
-        catch (Exception e) {
+        } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
 
- 
-    
     public void selectFile(ActionEvent event) {
 
         final FileChooser fileChooser = new FileChooser();
@@ -124,6 +126,35 @@ public class VosController {
             return;
         }
 
+    }
+
+    public void addSIgnAddress(ActionEvent event) {
+        try {
+            addPubkey();
+            // showAddAddressDialog();
+        } catch (Exception e) {
+            GuiUtils.crashAlert(e);
+        }
+    }
+
+    public void addPubkey() {
+        String temp = signnumberTF.getText();
+        if (temp != null && !temp.isEmpty() && temp.matches("[1-9]\\d*")) {
+
+            int signnumber = Integer.parseInt(temp);
+            if (signnumber >= 1) {
+                String address = signPubkeyTF.getText();
+                if (address != null && !address.isEmpty() && !signAddrChoiceBox.getItems().contains(address)) {
+                    signAddrChoiceBox.getItems().add(address);
+                    signAddrChoiceBox.getSelectionModel().selectLast();
+                }
+            }
+        }
+        signPubkeyTF.setText("");
+    }
+
+    public void removeSignAddress(ActionEvent event) {
+        signAddrChoiceBox.getItems().remove(signAddrChoiceBox.getValue());
     }
 
     public void closeUI(ActionEvent event) {
