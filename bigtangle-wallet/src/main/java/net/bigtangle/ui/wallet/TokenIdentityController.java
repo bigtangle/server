@@ -4,8 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.ui.wallet;
 
-import static net.bigtangle.ui.wallet.utils.GuiUtils.checkGuiThread;
-
 import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -15,9 +13,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,17 +23,14 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.data.identity.Identity;
 import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.encrypt.ECIESCoder;
@@ -46,7 +38,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
-import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
@@ -87,11 +78,10 @@ public class TokenIdentityController extends TokenSignsController {
     public ChoiceBox<String> signAddrChoiceBox2id;
 
     @FXML
-    public void initialize2id() {
+    public void initIdentityTab() {
         try {
             initCombobox2id();
         } catch (Exception e) {
-            e.printStackTrace();
             GuiUtils.crashAlert(e);
         }
     }
@@ -197,13 +187,14 @@ public class TokenIdentityController extends TokenSignsController {
 
             if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
                 for (String pubKeyHex : signAddrChoiceBox2id.getItems()) {
-                    ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
-                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", ecKey.getPublicKeyAsHex()));
+                    // ECKey ecKey =
+                    // ECKey.fromPublicOnly(Utils.HEX.decode(pubKeyHex));
+                    addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", pubKeyHex));
                 }
             }
-
-            Block block = Main.walletAppKit.wallet().createToken(outKey, "identity", 0, "id.shop", "test",
-                    BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
+            addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", outKey.getPublicKeyAsHex()));
+            Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0, "identity.shop",
+                    "identity", BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
