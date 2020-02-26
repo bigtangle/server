@@ -22,14 +22,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
-import net.bigtangle.core.Token;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
 @SuppressWarnings("rawtypes")
-public class TokenSearchController  extends TokenBaseController {
+public class TokenSearchController extends TokenBaseController {
     @FXML
     public TableView<Map> tokensTable;
     @FXML
@@ -53,7 +52,6 @@ public class TokenSearchController  extends TokenBaseController {
     @FXML
     public TableColumn<Map, String> tokenstopColumn;
 
-   
     @FXML
     public TextField nameTextField;
 
@@ -64,8 +62,7 @@ public class TokenSearchController  extends TokenBaseController {
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokenSearchController.class);
 
-    @FXML
-    public void initialize() {
+    public void initSearchTab() {
         this.isSignCheckBox.setSelected(true);
         try {
             initSearchResultTableView();
@@ -83,8 +80,6 @@ public class TokenSearchController  extends TokenBaseController {
         }
     }
 
- 
- 
     @SuppressWarnings({ "unchecked" })
     public void initSearchResultTableView() throws Exception {
         String name = nameTextField.getText();
@@ -149,5 +144,5 @@ public class TokenSearchController  extends TokenBaseController {
 
         tokensTable.setItems(tokenData);
     }
- 
+
 }

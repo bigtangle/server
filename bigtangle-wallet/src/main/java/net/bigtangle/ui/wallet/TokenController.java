@@ -10,12 +10,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 
 public class TokenController extends TokenPublishController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenController.class);
+
+    @FXML
+    public void init() {
+        initPublishTab();
+        initSearchTab();
+        initIdentityTab();
+        initSignTab();
+    }
 
     public void closeUI(ActionEvent event) {
         overlayUI.done();
