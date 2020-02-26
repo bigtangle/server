@@ -71,7 +71,6 @@ public class TokenSignsController extends TokenSearchController {
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokenSignsController.class);
 
-    @FXML
     public void initSignTab() {
         try {
             initMultisignTableView();

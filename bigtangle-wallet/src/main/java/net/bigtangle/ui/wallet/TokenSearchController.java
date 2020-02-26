@@ -61,8 +61,7 @@ public class TokenSearchController extends TokenBaseController {
     public CheckBox isSignCheckBox;
     public static Map<String, Boolean> multiMap = new HashMap<String, Boolean>();
     private static final Logger log = LoggerFactory.getLogger(TokenSearchController.class);
-
-    @FXML
+ 
     public void initSearchTab() {
         this.isSignCheckBox.setSelected(true);
         try {

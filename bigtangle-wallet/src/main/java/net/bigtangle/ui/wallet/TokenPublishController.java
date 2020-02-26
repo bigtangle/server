@@ -110,7 +110,6 @@ public class TokenPublishController extends TokenIdentityController {
     public String tokenidString;
     public Main.OverlayUI overlayUI;
 
-    @FXML
     public void initPublishTab() {
         try {
             tokenRB.setUserData("token");
