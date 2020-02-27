@@ -25,7 +25,7 @@ public class TokenCreateTests extends HelpTest {
         String domain = "bigtangle";
 
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
-                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY", new BigInteger("1000"));
+                Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY", new BigInteger("1000000"));
         // testCreateMultiSigToken(
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BTCTokenPriv),
         // Utils.HEX.decode(BTCTokenPub)),
@@ -112,7 +112,33 @@ public class TokenCreateTests extends HelpTest {
         {
             final String tokenid = preKey.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(preKey, tokenid, "com", null, "com");
-
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
+            }
+        
+        }
+    }
+    @Test
+    public void domainBigtangle() throws Exception {
+        
+        walletAppKit1.wallet().setServerURL( "https://test.bigtangle.info:8089/");
+        
+        ECKey preKey = ECKey
+                .fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));       
+            //    .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
+        {
+            final String tokenid = preKey.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(preKey, tokenid, "bigtangle", null, "bigtangle");
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
+            }
+        
         }
     }
 }
