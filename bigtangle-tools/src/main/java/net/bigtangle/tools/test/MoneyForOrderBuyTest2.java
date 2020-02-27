@@ -20,9 +20,11 @@ public class MoneyForOrderBuyTest2 extends HelpTest {
         // Test pay to mi@bigtangle.net
         List<String> paylist = Arrays.asList("16fbFkW7hS2WZPT7cDLk8S1zmA6UQ4Hzvi",
                 //buy@bigtangle.net
-                "14jWa37yQnFEicGeHW2jV2vehLgRRKftFL",
+                //"14jWa37yQnFEicGeHW2jV2vehLgRRKftFL",
                 //sell@bigtangle.net
-                "1D5MymgyrtE1z8VaDpYD2bUmLydRt64ncU");
+                //"1D5MymgyrtE1z8VaDpYD2bUmLydRt64ncU",
+                "1DFZ2SMWFLXXgwdUTh2ZfyoWKhPdec4Cd1"
+                );
         importKeys(walletAppKit1.wallet());
         for (String p : paylist) {
             payTokenToWallet1(p,  1888800000l,
