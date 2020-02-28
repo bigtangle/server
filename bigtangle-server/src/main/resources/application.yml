@@ -36,6 +36,11 @@ kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
   topicOutName: ${TOPIC_OUT_NAME:bigtangle}
   consumerIdSuffix: ${CONSUMERIDSUFFIX:bigtangletest}
+  
+graceful:
+   shutdown:
+     enabled: ${GRACEFULENABLED:false}
+       
 management:
   metrics:
     export:
