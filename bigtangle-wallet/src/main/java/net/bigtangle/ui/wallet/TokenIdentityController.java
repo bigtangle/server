@@ -6,6 +6,7 @@ package net.bigtangle.ui.wallet;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
@@ -50,6 +52,8 @@ public class TokenIdentityController extends TokenSignsController {
     @FXML
     public TextField tokenname2id;
     @FXML
+    public TextField domainname2id;
+    @FXML
     public ComboBox<String> tokenid2id;
 
     @FXML
@@ -62,13 +66,14 @@ public class TokenIdentityController extends TokenSignsController {
     public TextField photo2id;
 
     @FXML
-    public TextField sex2id;
+    public ChoiceBox<String> sex2idCB;
 
     @FXML
-    public TextField dateofissue2id;
+    public DatePicker dateofissue2idDatePicker;
 
     @FXML
-    public TextField dateofexpiry2id;
+    public DatePicker dateofexpiry2idDatePicker;
+
     @FXML
     public TextField signnumberTF2id;
 
@@ -173,9 +178,10 @@ public class TokenIdentityController extends TokenSignsController {
             IdentityCore identityCore = new IdentityCore();
             identityCore.setSurname(surname2id.getText());
             identityCore.setForenames(forenames2id.getText());
-            identityCore.setSex(sex2id.getText());
-            identityCore.setDateofissue(dateofissue2id.getText());
-            identityCore.setDateofexpiry(dateofexpiry2id.getText());
+            identityCore.setSex(sex2idCB.getValue());
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            identityCore.setDateofissue(df.format(dateofissue2idDatePicker.getValue()));
+            identityCore.setDateofexpiry(df.format(dateofexpiry2idDatePicker.getValue()));
             identity.setIdentityCore(identityCore);
             identity.setIdentificationnumber(identificationnumber2id.getText());
             byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
@@ -193,8 +199,9 @@ public class TokenIdentityController extends TokenSignsController {
                 }
             }
             addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", outKey.getPublicKeyAsHex()));
-            Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0, "identity.shop",
-                    "identity", BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
+            Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0,
+                    domainname2id.getText(), "identity", BigInteger.ONE, true, kv, TokenType.identity.ordinal(),
+                    addresses);
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 

@@ -43,32 +43,34 @@
                      <children>
                         <Label layoutX="24.0" layoutY="97.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_id" GridPane.rowIndex="2" />
                         <Label layoutX="24.0" layoutY="138.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%surname" GridPane.rowIndex="3" />
-                        <TextField fx:id="surname2id" layoutX="279.0" layoutY="134.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <TextField fx:id="surname2id" layoutX="279.0" layoutY="134.0" maxWidth="500.0" minWidth="87.0" prefHeight="23.0" prefWidth="87.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         <Button fx:id="save12" alignment="CENTER" defaultButton="true" layoutX="628.0" layoutY="512.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#saveIdentityToken" text="%save" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="TOP" />
                         <Button fx:id="closeButton14" cancelButton="true" layoutX="726.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="303.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofissue" GridPane.rowIndex="4" />
+                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="265.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofissue" GridPane.rowIndex="4" />
                         <ComboBox fx:id="tokenid2id" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
                         <TextField fx:id="tokenname2id" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <TextField fx:id="sex2id" layoutX="279.0" layoutY="250.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label layoutX="24.0" layoutY="254.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%sex" />
-                        <Label layoutX="24.0" layoutY="381.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
-                        <TextField fx:id="signnumberTF2id" layoutX="279.0" layoutY="377.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="1" />
-                        <Button defaultButton="true" layoutX="524.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSIgnAddress2id" prefWidth="120.0" text="%addSignPubkey" />
-                        <ChoiceBox fx:id="signAddrChoiceBox2id" layoutX="280.0" layoutY="482.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label layoutX="24.0" layoutY="415.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
-                        <Button defaultButton="true" layoutX="662.0" layoutY="444.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddress2id" prefWidth="120.0" text="%removePubkey" />
-                        <TextField fx:id="signPubkeyTF2id" layoutX="279.0" layoutY="411.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
-                        <TextField fx:id="forenames2id" layoutX="279.0" layoutY="176.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label layoutX="24.0" layoutY="180.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%forenames" />
-                        <TextField fx:id="dateofissue2id" layoutX="280.0" layoutY="299.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <TextField fx:id="dateofexpiry2id" layoutX="279.0" layoutY="334.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
-                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="338.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofexpiry" />
+                        <Label layoutX="649.0" layoutY="138.0" maxWidth="300.0" minWidth="59.0" prefHeight="15.0" prefWidth="59.0" text="%sex" />
+                        <Label layoutX="24.0" layoutY="343.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
+                        <TextField fx:id="signnumberTF2id" layoutX="279.0" layoutY="339.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" text="1" />
+                        <Button defaultButton="true" layoutX="524.0" layoutY="406.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#addSIgnAddress2id" prefWidth="120.0" text="%addSignPubkey" />
+                        <ChoiceBox fx:id="signAddrChoiceBox2id" layoutX="280.0" layoutY="444.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
+                        <Label layoutX="24.0" layoutY="377.0" prefHeight="15.0" prefWidth="101.0" text="%pubkey" />
+                        <Button defaultButton="true" layoutX="662.0" layoutY="406.0" maxWidth="120.0" minWidth="120.0" mnemonicParsing="false" onAction="#removeSignAddress2id" prefWidth="120.0" text="%removePubkey" />
+                        <TextField fx:id="signPubkeyTF2id" layoutX="279.0" layoutY="373.0" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" />
+                        <TextField fx:id="forenames2id" layoutX="497.0" layoutY="134.0" maxWidth="500.0" minWidth="97.0" prefHeight="23.0" prefWidth="139.0" />
+                        <Label layoutX="386.0" layoutY="138.0" maxWidth="300.0" minWidth="89.0" prefHeight="15.0" prefWidth="89.0" text="%forenames" />
+                        <Label contentDisplay="CENTER" layoutX="24.0" layoutY="300.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofexpiry" />
                         <Label layoutX="24.0" layoutY="212.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%photo" />
                         <Button fx:id="save121" alignment="CENTER" defaultButton="true" layoutX="603.0" layoutY="208.0" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#selectFile" prefHeight="23.0" prefWidth="108.0" text="%File" />
                         <TextField fx:id="photo2id" layoutX="278.0" layoutY="208.0" maxWidth="500.0" minWidth="290.0" prefHeight="23.0" prefWidth="290.0" />
                         <TextField fx:id="identificationnumber2id" layoutX="280.0" layoutY="23.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" />
                         <Label layoutX="24.0" layoutY="27.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="175.0" text="%identificationnumber" />
+                        <Label layoutX="24.0" layoutY="173.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%domainname" />
+                        <TextField fx:id="domainname2id" layoutX="278.0" layoutY="169.0" maxWidth="500.0" minWidth="290.0" prefHeight="23.0" prefWidth="290.0" />
+                        <ChoiceBox fx:id="sex2idCB" layoutX="714.0" layoutY="134.0" prefHeight="23.0" prefWidth="64.0" />
+                        <DatePicker fx:id="dateofissue2idDatePicker" editable="true" layoutX="279.0" layoutY="261.0" prefHeight="23.0" prefWidth="260.0" />
+                        <DatePicker fx:id="dateofexpiry2idDatePicker" editable="true" layoutX="278.0" layoutY="296.0" prefHeight="23.0" prefWidth="260.0" />
                      </children>
                   </AnchorPane>
                </content>
