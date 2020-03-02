@@ -63,13 +63,14 @@ public class PayOTCOrder {
     private KeyParameter aesKey = null;
     private boolean sellFlag;
 
-    public PayOTCOrder(KeyParameter aesKey, Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
+    public PayOTCOrder(KeyParameter aesKey, Wallet wallet, String orderid, String serverURL, String marketURL)
+            throws Exception {
         this.wallet = wallet;
         this.orderid = orderid;
         this.serverURL = serverURL;
         this.marketURL = marketURL;
         this.loadExchangeInfo();
-        this.aesKey=  aesKey;
+        this.aesKey = aesKey;
     }
 
     public PayOTCOrder(Wallet wallet, String orderid, String serverURL, String marketURL) throws Exception {
@@ -128,7 +129,7 @@ public class PayOTCOrder {
                             if (utxo.getTokenId().equals(this.exchange.getFromTokenHex()) && utxo.getMinimumsign() >= 2
                                     && utxo.getValue().getValue().longValue() >= Long
                                             .parseLong(this.exchange.getFromAmount())) {
-                            
+
                                 byte[] buf = Utils.HEX.decode(dataHex);
                                 OTCReload exchangeReload = this.reloadTransaction(buf);
                                 Transaction transaction0 = exchangeReload.getTransaction();
@@ -178,7 +179,9 @@ public class PayOTCOrder {
         if (transaction == null) {
             return;
         }
+
         SendRequest request = SendRequest.forTx(transaction);
+        request.aesKey = aesKey;
         this.wallet().setServerURL(this.serverURL);
         this.wallet().signTransaction(request);
 
@@ -263,17 +266,18 @@ public class PayOTCOrder {
         return makeSignTransactionBuffer(fromAddress00, fromCoin00, toAddress00, toCoin00);
     }
 
-    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin) throws Exception {
+    private byte[] makeSignTransactionBuffer(String fromAddress, Coin fromCoin, String toAddress, Coin toCoin)
+            throws Exception {
         Address fromAddress00 = new Address(this.wallet().getNetworkParameters(), fromAddress);
         Address toAddress00 = new Address(this.wallet().getNetworkParameters(), toAddress);
         byte[] buf = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
+        outputs.addAll(this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
         outputs.addAll(
-                this.getUTXOWithPubKeyHash(toAddress00.getHash160(), Utils.HEX.decode(fromCoin.getTokenHex())));
-        outputs.addAll(this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey),
-                Utils.HEX.decode(toCoin.getTokenHex())));
+                this.getUTXOWithECKeyList(this.wallet().walletKeys(aesKey), Utils.HEX.decode(toCoin.getTokenHex())));
 
         SendRequest req = SendRequest.to(toAddress00, toCoin);
+        req.aesKey = aesKey;
         req.tx.addOutput(fromCoin, fromAddress00);
 
         // SendRequest req = SendRequest.to(fromAddress00,fromAmount );
