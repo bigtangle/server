@@ -301,7 +301,7 @@ public class TokenPublishController extends TokenIdentityController {
         byte[] buf = transaction.getData();
         TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
-        tabPane.getSelectionModel().clearAndSelect(3);
+        tabPane.getSelectionModel().clearAndSelect(1);
         tokennameTF.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenidCB.setValue(tokenid);
         String amountString = MonetaryFormat.FIAT.noCode()
@@ -370,7 +370,7 @@ public class TokenPublishController extends TokenIdentityController {
         byte[] buf = transaction.getData();
         TokenInfo tokenInfo = new TokenInfo().parse(buf);
 
-        tabPane.getSelectionModel().clearAndSelect(2);
+        tabPane.getSelectionModel().clearAndSelect(1);
         tokennameTF.setText(Main.getString(tokenInfo.getToken().getTokenname()).trim());
         tokenidCB.setValue(tokenid);
         // String amountString =
