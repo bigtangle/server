@@ -198,38 +198,36 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             ECKey outKey = new ECKey();
             giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
         }
-      Block b=  walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
         mcmcService.update();
         confirmationService.update();
-       
-    Map<String, Object> requestParam = new HashMap<String, Object>();
 
-    List<String> blockhashs = new ArrayList<String>();
-    blockhashs.add(b.getHashAsString());
-    requestParam.put("blockhashs", blockhashs);
- 
-    String response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
-            Json.jsonmapper().writeValueAsString(requestParam));
+        Map<String, Object> requestParam = new HashMap<String, Object>();
 
-    GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
-            GetBlockEvaluationsResponse.class);
-    List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+        List<String> blockhashs = new ArrayList<String>();
+        blockhashs.add(b.getHashAsString());
+        requestParam.put("blockhashs", blockhashs);
 
-    assertTrue(!blockEvaluations.isEmpty());
-    
+        String response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+                GetBlockEvaluationsResponse.class);
+        List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+
+        assertTrue(!blockEvaluations.isEmpty());
+
     }
-    
+
     @Test
 
     public void testWalletImportKeyGiveMoney() throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub)));
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
 
         Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
-     
-        
+
         ECKey outKey = new ECKey();
 
         for (int i = 0; i < 3; i++) {
@@ -266,8 +264,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     public void testWalletBatchGiveMoney() throws Exception {
         List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub)));
+        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
 
         Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
         coinbaseWallet.setServerURL(contextRoot);
@@ -283,7 +280,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         coinbaseWallet.completeTx(request, null);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip, Json.jsonmapper().writeValueAsString(requestParam));
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
         Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
         rollingBlock.addTransaction(request.tx);
         rollingBlock.solve();
@@ -317,36 +315,34 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     }
 
-
-
     @Test
     public void exchangeSignsServer() throws Exception {
-        //testInitWallet();
-        //wallet1();
-        //wallet2();
-        
+        // testInitWallet();
+        // wallet1();
+        // wallet2();
+
         File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
         }
-        
+
         File f4 = new File("./logs/", "bigtangle4.wallet");
         if (f4.exists()) {
             f4.delete();
         }
-        
+
         walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
         walletAppKit1.wallet().setServerURL(contextRoot);
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
-        
+
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
         walletAppKit2.wallet().setServerURL(contextRoot);
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-        
+
         ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
         ECKey myKey = walletAppKit2.wallet().walletKeys(null).get(0);
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-        testCreateToken(walletKeys.get(0),"test");
+        testCreateToken(walletKeys.get(0), "test");
 
         mcmcService.update();
         confirmationService.update();
@@ -354,21 +350,21 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         mcmcService.update();
         confirmationService.update();
-        payToken(200, yourKey, walletKeys.get(0).getPubKey(),walletAppKit1.wallet());
-        payToken(300,myKey, walletKeys.get(1).getPubKey(),walletAppKit2.wallet());
-        
+        payToken(200, yourKey, walletKeys.get(0).getPubKey(), walletAppKit1.wallet());
+        payToken(300, myKey, walletKeys.get(1).getPubKey(), walletAppKit2.wallet());
+
         String orderid = UUID.randomUUID().toString();
-        
+
         // fromTokenHex = youkey
         String fromAddress = myKey.toAddress(networkParameters).toBase58();
         String fromTokenHex = walletKeys.get(0).getPublicKeyAsHex();
         String fromAmount = "2";
-        
+
         // toTokenHex = mykey
         String toAddress = yourKey.toAddress(networkParameters).toBase58();
         String toTokenHex = walletKeys.get(1).getPublicKeyAsHex();
         String toAmount = "3";
-        
+
         Map<String, Object> request = new HashMap<>();
         request.put("orderid", orderid);
 
@@ -381,11 +377,32 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         request.put("toAmount", toAmount);
         OkHttp3Util.post(contextRoot + ReqCmd.saveExchange.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
+        List<String> addressList = new ArrayList<String>();
+        addressList.add(toAddress);
+
+        String response = OkHttp3Util.post(contextRoot + "/" + ReqCmd.getBatchExchange.name(),
+                Json.jsonmapper().writeValueAsString(addressList).getBytes());
+        log.info("===============");
+        log.info(response);
+
         PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit1.wallet(), orderid, contextRoot, contextRoot);
         payOrder1.sign();
+
+        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
+                Json.jsonmapper().writeValueAsString(addressList).getBytes());
+        log.info(response);
+
+        addressList = new ArrayList<String>();
+        addressList.add(fromAddress);
+        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
+                Json.jsonmapper().writeValueAsString(addressList).getBytes());
+
+        log.info(response);
         PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit2.wallet(), orderid, contextRoot, contextRoot);
         payOrder2.sign();
-        
+        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
+                Json.jsonmapper().writeValueAsString(addressList).getBytes());
+        log.info(response);
         checkBalance(new Coin(3, walletKeys.get(1).getPubKey()), walletAppKit1.wallet().walletKeys(null));
         checkBalance(new Coin(2, walletKeys.get(0).getPubKey()), walletAppKit2.wallet().walletKeys(null));
     }
@@ -567,9 +584,6 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         checkBalance(coinbase, wallet.walletKeys(null));
     }
- 
- 
- 
 
     @Test
     public void createTransaction() throws Exception {
@@ -607,12 +621,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("transaction, datatype : " + transaction.getDataClassName());
     }
 
- 
     // @Test
     public void exchangeSign(String orderid) throws Exception {
 
         String serverURL = "http://localhost:8090";
- 
+
         // String orderid = (String) exchangemap.get("orderid");
 
         PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit.wallet(), orderid, serverURL, serverURL);
