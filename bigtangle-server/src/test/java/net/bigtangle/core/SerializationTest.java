@@ -8,6 +8,7 @@ package net.bigtangle.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -16,6 +17,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
+import org.spongycastle.crypto.InvalidCipherTextException;
+
+import net.bigtangle.data.identity.Identity;
+import net.bigtangle.data.identity.IdentityCore;
+import net.bigtangle.encrypt.ECIESCoder;
 
 public class SerializationTest {
 
@@ -59,8 +65,9 @@ public class SerializationTest {
 
     @Test
     public void testContractEventInfoSerialization() throws IOException {
-    	ContractEventInfo info1 = new ContractEventInfo( new BigInteger("1"), "test1", new byte[] { 2 }, 3l, 4l, "contracttokenid", "test2");
-    	ContractEventInfo info2 = new ContractEventInfo().parse(info1.toByteArray());
+        ContractEventInfo info1 = new ContractEventInfo(new BigInteger("1"), "test1", new byte[] { 2 }, 3l, 4l,
+                "contracttokenid", "test2");
+        ContractEventInfo info2 = new ContractEventInfo().parse(info1.toByteArray());
 
         assertArrayEquals(info1.toByteArray(), info2.toByteArray());
         assertEquals(info1.getBeneficiaryAddress(), info2.getBeneficiaryAddress());
@@ -72,7 +79,6 @@ public class SerializationTest {
         assertEquals(info1.getVersion(), info2.getVersion());
     }
 
-    
     @Test
     public void testOrderCancelInfoSerialization() throws IOException {
         OrderCancelInfo info1 = new OrderCancelInfo(getRandomSha256Hash());
@@ -121,7 +127,8 @@ public class SerializationTest {
     @Test
     public void testTokenInfoSerialization() throws IOException {
         List<MultiSignAddress> addresses = new ArrayList<>();
-        Token tokens = Token.buildSimpleTokenInfo(true, null, "2", "3", "4", 2, 3, BigInteger.valueOf(4), true, 0, "de");
+        Token tokens = Token.buildSimpleTokenInfo(true, null, "2", "3", "4", 2, 3, BigInteger.valueOf(4), true, 0,
+                "de");
         TokenInfo info1 = new TokenInfo();
         info1.setToken(tokens);
         info1.setMultiSignAddresses(addresses);
@@ -145,4 +152,18 @@ public class SerializationTest {
 
         assertEquals(info1.getToken().isTokenstop(), info2.getToken().isTokenstop());
     }
+
+    @Test
+    public void testKeyValueSerialization() throws InvalidCipherTextException, IOException {
+        KeyValue kv = new KeyValue();
+        kv.setKey("identity");
+
+        kv.setValue("value");
+        byte[] bytes1 = kv.toByteArray();
+        KeyValue k2 = new KeyValue().parse(bytes1);
+        assertEquals(kv.getKey(), k2.getKey());
+        assertEquals(kv.getValue(), k2.getValue());
+    }
+    
+    
 }

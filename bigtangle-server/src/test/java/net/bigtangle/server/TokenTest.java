@@ -29,9 +29,11 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.data.identity.Identity;
@@ -98,7 +100,7 @@ public class TokenTest extends AbstractIntegrationTest {
             mcmcService.update();
             confirmationService.update();
         }
- 
+
         {
             final String tokenid = new ECKey().getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "金", aesKey, "");
@@ -161,6 +163,7 @@ public class TokenTest extends AbstractIntegrationTest {
             confirmationService.update();
         }
     }
+
     @Test
     public void testCreateTokenWithDomain() throws Exception {
 
@@ -225,12 +228,13 @@ public class TokenTest extends AbstractIntegrationTest {
 
         {
 
-            ECKey productkey = new ECKey();
-            KeyValue kv = setKeyValue(productkey);
+            ECKey issuer = new ECKey();
+            ECKey userkey = new ECKey();
+            TokenKeyValues kvs = getTokenKeyValues(issuer, userkey);
 
-            walletAppKit1.wallet().importKey(productkey);
-            Block block = walletAppKit1.wallet().createToken(productkey, "identity", 0, "id.shop", "test",
-                    BigInteger.ONE, true, kv, TokenType.identity.ordinal());
+            walletAppKit1.wallet().importKey(issuer);
+            Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop",
+                    "test", BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
@@ -249,28 +253,19 @@ public class TokenTest extends AbstractIntegrationTest {
             Token token = getTokensResponse.getTokens().get(0);
             KeyValue kvtemp = token.getTokenKeyValues().getKeyvalues().get(0);
             String temp = kvtemp.getValue();
-            byte[] decryptedPayload = ECIESCoder.decrypt(productkey.getPrivKey(), Utils.HEX.decode(temp));
-            kv = new KeyValue();
-            kv.setKey("identity");
-            Identity identity = new Identity();
-            IdentityCore identityCore = new IdentityCore();
-            identityCore.setSurname("zhang");
-            identityCore.setForenames("san");
-            identityCore.setSex("man");
-            identityCore.setDateofissue("20200101");
-            identityCore.setDateofexpiry("20201231");
-            identity.setIdentityCore(identityCore);
-            identity.setIdentificationnumber("120123456789012345");
-            byte[] photo = readFile(new File("F:\\img\\cc_aes1.jpg"));
-            identity.setPhoto(photo);
-            assertArrayEquals(decryptedPayload, Json.jsonmapper().writeValueAsBytes(identity));
+            if( temp.equals(userkey.getPrivateKeyAsHex())) {
+            byte[] decryptedPayload = ECIESCoder.decrypt(issuer.getPrivKey(), Utils.HEX.decode(temp));
+            Identity identity = Json.jsonmapper().readValue(decryptedPayload,
+                    Identity.class);
+             assertTrue(identity.getIdentificationnumber().equals("120123456789012345"));
+            }
         }
 
     }
 
-    private KeyValue setKeyValue(ECKey key) throws InvalidCipherTextException, IOException {
-        KeyValue kv = new KeyValue();
-        kv.setKey("identity");
+    private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey) throws InvalidCipherTextException, IOException {
+        TokenKeyValues tokenKeyValues = new TokenKeyValues();
+
         Identity identity = new Identity();
         IdentityCore identityCore = new IdentityCore();
         identityCore.setSurname("zhang");
@@ -280,12 +275,20 @@ public class TokenTest extends AbstractIntegrationTest {
         identityCore.setDateofexpiry("20201231");
         identity.setIdentityCore(identityCore);
         identity.setIdentificationnumber("120123456789012345");
-        byte[] photo = readFile(new File("F:\\img\\cc_aes1.jpg"));
+        byte[] photo = "readFile".getBytes();
+        // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identity.setPhoto(photo);
         byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
-
+        KeyValue kv = new KeyValue();
+        kv.setKey(key.getPublicKeyAsHex());
         kv.setValue(Utils.HEX.encode(cipher));
-        return kv;
+        tokenKeyValues.addKeyvalue(kv);
+        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
+        kv = new KeyValue();
+        kv.setKey(userkey.getPublicKeyAsHex());
+        kv.setValue(Utils.HEX.encode(cipher1));
+        tokenKeyValues.addKeyvalue(kv);
+        return tokenKeyValues;
     }
 
     @Test

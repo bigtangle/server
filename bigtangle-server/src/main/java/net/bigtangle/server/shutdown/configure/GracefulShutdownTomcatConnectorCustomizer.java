@@ -37,6 +37,9 @@ public class GracefulShutdownTomcatConnectorCustomizer implements TomcatConnecto
     @EventListener(ContextClosedEvent.class)
     @Order(Ordered.HIGHEST_PRECEDENCE + 1)
     public void contextClosed(ContextClosedEvent event) throws InterruptedException {
+        if (props == null || !props.isEnabled()) {
+            return;
+        }
         if (connector == null) {
             return;
         }
@@ -65,7 +68,7 @@ public class GracefulShutdownTomcatConnectorCustomizer implements TomcatConnecto
     private void awaitTermination(ThreadPoolExecutor executor) throws InterruptedException {
         for (long remaining = props.getTimeout().getSeconds(); remaining > 0; remaining -= CHECK_INTERVAL) {
             if (executor.awaitTermination(CHECK_INTERVAL, TimeUnit.SECONDS)) {
-                return;
+                continue;
             }
 
             LOG.info("{} thread(s) active, {} seconds remaining", executor.getActiveCount(), remaining);

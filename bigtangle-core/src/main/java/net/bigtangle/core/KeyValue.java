@@ -1,14 +1,13 @@
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 
-public class KeyValue implements java.io.Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class KeyValue  extends DataClass {
+ 
     private String key;
     private String value;
 
@@ -55,6 +54,16 @@ public class KeyValue implements java.io.Serializable {
 
         value = Utils.readNBytesString(dis);
 
+        return this;
+    }
+    public KeyValue parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+        
+        dis.close();
+        bain.close();
         return this;
     }
 

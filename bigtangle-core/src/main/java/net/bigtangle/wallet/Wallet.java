@@ -82,6 +82,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -2435,6 +2436,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
+     * transfer data from encrypted
+     */
+    public Block transferData(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        Block block = getTip();
+
+        SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey = aesKey;
+
+        request.tx.setMemo(menoinfo);
+        completeTx(request, aesKey);
+        block.addTransaction(request.tx);
+
+        return solveAndPost(block);
+    }
+
+    /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
      */
@@ -2705,11 +2724,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
             BigInteger amount, boolean increment, KeyValue kv, int tokentype) throws Exception {
 
+        TokenKeyValues tokenKeyValues = new TokenKeyValues();
+        tokenKeyValues.addKeyvalue(kv);
+        return createToken(key, tokename, decimals, domainname, description, amount, increment, tokenKeyValues,
+                tokentype);
+
+    }
+
+    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype) throws Exception {
+
         String tokenid = key.getPublicKeyAsHex();
 
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
-        token.addKeyvalue(kv);
+        token.setTokenKeyValues(tokenKeyValues);
         token.setTokentype(tokentype);
         List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
         addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
@@ -2774,8 +2803,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Transaction tx = new Transaction(params);
         tx.addOutput(new Coin(payAmount, tokenId), new Address(params, beneficiary));
 
-        ContractExecutionResult info = new ContractExecutionResult(contractEventRecords,
-                tx.bitcoinSerialize());
+        ContractExecutionResult info = new ContractExecutionResult(contractEventRecords, tx.bitcoinSerialize());
         tx.setData(info.toByteArray());
         tx.setDataClassName("ContractExecutionResult");
 

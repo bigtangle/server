@@ -31,6 +31,11 @@ public class GracefulShutdownHealthIndicator implements HealthIndicator {
     @EventListener(ContextClosedEvent.class)
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public void contextClosed(ContextClosedEvent event) throws InterruptedException {
+        
+        if (props == null || !props.isEnabled()) {
+            return;
+        }
+        
         if (isEventFromLocalContext(event)) {
             updateHealthToOutOfService();
             waitForKubernetesToSeeOutOfService();

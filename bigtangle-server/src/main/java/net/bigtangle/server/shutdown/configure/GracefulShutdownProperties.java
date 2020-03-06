@@ -15,7 +15,7 @@ public class GracefulShutdownProperties implements InitializingBean {
     /**
      * Indicates whether graceful shutdown is enabled or not.
      */
-    private boolean enabled;
+    private boolean enabled=false;
 
     /**
      * The number of seconds to wait for active threads to finish before shutting down the embedded web container.
