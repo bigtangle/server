@@ -1,6 +1,5 @@
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedInputStream;
@@ -9,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,11 +33,11 @@ import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.data.identity.Identity;
 import net.bigtangle.data.identity.IdentityCore;
+import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
@@ -233,8 +233,8 @@ public class TokenTest extends AbstractIntegrationTest {
             TokenKeyValues kvs = getTokenKeyValues(issuer, userkey);
 
             walletAppKit1.wallet().importKey(issuer);
-            Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop",
-                    "test", BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
+            Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
+                    BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
@@ -251,19 +251,24 @@ public class TokenTest extends AbstractIntegrationTest {
             assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
                     .equals(currentToken.getToken().getTokenname() + "@id.shop"));
             Token token = getTokensResponse.getTokens().get(0);
-            KeyValue kvtemp = token.getTokenKeyValues().getKeyvalues().get(0);
-            String temp = kvtemp.getValue();
-            if( temp.equals(userkey.getPrivateKeyAsHex())) {
-            byte[] decryptedPayload = ECIESCoder.decrypt(issuer.getPrivKey(), Utils.HEX.decode(temp));
-            Identity identity = Json.jsonmapper().readValue(decryptedPayload,
-                    Identity.class);
-             assertTrue(identity.getIdentificationnumber().equals("120123456789012345"));
+            byte[] decryptedPayload = null;
+            for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+                if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                    decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                    Identity identity = new Identity().parse(decryptedPayload);
+                    IdentityData id = new IdentityData().parse(Utils.HEX.decode(identity.getIdentityData()));
+                    assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
+                    identity.verify();
+
+                }
             }
+
         }
 
     }
 
-    private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey) throws InvalidCipherTextException, IOException {
+    private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey)
+            throws InvalidCipherTextException, IOException, SignatureException {
         TokenKeyValues tokenKeyValues = new TokenKeyValues();
 
         Identity identity = new Identity();
@@ -273,17 +278,27 @@ public class TokenTest extends AbstractIntegrationTest {
         identityCore.setSex("man");
         identityCore.setDateofissue("20200101");
         identityCore.setDateofexpiry("20201231");
-        identity.setIdentityCore(identityCore);
-        identity.setIdentificationnumber("120123456789012345");
+        IdentityData identityData = new IdentityData();
+        identityData.setIdentityCore(identityCore);
+        identityData.setIdentificationnumber("120123456789012345");
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
-        identity.setPhoto(photo);
-        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
+        identityData.setPhoto(photo);
+        identity.setIdentityData(identityData.toByteArray());
+
+        identity.setPubsignkey(key.getPubKey());
+        identity.signMessage(key);
+
+        identity.verify();
+
+        byte[] data = identity.toByteArray();
+
+        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);
         KeyValue kv = new KeyValue();
         kv.setKey(key.getPublicKeyAsHex());
         kv.setValue(Utils.HEX.encode(cipher));
         tokenKeyValues.addKeyvalue(kv);
-        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
+        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
         kv = new KeyValue();
         kv.setKey(userkey.getPublicKeyAsHex());
         kv.setValue(Utils.HEX.encode(cipher1));

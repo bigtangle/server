@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 public class Contact {
     private String name = "";
@@ -37,21 +36,11 @@ public class Contact {
         try {
             DataOutputStream dos = new DataOutputStream(baos);
 
-            dos.writeBoolean(name != null);
-            if (name != null) {
-                dos.writeInt(name.getBytes("UTF-8").length);
-                dos.write(name.getBytes("UTF-8"));
-            }
-
-            dos.writeBoolean(address != null);
-            if (address != null) {
-                dos.writeInt(address.getBytes("UTF-8").length);
-                dos.write(address.getBytes("UTF-8"));
-            }
-            
+            Utils.writeNBytesString(dos, name);
+            Utils.writeNBytesString(dos, address); 
             dos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return baos.toByteArray();
     }

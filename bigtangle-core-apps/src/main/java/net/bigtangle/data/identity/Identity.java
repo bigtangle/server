@@ -1,81 +1,101 @@
 package net.bigtangle.data.identity;
 
-public class Identity {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.security.SignatureException;
 
-    private String code = "p";
-    private String identificationnumber;
-    // optional
-    private String pubkey;
-    private byte[] signatureofholder;
-    private byte[] photo;
-    private byte[] machinereadable;
-    // identity in English
-    IdentityCore identityCoreEn;
-    // original language UTF-8
-    IdentityCore identityCore;
+import net.bigtangle.core.DataClass;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Utils;
 
-    public String getCode() {
-        return code;
+public class Identity extends DataClass implements java.io.Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    // message
+    String identityData;
+
+    private byte[] pubsignkey;
+    private String signature;
+
+    public void verify() throws SignatureException {
+        ECKey.fromPublicOnly(pubsignkey).verifyMessage(identityData, signature);
+
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void signMessage(ECKey key) throws SignatureException {
+        signature = key.signMessage(identityData);
     }
 
-    public String getIdentificationnumber() {
-        return identificationnumber;
+    public void setIdentityData(byte[] identityData) {
+        this.identityData = Utils.HEX.encode(identityData);
     }
 
-    public void setIdentificationnumber(String identificationnumber) {
-        this.identificationnumber = identificationnumber;
+    public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.write(super.toByteArray());
+
+            Utils.writeNBytesString(dos, identityData);
+            Utils.writeNBytes(dos, pubsignkey);
+            Utils.writeNBytesString(dos, signature);
+            dos.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return baos.toByteArray();
     }
 
-    public byte[] getSignatureofholder() {
-        return signatureofholder;
+    public Identity parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+
+        dis.close();
+        bain.close();
+        return this;
     }
 
-    public void setSignatureofholder(byte[] signatureofholder) {
-        this.signatureofholder = signatureofholder;
+    public Identity parseDIS(DataInputStream dis) throws IOException {
+        super.parseDIS(dis);
+        identityData = Utils.readNBytesString(dis);
+        pubsignkey = Utils.readNBytes(dis);
+        signature = Utils.readNBytesString(dis);
+
+        dis.close();
+
+        return this;
     }
 
-    public byte[] getPhoto() {
-        return photo;
+    public String getSignature() {
+        return signature;
     }
 
-    public void setPhoto(byte[] photo) {
-        this.photo = photo;
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 
-    public byte[] getMachinereadable() {
-        return machinereadable;
+    public String getIdentityData() {
+        return identityData;
     }
 
-    public void setMachinereadable(byte[] machinereadable) {
-        this.machinereadable = machinereadable;
+    public void setIdentityData(String identityData) {
+        this.identityData = identityData;
     }
 
-    public IdentityCore getIdentityCoreEn() {
-        return identityCoreEn;
+    public byte[] getPubsignkey() {
+        return pubsignkey;
     }
 
-    public void setIdentityCoreEn(IdentityCore identityCoreEn) {
-        this.identityCoreEn = identityCoreEn;
-    }
-
-    public IdentityCore getIdentityCore() {
-        return identityCore;
-    }
-
-    public void setIdentityCore(IdentityCore identityCore) {
-        this.identityCore = identityCore;
-    }
-
-    public String getPubkey() {
-        return pubkey;
-    }
-
-    public void setPubkey(String pubkey) {
-        this.pubkey = pubkey;
+    public void setPubsignkey(byte[] pubsignkey) {
+        this.pubsignkey = pubsignkey;
     }
 
 }

@@ -7,10 +7,11 @@ package net.bigtangle.core;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.spongycastle.crypto.InvalidCipherTextException;
 
 import net.bigtangle.data.identity.Identity;
 import net.bigtangle.data.identity.IdentityCore;
+import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.encrypt.ECIESCoder;
 
 public class SerializationTest {
@@ -48,6 +50,22 @@ public class SerializationTest {
         assertEquals(info1.getContactList().get(0).getName(), info2.getContactList().get(0).getName());
     }
 
+    @Test
+    public void testContactInfo2Serialization() throws IOException {
+        ContactInfo info1 = new ContactInfo();
+        info1.setVersion(3);
+        final Contact e = new Contact();
+        e.setAddress("test1");
+        e.setName(null);
+        info1.getContactList().add(e);
+        ContactInfo info2 = new ContactInfo().parse(info1.toByteArray());
+
+        assertArrayEquals(info1.toByteArray(), info2.toByteArray());
+        assertEquals(info1.getVersion(), info2.getVersion());
+        assertEquals(info1.getContactList().get(0).getAddress(), info2.getContactList().get(0).getAddress());
+        assertEquals(info1.getContactList().get(0).getName(), info2.getContactList().get(0).getName());
+    }
+    
     @Test
     public void testOrderOpenInfoSerialization() throws IOException {
         OrderOpenInfo info1 = new OrderOpenInfo(2l, "test1", new byte[] { 2 }, 3l, 4l, Side.SELL, "test2");
@@ -156,14 +174,99 @@ public class SerializationTest {
     @Test
     public void testKeyValueSerialization() throws InvalidCipherTextException, IOException {
         KeyValue kv = new KeyValue();
-        kv.setKey("identity");
-
+        kv.setKey("identity"); 
         kv.setValue("value");
         byte[] bytes1 = kv.toByteArray();
         KeyValue k2 = new KeyValue().parse(bytes1);
         assertEquals(kv.getKey(), k2.getKey());
         assertEquals(kv.getValue(), k2.getValue());
     }
-    
-    
+
+    @Test
+    public void testIdentityCoreSerialization() throws InvalidCipherTextException, IOException, SignatureException {
+  
+        IdentityCore identityCore = new IdentityCore();
+        identityCore.setSurname("zhang");
+        identityCore.setForenames("san");
+        identityCore.setSex("man");
+        identityCore.setDateofissue("20200101");
+        identityCore.setDateofexpiry("20201231");
+       
+        IdentityCore id = new IdentityCore().parse(identityCore.toByteArray());
+        assertTrue(id.getDateofissue().equals("20200101"));
+   
+    }
+
+    @Test
+    public void testIdentityCoreDataSerialization() throws InvalidCipherTextException, IOException, SignatureException {
+  
+      
+        IdentityCore identityCore = new IdentityCore();
+        identityCore.setSurname("zhang");
+        identityCore.setForenames("san");
+        identityCore.setSex("man");
+        identityCore.setDateofissue("20200101");
+        identityCore.setDateofexpiry("20201231");
+        IdentityData identityData = new IdentityData();
+        identityData.setIdentityCore(identityCore);
+        identityData.setIdentificationnumber("120123456789012345"); 
+        identityData.setPhoto( "readFile".getBytes());
+        identityData.setIdentityCore(identityCore);
+      
+        IdentityData id = new IdentityData().parse(identityData.toByteArray());
+        assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
+   
+    }
+
+    @Test
+    public void testIdentitySerialization() throws InvalidCipherTextException, IOException, SignatureException {
+        ECKey key = new ECKey();
+        ECKey userkey = new ECKey();
+        TokenKeyValues tokenKeyValues = new TokenKeyValues();
+        Identity identity = new Identity();
+        IdentityCore identityCore = new IdentityCore();
+        identityCore.setSurname("zhang");
+        identityCore.setForenames("san");
+        identityCore.setSex("man");
+        identityCore.setDateofissue("20200101");
+        identityCore.setDateofexpiry("20201231");
+        IdentityData identityData = new IdentityData();
+        identityData.setIdentityCore(identityCore);
+        identityData.setIdentificationnumber("120123456789012345");
+        byte[] photo = "readFile".getBytes();
+        // readFile(new File("F:\\img\\cc_aes1.jpg"));
+        identityData.setPhoto(photo);
+        identity.setIdentityData(identityData.toByteArray());
+
+        identity.setPubsignkey(key.getPubKey());
+        identity.signMessage(key);
+
+        identity.verify();
+
+        byte[] data = identity.toByteArray();
+
+        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);
+        KeyValue kv = new KeyValue();
+        kv.setKey(key.getPublicKeyAsHex());
+        kv.setValue(Utils.HEX.encode(cipher));
+        tokenKeyValues.addKeyvalue(kv);
+        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
+        kv = new KeyValue();
+        kv.setKey(userkey.getPublicKeyAsHex());
+        kv.setValue(Utils.HEX.encode(cipher1));
+        tokenKeyValues.addKeyvalue(kv);
+
+        for (KeyValue kvtemp : tokenKeyValues.getKeyvalues()) {
+            if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                byte[] decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                Identity reidentity = new Identity().parse(decryptedPayload);
+                IdentityData id = new IdentityData().parse(Utils.HEX.decode(reidentity.getIdentityData()));
+                assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
+                identity.verify();
+
+            }
+        }
+
+    }
+
 }

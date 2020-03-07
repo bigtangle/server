@@ -1,7 +1,20 @@
 package net.bigtangle.data.identity;
 
-public class IdentityCore {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
+import net.bigtangle.core.DataClass;
+import net.bigtangle.core.Utils;
+
+public class IdentityCore extends DataClass implements java.io.Serializable {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private String surname;
     private String forenames;
     private String nationality;
@@ -11,6 +24,57 @@ public class IdentityCore {
     private String dateofissue;
     private String dateofexpiry;
     private String authority;
+
+    public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+       
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.write(super.toByteArray());
+            Utils.writeNBytesString(dos, surname);
+            Utils.writeNBytesString(dos, forenames);
+            Utils.writeNBytesString(dos, nationality);
+            Utils.writeNBytesString(dos, dateofbirth);
+            Utils.writeNBytesString(dos, sex);
+            Utils.writeNBytesString(dos, placeofbirth);
+            Utils.writeNBytesString(dos, dateofissue);
+            Utils.writeNBytesString(dos, dateofexpiry);
+            Utils.writeNBytesString(dos, authority);
+            dos.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return baos.toByteArray();
+    }
+
+    public IdentityCore parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+
+        dis.close();
+        bain.close();
+        return this;
+    }
+
+    public IdentityCore parseDIS(DataInputStream dis) throws IOException {
+        super.parseDIS(dis);
+
+        surname = Utils.readNBytesString(dis);
+        forenames = Utils.readNBytesString(dis);
+        nationality = Utils.readNBytesString(dis);
+        dateofbirth = Utils.readNBytesString(dis);
+        sex = Utils.readNBytesString(dis);
+        placeofbirth = Utils.readNBytesString(dis);
+        dateofissue = Utils.readNBytesString(dis);
+        dateofexpiry = Utils.readNBytesString(dis);
+        authority = Utils.readNBytesString(dis);
+
+        dis.close();
+
+        return this;
+    }
 
     private String nameatbirth;
 
@@ -93,6 +157,5 @@ public class IdentityCore {
     public void setNameatbirth(String nameatbirth) {
         this.nameatbirth = nameatbirth;
     }
-    
-    
+
 }

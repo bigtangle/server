@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class KeyValue  extends DataClass {
+public class KeyValue  {
  
     private String key;
     private String value;
@@ -30,17 +30,9 @@ public class KeyValue  extends DataClass {
     public byte[] toByteArray() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            DataOutputStream dos = new DataOutputStream(baos);
-
-            dos.writeInt(key.getBytes("UTF-8").length);
-            dos.write(key.getBytes("UTF-8"));
-
-            dos.writeBoolean(value != null);
-            if (value != null) {
-                dos.writeInt(value.getBytes("UTF-8").length);
-                dos.write(value.getBytes("UTF-8"));
-            }
-
+            DataOutputStream dos = new DataOutputStream(baos); 
+            Utils.writeNBytesString(dos, key);
+            Utils.writeNBytesString(dos, value);
             dos.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -48,12 +40,9 @@ public class KeyValue  extends DataClass {
         return baos.toByteArray();
     }
 
-    public KeyValue parseDIS(DataInputStream dis) throws IOException {
-
-        key = Utils.readNBytesString(dis);
-
-        value = Utils.readNBytesString(dis);
-
+    public KeyValue parseDIS(DataInputStream dis) throws IOException { 
+        key = Utils.readNBytesString(dis); 
+        value = Utils.readNBytesString(dis); 
         return this;
     }
     public KeyValue parse(byte[] buf) throws IOException {

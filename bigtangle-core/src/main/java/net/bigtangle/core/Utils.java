@@ -20,6 +20,34 @@
  */
 package net.bigtangle.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -32,46 +60,31 @@ import com.google.common.primitives.UnsignedLongs;
 import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.utils.Base58;
 
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
-
 /**
- * A collection of various utility methods that are helpful for working with the Bitcoin protocol.
- * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
+ * A collection of various utility methods that are helpful for working with the
+ * Bitcoin protocol. To enable debug logging from the library, run with
+ * -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
-    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
+    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER
+            .getBytes(Charsets.UTF_8);
 
     private static final Joiner SPACE_JOINER = Joiner.on(" ");
 
     private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**
-     * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
-     * leading zero to indicate that the number is positive and may need padding.
+     * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite
+     * what we often need: it appends a leading zero to indicate that the number
+     * is positive and may need padding.
      *
-     * @param b the integer to format into a byte array
-     * @param numBytes the desired size of the resulting byte array
+     * @param b
+     *            the integer to format into a byte array
+     * @param numBytes
+     *            the desired size of the resulting byte array
      * @return numBytes byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
@@ -83,7 +96,7 @@ public class Utils {
         int start = (biBytes.length == numBytes + 1) ? 1 : 0;
         int length = Math.min(biBytes.length, numBytes);
         System.arraycopy(biBytes, start, bytes, numBytes - length, length);
-        return bytes;        
+        return bytes;
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
@@ -110,7 +123,7 @@ public class Utils {
         out[offset + 6] = (byte) (0xFF & (val >> 48));
         out[offset + 7] = (byte) (0xFF & (val >> 56));
     }
-    
+
     public static void bytesToByteStream(byte[] b, OutputStream stream) throws IOException {
         stream.write(b);
     }
@@ -121,7 +134,7 @@ public class Utils {
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 24)));
     }
-    
+
     public static void int64ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
@@ -161,7 +174,8 @@ public class Utils {
     }
 
     /**
-     * Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence).
+     * Hex encoding used throughout the framework. Use with HEX.encode(byte[])
+     * or HEX.decode(CharSequence).
      */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
@@ -169,28 +183,33 @@ public class Utils {
      * Returns a copy of the given byte array in reverse order.
      */
     public static byte[] reverseBytes(byte[] bytes) {
-        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
+        // We could use the XOR trick here but it's easier to understand if we
+        // don't. If we find this is really a
         // performance issue the matter can be revisited.
         byte[] buf = new byte[bytes.length];
         for (int i = 0; i < bytes.length; i++)
             buf[i] = bytes[bytes.length - 1 - i];
         return buf;
     }
-    
+
     /**
-     * Returns a copy of the given byte array with the bytes of each double-word (4 bytes) reversed.
+     * Returns a copy of the given byte array with the bytes of each double-word
+     * (4 bytes) reversed.
      * 
-     * @param bytes length must be divisible by 4.
-     * @param trimLength trim output to this length.  If positive, must be divisible by 4.
+     * @param bytes
+     *            length must be divisible by 4.
+     * @param trimLength
+     *            trim output to this length. If positive, must be divisible by
+     *            4.
      */
     public static byte[] reverseDwordBytes(byte[] bytes, int trimLength) {
         checkArgument(bytes.length % 4 == 0);
         checkArgument(trimLength < 0 || trimLength % 4 == 0);
-        
+
         byte[] rev = new byte[trimLength >= 0 && bytes.length > trimLength ? trimLength : bytes.length];
-        
+
         for (int i = 0; i < rev.length; i += 4) {
-            System.arraycopy(bytes, i, rev, i , 4);
+            System.arraycopy(bytes, i, rev, i, 4);
             for (int j = 0; j < 4; j++) {
                 rev[i + j] = bytes[i + 3 - j];
             }
@@ -198,35 +217,36 @@ public class Utils {
         return rev;
     }
 
-    /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
+    /**
+     * Parse 4 bytes from the byte array (starting at the offset) as unsigned
+     * 32-bit integer in little endian format.
+     */
     public static long readUint32(byte[] bytes, int offset) {
-        return (bytes[offset] & 0xffl) |
-                ((bytes[offset + 1] & 0xffl) << 8) |
-                ((bytes[offset + 2] & 0xffl) << 16) |
-                ((bytes[offset + 3] & 0xffl) << 24);
+        return (bytes[offset] & 0xffl) | ((bytes[offset + 1] & 0xffl) << 8) | ((bytes[offset + 2] & 0xffl) << 16)
+                | ((bytes[offset + 3] & 0xffl) << 24);
     }
 
-    /** Parse 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
+    /**
+     * Parse 8 bytes from the byte array (starting at the offset) as signed
+     * 64-bit integer in little endian format.
+     */
     public static long readInt64(byte[] bytes, int offset) {
-        return (bytes[offset] & 0xffl) |
-               ((bytes[offset + 1] & 0xffl) << 8) |
-               ((bytes[offset + 2] & 0xffl) << 16) |
-               ((bytes[offset + 3] & 0xffl) << 24) |
-               ((bytes[offset + 4] & 0xffl) << 32) |
-               ((bytes[offset + 5] & 0xffl) << 40) |
-               ((bytes[offset + 6] & 0xffl) << 48) |
-               ((bytes[offset + 7] & 0xffl) << 56);
+        return (bytes[offset] & 0xffl) | ((bytes[offset + 1] & 0xffl) << 8) | ((bytes[offset + 2] & 0xffl) << 16)
+                | ((bytes[offset + 3] & 0xffl) << 24) | ((bytes[offset + 4] & 0xffl) << 32)
+                | ((bytes[offset + 5] & 0xffl) << 40) | ((bytes[offset + 6] & 0xffl) << 48)
+                | ((bytes[offset + 7] & 0xffl) << 56);
     }
 
-    /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
+    /**
+     * Parse 4 bytes from the byte array (starting at the offset) as unsigned
+     * 32-bit integer in big endian format.
+     */
     public static long readUint32BE(byte[] bytes, int offset) {
-        return ((bytes[offset] & 0xffl) << 24) |
-                ((bytes[offset + 1] & 0xffl) << 16) |
-                ((bytes[offset + 2] & 0xffl) << 8) |
-                (bytes[offset + 3] & 0xffl);
+        return ((bytes[offset] & 0xffl) << 24) | ((bytes[offset + 1] & 0xffl) << 16)
+                | ((bytes[offset + 2] & 0xffl) << 8) | (bytes[offset + 3] & 0xffl);
     }
 
-    public static  String readNBytesString(DataInputStream dis) throws IOException, UnsupportedEncodingException {
+    public static String readNBytesString(DataInputStream dis) throws IOException, UnsupportedEncodingException {
         if (dis.readBoolean()) {
             byte[] buf = new byte[dis.readInt()];
             dis.readFully(buf);
@@ -235,15 +255,50 @@ public class Utils {
             return null;
         }
     }
-    
-    /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in big endian format. */
-    public static int readUint16BE(byte[] bytes, int offset) {
-        return ((bytes[offset] & 0xff) << 8) |
-                (bytes[offset + 1] & 0xff);
+
+  
+    public static byte[] readNBytes(DataInputStream dis )
+            throws IOException, UnsupportedEncodingException {
+        byte[] message;
+        if (dis.readBoolean()) {
+            message = new byte[dis.readInt()];
+            dis.readFully(message);
+            return message;
+        } else {
+            return null;
+        }
+    }
+
+    public static void writeNBytesString(DataOutputStream dos, String message)
+            throws IOException, UnsupportedEncodingException {
+        dos.writeBoolean(message != null);
+        if (message != null) {
+            dos.writeInt(message.getBytes("UTF-8").length);
+            dos.write(message.getBytes("UTF-8"));
+        }
+
+    }
+
+    public static void writeNBytes(DataOutputStream dos, byte[] message)
+            throws IOException, UnsupportedEncodingException {
+        dos.writeBoolean(message != null);
+        if (message != null) {
+        dos.writeInt(message.length);
+        dos.write(message);
+        }
     }
 
     /**
-     * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
+     * Parse 2 bytes from the byte array (starting at the offset) as unsigned
+     * 16-bit integer in big endian format.
+     */
+    public static int readUint16BE(byte[] bytes, int offset) {
+        return ((bytes[offset] & 0xff) << 8) | (bytes[offset + 1] & 0xff);
+    }
+
+    /**
+     * Calculates RIPEMD160(SHA256(input)). This is used in Address
+     * calculations.
      */
     public static byte[] sha256hash160(byte[] input) {
         byte[] sha256 = Sha256Hash.hash(input);
@@ -255,10 +310,14 @@ public class Utils {
     }
 
     /**
-     * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
-     * a 4 byte big endian length field, followed by the stated number of bytes representing
-     * the number in big endian format (with a sign bit).
-     * @param hasLength can be set to false if the given array is missing the 4 byte length field
+     * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They
+     * consist of a 4 byte big endian length field, followed by the stated
+     * number of bytes representing the number in big endian format (with a sign
+     * bit).
+     * 
+     * @param hasLength
+     *            can be set to false if the given array is missing the 4 byte
+     *            length field
      */
     public static BigInteger decodeMPI(byte[] mpi, boolean hasLength) {
         byte[] buf;
@@ -276,19 +335,22 @@ public class Utils {
         BigInteger result = new BigInteger(buf);
         return isNegative ? result.negate() : result;
     }
-    
+
     /**
-     * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They consist of
-     * a 4 byte big endian length field, followed by the stated number of bytes representing
-     * the number in big endian format (with a sign bit).
-     * @param includeLength indicates whether the 4 byte length field should be included
+     * MPI encoded numbers are produced by the OpenSSL BN_bn2mpi function. They
+     * consist of a 4 byte big endian length field, followed by the stated
+     * number of bytes representing the number in big endian format (with a sign
+     * bit).
+     * 
+     * @param includeLength
+     *            indicates whether the 4 byte length field should be included
      */
     public static byte[] encodeMPI(BigInteger value, boolean includeLength) {
         if (value.equals(BigInteger.ZERO)) {
             if (!includeLength)
                 return new byte[] {};
             else
-                return new byte[] {0x00, 0x00, 0x00, 0x00};
+                return new byte[] { 0x00, 0x00, 0x00, 0x00 };
         }
         boolean isNegative = value.signum() < 0;
         if (isNegative)
@@ -309,7 +371,7 @@ public class Utils {
             if (length != array.length) {
                 result = new byte[length];
                 System.arraycopy(array, 0, result, 1, array.length);
-            }else
+            } else
                 result = array;
             if (isNegative)
                 result[0] |= 0x80;
@@ -318,25 +380,38 @@ public class Utils {
     }
 
     /**
-     * <p>The "compact" format is a representation of a whole number N using an unsigned 32 bit number similar to a
-     * floating point format. The most significant 8 bits are the unsigned exponent of base 256. This exponent can
-     * be thought of as "number of bytes of N". The lower 23 bits are the mantissa. Bit number 24 (0x800000) represents
-     * the sign of N. Therefore, N = (-1^sign) * mantissa * 256^(exponent-3).</p>
+     * <p>
+     * The "compact" format is a representation of a whole number N using an
+     * unsigned 32 bit number similar to a floating point format. The most
+     * significant 8 bits are the unsigned exponent of base 256. This exponent
+     * can be thought of as "number of bytes of N". The lower 23 bits are the
+     * mantissa. Bit number 24 (0x800000) represents the sign of N. Therefore, N
+     * = (-1^sign) * mantissa * 256^(exponent-3).
+     * </p>
      *
-     * <p>Satoshi's original implementation used BN_bn2mpi() and BN_mpi2bn(). MPI uses the most significant bit of the
-     * first byte as sign. Thus 0x1234560000 is compact 0x05123456 and 0xc0de000000 is compact 0x0600c0de. Compact
-     * 0x05c0de00 would be -0x40de000000.</p>
+     * <p>
+     * Satoshi's original implementation used BN_bn2mpi() and BN_mpi2bn(). MPI
+     * uses the most significant bit of the first byte as sign. Thus
+     * 0x1234560000 is compact 0x05123456 and 0xc0de000000 is compact
+     * 0x0600c0de. Compact 0x05c0de00 would be -0x40de000000.
+     * </p>
      *
-     * <p>Bitcoin only uses this "compact" format for encoding difficulty targets, which are unsigned 256bit quantities.
-     * Thus, all the complexities of the sign bit and using base 256 are probably an implementation accident.</p>
+     * <p>
+     * Bitcoin only uses this "compact" format for encoding difficulty targets,
+     * which are unsigned 256bit quantities. Thus, all the complexities of the
+     * sign bit and using base 256 are probably an implementation accident.
+     * </p>
      */
     public static BigInteger decodeCompactBits(long compact) {
         int size = ((int) (compact >> 24)) & 0xFF;
         byte[] bytes = new byte[4 + size];
         bytes[3] = (byte) size;
-        if (size >= 1) bytes[4] = (byte) ((compact >> 16) & 0xFF);
-        if (size >= 2) bytes[5] = (byte) ((compact >> 8) & 0xFF);
-        if (size >= 3) bytes[6] = (byte) (compact & 0xFF);
+        if (size >= 1)
+            bytes[4] = (byte) ((compact >> 16) & 0xFF);
+        if (size >= 2)
+            bytes[5] = (byte) ((compact >> 8) & 0xFF);
+        if (size >= 3)
+            bytes[6] = (byte) (compact & 0xFF);
         return decodeMPI(bytes, true);
     }
 
@@ -351,7 +426,8 @@ public class Utils {
         else
             result = value.shiftRight(8 * (size - 3)).longValue();
         // The 0x00800000 bit denotes the sign.
-        // Thus, if it is already set, divide the mantissa by 256 and increase the exponent.
+        // Thus, if it is already set, divide the mantissa by 256 and increase
+        // the exponent.
         if ((result & 0x00800000L) != 0) {
             result >>= 8;
             size++;
@@ -411,7 +487,10 @@ public class Utils {
         return mockTime != null ? mockTime : new Date();
     }
 
-    /** Returns the current time in milliseconds since the epoch, or a mocked out equivalent. */
+    /**
+     * Returns the current time in milliseconds since the epoch, or a mocked out
+     * equivalent.
+     */
     public static long currentTimeMillis() {
         return mockTime != null ? mockTime.getTime() : System.currentTimeMillis();
     }
@@ -424,7 +503,9 @@ public class Utils {
 
     /**
      * Formats a given date+time value to an ISO 8601 string.
-     * @param dateTime value to format, as a Date
+     * 
+     * @param dateTime
+     *            value to format, as a Date
      */
     public static String dateTimeFormat(Date dateTime) {
         DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
@@ -434,7 +515,9 @@ public class Utils {
 
     /**
      * Formats a given date+time value to an ISO 8601 string.
-     * @param dateTime value to format, unix time (ms)
+     * 
+     * @param dateTime
+     *            value to format, unix time (ms)
      */
     public static String dateTimeFormat(long dateTime) {
         DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
@@ -446,8 +529,10 @@ public class Utils {
      * Returns a string containing the string representation of the given items,
      * delimited by a single space character.
      *
-     * @param items the items to join
-     * @param <T> the item type
+     * @param items
+     *            the items to join
+     * @param <T>
+     *            the item type
      * @return the joined space-delimited string
      */
     public static <T> String join(Iterable<T> items) {
@@ -470,14 +555,18 @@ public class Utils {
     }
 
     /**
-     * Constructs a new String by decoding the given bytes using the specified charset.
+     * Constructs a new String by decoding the given bytes using the specified
+     * charset.
      * <p>
-     * This is a convenience method which wraps the checked exception with a RuntimeException.
-     * The exception can never occur given the charsets
+     * This is a convenience method which wraps the checked exception with a
+     * RuntimeException. The exception can never occur given the charsets
      * US-ASCII, ISO-8859-1, UTF-8, UTF-16, UTF-16LE or UTF-16BE.
      *
-     * @param bytes the bytes to be decoded into characters
-     * @param charsetName the name of a supported {@linkplain java.nio.charset.Charset charset}
+     * @param bytes
+     *            the bytes to be decoded into characters
+     * @param charsetName
+     *            the name of a supported {@linkplain java.nio.charset.Charset
+     *            charset}
      * @return the decoded String
      */
     public static String toString(byte[] bytes, String charsetName) {
@@ -489,14 +578,18 @@ public class Utils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the named charset.
+     * Encodes the given string into a sequence of bytes using the named
+     * charset.
      * <p>
-     * This is a convenience method which wraps the checked exception with a RuntimeException.
-     * The exception can never occur given the charsets
+     * This is a convenience method which wraps the checked exception with a
+     * RuntimeException. The exception can never occur given the charsets
      * US-ASCII, ISO-8859-1, UTF-8, UTF-16, UTF-16LE or UTF-16BE.
      *
-     * @param str the string to encode into bytes
-     * @param charsetName the name of a supported {@linkplain java.nio.charset.Charset charset}
+     * @param str
+     *            the string to encode into bytes
+     * @param charsetName
+     *            the name of a supported {@linkplain java.nio.charset.Charset
+     *            charset}
      * @return the encoded bytes
      */
     public static byte[] toBytes(CharSequence str, String charsetName) {
@@ -508,8 +601,8 @@ public class Utils {
     }
 
     /**
-     * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
-     * neither parse was successful.
+     * Attempts to parse the given string as arbitrary-length hex or base58 and
+     * then return the results, or null if neither parse was successful.
      */
     public static byte[] parseAsHexOrBase58(String data) {
         try {
@@ -529,7 +622,9 @@ public class Utils {
     }
 
     /**
-     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
+     * <p>
+     * Given a textual message, returns a byte buffer formatted as follows:
+     * </p>
      *
      * <tt><p>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</p></tt>
      */
@@ -544,19 +639,25 @@ public class Utils {
             bos.write(messageBytes);
             return bos.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            throw new RuntimeException(e); // Cannot happen.
         }
     }
-    
+
     // 00000001, 00000010, 00000100, 00001000, ...
-    private static final int[] bitMask = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-    
-    /** Checks if the given bit is set in data, using little endian (not the same as Java native big endian) */
+    private static final int[] bitMask = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+
+    /**
+     * Checks if the given bit is set in data, using little endian (not the same
+     * as Java native big endian)
+     */
     public static boolean checkBitLE(byte[] data, int index) {
         return (data[index >>> 3] & bitMask[7 & index]) != 0;
     }
-    
-    /** Sets the given bit in data to one, using little endian (not the same as Java native big endian) */
+
+    /**
+     * Sets the given bit in data to one, using little endian (not the same as
+     * Java native big endian)
+     */
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
     }
@@ -577,7 +678,9 @@ public class Utils {
         }
     }
 
-    /** Enable or disable mock sleep.  If enabled, set mock time to current time. */
+    /**
+     * Enable or disable mock sleep. If enabled, set mock time to current time.
+     */
     public static void setMockSleep(boolean isEnable) {
         if (isEnable) {
             mockSleepQueue = new ArrayBlockingQueue<Boolean>(1);
@@ -587,12 +690,15 @@ public class Utils {
         }
     }
 
-    /** Let sleeping thread pass the synchronization point.  */
+    /** Let sleeping thread pass the synchronization point. */
     public static void passMockSleep() {
         mockSleepQueue.offer(false);
     }
 
-    /** Let the sleeping thread pass the synchronization point any number of times. */
+    /**
+     * Let the sleeping thread pass the synchronization point any number of
+     * times.
+     */
     public static void finishMockSleep() {
         if (mockSleepQueue != null) {
             mockSleepQueue.offer(true);
@@ -600,6 +706,7 @@ public class Utils {
     }
 
     private static int isAndroid = -1;
+
     public static boolean isAndroidRuntime() {
         if (isAndroid == -1) {
             final String runtime = System.getProperty("java.runtime.name");
@@ -610,15 +717,25 @@ public class Utils {
 
     private static class Pair implements Comparable<Pair> {
         int item, count;
-        public Pair(int item, int count) { this.count = count; this.item = item; }
-        // note that in this implementation compareTo() is not consistent with equals()
-        @Override public int compareTo(Pair o) { return -Ints.compare(count, o.count); }
+
+        public Pair(int item, int count) {
+            this.count = count;
+            this.item = item;
+        }
+
+        // note that in this implementation compareTo() is not consistent with
+        // equals()
+        @Override
+        public int compareTo(Pair o) {
+            return -Ints.compare(count, o.count);
+        }
     }
 
     public static int maxOfMostFreq(int... items) {
         // Java 6 sucks.
         ArrayList<Integer> list = new ArrayList<Integer>(items.length);
-        for (int item : items) list.add(item);
+        for (int item : items)
+            list.add(item);
         return maxOfMostFreq(list);
     }
 
@@ -635,8 +752,10 @@ public class Utils {
                 pairs.add((pair = new Pair(item, 0)));
             pair.count++;
         }
-        // pairs now contains a uniqified list of the sorted inputs, with counts for how often that item appeared.
-        // Now sort by how frequently they occur, and pick the max of the most frequent.
+        // pairs now contains a uniqified list of the sorted inputs, with counts
+        // for how often that item appeared.
+        // Now sort by how frequently they occur, and pick the max of the most
+        // frequent.
         Collections.sort(pairs);
         int maxCount = pairs.getFirst().count;
         int maxItem = pairs.getFirst().item;
@@ -649,14 +768,16 @@ public class Utils {
     }
 
     /**
-     * Reads and joins together with LF char (\n) all the lines from given file. It's assumed that file is in UTF-8.
+     * Reads and joins together with LF char (\n) all the lines from given file.
+     * It's assumed that file is in UTF-8.
      */
     public static String getResourceAsString(URL url) throws IOException {
         List<String> lines = Resources.readLines(url, Charsets.UTF_8);
         return Joiner.on('\n').join(lines);
     }
 
-    // Can't use Closeable here because it's Java 7 only and Android devices only got that with KitKat.
+    // Can't use Closeable here because it's Java 7 only and Android devices
+    // only got that with KitKat.
     public static InputStream closeUnchecked(InputStream stream) {
         try {
             stream.close();
@@ -674,13 +795,13 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
-    
+
     /**
      * Xors the arrays
      */
     public static byte[] xor(byte[] a, byte[] b) {
         byte[] c = new byte[a.length];
-        for (int i = 0; i < a.length; i++) 
+        for (int i = 0; i < a.length; i++)
             c[i] = (byte) (a[i] ^ b[i]);
         return c;
     }
