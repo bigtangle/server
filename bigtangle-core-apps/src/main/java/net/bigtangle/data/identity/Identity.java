@@ -7,9 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.security.SignatureException;
 
+import org.spongycastle.crypto.InvalidCipherTextException;
+
 import net.bigtangle.core.DataClass;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Utils;
+import net.bigtangle.encrypt.ECIESCoder;
 
 public class Identity extends DataClass implements java.io.Serializable {
     /**
@@ -17,7 +22,10 @@ public class Identity extends DataClass implements java.io.Serializable {
      */
     private static final long serialVersionUID = 1L;
 
-    // message
+    // dataClassName of serialized data
+    String dataClassName;
+
+    // serialized data Utils.HEX.encode
     String identityData;
 
     private byte[] pubsignkey;
@@ -41,7 +49,7 @@ public class Identity extends DataClass implements java.io.Serializable {
         try {
             DataOutputStream dos = new DataOutputStream(baos);
             dos.write(super.toByteArray());
-
+            Utils.writeNBytesString(dos, dataClassName);
             Utils.writeNBytesString(dos, identityData);
             Utils.writeNBytes(dos, pubsignkey);
             Utils.writeNBytesString(dos, signature);
@@ -65,6 +73,7 @@ public class Identity extends DataClass implements java.io.Serializable {
 
     public Identity parseDIS(DataInputStream dis) throws IOException {
         super.parseDIS(dis);
+        dataClassName = Utils.readNBytesString(dis);
         identityData = Utils.readNBytesString(dis);
         pubsignkey = Utils.readNBytes(dis);
         signature = Utils.readNBytesString(dis);
@@ -72,6 +81,26 @@ public class Identity extends DataClass implements java.io.Serializable {
         dis.close();
 
         return this;
+    }
+
+    public TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey, IdentityData identityData)
+            throws InvalidCipherTextException, IOException, SignatureException {
+        TokenKeyValues tokenKeyValues = new TokenKeyValues(); 
+        setIdentityData(identityData.toByteArray()); 
+        setPubsignkey(key.getPubKey());
+        signMessage(key); 
+        byte[] data = this.toByteArray(); 
+        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);
+        KeyValue kv = new KeyValue();
+        kv.setKey(key.getPublicKeyAsHex());
+        kv.setValue(Utils.HEX.encode(cipher));
+        tokenKeyValues.addKeyvalue(kv);
+        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
+        kv = new KeyValue();
+        kv.setKey(userkey.getPublicKeyAsHex());
+        kv.setValue(Utils.HEX.encode(cipher1));
+        tokenKeyValues.addKeyvalue(kv);
+        return tokenKeyValues;
     }
 
     public String getSignature() {
@@ -96,6 +125,14 @@ public class Identity extends DataClass implements java.io.Serializable {
 
     public void setPubsignkey(byte[] pubsignkey) {
         this.pubsignkey = pubsignkey;
+    }
+
+    public String getDataClassName() {
+        return dataClassName;
+    }
+
+    public void setDataClassName(String dataClassName) {
+        this.dataClassName = dataClassName;
     }
 
 }

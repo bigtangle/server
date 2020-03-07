@@ -269,8 +269,6 @@ public class TokenTest extends AbstractIntegrationTest {
 
     private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
-        TokenKeyValues tokenKeyValues = new TokenKeyValues();
-
         Identity identity = new Identity();
         IdentityCore identityCore = new IdentityCore();
         identityCore.setSurname("zhang");
@@ -283,27 +281,9 @@ public class TokenTest extends AbstractIntegrationTest {
         identityData.setIdentificationnumber("120123456789012345");
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
-        identityData.setPhoto(photo);
-        identity.setIdentityData(identityData.toByteArray());
-
-        identity.setPubsignkey(key.getPubKey());
-        identity.signMessage(key);
-
-        identity.verify();
-
-        byte[] data = identity.toByteArray();
-
-        byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);
-        KeyValue kv = new KeyValue();
-        kv.setKey(key.getPublicKeyAsHex());
-        kv.setValue(Utils.HEX.encode(cipher));
-        tokenKeyValues.addKeyvalue(kv);
-        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
-        kv = new KeyValue();
-        kv.setKey(userkey.getPublicKeyAsHex());
-        kv.setValue(Utils.HEX.encode(cipher1));
-        tokenKeyValues.addKeyvalue(kv);
-        return tokenKeyValues;
+        identityData.setPhoto(photo); 
+   
+        return  identity. getTokenKeyValues(key, userkey, identityData);
     }
 
     @Test

@@ -8,9 +8,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,23 +24,19 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.data.identity.Identity;
 import net.bigtangle.data.identity.IdentityCore;
-import net.bigtangle.encrypt.ECIESCoder;
-import net.bigtangle.params.ReqCmd;
+import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
-import net.bigtangle.utils.OkHttp3Util;
 
-@SuppressWarnings("rawtypes")
+ 
 public class TokenIdentityController extends TokenSignsController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenIdentityController.class);
@@ -91,18 +85,8 @@ public class TokenIdentityController extends TokenSignsController {
         }
     }
 
-    public void initCombobox2id() throws Exception {
-        String CONTEXT_ROOT = Main.getContextRoot();
-        ObservableList<String> tokenData = FXCollections.observableArrayList();
-        Map<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-
-        // wallet keys minus used from token list with one time (blocktype false
-
+    public void initCombobox2id() throws Exception { 
+        ObservableList<String> tokenData = FXCollections.observableArrayList();  
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKey());
@@ -182,13 +166,17 @@ public class TokenIdentityController extends TokenSignsController {
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             identityCore.setDateofissue(df.format(dateofissue2idDatePicker.getValue()));
             identityCore.setDateofexpiry(df.format(dateofexpiry2idDatePicker.getValue()));
-            identity.setIdentityCore(identityCore);
-            identity.setIdentificationnumber(identificationnumber2id.getText());
+            
+            IdentityData identityData = new IdentityData();
+            identityData.setIdentityCore(identityCore);
+            identityData.setIdentificationnumber(identificationnumber2id.getText());
             byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
-            identity.setPhoto(photo);
-            byte[] cipher = ECIESCoder.encrypt(outKey.getPubKeyPoint(), Json.jsonmapper().writeValueAsBytes(identity));
-
-            kv.setValue(Utils.HEX.encode(cipher));
+            
+            identityData.setPhoto(photo); 
+            
+            ECKey  userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText()));
+            identity. getTokenKeyValues(outKey, userkey, identityData);
+        
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 
             if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
