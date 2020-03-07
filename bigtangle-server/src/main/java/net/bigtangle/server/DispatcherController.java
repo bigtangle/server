@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
@@ -40,7 +42,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -111,6 +112,7 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
+        Stopwatch watch = Stopwatch.createStarted();
         byte[] bodyByte = new byte[0];
         try {
 
@@ -119,10 +121,10 @@ public class DispatcherController {
 
             bodyByte = Gzip.decompress(contentBytes);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
-            if (!checkPermission(httpServletResponse, httprequest)) {
+            if (!checkPermission(httpServletResponse, httprequest,watch)) {
                 return;
             }
-            if (!checkReady(httpServletResponse, httprequest)) {
+            if (!checkReady(httpServletResponse, httprequest,watch)) {
                 return;
             }
             switch (reqCmd0000) {
@@ -134,11 +136,11 @@ public class DispatcherController {
             }
                 break;
             case saveBlock: {
-                saveBlock(bodyByte, httpServletResponse);
+                saveBlock(bodyByte, httpServletResponse,watch);
             }
                 break;
             case batchBlock: {
-                batchBlock(bodyByte, httpServletResponse);
+                batchBlock(bodyByte, httpServletResponse,watch);
             }
                 break;
             case getOutputs: {
@@ -149,18 +151,18 @@ public class DispatcherController {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
                 AbstractResponse response = walletService.getAccountOutputs(pubKeyHashs);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getOutputsHistory: {
-                outputHistory(bodyByte, httpServletResponse);
+                outputHistory(bodyByte, httpServletResponse,watch);
             }
                 break;
             case outputsOfTokenid: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = walletService.getOpenAllOutputsResponse((String) request.get("tokenid"));
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -168,26 +170,26 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 GetTokensResponse response = tokensService.searchTokens((String) request.get("name"));
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case searchExchangeTokens: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 GetTokensResponse response = tokensService.searchExchangeTokens((String) request.get("name"));
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getOTCMarkets: {
                 AbstractResponse response = tokensService.getMarketTokensList();
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getTokenById: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = tokensService.getTokenById((String) request.get("tokenid"));
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getBalances: {
@@ -198,14 +200,14 @@ public class DispatcherController {
                     pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
                 }
                 AbstractResponse response = walletService.getAccountBalanceInfo(pubKeyHashs);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case findBlockEvaluation: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlock(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -213,7 +215,7 @@ public class DispatcherController {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.searchBlockByBlockHashs(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -242,7 +244,7 @@ public class DispatcherController {
                 GetBlockListResponse response = this.blockService.blocksFromChainLength(
                         Long.valueOf((String) request.get("start")), Long.valueOf((String) request.get("end")));
 
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getTokenSignByAddress: {
@@ -251,7 +253,7 @@ public class DispatcherController {
                 String address = (String) request.get("address");
                 String tokenid = (String) request.get("tokenid");
                 AbstractResponse response = this.multiSignService.getMultiSignListWithAddress(tokenid, address);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getTokenSigns: {
@@ -261,7 +263,7 @@ public class DispatcherController {
                 long tokenindex = Long.parseLong(request.get("tokenindex") + "");
                 int sign = Integer.parseInt(request.get("sign") + "");
                 AbstractResponse response = this.multiSignService.getCountMultiSign(tokenid, tokenindex, sign);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getTokenSignByTokenid: {
@@ -273,20 +275,20 @@ public class DispatcherController {
                 AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
                         tokenindex == null ? 0 : Integer.valueOf(tokenindex), (List<String>) request.get("addresses"),
                         isSign == null ? false : isSign);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case signToken: {
                 Block block = networkParameters.getDefaultSerializer().makeBlock(bodyByte);
                 this.multiSignService.signTokenAndSaveBlock(block, false);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
                 break;
             case signOrder: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.signTransaction(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getTokenIndex: {
@@ -294,7 +296,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
                 AbstractResponse response = this.multiSignService.getNextTokenSerialIndex(tokenid);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getUserData: {
@@ -312,26 +314,26 @@ public class DispatcherController {
                 int blocktype = (int) request.get("blocktype");
                 List<String> pubKeyList = (List<String>) request.get("pubKeyList");
                 AbstractResponse response = this.userDataService.getUserDataList(blocktype, pubKeyList);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case launchPayMultiSign: {
                 this.payMultiSignService.launchPayMultiSign(bodyByte);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
                 break;
             case payMultiSign: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.payMultiSignService.payMultiSign(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getPayMultiSignList: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignList(keyStrHex000);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getPayMultiSignAddressList: {
@@ -339,7 +341,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignAddressList(orderid);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case payMultiSignDetails: {
@@ -347,7 +349,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.payMultiSignService.getPayMultiSignDetails(orderid);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getOutputByKey: {
@@ -355,7 +357,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String hexStr = (String) request.get("hexStr");
                 AbstractResponse response = walletService.getOutputsWithHexStr(hexStr);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -366,9 +368,9 @@ public class DispatcherController {
                 String signHex = (String) request.get("signHex");
                 boolean flag = subtanglePermissionService.savePubkey(pubkey, signHex);
                 if (flag) {
-                    this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                    this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
                 } else {
-                    this.outPrintJSONString(httpServletResponse, ErrorResponse.create(0));
+                    this.outPrintJSONString(httpServletResponse, ErrorResponse.create(0), watch);
                 }
             }
                 break;
@@ -379,7 +381,7 @@ public class DispatcherController {
                 String userdataPubkey = (String) request.get("userdataPubkey");
                 String status = (String) request.get("status");
                 subtanglePermissionService.updateSubtanglePermission(pubkey, "", userdataPubkey, status);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
                 break;
             case getOrders: {
@@ -393,7 +395,7 @@ public class DispatcherController {
                     spent = true;
                 List<String> addresses = (List<String>) request.get("addresses");
                 AbstractResponse response = orderdataService.getOrderdataList(spent, address, addresses, tokenid);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getOrdersTicker: {
@@ -405,14 +407,14 @@ public class DispatcherController {
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
                 if (count != null) {
                     AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, count);
-                    this.outPrintJSONString(httpServletResponse, response);
+                    this.outPrintJSONString(httpServletResponse, response, watch);
                 } else if (startDate == null || endDate == null) {
                     AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids);
-                    this.outPrintJSONString(httpServletResponse, response);
+                    this.outPrintJSONString(httpServletResponse, response, watch);
                 } else {
                     AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids,
                             startDate / 1000, endDate / 1000);
-                    this.outPrintJSONString(httpServletResponse, response);
+                    this.outPrintJSONString(httpServletResponse, response, watch);
                 }
             }
                 break;
@@ -422,7 +424,7 @@ public class DispatcherController {
                 final String domainNameBlockHash = (String) request.get("domainNameBlockHash");
                 PermissionedAddressesResponse response = this.tokenDomainnameService
                         .queryDomainnameTokenPermissionedAddresses(domainNameBlockHash);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getDomainNameBlockHash: {
@@ -432,10 +434,10 @@ public class DispatcherController {
                 final String token = (String) request.get("token");
                 if (token == null || "".equals(token)) {
                     this.outPrintJSONString(httpServletResponse,
-                            this.tokenDomainnameService.queryParentDomainnameBlockHash(domainname));
+                            this.tokenDomainnameService.queryParentDomainnameBlockHash(domainname), watch);
                 } else {
                     this.outPrintJSONString(httpServletResponse,
-                            this.tokenDomainnameService.queryDomainnameBlockHash(domainname));
+                            this.tokenDomainnameService.queryDomainnameBlockHash(domainname), watch);
                 }
 
             }
@@ -446,7 +448,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String orderid = (String) request.get("orderid");
                 AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case saveExchange: {
@@ -454,7 +456,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.saveExchange(request);
 
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case deleteExchange: {
@@ -462,7 +464,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = exchangeService.deleteExchange(request);
 
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getMaxConfirmedReward: {
@@ -470,28 +472,28 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = rewardService.getMaxConfirmedReward(request);
 
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getBatchExchange: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> address = Json.jsonmapper().readValue(reqStr, List.class);
                 AbstractResponse response = exchangeService.getBatchExchangeListByAddressListA(address);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case getAllConfirmedReward: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = rewardService.getAllConfirmedReward(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
             case findRetryBlocks: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = this.blockService.findRetryBlocks(request);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -500,7 +502,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String pubKey = (String) request.get("pubKey");
                 AbstractResponse response = this.accessPermissionedService.getSessionRandomNumResp(pubKey);
-                this.outPrintJSONString(httpServletResponse, response);
+                this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
 
@@ -509,7 +511,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String pubKey = (String) request.get("pubKey");
                 this.accessGrantService.addAccessGrant(pubKey);
-                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse(), watch);
             }
                 break;
 
@@ -518,7 +520,7 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String pubKey = (String) request.get("pubKey");
                 this.accessGrantService.deleteAccessGrant(pubKey);
-                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse());
+                this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse(), watch);
             }
                 break;
 
@@ -531,7 +533,7 @@ public class DispatcherController {
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(101);
             resp.setMessage(e.getLocalizedMessage());
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
         } catch (NoBlockException e) {
             logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     bodyByte.length);
@@ -539,7 +541,7 @@ public class DispatcherController {
             AbstractResponse resp = ErrorResponse.create(404);
             resp.setErrorcode(404);
             resp.setMessage(e.getLocalizedMessage());
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
         } catch (Throwable exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, bodyByte.length, exception);
             AbstractResponse resp = ErrorResponse.create(100);
@@ -547,11 +549,11 @@ public class DispatcherController {
             exception.printStackTrace(new PrintWriter(sw));
 
             resp.setMessage(sw.toString());
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
         }
     }
 
-    private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse)
+    private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch)
             throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
         String reqStr = new String(bodyByte, "UTF-8");
         @SuppressWarnings("unchecked")
@@ -561,10 +563,10 @@ public class DispatcherController {
         Long starttime = request.get("starttime") == null ? null : Long.valueOf(request.get("starttime").toString());
         Long endtime = request.get("endtime") == null ? null : Long.valueOf(request.get("endtime").toString());
         AbstractResponse response = walletService.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
-        this.outPrintJSONString(httpServletResponse, response);
+        this.outPrintJSONString(httpServletResponse, response, watch);
     }
 
-    private void batchBlock(byte[] bodyByte, HttpServletResponse httpServletResponse)
+    private void batchBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch)
             throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
         if (serverConfiguration.getMyserverblockOnly()) {
@@ -572,20 +574,20 @@ public class DispatcherController {
                 AbstractResponse resp = ErrorResponse.create(101);
                 resp.setErrorcode(403);
                 resp.setMessage("server accept only his tip selection for validation");
-                this.outPrintJSONString(httpServletResponse, resp);
+                this.outPrintJSONString(httpServletResponse, resp, watch);
             } else {
                 blockService.batchBlock(block);
                 deleteRegisterBlock(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
         } else {
             blockService.batchBlock(block);
             deleteRegisterBlock(block);
-            this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
         }
     }
 
-    private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse)
+    private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch)
             throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
         if (serverConfiguration.getMyserverblockOnly()) {
@@ -593,23 +595,23 @@ public class DispatcherController {
                 AbstractResponse resp = ErrorResponse.create(101);
                 resp.setErrorcode(403);
                 resp.setMessage("server accept only his tip selection for validation");
-                this.outPrintJSONString(httpServletResponse, resp);
+                this.outPrintJSONString(httpServletResponse, resp, watch);
             } else {
                 blockService.checkBlockBeforeSave(block);
                 blockService.saveBlock(block);
                 deleteRegisterBlock(block);
-                this.outPrintJSONString(httpServletResponse, OkResponse.create());
+                this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
 
             }
         } else {
             blockService.checkBlockBeforeSave(block);
             blockService.saveBlock(block);
             deleteRegisterBlock(block);
-            this.outPrintJSONString(httpServletResponse, OkResponse.create());
+            this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
         }
     }
 
-    private boolean checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+    private boolean checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest, Stopwatch watch)
             throws BlockStoreException, Exception {
         if (!serverConfiguration.getPermissioned()) {
             return true;
@@ -635,26 +637,26 @@ public class DispatcherController {
         if (count == 0) {
             AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage("no auth");
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
             return false;
         }
 
         if (!checkAuth(httpServletResponse, httprequest)) {
             AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage("no auth");
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
             return false;
         }
 
         return true;
     }
 
-    private boolean checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest)
+    private boolean checkReady(HttpServletResponse httpServletResponse, HttpServletRequest httprequest, Stopwatch watch)
             throws BlockStoreException, Exception {
         if (!serverConfiguration.checkService()) {
             AbstractResponse resp = ErrorResponse.create(103);
             resp.setMessage("service is not ready.");
-            this.outPrintJSONString(httpServletResponse, resp);
+            this.outPrintJSONString(httpServletResponse, resp, watch);
             return false;
         } else {
             return true;
@@ -713,8 +715,11 @@ public class DispatcherController {
         servletOutputStream.close();
     }
 
-    public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response)
+    public void outPrintJSONString(HttpServletResponse httpServletResponse,
+            AbstractResponse response, Stopwatch watch )
             throws Exception {
+        
+        response. setDuration(  watch.elapsed(TimeUnit.MILLISECONDS));
         gzipBinary(httpServletResponse, response);
     }
 

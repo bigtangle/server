@@ -17,7 +17,7 @@ public abstract class AbstractResponse  {
 
     private String message;
 
-    private Integer duration;
+    private Long duration;
     
  
     @Override
@@ -58,11 +58,11 @@ public abstract class AbstractResponse  {
     private static class Emptyness extends AbstractResponse {
  
     }
-   public Integer getDuration() {
+   public Long getDuration() {
         return duration == null ? 0 : this.duration;
     }
 
-    public void setDuration(Integer duration) {
+    public void setDuration(Long duration) {
         this.duration = duration;
     }
 }
