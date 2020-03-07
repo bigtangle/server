@@ -26,6 +26,8 @@ import net.bigtangle.server.AbstractIntegrationTest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
+@Ignore
 public class RangeAttackTest extends AbstractIntegrationTest { 
 
     
