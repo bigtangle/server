@@ -190,11 +190,11 @@ public class SerializationTest {
     byte[] first = "my first file".getBytes();
     KeyValue kv = new KeyValue();
     kv.setKey("myfirst");
-    kv.setValueByte(first);
+    kv.setValue(Utils.HEX.encode(first));
     kvs.addKeyvalue(kv);
     kv = new KeyValue();
     kv.setKey("second.pdf");
-    kv.setValueByte("second.pdf".getBytes());
+    kv.setValue(Utils.HEX.encode("second.pdf".getBytes()));
     kvs.addKeyvalue(kv);
     KeyValueList id = new KeyValueList().parse(kvs.toByteArray());
     

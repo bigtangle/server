@@ -2661,7 +2661,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         tokens.setDomainNameBlockHash(resultSet.getString("domainpredblockhash"));
         byte[] buf = resultSet.getBytes("tokenkeyvalues");
         if (buf != null) {
+            try {
             tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+            }catch (Exception e) {
+               log.warn("Token "+ tokens, e);
+            }
         }
     }
 

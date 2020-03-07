@@ -164,17 +164,19 @@ public class TokenIdentityController extends TokenSignsController {
             identityCore.setForenames(forenames2id.getText());
             identityCore.setSex(sex2idCB.getValue());
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            identityCore.setDateofissue(df.format(dateofissue2idDatePicker.getValue()));
-            identityCore.setDateofexpiry(df.format(dateofexpiry2idDatePicker.getValue()));
+            if (dateofissue2idDatePicker.getValue() != null)
+                identityCore.setDateofissue(df.format(dateofissue2idDatePicker.getValue()));
+            if (dateofexpiry2idDatePicker.getValue() != null)
+                identityCore.setDateofexpiry(df.format(dateofexpiry2idDatePicker.getValue()));
 
             IdentityData identityData = new IdentityData();
             identityData.setIdentityCore(identityCore);
             identityData.setIdentificationnumber(identificationnumber2id.getText());
-            byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
-
-            identityData.setPhoto(photo);
-
-            ECKey userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText()));
+            if (photo2id.getText() != null) {
+                byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
+                identityData.setPhoto(photo);
+            }
+            ECKey userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText().trim()));
             identity.getTokenKeyValues(outKey, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
 
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
@@ -194,8 +196,7 @@ public class TokenIdentityController extends TokenSignsController {
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
             // tabPane.getSelectionModel().clearAndSelect(4);
-        } catch (IgnoreServiceException e) {
-        } catch (Exception e) {
+        }  catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }

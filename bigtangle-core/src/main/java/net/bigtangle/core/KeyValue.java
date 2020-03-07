@@ -11,14 +11,8 @@ public class KeyValue  {
     private String key;
     private String value;
 
-    public void setValueByte(byte[] value) {
-        this.value =  Utils.HEX.encode(value);
-    }
+ 
    
-    public byte[] getValueByte( ) {
-         return Utils.HEX.decode(value);
-    }
-    
     public String getKey() {
         return key;
     }

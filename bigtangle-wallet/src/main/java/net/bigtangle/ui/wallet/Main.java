@@ -97,7 +97,6 @@ import net.bigtangle.utils.BriefLogFormatter;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.DeterministicSeed;
- 
 
 public class Main extends Application {
     public static NetworkParameters params = MainNetParams.get();
@@ -138,9 +137,9 @@ public class Main extends Application {
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {
-      //      System.setProperty("https.proxyHost",
-      //              "anwproxy.anwendungen.localnet.de");
-      //             System.setProperty("https.proxyPort", "3128");
+            // System.setProperty("https.proxyHost",
+            // "anwproxy.anwendungen.localnet.de");
+            // System.setProperty("https.proxyPort", "3128");
             realStart(mainWindow, Main.lang);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
@@ -478,7 +477,8 @@ public class Main extends Application {
 
         List<String> addressList = new ArrayList<String>();
         ContactInfo contactInfo = (ContactInfo) getUserdata(DataClassName.CONTACTINFO.name(), false);
-        if( contactInfo ==null) return addressList;
+        if (contactInfo == null)
+            return addressList;
         List<Contact> list = contactInfo.getContactList();
         for (Contact contact : list) {
             addressList.add(contact.getName() + "," + contact.getAddress());
@@ -766,6 +766,12 @@ public class Main extends Application {
                 if (!flag1)
                     IpAddress = args[2];
             }
+            if (args.length >= 4) { 
+                    if ("test".equals(args[3])) {
+                        params = TestParams.get();
+                    }
+               
+            }
 
         }
 
@@ -922,10 +928,10 @@ public class Main extends Application {
                         Transaction transaction = block.getTransactions().get(block.getTransactions().size() - 1);
                         byte[] buf = transaction.getData();
                         try {
-                        if(buf.length>0)
-                        userdata = new WatchedInfo().parse(buf);
-                        }catch (Exception e) {
-                           log.warn("", e);
+                            if (buf.length > 0)
+                                userdata = new WatchedInfo().parse(buf);
+                        } catch (Exception e) {
+                            log.warn("", e);
                         }
                     }
 
@@ -941,7 +947,8 @@ public class Main extends Application {
             List<ECKey> issuedKeys = Main.walletAppKit.wallet().walletKeys(getAesKey());
 
             ECKey pubKeyTo = null;
-            if(issuedKeys==null || issuedKeys.isEmpty()) return null;
+            if (issuedKeys == null || issuedKeys.isEmpty())
+                return null;
             pubKeyTo = issuedKeys.get(0);
 
             if (DataClassName.TOKEN.name().equals(type) || DataClassName.LANG.name().equals(type)
