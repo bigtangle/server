@@ -83,11 +83,12 @@ public class Identity extends DataClass implements java.io.Serializable {
         return this;
     }
 
-    public TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey, IdentityData identityData)
+    public TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey, byte[] identityData, String dataClassname)
             throws InvalidCipherTextException, IOException, SignatureException {
         TokenKeyValues tokenKeyValues = new TokenKeyValues(); 
-        setIdentityData(identityData.toByteArray()); 
+        setIdentityData(identityData); 
         setPubsignkey(key.getPubKey());
+        setDataClassName(dataClassname);
         signMessage(key); 
         byte[] data = this.toByteArray(); 
         byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);

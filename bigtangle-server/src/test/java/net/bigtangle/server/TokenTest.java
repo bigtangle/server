@@ -24,9 +24,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.KeyValueList;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
@@ -212,6 +214,85 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testCreateIdentityTokenWithDomain() throws Exception {
 
+        ECKey key = prepareIdentity();
+
+        ECKey issuer = new ECKey();
+        ECKey userkey = new ECKey();
+        TokenKeyValues kvs = getTokenKeyValues(issuer, userkey);
+        walletAppKit1.wallet().importKey(issuer);
+        Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
+                BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
+        TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", currentToken.getToken().getTokenid());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+
+        assertTrue(getTokensResponse.getTokens().size() == 1);
+        assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
+                .equals(currentToken.getToken().getTokenname() + "@id.shop"));
+        Token token = getTokensResponse.getTokens().get(0);
+        byte[] decryptedPayload = null;
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                Identity identity = new Identity().parse(decryptedPayload);
+                IdentityData id = new IdentityData().parse(Utils.HEX.decode(identity.getIdentityData()));
+                assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
+                identity.verify();
+            }
+        }
+
+    }
+
+    @Test
+    public void testCreateCertificate() throws Exception {
+
+        ECKey key = prepareIdentity();
+
+        ECKey issuer = new ECKey();
+        ECKey userkey = new ECKey();
+        TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
+        walletAppKit1.wallet().importKey(issuer);
+        Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
+                BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
+        TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", currentToken.getToken().getTokenid());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+
+        assertTrue(getTokensResponse.getTokens().size() == 1);
+        assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
+                .equals(currentToken.getToken().getTokenname() + "@id.shop"));
+        Token token = getTokensResponse.getTokens().get(0);
+        byte[] decryptedPayload = null;
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                Identity identity = new Identity().parse(decryptedPayload);
+                identity.verify();
+                if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
+                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getIdentityData()));
+                    assertTrue(id.getKeyvalues().size() == 2);
+                } 
+            }
+        }
+
+    }
+
+    private ECKey prepareIdentity()
+            throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
         createShopToken();
 
         ECKey key = new ECKey();
@@ -225,46 +306,7 @@ public class TokenTest extends AbstractIntegrationTest {
         sendEmpty(10);
         mcmcService.update();
         confirmationService.update();
-
-        {
-
-            ECKey issuer = new ECKey();
-            ECKey userkey = new ECKey();
-            TokenKeyValues kvs = getTokenKeyValues(issuer, userkey);
-
-            walletAppKit1.wallet().importKey(issuer);
-            Block block = walletAppKit1.wallet().createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                    BigInteger.ONE, true, kvs, TokenType.identity.ordinal());
-            TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
-            walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-
-            sendEmpty(10);
-            mcmcService.update();
-            confirmationService.update();
-            HashMap<String, Object> requestParam = new HashMap<String, Object>();
-            requestParam.put("tokenid", currentToken.getToken().getTokenid());
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-
-            assertTrue(getTokensResponse.getTokens().size() == 1);
-            assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
-                    .equals(currentToken.getToken().getTokenname() + "@id.shop"));
-            Token token = getTokensResponse.getTokens().get(0);
-            byte[] decryptedPayload = null;
-            for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
-                if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
-                    decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                    Identity identity = new Identity().parse(decryptedPayload);
-                    IdentityData id = new IdentityData().parse(Utils.HEX.decode(identity.getIdentityData()));
-                    assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
-                    identity.verify();
-
-                }
-            }
-
-        }
-
+        return key;
     }
 
     private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey)
@@ -281,9 +323,27 @@ public class TokenTest extends AbstractIntegrationTest {
         identityData.setIdentificationnumber("120123456789012345");
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
-        identityData.setPhoto(photo); 
-   
-        return  identity. getTokenKeyValues(key, userkey, identityData);
+        identityData.setPhoto(photo);
+
+        return identity.getTokenKeyValues(key, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+    }
+
+    private TokenKeyValues certificateTokenKeyValues(ECKey key, ECKey userkey)
+            throws InvalidCipherTextException, IOException, SignatureException {
+        Identity identity = new Identity();
+        KeyValueList kvs = new KeyValueList();
+
+        byte[] first = "my first file".getBytes();
+        KeyValue kv = new KeyValue();
+        kv.setKey("myfirst");
+        kv.setValueByte(first);
+        kvs.addKeyvalue(kv);
+        kv = new KeyValue();
+        kv.setKey("second.pdf");
+        kv.setValueByte("second.pdf".getBytes());
+        kvs.addKeyvalue(kv);
+
+        return identity.getTokenKeyValues(key, userkey, kvs.toByteArray(), DataClassName.KeyValueList.name());
     }
 
     @Test

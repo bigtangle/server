@@ -8,5 +8,5 @@ package net.bigtangle.core;
 public enum DataClassName {
 
     TOKEN, PAYMULTISIGN, CONTACTINFO, MYHOMEADDRESS, UPLOADFILE, VOS,
-    SERVERURL, LANG, OTHER, BlockSolveType, WATCHED, OrderOpenInfo
+    SERVERURL, LANG, OTHER, BlockSolveType, WATCHED, OrderOpenInfo, IdentityData, KeyValueList
 }

@@ -183,6 +183,25 @@ public class SerializationTest {
     }
 
     @Test
+    public void testKeyValueListSerialization() throws InvalidCipherTextException, IOException {
+ 
+    KeyValueList kvs = new KeyValueList();
+
+    byte[] first = "my first file".getBytes();
+    KeyValue kv = new KeyValue();
+    kv.setKey("myfirst");
+    kv.setValueByte(first);
+    kvs.addKeyvalue(kv);
+    kv = new KeyValue();
+    kv.setKey("second.pdf");
+    kv.setValueByte("second.pdf".getBytes());
+    kvs.addKeyvalue(kv);
+    KeyValueList id = new KeyValueList().parse(kvs.toByteArray());
+    
+    assertTrue( id.getKeyvalues().size()==2);
+    }
+    
+    @Test
     public void testIdentityCoreSerialization() throws InvalidCipherTextException, IOException, SignatureException {
   
         IdentityCore identityCore = new IdentityCore();

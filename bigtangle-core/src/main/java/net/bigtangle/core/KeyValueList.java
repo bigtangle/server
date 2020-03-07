@@ -20,28 +20,27 @@ public class KeyValueList extends DataClass implements java.io.Serializable {
         if (keyvalues == null) {
             keyvalues = new ArrayList<KeyValue>();
             keyvalues.add(kv);
-        }else {
+        } else {
             keyvalues.add(kv);
         }
     }
 
-
     public byte[] toByteArray() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            DataOutputStream dos = new DataOutputStream(baos); 
-            
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.write(super.toByteArray());
             dos.writeInt(keyvalues.size());
             for (KeyValue c : keyvalues)
                 dos.write(c.toByteArray());
-            
+
             dos.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return baos.toByteArray();
     }
-    
+
     @Override
     public KeyValueList parseDIS(DataInputStream dis) throws IOException {
         super.parseDIS(dis);
@@ -51,7 +50,7 @@ public class KeyValueList extends DataClass implements java.io.Serializable {
         for (int i = 0; i < size; i++) {
             keyvalues.add(new KeyValue().parseDIS(dis));
         }
-        
+
         return this;
     }
 
@@ -60,12 +59,11 @@ public class KeyValueList extends DataClass implements java.io.Serializable {
         DataInputStream dis = new DataInputStream(bain);
 
         parseDIS(dis);
-        
+
         dis.close();
         bain.close();
         return this;
     }
-
 
     public List<KeyValue> getKeyvalues() {
         return keyvalues;
@@ -74,6 +72,5 @@ public class KeyValueList extends DataClass implements java.io.Serializable {
     public void setKeyvalues(List<KeyValue> keyvalues) {
         this.keyvalues = keyvalues;
     }
-
 
 }
