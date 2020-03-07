@@ -23,6 +23,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
@@ -36,7 +37,6 @@ import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 
- 
 public class TokenIdentityController extends TokenSignsController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenIdentityController.class);
@@ -85,8 +85,8 @@ public class TokenIdentityController extends TokenSignsController {
         }
     }
 
-    public void initCombobox2id() throws Exception { 
-        ObservableList<String> tokenData = FXCollections.observableArrayList();  
+    public void initCombobox2id() throws Exception {
+        ObservableList<String> tokenData = FXCollections.observableArrayList();
         List<ECKey> keys = Main.walletAppKit.wallet().walletKeys(Main.getAesKey());
         for (ECKey key : keys) {
             String temp = Utils.HEX.encode(key.getPubKey());
@@ -166,17 +166,17 @@ public class TokenIdentityController extends TokenSignsController {
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             identityCore.setDateofissue(df.format(dateofissue2idDatePicker.getValue()));
             identityCore.setDateofexpiry(df.format(dateofexpiry2idDatePicker.getValue()));
-            
+
             IdentityData identityData = new IdentityData();
             identityData.setIdentityCore(identityCore);
             identityData.setIdentificationnumber(identificationnumber2id.getText());
             byte[] photo = FileUtil.readFile(new File(photo2id.getText()));
-            
-            identityData.setPhoto(photo); 
-            
-            ECKey  userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText()));
-            identity. getTokenKeyValues(outKey, userkey, identityData);
-        
+
+            identityData.setPhoto(photo);
+
+            ECKey userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText()));
+            identity.getTokenKeyValues(outKey, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 
             if (signAddrChoiceBox2id.getItems() != null && !signAddrChoiceBox2id.getItems().isEmpty()) {
