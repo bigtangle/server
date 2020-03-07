@@ -142,8 +142,7 @@ public class DispatcherController {
             }
         } catch (Exception exception) {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, Utils.HEX.encode(bodyByte), exception);
-            AbstractResponse resp = AbstractResponse.createEmptyResponse();
-            resp.setDuration(100);
+            AbstractResponse resp = AbstractResponse.createEmptyResponse(); 
             this.outPrintJSONString(httpServletResponse, resp);
         }
     }
