@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.testing;
+package net.bigtangle.core;
 
 import static com.google.common.base.Preconditions.checkState;
 import static net.bigtangle.core.Coin.COIN;

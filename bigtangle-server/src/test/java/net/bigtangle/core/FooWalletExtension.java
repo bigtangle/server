@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.bigtangle.testing;
+package net.bigtangle.core;
 
 import java.util.Arrays;
 

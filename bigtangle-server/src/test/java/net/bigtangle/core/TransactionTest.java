@@ -22,7 +22,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.testing.FakeTxBuilder;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have

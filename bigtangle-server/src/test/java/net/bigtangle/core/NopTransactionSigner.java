@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.testing;
+package net.bigtangle.core;
 
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.wallet.KeyBag;

@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.testing;
+package net.bigtangle.core;
 
 import com.google.common.collect.ImmutableList;
 

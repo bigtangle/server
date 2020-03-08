@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.order.match;
+package net.bigtangle.wallet;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
