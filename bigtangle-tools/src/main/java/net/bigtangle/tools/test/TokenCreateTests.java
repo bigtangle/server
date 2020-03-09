@@ -35,15 +35,17 @@ public class TokenCreateTests extends HelpTest {
         // Utils.HEX.decode(ETHTokenPub)),
         // "ETH", 8, domain, "Ethereum ETF");
         testCreateMultiSigToken(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(EURTokenPriv), Utils.HEX.decode(EURTokenPub)),
+                ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv) ),
                 "EUR", 2, domain, "Euro", new BigInteger("1000000"));
         testCreateMultiSigToken(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(USDTokenPriv), Utils.HEX.decode(USDTokenPub)),
+                ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)),
                 "USD", 2, domain, "US Dollar", new BigInteger("1000000"));
         testCreateMultiSigToken(
-                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(JPYTokenPriv), Utils.HEX.decode(JPYTokenPub)),
+                ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)),
                 "JPY", 2, domain, "Japan Yuan", new BigInteger("1000000"));
-
+        testCreateMultiSigToken(
+                ECKey.fromPrivate(Utils.HEX.decode(USDTPriv)),
+                "USDT", 2, domain, "Japan Yuan", new BigInteger("1000000"));
     }
 
     @Test

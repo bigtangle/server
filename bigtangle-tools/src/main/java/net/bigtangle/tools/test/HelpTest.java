@@ -75,26 +75,26 @@ public abstract class HelpTest {
     public static String JPYTokenPub = "03e608ba3cbce11acc4a6b5e0b63b3381af7e9f50c1d43e6a6ce8cf16d3743891c";
     public static String JPYTokenPriv = "7a62e210952b6d49d545edb6fe4c322d68605c1b97102448a3439158ba9acd5f";
 
- 
     // 1Q5ysrjmeEjJKFBrnEJBSAs6vBHYzsmN2H
     public static String ShopDomainPub = "02b5fb501bdb5ea68949f7fd37a7a75728ca3bdd4b0aacd1a6febc0c34a7338694";
     public static String ShopDomainPriv = "5adeeab95523100880b689fc9150650acca8c3a977552851bde75f85e1453bf2";
 
-    
     public static String BigtangleDomainPub = "02122251e6e3cdbe3e4bbaa4bc0dcc12014c6cf0388abac61bf2c972579d790a68";
-      public static String BigtangleDomainPriv = "dbee6582476dc44ac1e26c67733205ff4c50a1a6a6716667b4428b36f0dcb7bc";
+    public static String BigtangleDomainPriv = "dbee6582476dc44ac1e26c67733205ff4c50a1a6a6716667b4428b36f0dcb7bc";
+
+    public static String DomainComPriv = "64a48e5a568e4498a51df1d35eced926b27d7bb29bfb0d4f6efb256c97381e07";
+    public static String DomainComPub = "022d607a37d3d4467557a003189531a8198abb9967adec542edea70305b4785324";
+
+    public static String USDTPriv = "e82491e13e39800a97f9635680f8fce5b39355390ad3268a8a6d1a7952e5360d";
+    public static String USDTPub = "025dde0e5c05b480eba5d38aba4afd873efd5657f7a2637e16b0918d65cfbd825f";
+
     
-      public static String  DomainComPriv =  "64a48e5a568e4498a51df1d35eced926b27d7bb29bfb0d4f6efb256c97381e07";
- 
-      public static String  DomainComPub = "022d607a37d3d4467557a003189531a8198abb9967adec542edea70305b4785324";
-      
-      
-      // private static final String CONTEXT_ROOT_TEMPLATE =
+    // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
     public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
-            //"https://p.bigtangle.org:8088/";
+    // "https://p.bigtangle.org:8088/";
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_INFO;
 
@@ -125,14 +125,11 @@ public abstract class HelpTest {
         // emptyBlocks(10);
     }
 
+    private void proxy() {
+        System.setProperty("https.proxyHost", "anwproxy.anwendungen.localnet.de");
+        System.setProperty("https.proxyPort", "3128");
+    }
 
-	private void proxy() {
-		System.setProperty("https.proxyHost",
-        "anwproxy.anwendungen.localnet.de");
-         System.setProperty("https.proxyPort", "3128");
-	}
- 
- 
     public void importKeys(Wallet w) throws Exception {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
@@ -145,13 +142,12 @@ public abstract class HelpTest {
         w.importKey(ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv)));
     }
 
-    
     protected void mkdir() throws Exception {
-        File f = new File("./logs" );
-        if (!f.exists()) 
-               f.mkdirs();
-        }
-   
+        File f = new File("./logs");
+        if (!f.exists())
+            f.mkdirs();
+    }
+
     protected void wallet1() throws Exception {
         KeyParameter aesKey = null;
         // delete first
@@ -273,21 +269,20 @@ public abstract class HelpTest {
     }
 
     // create a token with multi sign
-    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals,  String domainname  ,
+    protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
             String description, BigInteger amount) throws JsonProcessingException, Exception {
         try {
             walletAppKit1.wallet().setServerURL(contextRoot);
-            walletAppKit1.wallet().createToken(key, tokename, decimals, domainname, description, amount, true, null) ;
+            walletAppKit1.wallet().createToken(key, tokename, decimals, domainname, description, amount, true, null);
 
             ECKey signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
 
             walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
-            
+
             signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BigtangleDomainPriv),
                     Utils.HEX.decode(testPub));
             walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
-
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -296,13 +291,11 @@ public abstract class HelpTest {
 
     }
 
-     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, BigInteger amount, int decimals,
-            Token domainname, String description)
+    protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, BigInteger amount,
+            int decimals, Token domainname, String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
-       
 
-  
-           }
+    }
 
     public void testCheckToken(String server) throws JsonProcessingException, Exception {
         Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
