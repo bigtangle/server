@@ -39,6 +39,7 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.ECKey;
@@ -484,6 +485,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO contractexecution (blockhash, contracttokenid, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?,?)";
 
+    protected final String BlockPrototype_SELECT_SQL = 
+             "   select prevblockhash, prevbranchblockhash, inserttime from blockprototype   ";          
+    protected final String BlockPrototype_INSERT_SQL = getInsert()
+            + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) "
+            + "VALUES (?, ?, ?)";
+    protected final String BlockPrototype_DELETE_SQL = 
+            "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";          
+
+    
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected LinkedBlockingQueue<Connection> allConnections;
@@ -1437,16 +1447,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    public void resetStore(DatabaseStoreCallback databaseStoreCallback) throws BlockStoreException {
-        this.resetStore();
-        try {
-            databaseStoreCallback.callback();
-        } catch (Exception e) {
-            log.error("databaseStoreCallback", e);
-            throw new RuntimeException(e);
-        }
-    }
-
+ 
     /**
      * Deletes the store by deleting the tables within the database.
      * 
@@ -6256,4 +6257,75 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     }
 
+    @Override
+    public List<BlockPrototype> getBlockPrototype( ) throws BlockStoreException  {
+
+        PreparedStatement s = null;
+        List<BlockPrototype> outputs = new ArrayList<BlockPrototype>();
+        try {
+            maybeConnect(); 
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                outputs.add(
+                       new BlockPrototype(Sha256Hash.wrap(results.getBytes("previousblockhash")),
+                               Sha256Hash.wrap(results.getBytes("previousbranchblockhash")), results.getLong("inserttime")));
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+         } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+        }
+
+    }
+    @Override
+    public void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash) throws BlockStoreException {
+       
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(BlockPrototype_INSERT_SQL);
+            preparedStatement.setBytes(1, previousblockhash.getBytes());
+            preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
+            preparedStatement.setLong(3, System.currentTimeMillis());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+    @Override
+    public void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash) throws BlockStoreException {
+       
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(BlockPrototype_DELETE_SQL);
+            preparedStatement.setBytes(1, previousblockhash.getBytes());
+            preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
 }

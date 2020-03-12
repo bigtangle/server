@@ -351,6 +351,14 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "   chainlength bigint NOT NULL,\n" 
             + "   resultdata blob NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+    // Cached block prototype for performance
+    private static final String CREATE_BLOCKPROTOTYPE_TABLE = "CREATE TABLE blockprototype (\n"
+            + "    prevblockhash  binary(32) NOT NULL,\n"
+            + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
+            + "    insertime bigint,\n" 
+            + "    CONSTRAINT tips_pk PRIMARY KEY (prevblockhash,prevbranchblockhash ) USING BTREE \n" + ")\n";
+
+    
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
@@ -424,6 +432,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE);
+        sqlStatements.add(CREATE_BLOCKPROTOTYPE_TABLE);
         return sqlStatements;
     }
 

@@ -20,6 +20,7 @@ import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
@@ -494,5 +495,11 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
 	ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
+    List<BlockPrototype> getBlockPrototype() throws BlockStoreException;
 
+    void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
+            throws BlockStoreException;
+
+    void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
+            throws BlockStoreException;
 }
