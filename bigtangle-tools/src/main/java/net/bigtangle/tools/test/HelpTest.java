@@ -88,6 +88,10 @@ public abstract class HelpTest {
     public static String USDTPriv = "e82491e13e39800a97f9635680f8fce5b39355390ad3268a8a6d1a7952e5360d";
     public static String USDTPub = "025dde0e5c05b480eba5d38aba4afd873efd5657f7a2637e16b0918d65cfbd825f";
 
+    public static String idgovpriv = "315536a1d2366d241ed3b33c1d0aa85c126b9f808de0480bb59dffed4ef7fc59";
+    public static String  govpriv = "f19d37c7b621b88fff17e02b121e08799d7b31a0d18550707089bfcf6bc140ec";
+    
+    
     
     // private static final String CONTEXT_ROOT_TEMPLATE =
     // "http://localhost:%s/";

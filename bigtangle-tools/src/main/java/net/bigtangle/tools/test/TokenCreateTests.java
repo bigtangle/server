@@ -34,18 +34,14 @@ public class TokenCreateTests extends HelpTest {
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(ETHTokenPriv),
         // Utils.HEX.decode(ETHTokenPub)),
         // "ETH", 8, domain, "Ethereum ETF");
-        testCreateMultiSigToken(
-                ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv) ),
-                "EUR", 2, domain, "Euro", new BigInteger("1000000"));
-        testCreateMultiSigToken(
-                ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)),
-                "USD", 2, domain, "US Dollar", new BigInteger("1000000"));
-        testCreateMultiSigToken(
-                ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)),
-                "JPY", 2, domain, "Japan Yuan", new BigInteger("1000000"));
-        testCreateMultiSigToken(
-                ECKey.fromPrivate(Utils.HEX.decode(USDTPriv)),
-                "USDT", 2, domain, "Japan Yuan", new BigInteger("1000000"));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)), "EUR", 2, domain, "Euro",
+                new BigInteger("1000000"));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)), "USD", 2, domain, "US Dollar",
+                new BigInteger("1000000"));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)), "JPY", 2, domain, "Japan Yuan",
+                new BigInteger("1000000"));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(USDTPriv)), "USDT", 2, domain, "Japan Yuan",
+                new BigInteger("1000000"));
     }
 
     @Test
@@ -105,12 +101,11 @@ public class TokenCreateTests extends HelpTest {
 
     @Test
     public void domainCom() throws Exception {
-        
-        walletAppKit1.wallet().setServerURL( "https://test.bigtangle.info:8089/");
-        
-        ECKey preKey = ECKey
-                .fromPrivate(Utils.HEX.decode(DomainComPriv));       
-            //    .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
+
+        walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(DomainComPriv));
+        // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
         {
             final String tokenid = preKey.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(preKey, tokenid, "com", null, "com");
@@ -120,17 +115,17 @@ public class TokenCreateTests extends HelpTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
             }
-        
+
         }
     }
+
     @Test
     public void domainBigtangle() throws Exception {
-        
-        walletAppKit1.wallet().setServerURL( "https://test.bigtangle.info:8089/");
-        
-        ECKey preKey = ECKey
-                .fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));       
-            //    .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
+
+        walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));
+        // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
         {
             final String tokenid = preKey.getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(preKey, tokenid, "bigtangle", null, "bigtangle");
@@ -140,7 +135,40 @@ public class TokenCreateTests extends HelpTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
             }
-        
+
         }
     }
+
+    @Test
+    public void domainGov() throws Exception {
+
+        walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(govpriv));
+        {
+            final String tokenid = preKey.getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(preKey, tokenid, "gov", null, "gov");
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
+            } 
+        } 
+    }
+        @Test
+        public void domainIdentityGov() throws Exception {
+            ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(govpriv));
+          ECKey idgov=  ECKey.fromPrivate(Utils.HEX.decode(idgovpriv));
+
+            walletAppKit1.wallet().publishDomainName(idgov, idgov.getPublicKeyAsHex(), "id.gov", null, "");
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            keys.add(idgov);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(idgov.getPublicKeyAsHex(), keys.get(i), null);
+            }
+
+        }
+ 
 }

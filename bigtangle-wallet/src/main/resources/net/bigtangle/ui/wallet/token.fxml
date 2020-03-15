@@ -86,7 +86,7 @@
                         <Button fx:id="closeButton14" cancelButton="true" layoutX="726.0" layoutY="512.0" mnemonicParsing="false" onAction="#closeUI" text="%close" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                         <Label contentDisplay="CENTER" layoutX="24.0" layoutY="265.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%dateofissue" GridPane.rowIndex="4" />
                         <ComboBox fx:id="tokenid2id" editable="true" layoutX="279.0" layoutY="93.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%token_name" GridPane.rowIndex="1" />
+                        <Label layoutX="24.0" layoutY="59.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%pubkey" GridPane.rowIndex="1" />
                         <TextField fx:id="tokenname2id" layoutX="279.0" layoutY="55.0" maxWidth="500.0" minWidth="500.0" prefHeight="23.0" prefWidth="500.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label layoutX="649.0" layoutY="138.0" maxWidth="300.0" minWidth="59.0" prefHeight="15.0" prefWidth="59.0" text="%sex" />
                         <Label layoutX="24.0" layoutY="343.0" maxWidth="300.0" minWidth="120.0" prefHeight="15.0" prefWidth="120.0" text="%signnumber" />
