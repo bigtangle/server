@@ -35,7 +35,6 @@ import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
-import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 
 public class TokenIdentityController extends TokenSignsController {
 
@@ -79,6 +78,7 @@ public class TokenIdentityController extends TokenSignsController {
     @FXML
     public void initIdentityTab() {
         try {
+            sex2idCB.setItems(FXCollections.observableArrayList(Main.getText("man"), Main.getText("woman")));
             initCombobox2id();
         } catch (Exception e) {
             GuiUtils.crashAlert(e);
@@ -196,7 +196,7 @@ public class TokenIdentityController extends TokenSignsController {
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 
             // tabPane.getSelectionModel().clearAndSelect(4);
-        }  catch (Exception e) {
+        } catch (Exception e) {
             GuiUtils.crashAlert(e);
         }
     }
