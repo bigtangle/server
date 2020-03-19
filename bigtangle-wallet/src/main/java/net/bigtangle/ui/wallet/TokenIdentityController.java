@@ -151,10 +151,8 @@ public class TokenIdentityController extends TokenSignsController {
             }
 
             ECKey outKey = null;
-            for (ECKey key : issuedKeys) {
-                if (key.getPublicKeyAsHex().equalsIgnoreCase(tokenid2id.getValue().trim())) {
-                    outKey = key;
-                }
+            for (ECKey key : issuedKeys) { 
+                    outKey = key; 
             }
             KeyValue kv = new KeyValue();
             kv.setKey("identity");
@@ -191,7 +189,7 @@ public class TokenIdentityController extends TokenSignsController {
             addresses.add(new MultiSignAddress(tokenid2id.getValue().trim(), "", outKey.getPublicKeyAsHex()));
             Block block = Main.walletAppKit.wallet().createToken(outKey, tokenname2id.getText(), 0,
                     domainname2id.getText(), "identity", BigInteger.ONE, true, kv, TokenType.identity.ordinal(),
-                    addresses);
+                    addresses, new ECKey().getPublicKeyAsHex());
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 

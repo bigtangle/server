@@ -105,7 +105,8 @@ public class VosController {
             }
             addresses.add(new MultiSignAddress(tokenidCB.getValue().trim(), "", outKey.getPublicKeyAsHex()));
             Block block = Main.walletAppKit.wallet().createToken(outKey, tokennameTF.getText(), 0, urlTF.getText(),
-                    tokendescriptionTF.getText(), BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses);
+                    tokendescriptionTF.getText(), BigInteger.ONE, true, kv, TokenType.identity.ordinal(), addresses,
+                    new ECKey().getPublicKeyAsHex());
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
 

@@ -2712,11 +2712,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses)
+            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses, String tokenid)
             throws Exception {
-
-        String tokenid = key.getPublicKeyAsHex();
-
+ 
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
         token.addKeyvalue(kv);

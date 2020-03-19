@@ -188,7 +188,7 @@ public class TokenPublishController extends TokenIdentityController {
                 Block block = Main.walletAppKit.wallet().createToken(outKey, tokennameTF.getText(),
                         Integer.valueOf(decimalsTF.getText()), urlTF.getText(), tokendescriptionTF.getText(),
                         tokenamount.toBigInteger(), !tokenstopCheckBox.isSelected(), null, TokenType.token.ordinal(),
-                        addresses);
+                        addresses,  new ECKey().getPublicKeyAsHex() );
                 TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
                 Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
             } else if (tokentype.equals("domain")) {
@@ -216,13 +216,13 @@ public class TokenPublishController extends TokenIdentityController {
 
                 Block block = Main.walletAppKit.wallet().createToken(outKey, tokennameTF.getText(), 0, urlTF.getText(),
                         tokendescriptionTF.getText(), BigInteger.ONE, !tokenstopCheckBox.isSelected(), null,
-                        TokenType.market.ordinal(), addresses);
+                        TokenType.market.ordinal(), addresses, new ECKey().getPublicKeyAsHex());
                 TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
                 Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
             } else if (tokentype.equals("subtangle")) {
                 Block block = Main.walletAppKit.wallet().createToken(outKey, tokennameTF.getText(), 0, urlTF.getText(),
                         tokendescriptionTF.getText(), BigInteger.ONE, !tokenstopCheckBox.isSelected(), null,
-                        TokenType.subtangle.ordinal(), addresses);
+                        TokenType.subtangle.ordinal(), addresses, new ECKey().getPublicKeyAsHex());
                 TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
                 Main.walletAppKit.wallet().multiSign(currentToken.getToken().getTokenid(), outKey, Main.getAesKey());
             }
