@@ -2707,44 +2707,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
     }
 
-    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, KeyValue kv) throws Exception {
+ 
+ 
 
-        String tokenid = key.getPublicKeyAsHex();
-
-        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
-                amount, !increment, decimals, "");
-        token.addKeyvalue(kv);
-        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
-        addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-        return createToken(key, domainname, increment, token, addresses);
-
-    }
-
-    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, KeyValue kv, int tokentype) throws Exception {
-
-        TokenKeyValues tokenKeyValues = new TokenKeyValues();
-        tokenKeyValues.addKeyvalue(kv);
-        return createToken(key, tokename, decimals, domainname, description, amount, increment, tokenKeyValues,
-                tokentype);
-
-    }
-
-    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype) throws Exception {
-
-        String tokenid = key.getPublicKeyAsHex();
-
-        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
-                amount, !increment, decimals, "");
-        token.setTokenKeyValues(tokenKeyValues);
-        token.setTokentype(tokentype);
-        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
-        addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-        return createToken(key, domainname, increment, token, addresses);
-
-    }
 
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
             BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses)

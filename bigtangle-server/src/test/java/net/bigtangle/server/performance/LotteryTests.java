@@ -27,6 +27,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -182,8 +183,9 @@ public class LotteryTests extends AbstractIntegrationTest {
             String description, BigInteger amount) throws JsonProcessingException, Exception {
         try {
             walletAppKit1.wallet().setServerURL(contextRoot);
-            walletAppKit1.wallet().createToken(key, tokename, decimals, domainname, description, amount, true, null);
-
+            createToken(key, tokename, decimals, domainname, description, amount, true, null,  TokenType.identity.ordinal(), key.getPublicKeyAsHex(),
+                    walletAppKit1.wallet());
+  
             ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
             walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);

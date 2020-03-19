@@ -62,6 +62,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -94,6 +95,7 @@ import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
@@ -1400,5 +1402,18 @@ public abstract class AbstractIntegrationTest {
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
         return getBlockEvaluationsResponse.getEvaluations();
+    }
+    
+    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid, Wallet w ) throws Exception {
+ 
+        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
+                amount, !increment, decimals, "");
+        token.setTokenKeyValues(tokenKeyValues);
+        token.setTokentype(tokentype);
+        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
+        addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+        return w. createToken(key, domainname, increment, token, addresses);
+
     }
 }

@@ -25,13 +25,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenKeyValues;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetBalancesResponse;
@@ -277,8 +282,9 @@ public abstract class HelpTest {
             String description, BigInteger amount) throws JsonProcessingException, Exception {
         try {
             walletAppKit1.wallet().setServerURL(contextRoot);
-            walletAppKit1.wallet().createToken(key, tokename, decimals, domainname, description, amount, true, null);
-
+            createToken(key, tokename, decimals, domainname, description, amount, true, null,  TokenType.identity.ordinal(), key.getPublicKeyAsHex(),
+                    walletAppKit1.wallet());
+  
             ECKey signkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
 
@@ -295,6 +301,18 @@ public abstract class HelpTest {
 
     }
 
+    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid, Wallet w ) throws Exception {
+ 
+        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
+                amount, !increment, decimals, "");
+        token.setTokenKeyValues(tokenKeyValues);
+        token.setTokentype(tokentype);
+        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
+        addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+        return w. createToken(key, domainname, increment, token, addresses);
+
+    }
     protected void createMultisignToken(ECKey key, TokenInfo tokenInfo, String tokename, BigInteger amount,
             int decimals, Token domainname, String description)
             throws Exception, JsonProcessingException, IOException, JsonParseException, JsonMappingException {
