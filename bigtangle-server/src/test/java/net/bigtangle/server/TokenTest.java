@@ -335,7 +335,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         byte[] first = "my first file".getBytes();
         KeyValue kv = new KeyValue();
-        kv.setKey("myfirst");
+        kv.setKey("myfirst.txt");
         kv.setValue(Utils.HEX.encode(first));
         kvs.addKeyvalue(kv);
         kv = new KeyValue();
