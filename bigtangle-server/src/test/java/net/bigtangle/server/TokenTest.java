@@ -291,6 +291,47 @@ public class TokenTest extends AbstractIntegrationTest {
 
     }
 
+    @Test
+    public void testTokenidNotInWallet() throws Exception {
+
+        ECKey key = prepareIdentity();
+
+        ECKey issuer = new ECKey();
+        ECKey userkey = new ECKey();
+        TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
+        walletAppKit1.wallet().importKey(issuer);
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
+                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),  new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet());
+        TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", currentToken.getToken().getTokenid());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+
+        assertTrue(getTokensResponse.getTokens().size() == 1);
+        assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
+                .equals(currentToken.getToken().getTokenname() + "@id.shop"));
+        Token token = getTokensResponse.getTokens().get(0);
+        byte[] decryptedPayload = null;
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                Identity identity = new Identity().parse(decryptedPayload);
+                identity.verify();
+                if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
+                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getIdentityData()));
+                    assertTrue(id.getKeyvalues().size() == 2);
+                } 
+            }
+        }
+
+    }
+    
     private ECKey prepareIdentity()
             throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
         createShopToken();

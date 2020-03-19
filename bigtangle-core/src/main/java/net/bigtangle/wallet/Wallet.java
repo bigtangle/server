@@ -82,7 +82,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -2687,7 +2686,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         token.setDomainName(domain.getTokenname());
         token.setDomainNameBlockHash(domain.getBlockHashHex());
 
-        String tokenid = key.getPublicKeyAsHex();
+        String tokenid = token.getTokenid();
+                //key.getPublicKeyAsHex();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);

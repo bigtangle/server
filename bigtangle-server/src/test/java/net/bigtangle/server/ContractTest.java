@@ -21,7 +21,7 @@ public class ContractTest extends AbstractIntegrationTest {
  
  
 
-    @Test
+   // @Test
     public void payContract() throws Exception {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
