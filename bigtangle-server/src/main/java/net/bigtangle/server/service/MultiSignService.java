@@ -25,8 +25,10 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
@@ -51,7 +53,7 @@ public class MultiSignService {
     protected TokenDomainnameService tokenDomainnameService;
     @Autowired
     private BlockService blockService;
-    
+
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address)
             throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
@@ -68,18 +70,18 @@ public class MultiSignService {
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
-    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex,  List<String> addresses, boolean isSign)
-            throws Exception {
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, List<String> addresses,
+            boolean isSign) throws Exception {
         HashSet<String> a = new HashSet<String>();
         if (addresses != null) {
             a = new HashSet<String>(addresses);
         }
-        return getMultiSignListWithTokenid(tokenid,tokenindex, a, isSign);
+        return getMultiSignListWithTokenid(tokenid, tokenindex, a, isSign);
     }
 
-    public AbstractResponse getMultiSignListWithTokenid(String tokenid,  Integer tokenindex,Set<String> addresses, boolean isSign)
-            throws Exception {
-        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid,tokenindex, addresses, isSign);
+    public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, Set<String> addresses,
+            boolean isSign) throws Exception {
+        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenindex, addresses, isSign);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
         for (MultiSign multiSign : multiSigns) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -120,7 +122,7 @@ public class MultiSignService {
     }
 
     public void saveMultiSign(Block block) throws BlockStoreException, Exception {
-     //   blockService.checkBlockBeforeSave(block);
+        // blockService.checkBlockBeforeSave(block);
         try {
             this.store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
@@ -194,16 +196,33 @@ public class MultiSignService {
             validatorService.checkTokenUnique(block);
             if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block);
-          
-                blockService.saveBlock(block);
-               deleteMultiSign(block);
+                // check the block prototype and may do update
+
+                blockService.saveBlock(checkBlockPrototype(block));
+                deleteMultiSign(block);
             } else {
-                // data save only on this server for multi signs, not in block. 
+                // data save only on this server for multi signs, not in block.
                 this.saveMultiSign(block);
             }
         } catch (InsufficientSignaturesException e) {
             this.saveMultiSign(block);
 
+        }
+    }
+
+    private Block checkBlockPrototype(Block oldBlock) throws BlockStoreException, NoBlockException {
+
+        int time = 60 * 60 * 8;
+        if (System.currentTimeMillis() / 1000 - oldBlock.getTimeSeconds() > time) {
+            Block block = blockService.getBlockPrototype();
+            block.setBlockType(oldBlock.getBlockType());
+            for (Transaction transaction : oldBlock.getTransactions()) {
+                block.addTransaction(transaction);
+            }
+            block.solve();
+            return block;
+        } else {
+            return oldBlock;
         }
     }
 
