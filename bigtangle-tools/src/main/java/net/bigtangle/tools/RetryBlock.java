@@ -25,7 +25,7 @@ public class RetryBlock {
     public static void main(String[] args) throws  Exception{
         WalletAppKit walletAppKit1 = new WalletAppKit(networkParameters, new File("/home/cui/Downloads"), "201707040100000004");
         walletAppKit1.wallet().setServerURL("https://61.181.128.230:8088/");
-        walletAppKit1.wallet().retryBlock("00002e00dc0b57c168bc1a3d7e25fdd13847985abc4775956c774113beedcfcd");
+        walletAppKit1.wallet().retryBlock("00004b0912a656ad894a2d3ab74835fcf8420f7c395682d578fdd790fc8b4450");
     }
     public static KeyParameter getAesKey(Wallet wallet, String aespwd)
             throws IOException, UnreadableWalletException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {

@@ -90,6 +90,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
+import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -2606,6 +2607,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
         Block block = params.getDefaultSerializer().makeBlock(payloadBytes);
+        //replace block prototype if it is too too old 
+        
         Transaction transaction = block.getTransactions().get(0);
 
         List<MultiSignBy> multiSignBies = null;
@@ -2630,8 +2633,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+        
+        block = adjustSolveAndSign(checkBlockPrototype(block));
+    }
 
-        block = adjustSolveAndSign(block);
+    private Block checkBlockPrototype(Block oldBlock) throws BlockStoreException, NoBlockException, IOException {
+
+        int time = 60 * 60 * 8;
+        if (System.currentTimeMillis() / 1000 - oldBlock.getTimeSeconds() > time) {
+            HashMap<String, String> requestParam = new HashMap<String, String>();
+            byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
+                    Json.jsonmapper().writeValueAsString(requestParam));
+            Block block = params.getDefaultSerializer().makeBlock( data );
+            
+            block.setBlockType(oldBlock.getBlockType());
+            for (Transaction transaction : oldBlock.getTransactions()) {
+                block.addTransaction(transaction);
+            }
+            block.solve();
+            return block;
+        } else {
+            return oldBlock;
+        }
     }
 
     public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,
