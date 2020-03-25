@@ -2614,7 +2614,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
-                sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%')";
+                sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%' OR domainname LIKE '%"+name+"%')";
             }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
