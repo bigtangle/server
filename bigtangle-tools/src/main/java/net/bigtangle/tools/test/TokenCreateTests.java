@@ -40,10 +40,19 @@ public class TokenCreateTests extends HelpTest {
                 new BigInteger("1000000"));
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)), "JPY", 2, domain, "Japan Yuan",
                 new BigInteger("1000000"));
-        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(USDTPriv)), "USDT", 2, domain, "Japan Yuan",
-                new BigInteger("1000000"));
-    }
+      }
 
+    @Test
+    public void testTokensETH() throws JsonProcessingException, Exception {
+
+        String domain = "bigtangle";
+
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)
+                ), "ETH", 18, domain, "ETH", new BigInteger("100000000000000000000000"));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHUSDTPriv)
+                ), "ETH-USDT", 6, domain, "ETH-USDT", new BigInteger("100000000000000000"));
+      
+    }
     @Test
     public void testMyshop() throws JsonProcessingException, Exception {
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(ShopDomainPriv));

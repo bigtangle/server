@@ -90,8 +90,8 @@ public abstract class HelpTest {
     public static String DomainComPriv = "64a48e5a568e4498a51df1d35eced926b27d7bb29bfb0d4f6efb256c97381e07";
     public static String DomainComPub = "022d607a37d3d4467557a003189531a8198abb9967adec542edea70305b4785324";
 
-    public static String USDTPriv = "e82491e13e39800a97f9635680f8fce5b39355390ad3268a8a6d1a7952e5360d";
-    public static String USDTPub = "025dde0e5c05b480eba5d38aba4afd873efd5657f7a2637e16b0918d65cfbd825f";
+    public static String ETHUSDTPriv = "e82491e13e39800a97f9635680f8fce5b39355390ad3268a8a6d1a7952e5360d";
+    public static String ETHUSDTPub = "025dde0e5c05b480eba5d38aba4afd873efd5657f7a2637e16b0918d65cfbd825f";
 
     public static String idgovpriv = "315536a1d2366d241ed3b33c1d0aa85c126b9f808de0480bb59dffed4ef7fc59";
     public static String  govpriv = "f19d37c7b621b88fff17e02b121e08799d7b31a0d18550707089bfcf6bc140ec";
