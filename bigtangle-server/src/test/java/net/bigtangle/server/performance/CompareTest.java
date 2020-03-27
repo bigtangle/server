@@ -23,17 +23,18 @@ import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.SyncBlockService.Tokensums;
 
- @Ignore
+//@Ignore
 public class CompareTest {
-    public static boolean testnet = true;
-    public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "") + "bigtangle.de:8089/";
-    public static String HTTPS_BIGTANGLE_INFO =
-            // HTTPS_BIGTANGLE_LOCAL;
-            "https://" + (testnet ? "test." : "") + "bigtangle.info:8089/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "") + "bigtangle.org:8089/";
+    public static boolean testnet = false;
+    public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "p.") + "bigtangle.de:"
+            + (testnet ? "8089" : "8088") + "/";
+    public static String HTTPS_BIGTANGLE_INFO = "https://" + (testnet ? "test." : "p.") + "bigtangle.info:"
+            + (testnet ? "8089" : "8088") + "/";
+    public static String HTTPS_BIGTANGLE_ORG = "https://" + (testnet ? "test." : "p.") + "bigtangle.org:"
+            + (testnet ? "8089" : "8088") + "/";
     public static String HTTPS_BIGTANGLE_LOCAL = "http://" + "localhost:8088/";
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
