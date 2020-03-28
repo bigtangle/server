@@ -1803,7 +1803,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return false;
     }
 
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey) throws Exception {
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey) throws Exception {
         final Token token = tokenInfo.getToken();
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())
@@ -1837,7 +1837,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
 
-        // +1 for domain name
+        // +1 for domain name or super domain
         token.setSignnumber(token.getSignnumber() + 1);
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -1845,21 +1845,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(ownerKey.getPubKey(), basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);
 
         Sha256Hash sighash = transaction.getHash();
 
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        ECKey.ECDSASignature party1Signature = ownerKey.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
         multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
         multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(outKey.toAddress(params).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
+        multiSignBy0.setAddress(ownerKey.toAddress(params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(ownerKey.getPubKey()));
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
@@ -2515,28 +2515,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    public void publishDomainName(ECKey signKey, String tokenid, String tokenname, KeyParameter aesKey,
+    public void publishDomainName(ECKey ownerKey, String tokenid, String tokenname, KeyParameter aesKey,
             String description) throws Exception {
         GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         Token domainName = getDomainBlockHashResponse.getdomainNameToken();
 
         List<ECKey> walletKeys = new ArrayList<ECKey>();
-        walletKeys.add(signKey);
+        walletKeys.add(ownerKey);
 
         final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainName, aesKey, description, signnumber);
+        this.publishDomainName(walletKeys, ownerKey, tokenid, tokenname, domainName, aesKey, description, signnumber);
     }
 
-    public void publishDomainName(List<ECKey> walletKeys, ECKey signKey, String tokenid, String tokenname,
+    public void publishDomainName(List<ECKey> signKeys, ECKey ownerKey, String tokenid, String tokenname,
             KeyParameter aesKey, BigInteger amount, String description) throws Exception {
         GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
         Token domainNameBlockHash = getDomainBlockHashResponse.getdomainNameToken();
-        final int signnumber = walletKeys.size();
-        this.publishDomainName(walletKeys, signKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
+        final int signnumber = signKeys.size();
+        this.publishDomainName(signKeys, ownerKey, tokenid, tokenname, domainNameBlockHash, aesKey, description,
                 signnumber);
     }
 
-    public void publishDomainName(List<ECKey> multiSigns, ECKey signKey, String tokenid, String tokenname,
+    public void publishDomainName(List<ECKey> multiSigns, ECKey ownerKey, String tokenid, String tokenname,
             Token domainNameBlockHash, KeyParameter aesKey, String description, int signnumber) throws Exception {
 
         TokenIndexResponse tokenIndexResponse = this.getServerCalTokenIndex(tokenid);
@@ -2556,7 +2556,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        saveToken(tokenInfo, Coin.valueOf(1, tokenid), signKey, aesKey);
+        saveToken(tokenInfo, Coin.valueOf(1, tokenid), ownerKey, aesKey);
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
