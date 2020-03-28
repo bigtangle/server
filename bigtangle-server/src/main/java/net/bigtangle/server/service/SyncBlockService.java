@@ -474,7 +474,7 @@ public class SyncBlockService {
      */
     public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward,  TXReward my ) throws Exception {
      
-        if (my == null || aMaxConfirmedReward.aTXReward == null)
+         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
         log.debug("  remote chain length  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
                 + aMaxConfirmedReward.server + " my chain length " + my.getChainLength());
@@ -484,12 +484,13 @@ public class SyncBlockService {
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
             Collections.sort(remotes, new SortbyChain());
             List<TXReward> mylist = new ArrayList<TXReward>();
+         
             for(TXReward t: store.getAllConfirmedReward()) {
                 if(t.getChainLength() <= my.getChainLength()) {
                     mylist.add(t);
                 }
             } 
-           
+            Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
@@ -527,6 +528,11 @@ public class SyncBlockService {
 
     private TXReward findSync(List<TXReward> remotes, TXReward my) throws Exception {
         for (TXReward b1 : remotes) {
+            if (b1.getChainLength()==my.getChainLength()
+                    && !b1.getBlockHash().equals(my.getBlockHash())) {
+                log.debug( " different chains remote " + b1 + " my "+ my);
+                return null;
+            }
             if (b1.getBlockHash().equals(my.getBlockHash())) {
                 return b1;
             }
