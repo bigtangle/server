@@ -58,4 +58,10 @@ public class MultiSignBy implements java.io.Serializable {
         this.signature = signature;
     }
 
+    @Override
+    public String toString() {
+        return "MultiSignBy [tokenid=" + tokenid + ", tokenindex=" + tokenindex + ", address=" + address
+                + ", publickey=" + publickey + ", signature=" + signature + "]";
+    }
+
 }
