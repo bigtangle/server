@@ -426,7 +426,7 @@ public final class MonetaryFormat {
         return new  Coin(parseValue(str, decimal), tokenid);
     }
 
-    private BigInteger parseValue(String str, int smallestUnitExponent) {
+    public BigInteger parseValue(String str, int smallestUnitExponent) {
         StringWriter s = new StringWriter();
         for (int i = 0; i < smallestUnitExponent; i++) {
             s.append("0");
