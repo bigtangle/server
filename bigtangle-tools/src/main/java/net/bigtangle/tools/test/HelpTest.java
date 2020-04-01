@@ -107,7 +107,7 @@ public abstract class HelpTest {
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_INFO;
 
-    public String contextRoot = HTTPS_BIGTANGLE_LOCAL;
+    public String contextRoot = TESTSERVER1;
     // "http://localhost:8088/";
     // "https://test.bigtangle.de/";
 
