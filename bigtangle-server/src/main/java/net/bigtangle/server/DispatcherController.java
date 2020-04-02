@@ -553,6 +553,11 @@ public class DispatcherController {
         }
     }
 
+    @RequestMapping("/")
+    public String index() {
+        return serverConfiguration.getIndexhtml();
+    }
+    
     private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch)
             throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
         String reqStr = new String(bodyByte, "UTF-8");

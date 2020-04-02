@@ -38,6 +38,8 @@ public class ServerConfiguration {
     private Long checkpoint=-1l ;
     private int syncblocks=500;
     
+    private String indexhtml="https://www.bigtangle.org";
+    
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -202,6 +204,14 @@ public class ServerConfiguration {
 
     public void setSyncblocks(int syncblocks) {
         this.syncblocks = syncblocks;
+    }
+
+    public String getIndexhtml() {
+        return indexhtml;
+    }
+
+    public void setIndexhtml(String indexhtml) {
+        this.indexhtml = indexhtml;
     }
 
     @Override
