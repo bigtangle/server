@@ -33,6 +33,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetOutputsResponse;
@@ -260,7 +261,8 @@ public class TokenTest extends AbstractIntegrationTest {
         TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(), issuer.getPublicKeyAsHex(),walletAppKit1.wallet());
+                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),
+                new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet(), userkey.getPubKey());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -288,7 +290,10 @@ public class TokenTest extends AbstractIntegrationTest {
                 } 
             }
         }
-
+        List<UTXO> ulist = getBalance(false, userkey);
+        assertTrue(ulist.size()==1);
+      //  assertTrue(ulist.size()==1);
+       
     }
 
     @Test
