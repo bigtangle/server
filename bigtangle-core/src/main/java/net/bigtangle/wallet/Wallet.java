@@ -1804,6 +1804,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey) throws Exception {
+        return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey());
+    }
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo) throws Exception {
         final Token token = tokenInfo.getToken();
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())
@@ -1845,7 +1848,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(ownerKey.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(pubKeyTo, basecoin, tokenInfo);
 
         Transaction transaction = block.getTransactions().get(0);
 
@@ -2705,6 +2708,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
             List<MultiSignAddress> addresses) throws Exception {
+       return createToken(key, domainname, increment, token, addresses, key.getPubKey());
+    }
+    public Block createToken(ECKey key, String domainname, boolean increment, Token token,
+            List<MultiSignAddress> addresses, byte[] pubkeyTo) throws Exception {
         Token domain = getDomainNameBlockHash(domainname, "token").getdomainNameToken();
         token.setDomainName(domain.getTokenname());
         token.setDomainNameBlockHash(domain.getBlockHashHex());
@@ -2727,7 +2734,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         tokenInfo.setMultiSignAddresses(addresses);
         // tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid,
         // "", key.getPublicKeyAsHex()));
-        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null);
+        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null, pubkeyTo);
     }
 
  

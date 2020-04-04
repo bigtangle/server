@@ -301,7 +301,8 @@ public class TokenTest extends AbstractIntegrationTest {
         TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),  new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet());
+                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),  
+                new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet(), userkey.getPubKey());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -329,6 +330,8 @@ public class TokenTest extends AbstractIntegrationTest {
                 } 
             }
         }
+        
+        
 
     }
     

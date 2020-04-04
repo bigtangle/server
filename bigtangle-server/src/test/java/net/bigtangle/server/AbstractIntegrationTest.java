@@ -1416,4 +1416,16 @@ public abstract class AbstractIntegrationTest {
         return w. createToken(key, domainname, increment, token, addresses);
 
     }
+    public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid, Wallet w , byte[] pubkeyTo) throws Exception {
+ 
+        Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
+                amount, !increment, decimals, "");
+        token.setTokenKeyValues(tokenKeyValues);
+        token.setTokentype(tokentype);
+        List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
+        addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+        return w. createToken(key, domainname, increment, token, addresses,pubkeyTo);
+
+    }
 }
