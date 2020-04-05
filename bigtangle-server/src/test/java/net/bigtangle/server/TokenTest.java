@@ -38,7 +38,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.data.identity.Identity;
+import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.encrypt.ECIESCoder;
@@ -242,8 +242,8 @@ public class TokenTest extends AbstractIntegrationTest {
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
             if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
                 decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                Identity identity = new Identity().parse(decryptedPayload);
-                IdentityData id = new IdentityData().parse(Utils.HEX.decode(identity.getIdentityData()));
+                SignedData identity = new SignedData().parse(decryptedPayload);
+                IdentityData id = new IdentityData().parse(Utils.HEX.decode(identity.getSerializedData()));
                 assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
                 identity.verify();
             }
@@ -282,10 +282,10 @@ public class TokenTest extends AbstractIntegrationTest {
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
             if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
                 decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                Identity identity = new Identity().parse(decryptedPayload);
+                SignedData identity = new SignedData().parse(decryptedPayload);
                 identity.verify();
                 if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
-                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getIdentityData()));
+                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getSerializedData()));
                     assertTrue(id.getKeyvalues().size() == 2);
                 } 
             }
@@ -327,10 +327,10 @@ public class TokenTest extends AbstractIntegrationTest {
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
             if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
                 decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                Identity identity = new Identity().parse(decryptedPayload);
+                SignedData identity = new SignedData().parse(decryptedPayload);
                 identity.verify();
                 if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
-                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getIdentityData()));
+                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getSerializedData()));
                     assertTrue(id.getKeyvalues().size() == 2);
                 } 
             }
@@ -360,7 +360,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
     private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
-        Identity identity = new Identity();
+        SignedData identity = new SignedData();
         IdentityCore identityCore = new IdentityCore();
         identityCore.setSurname("zhang");
         identityCore.setForenames("san");
@@ -374,12 +374,12 @@ public class TokenTest extends AbstractIntegrationTest {
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);
 
-        return identity.getTokenKeyValues(key, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+        return identity.toTokenKeyValues(key, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
     }
 
     private TokenKeyValues certificateTokenKeyValues(ECKey key, ECKey userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
-        Identity identity = new Identity();
+        SignedData identity = new SignedData();
         KeyValueList kvs = new KeyValueList();
 
         byte[] first = "my first file".getBytes();
@@ -392,7 +392,7 @@ public class TokenTest extends AbstractIntegrationTest {
         kv.setValue(Utils.HEX.encode("second.pdf".getBytes()));
         kvs.addKeyvalue(kv);
 
-        return identity.getTokenKeyValues(key, userkey, kvs.toByteArray(), DataClassName.KeyValueList.name());
+        return identity.toTokenKeyValues(key, userkey, kvs.toByteArray(), DataClassName.KeyValueList.name());
     }
 
     @Test

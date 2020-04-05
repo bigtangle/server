@@ -30,7 +30,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
-import net.bigtangle.data.identity.Identity;
+import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.ui.wallet.utils.FileUtil;
@@ -156,7 +156,7 @@ public class TokenIdentityController extends TokenSignsController {
             }
             KeyValue kv = new KeyValue();
             kv.setKey("identity");
-            Identity identity = new Identity();
+            SignedData identity = new SignedData();
             IdentityCore identityCore = new IdentityCore();
             identityCore.setSurname(surname2id.getText());
             identityCore.setForenames(forenames2id.getText());
@@ -175,7 +175,7 @@ public class TokenIdentityController extends TokenSignsController {
                 identityData.setPhoto(photo);
             }
             ECKey userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText().trim()));
-            identity.getTokenKeyValues(outKey, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+            identity.toTokenKeyValues(outKey, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
 
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 

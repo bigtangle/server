@@ -16,7 +16,7 @@ import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Utils;
 import net.bigtangle.encrypt.ECIESCoder;
 
-public class Identity extends DataClass implements java.io.Serializable {
+public class SignedData extends DataClass implements java.io.Serializable {
     /**
      * 
      */
@@ -25,23 +25,23 @@ public class Identity extends DataClass implements java.io.Serializable {
     // dataClassName of serialized data
     String dataClassName;
 
-    // serialized data Utils.HEX.encode
-    String identityData;
+    // serialized data Utils.HEX.encode before encryption
+    String serializedData;
 
     private byte[] pubsignkey;
     private String signature;
 
     public void verify() throws SignatureException {
-        ECKey.fromPublicOnly(pubsignkey).verifyMessage(identityData, signature);
+        ECKey.fromPublicOnly(pubsignkey).verifyMessage(serializedData, signature);
 
     }
 
     public void signMessage(ECKey key) throws SignatureException {
-        signature = key.signMessage(identityData);
+        signature = key.signMessage(serializedData);
     }
 
-    public void setIdentityData(byte[] identityData) {
-        this.identityData = Utils.HEX.encode(identityData);
+    public void setSerializedData(byte[] byteData) {
+        this.serializedData = Utils.HEX.encode(byteData);
     }
 
     public byte[] toByteArray() {
@@ -50,7 +50,7 @@ public class Identity extends DataClass implements java.io.Serializable {
             DataOutputStream dos = new DataOutputStream(baos);
             dos.write(super.toByteArray());
             Utils.writeNBytesString(dos, dataClassName);
-            Utils.writeNBytesString(dos, identityData);
+            Utils.writeNBytesString(dos, serializedData);
             Utils.writeNBytes(dos, pubsignkey);
             Utils.writeNBytesString(dos, signature);
             dos.close();
@@ -60,7 +60,7 @@ public class Identity extends DataClass implements java.io.Serializable {
         return baos.toByteArray();
     }
 
-    public Identity parse(byte[] buf) throws IOException {
+    public SignedData parse(byte[] buf) throws IOException {
         ByteArrayInputStream bain = new ByteArrayInputStream(buf);
         DataInputStream dis = new DataInputStream(bain);
 
@@ -71,10 +71,10 @@ public class Identity extends DataClass implements java.io.Serializable {
         return this;
     }
 
-    public Identity parseDIS(DataInputStream dis) throws IOException {
+    public SignedData parseDIS(DataInputStream dis) throws IOException {
         super.parseDIS(dis);
         dataClassName = Utils.readNBytesString(dis);
-        identityData = Utils.readNBytesString(dis);
+        serializedData = Utils.readNBytesString(dis);
         pubsignkey = Utils.readNBytes(dis);
         signature = Utils.readNBytesString(dis);
 
@@ -83,10 +83,13 @@ public class Identity extends DataClass implements java.io.Serializable {
         return this;
     }
 
-    public TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey, byte[] identityData, String dataClassname)
+    /*
+     * transform the data with encryption to be saved in token 
+     */
+    public TokenKeyValues toTokenKeyValues(ECKey key, ECKey userkey, byte[] originalData, String dataClassname)
             throws InvalidCipherTextException, IOException, SignatureException {
         TokenKeyValues tokenKeyValues = new TokenKeyValues(); 
-        setIdentityData(identityData); 
+        setSerializedData(originalData); 
         setPubsignkey(key.getPubKey());
         setDataClassName(dataClassname);
         signMessage(key); 
@@ -112,12 +115,14 @@ public class Identity extends DataClass implements java.io.Serializable {
         this.signature = signature;
     }
 
-    public String getIdentityData() {
-        return identityData;
+     
+
+    public String getSerializedData() {
+        return serializedData;
     }
 
-    public void setIdentityData(String identityData) {
-        this.identityData = identityData;
+    public void setSerializedData(String serializedData) {
+        this.serializedData = serializedData;
     }
 
     public byte[] getPubsignkey() {

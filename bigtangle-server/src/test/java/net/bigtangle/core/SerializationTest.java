@@ -20,7 +20,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.spongycastle.crypto.InvalidCipherTextException;
 
-import net.bigtangle.data.identity.Identity;
+import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.data.identity.IdentityData;
 import net.bigtangle.encrypt.ECIESCoder;
@@ -242,7 +242,7 @@ public class SerializationTest {
         ECKey key = new ECKey();
         ECKey userkey = new ECKey();
         TokenKeyValues tokenKeyValues = new TokenKeyValues();
-        Identity identity = new Identity();
+        SignedData identity = new SignedData();
         IdentityCore identityCore = new IdentityCore();
         identityCore.setSurname("zhang");
         identityCore.setForenames("san");
@@ -255,7 +255,7 @@ public class SerializationTest {
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);
-        identity.setIdentityData(identityData.toByteArray());
+        identity.setSerializedData(identityData.toByteArray());
 
         identity.setPubsignkey(key.getPubKey());
         identity.signMessage(key);
@@ -278,8 +278,8 @@ public class SerializationTest {
         for (KeyValue kvtemp : tokenKeyValues.getKeyvalues()) {
             if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
                 byte[] decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                Identity reidentity = new Identity().parse(decryptedPayload);
-                IdentityData id = new IdentityData().parse(Utils.HEX.decode(reidentity.getIdentityData()));
+                SignedData reidentity = new SignedData().parse(decryptedPayload);
+                IdentityData id = new IdentityData().parse(Utils.HEX.decode(reidentity.getSerializedData()));
                 assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
                 identity.verify();
 
