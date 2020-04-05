@@ -24,7 +24,7 @@ public class RetryBlock {
         Wallet wallet= new Wallet(networkParameters);
         String url = "https://61.181.128.230:8088/";
         wallet.setServerURL(url);
-        wallet.retryBlock("00004b0912a656ad894a2d3ab74835fcf8420f7c395682d578fdd790fc8b4450");
+        wallet.retryBlock("00002b3d3cf5c2b048dad06faec7195cb7b6dd5ad311c42d1a2f8e5bcefa35bd");
     }
     public static KeyParameter getAesKey(Wallet wallet, String aespwd)
             throws IOException, UnreadableWalletException, InvalidKeyException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
