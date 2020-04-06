@@ -122,7 +122,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
     private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
     private static String DROP_CONTRACT_ACCOUNT_TABLE = "DROP TABLE contractaccount";
-    private static String DROP_BLOCKPROTOTYPE_TABLE = "DROP TABLE contractaccount";
+    private static String DROP_BLOCKPROTOTYPE_TABLE = "DROP TABLE blockprototype";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";

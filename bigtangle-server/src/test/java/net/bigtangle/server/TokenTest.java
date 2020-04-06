@@ -1,5 +1,6 @@
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedInputStream;
@@ -12,6 +13,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
@@ -29,6 +31,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.KeyValueList;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
@@ -36,14 +39,17 @@ import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.data.identity.IdentityCore;
 import net.bigtangle.data.identity.IdentityData;
+import net.bigtangle.data.identity.Prescription;
+import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.Wallet;
 
 /*
  * ## permission of token creation 
@@ -188,8 +194,8 @@ public class TokenTest extends AbstractIntegrationTest {
 
             ECKey productkey = new ECKey();
             walletAppKit1.wallet().importKey(productkey);
-            Block block = createToken(productkey, "product", 0, "myshopname.shop", "test",
-                    BigInteger.ONE, true, null, TokenType.token.ordinal() , productkey.getPublicKeyAsHex(), walletAppKit1.wallet() );
+            Block block = createToken(productkey, "product", 0, "myshopname.shop", "test", BigInteger.ONE, true, null,
+                    TokenType.token.ordinal(), productkey.getPublicKeyAsHex(), walletAppKit1.wallet());
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
@@ -221,8 +227,8 @@ public class TokenTest extends AbstractIntegrationTest {
         ECKey userkey = new ECKey();
         TokenKeyValues kvs = getTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
-        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(), issuer.getPublicKeyAsHex(),walletAppKit1.wallet());
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
+                TokenType.identity.ordinal(), issuer.getPublicKeyAsHex(), walletAppKit1.wallet());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -260,9 +266,9 @@ public class TokenTest extends AbstractIntegrationTest {
         ECKey userkey = new ECKey();
         TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
-        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),
-                new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet(), userkey.getPubKey());
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
+                TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
+                userkey.getPubKey());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -282,18 +288,127 @@ public class TokenTest extends AbstractIntegrationTest {
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
             if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
                 decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
-                SignedData identity = new SignedData().parse(decryptedPayload);
-                identity.verify();
-                if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
-                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getSerializedData()));
+                SignedData sdata = new SignedData().parse(decryptedPayload);
+                sdata.verify();
+                if (DataClassName.KeyValueList.name().equals(sdata.getDataClassName())) {
+                    KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(sdata.getSerializedData()));
                     assertTrue(id.getKeyvalues().size() == 2);
-                } 
+                }
             }
         }
         List<UTXO> ulist = getBalance(false, userkey);
-        assertTrue(ulist.size()==1);
-      //  assertTrue(ulist.size()==1);
-       
+        assertTrue(ulist.size() == 1);
+        // assertTrue(ulist.size()==1);
+
+    }
+
+    @Test
+    public void testPrescription() throws Exception {
+
+        ECKey key = prepareIdentity();
+
+        ECKey issuer = new ECKey();
+        ECKey userkey = new ECKey();
+        TokenKeyValues kvs = prescriptionTokenKeyValues(issuer, userkey);
+        walletAppKit1.wallet().importKey(issuer);
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
+                TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
+                userkey.getPubKey());
+        TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", currentToken.getToken().getTokenid());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+
+        assertTrue(getTokensResponse.getTokens().size() == 1);
+        assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
+                .equals(currentToken.getToken().getTokenname() + "@id.shop"));
+        Token token = getTokensResponse.getTokens().get(0);
+          SignedData p = prescription(userkey, token);
+        List<UTXO> ulist = getBalance(false, userkey);
+        assertTrue(ulist.size() == 1);
+        // pay the token to pharmacy
+        ECKey pharmacy = new ECKey();
+        // encrypt data as memo or
+        Wallet userWallet = Wallet.fromKeys(networkParameters, userkey);
+
+        byte[] cipher = ECIESCoder.encrypt(pharmacy.getPubKeyPoint(), p.toByteArray());
+        String memoHex = Utils.HEX.encode(cipher);
+
+        MemoInfo memoInfo = new MemoInfo();
+        memoInfo.addEncryptMemo(memoHex);
+        userWallet.setServerURL(contextRoot);
+        Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
+        sendEmpty(10);
+        mcmcService.update();
+        confirmationService.update();
+        List<UTXO> pharmalist = getBalance(false, pharmacy);
+        String jsonString = pharmalist.get(0).getMemo();
+
+        MemoInfo m = MemoInfo.parse(jsonString);
+        for (KeyValue keyValue : m.getKv()) {
+            if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
+                byte[] decryptedPayload = ECIESCoder.decrypt(pharmacy.getPrivKey(),
+                        Utils.HEX.decode(keyValue.getValue()));
+                      SignedData sdata = new SignedData().parse(decryptedPayload);
+                sdata.verify();
+                if (DataClassName.Prescription.name().equals(sdata.getDataClassName())) {
+                   Prescription pre = new Prescription().parse(Utils.HEX.decode(sdata.getSerializedData()));
+                     assertTrue(pre.getFilename() !=null );
+                }
+                
+            }
+        }
+
+    }
+
+    private SignedData prescription(ECKey userkey, Token token)
+            throws IOException, InvalidCipherTextException, SignatureException {
+        byte[] decryptedPayload = null;
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            if (kvtemp.getKey().equals(userkey.getPublicKeyAsHex())) {
+                decryptedPayload = ECIESCoder.decrypt(userkey.getPrivKey(), Utils.HEX.decode(kvtemp.getValue()));
+                SignedData sdata = new SignedData().parse(decryptedPayload);
+                sdata.verify();
+                return sdata;
+            }
+        }
+        return null;
+    }
+
+    public List<Prescription> prescriptionList(ECKey ecKey) throws Exception {
+        List<Prescription> prescriptionlist = new ArrayList<Prescription>();
+        Map<String, String> param = new HashMap<String, String>();
+        param.put("toaddress", ecKey.toAddress(networkParameters).toString());
+
+        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
+                Json.jsonmapper().writeValueAsString(param));
+
+        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+        Map<String, Token> tokennames = new HashMap<String, Token>();
+        tokennames.putAll(balancesResponse.getTokennames());
+        for (UTXO utxo : balancesResponse.getOutputs()) {
+            if (checkPrescription(utxo, tokennames)) {
+                Token token = tokennames.get(utxo.getTokenId());
+                for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+                    byte[] decryptedPayload = ECIESCoder.decrypt(ecKey.getPrivKey(),
+                            Utils.HEX.decode(kvtemp.getValue()));
+                    SignedData sdata = new SignedData().parse(decryptedPayload);
+                    prescriptionlist.add(new Prescription().parse(Utils.HEX.decode(sdata.getSerializedData())));
+                }
+            }
+        }
+        return prescriptionlist;
+    }
+
+    private boolean checkPrescription(UTXO utxo, Map<String, Token> tokennames) {
+        return TokenType.prescription.ordinal() == tokennames.get(utxo.getTokenId()).getTokentype();
+
     }
 
     @Test
@@ -305,9 +420,9 @@ public class TokenTest extends AbstractIntegrationTest {
         ECKey userkey = new ECKey();
         TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
-        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test",
-                BigInteger.ONE, true, kvs, TokenType.identity.ordinal(),  
-                new ECKey().getPublicKeyAsHex(),walletAppKit1.wallet(), userkey.getPubKey());
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
+                TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
+                userkey.getPubKey());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -332,14 +447,12 @@ public class TokenTest extends AbstractIntegrationTest {
                 if (DataClassName.KeyValueList.name().equals(identity.getDataClassName())) {
                     KeyValueList id = new KeyValueList().parse(Utils.HEX.decode(identity.getSerializedData()));
                     assertTrue(id.getKeyvalues().size() == 2);
-                } 
+                }
             }
         }
-        
-        
 
     }
-    
+
     private ECKey prepareIdentity()
             throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
         createShopToken();
@@ -393,6 +506,18 @@ public class TokenTest extends AbstractIntegrationTest {
         kvs.addKeyvalue(kv);
 
         return identity.toTokenKeyValues(key, userkey, kvs.toByteArray(), DataClassName.KeyValueList.name());
+    }
+
+    private TokenKeyValues prescriptionTokenKeyValues(ECKey key, ECKey userkey)
+            throws InvalidCipherTextException, IOException, SignatureException {
+        SignedData identity = new SignedData();
+        Prescription p = new Prescription();
+        byte[] first = "my first file".getBytes();
+        p.setPrescription("my first prescription");
+        p.setFilename("second.pdf");
+        p.setFile("second.pdf".getBytes());
+
+        return identity.toTokenKeyValues(key, userkey, p.toByteArray(), DataClassName.Prescription.name());
     }
 
     @Test
@@ -621,8 +746,8 @@ public class TokenTest extends AbstractIntegrationTest {
             throws Exception, JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {
 
         walletAppKit1.wallet().importKey(key);
-        Block block = createToken(key, "product", 0, "shop", "test", BigInteger.ONE, true, null,  TokenType.identity.ordinal(), key.getPublicKeyAsHex(),
-                walletAppKit1.wallet());
+        Block block = createToken(key, "product", 0, "shop", "test", BigInteger.ONE, true, null,
+                TokenType.identity.ordinal(), key.getPublicKeyAsHex(), walletAppKit1.wallet());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(walletKeys.get(0));

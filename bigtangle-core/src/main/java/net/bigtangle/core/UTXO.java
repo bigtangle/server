@@ -163,7 +163,8 @@ public class UTXO extends SpentBlock {
         } catch (Exception e) {
             // IGNORE
         }
-        this.memo = MemoInfo.parseToString(memo);
+        this.memo =memo;
+                //;
 
         this.address = address;
         this.setSpent(spent);
@@ -175,6 +176,11 @@ public class UTXO extends SpentBlock {
         this.setTime(time);
     }
 
+    public String  memoToString() {
+        return MemoInfo.parseToString(memo);
+    }
+
+    
     /** The value which this Transaction output holds. */
     public Coin getValue() {
         return value;

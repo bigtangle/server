@@ -2409,53 +2409,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-
-        Block block = getTip();
-
-        SendRequest request = SendRequest.to(destination, amount);
-        request.aesKey = aesKey;
-
-        request.tx.setMemo(new MemoInfo(memo));
-        completeTx(request, aesKey);
-        block.addTransaction(request.tx);
-
-        return solveAndPost(block);
+            throws JsonProcessingException, IOException, InsufficientMoneyException { 
+        return pay(aesKey, destination, amount, new MemoInfo(memo));
     }
 
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-
-        Block block = getTip();
-
+            throws JsonProcessingException, IOException, InsufficientMoneyException { 
+        Block block = getTip(); 
         SendRequest request = SendRequest.to(destination, amount);
-        request.aesKey = aesKey;
-
+        request.aesKey = aesKey; 
         request.tx.setMemo(menoinfo);
         completeTx(request, aesKey);
-        block.addTransaction(request.tx);
-
+        block.addTransaction(request.tx); 
         return solveAndPost(block);
-    }
-
-    /*
-     * transfer data from encrypted
-     */
-    public Block transferData(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-
-        Block block = getTip();
-
-        SendRequest request = SendRequest.to(destination, amount);
-        request.aesKey = aesKey;
-
-        request.tx.setMemo(menoinfo);
-        completeTx(request, aesKey);
-        block.addTransaction(request.tx);
-
-        return solveAndPost(block);
-    }
-
+    } 
     /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
