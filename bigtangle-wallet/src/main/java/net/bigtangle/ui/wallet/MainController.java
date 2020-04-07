@@ -209,7 +209,7 @@ public class MainController {
             byte[] tokenid = c.getTokenid();
             String address = utxo.getAddress();
             String tokenname = t.getTokenname();
-            String memo = utxo.getMemo();
+            String memo = utxo.memoToString();
             String minimumsign = Main.getString(utxo.getMinimumsign()).trim();
             String hashHex = utxo.getBlockHashHex();
             String hash = utxo.getHashHex();
