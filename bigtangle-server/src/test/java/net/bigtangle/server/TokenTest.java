@@ -264,11 +264,12 @@ public class TokenTest extends AbstractIntegrationTest {
 
         ECKey issuer = new ECKey();
         ECKey userkey = new ECKey();
-        TokenKeyValues kvs = certificateTokenKeyValues(issuer, userkey);
+        SignedData signedata = signeddata(issuer);
+        TokenKeyValues kvs = signedata.toTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
                 TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
-                userkey.getPubKey());
+                userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -309,11 +310,12 @@ public class TokenTest extends AbstractIntegrationTest {
 
         ECKey issuer = new ECKey();
         ECKey userkey = new ECKey();
-        TokenKeyValues kvs = prescriptionTokenKeyValues(issuer, userkey);
+        SignedData signedata = signeddata(key);
+        TokenKeyValues kvs = signedata.toTokenKeyValues(key, userkey);
         walletAppKit1.wallet().importKey(issuer);
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
                 TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
-                userkey.getPubKey());
+                userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -329,7 +331,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().get(0).getTokennameDisplay()
                 .equals(currentToken.getToken().getTokenname() + "@id.shop"));
         Token token = getTokensResponse.getTokens().get(0);
-          SignedData p = prescription(userkey, token);
+        SignedData p = prescription(userkey, token);
         List<UTXO> ulist = getBalance(false, userkey);
         assertTrue(ulist.size() == 1);
         // pay the token to pharmacy
@@ -337,11 +339,7 @@ public class TokenTest extends AbstractIntegrationTest {
         // encrypt data as memo or
         Wallet userWallet = Wallet.fromKeys(networkParameters, userkey);
 
-        byte[] cipher = ECIESCoder.encrypt(pharmacy.getPubKeyPoint(), p.toByteArray());
-        String memoHex = Utils.HEX.encode(cipher);
-
-        MemoInfo memoInfo = new MemoInfo();
-        memoInfo.addEncryptMemo(memoHex);
+        MemoInfo memoInfo = p.encryptToMemo(pharmacy);
         userWallet.setServerURL(contextRoot);
         Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
         sendEmpty(10);
@@ -349,22 +347,13 @@ public class TokenTest extends AbstractIntegrationTest {
         confirmationService.update();
         List<UTXO> pharmalist = getBalance(false, pharmacy);
         String jsonString = pharmalist.get(0).getMemo();
-
         MemoInfo m = MemoInfo.parse(jsonString);
-        for (KeyValue keyValue : m.getKv()) {
-            if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
-                byte[] decryptedPayload = ECIESCoder.decrypt(pharmacy.getPrivKey(),
-                        Utils.HEX.decode(keyValue.getValue()));
-                      SignedData sdata = new SignedData().parse(decryptedPayload);
-                sdata.verify();
-                if (DataClassName.Prescription.name().equals(sdata.getDataClassName())) {
-                   Prescription pre = new Prescription().parse(Utils.HEX.decode(sdata.getSerializedData()));
-                     assertTrue(pre.getFilename() !=null );
-                }
-                
-            }
-        }
+        SignedData sdata = SignedData.decryptFromMemo(pharmacy, m);
+        if (DataClassName.Prescription.name().equals(sdata.getDataClassName())) {
+            Prescription pre = new Prescription().parse(Utils.HEX.decode(sdata.getSerializedData()));
+            assertTrue(pre.getFilename() != null);
 
+        }
     }
 
     private SignedData prescription(ECKey userkey, Token token)
@@ -422,7 +411,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().importKey(issuer);
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
                 TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
-                userkey.getPubKey());
+                userkey.getPubKey(), null);
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
@@ -473,7 +462,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
     private TokenKeyValues getTokenKeyValues(ECKey key, ECKey userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
-        SignedData identity = new SignedData();
+        SignedData signeddata = new SignedData();
         IdentityCore identityCore = new IdentityCore();
         identityCore.setSurname("zhang");
         identityCore.setForenames("san");
@@ -486,13 +475,13 @@ public class TokenTest extends AbstractIntegrationTest {
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);
-
-        return identity.toTokenKeyValues(key, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+        signeddata.signData(key, identityData.toByteArray(), DataClassName.IdentityData.name());
+        return signeddata.toTokenKeyValues(key, userkey);
     }
 
     private TokenKeyValues certificateTokenKeyValues(ECKey key, ECKey userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
-        SignedData identity = new SignedData();
+        SignedData signeddata = new SignedData();
         KeyValueList kvs = new KeyValueList();
 
         byte[] first = "my first file".getBytes();
@@ -505,19 +494,18 @@ public class TokenTest extends AbstractIntegrationTest {
         kv.setValue(Utils.HEX.encode("second.pdf".getBytes()));
         kvs.addKeyvalue(kv);
 
-        return identity.toTokenKeyValues(key, userkey, kvs.toByteArray(), DataClassName.KeyValueList.name());
+        signeddata.signData(key, kvs.toByteArray(), DataClassName.KeyValueList.name());
+        return signeddata.toTokenKeyValues(key, userkey);
     }
 
-    private TokenKeyValues prescriptionTokenKeyValues(ECKey key, ECKey userkey)
-            throws InvalidCipherTextException, IOException, SignatureException {
-        SignedData identity = new SignedData();
+    private SignedData signeddata(ECKey key) throws SignatureException {
+        SignedData signedata = new SignedData();
         Prescription p = new Prescription();
-        byte[] first = "my first file".getBytes();
         p.setPrescription("my first prescription");
         p.setFilename("second.pdf");
         p.setFile("second.pdf".getBytes());
-
-        return identity.toTokenKeyValues(key, userkey, p.toByteArray(), DataClassName.Prescription.name());
+        signedata.signData(key, p.toByteArray(), DataClassName.Prescription.name());
+        return signedata;
     }
 
     @Test

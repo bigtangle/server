@@ -67,7 +67,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo,null);
 
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash = transaction.getHash();

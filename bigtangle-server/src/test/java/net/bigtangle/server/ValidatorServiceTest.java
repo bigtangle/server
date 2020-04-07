@@ -29,6 +29,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -1030,7 +1031,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase without data
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         block.getTransactions().get(0).setData(null);
 
         // solve block
@@ -1065,7 +1066,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase without data
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         block.getTransactions().get(0).setData(new byte[] { 1, 2 });
 
         // solve block
@@ -1102,7 +1103,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase without data
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         block.getTransactions().get(0).setDataSignature(null);
 
         // solve block
@@ -1139,7 +1140,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase without data
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         block.getTransactions().get(0).setDataSignature(new byte[] { 1, 2 });
 
         // solve block
@@ -1735,7 +1736,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Coinbase with signatures
             if (tokenInfo.getMultiSignAddresses() != null) {
 
-                block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+                block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
                 Transaction transaction = block.getTransactions().get(0);
                 Sha256Hash sighash1 = transaction.getHash();
                 ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
@@ -1811,7 +1812,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,null);
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
@@ -2093,7 +2094,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,null);
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
@@ -2147,7 +2148,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
@@ -2401,7 +2402,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
 
         // Coinbase with signatures
-        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo,new MemoInfo("coinbase"));
         Transaction transaction = block.getTransactions().get(0);
 
         // Add another output for other tokens

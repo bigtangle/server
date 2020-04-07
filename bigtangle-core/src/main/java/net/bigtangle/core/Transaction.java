@@ -304,7 +304,8 @@ public class Transaction extends ChildMessage {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] buf = unsafeBitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf, 0, buf.length - calculateMemoLen() - calculateDataSignatureLen()));
+            hash = Sha256Hash.wrapReversed(
+                    Sha256Hash.hashTwice(buf, 0, buf.length - calculateMemoLen() - calculateDataSignatureLen()));
         }
         return hash;
     }
@@ -612,7 +613,7 @@ public class Transaction extends ChildMessage {
             }
             optimalEncodingMessageSize += len;
         }
-        
+
         len = readUint32();
         optimalEncodingMessageSize += 4;
         if (len > 0) {
@@ -734,7 +735,7 @@ public class Transaction extends ChildMessage {
             }
         } else {
             s.append("     ");
-        //    s.append("INCOMPLETE: No inputs!\n");
+            // s.append("INCOMPLETE: No inputs!\n");
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
@@ -1227,7 +1228,7 @@ public class Transaction extends ChildMessage {
             uint32ToByteStreamLE(membyte.length, stream);
             stream.write(membyte);
         }
-        
+
         if (this.dataSignature == null) {
             uint32ToByteStreamLE(0L, stream);
         } else {
@@ -1389,9 +1390,11 @@ public class Transaction extends ChildMessage {
         if (this.getMemo() != null && this.getMemo().length() > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE)
             throw new VerificationException("memo size too large MAX " + NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
 
-        /* Check by this.getMessageSize() > NetworkParameters.MAX_DEFAULT_BLOCK_SIZE
-         * if (this.getDataClassName()!=null&& this.getDataClassName().length()
-         * > NetworkParameters.MAX_TRANSACTION_MEMO_SIZE) throw new
+        /*
+         * Check by this.getMessageSize() >
+         * NetworkParameters.MAX_DEFAULT_BLOCK_SIZE if
+         * (this.getDataClassName()!=null&& this.getDataClassName().length() >
+         * NetworkParameters.MAX_TRANSACTION_MEMO_SIZE) throw new
          * VerificationException( "getDataClassName size too large MAX " +
          * NetworkParameters.MAX_TRANSACTION_MEMO_SIZE);
          * 
@@ -1513,12 +1516,15 @@ public class Transaction extends ChildMessage {
      */
     public void setMemo(MemoInfo memoInfo) {
         try {
-            this.memo = memoInfo.toJson();
+            if (memoInfo == null)
+                this.memo = null;
+            else
+                this.memo = memoInfo.toJson();
         } catch (JsonProcessingException e) {
         }
         unCache();
     }
-    
+
     public byte[] getData() {
         return data;
     }

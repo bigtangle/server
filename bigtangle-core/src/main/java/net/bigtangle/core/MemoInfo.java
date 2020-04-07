@@ -17,9 +17,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
  */
 public class MemoInfo implements java.io.Serializable {
     public static final String MEMO = "memo";
-    public static final String ENCRYPT = "encrypt";
+    public static final String ENCRYPT = "SignedData";
     private static final long serialVersionUID = 6992138619113601243L;
 
+    private List<KeyValue> kv;
+    
     public MemoInfo() {
     }
 
@@ -44,7 +46,7 @@ public class MemoInfo implements java.io.Serializable {
         return this;
     }
 
-    private List<KeyValue> kv;
+
 
     public String toJson() throws JsonProcessingException {
         return Json.jsonmapper().writeValueAsString(this);

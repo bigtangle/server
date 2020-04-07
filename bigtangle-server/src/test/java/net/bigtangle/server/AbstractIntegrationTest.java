@@ -50,6 +50,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -957,7 +958,7 @@ public abstract class AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(keys.get(2).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(2).getPubKey(), basecoin, tokenInfo, new MemoInfo("coinbase"));
         block = adjustSolve(block);
 
         log.debug("block hash : " + block.getHashAsString());
@@ -1129,7 +1130,7 @@ public abstract class AbstractIntegrationTest {
             block.setHeight(Math.max(overrideHash2.getHeight(), overrideHash1.getHeight()) + 1);
         }
 
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo, new MemoInfo("coinbase"));
 
         Transaction transaction = block.getTransactions().get(0);
 
@@ -1238,7 +1239,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo,new MemoInfo("coinbase"));
 
         Transaction transaction = block.getTransactions().get(0);
 
@@ -1417,7 +1418,8 @@ public abstract class AbstractIntegrationTest {
 
     }
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid, Wallet w , byte[] pubkeyTo) throws Exception {
+            BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, 
+            String tokenid, Wallet w , byte[] pubkeyTo, MemoInfo memoInfo) throws Exception {
  
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
@@ -1425,7 +1427,7 @@ public abstract class AbstractIntegrationTest {
         token.setTokentype(tokentype);
         List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
         addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
-        return w. createToken(key, domainname, increment, token, addresses,pubkeyTo);
+        return w. createToken(key, domainname, increment, token, addresses,pubkeyTo, memoInfo);
 
     }
 }

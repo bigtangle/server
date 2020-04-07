@@ -175,7 +175,8 @@ public class TokenIdentityController extends TokenSignsController {
                 identityData.setPhoto(photo);
             }
             ECKey userkey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenname2id.getText().trim()));
-            identity.toTokenKeyValues(outKey, userkey, identityData.toByteArray(), DataClassName.IdentityData.name());
+            identity.signData(outKey,   identityData.toByteArray(), DataClassName.IdentityData.name());
+            identity.toTokenKeyValues(outKey, userkey);
 
             List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 

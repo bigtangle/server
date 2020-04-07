@@ -1804,9 +1804,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey) throws Exception {
-        return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey());
+        return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("coinbase"));
     }
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo) throws Exception {
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo,  MemoInfo memoInfo) throws Exception {
         final Token token = tokenInfo.getToken();
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())
@@ -1848,7 +1848,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(pubKeyTo, basecoin, tokenInfo);
+        block.addCoinbaseTransaction(pubKeyTo, basecoin, tokenInfo, memoInfo);
 
         Transaction transaction = block.getTransactions().get(0);
 
@@ -2526,7 +2526,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        saveToken(tokenInfo, Coin.valueOf(1, tokenid), ownerKey, aesKey);
+        saveToken(tokenInfo, Coin.valueOf(1, tokenid), ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("publishDomainName"));
+   
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2675,10 +2676,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
             List<MultiSignAddress> addresses) throws Exception {
-       return createToken(key, domainname, increment, token, addresses, key.getPubKey());
+       return createToken(key, domainname, increment, token, addresses, key.getPubKey(),new MemoInfo("coinbase"));
     }
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
-            List<MultiSignAddress> addresses, byte[] pubkeyTo) throws Exception {
+            List<MultiSignAddress> addresses, byte[] pubkeyTo,       MemoInfo memoInfo ) throws Exception {
         Token domain = getDomainNameBlockHash(domainname, "token").getdomainNameToken();
         token.setDomainName(domain.getTokenname());
         token.setDomainNameBlockHash(domain.getBlockHashHex());
@@ -2701,7 +2702,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         tokenInfo.setMultiSignAddresses(addresses);
         // tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid,
         // "", key.getPublicKeyAsHex()));
-        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null, pubkeyTo);
+        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null, pubkeyTo,memoInfo);
     }
 
  

@@ -1077,17 +1077,6 @@ public class Block extends Message {
     // Used to make transactions unique.
     private static int txCounter;
 
-    /**
-     * Adds a coinbase transaction to the block. This exists for unit tests.
-     * 
-     * @param height
-     *            block height, if known, or -1 otherwise.
-     */
-
-    public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
-        this.addCoinbaseTransaction(pubKeyTo, value, null);
-    }
-
  
     public void addCoinbaseTransactionPubKeyData(byte[] pubKeyTo, Coin value, DataClassName dataClassName,
             byte[] data) {
@@ -1127,7 +1116,7 @@ public class Block extends Message {
         adjustLength(transactions.size(), coinbase.length);
     }
 
-    public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo) {
+    public void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, TokenInfo tokenInfo, MemoInfo memoInfo) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
 
@@ -1137,7 +1126,7 @@ public class Block extends Message {
             byte[] buf = tokenInfo.toByteArray();
             coinbase.setData(buf);
         }
-        coinbase.setMemo(new MemoInfo(" Coinbase:  " +DataClassName.TOKEN.name()));
+        coinbase.setMemo(memoInfo);
         // coinbase.tokenid = value.tokenid;
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 

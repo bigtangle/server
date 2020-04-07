@@ -35,6 +35,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -389,7 +390,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         final TokenInfo tokenInfo = null;
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -411,7 +412,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
         final TokenInfo tokenInfo = new TokenInfo();
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -439,7 +440,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -468,7 +469,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -505,7 +506,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -545,7 +546,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(0).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -587,7 +588,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(2).getPublicKeyAsHex()));
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo, new MemoInfo("test"));
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -650,7 +651,6 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
         TokenInfo tokenInfo = new TokenInfo();
-
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
         String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
@@ -668,7 +668,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(2).getPublicKeyAsHex()));
 
-        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(keys.get(0).getPubKey(), basecoin, tokenInfo,null);
         block.solve();
         String resp = OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
@@ -837,7 +837,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                     Json.jsonmapper().writeValueAsString(requestParam));
             Block block = networkParameters.getDefaultSerializer().makeBlock(data);
             block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-            block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo);
+            block.addCoinbaseTransaction(outKey.getPubKey(), basecoin, tokenInfo,null);
 
             Transaction transaction = block.getTransactions().get(0);
 
@@ -898,7 +898,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo);
+        block.addCoinbaseTransaction(key1.getPubKey(), basecoin, tokenInfo,null);
         block.solve();
 
         log.debug("block hash : " + block.getHashAsString());
