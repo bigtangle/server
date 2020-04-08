@@ -19,6 +19,7 @@ public class Prescription extends DataClass implements java.io.Serializable {
     private String prescription;
     private String filename;
     private byte[] file;
+    private String utxokey;
 
     public byte[] toByteArray() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -49,14 +50,15 @@ public class Prescription extends DataClass implements java.io.Serializable {
     }
 
     public Prescription parseDIS(DataInputStream dis) throws IOException {
-        super.parseDIS(dis); 
+        super.parseDIS(dis);
         prescription = Utils.readNBytesString(dis);
         filename = Utils.readNBytesString(dis);
-        file = Utils.readNBytes(dis); 
+        file = Utils.readNBytes(dis);
         dis.close();
 
         return this;
     }
+
     public String getPrescription() {
         return prescription;
     }
@@ -79,6 +81,14 @@ public class Prescription extends DataClass implements java.io.Serializable {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getUtxokey() {
+        return utxokey;
+    }
+
+    public void setUtxokey(String utxokey) {
+        this.utxokey = utxokey;
     }
 
 }
