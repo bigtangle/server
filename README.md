@@ -19,7 +19,7 @@ $ ./gradlew build
 #For development using the latest eclipse
 checkout this project and import this project. It may require the configure of the  project as gradle project.
 
-use the format preference-> java -> code style -> formatter import the file designdoc/eclipse.xml
+use the format preference-> java -> code style -> formatter import the file helper/eclipse.xml
 
 
 

@@ -1,1 +1,0 @@
- spendpendingtime bigint
