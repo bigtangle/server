@@ -1,4 +1,4 @@
-package net.bigtangle.data.identity;
+package net.bigtangle.apps.data;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -21,10 +21,13 @@ public class MemoInfo implements java.io.Serializable {
     private static final long serialVersionUID = 6992138619113601243L;
 
     private List<KeyValue> kv;
-    
+
     public MemoInfo() {
     }
 
+    /*
+     *  add string memo 
+     */
     public MemoInfo(String memo) {
         kv = new ArrayList<KeyValue>();
         KeyValue keyValue = new KeyValue();
@@ -33,6 +36,9 @@ public class MemoInfo implements java.io.Serializable {
         kv.add(keyValue);
     }
 
+    /*
+     * add ENCRYPT data as key value
+     */
     public MemoInfo addEncryptMemo(String memo) {
         if (kv == null) {
             kv = new ArrayList<KeyValue>();
@@ -46,8 +52,6 @@ public class MemoInfo implements java.io.Serializable {
         return this;
     }
 
-
-
     public String toJson() throws JsonProcessingException {
         return Json.jsonmapper().writeValueAsString(this);
 
@@ -59,6 +63,9 @@ public class MemoInfo implements java.io.Serializable {
         return Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
     }
 
+    /*
+     * used for display the memo and cutoff maximal to 20 chars
+     */
     public static String parseToString(String jsonStr) {
         try {
             if (jsonStr == null)
@@ -66,13 +73,23 @@ public class MemoInfo implements java.io.Serializable {
             MemoInfo m = Json.jsonmapper().readValue(jsonStr, MemoInfo.class);
             String s = "";
             for (KeyValue keyvalue : m.getKv()) {
-                if (keyvalue.getValue() != null && keyvalue.getKey() != null && !keyvalue.getKey().equals("null")) {
-                    s += keyvalue.getKey() + ": " + keyvalue.getValue() + " \n";
+                if (valueDisplay(keyvalue) != null && keyvalue.getKey() != null && !keyvalue.getKey().equals("null")) {
+                    s += keyvalue.getKey() + ": " + valueDisplay(keyvalue) + " \n";
                 }
             }
             return s;
         } catch (Exception e) {
             return jsonStr;
+        }
+    }
+
+    private static String valueDisplay(KeyValue keyvalue) {
+        if (keyvalue.getValue() != null)
+            return "";
+        if (keyvalue.getValue().length() < 20) {
+            return keyvalue.getValue();
+        } else {
+            return keyvalue.getValue().substring(0, 20) + "...";
         }
     }
 
