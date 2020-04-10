@@ -79,8 +79,12 @@ public abstract class AbstractStreamHandler {
     }
 
     private String getApplicationId() {
+        String consumerIdSuffix=kafkaConfiguration.getConsumerIdSuffix();
+        if(consumerIdSuffix==null || "".equals(consumerIdSuffix )) {
+            consumerIdSuffix= serverConfiguration.getMineraddress(); 
+        }
         return BlockStreamHandler.class.getCanonicalName() + "_" + this.getClass().getSimpleName() + "_"
-                + kafkaConfiguration.getConsumerIdSuffix();
+                + consumerIdSuffix;
     }
     public boolean isRunning() {
         if(streams==null) return false;

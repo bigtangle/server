@@ -20,9 +20,9 @@ import java.util.Random;
 import org.junit.Test;
 import org.spongycastle.crypto.InvalidCipherTextException;
 
-import net.bigtangle.data.identity.SignedData;
-import net.bigtangle.data.identity.IdentityCore;
-import net.bigtangle.data.identity.IdentityData;
+import net.bigtangle.apps.data.IdentityCore;
+import net.bigtangle.apps.data.IdentityData;
+import net.bigtangle.apps.data.SignedData;
 import net.bigtangle.encrypt.ECIESCoder;
 
 public class SerializationTest {

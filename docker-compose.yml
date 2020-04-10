@@ -32,10 +32,9 @@ services:
       SERVER_PORT: 8088
       DB_NAME: info
       SERVICE_MILESTONE_ACTIVE: true
-      SERVER_MINERADDRESS: 1MxiDdUWQ5Aek872tJHpnGe7j75pwaGdZE
-      BOOT_STRAP_SERVERS: $KAFKA    
+      SERVER_MINERADDRESS: 1MxiDdUWQ5Aek872tJHpnGe7j75pwaGdZE 
       TOPIC_OUT_NAME: bigtangle
-      CONSUMERIDSUFFIX:  yourid.bigtangle-server
+      CONSUMERIDSUFFIX:  
       REQUESTER: https://p.bigtangle.org:8088, https://p.bigtangle.de:8088
       SERVER_NET: Mainnet
       

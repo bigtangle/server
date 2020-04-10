@@ -24,6 +24,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import net.bigtangle.apps.data.IdentityCore;
+import net.bigtangle.apps.data.IdentityData;
+import net.bigtangle.apps.data.Prescription;
+import net.bigtangle.apps.data.SignedData;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.DataClassName;
@@ -42,10 +46,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.data.identity.IdentityCore;
-import net.bigtangle.data.identity.IdentityData;
-import net.bigtangle.data.identity.Prescription;
-import net.bigtangle.data.identity.SignedData;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.OkHttp3Util;
