@@ -86,10 +86,10 @@ public class MemoInfo implements java.io.Serializable {
     private static String valueDisplay(KeyValue keyvalue) {
         if (keyvalue.getValue() != null)
             return "";
-        if (keyvalue.getValue().length() < 20) {
+        if (keyvalue.getValue().length() < 40) {
             return keyvalue.getValue();
         } else {
-            return keyvalue.getValue().substring(0, 20) + "...";
+            return keyvalue.getValue().substring(0, 40) + "...";
         }
     }
 

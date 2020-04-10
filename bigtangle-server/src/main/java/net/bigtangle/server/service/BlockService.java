@@ -16,7 +16,6 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -59,7 +58,6 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
-import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.CoinSelector;
 import net.bigtangle.wallet.DefaultCoinSelector;
 
@@ -91,13 +89,10 @@ public class BlockService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
     private static final int PROTOTYPE_CACHE_SIZE = 10;
-
-    private List<Block> prototypeCache = new ArrayList<>();
-    private long lastPrototypeCacheUpdate = 0;
+  
 
     // cache only binary block only
     @Cacheable("blocks")
-    // nullable
     public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
     }
@@ -404,7 +399,7 @@ public class BlockService {
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
-    protected final ReentrantLock lock = Threading.lock("blockService");
+   
 
     protected final Random random = new Random();
 
@@ -412,24 +407,13 @@ public class BlockService {
         return getNewBlockPrototype();
     }
 
-    public Block getBlockPrototypeWithCache() throws Exception {
-        lock.lock();
-        try {
-            if (lastPrototypeCacheUpdate < System.currentTimeMillis() - 1000) {
-                prototypeCache.clear();
+    public void createBlockPrototypeCache() throws Exception { 
                 for (int i = 0; i < PROTOTYPE_CACHE_SIZE; i++) {
-                    Block newTip = getNewBlockPrototype();
-                    prototypeCache.add(newTip);
+                    Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+                    Block r1 = getBlock(tipsToApprove.getLeft());
+                    Block r2 = getBlock(tipsToApprove.getRight()); 
+                    store.insertBlockPrototype(r1.getHash(), r2.getHash());
                 }
-                lastPrototypeCacheUpdate = System.currentTimeMillis();
-            }
-            return prototypeCache.get(random.nextInt(prototypeCache.size()));
-        } catch (Exception e) {
-            logger.error("getTip ", e);
-            return null;
-        } finally {
-            lock.unlock();
-        }
     }
 
     private Block getNewBlockPrototype() throws BlockStoreException, NoBlockException {
