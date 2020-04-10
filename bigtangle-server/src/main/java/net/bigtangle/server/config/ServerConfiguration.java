@@ -39,6 +39,7 @@ public class ServerConfiguration {
     private int syncblocks=500;
     
     private String indexhtml="https://www.bigtangle.org";
+    private int blockPrototypeCachesSize =10;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -212,6 +213,14 @@ public class ServerConfiguration {
 
     public void setIndexhtml(String indexhtml) {
         this.indexhtml = indexhtml;
+    }
+
+    public int getBlockPrototypeCachesSize() {
+        return blockPrototypeCachesSize;
+    }
+
+    public void setBlockPrototypeCachesSize(int blockPrototypeCachesSize) {
+        this.blockPrototypeCachesSize = blockPrototypeCachesSize;
     }
 
     @Override

@@ -486,15 +486,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO contractexecution (blockhash, contracttokenid, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?,?)";
 
-    protected final String BlockPrototype_SELECT_SQL = 
-             "   select prevblockhash, prevbranchblockhash, inserttime from blockprototype   ";          
+    protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, inserttime from blockprototype   ";
     protected final String BlockPrototype_INSERT_SQL = getInsert()
-            + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) "
-            + "VALUES (?, ?, ?)";
-    protected final String BlockPrototype_DELETE_SQL = 
-            "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";          
+            + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) " + "VALUES (?, ?, ?)";
+    protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";
 
-    
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
     protected LinkedBlockingQueue<Connection> allConnections;
@@ -1449,7 +1445,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
- 
     /**
      * Deletes the store by deleting the tables within the database.
      * 
@@ -2616,7 +2611,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
             if (name != null && !"".equals(name.trim())) {
-                sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name + "%' OR domainname LIKE '%"+name+"%')";
+                sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name
+                        + "%' OR domainname LIKE '%" + name + "%')";
             }
             sql += LIMIT_5000;
             preparedStatement = conn.get().prepareStatement(sql);
@@ -2665,9 +2661,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         byte[] buf = resultSet.getBytes("tokenkeyvalues");
         if (buf != null) {
             try {
-            tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
-            }catch (Exception e) {
-               log.warn("Token "+ tokens, e);
+                tokens.setTokenKeyValues(TokenKeyValues.parse(buf));
+            } catch (Exception e) {
+                log.warn("Token " + tokens, e);
             }
         }
     }
@@ -6260,22 +6256,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<BlockPrototype> getBlockPrototype( ) throws BlockStoreException  {
-
+    public BlockPrototype getBlockPrototype() throws BlockStoreException {
         PreparedStatement s = null;
-        List<BlockPrototype> outputs = new ArrayList<BlockPrototype>();
         try {
-            maybeConnect(); 
+            maybeConnect();
+            s = conn.get().prepareStatement(BlockPrototype_SELECT_SQL + " where inserttime > ? limit 1 ");
+            s.setLong(1, System.currentTimeMillis() - 30000);
             ResultSet results = s.executeQuery();
-            while (results.next()) {
-                outputs.add(
-                       new BlockPrototype(Sha256Hash.wrap(results.getBytes("previousblockhash")),
-                               Sha256Hash.wrap(results.getBytes("previousbranchblockhash")), results.getLong("inserttime")));
+            if (results.next()) {
+                return new BlockPrototype(Sha256Hash.wrap(results.getBytes("previousblockhash")),
+                        Sha256Hash.wrap(results.getBytes("previousbranchblockhash")), results.getLong("inserttime"));
             }
-            return outputs;
+            return null;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-         } finally {
+        } finally {
             if (s != null)
                 try {
                     s.close();
@@ -6285,9 +6280,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
     }
+
     @Override
-    public void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash) throws BlockStoreException {
-       
+    public void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
+            throws BlockStoreException {
+
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -6295,6 +6292,32 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setBytes(1, previousblockhash.getBytes());
             preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
             preparedStatement.setLong(3, System.currentTimeMillis());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                throw new BlockStoreException(e);
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
+            throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(BlockPrototype_DELETE_SQL);
+            preparedStatement.setBytes(1, previousblockhash.getBytes());
+            preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -6308,15 +6331,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
+
     @Override
-    public void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash) throws BlockStoreException {
-       
+    public void deleteBlockPrototypeTimeout() throws BlockStoreException {
+
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(BlockPrototype_DELETE_SQL);
-            preparedStatement.setBytes(1, previousblockhash.getBytes());
-            preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
+            preparedStatement = conn.get().prepareStatement(" delete from blockprototype  where inserttime < ?");
+            preparedStatement.setLong(1, System.currentTimeMillis() - 30000);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);

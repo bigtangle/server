@@ -147,7 +147,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return a;
     }
 
-    public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
+    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();

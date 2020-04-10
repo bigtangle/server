@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -28,6 +27,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
@@ -58,8 +58,6 @@ import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
-import net.bigtangle.wallet.CoinSelector;
-import net.bigtangle.wallet.DefaultCoinSelector;
 
 /**
  * <p>
@@ -88,8 +86,6 @@ public class BlockService {
     protected TipsService tipService;
 
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
-    private static final int PROTOTYPE_CACHE_SIZE = 10;
-  
 
     // cache only binary block only
     @Cacheable("blocks")
@@ -129,8 +125,17 @@ public class BlockService {
         Context context = new Context(networkParameters);
         Context.propagate(context);
         blockgraph.add(block, false);
+        removeBlockPrototype(block);
         broadcastBlock(block);
 
+    }
+
+    public void removeBlockPrototype(Block block) {
+        try {
+            store.deleteBlockPrototype(block.getPrevBlockHash(), block.getPrevBranchBlockHash());
+        } catch (BlockStoreException e) {
+            // ignore this and delete will be done by schedule
+        }
     }
 
     public long getTimeSeconds(int days) throws Exception {
@@ -397,32 +402,34 @@ public class BlockService {
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
 
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
-
-   
-
-    protected final Random random = new Random();
-
     public Block getBlockPrototype() throws BlockStoreException, NoBlockException {
-        return getNewBlockPrototype();
+        BlockPrototype re = store.getBlockPrototype();
+        if (re == null) {
+            return getNewBlockPrototype();
+        } else {
+            Block r1 = getBlock(re.getPrevBlockHash());
+            Block r2 = getBlock(re.getPrevBranchBlockHash());
+            Block b = Block.createBlock(networkParameters, r1, r2);
+            b.setMinerAddress(
+                    Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+            return b;
+        }
     }
 
-    public void createBlockPrototypeCache() throws Exception { 
-                for (int i = 0; i < PROTOTYPE_CACHE_SIZE; i++) {
-                    Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-                    Block r1 = getBlock(tipsToApprove.getLeft());
-                    Block r2 = getBlock(tipsToApprove.getRight()); 
-                    store.insertBlockPrototype(r1.getHash(), r2.getHash());
-                }
+    public void createBlockPrototypeCache() throws Exception {
+        for (int i = 0; i < serverConfiguration.getBlockPrototypeCachesSize(); i++) {
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
+            Block r1 = getBlock(tipsToApprove.getLeft());
+            Block r2 = getBlock(tipsToApprove.getRight());
+            store.insertBlockPrototype(r1.getHash(), r2.getHash());
+        }
     }
 
     private Block getNewBlockPrototype() throws BlockStoreException, NoBlockException {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
         Block r1 = getBlock(tipsToApprove.getLeft());
         Block r2 = getBlock(tipsToApprove.getRight());
-
         Block b = Block.createBlock(networkParameters, r1, r2);
-
         b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
         return b;
@@ -476,11 +483,8 @@ public class BlockService {
         if (store.getBlockEvaluation(block.getHash()) == null) {
 
             try {
-                if (!blockgraph.add(block, allowUnsolid)) {
-                    // if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                    // blockRequester.requestBlocks(block);
-                    // }
-                }
+                blockgraph.add(block, allowUnsolid);
+                removeBlockPrototype(block);
                 return Optional.of(block);
             } catch (ProofOfWorkException | UnsolidException e) {
                 return Optional.empty();

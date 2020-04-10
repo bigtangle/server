@@ -355,7 +355,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_BLOCKPROTOTYPE_TABLE = "CREATE TABLE blockprototype (\n"
             + "    prevblockhash  binary(32) NOT NULL,\n"
             + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
-            + "    insertime bigint,\n" 
+            + "    inserttime bigint,\n" 
             + "    CONSTRAINT tips_pk PRIMARY KEY (prevblockhash,prevbranchblockhash ) USING BTREE \n" + ")\n";
 
     
@@ -439,7 +439,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
  
     public  void updateDatabse() throws BlockStoreException, SQLException  {
     
-       String ver = new String(getSettingValue("version"));
+       byte[] settingValue = getSettingValue("version");
+       String ver = "";
+       if(settingValue!=null) ver= new String(settingValue);
        
        if("03".equals(ver)) {
            updateTables(getCreateTablesSQL2());

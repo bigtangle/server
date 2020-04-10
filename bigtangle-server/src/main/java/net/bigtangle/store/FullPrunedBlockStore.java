@@ -298,8 +298,9 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
             long height, long maxblocks) throws BlockStoreException;
 
     public List<Block> findRetryBlocks(long minheight) throws BlockStoreException;
-    
-    public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs) throws BlockStoreException;
+
+    public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
+            throws BlockStoreException;
 
     public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
             throws BlockStoreException;
@@ -322,8 +323,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
             throws BlockStoreException;
 
-    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses, boolean isSign)
-            throws BlockStoreException;
+    public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses,
+            boolean isSign) throws BlockStoreException;
 
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException;
 
@@ -492,14 +493,17 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
 
     void updateDatabse() throws BlockStoreException, SQLException;
 
-	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
+    void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
-	ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
-    List<BlockPrototype> getBlockPrototype() throws BlockStoreException;
+    ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
+
+    BlockPrototype getBlockPrototype() throws BlockStoreException;
 
     void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
             throws BlockStoreException;
 
     void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
             throws BlockStoreException;
+    void deleteBlockPrototypeTimeout( )    throws BlockStoreException;
+
 }
