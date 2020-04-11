@@ -105,7 +105,7 @@ public class SyncBlockService {
 
     }
 
-    public void startInit() {
+    public void startInit() throws Exception {
         if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
@@ -119,11 +119,8 @@ public class SyncBlockService {
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
-        } catch (Exception e) {
-            log.warn("SyncBlockService ", e);
-        } finally {
-            lock.unlock();
-            ;
+        }  finally {
+            lock.unlock(); 
         }
 
     }

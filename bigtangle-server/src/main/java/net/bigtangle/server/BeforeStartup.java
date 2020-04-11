@@ -30,19 +30,23 @@ public class BeforeStartup {
         // set false in test
         if (serverConfiguration.getCreatetable()) {
             store.create();
-            //update tables to new version after initial setup
-            store.updateDatabse(); 
+            // update tables to new version after initial setup
+            store.updateDatabse();
         }
         Secp256k1Context.getContext();
         if (scheduleConfiguration.isMilestone_active()) {
-            syncBlockService.startInit();
+            try {
+                syncBlockService.startInit();
+            } catch (Exception e) {
+                logger.error("", e);
+                System.exit(-1);
+            }
         }
         serverConfiguration.setServiceReady(true);
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
-  
-      
+
     }
 
     @Autowired
