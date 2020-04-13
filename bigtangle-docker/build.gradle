@@ -1,0 +1,10 @@
+ dependencies {
+ 
+   compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
+    compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot   
+ 
+    compile project(':bigtangle-core')
+ 
+}
+ 

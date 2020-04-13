@@ -40,6 +40,7 @@ public class ServerConfiguration {
     
     private String indexhtml="https://www.bigtangle.org";
     private int blockPrototypeCachesSize =10;
+    private String dockerDBHost="mysql-test";
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -221,6 +222,14 @@ public class ServerConfiguration {
 
     public void setBlockPrototypeCachesSize(int blockPrototypeCachesSize) {
         this.blockPrototypeCachesSize = blockPrototypeCachesSize;
+    }
+
+    public String getDockerDBHost() {
+        return dockerDBHost;
+    }
+
+    public void setDockerDBHost(String dockerDBHost) {
+        this.dockerDBHost = dockerDBHost;
     }
 
     @Override
