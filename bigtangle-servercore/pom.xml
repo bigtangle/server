@@ -16,13 +16,7 @@
 
 
 
-		<dependency>
-			<groupId>net.bigtangle</groupId>
-			<artifactId>bigtangle-core-apps</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-
+	
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil</artifactId>
