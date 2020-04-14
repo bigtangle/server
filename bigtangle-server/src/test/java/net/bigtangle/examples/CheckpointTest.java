@@ -1,4 +1,6 @@
-package net.bigtangle.server;
+package net.bigtangle.examples;
+
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,8 +25,8 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.docker.ShellExecute;
 import net.bigtangle.docker.VmDeployImpl;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.checkpoint.DockerService;
-import net.bigtangle.server.config.DBStoreConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -51,7 +53,11 @@ public class CheckpointTest extends AbstractIntegrationTest {
                 + " &&  "
                 + dockerService.docker("chmod +x " + shell.getFilelocation() + " && " + shell.getFilelocation())
                 );
-        System.out.println(vmDeployImpl.shellExecute(shell));
+       String re = vmDeployImpl.shellExecute(shell) ;
+       log.debug(re);
+       String hash = re.split(" ")[0];
+       assertTrue(hash.equals("034b92c696a4b33871e08ea238e6f3ad730eda8517e30de44823bcc8ce979f2f"));
+    
     }
 
     public void testServerURL() throws Exception {

@@ -43,7 +43,7 @@ public class DockerService {
      * create a executable file on the vm and calculate the  sha256sum
      */
     public String mysqldumpCheck() { 
-     String  re= " mysqldump -u " + dbStoreConfiguration.getUsername() + " -p" + dbStoreConfiguration.getPassword()
+     String  re= " mysqldump --complete-insert --skip-dump-date -u " + dbStoreConfiguration.getUsername() + " -p" + dbStoreConfiguration.getPassword()
         + " --databases " + dbStoreConfiguration.getDbName() 
         + " >  /tmp/bigtangle-database.sql   \n";
        re += " sha256sum /tmp/bigtangle-database.sql " ;

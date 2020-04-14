@@ -6264,8 +6264,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(1, System.currentTimeMillis() - 30000);
             ResultSet results = s.executeQuery();
             if (results.next()) {
-                return new BlockPrototype(Sha256Hash.wrap(results.getBytes("previousblockhash")),
-                        Sha256Hash.wrap(results.getBytes("previousbranchblockhash")), results.getLong("inserttime"));
+                return new BlockPrototype(Sha256Hash.wrap(results.getBytes("prevblockhash")),
+                        Sha256Hash.wrap(results.getBytes("prevbranchblockhash")), results.getLong("inserttime"));
             }
             return null;
         } catch (SQLException ex) {

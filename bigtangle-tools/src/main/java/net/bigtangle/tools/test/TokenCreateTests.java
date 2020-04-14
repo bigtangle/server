@@ -131,7 +131,7 @@ public class TokenCreateTests extends HelpTest {
     @Test
     public void domainBigtangle() throws Exception {
 
-        walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+      //  walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
 
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));
         // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
