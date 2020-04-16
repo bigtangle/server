@@ -5,15 +5,11 @@
 package net.bigtangle.server.service;
 
 import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,29 +19,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
-import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.response.GetBlockListResponse;
-import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
-import net.bigtangle.core.response.GetTokensResponse;
-import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -60,8 +49,6 @@ import net.bigtangle.utils.Threading;
  */
 @Service
 public class SyncBlockService {
-
-    
 
     @Autowired
     protected FullPrunedBlockStore store;
@@ -119,13 +106,12 @@ public class SyncBlockService {
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
-        }  finally {
-            lock.unlock(); 
+        } finally {
+            lock.unlock();
         }
 
     }
 
-    
     public void requestPrev(Block block) {
         try {
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
@@ -183,8 +169,8 @@ public class SyncBlockService {
         long cutoffHeight = blockService.getCurrentCutoffHeight();
         long maxHeight = blockService.getCurrentMaxHeight();
         List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight, maxHeight);
-        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() 
-        + " from cutoff height: " + cutoffHeight + " to max height: " + maxHeight);
+        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff height: " + cutoffHeight
+                + " to max height: " + maxHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
                 Block req = blockService.getBlock(storedBlock.missingdependencyHash());
@@ -203,119 +189,7 @@ public class SyncBlockService {
         }
 
     }
-
-    public class Tokensums {
-        String tokenid;
-        BigInteger initial;
-        BigInteger unspent;
-        BigInteger order;
-        Map<String, UTXO> utxos = new HashMap<String, UTXO>();
-        
-        @Override
-        public String toString() {
-            return "Tokensums [tokenid=" + tokenid + ", initial=" + initial + ", unspent=" + unspent + ", order="
-                    + order + " unspent.add(order) = " + unspent.add(order) + "]";
-        }
-
-        public boolean check() {
-            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid)) {
-                return initial.compareTo(unspent.add(order)) < 0;
-            } else {
-                return initial.compareTo(unspent.add(order)) == 0;
-            }
-
-        }
-
-        public BigInteger unspentOrderSum() {
-            return unspent.add(order);
-        }
-        public  Map<String, UTXO> getUtxos()  {
-            return utxos;
-        }
-
-    }
-
-    public void checkToken(String server, Map<String, Map<String, Tokensums>> result)
-            throws JsonProcessingException, Exception {
-        // String server = "http://localhost:8088/";
-        Map<String, Tokensums> tokensumset = new HashMap<String, Tokensums>();
-
-        result.put(server, tokensumset);
-
-        Map<String, BigInteger> tokensums = tokensum(server);
-
-        Set<String> tokenids = tokensums.keySet();
-        OrderdataResponse orderdataResponse = orders(server);
-        for (String tokenid : tokenids) {
-            Coin tokensum = new Coin(tokensums.get(tokenid) == null ? BigInteger.ZERO : tokensums.get(tokenid),
-                    tokenid);
-
-            checkToken(server, tokenid, tokensum, result.get(server), orderdataResponse);
-        }
-    }
-
-    public void checkToken(String server, String tokenid, Coin tokensum, Map<String, Tokensums> tokensums,
-            OrderdataResponse orderdataResponse) throws JsonProcessingException, Exception {
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-
-        Tokensums t = new Tokensums();
-        
-        Coin sumUnspent = Coin.valueOf(0l, tokenid);
-
-        for (UTXO u : getOutputsResponse.getOutputs()) {
-            if (u.isConfirmed() && !u.isSpent()) {
-                sumUnspent = sumUnspent.add(u.getValue());
-                
-            }
-            
-           t. utxos.put(u.keyAsString(), u);
-        }
  
-        Coin ordersum = ordersum(tokenid, server, orderdataResponse);
-        t.tokenid = tokenid;
-        t.unspent = sumUnspent.getValue();
-        t.order = ordersum.getValue();
-        t.initial = tokensum.getValue();
-        tokensums.put(tokenid, t);
-    }
-
-    public Coin ordersum(String tokenid, String server, OrderdataResponse orderdataResponse)
-            throws JsonProcessingException, Exception {
-        // OrderdataResponse orderdataResponse = orders(server);
-        Coin sumUnspent = Coin.valueOf(0l, tokenid);
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            if (orderRecord.getOfferTokenid().equals(tokenid)) {
-                sumUnspent = sumUnspent.add(Coin.valueOf(orderRecord.getOfferValue(), tokenid));
-            }
-        }
-        return sumUnspent;
-    }
-
-    private OrderdataResponse orders(String server) throws IOException, JsonProcessingException, JsonMappingException {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
-
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        return orderdataResponse;
-    }
-
-    public Map<String, BigInteger> tokensum(String server) throws JsonProcessingException, Exception {
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("name", null);
-        String response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
-
-        GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-
-        return orderdataResponse.getAmountMap();
-    }
-
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());
@@ -435,28 +309,29 @@ public class SyncBlockService {
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
         TXReward my = store.getMaxConfirmedReward();
-        if(chainlength > -1) {
-            TXReward    my1 = store.getRewardConfirmedAtHeight(chainlength);
-            if(my1!=null) my=my1;
+        if (chainlength > -1) {
+            TXReward my1 = store.getRewardConfirmedAtHeight(chainlength);
+            if (my1 != null)
+                my = my1;
         }
-        log.debug( " my chain length " + my.getChainLength()); 
+        log.debug(" my chain length " + my.getChainLength());
         for (String s : re) {
             try {
-            if (s != null && !"".equals(s)) {
-                TXReward aTXReward = getMaxConfirmedReward(s.trim());
-                if (aMaxConfirmedReward.aTXReward == null) {
-                    aMaxConfirmedReward.server = s.trim();
-                    aMaxConfirmedReward.aTXReward = aTXReward;
-                } else {
-                    if (aTXReward.getChainLength() > aMaxConfirmedReward.aTXReward.getChainLength()) {
+                if (s != null && !"".equals(s)) {
+                    TXReward aTXReward = getMaxConfirmedReward(s.trim());
+                    if (aMaxConfirmedReward.aTXReward == null) {
                         aMaxConfirmedReward.server = s.trim();
                         aMaxConfirmedReward.aTXReward = aTXReward;
+                    } else {
+                        if (aTXReward.getChainLength() > aMaxConfirmedReward.aTXReward.getChainLength()) {
+                            aMaxConfirmedReward.server = s.trim();
+                            aMaxConfirmedReward.aTXReward = aTXReward;
+                        }
                     }
+                    syncMaxConfirmedReward(aMaxConfirmedReward, my);
                 }
-                syncMaxConfirmedReward(aMaxConfirmedReward,my);
-            }
-            }catch (Exception e) {
-                log.debug("",e);
+            } catch (Exception e) {
+                log.debug("", e);
             }
         }
 
@@ -469,9 +344,9 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward,  TXReward my ) throws Exception {
-     
-         if (my == null || aMaxConfirmedReward.aTXReward == null)
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my) throws Exception {
+
+        if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
         log.debug("  remote chain length  " + aMaxConfirmedReward.aTXReward.getChainLength() + " server: "
                 + aMaxConfirmedReward.server + " my chain length " + my.getChainLength());
@@ -481,18 +356,19 @@ public class SyncBlockService {
             List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
             Collections.sort(remotes, new SortbyChain());
             List<TXReward> mylist = new ArrayList<TXReward>();
-         
-            for(TXReward t: store.getAllConfirmedReward()) {
-                if(t.getChainLength() <= my.getChainLength()) {
+
+            for (TXReward t : store.getAllConfirmedReward()) {
+                if (t.getChainLength() <= my.getChainLength()) {
                     mylist.add(t);
                 }
-            } 
+            }
             Collections.sort(mylist, new SortbyChain());
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward.getChainLength(); i += serverConfiguration.getSyncblocks()) {
-                requestBlocks(i, i + serverConfiguration.getSyncblocks() -1 , aMaxConfirmedReward.server);
+            for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
+                    .getChainLength(); i += serverConfiguration.getSyncblocks()) {
+                requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server);
             }
 
         }
@@ -525,9 +401,8 @@ public class SyncBlockService {
 
     private TXReward findSync(List<TXReward> remotes, TXReward my) throws Exception {
         for (TXReward b1 : remotes) {
-            if (b1.getChainLength()==my.getChainLength()
-                    && !b1.getBlockHash().equals(my.getBlockHash())) {
-                log.debug( " different chains remote " + b1 + " my "+ my);
+            if (b1.getChainLength() == my.getChainLength() && !b1.getBlockHash().equals(my.getBlockHash())) {
+                log.debug(" different chains remote " + b1 + " my " + my);
                 return null;
             }
             if (b1.getBlockHash().equals(my.getBlockHash())) {

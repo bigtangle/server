@@ -6,7 +6,6 @@ package net.bigtangle.server.performance;
 
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +19,9 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.server.service.SyncBlockService.Tokensums;
+import net.bigtangle.store.data.Tokensums;
 
 @Ignore
 public class CompareTest {
@@ -39,6 +39,7 @@ public class CompareTest {
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
+    CheckpointService checkpointService;
 
     @Test
     public void diffThread() throws Exception {
@@ -47,6 +48,7 @@ public class CompareTest {
         // System.setProperty("https.proxyPort", "3128");
 
         syncBlockService = new SyncBlockService();
+        checkpointService = new CheckpointService();
 
         while (true) {
             try {
@@ -67,8 +69,8 @@ public class CompareTest {
         List<TXReward> txreward2 = syncBlockService.getAllConfirmedReward(TESTSERVER2);
         Map<String, Map<String, Tokensums>> result = new HashMap<String, Map<String, Tokensums>>();
 
-        syncBlockService.checkToken(TESTSERVER1, result);
-        syncBlockService.checkToken(TESTSERVER2, result);
+        checkpointService.checkToken(TESTSERVER1, result);
+        checkpointService.checkToken(TESTSERVER2, result);
         log.debug("\n " + TESTSERVER2 + "txreward  " + txreward2.size() + "\n "
                 + txreward2.get(txreward2.size() - 1).getBlockHash() + "\n " + TESTSERVER1 + "   txreward  "
                 + txreward.size() + "\n " + txreward.get(txreward.size() - 1).getBlockHash());
@@ -104,29 +106,22 @@ public class CompareTest {
         log.debug("\n " + t1.toString() + "\n " + TESTSERVER1 + " utxo size : " + t1.getUtxos().size() + "\n "
                 + TESTSERVER2 + ": " + t.getUtxos().size());
 
-        for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
-            UTXO find = t.getUtxos().get(a.getKey());
+        for (UTXO a : t1.getUtxos()) {
+            UTXO find = find(t.getUtxos(), a);
             if (find == null) {
-                List<UTXO> utxos1 = findFromBlockHash(t1, a.getValue().getBlockHashHex());
-                List<UTXO> utxos2 = findFromBlockHash(t, a.getValue().getBlockHashHex());
-                log.error("\n " + " not found " + a.getValue().toString());
-                log.error("\n " + utxos1);
-                log.error("\n " + utxos2);
-            } else {
-                if (!a.getValue().getValue().equals(find.getValue()))
-                    log.error("\n " + TESTSERVER1 + ": " + a.getValue().getValue().toString() + "\n " + TESTSERVER2
-                            + ": " + find.getValue().toString());
+                log.error("\n " + " not found " + a);
             }
         }
     }
 
-    private List<UTXO> findFromBlockHash(Tokensums t1, String blockHashHex) {
-        List<UTXO> res = new ArrayList<>();
-        for (Entry<String, UTXO> a : t1.getUtxos().entrySet()) {
-            if (a.getKey().startsWith(blockHashHex))
-                res.add(a.getValue());
-        }
-        return res;
-    }
+    private UTXO find(List<UTXO> t1, UTXO u) {
 
+        for (UTXO a : t1) {
+            if (a.getBlockHashHex().equals(u.getBlockHashHex()) && a.getIndex() == u.getIndex()
+                    && a.getValue().equals(u.getValue()))
+                return a;
+            ;
+        }
+        return null;
+    }
 }

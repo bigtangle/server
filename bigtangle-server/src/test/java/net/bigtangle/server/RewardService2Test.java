@@ -6,7 +6,6 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +32,8 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.service.SyncBlockService.Tokensums;
+import net.bigtangle.server.service.CheckpointService;
+import net.bigtangle.store.data.Tokensums;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
@@ -94,18 +94,18 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (Block b : a2) {
             if (b != null)
                 blockGraph.add(b, true);
-  
+
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
         checkSum();
-        
-        //replay second and then replay first
+
+        // replay second and then replay first
         store.resetStore();
         for (Block b : a2) {
             if (b != null)
                 blockGraph.add(b, true);
-  
+
         }
         for (Block b : a1) {
             if (b != null)
@@ -119,10 +119,10 @@ public class RewardService2Test extends AbstractIntegrationTest {
     private void checkSum() throws JsonProcessingException, Exception {
         Map<String, Map<String, Tokensums>> result = new HashMap<String, Map<String, Tokensums>>();
 
-        syncBlockService.checkToken(contextRoot, result);
+        (new CheckpointService()).checkToken(contextRoot, result);
         Map<String, Tokensums> r11 = result.get(contextRoot);
         for (Entry<String, Tokensums> a : r11.entrySet()) {
-            assertTrue(" " + a.toString() , a.getValue().check());
+            assertTrue(" " + a.toString(), a.getValue().check());
         }
     }
 
@@ -156,8 +156,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         Collections.shuffle(utxos);
         long q = 8;
         for (UTXO utxo : utxos) {
-            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
-                   ) {
+            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
                 walletAppKit.wallet().setServerURL(contextRoot);
                 blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, q, null, null));
 
@@ -174,7 +173,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
                     3333000000L / LongMath.pow(2, j));
         }
         walletAppKit1.wallet().importKey(fromkey);
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1" );
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
         confirmationService.update();
@@ -213,6 +212,5 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
 
     }
-    
- 
+
 }

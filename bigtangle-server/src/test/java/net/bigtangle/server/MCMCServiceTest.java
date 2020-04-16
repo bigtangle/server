@@ -39,6 +39,8 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MCMCServiceTest extends AbstractIntegrationTest {
 
+ 
+   
     // Test forward cutoff
    //TODO check this test correct?  @Test
     public void testForwardCutoff() throws Exception {
@@ -515,6 +517,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // syncBlockService.updateSolidity();
         mcmcService.update();
         confirmationService.update();
+        blockService.createBlockPrototypeCache();
         assertTrue(blockService.getBlockEvaluation(b1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash()).isConfirmed());

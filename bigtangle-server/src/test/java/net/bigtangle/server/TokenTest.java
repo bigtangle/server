@@ -1,6 +1,5 @@
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedInputStream;
@@ -498,12 +497,13 @@ public class TokenTest extends AbstractIntegrationTest {
         return signeddata.toTokenKeyValues(key, userkey);
     }
 
-    private SignedData signeddata(ECKey key) throws SignatureException {
+    private SignedData signeddata(ECKey key ) throws SignatureException {
         SignedData signedata = new SignedData();
         Prescription p = new Prescription();
         p.setPrescription("my first prescription");
         p.setFilename("second.pdf");
         p.setFile("second.pdf".getBytes());
+        p.getCoins().add( new Coin(10, key.getPubKey()));
         signedata.signData(key, p.toByteArray(), DataClassName.Prescription.name());
         return signedata;
     }

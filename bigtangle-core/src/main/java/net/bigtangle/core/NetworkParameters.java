@@ -160,8 +160,6 @@ public abstract class NetworkParameters {
             + 8 // height
             + (USE_EQUIHASH ? EquihashProof.BYTE_LENGTH : 0); // for Equihash
 
-    // Transaction setting
-    public static final int MAX_TRANSACTION_MEMO_SIZE = MAX_DEFAULT_BLOCK_SIZE / 5;
 
     // max time of an order in seconds
     public static final long ORDER_TIMEOUT_MAX = 8 * 60 * 60;
