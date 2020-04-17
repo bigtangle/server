@@ -53,9 +53,9 @@ public abstract class HelpTest {
 
     public static final String HTTPS_BIGTANGLE_LOCAL = "http://localhost:8088/";
 
-    public static String HTTPS_BIGTANGLE_DE = "https://test.bigtangle.de/";
-    public static String HTTPS_BIGTANGLE_INFO = "https://test1.bigtangle.info/";
-    public static String HTTPS_BIGTANGLE_ORG = "https://test1.bigtangle.org/";
+    public static String HTTPS_BIGTANGLE_DE = "https://test.bigtangle.de:8089/";
+    public static String HTTPS_BIGTANGLE_INFO = "https://test.bigtangle.info:8089/";
+  //  public static String HTTPS_BIGTANGLE_ORG = "https://test.bigtangle.org:8089/";
 
     public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
     public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
@@ -102,7 +102,7 @@ public abstract class HelpTest {
     // "http://localhost:%s/";
     public static final Logger log = LoggerFactory.getLogger(HelpTest.class);
 
-    public static String TESTSERVER1 = HTTPS_BIGTANGLE_LOCAL;
+    public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
     // "https://p.bigtangle.org:8088/";
 
     public static String TESTSERVER2 = HTTPS_BIGTANGLE_INFO;

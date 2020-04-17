@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Utils;
@@ -40,19 +41,20 @@ public class TokenCreateTests extends HelpTest {
                 new BigInteger("1000000"));
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(JPYTokenPriv)), "JPY", 2, domain, "Japan Yuan",
                 new BigInteger("1000000"));
-      }
+    }
 
     @Test
     public void testTokensETH() throws JsonProcessingException, Exception {
 
         String domain = "bigtangle";
 
-        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)
-                ), "ETH", 18, domain, "ETH", new BigInteger("100000000000000000000000"));
-        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHUSDTPriv)
-                ), "ETH-USDT", 6, domain, "ETH-USDT", new BigInteger("100000000000000000"));
-      
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)), "ETH", 18, domain, "ETH",
+                BigInteger.valueOf(100000).multiply(BigInteger.valueOf(LongMath.pow(10, 18))));
+        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(ETHUSDTPriv)), "ETH-USDT", 6, domain, "ETH-USDT",
+                BigInteger.valueOf(1000000 * LongMath.pow(10, 6)));
+
     }
+
     @Test
     public void testMyshop() throws JsonProcessingException, Exception {
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(ShopDomainPriv));
@@ -111,7 +113,7 @@ public class TokenCreateTests extends HelpTest {
     @Test
     public void domainCom() throws Exception {
 
-       // walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+        // walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
 
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(DomainComPriv));
         // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
@@ -131,7 +133,7 @@ public class TokenCreateTests extends HelpTest {
     @Test
     public void domainBigtangle() throws Exception {
 
-      //  walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
+        // walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
 
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(BigtangleDomainPriv));
         // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
@@ -162,22 +164,23 @@ public class TokenCreateTests extends HelpTest {
             keys.add(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), null);
-            } 
-        } 
-    }
-        @Test
-        public void domainIdentityGov() throws Exception {
-            ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(govpriv));
-          ECKey idgov=  ECKey.fromPrivate(Utils.HEX.decode(idgovpriv));
-
-            walletAppKit1.wallet().publishDomainName(idgov, idgov.getPublicKeyAsHex(), "id.gov", null, "");
-            List<ECKey> keys = new ArrayList<ECKey>();
-            keys.add(preKey);
-            keys.add(idgov);
-            for (int i = 0; i < keys.size(); i++) {
-                walletAppKit1.wallet().multiSign(idgov.getPublicKeyAsHex(), keys.get(i), null);
             }
-
         }
- 
+    }
+
+    @Test
+    public void domainIdentityGov() throws Exception {
+        ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(govpriv));
+        ECKey idgov = ECKey.fromPrivate(Utils.HEX.decode(idgovpriv));
+
+        walletAppKit1.wallet().publishDomainName(idgov, idgov.getPublicKeyAsHex(), "id.gov", null, "");
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(preKey);
+        keys.add(idgov);
+        for (int i = 0; i < keys.size(); i++) {
+            walletAppKit1.wallet().multiSign(idgov.getPublicKeyAsHex(), keys.get(i), null);
+        }
+
+    }
+
 }
