@@ -127,12 +127,12 @@ public abstract class NetworkParameters {
  
     /**
      * A constant shared by the entire network: how large in bytes a block is
-     * allowed to be. One day we may have to upgrade everyone to change this, so
-     * it can continue to grow. For now it exists as an anti-DoS measure to
-     * avoid somebody creating a titanically huge but valid block and forcing
-     * everyone to download/store it forever.
+     * allowed to be. 
+     * It can no be smaller than last value, it will break consensus history. 
+     * 
+     * Start at: 262144 
      */
-    public static final int MAX_DEFAULT_BLOCK_SIZE = 262144; // 256*256*4
+    public static final int MAX_DEFAULT_BLOCK_SIZE = 1024*1024; // 1MB
   
     /**
      * A "sigop" is a signature verification operation. Because they're
