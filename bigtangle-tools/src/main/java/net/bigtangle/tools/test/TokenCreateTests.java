@@ -27,14 +27,6 @@ public class TokenCreateTests extends HelpTest {
 
         testCreateMultiSigToken(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(yuanTokenPriv),
                 Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY", new BigInteger("1000000"));
-        // testCreateMultiSigToken(
-        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(BTCTokenPriv),
-        // Utils.HEX.decode(BTCTokenPub)),
-        // "BTC", 8, domain, "Bitcoin ETF");
-        // testCreateMultiSigToken(
-        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(ETHTokenPriv),
-        // Utils.HEX.decode(ETHTokenPub)),
-        // "ETH", 8, domain, "Ethereum ETF");
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(EURTokenPriv)), "EUR", 2, domain, "Euro",
                 new BigInteger("1000000"));
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)), "USD", 2, domain, "US Dollar",
@@ -112,9 +104,7 @@ public class TokenCreateTests extends HelpTest {
 
     @Test
     public void domainCom() throws Exception {
-
-        // walletAppKit1.wallet().setServerURL("https://test.bigtangle.info:8089/");
-
+ 
         ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(DomainComPriv));
         // .fromPrivate(Utils.HEX.decode("85208f51dc3977bdca6bbcf6c7ad8c9988533ea84c8f99479987e10222c23b49"));
         {

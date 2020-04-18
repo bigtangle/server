@@ -110,6 +110,7 @@ public abstract class HelpTest {
     public String contextRoot = TESTSERVER1;
     // "http://localhost:8088/";
     // "https://test.bigtangle.de/";
+    //https://p.bigtangle.org:8088/
 
     public List<ECKey> wallet1Keys;
     public List<ECKey> wallet2Keys;
