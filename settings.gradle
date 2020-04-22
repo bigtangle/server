@@ -12,6 +12,6 @@ include 'bigtangle-emptyblock'
 include 'bigtangle-pool'
 include 'bigtangle-blockconfirm'
 include 'bigtangle-lottery'
-include 'bigtangle-thresholdcrypto'
+//include 'bigtangle-thresholdcrypto'
 include 'bigtangle-docker'
 
