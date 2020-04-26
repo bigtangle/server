@@ -6,6 +6,5 @@ include 'bigtangle-wallet'
 include 'bigtangle-kafkabridge'
 include 'bigtangle-subtangle'
 include 'bigtangle-pool'
-//include 'bigtangle-thresholdcrypto'
 include 'bigtangle-docker'
 

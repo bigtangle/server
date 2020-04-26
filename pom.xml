@@ -23,11 +23,9 @@
 	<modules>
 
 		<module>./bigtangle-core</module>
-		<module>./bigtangle-core-apps</module>
 		<module>./bigtangle-servercore</module>
 		<module>./bigtangle-server</module>
-		<module>./bigtangle-lottery</module>
-		<module>./bigtangle-tools</module>
+ 
 	</modules>
 
 
