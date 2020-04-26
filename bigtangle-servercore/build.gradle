@@ -1,6 +1,9 @@
+ 
+defaultTasks 'clean', 'build'
+ 
  dependencies {
     compile group: 'it.unimi.dsi', name: 'fastutil', version:'8.1.0'
     compile project(':bigtangle-core')
  
 }
- 
+ apply plugin: 'maven-publish'
