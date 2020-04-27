@@ -2165,7 +2165,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
         return BigInteger.valueOf(buyPrice).multiply(
-                BigInteger.valueOf(buyAmount).divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal))));
+                BigInteger.valueOf(buyAmount)).divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
 
     }
 

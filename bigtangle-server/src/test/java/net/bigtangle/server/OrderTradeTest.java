@@ -203,6 +203,8 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         payTestToken(testKey, amountToken);
         checkBalanceSum(Coin.valueOf(2 * amountToken, testKey.getPubKey()), wallet2Keys);
 
+        walletAppKit2.wallet().totalAmount(500000000, 100000000000l, 9);
+        
         long tradeAmount = 10l;
         long price = Long.MAX_VALUE;
         try {
