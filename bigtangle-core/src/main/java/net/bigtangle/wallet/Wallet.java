@@ -2164,8 +2164,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
             IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
-        return BigInteger.valueOf(buyPrice).multiply(
-                BigInteger.valueOf(buyAmount)).divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
+        return BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount))
+                .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
 
     }
 
@@ -2294,7 +2294,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
 
         Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
-        
+
         Transaction tx = new Transaction(params);
 
         List<UTXO> coinList = getSpendableUTXO(aesKey, amount.getTokenid());
@@ -2662,16 +2662,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
                 map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getTargetValue()));
+                map.put("price", mf.format(calc(orderRecord.getOfferValue(), LongMath.pow(10, t.getDecimals()),
+                        orderRecord.getTargetValue())));
             } else {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
                 map.put("type", sellText);
                 map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getOfferValue()));
+                map.put("price", mf.format(calc(orderRecord.getTargetValue(), LongMath.pow(10, t.getDecimals()),
+                        orderRecord.getOfferValue())));
             }
             map.put("orderId", orderRecord.getBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -2684,6 +2684,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             // requestParam.get("state")));
             orderData.add(map);
         }
+    }
+
+    public Long calc(long m, long factor, long d) {
+        return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
     }
 
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
