@@ -2,6 +2,7 @@ package net.bigtangle.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,9 +24,10 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.server.service.OrderTickerService;
-
+import static org.junit.Assert.fail;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderTradeTest extends AbstractIntegrationTest {
@@ -164,6 +166,54 @@ public class OrderTradeTest extends AbstractIntegrationTest {
                 wallet1Keys);
     }
 
+    
+    
+    @Test 
+    // test buy order with multiple inputs
+    public void testOrderLargeThanLONGMAX() throws Exception {
+
+        File f3 = new File("./logs/", "bigtangle3.wallet");
+        if (f3.exists()) {
+            f3.delete();
+        }
+
+        File f4 = new File("./logs/", "bigtangle4.wallet");
+        if (f4.exists()) {
+            f4.delete();
+        }
+
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
+        walletAppKit1.wallet().setServerURL(contextRoot);
+        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
+
+        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
+        walletAppKit2.wallet().setServerURL(contextRoot);
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
+
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestToken(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        long amountToken = 88l;
+        // split token
+        payTestToken(testKey, amountToken);
+        payTestToken(testKey, amountToken);
+        checkBalanceSum(Coin.valueOf(2 * amountToken, testKey.getPubKey()), wallet2Keys);
+
+        long tradeAmount = 10l;
+        long price = Long.MAX_VALUE;
+        try {
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        fail();
+        }catch (VerificationException e) {
+            // TODO: handle exception
+        }
+    
+    }
+    
     private void payBig(long amount) throws JsonProcessingException, IOException, InsufficientMoneyException,
             InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
@@ -185,6 +235,17 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
         b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        mcmcService.update();
+        confirmationService.update();
+        // Open sell order for test tokens
+    }
+    private void payTestToken2(ECKey testKey, Coin amount)
+            throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
+            ExecutionException, BlockStoreException, UTXOProviderException {
+    
+          walletAppKit.wallet().pay(null, testKey.toAddress(networkParameters),amount,  "" );
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcService.update();

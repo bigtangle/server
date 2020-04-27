@@ -84,7 +84,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
         Block r2 = blockService.getBlock(tipsToApprove.getRight());
         Block b = r2.createNextBlock(r1);
-        b.setTime(1587836800); //  
+        b.setTime(1887836800); //  
         b.solve();
         try {
             blockService.saveBlock(b);

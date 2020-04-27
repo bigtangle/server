@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -94,6 +93,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -1806,7 +1806,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey) throws Exception {
         return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("coinbase"));
     }
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo,  MemoInfo memoInfo) throws Exception {
+
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo,
+            MemoInfo memoInfo) throws Exception {
         final Token token = tokenInfo.getToken();
 
         if (StringUtils.isBlank(token.getDomainNameBlockHash())
@@ -2155,13 +2157,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * totalAmount must be an integer in BIG
+     * totalAmount must be an integer in BIG, It must be long and using
+     * BigInteger to calculation
      */
 
-    public long totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
+    public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
             IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
-        return LongMath.divide(buyPrice * buyAmount, LongMath.checkedPow(10, tokenDecimal), RoundingMode.UNNECESSARY);
+        return BigInteger.valueOf(buyPrice).multiply(
+                BigInteger.valueOf(buyAmount).divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal))));
 
     }
 
@@ -2171,8 +2175,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // add client check if the tokenid exists
         Token t = checkTokenId(tokenId);
         // Burn BIG to buy
-        Coin amount = Coin
-                .valueOf(totalAmount(buyPrice, buyAmount, t.getDecimals()), NetworkParameters.BIGTANGLE_TOKENID)
+        Coin amount = new Coin(totalAmount(buyPrice, buyAmount, t.getDecimals()), NetworkParameters.BIGTANGLE_TOKENID)
                 .negate();
         Transaction tx = new Transaction(params);
         List<UTXO> coinList = getSpendableUTXO(aesKey, NetworkParameters.BIGTANGLE_TOKENID);
@@ -2282,9 +2285,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             Long validFromTime)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token t = checkTokenId(tokenId);
-        long total = totalAmount(sellPrice, sellAmount, t.getDecimals());
         // Burn tokens to sell
+        BigInteger total = totalAmount(sellPrice, sellAmount, t.getDecimals());
+        if (total.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+
+            throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
+
+        }
+
         Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
+        
         Transaction tx = new Transaction(params);
 
         List<UTXO> coinList = getSpendableUTXO(aesKey, amount.getTokenid());
@@ -2303,7 +2313,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throw new InsufficientMoneyException("");
         }
 
-        OrderOpenInfo info = new OrderOpenInfo(total, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+        OrderOpenInfo info = new OrderOpenInfo(total.longValue(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58());
         tx.setData(info.toByteArray());
@@ -2409,20 +2419,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo)
-            throws JsonProcessingException, IOException, InsufficientMoneyException { 
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
         return pay(aesKey, destination, amount, new MemoInfo(memo));
     }
 
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
-            throws JsonProcessingException, IOException, InsufficientMoneyException { 
-        Block block = getTip(); 
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+        Block block = getTip();
         SendRequest request = SendRequest.to(destination, amount);
-        request.aesKey = aesKey; 
+        request.aesKey = aesKey;
         request.tx.setMemo(menoinfo);
         completeTx(request, aesKey);
-        block.addTransaction(request.tx); 
+        block.addTransaction(request.tx);
         return solveAndPost(block);
-    } 
+    }
+
     /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
@@ -2526,8 +2537,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignAddresses.add(new MultiSignAddress(tokenid, "", ecKey.getPublicKeyAsHex()));
         }
 
-        saveToken(tokenInfo, Coin.valueOf(1, tokenid), ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("publishDomainName"));
-   
+        saveToken(tokenInfo, Coin.valueOf(1, tokenid), ownerKey, aesKey, ownerKey.getPubKey(),
+                new MemoInfo("publishDomainName"));
+
     }
 
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
@@ -2578,8 +2590,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
         Block block = params.getDefaultSerializer().makeBlock(payloadBytes);
-        //replace block prototype if it is too too old 
-        
+        // replace block prototype if it is too too old
+
         Transaction transaction = block.getTransactions().get(0);
 
         List<MultiSignBy> multiSignBies = null;
@@ -2604,7 +2616,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        
+
         block = adjustSolveAndSign(checkBlockPrototype(block));
     }
 
@@ -2615,8 +2627,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             HashMap<String, String> requestParam = new HashMap<String, String>();
             byte[] data = OkHttp3Util.postAndGetBlock(serverurl + ReqCmd.getTip,
                     Json.jsonmapper().writeValueAsString(requestParam));
-            Block block = params.getDefaultSerializer().makeBlock( data );
-            
+            Block block = params.getDefaultSerializer().makeBlock(data);
+
             block.setBlockType(oldBlock.getBlockType());
             for (Transaction transaction : oldBlock.getTransactions()) {
                 block.addTransaction(transaction);
@@ -2676,16 +2688,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
             List<MultiSignAddress> addresses) throws Exception {
-       return createToken(key, domainname, increment, token, addresses, key.getPubKey(),new MemoInfo("coinbase"));
+        return createToken(key, domainname, increment, token, addresses, key.getPubKey(), new MemoInfo("coinbase"));
     }
+
     public Block createToken(ECKey key, String domainname, boolean increment, Token token,
-            List<MultiSignAddress> addresses, byte[] pubkeyTo,       MemoInfo memoInfo ) throws Exception {
+            List<MultiSignAddress> addresses, byte[] pubkeyTo, MemoInfo memoInfo) throws Exception {
         Token domain = getDomainNameBlockHash(domainname, "token").getdomainNameToken();
         token.setDomainName(domain.getTokenname());
         token.setDomainNameBlockHash(domain.getBlockHashHex());
 
         String tokenid = token.getTokenid();
-                //key.getPublicKeyAsHex();
+        // key.getPublicKeyAsHex();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
@@ -2702,17 +2715,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         tokenInfo.setMultiSignAddresses(addresses);
         // tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid,
         // "", key.getPublicKeyAsHex()));
-        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null, pubkeyTo,memoInfo);
+        return saveToken(tokenInfo, new Coin(token.getAmount(), tokenid), key, null, pubkeyTo, memoInfo);
     }
 
- 
- 
-
-
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
-            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses, String tokenid)
-            throws Exception {
- 
+            BigInteger amount, boolean increment, KeyValue kv, int tokentype, List<MultiSignAddress> addresses,
+            String tokenid) throws Exception {
+
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
         token.addKeyvalue(kv);

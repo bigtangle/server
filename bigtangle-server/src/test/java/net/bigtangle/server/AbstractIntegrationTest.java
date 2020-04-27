@@ -212,10 +212,15 @@ public abstract class AbstractIntegrationTest {
 
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
-        return resetAndMakeTestToken(testKey, addedBlocks, 0);
+        return resetAndMakeTestToken(testKey,BigInteger.valueOf(77777L), addedBlocks, 0);
     }
 
-    protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks, int decimal)
+    protected Block resetAndMakeTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks)
+            throws JsonProcessingException, Exception, BlockStoreException {
+        return resetAndMakeTestToken(testKey, amount, addedBlocks, 0);
+    }
+    
+    protected Block resetAndMakeTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks, int decimal)
             throws JsonProcessingException, Exception, BlockStoreException {
      //   store.resetStore();
 
@@ -223,8 +228,8 @@ public abstract class AbstractIntegrationTest {
         Block block = null;
         TokenInfo tokenInfo = new TokenInfo();
 
-        Coin coinbase = Coin.valueOf(77777L, testKey.getPubKey());
-        BigInteger amount = coinbase.getValue();
+        Coin coinbase = new Coin(amount, testKey.getPubKey());
+       // BigInteger amount = coinbase.getValue();
         Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(testKey.getPubKey()), "Test", "Test", 1,
                 0, amount, true, decimal, networkParameters.getGenesisBlock().getHashAsString());
 
