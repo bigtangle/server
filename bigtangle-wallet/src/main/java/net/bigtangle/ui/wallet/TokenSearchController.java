@@ -22,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.MapValueFactory;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Json;
+import net.bigtangle.core.Utils;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.utils.MonetaryFormat;
@@ -117,9 +118,11 @@ public class TokenSearchController extends TokenBaseController {
                 map.put("asmarket", temp1);
                 map.put("tokenstop", temp2);
                 if (amountMap.containsKey(map.get("tokenid"))) {
-                    long count = Long.parseLong(amountMap.get((String) map.get("tokenid")).toString());
-                    Coin fromAmount = Coin.valueOf(count, (String) map.get("tokenid"));
-                    String amountString = MonetaryFormat.FIAT.noCode().format(fromAmount, (int) map.get("decimals"));
+                      Coin fromAmount =  MonetaryFormat.FIAT.noCode().parse(""+amountMap.get((String) map.get("tokenid")),
+                              Utils.HEX.decode((String) map.get("tokenid")),
+                            (int) map.get("decimals"));
+                 
+                      String amountString = MonetaryFormat.FIAT.noCode().format(fromAmount, (int) map.get("decimals"));
                     if (amountString.startsWith("0"))
                         amountString = "";
                     map.put("amount", amountString);
