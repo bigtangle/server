@@ -1157,9 +1157,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             ArrayList<OrderRecord> orderId2Order, long orderId) {
 
         Side side = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
-        long price = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                ? o.getOfferValue() / o.getTargetValue()
-                : o.getTargetValue() / o.getOfferValue();
+        long price = o.price();
+        if(price <=0) log.warn(" price is wrong " +price);
+            //throw new RuntimeException(" price is wrong " +price);
         long size = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? o.getTargetValue()
                 : o.getOfferValue();
         String tokenId = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? o.getTargetTokenid()

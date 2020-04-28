@@ -902,6 +902,9 @@ public abstract class AbstractIntegrationTest {
 
             }
         }
+        if(coin.getValue().compareTo(sum.getValue()) != 0) {
+            log.error(" expected: " + coin  + " got: "+ sum);
+        }
         assertTrue(coin.getValue().compareTo(sum.getValue()) == 0);
 
     }

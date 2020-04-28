@@ -2160,12 +2160,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * It must use BigInteger to calculation
      */
 
-    public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
-            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+    public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) {
 
-        return BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount))
+        BigInteger re = BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount))
                 .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
 
+        if (re.compareTo(BigInteger.ONE) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new InvalidTransactionDataException("Invalid target total value: " + re);
+        }
+        return re;
     }
 
     public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,

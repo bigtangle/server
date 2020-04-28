@@ -68,8 +68,14 @@ public class OrderRecord extends SpentBlock {
                 old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress);
     }
 
+    /*
+     * price is in BIG with decimals
+     */
     public long price() {
-        return getTargetValue() / getOfferValue();
+       return getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+                ?  getOfferValue() /  getTargetValue()
+                :  getTargetValue() /  getOfferValue();
+  
     }
 
     public boolean isTimeouted(long blockTime) {

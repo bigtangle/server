@@ -929,7 +929,7 @@ public class ValidatorService {
         // Check bounds for target coin values
         if (orderInfo.getTargetValue() < 1 || orderInfo.getTargetValue() > Long.MAX_VALUE) {
             if (throwExceptions)
-                throw new InvalidTransactionDataException("Invalid target value max: " + Long.MAX_VALUE);
+                throw new InvalidTransactionDataException("Invalid target long value: " +orderInfo.getTargetValue() );
             return SolidityState.getFailState();
         }
 
@@ -1576,7 +1576,7 @@ public class ValidatorService {
 
         // Check that we have a correct price given in full BIGs
         //OK
-        /*
+        
         if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
             if (burnedCoins.getValue().longValue() % orderInfo.getTargetValue() != 0
                     || burnedCoins.getValue().longValue() / orderInfo.getTargetValue() <= 0) {
@@ -1592,7 +1592,7 @@ public class ValidatorService {
                 return SolidityState.getFailState();
             }
         }
-*/
+ 
         if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(),
                 NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
