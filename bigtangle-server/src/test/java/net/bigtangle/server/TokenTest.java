@@ -497,13 +497,13 @@ public class TokenTest extends AbstractIntegrationTest {
         return signeddata.toTokenKeyValues(key, userkey);
     }
 
-    private SignedData signeddata(ECKey key ) throws SignatureException {
+    private SignedData signeddata(ECKey key) throws SignatureException {
         SignedData signedata = new SignedData();
         Prescription p = new Prescription();
         p.setPrescription("my first prescription");
         p.setFilename("second.pdf");
         p.setFile("second.pdf".getBytes());
-        p.getCoins().add( new Coin(10, key.getPubKey()));
+        p.getCoins().add(new Coin(10, key.getPubKey()));
         signedata.signData(key, p.toByteArray(), DataClassName.Prescription.name());
         return signedata;
     }
@@ -532,6 +532,42 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getOutputsResponse.getOutputs().size() > 0);
         assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
                 .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
+    }
+
+    @Test
+    public void testPayTokenById() throws Exception {
+
+        testCreateToken(walletKeys.get(0), "test");
+
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        log.info("getTokenById resp : " + resp);
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        log.info("getTokensResponse : " + getTokensResponse);
+        assertTrue(getTokensResponse.getTokens().size() > 0);
+
+        mcmcService.update();
+        confirmationService.update();
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        log.info("getOutputsResponse : " + getOutputsResponse);
+        List<UTXO> outputs = getOutputsResponse.getOutputs();
+        Map<String, Token> tokennames = getOutputsResponse.getTokennames();
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+        for (UTXO utxo : outputs) {
+            giveMoneyResult.put(utxo.getAddress(), utxo.getValue().getValue().longValue() * 3 / 1000);
+        }
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(tokenid),
+                "pay to user", 3, 20000);
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
+        sendEmpty(5);
+        mcmcService.update();
+        confirmationService.update();
+
     }
 
     @Test
