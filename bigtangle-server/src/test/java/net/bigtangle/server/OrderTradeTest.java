@@ -1,5 +1,7 @@
 package net.bigtangle.server;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -27,7 +29,6 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.server.service.OrderTickerService;
-import static org.junit.Assert.fail;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderTradeTest extends AbstractIntegrationTest {
@@ -62,12 +63,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         payTestToken(testKey, amountToken);
         payTestToken(testKey, amountToken);
         checkBalanceSum(Coin.valueOf(2 * amountToken, testKey.getPubKey()), wallet2Keys);
-        
-//        long tradeAmount = 100l;
-//        long price = 1;
-//        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
-        //addedBlocks.add(block);
-        //blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+  
     }
 
     @Test
@@ -255,4 +251,74 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         // Open sell order for test tokens
     }
 
+    
+    @Test
+    // test buy order with multiple inputs
+    public void testBuySellWithDecimal() throws Exception {
+
+        File f3 = new File("./logs/", "bigtangle3.wallet");
+        if (f3.exists()) {
+            f3.delete();
+        }
+
+        File f4 = new File("./logs/", "bigtangle4.wallet");
+        if (f4.exists()) {
+            f4.delete();
+        }
+
+        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
+        walletAppKit1.wallet().setServerURL(contextRoot);
+        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
+
+        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
+        walletAppKit2.wallet().setServerURL(contextRoot);
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
+
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        int tokendecimal = 9;
+        resetAndMakeTestToken(testKey, BigInteger.valueOf(77777l),  addedBlocks, tokendecimal );
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        long amountToken = 88l;
+        // split token
+        payTestToken(testKey, amountToken);
+        payTestToken(testKey, amountToken);
+        checkBalanceSum(Coin.valueOf(2 * amountToken, testKey.getPubKey()), wallet2Keys);
+
+        long tradeAmount = 100l;
+        long price = 1000000000;
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        addedBlocks.add(block);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+
+        long amount = 7700000000000l;
+        // split BIG
+        payBig(amount);
+        payBig(amount);
+        checkBalanceSum(Coin.valueOf(2 * amount, NetworkParameters.BIGTANGLE_TOKENID), wallet1Keys);
+        // Open buy order for test tokens
+        block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
+        addedBlocks.add(block);
+        mcmcService.update();
+        confirmationService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        showOrders();
+
+        // Verify the tokens changed position
+        checkBalanceSum( new Coin(
+                walletAppKit1.wallet().totalAmount(  tradeAmount ,  price, tokendecimal), NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys);
+
+        checkBalanceSum(Coin.valueOf(2 * amountToken - tradeAmount, testKey.getPubKey()), wallet2Keys);
+
+        checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet1Keys);
+    
+    }
+ 
+    
 }

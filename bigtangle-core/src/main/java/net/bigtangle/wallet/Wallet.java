@@ -2157,8 +2157,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * totalAmount must be an integer in BIG, It must be long and using
-     * BigInteger to calculation
+     * It must use BigInteger to calculation
      */
 
     public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) throws JsonProcessingException,
@@ -2286,13 +2285,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token t = checkTokenId(tokenId);
         // Burn tokens to sell
-        BigInteger total = totalAmount(sellPrice, sellAmount, t.getDecimals());
-        if (total.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-
-            throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
-
-        }
-
         Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
 
         Transaction tx = new Transaction(params);
@@ -2311,6 +2303,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         if (beneficiary == null || amount.isNegative()) {
             throw new InsufficientMoneyException("");
+        }
+
+        BigInteger total = totalAmount(sellPrice, sellAmount, t.getDecimals());
+        if (total.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
         }
 
         OrderOpenInfo info = new OrderOpenInfo(total.longValue(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
