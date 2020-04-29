@@ -2662,16 +2662,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
                 map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getOfferValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getTargetValue()));
+                map.put("price", mf.format(calc(orderRecord.getOfferValue(), LongMath.pow(10, t.getDecimals()),
+                        orderRecord.getTargetValue())));
             } else {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
                 map.put("type", sellText);
                 map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
                 map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(orderRecord.getTargetValue() * LongMath.pow(10, t.getDecimals())
-                        / orderRecord.getOfferValue()));
+                map.put("price", mf.format(calc(orderRecord.getTargetValue(), LongMath.pow(10, t.getDecimals()),
+                        orderRecord.getOfferValue())));
             }
             map.put("orderId", orderRecord.getBlockHashHex());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
