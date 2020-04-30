@@ -35,6 +35,7 @@ import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.KeyValueList;
 import net.bigtangle.core.MemoInfo;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
@@ -534,24 +535,34 @@ public class TokenTest extends AbstractIntegrationTest {
                 .equals(Coin.valueOf(77777L, walletKeys.get(0).getPubKey())));
     }
 
+    public List<ECKey> payKeys() throws Exception {
+        List<ECKey> userkeys = new ArrayList<ECKey>();
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+
+        for (int i = 1; i <= 10; i++) {
+            ECKey key = new ECKey();
+            giveMoneyResult.put(key.toAddress(networkParameters).toString(), i * 10000l);
+            userkeys.add(key);
+        }
+
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
+                "pay to user", 3, 20000);
+        mcmcService.update();
+        confirmationService.update();
+        log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        return userkeys;
+    }
+
     @Test
     public void testPayTokenById() throws Exception {
 
-        testCreateToken(walletKeys.get(0), "test");
-
+        payKeys();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-        requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        log.info("getTokenById resp : " + resp);
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-        log.info("getTokensResponse : " + getTokensResponse);
-        assertTrue(getTokensResponse.getTokens().size() > 0);
-
+        requestParam.put("tokenid", NetworkParameters.BIGTANGLE_TOKENID_STRING);
         mcmcService.update();
         confirmationService.update();
-        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);
@@ -561,7 +572,7 @@ public class TokenTest extends AbstractIntegrationTest {
         for (UTXO utxo : outputs) {
             giveMoneyResult.put(utxo.getAddress(), utxo.getValue().getValue().longValue() * 3 / 1000);
         }
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(tokenid),
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
                 "pay to user", 3, 20000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         sendEmpty(5);
