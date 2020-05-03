@@ -27,9 +27,11 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.data.Tokensums;
+import net.bigtangle.core.data.TokensumsMap;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
@@ -84,6 +86,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         log.debug(r2.toString());
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
+        Sha256Hash hash = checkpointService.checkToken().hash();
         // replay
         store.resetStore();
 
@@ -102,8 +105,8 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
-        checkSum();
-
+        Sha256Hash hash1=    checkSum();
+        assertTrue( hash.equals(checkpointService.checkToken().hash()));
         // replay second and then replay first
         store.resetStore();
         for (Block b : a2) {
@@ -116,16 +119,18 @@ public class RewardService2Test extends AbstractIntegrationTest {
                 blockGraph.add(b, true);
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
-
-        checkSum();
+        assertTrue( hash.equals(checkpointService.checkToken().hash()));
+        Sha256Hash hash2=  checkSum();
+        assertTrue(hash1.equals(hash2));
     }
 
-    private void checkSum() throws JsonProcessingException, Exception {
-
-        Map<String, Tokensums> r11 = checkpointService.checkToken().getTokensumsMap();
+    private   Sha256Hash checkSum() throws JsonProcessingException, Exception {
+        TokensumsMap map = checkpointService.checkToken();
+        Map<String, Tokensums> r11 = map.getTokensumsMap();
         for (Entry<String, Tokensums> a : r11.entrySet()) {
             assertTrue(" " + a.toString(), a.getValue().check());
         }
+        return map.hash();
     }
 
     public void testToken(List<Block> blocksAddedAll) throws Exception {

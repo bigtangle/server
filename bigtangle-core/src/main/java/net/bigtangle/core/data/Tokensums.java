@@ -1,20 +1,33 @@
 package net.bigtangle.core.data;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.core.DataClass;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
 
-public class Tokensums {
+public class Tokensums  extends DataClass implements java.io.Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    
     String tokenid;
     BigInteger initial = BigInteger.ZERO;
     BigInteger unspent = BigInteger.ZERO;
     BigInteger order = BigInteger.ZERO;
+    //It must be sorted list for calculation hash
     List<UTXO> utxos = new ArrayList<UTXO>();
     List<OrderRecord> orders = new ArrayList<OrderRecord>();
+
+    
 
     public void calculate() {
         calcOutputs();
@@ -51,6 +64,31 @@ public class Tokensums {
         }
     }
 
+    
+
+    public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            DataOutputStream dos = new DataOutputStream(baos); 
+            dos.write(super.toByteArray()); 
+            Utils.writeNBytesString(dos, tokenid);
+            Utils.writeNBytes(dos, initial.toByteArray());
+            Utils.writeNBytes(dos, unspent.toByteArray());
+            Utils.writeNBytes(dos, order.toByteArray());
+            dos.writeInt(utxos.size());
+            for (UTXO c : utxos)
+                dos.write(c.toByteArray());
+            dos.writeInt(utxos.size());
+            for (OrderRecord c : orders)
+                dos.write(c.toByteArray());
+            dos.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return baos.toByteArray();
+    }
+ 
+    
     public BigInteger unspentOrderSum() {
         return unspent.add(order);
     }

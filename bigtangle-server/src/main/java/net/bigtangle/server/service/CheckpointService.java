@@ -39,6 +39,7 @@ public class CheckpointService {
    // private static final Logger log = LoggerFactory.getLogger(CheckpointService.class);
 
     private List<UTXO> getOutputs(String tokenid) throws UTXOProviderException {
+        //Must be sorted with the  key of 
         return store.getOpenAllOutputs(tokenid);
     }
 

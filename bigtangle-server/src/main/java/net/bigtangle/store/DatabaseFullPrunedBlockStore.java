@@ -1490,7 +1490,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL);
+            //Must be sorted for hash checkpoint
+            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL+ " order by hash, outputindex ");
             s.setString(1, tokenid);
             ResultSet results = s.executeQuery();
             while (results.next()) {
