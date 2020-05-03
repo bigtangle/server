@@ -16,7 +16,7 @@ public enum ReqCmd {
 
 	getTokenSignByTokenid, signToken, getTokenSigns, getTokenPermissionedAddresses, getDomainNameBlockHash,
 	// Block Order
-	getOrders, getOTCMarkets, getOrdersTicker, signOrder,
+	getOrders, getOTCMarkets, getOrdersTicker, signOrder,getOrdermatched,
 	// Outputs
 	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,
 

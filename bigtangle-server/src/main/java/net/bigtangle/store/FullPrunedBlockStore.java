@@ -28,6 +28,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.OrderRecordMatched;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -505,5 +506,8 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
             throws BlockStoreException;
     void deleteBlockPrototypeTimeout( )    throws BlockStoreException;
+    void insertOrderRecordMatched(List<OrderRecordMatched> matchresults) throws BlockStoreException;
 
+    List<OrderRecordMatched> selectOrderRecordMatched(String tokenId,long matchtime) throws BlockStoreException;
+    
 }

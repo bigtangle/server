@@ -51,6 +51,7 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.OrderRecordMatched;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -486,10 +487,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO contractexecution (blockhash, contracttokenid, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?,?)";
 
-    protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, inserttime from blockprototype   ";
+    protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, "
+            + " inserttime from blockprototype   ";
     protected final String BlockPrototype_INSERT_SQL = getInsert()
             + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) " + "VALUES (?, ?, ?)";
     protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";
+
+    protected final String OrderRecordMatchedColumn =  ORDER_TEMPLATE + ", txhash, matchblocktime";
+
+    protected final String INSERT_OrderRecordMatched = getInsert() + "  INTO OrderRecordMatched ("
+            + OrderRecordMatchedColumn + ") " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?)";
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
@@ -665,6 +672,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
         sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_BLOCKPROTOTYPE_TABLE);
+        sqlStatements.add("DROP TABLE OrderRecordMatched");
         return sqlStatements;
     }
 
@@ -6352,5 +6360,96 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
             }
         }
+    }
+
+    @Override
+    public void insertOrderRecordMatched(List<OrderRecordMatched> matchlist) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = conn.get().prepareStatement(INSERT_OrderRecordMatched);
+            for (OrderRecordMatched record : matchlist) {
+                preparedStatement.setBytes(1, record.getBlockHash().getBytes());
+                preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
+                preparedStatement.setLong(3, record.getOfferValue());
+                preparedStatement.setString(4, record.getOfferTokenid());
+                preparedStatement.setBoolean(5, record.isConfirmed());
+                preparedStatement.setBoolean(6, record.isSpent());
+                preparedStatement.setBytes(7,
+                        record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
+                preparedStatement.setLong(8, record.getTargetValue());
+                preparedStatement.setString(9, record.getTargetTokenid());
+                preparedStatement.setBytes(10, record.getBeneficiaryPubKey());
+                preparedStatement.setLong(11, record.getValidToTime());
+                preparedStatement.setLong(12, record.getValidFromTime());
+                preparedStatement.setString(13, record.getSide() == null ? null : record.getSide().name());
+                preparedStatement.setString(14, record.getBeneficiaryAddress());
+                preparedStatement.setString(15, record.getTransactionHash() );
+                preparedStatement.setLong(16, record.getMatchBlockTime());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+            preparedStatement.close();
+
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<OrderRecordMatched> selectOrderRecordMatched(String tokenId,long matchtime) throws BlockStoreException {
+
+        PreparedStatement s = null;
+        List<OrderRecordMatched>  list =  new ArrayList<OrderRecordMatched>();
+        try {
+            maybeConnect();
+            if(tokenId==null || "".equals(tokenId)) {
+            s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn+
+                    " from OrderRecordMatched " + " where matchblocktime > ?  ");
+            s.setLong(1, matchtime);
+            }else {
+                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn+
+                        " from OrderRecordMatched " + " where matchblocktime > ? and ( targettokenid=?"
+                                + " or offertokenid=? ");
+                s.setLong(1, matchtime); 
+                s.setString(2, tokenId); 
+                s.setString(3, tokenId); 
+            }
+            ResultSet resultSet = s.executeQuery();
+            while (resultSet.next()) { 
+                list.add(  setOrderRecordMatched(resultSet ));
+            }
+            return list;
+        } catch (SQLException ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+        }
+    }
+    private OrderRecordMatched setOrderRecordMatched(ResultSet resultSet) throws SQLException {
+        return new OrderRecordMatched(Sha256Hash.wrap(resultSet.getBytes("blockhash")),
+                Sha256Hash.wrap(resultSet.getBytes("collectinghash")), resultSet.getLong("offercoinvalue"),
+                resultSet.getString("offertokenid"), resultSet.getBoolean("confirmed"), resultSet.getBoolean("spent"),
+                resultSet.getBytes("spenderblockhash") == null ? null
+                        : Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
+                resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
+                resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
+                resultSet.getLong("validFromTime"), resultSet.getString("side"),
+                resultSet.getString("beneficiaryaddress"),
+                resultSet.getString("txhash"),
+                resultSet.getLong("matchblocktime"  )) ;
     }
 }

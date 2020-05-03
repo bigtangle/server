@@ -523,7 +523,16 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse(), watch);
             }
                 break;
-
+            case getOrdermatched: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class); 
+                String matchBlockTime   = (String) request.get("matchblocktime");
+                String tokenid = (String) request.get("tokenid"); 
+                AbstractResponse response = orderTickerService.getOrderRecordMatched(tokenid, matchBlockTime) ;
+                this.outPrintJSONString(httpServletResponse, response, watch);
+            }
+                break;
+       
             default:
                 break;
             }
