@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.SubtangleStatus;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.SubtangleResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.SubtangleStatus;
 
 @Service
 public class SubtanglePermissionService {

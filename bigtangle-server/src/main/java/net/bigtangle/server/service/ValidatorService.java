@@ -41,6 +41,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.data.SolidityState;
+import net.bigtangle.core.data.SolidityState.State;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventInfo;
@@ -90,8 +92,6 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.SolidityState;
-import net.bigtangle.store.data.SolidityState.State;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 @Service

@@ -37,6 +37,10 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.data.ContractEventRecord;
+import net.bigtangle.core.data.OrderMatchingResult;
+import net.bigtangle.core.data.SolidityState;
+import net.bigtangle.core.data.SolidityState.State;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -78,10 +82,6 @@ import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
-import net.bigtangle.store.data.ContractEventRecord;
-import net.bigtangle.store.data.OrderMatchingResult;
-import net.bigtangle.store.data.SolidityState;
-import net.bigtangle.store.data.SolidityState.State;
 
 /**
  * <p>

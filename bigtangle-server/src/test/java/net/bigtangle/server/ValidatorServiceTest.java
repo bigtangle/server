@@ -78,7 +78,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testVerificationFutureTimestamp() throws Exception {
-        store.resetStore();
+        
 
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
@@ -95,7 +95,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testAdjustTimestamp() throws Exception {
-        store.resetStore();
+        
 
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
@@ -110,7 +110,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testVerificationIncorrectPoW() throws Exception {
-        store.resetStore();
+        
 
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
         Block r1 = blockService.getBlock(tipsToApprove.getLeft());
@@ -133,7 +133,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidBlockAllowed() throws Exception {
-        store.resetStore();
+        
 
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
@@ -149,7 +149,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidBlockDisallowed() throws Exception {
-        store.resetStore();
+        
 
         Sha256Hash sha256Hash1 = getRandomSha256Hash();
         Sha256Hash sha256Hash2 = getRandomSha256Hash();
@@ -173,7 +173,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidBlockReconnectBlock() throws Exception {
-        store.resetStore();
+        
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = depBlock.createNextBlock(depBlock);
@@ -195,7 +195,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidMissingPredecessor1() throws Exception {
-        store.resetStore();
+        
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = depBlock.createNextBlock(networkParameters.getGenesisBlock());
@@ -217,7 +217,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidMissingPredecessor2() throws Exception {
-        store.resetStore();
+        
 
         Block depBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         Block block = networkParameters.getGenesisBlock().createNextBlock(depBlock);
@@ -239,7 +239,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidMissingUTXO() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXO
         Transaction tx1 = createTestTransaction();
@@ -276,7 +276,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidMissingReward() throws Exception {
-        store.resetStore();
+        
         List<Block> blocks1 = new ArrayList<>();
         List<Block> blocks2 = new ArrayList<>();
 
@@ -345,8 +345,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnsolidMissingToken() throws Exception {
-        store.resetStore();
-
+       
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
@@ -394,7 +393,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityPredecessorConsensusInheritance() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval and second reward
         // interval
@@ -463,7 +462,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityPredecessorTimeInheritance() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval and second reward
         // interval
@@ -498,7 +497,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityCoinbaseDisallowed() throws Exception {
-        store.resetStore();
+        
         final Block genesisBlock = networkParameters.getGenesisBlock();
 
         // For disallowed types: coinbases are not allowed
@@ -533,7 +532,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTXDoubleSpend() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXOs
         Transaction tx1 = createTestTransaction();
@@ -628,7 +627,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTXInputScriptsCorrect() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXO
         Transaction tx1 = createTestTransaction();
@@ -651,7 +650,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTXOutputSumCorrect() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXO
         {
@@ -717,7 +716,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTXOutputNonNegative() throws Exception {
-        store.resetStore();
+        
 
         // Create block with negative outputs
         try {
@@ -748,7 +747,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityNewGenesis() throws Exception {
-        store.resetStore();
+        
 
         // Create genesis block
         try {
@@ -763,7 +762,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSoliditySigOps() throws Exception {
-        store.resetStore();
+        
 
         // Create block with outputs
         try {
@@ -795,7 +794,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxWrongDifficulty() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -822,7 +821,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxWithTransfers1() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -863,7 +862,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxWithTransfers2() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -891,7 +890,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxWithMissingRewardInfo() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -919,7 +918,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxMalformedData1() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -946,7 +945,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityRewardTxMalformedData2() throws Exception {
-        store.resetStore();
+        
         Block rollingBlock = networkParameters.getGenesisBlock();
 
         // Generate blocks until passing first reward interval
@@ -1012,7 +1011,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMalformedData1() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -1047,7 +1046,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMalformedData2() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -1082,7 +1081,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMalformedDataSignature1() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -1119,7 +1118,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMalformedDataSignature2() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -1156,7 +1155,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMutatedData() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -1792,7 +1791,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMutatedDataSignatures() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -2056,7 +2055,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenNoTransaction() throws Exception {
-        store.resetStore();
+        
 
         // Make block including it
         Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -2075,7 +2074,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMultipleTransactions1() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -2129,7 +2128,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenMultipleTransactions2() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -2182,7 +2181,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenTransferTransaction() throws Exception {
-        store.resetStore();
+        
 
         // Make block including it
         Block block = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -2206,7 +2205,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorWrongTokenid() throws JsonProcessingException, Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -2242,7 +2241,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenWrongTokenindex() throws JsonProcessingException, Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2277,7 +2276,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorStopped() throws JsonProcessingException, Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2312,7 +2311,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorConflictingType() throws JsonProcessingException, Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2348,7 +2347,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenPredecessorConflictingName() throws JsonProcessingException, Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(0);
         byte[] pubKey = outKey.getPubKey();
 
@@ -2383,7 +2382,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityTokenWrongTokenCoinbase() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(0);
@@ -2437,7 +2436,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenOk() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2480,7 +2479,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenNoTransactions() throws Exception {
-        store.resetStore();
+        
 
         Block block1 = null;
         {
@@ -2500,7 +2499,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenMultipleTXs() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2589,7 +2588,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenNoTokensOffered() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2619,7 +2618,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenMultipleTokens() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2708,7 +2707,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenNoBIGs() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2778,7 +2777,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpenFractionalPrice() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2889,7 +2888,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpOk() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -2956,7 +2955,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testSolidityOrderOpWrongSig() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 

@@ -24,13 +24,13 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.OrderMatchingResult;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.OrderMatchingResult;
 import net.bigtangle.utils.Threading;
 
 /**

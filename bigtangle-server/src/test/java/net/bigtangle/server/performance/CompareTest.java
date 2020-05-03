@@ -18,14 +18,14 @@ import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.data.Tokensums;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.store.data.Tokensums;
 
-@Ignore
+//@Ignore
 public class CompareTest {
-    public static boolean testnet = false;
+    public static boolean testnet = true;
     public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "p.") + "bigtangle.de:"
             + (testnet ? "8089" : "8088") + "/";
     public static String HTTPS_BIGTANGLE_INFO = "https://" + (testnet ? "test." : "p.") + "bigtangle.info:"
@@ -36,10 +36,10 @@ public class CompareTest {
 
     public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
-    CheckpointService checkpointService;
+    CheckpointRemote checkpointService;
 
     @Test
     public void diffThread() throws Exception {
@@ -48,7 +48,7 @@ public class CompareTest {
         // System.setProperty("https.proxyPort", "3128");
 
         syncBlockService = new SyncBlockService();
-        checkpointService = new CheckpointService();
+        checkpointService = new CheckpointRemote();
 
         while (true) {
             try {

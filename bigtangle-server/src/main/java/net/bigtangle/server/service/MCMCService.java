@@ -25,12 +25,12 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.data.DepthAndWeight;
+import net.bigtangle.core.data.Rating;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.DepthAndWeight;
-import net.bigtangle.store.data.Rating;
 import net.bigtangle.utils.Threading;
 
 /*

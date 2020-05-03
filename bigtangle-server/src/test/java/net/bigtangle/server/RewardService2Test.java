@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -28,17 +29,20 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.Tokensums;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.CheckpointService;
-import net.bigtangle.store.data.Tokensums;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RewardService2Test extends AbstractIntegrationTest {
+
+    @Autowired
+    CheckpointService checkpointService;
 
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
         for (int j = 1; j < 3; j++) {
@@ -117,10 +121,8 @@ public class RewardService2Test extends AbstractIntegrationTest {
     }
 
     private void checkSum() throws JsonProcessingException, Exception {
-        Map<String, Map<String, Tokensums>> result = new HashMap<String, Map<String, Tokensums>>();
 
-        (new CheckpointService()).checkToken(contextRoot, result);
-        Map<String, Tokensums> r11 = result.get(contextRoot);
+        Map<String, Tokensums> r11 = checkpointService.checkToken().getTokensumsMap();
         for (Entry<String, Tokensums> a : r11.entrySet()) {
             assertTrue(" " + a.toString(), a.getValue().check());
         }

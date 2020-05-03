@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.store.data;
+package net.bigtangle.core.data;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

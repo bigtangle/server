@@ -26,6 +26,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
@@ -35,7 +36,6 @@ import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.SolidityState;
 import net.bigtangle.utils.UUIDUtil;
 
 @Service

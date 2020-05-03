@@ -43,6 +43,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.CheckpointResponse;
 import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -53,6 +54,7 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.AccessGrantService;
 import net.bigtangle.server.service.AccessPermissionedService;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
@@ -107,7 +109,8 @@ public class DispatcherController {
     private AccessPermissionedService accessPermissionedService;
     @Autowired
     private AccessGrantService accessGrantService;
-
+    @Autowired
+    private CheckpointService checkpointService;
     @SuppressWarnings("unchecked")
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
@@ -532,7 +535,11 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
-       
+            case getCheckPoint: { 
+                AbstractResponse response =CheckpointResponse.create(checkpointService.checkToken()) ;
+                this.outPrintJSONString(httpServletResponse, response, watch);
+            }
+                break;
             default:
                 break;
             }

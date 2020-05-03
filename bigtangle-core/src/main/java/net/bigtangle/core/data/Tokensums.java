@@ -1,4 +1,4 @@
-package net.bigtangle.store.data;
+package net.bigtangle.core.data;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

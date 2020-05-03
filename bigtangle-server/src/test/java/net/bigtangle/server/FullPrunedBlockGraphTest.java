@@ -51,7 +51,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectTransactionalUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXOs
         Transaction tx1 = createTestTransaction();
@@ -71,7 +71,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectRewardUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -95,7 +95,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectTokenUTXOs() throws Exception {
-        store.resetStore();
+        
  
         ECKey ecKey1 = new ECKey();
         byte[] pubKey = ecKey1.getPubKey();
@@ -167,7 +167,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConnectOrderOpenUTXOs() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -225,7 +225,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmTransactionalUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXOs
         Transaction tx1 = createTestTransaction();
@@ -256,7 +256,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmRewardUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -293,7 +293,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmTokenUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -320,7 +320,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmOrderOpenUTXOs() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -364,7 +364,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmOrderMatchUTXOs1() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -435,7 +435,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testConfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -566,7 +566,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmTransactionalUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Create block with UTXOs
         Transaction tx11 = createTestTransaction();
@@ -610,7 +610,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmRewardUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
@@ -651,7 +651,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmTokenUTXOs() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -685,7 +685,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmOrderOpenUTXOs() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -730,7 +730,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmOrderMatchUTXOs1() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -805,7 +805,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmOrderMatchUTXOs2() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
@@ -940,7 +940,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsTransactional() throws Exception {
-        store.resetStore();
+        
 
         // Create blocks with UTXOs
         Transaction tx1 = createTestTransaction();
@@ -989,7 +989,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsRewardOtherRewards() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing second reward interval
         // Generate mining reward block
@@ -1056,7 +1056,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
-        store.resetStore();
+        
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Generate blocks until passing second reward interval
@@ -1138,7 +1138,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
     @Test
     public void testUnconfirmDependentsToken() throws Exception {
-        store.resetStore();
+        
         ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
 

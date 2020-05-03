@@ -16,6 +16,7 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OrderRecordMatched;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.data.OrderMatchingResult;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
@@ -25,7 +26,6 @@ import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderMatchedResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.OrderMatchingResult;
 
 /**
  * This service provides informations on current exchange rates

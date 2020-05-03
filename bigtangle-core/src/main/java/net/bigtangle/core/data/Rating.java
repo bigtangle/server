@@ -1,4 +1,4 @@
-package net.bigtangle.store.data;
+package net.bigtangle.core.data;
 
 import net.bigtangle.core.Sha256Hash;
 

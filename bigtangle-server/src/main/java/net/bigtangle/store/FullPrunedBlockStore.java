@@ -39,14 +39,14 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
+import net.bigtangle.core.data.ContractEventRecord;
+import net.bigtangle.core.data.DepthAndWeight;
+import net.bigtangle.core.data.Rating;
+import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.store.data.ContractEventRecord;
-import net.bigtangle.store.data.DepthAndWeight;
-import net.bigtangle.store.data.Rating;
-import net.bigtangle.store.data.SolidityState;
 
 /**
  * <p>

@@ -42,7 +42,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testPrototypeTransactional() throws Exception {
-        store.resetStore();
+        
 
         // Generate two conflicting blocks
       
@@ -98,7 +98,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
-        store.resetStore();
+        
 
         // Generate two conflicting blocks
  
@@ -163,7 +163,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     // Deprecated @Test
     public void testConflictEligibleReward() throws Exception {
-        store.resetStore();
+        
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
@@ -220,7 +220,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
         
@@ -296,7 +296,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
-        store.resetStore();
+        
         ECKey outKey = walletKeys.get(1);
         byte[] pubKey = outKey.getPubKey();
 
@@ -370,7 +370,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenFirstIssuance() throws Exception {
-        store.resetStore();
+        
 
         // Generate an eligible issuance
         ECKey outKey = walletKeys.get(0);
@@ -430,7 +430,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
     @Test
     public void testConflictSameTokenidFirstIssuance() throws Exception {
-        store.resetStore();
+        
 
         // Generate an issuance
         ECKey outKey = walletKeys.get(0);

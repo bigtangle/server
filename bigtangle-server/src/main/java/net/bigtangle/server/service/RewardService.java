@@ -39,6 +39,8 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.data.OrderMatchingResult;
+import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
@@ -58,8 +60,6 @@ import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.data.OrderMatchingResult;
-import net.bigtangle.store.data.SolidityState;
 import net.bigtangle.utils.Threading;
 
 /**

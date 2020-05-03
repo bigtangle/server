@@ -127,7 +127,7 @@ public class OkHttp3Util {
     }
 
     public static String postString(String url, String s) throws IOException {
-        logger.debug("start:  "+url);
+        logger.debug("start:  "+url + " " + s);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();

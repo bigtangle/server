@@ -33,6 +33,7 @@ public enum ReqCmd {
 	// permissioned
 	addAccessGrant, deleteAccessGrant,
 	// Smart Contract
-	getContractEvents;
-
+	getContractEvents,
+    // check point value
+    getCheckPoint;
 }
