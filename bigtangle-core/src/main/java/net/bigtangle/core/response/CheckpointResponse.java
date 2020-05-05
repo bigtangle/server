@@ -5,26 +5,28 @@
 
 package net.bigtangle.core.response;
 
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.data.TokensumsMap;
 
 public class CheckpointResponse extends AbstractResponse {
 
-    private TokensumsMap  tokensumsMap;
+    private Sha256Hash  tokensumsMapHash;
  
     public static CheckpointResponse create(TokensumsMap  tokensumsMap) {
         CheckpointResponse res = new CheckpointResponse();
-        res.tokensumsMap =  tokensumsMap;
+        res.tokensumsMapHash =  tokensumsMap.hash();
         return res;
     }
 
-    public TokensumsMap getTokensumsMap() {
-        return tokensumsMap;
+    public Sha256Hash getTokensumsMapHash() {
+        return tokensumsMapHash;
     }
 
-    public void setTokensumsMap(TokensumsMap tokensumsMap) {
-        this.tokensumsMap = tokensumsMap;
+    public void setTokensumsMapHash(Sha256Hash tokensumsMapHash) {
+        this.tokensumsMapHash = tokensumsMapHash;
     }
 
+   
     
      
 }

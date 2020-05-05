@@ -41,6 +41,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
+import net.bigtangle.core.response.OrderMatchedResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
@@ -234,10 +235,20 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 
         // Verify the  matched orders are correct
-      List<OrderRecordMatched> matched = tickerService. getOrderRecordMatched(null, System.currentTimeMillis()/1000 - 1000000000);
+      long matchBlockTime = System.currentTimeMillis()/1000 - 1000000000;
+    List<OrderRecordMatched> matched = tickerService. getOrderRecordMatched(null, matchBlockTime);
       assertTrue(matched.size() == 2 );
  
 
+      
+
+      HashMap<String, String> requestParam00 = new HashMap<String, String>();
+      requestParam00.put("matchBlockTime", matchBlockTime+"");
+      String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getOrdermatched.name(),
+              Json.jsonmapper().writeValueAsString(requestParam00));
+      OrderMatchedResponse res = Json.jsonmapper().readValue(resp2, OrderMatchedResponse.class);
+      assertTrue(matched.size()  ==  res.getOrderRecordMatcheds().size());
+      
     }
     @Test
     public void buy() throws Exception {
@@ -474,10 +485,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0);
-        ;
-        List<Block> addedBlocks = new ArrayList<>();
-
+        ECKey testKey = walletKeys.get(0); 
+        List<Block> addedBlocks = new ArrayList<>(); 
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -553,10 +562,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0);
-        ;
-        List<Block> addedBlocks = new ArrayList<>();
-
+        ECKey testKey = walletKeys.get(0); 
+        List<Block> addedBlocks = new ArrayList<>(); 
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();

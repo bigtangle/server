@@ -24,6 +24,16 @@ public class Prescription extends DataClass implements java.io.Serializable {
      * this is the prescription written as text
      */
     private String prescription;
+    
+    /*
+     * this is the type of Prescription
+     */
+    private String type;
+    /*
+     * this is the  country code  de = germany etc
+     */
+    private String countrycode;
+    
     // this is the associated file name for example scan.pdf
     private String filename;
     // this the binary file
@@ -39,6 +49,8 @@ public class Prescription extends DataClass implements java.io.Serializable {
             dos.write(super.toByteArray());
 
             Utils.writeNBytesString(dos, prescription);
+            Utils.writeNBytesString(dos, type);
+            Utils.writeNBytesString(dos, countrycode);
             Utils.writeNBytesString(dos, filename);
             Utils.writeNBytes(dos, file);
             dos.writeInt(coins.size());
@@ -68,6 +80,8 @@ public class Prescription extends DataClass implements java.io.Serializable {
     public Prescription parseDIS(DataInputStream dis) throws IOException {
         super.parseDIS(dis);
         prescription = Utils.readNBytesString(dis);
+        type = Utils.readNBytesString(dis);
+        countrycode = Utils.readNBytesString(dis);
         filename = Utils.readNBytesString(dis);
         file = Utils.readNBytes(dis);
 
@@ -111,6 +125,22 @@ public class Prescription extends DataClass implements java.io.Serializable {
 
     public void setCoins(List<Coin> coins) {
         this.coins = coins;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getCountrycode() {
+        return countrycode;
+    }
+
+    public void setCountrycode(String countrycode) {
+        this.countrycode = countrycode;
     }
 
 }

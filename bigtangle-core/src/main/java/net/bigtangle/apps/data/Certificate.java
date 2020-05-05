@@ -17,9 +17,20 @@ public class Certificate extends DataClass implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
 
     /*
-     * this is the prescription written as text
+     * this is the description of Certificate
      */
     private String description;
+    /*
+     * this is the type of Certificate
+     */
+    private String type;
+    
+    /*
+     * this is the  country code  de = germany etc
+     */
+    private String countrycode;
+    
+    
     // this is the associated file name for example scan.pdf
     private String filename;
     // this the binary file
@@ -33,6 +44,8 @@ public class Certificate extends DataClass implements java.io.Serializable {
             dos.write(super.toByteArray());
 
             Utils.writeNBytesString(dos, description);
+            Utils.writeNBytesString(dos, type);
+            Utils.writeNBytesString(dos, countrycode);
             Utils.writeNBytesString(dos, filename);
             Utils.writeNBytes(dos, file);
 
@@ -57,6 +70,8 @@ public class Certificate extends DataClass implements java.io.Serializable {
     public Certificate parseDIS(DataInputStream dis) throws IOException {
         super.parseDIS(dis);
         description = Utils.readNBytesString(dis);
+        type = Utils.readNBytesString(dis);
+        countrycode = Utils.readNBytesString(dis);
         filename = Utils.readNBytesString(dis);
         file = Utils.readNBytes(dis);
 
@@ -87,6 +102,22 @@ public class Certificate extends DataClass implements java.io.Serializable {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getCountrycode() {
+        return countrycode;
+    }
+
+    public void setCountrycode(String countrycode) {
+        this.countrycode = countrycode;
     }
 
 }
