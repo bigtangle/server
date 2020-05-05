@@ -39,7 +39,7 @@ public class BeforeStartup {
                 syncBlockService.startInit();
             } catch (Exception e) {
                 logger.error("", e);
-                System.exit(-1);
+               //TODO sync checkpoint  System.exit(-1);
             }
         }
         serverConfiguration.setServiceReady(true);
