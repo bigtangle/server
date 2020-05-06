@@ -3,9 +3,11 @@ package net.bigtangle.apps.data;
 public enum CertificateType {
     //凭证
     certificate, 
-    //车辆登记
+    //驾照
+    driveLicence,
+    //车辆证
     vehicleRegistration, 
-    //学士文凭
+    //学士学位
     bachlorDegree, 
     //硕士学位
     masterDegree, 
@@ -17,9 +19,7 @@ public enum CertificateType {
     marriageCertificate, 
     //房产证
     realEstate, 
-    //驾照
-    driveLicence,
-    //专利
+    //专利证
     patent,
     
 }
