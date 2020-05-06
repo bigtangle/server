@@ -20,6 +20,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.spongycastle.crypto.InvalidCipherTextException;
 
+import net.bigtangle.apps.data.Certificate;
 import net.bigtangle.apps.data.IdentityCore;
 import net.bigtangle.apps.data.IdentityData;
 import net.bigtangle.apps.data.SignedData;
@@ -216,6 +217,7 @@ public class SerializationTest {
    
     }
 
+   
     @Test
     public void testIdentityCoreDataSerialization() throws InvalidCipherTextException, IOException, SignatureException {
   
@@ -253,15 +255,17 @@ public class SerializationTest {
         identityData.setIdentityCore(identityCore);
         identityData.setIdentificationnumber("120123456789012345");
         byte[] photo = "readFile".getBytes();
+        identity.setPubkey(userkey.getPublicKeyAsHex());
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);
         identity.setSerializedData(identityData.toByteArray());
 
-        identity.setPubsignkey(key.getPubKey());
+        identity.setSignerpubkey(key.getPubKey());
         identity.signMessage(key);
 
         identity.verify();
 
+        identity.setValidtodate(System.currentTimeMillis());
         byte[] data = identity.toByteArray();
 
         byte[] cipher = ECIESCoder.encrypt(key.getPubKeyPoint(), data);

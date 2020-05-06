@@ -26,7 +26,7 @@ public class IdentityData extends DataClass implements java.io.Serializable {
     // original language UTF-8
     IdentityCore identityCore = new  IdentityCore();
 
-    
+   
     public byte[] toByteArray() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {

@@ -256,9 +256,7 @@ public class Utils {
         }
     }
 
-  
-    public static byte[] readNBytes(DataInputStream dis )
-            throws IOException, UnsupportedEncodingException {
+    public static byte[] readNBytes(DataInputStream dis) throws IOException, UnsupportedEncodingException {
         byte[] message;
         if (dis.readBoolean()) {
             message = new byte[dis.readInt()];
@@ -279,12 +277,28 @@ public class Utils {
 
     }
 
+    public static void writeLong(DataOutputStream dos, Long message) throws IOException, UnsupportedEncodingException {
+        dos.writeBoolean(message != null);
+        if (message != null) {
+            dos.write(message.byteValue());
+        }
+
+    }
+
+    public static Long readLong(DataInputStream dis) throws IOException, UnsupportedEncodingException {
+        if (dis.readBoolean()) {
+            return new Long(dis.readByte());
+        } else {
+            return null;
+        }
+    }
+
     public static void writeNBytes(DataOutputStream dos, byte[] message)
             throws IOException, UnsupportedEncodingException {
         dos.writeBoolean(message != null);
         if (message != null) {
-        dos.writeInt(message.length);
-        dos.write(message);
+            dos.writeInt(message.length);
+            dos.write(message);
         }
     }
 

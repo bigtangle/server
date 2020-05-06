@@ -29,12 +29,18 @@ public class SignedData extends DataClass implements java.io.Serializable {
 
     // serialized data Utils.HEX.encode before encryption
     String serializedData;
-
-    private byte[] pubsignkey;
+    // used for verify this message
+    private byte[] signerpubkey;
     private String signature;
 
+    // milliseconds, not encrypted, can be null
+    private Long validtodate;
+
+    // the signed data is issued to this pubkey, can be null
+    private String pubkey;
+
     public void verify() throws SignatureException {
-        ECKey.fromPublicOnly(pubsignkey).verifyMessage(serializedData, signature);
+        ECKey.fromPublicOnly(signerpubkey).verifyMessage(serializedData, signature);
 
     }
 
@@ -53,8 +59,10 @@ public class SignedData extends DataClass implements java.io.Serializable {
             dos.write(super.toByteArray());
             Utils.writeNBytesString(dos, dataClassName);
             Utils.writeNBytesString(dos, serializedData);
-            Utils.writeNBytes(dos, pubsignkey);
+            Utils.writeNBytes(dos, signerpubkey);
             Utils.writeNBytesString(dos, signature);
+            Utils.writeLong(dos, validtodate);
+            Utils.writeNBytesString(dos, pubkey);
             dos.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -77,9 +85,10 @@ public class SignedData extends DataClass implements java.io.Serializable {
         super.parseDIS(dis);
         dataClassName = Utils.readNBytesString(dis);
         serializedData = Utils.readNBytesString(dis);
-        pubsignkey = Utils.readNBytes(dis);
+        signerpubkey = Utils.readNBytes(dis);
         signature = Utils.readNBytesString(dis);
-
+        validtodate = Utils.readLong(dis);
+        pubkey = Utils.readNBytesString(dis);
         dis.close();
 
         return this;
@@ -93,7 +102,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         return memoInfo;
     }
 
-    public  static SignedData decryptFromMemo(ECKey userkey, MemoInfo memoInfo)
+    public static SignedData decryptFromMemo(ECKey userkey, MemoInfo memoInfo)
             throws InvalidCipherTextException, IOException, SignatureException, NoSignedDataException {
         for (KeyValue keyValue : memoInfo.getKv()) {
             if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
@@ -132,7 +141,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
 
     public void signData(ECKey signkey, byte[] originalData, String dataClassname) throws SignatureException {
         setSerializedData(originalData);
-        setPubsignkey(signkey.getPubKey());
+        setSignerpubkey(signkey.getPubKey());
         setDataClassName(dataClassname);
         signMessage(signkey);
     }
@@ -153,20 +162,36 @@ public class SignedData extends DataClass implements java.io.Serializable {
         this.serializedData = serializedData;
     }
 
-    public byte[] getPubsignkey() {
-        return pubsignkey;
-    }
-
-    public void setPubsignkey(byte[] pubsignkey) {
-        this.pubsignkey = pubsignkey;
-    }
-
     public String getDataClassName() {
         return dataClassName;
     }
 
     public void setDataClassName(String dataClassName) {
         this.dataClassName = dataClassName;
+    }
+
+    public byte[] getSignerpubkey() {
+        return signerpubkey;
+    }
+
+    public void setSignerpubkey(byte[] signerpubkey) {
+        this.signerpubkey = signerpubkey;
+    }
+
+    public Long getValidtodate() {
+        return validtodate;
+    }
+
+    public void setValidtodate(Long validtodate) {
+        this.validtodate = validtodate;
+    }
+
+    public String getPubkey() {
+        return pubkey;
+    }
+
+    public void setPubkey(String pubkey) {
+        this.pubkey = pubkey;
     }
 
 }
