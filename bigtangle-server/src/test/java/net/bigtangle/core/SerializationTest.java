@@ -255,7 +255,7 @@ public class SerializationTest {
         identityData.setIdentityCore(identityCore);
         identityData.setIdentificationnumber("120123456789012345");
         byte[] photo = "readFile".getBytes();
-        identity.setPubkey(userkey.getPublicKeyAsHex());
+ 
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);
         identity.setSerializedData(identityData.toByteArray());

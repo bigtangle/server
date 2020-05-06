@@ -36,9 +36,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
     // milliseconds, not encrypted, can be null
     private Long validtodate;
 
-    // the signed data is issued to this pubkey, can be null
-    private String pubkey;
-
+ 
     public void verify() throws SignatureException {
         ECKey.fromPublicOnly(signerpubkey).verifyMessage(serializedData, signature);
 
@@ -62,7 +60,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
             Utils.writeNBytes(dos, signerpubkey);
             Utils.writeNBytesString(dos, signature);
             Utils.writeLong(dos, validtodate);
-            Utils.writeNBytesString(dos, pubkey);
+       
             dos.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -88,7 +86,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         signerpubkey = Utils.readNBytes(dis);
         signature = Utils.readNBytesString(dis);
         validtodate = Utils.readLong(dis);
-        pubkey = Utils.readNBytesString(dis);
+ 
         dis.close();
 
         return this;
@@ -185,13 +183,5 @@ public class SignedData extends DataClass implements java.io.Serializable {
     public void setValidtodate(Long validtodate) {
         this.validtodate = validtodate;
     }
-
-    public String getPubkey() {
-        return pubkey;
-    }
-
-    public void setPubkey(String pubkey) {
-        this.pubkey = pubkey;
-    }
-
+ 
 }
