@@ -11,6 +11,11 @@ public class OrderRecordMatched extends OrderRecord {
     String transactionHash;
     Long matchBlockTime;
 
+    //for JSON
+    public OrderRecordMatched() {
+       
+    }
+
     public OrderRecordMatched(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
             String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, String side,
