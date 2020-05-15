@@ -4,6 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.server.service.schedule;
 
+import java.time.Duration;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -12,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
@@ -57,7 +67,7 @@ public class BlockPrototypeService {
         logger.info("BlockPrototypeService start");
         try {
             store.deleteBlockPrototypeTimeout();
-            blockprototype();
+            timeboxed();
         } catch (Exception e) {
             logger.info("BlockPrototypeService error", e);
         } finally {
@@ -69,4 +79,32 @@ public class BlockPrototypeService {
     private void blockprototype() throws BlockStoreException, Exception {
         this.blockService.createBlockPrototypeCache();
     }
+    
+    private void timeboxed( )
+            throws InterruptedException, ExecutionException {
+        final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                logger.debug(" blockprototype  started  : "  );
+                blockService.createBlockPrototypeCache();
+                return "";
+            }
+        });
+        Stopwatch watch = Stopwatch.createStarted();
+        try {
+            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            logger.debug(" blockprototype Timeout  ");
+            handler.cancel(true);
+         
+        } finally {
+            executor.shutdownNow();
+        }
+        logger.debug("blockprototype time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+        
+    }
+
 }

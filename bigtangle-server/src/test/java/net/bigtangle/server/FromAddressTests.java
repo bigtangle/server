@@ -45,9 +45,8 @@ public class FromAddressTests extends AbstractIntegrationTest {
     Wallet w;
     protected static final Logger log = LoggerFactory.getLogger(FromAddressTests.class);
 
-    @Test
-
-    public void lotteryDo() throws Exception {
+    @Test 
+    public void testUserpay() throws Exception {
         w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
         w.setServerURL(contextRoot);
         accountKey = new ECKey(); 
@@ -56,12 +55,13 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
     }
 
-    private void checkResult(ECKey userkey, String fromaddress) throws Exception {
+    private void checkResult(ECKey userkey, String fromaddress, String memo) throws Exception {
 
         List<UTXO> users = getBalance(userkey.toAddress(networkParameters).toBase58());
 
         for (UTXO u : users) {
             assertTrue(u.getFromaddress().equals(fromaddress));
+            assertTrue(u.getMemoInfo().getKv().get(0).getValue().equals(memo));
         }
     }
 
@@ -87,7 +87,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
             // TODO: handle exception
         }
         mcmc();
-        checkResult(accountKey, key.toAddress(networkParameters).toBase58());
+   //     checkResult(accountKey, key.toAddress(networkParameters).toBase58());
     }
 
     public List<ECKey> payKeys() throws Exception {
@@ -97,12 +97,16 @@ public class FromAddressTests extends AbstractIntegrationTest {
         ECKey key = new ECKey();
         giveMoneyResult.put(key.toAddress(networkParameters).toString(), 100l);
         userkeys.add(key);
-
-        Block b = w.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user", 3, 20000);
+        ECKey key2 = new ECKey();
+        giveMoneyResult.put(key2.toAddress(networkParameters).toString(), 100l);
+        userkeys.add(key2);
+        
+        String memo = "pay to user";
+        Block b = w.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo, 3, 20000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmc();
 
-        checkResult(key, w.walletKeys().get(0).toAddress(networkParameters).toBase58());
+        checkResult(key, w.walletKeys().get(0).toAddress(networkParameters).toBase58(),memo);
         return userkeys;
     }
 
