@@ -67,7 +67,8 @@ public class BlockPrototypeService {
         logger.info("BlockPrototypeService start");
         try {
             store.deleteBlockPrototypeTimeout();
-            timeboxed();
+           //TODO too many DB connections timeboxed();
+            blockprototype();
         } catch (Exception e) {
             logger.info("BlockPrototypeService error", e);
         } finally {
