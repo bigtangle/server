@@ -39,14 +39,15 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.data.OrderMatchingResult;
-import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.OrderMatchingResult;
+import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException;
@@ -85,7 +86,6 @@ public class RewardService {
     @Autowired
     protected NetworkParameters networkParameters;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-  
 
     /**
      * Scheduled update function that updates the Tangle
@@ -101,14 +101,14 @@ public class RewardService {
             log.debug(this.getClass().getName() + "  RewardService running. Returning...");
             return;
         }
-     
+
         try {
             // log.info("create Reward started");
             createReward();
         } catch (Exception e) {
             log.error("create Reward end  ", e);
         } finally {
-             lock.unlock();
+            lock.unlock();
         }
 
     }
@@ -137,7 +137,7 @@ public class RewardService {
             log.debug("  getValidatedRewardBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
             return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight());
-        } catch (CutoffException | InfeasiblePrototypeException e) {
+        } catch (CutoffException | InfeasiblePrototypeException  | NullPointerException e ) {
             // fall back to use prev reward as tip
             log.debug(" fall back to use prev reward as tip: ", e);
             Block prevreward = store.get(prevRewardHash);
@@ -149,34 +149,39 @@ public class RewardService {
         return createReward(prevRewardHash, prevTrunk, prevBranch, null);
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride) throws Exception {
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride)
+            throws Exception {
 
         Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride);
-        if (block != null)
-//            if (scheduleConfiguration.isMining()) {
-//                blockService.broadcastBlock(block);
-//            } else {
+
+        if (block != null) {
+            // check, if the reward block is too old to avoid conflict.
+            TXReward latest = store.getMaxConfirmedReward();
+            if (latest.getChainLength() >= block.getLastMiningRewardBlock() + 1) {
+                log.debug("resolved Reward is out of date.");
+            } else {
                 blockService.saveBlock(block);
-         //   }
+            }
+        }
         return block;
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null);        	
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null);
     }
 
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride)
-            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            Long timeOverride) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         Stopwatch watch = Stopwatch.createStarted();
-        
+
         Block r1 = blockService.getBlock(prevTrunk);
         Block r2 = blockService.getBlock(prevBranch);
-        
-        long currentTime = Math.max(System.currentTimeMillis() / 1000, 
+
+        long currentTime = Math.max(System.currentTimeMillis() / 1000,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         if (timeOverride != null)
-        	currentTime = timeOverride;
+            currentTime = timeOverride;
         RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime);
 
         Block block = Block.createBlock(networkParameters, r1, r2);
@@ -220,7 +225,7 @@ public class RewardService {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-                log.debug(" reward block solve started  : " + chainTargetFinal + " \n for block"  +block);
+                log.debug(" reward block solve started  : " + chainTargetFinal + " \n for block" + block);
                 block.solve(chainTargetFinal);
                 return "";
             }
@@ -268,8 +273,8 @@ public class RewardService {
      * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
      *         perTxReward)
      */
-    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash, long currentTime)
-            throws BlockStoreException {
+    public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
+            long currentTime) throws BlockStoreException {
 
         // Read previous reward block's data
         long prevChainLength = store.getRewardChainLength(prevRewardHash);
@@ -289,7 +294,7 @@ public class RewardService {
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
                     true);
         } catch (CutoffException e) {
-            
+
             // Robustness
             e.printStackTrace();
             blocks = new HashSet<Sha256Hash>();
@@ -299,8 +304,7 @@ public class RewardService {
                     false);
         }
 
-        long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
-                currentTime);
+        long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -595,7 +599,8 @@ public class RewardService {
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
         RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
-                newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(), newMilestoneBlock.getTimeSeconds());
+                newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(),
+                newMilestoneBlock.getTimeSeconds());
         if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
             throw new VerificationException("Incorrect difficulty target");
         }
@@ -745,7 +750,7 @@ public class RewardService {
 
         // Get the block INTERVAL ago
         for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
-          prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
+            prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
         }
         Block oldBlock = store.get(prevRewardHash);
 
@@ -761,18 +766,20 @@ public class RewardService {
 
         BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-      newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
         if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
-         //   log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
+            // log.info("Difficulty hit proof of work limit: {}",
+            // newTarget.toString(16));
             newTarget = networkParameters.getMaxTargetReward();
         }
 
-        if ( prevDifficulty != (Utils.encodeCompactBits(newTarget))  ) {
-            log.info("Difficulty  change from {} to: {} and diff={}", prevDifficulty,  Utils.encodeCompactBits(newTarget), prevDifficulty -Utils.encodeCompactBits(newTarget));
-         
+        if (prevDifficulty != (Utils.encodeCompactBits(newTarget))) {
+            log.info("Difficulty  change from {} to: {} and diff={}", prevDifficulty,
+                    Utils.encodeCompactBits(newTarget), prevDifficulty - Utils.encodeCompactBits(newTarget));
+
         }
-        
+
         return Utils.encodeCompactBits(newTarget);
     }
 }

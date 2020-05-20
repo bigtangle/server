@@ -23,9 +23,9 @@ public class RandomNumberBlock extends AbstractIntegrationTest {
     public void createRandomNumber(  List<Block> a1, List<Integer> rnumbers) throws Exception { 
   
         Block r1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
+       
             r1 = createReward(r1, a1);
-        }  
+        
         // Deterministic randomization
         byte[] randomness = Utils.xor(r1.getPrevBlockHash().getBytes(), r1.getPrevBranchBlockHash().getBytes());
         SecureRandom se = new SecureRandom(randomness);

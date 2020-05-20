@@ -173,6 +173,25 @@ public class TokenTest extends AbstractIntegrationTest {
         }
     }
 
+    public void testWrongSignnumber() throws Exception {
+
+        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+
+        {
+            final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de/de", aesKey, "");
+
+            List<ECKey> keys = new ArrayList<ECKey>();
+            keys.add(preKey);
+            for (int i = 0; i < keys.size(); i++) {
+                walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
+            }
+            sendEmpty(10);
+            mcmcService.update();
+            confirmationService.update();
+        }
+    }
+    
     @Test
     public void testCreateTokenWithDomain() throws Exception {
 
