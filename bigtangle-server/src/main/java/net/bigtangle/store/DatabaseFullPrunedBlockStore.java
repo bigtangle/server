@@ -3605,7 +3605,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement.setLong(2, multiSign.getTokenindex());
             preparedStatement.setString(3, multiSign.getAddress());
             preparedStatement.setBytes(4, multiSign.getBlockbytes());
-            preparedStatement.setInt(5, 0);
+            preparedStatement.setInt(5, multiSign.getSign());
             preparedStatement.setString(6, multiSign.getId());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {

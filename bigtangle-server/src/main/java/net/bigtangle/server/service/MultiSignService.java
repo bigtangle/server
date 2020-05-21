@@ -154,6 +154,7 @@ public class MultiSignService {
                     multiSign.setAddress(address);
                     multiSign.setBlockbytes(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
+                    multiSign.setSign(1);
                     store.saveMultiSign(multiSign);
                 }
             }
