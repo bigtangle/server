@@ -107,7 +107,6 @@ public class MultiSignService {
                 signcount = multiSignByRequest.getMultiSignBies().size();
             }
             map.put("signcount", signcount);
-            map.put("inserttime", multiSign.getInserttime());
             multiSignList.add(map);
         }
         return SearchMultiSignResponse.createSearchMultiSignResponse(multiSignList);

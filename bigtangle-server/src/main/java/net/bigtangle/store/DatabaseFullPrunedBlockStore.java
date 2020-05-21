@@ -493,7 +493,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) " + "VALUES (?, ?, ?)";
     protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";
 
-    protected final String OrderRecordMatchedColumn = ORDER_TEMPLATE + ", txhash, matchblocktime";
+    protected final String OrderRecordMatchedColumn =  ORDER_TEMPLATE + ", txhash, matchblocktime";
 
     protected final String INSERT_OrderRecordMatched = getInsert() + "  INTO OrderRecordMatched ("
             + OrderRecordMatchedColumn + ") " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?)";
@@ -1490,8 +1490,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            // Must be sorted for hash checkpoint
-            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
+            //Must be sorted for hash checkpoint
+            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL+ " order by hash, outputindex ");
             s.setString(1, tokenid);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -3446,7 +3446,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         String address0 = resultSet.getString("address");
         byte[] blockhash = resultSet.getBytes("blockhash");
         int sign = resultSet.getInt("sign");
-        Long inserttime = resultSet.getLong("inserttime");
+
         MultiSign multiSign = new MultiSign();
         multiSign.setId(id);
         multiSign.setTokenindex(tokenindex);
@@ -3454,7 +3454,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         multiSign.setAddress(address0);
         multiSign.setBlockbytes(blockhash);
         multiSign.setSign(sign);
-        multiSign.setInserttime(inserttime);
+
         list.add(multiSign);
     }
 
@@ -3492,7 +3492,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<MultiSign> list = new ArrayList<MultiSign>();
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign,inserttime FROM multisign a left join blocks b ON a.blockhash=b.hash WHERE 1 = 1  ";
+        String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
         if (addresses != null && !addresses.isEmpty()) {
             sql += " AND address IN( " + buildINList(addresses) + " ) ";
         }
@@ -6385,7 +6385,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 preparedStatement.setLong(12, record.getValidFromTime());
                 preparedStatement.setString(13, record.getSide() == null ? null : record.getSide().name());
                 preparedStatement.setString(14, record.getBeneficiaryAddress());
-                preparedStatement.setString(15, record.getTransactionHash());
+                preparedStatement.setString(15, record.getTransactionHash() );
                 preparedStatement.setLong(16, record.getMatchBlockTime());
                 preparedStatement.addBatch();
             }
@@ -6406,27 +6406,27 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<OrderRecordMatched> selectOrderRecordMatched(String tokenId, long matchtime)
-            throws BlockStoreException {
+    public List<OrderRecordMatched> selectOrderRecordMatched(String tokenId,long matchtime) throws BlockStoreException {
 
         PreparedStatement s = null;
-        List<OrderRecordMatched> list = new ArrayList<OrderRecordMatched>();
+        List<OrderRecordMatched>  list =  new ArrayList<OrderRecordMatched>();
         try {
             maybeConnect();
-            if (tokenId == null || "".equals(tokenId)) {
-                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
-                        + " where matchblocktime > ?  ");
-                s.setLong(1, matchtime);
-            } else {
-                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
-                        + " where matchblocktime > ? and ( targettokenid=?" + " or offertokenid=? ");
-                s.setLong(1, matchtime);
-                s.setString(2, tokenId);
-                s.setString(3, tokenId);
+            if(tokenId==null || "".equals(tokenId)) {
+            s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn+
+                    " from OrderRecordMatched " + " where matchblocktime > ?  ");
+            s.setLong(1, matchtime);
+            }else {
+                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn+
+                        " from OrderRecordMatched " + " where matchblocktime > ? and ( targettokenid=?"
+                                + " or offertokenid=? ");
+                s.setLong(1, matchtime); 
+                s.setString(2, tokenId); 
+                s.setString(3, tokenId); 
             }
             ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                list.add(setOrderRecordMatched(resultSet));
+            while (resultSet.next()) { 
+                list.add(  setOrderRecordMatched(resultSet ));
             }
             return list;
         } catch (SQLException ex) {
@@ -6440,7 +6440,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
         }
     }
-
     private OrderRecordMatched setOrderRecordMatched(ResultSet resultSet) throws SQLException {
         return new OrderRecordMatched(Sha256Hash.wrap(resultSet.getBytes("blockhash")),
                 Sha256Hash.wrap(resultSet.getBytes("collectinghash")), resultSet.getLong("offercoinvalue"),
@@ -6450,7 +6449,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
                 resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
                 resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"), resultSet.getString("txhash"),
-                resultSet.getLong("matchblocktime"));
+                resultSet.getString("beneficiaryaddress"),
+                resultSet.getString("txhash"),
+                resultSet.getLong("matchblocktime"  )) ;
     }
 }
