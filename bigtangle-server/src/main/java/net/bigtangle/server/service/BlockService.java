@@ -124,9 +124,10 @@ public class BlockService {
     public void saveBlock(Block block) throws Exception {
         Context context = new Context(networkParameters);
         Context.propagate(context);
+        broadcastBlock(block);
         blockgraph.add(block, false);
         removeBlockPrototype(block);
-        broadcastBlock(block);
+     
 
     }
 
