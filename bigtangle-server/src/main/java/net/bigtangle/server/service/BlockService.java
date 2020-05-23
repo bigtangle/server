@@ -40,6 +40,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
@@ -458,7 +459,7 @@ public class BlockService {
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes) {
 
         try {
-            // logger.debug(" bytes " +bytes.length);
+             
             return addConnected(Gzip.decompress(bytes), true);
         } catch (VerificationException e) {
             return null;
@@ -481,9 +482,11 @@ public class BlockService {
     }
 
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
-        if (store.getBlockEvaluation(block.getHash()) == null) {
-
-            try {
+        if (store.getBlockEvaluation(block.getHash()) == null) { 
+            try { 
+                if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+                logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
+                }
                 blockgraph.add(block, allowUnsolid);
                 removeBlockPrototype(block);
                 return Optional.of(block);
