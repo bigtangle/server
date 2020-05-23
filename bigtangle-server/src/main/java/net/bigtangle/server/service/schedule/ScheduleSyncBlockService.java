@@ -31,7 +31,7 @@ public class ScheduleSyncBlockService {
      * if missing previous, it may request network for the blocks
      */
     @Async
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 15000)
     public void syncService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             syncBlockService.startSingleProcess();
