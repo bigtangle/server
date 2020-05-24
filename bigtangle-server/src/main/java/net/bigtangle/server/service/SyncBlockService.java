@@ -257,7 +257,10 @@ public class SyncBlockService {
         }
         Collections.sort(sortedBlocks, new SortbyBlock());
         for (Block block : sortedBlocks) {
+            //no genesis block
+            if(block.getHeight()>0) {
             blockgraph.add(block, true); 
+            }
         }
 
     }
