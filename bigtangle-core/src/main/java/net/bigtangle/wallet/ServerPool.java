@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Json;
@@ -32,7 +35,7 @@ import net.bigtangle.utils.OkHttp3Util;
 public class ServerPool {
 
     private List<ServerState> servers = new ArrayList<ServerState>();
-
+    private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
     // get a best server to be used and balance with random
     public ServerState getServer() {
         return servers.get(0);
@@ -49,7 +52,7 @@ public class ServerPool {
             serverState.setChainlength(chain.getChainLength());
             servers.add(serverState);
         } catch (Exception e) {
-
+            log.debug("", e);
         }
         Collections.sort(servers, new SortbyChain());
     }
