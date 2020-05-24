@@ -266,7 +266,7 @@ public class SyncBlockService {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getMaxConfirmedReward,
+        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 

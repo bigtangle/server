@@ -6,8 +6,11 @@
 package net.bigtangle.params;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import com.google.common.collect.ImmutableList;
+
+import net.bigtangle.wallet.ServerPool;
 
 /**
  * Parameters for the main production network on which people trade goods and
@@ -41,6 +44,14 @@ public class TestParams extends AbstractBitcoinNetParams {
         equihashK = 4;
 
         genesisBlock = createGenesis(this);
+
+    }
+
+    public void serverSeeds() {
+        String[] urls = new String[] { "https://test.bigtangle.de:8088", "https://test.bigtangle.info:8088" };
+        serverPool = new ServerPool();
+        serverPool.addServers(Arrays.asList(urls));
+
     }
 
     private static TestParams instance;

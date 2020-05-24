@@ -21,8 +21,11 @@
 package net.bigtangle.params;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import com.google.common.collect.ImmutableList;
+
+import net.bigtangle.wallet.ServerPool;
 
 /**
  * Parameters for the main production network on which people trade goods and
@@ -77,6 +80,15 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         addrSeeds = new int[] {};
 
         genesisBlock = createGenesis(this);
+        // seeds for servers
+
+    }
+
+    public void serverSeeds() {
+        String[] urls = new String[] { "https://p.bigtangle.de:8088", "https://p.bigtangle.org:8088",
+                "https://p.bigtangle.info:8088" };
+        serverPool = new ServerPool();
+        serverPool.addServers(Arrays.asList(urls));
     }
 
     private static MainNetParams instance;

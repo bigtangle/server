@@ -40,6 +40,7 @@ import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
+import net.bigtangle.wallet.ServerPool;
 
 /**
  * <p>
@@ -99,7 +100,11 @@ public abstract class NetworkParameters {
     protected transient MessageSerializer defaultSerializer = null;
 
     protected String genesisPub;
+    //List of root permissionDomainname
     protected List<String> permissionDomainname;
+    //List of servers can be used
+    protected  ServerPool serverPool;
+    
     // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 70;
     public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 67;
@@ -476,7 +481,8 @@ public abstract class NetworkParameters {
     }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);
-
+    public abstract   void  serverSeeds() ;
+    
     public static enum ProtocolVersion {
         MINIMUM(70000), PONG(60001), BLOOM_FILTER(70000), CURRENT(70001);
 
@@ -499,4 +505,13 @@ public abstract class NetworkParameters {
         }
         return rootPermission;
     }
+
+    public ServerPool getServerPool() {
+        return serverPool;
+    }
+
+    public void setServerPool(ServerPool serverPool) {
+        this.serverPool = serverPool;
+    }
+    
 }

@@ -470,7 +470,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
-            case getMaxConfirmedReward: {
+            case getChainNumber: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 AbstractResponse response = rewardService.getMaxConfirmedReward(request);
