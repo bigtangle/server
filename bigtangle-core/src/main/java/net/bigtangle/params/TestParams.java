@@ -48,7 +48,7 @@ public class TestParams extends AbstractBitcoinNetParams {
     }
 
     public void serverSeeds() {
-        String[] urls = new String[] { "https://test.bigtangle.de:8088", "https://test.bigtangle.info:8088" };
+        String[] urls = new String[] { "https://test.bigtangle.de:8089/", "https://test.bigtangle.info:8089/" };
         serverPool = new ServerPool();
         serverPool.addServers(Arrays.asList(urls));
 

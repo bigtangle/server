@@ -85,8 +85,9 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     }
 
     public void serverSeeds() {
-        String[] urls = new String[] { "https://p.bigtangle.de:8088", "https://p.bigtangle.org:8088",
-                "https://p.bigtangle.info:8088" };
+        String[] urls = new String[] { "https://p.bigtangle.de:8088/",
+                "https://p.bigtangle.org:8088/",
+                "https://p.bigtangle.info:8088/" };
         serverPool = new ServerPool();
         serverPool.addServers(Arrays.asList(urls));
     }
