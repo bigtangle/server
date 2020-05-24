@@ -11,8 +11,8 @@ public class ServerPoolTest {
 
     public static void main(String[] args) throws  Exception{
         
-          String[] urls = new String[] {"http://localhost:8088"};
-            //      { "https://p.bigtangle.de:8088","https://p.bigtangle.org:8088", "https://p.bigtangle.info:8088"  };
+          String[] urls = new String[] {"http://localhost:8088/"};
+            //      { "https://p.bigtangle.de:8088","https://p.bigtangle.org:8088/", "https://p.bigtangle.info:8088/"  };
           ServerPool serverPool= new ServerPool();
           serverPool.addServers(Arrays.asList(urls));
           System.out.println(serverPool.getServer());

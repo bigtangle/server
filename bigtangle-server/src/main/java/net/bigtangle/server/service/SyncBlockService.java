@@ -257,7 +257,7 @@ public class SyncBlockService {
         }
         Collections.sort(sortedBlocks, new SortbyBlock());
         for (Block block : sortedBlocks) {
-            blockService.addConnectedBlock(block, true);
+            blockgraph.add(block, true); 
         }
 
     }
