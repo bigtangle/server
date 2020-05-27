@@ -3498,7 +3498,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND tokenid=?  ";
-            if (tokenindex != 0) {
+            if (tokenindex != -1) {
                 sql += "  AND tokenindex = ? ";
             }
         }
@@ -3512,7 +3512,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             preparedStatement = conn.get().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
-                if (tokenindex != 0) {
+                if (tokenindex != -1) {
                     preparedStatement.setInt(2, tokenindex);
                 }
             }

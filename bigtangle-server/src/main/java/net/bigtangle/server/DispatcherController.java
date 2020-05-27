@@ -275,11 +275,11 @@ public class DispatcherController {
                 String tokenid = (String) request.get("tokenid");
                 String tokenindex = (String) request.get("tokenindex");
                 if (tokenindex==null||"".equals(tokenindex.trim())) {
-                    tokenindex="0"; 
+                    tokenindex="-1"; 
                 }
                 Boolean isSign = (Boolean) request.get("isSign");
                 AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
-                        tokenindex == null ? 0 : Integer.valueOf(tokenindex), (List<String>) request.get("addresses"),
+                        tokenindex == null ? -1 : Integer.valueOf(tokenindex), (List<String>) request.get("addresses"),
                         isSign == null ? false : isSign);
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
