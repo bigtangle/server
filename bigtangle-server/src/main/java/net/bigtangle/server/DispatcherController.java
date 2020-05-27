@@ -274,6 +274,9 @@ public class DispatcherController {
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
                 String tokenid = (String) request.get("tokenid");
                 String tokenindex = (String) request.get("tokenindex");
+                if (tokenindex==null||"".equals(tokenindex.trim())) {
+                    tokenindex="0"; 
+                }
                 Boolean isSign = (Boolean) request.get("isSign");
                 AbstractResponse response = this.multiSignService.getMultiSignListWithTokenid(tokenid,
                         tokenindex == null ? 0 : Integer.valueOf(tokenindex), (List<String>) request.get("addresses"),
