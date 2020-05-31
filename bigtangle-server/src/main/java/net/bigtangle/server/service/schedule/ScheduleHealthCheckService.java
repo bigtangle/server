@@ -29,7 +29,7 @@ public class ScheduleHealthCheckService {
     /*
      * check the heath of the system, database and kafka stream 
      */
-    @Scheduled(fixedRate = 2000)
+   // @Scheduled(fixedRate = 2000)
     public void checkService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             heathCheckService.startSingleProcess();
