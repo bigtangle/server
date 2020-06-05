@@ -37,10 +37,6 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.data.ContractEventRecord;
-import net.bigtangle.core.data.OrderMatchingResult;
-import net.bigtangle.core.data.SolidityState;
-import net.bigtangle.core.data.SolidityState.State;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Context;
@@ -67,6 +63,10 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.data.ContractEventRecord;
+import net.bigtangle.core.data.OrderMatchingResult;
+import net.bigtangle.core.data.SolidityState;
+import net.bigtangle.core.data.SolidityState.State;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
@@ -80,6 +80,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
+import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 
@@ -120,6 +121,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     @Autowired
     private BlockService blockService;
 
+    @Autowired
+    private SyncBlockService syncBlockService;
+    
     private void solidifyReward(Block block) throws BlockStoreException {
 
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
@@ -1636,7 +1640,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     // if (log.isDebugEnabled())
                     // log.debug("Orphan block {} is not connectable right now",
                     // orphanBlock.block.getHash());
-
+                    syncBlockService.requestBlock(orphanBlock.block.getRewardInfo().getPrevRewardHash());
+                    log.info("syncBlockService orphan {}", orphanBlock.block.getHash());
                     continue;
                 }
                 // Otherwise we can connect it now.
