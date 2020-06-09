@@ -1909,12 +1909,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 20000);
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 200000);
     }
 
     public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 20000);
+        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 200000);
     }
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
