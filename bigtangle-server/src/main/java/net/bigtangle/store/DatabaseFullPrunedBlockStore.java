@@ -8,7 +8,6 @@ package net.bigtangle.store;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,12 +20,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nullable;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -499,16 +498,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             + OrderRecordMatchedColumn + ") " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?)";
 
     protected NetworkParameters params;
-    protected ThreadLocal<Connection> conn;
-    protected LinkedBlockingQueue<Connection> allConnections;
+    protected Connection conn;
+    // protected LinkedBlockingQueue<Connection> allConnections;
     protected String connectionURL;
     protected int fullStoreDepth;
     protected String username;
     protected String password;
     protected String schemaName;
 
-    public ThreadLocal<Connection> getConnection() {
-        return this.conn;
+    @Resource(name = "dataSource")
+    protected transient DataSource dataSource;
+
+    public Connection getConnection() throws SQLException {
+        if (conn == null)
+            conn = dataSource.getConnection();
+        return conn;
     }
 
     /**
@@ -545,8 +549,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.schemaName = schemaName;
         this.username = username;
         this.password = password;
-        this.conn = new ThreadLocal<Connection>();
-        this.allConnections = new LinkedBlockingQueue<Connection>();
     }
 
     public void create() throws BlockStoreException {
@@ -715,59 +717,23 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             if successful connection to the DB couldn't be made.
      */
     protected void maybeConnect() throws BlockStoreException {
-        try {
-            if (conn.get() != null && !conn.get().isClosed())
-                return;
-
-            if (username == null || password == null) {
-                conn.set(DriverManager.getConnection(connectionURL));
-            } else {
-                Properties props = new Properties();
-                props.setProperty("user", this.username);
-                props.setProperty("password", this.password);
-                conn.set(DriverManager.getConnection(connectionURL, props));
-            }
-
-            allConnections.add(conn.get());
-
-            // set the schema if one is needed
-            synchronized (this) {
-                if (schemaName != null) {
-                    Statement s = conn.get().createStatement();
-                    for (String sql : getCreateSchemeSQL()) {
-                        s.execute(sql);
-                    }
-                }
-            }
-            logStack();
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        }
     }
 
-    private void logStack() {
-
-    }
-
+    
     @Override
     public void close() {
-        synchronized (this) {
-            for (Connection conn : allConnections) {
-                try {
-                    if (!conn.getAutoCommit()) {
-                        conn.rollback();
-                    }
-                    conn.close();
-                    if (conn == this.conn.get()) {
-                        this.conn.set(null);
-                    }
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
+        try {
+            if (!conn.getAutoCommit()) {
+                conn.rollback();
             }
-            allConnections.clear();
+
+            conn.close();
+            conn = null;
+        } catch (Exception e) {
+            // Ignore
+
         }
+
     }
 
     /**
@@ -786,7 +752,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private boolean tablesExists() throws SQLException {
         PreparedStatement ps = null;
         try {
-            ps = conn.get().prepareStatement(getTablesExistSQL());
+            ps = getConnection().prepareStatement(getTablesExistSQL());
             ResultSet results = ps.executeQuery();
             results.close();
             return true;
@@ -828,7 +794,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * initial ps.setBytes(2, "03".getBytes());
      */
     private void dbversion(String version) throws SQLException {
-        PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
+        PreparedStatement ps = getConnection().prepareStatement(getInsertSettingsSQL());
         ps.setString(1, VERSION_SETTING);
         ps.setBytes(2, version.getBytes());
         ps.execute();
@@ -836,7 +802,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     protected void dbupdateversion(String version) throws SQLException {
-        PreparedStatement ps = conn.get().prepareStatement(UPDATE_SETTINGS_SQL);
+        PreparedStatement ps = getConnection().prepareStatement(UPDATE_SETTINGS_SQL);
         ps.setString(2, VERSION_SETTING);
         ps.setBytes(1, version.getBytes());
         ps.execute();
@@ -851,7 +817,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (log.isDebugEnabled()) {
                 log.debug("DatabaseFullPrunedBlockStore :     " + sql);
             }
-            Statement s = conn.get().createStatement();
+            Statement s = getConnection().createStatement();
             try {
                 s.execute(sql);
 
@@ -938,7 +904,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
         try {
 
-            PreparedStatement s = conn.get().prepareStatement(INSERT_BLOCKS_SQL);
+            PreparedStatement s = getConnection().prepareStatement(INSERT_BLOCKS_SQL);
             s.setBytes(1, block.getHash().getBytes());
             s.setLong(2, block.getHeight());
             s.setBytes(3, Gzip.compress(block.unsafeBitcoinSerialize()));
@@ -993,7 +959,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
         try {
-            s = conn.get().prepareStatement(SELECT_BLOCKS_SQL);
+            s = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -1031,7 +997,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
         try {
-            s = conn.get().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
+            s = getConnection().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
             s.setLong(1, start);
             s.setLong(2, end);
             s.setLong(3, start);
@@ -1063,7 +1029,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
         try {
-            s = conn.get().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
+            s = getConnection().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
             s.setLong(1, height);
             ResultSet results = s.executeQuery();
             long count = 0;
@@ -1092,7 +1058,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_APPROVER_BLOCKS_SQL);
+            s = getConnection().prepareStatement(SELECT_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
@@ -1138,7 +1104,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL);
+            s = getConnection().prepareStatement(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
@@ -1175,7 +1141,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
+            s = getConnection().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
@@ -1212,7 +1178,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
+            s = getConnection().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet results = s.executeQuery();
@@ -1245,7 +1211,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(
+            s = getConnection().prepareStatement(
                     "SELECT  confirmed " + "FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ");
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
@@ -1275,7 +1241,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_OUTPUTS_SQL);
+            s = getConnection().prepareStatement(SELECT_OUTPUTS_SQL);
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
             s.setLong(2, index);
@@ -1329,7 +1295,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(INSERT_OUTPUTS_SQL);
+            s = getConnection().prepareStatement(INSERT_OUTPUTS_SQL);
             for (UTXO out : utxos) {
                 s.setBytes(1, out.getTxHash().getBytes());
                 // index is actually an unsigned int
@@ -1384,7 +1350,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            conn.get().setAutoCommit(false);
+            getConnection().setAutoCommit(false);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -1393,9 +1359,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void commitDatabaseBatchWrite() throws BlockStoreException {
         try {
-            if (!conn.get().getAutoCommit())
-                conn.get().commit();
-            conn.get().setAutoCommit(true);
+            if (!getConnection().getAutoCommit())
+                getConnection().commit();
+            getConnection().setAutoCommit(true);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
@@ -1403,13 +1369,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     @Override
     public void abortDatabaseBatchWrite() throws BlockStoreException {
-
-        if (log.isDebugEnabled())
-            log.debug("Rollback database batch write with connection: " + conn.get().toString());
         try {
-            if (!conn.get().getAutoCommit()) {
-                conn.get().rollback();
-                conn.get().setAutoCommit(true);
+            if (log.isDebugEnabled())
+                log.debug("Rollback database batch write with connection: " + getConnection().toString());
+
+            if (!getConnection().getAutoCommit()) {
+                getConnection().rollback();
+                getConnection().setAutoCommit(true);
             } else {
                 log.warn("Warning: Rollback attempt without transaction");
             }
@@ -1421,8 +1387,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void defaultDatabaseBatchWrite() throws BlockStoreException {
         try {
-            if (!conn.get().getAutoCommit()) {
-                conn.get().setAutoCommit(true);
+            if (!getConnection().getAutoCommit()) {
+                getConnection().setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -1464,7 +1430,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
 
             for (String sql : getDropTablesSQL()) {
-                Statement s = conn.get().createStatement();
+                Statement s = getConnection().createStatement();
                 try {
 
                     log.info("drop table : " + sql);
@@ -1491,7 +1457,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             maybeConnect();
             // Must be sorted for hash checkpoint
-            s = conn.get().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
+            s = getConnection().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
             s.setString(1, tokenid);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -1520,7 +1486,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL);
+            s = getConnection().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -1552,7 +1518,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(getTransactionOutputTokenSelectSQL());
+            s = getConnection().prepareStatement(getTransactionOutputTokenSelectSQL());
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -1584,7 +1550,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKWRAP_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKWRAP_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1612,7 +1578,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKEVALUATION_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKEVALUATION_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1641,7 +1607,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_NONSOLID_MISSINGBLOCKS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_NONSOLID_MISSINGBLOCKS_SQL);
             preparedStatement.setLong(1, cutoffHeight);
             preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1685,7 +1651,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             if (endtime != null) {
                 sql += " AND time<=?";
             }
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             int i = 1;
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
                 preparedStatement.setString(i++, fromaddress);
@@ -1724,7 +1690,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ALL_BLOCKEVALUATIONS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ALL_BLOCKEVALUATIONS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -1753,7 +1719,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
             preparedStatement.setLong(1, cutoffHeight);
             preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1784,7 +1750,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_TO_UNCONFIRM_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_TO_UNCONFIRM_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -1813,7 +1779,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL);
             preparedStatement.setLong(1, cutoffHeight);
             preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1845,7 +1811,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
             preparedStatement.setLong(1, minMilestone);
             preparedStatement.setLong(2, maxMilestone);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1878,7 +1844,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
             preparedStatement.setLong(1, minChainLength);
             preparedStatement.setLong(2, currChainLength);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1912,7 +1878,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
             preparedStatement.setLong(1, minChainLength);
             preparedStatement.setLong(2, currChainLength);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1953,7 +1919,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationCumulativeweightSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationCumulativeweightSQL());
             preparedStatement.setLong(1, cumulativeweight);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1977,7 +1943,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationDepthSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationDepthSQL());
             preparedStatement.setLong(1, depth);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1999,7 +1965,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
             for (DepthAndWeight d : depthAndWeight) {
                 preparedStatement.setLong(1, d.getWeight());
                 preparedStatement.setLong(2, d.getDepth());
@@ -2029,7 +1995,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
             preparedStatement.setLong(1, b);
             preparedStatement.setLong(2, System.currentTimeMillis());
             preparedStatement.setBytes(3, blockhash.getBytes());
@@ -2055,7 +2021,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_SET_MILESTONE_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_SET_MILESTONE_SQL);
             preparedStatement.setLong(1, milestoneNumber);
             preparedStatement.setLong(2, System.currentTimeMillis());
             preparedStatement.executeUpdate();
@@ -2080,7 +2046,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_SET_MISSING_BLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_SET_MISSING_BLOCK_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, hash.getBytes());
             preparedStatement.executeUpdate();
@@ -2105,7 +2071,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_UNSET_MILESTONE_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_UNSET_MILESTONE_SQL);
             preparedStatement.setLong(1, System.currentTimeMillis());
             preparedStatement.setLong(2, milestoneNumber);
             preparedStatement.executeUpdate();
@@ -2130,7 +2096,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
 
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2156,7 +2122,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateBlockEvaluationRatingSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationRatingSQL());
             for (Rating r : ratings) {
                 preparedStatement.setLong(1, r.getRating());
                 preparedStatement.setBytes(2, r.getBlockhash().getBytes());
@@ -2182,7 +2148,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_BLOCKEVALUATION_SOLID_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_SOLID_SQL);
             preparedStatement.setLong(1, solid);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -2204,7 +2170,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_UNSOLIDBLOCKS_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_UNSOLIDBLOCKS_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -2225,7 +2191,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_OLD_UNSOLIDBLOCKS_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_OLD_UNSOLIDBLOCKS_SQL);
             preparedStatement.setLong(1, height);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -2249,7 +2215,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             // Since both waiting reasons are hashes, we can simply look for the
             // hashes
-            s = conn.get().prepareStatement(SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL);
+            s = getConnection().prepareStatement(SELECT_UNSOLIDBLOCKS_FROM_DEPENDENCY_SQL);
             s.setBytes(1, dep);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -2277,7 +2243,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         long re = 0l;
         try {
-            s = conn.get().prepareStatement(SELECT_BLOCKS_SQL);
+            s = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
             for (Sha256Hash hash : txHashs) {
                 s.setBytes(1, hash.getBytes());
 
@@ -2309,7 +2275,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_UNSOLIDBLOCKS_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_UNSOLIDBLOCKS_SQL);
             preparedStatement.setBytes(1, block.getHash().getBytes());
             preparedStatement.setBytes(2, Gzip.compress(block.bitcoinSerialize()));
             preparedStatement.setLong(3, block.getTimeSeconds());
@@ -2351,7 +2317,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_OUTPUT_SPENDER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_OUTPUT_SPENDER_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setLong(2, index);
             preparedStatement.setBytes(3, blockHash.getBytes());
@@ -2383,7 +2349,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpentSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpentSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
             preparedStatement.setBytes(3, prevTxHash.getBytes());
@@ -2412,7 +2378,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateOutputsConfirmedSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateOutputsConfirmedSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevTxHash.getBytes());
             preparedStatement.setLong(3, index);
@@ -2436,7 +2402,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_ALL_OUTPUTS_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_ALL_OUTPUTS_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevBlockHash.getBytes());
             preparedStatement.executeUpdate();
@@ -2461,7 +2427,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(getUpdateOutputsSpendPendingSQL());
+            preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpendPendingSQL());
             for (UTXO u : utxos) {
                 preparedStatement.setBoolean(1, true);
                 preparedStatement.setLong(2, System.currentTimeMillis());
@@ -2495,7 +2461,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql += "  and tokenid in ( " + buildINList(tokenids) + " )";
             }
             sql += LIMIT_5000;
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
 
@@ -2523,7 +2489,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MARKET_TOKENS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_MARKET_TOKENS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
@@ -2552,7 +2518,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_ACOUNT_MAP_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_ACOUNT_MAP_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
@@ -2589,7 +2555,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql += " AND (domainname = '" + domainname + "' )";
             }
             sql += LIMIT_5000;
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Token tokens = new Token();
@@ -2624,7 +2590,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         + "%' OR domainname LIKE '%" + name + "%')";
             }
             sql += LIMIT_5000;
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Token tokens = new Token();
@@ -2708,7 +2674,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = conn.get().prepareStatement(INSERT_TOKENS_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_TOKENS_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             preparedStatement.setBoolean(2, confirmed);
             preparedStatement.setString(3, tokenid);
@@ -2749,7 +2715,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_PREVBLOCKHASH_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_PREVBLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -2775,7 +2741,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SPENDER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SPENDER_SQL);
             preparedStatement.setString(1, blockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -2800,7 +2766,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2823,7 +2789,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_CONFIRMED_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2846,7 +2812,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ANY_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_ANY_CONFIRMED_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2870,7 +2836,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         try {
             String sql = "SELECT confirmed FROM tokens WHERE tokenname = ? AND domainpredblockhash = ?  ";
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, tokenname);
             preparedStatement.setString(2, domainpre);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2898,7 +2864,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2925,7 +2891,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
             preparedStatement.setString(1, tokenName);
             preparedStatement.setString(2, domainPred);
             preparedStatement.setLong(3, index);
@@ -2953,7 +2919,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL);
             preparedStatement.setString(1, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -2980,7 +2946,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
             preparedStatement.setBytes(3, blockhash.getBytes());
@@ -3004,7 +2970,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = conn.get().prepareStatement(UPDATE_TOKEN_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_TOKEN_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
             preparedStatement.setBytes(2, blockHash.getBytes());
             preparedStatement.executeUpdate();
@@ -3036,7 +3002,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -3090,7 +3056,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
@@ -3135,7 +3101,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             for (String hash : blockhashs) {
 
-                preparedStatement = conn.get().prepareStatement(sql);
+                preparedStatement = getConnection().prepareStatement(sql);
                 preparedStatement.setBytes(1, Utils.HEX.decode(hash));
                 ResultSet resultSet = preparedStatement.executeQuery();
                 while (resultSet.next()) {
@@ -3168,7 +3134,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         List<MultiSignAddress> list = new ArrayList<MultiSignAddress>();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setBytes(2, prevblockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3203,7 +3169,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_MULTISIGNADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, multiSignAddress.getTokenid());
             preparedStatement.setString(2, multiSignAddress.getAddress());
             preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
@@ -3230,7 +3196,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_MULTISIGNADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setString(2, address);
             preparedStatement.executeUpdate();
@@ -3252,7 +3218,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_MULTISIGNBY_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGNBY_SQL);
             preparedStatement.setString(1, multisignby.getTokenid());
             preparedStatement.setLong(2, multisignby.getTokenindex());
             preparedStatement.setString(3, multisignby.getAddress());
@@ -3275,7 +3241,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(COUNT_MULTISIGNADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(COUNT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -3300,7 +3266,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(COUNT_TOKENSINDEX_SQL);
+            preparedStatement = getConnection().prepareStatement(COUNT_TOKENSINDEX_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             Token tokens = new Token();
@@ -3332,7 +3298,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKEN_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             Token tokens = null;
@@ -3360,7 +3326,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENID_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKENID_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3391,7 +3357,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGNBY_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGNBY_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setString(3, address);
@@ -3419,7 +3385,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGN_ADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_ADDRESS_SQL);
             preparedStatement.setString(1, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3464,7 +3430,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setString(2, address);
 
@@ -3509,7 +3475,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         sql += " ORDER BY tokenid,tokenindex DESC";
         try {
             log.info("sql : " + sql);
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
                 if (tokenindex != -1) {
@@ -3548,7 +3514,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setString(3, address);
@@ -3574,7 +3540,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setInt(3, sign);
@@ -3606,7 +3572,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGN_SQL);
             preparedStatement.setString(1, multiSign.getTokenid());
             preparedStatement.setLong(2, multiSign.getTokenindex());
             preparedStatement.setString(3, multiSign.getAddress());
@@ -3633,7 +3599,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN_SQL);
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setInt(2, sign);
             preparedStatement.setString(3, tokenid);
@@ -3659,7 +3625,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_MULTISIGN0_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN0_SQL);
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setString(2, tokenid);
             preparedStatement.setLong(3, tokenindex);
@@ -3685,7 +3651,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL + " AND tokenid=? AND tokenindex = ?";
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, tokenid.trim());
             preparedStatement.setLong(2, tokenindex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3711,7 +3677,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -3732,7 +3698,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENT_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3755,7 +3721,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -3780,7 +3746,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3803,7 +3769,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_DIFFICULTY_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_DIFFICULTY_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3826,7 +3792,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CHAINLENGTH_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CHAINLENGTH_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -3853,7 +3819,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3877,7 +3843,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_TX_REWARD_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_TX_REWARD_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.setBoolean(2, false);
             preparedStatement.setBoolean(3, false);
@@ -3905,7 +3871,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_TX_REWARD_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, hash.getBytes());
             preparedStatement.executeUpdate();
@@ -3928,7 +3894,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_TX_REWARD_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
             preparedStatement.setBytes(3, hash.getBytes());
@@ -3951,7 +3917,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
             preparedStatement.setLong(1, chainlength);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -3977,7 +3943,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
 
@@ -4003,7 +3969,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return setContractExecution(resultSet);
@@ -4027,7 +3993,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
 
@@ -4053,7 +4019,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<TXReward> list = new ArrayList<TXReward>();
             while (resultSet.next()) {
@@ -4094,7 +4060,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             List<Sha256Hash> list = new ArrayList<Sha256Hash>();
@@ -4121,7 +4087,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_MULTISIGN1_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN1_SQL);
             preparedStatement.setBytes(1, bytes);
             preparedStatement.setString(2, tokenid);
             preparedStatement.setLong(3, tokenindex);
@@ -4144,7 +4110,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
             preparedStatement.setBytes(1, outputsMulti.getHash().getBytes());
             preparedStatement.setString(2, outputsMulti.getToAddress());
             preparedStatement.setLong(3, outputsMulti.getOutputIndex());
@@ -4169,7 +4135,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         List<OutputsMulti> list = new ArrayList<OutputsMulti>();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_OUTPUTSMULTI_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_OUTPUTSMULTI_SQL);
             preparedStatement.setBytes(1, hash);
             preparedStatement.setLong(2, index);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4202,7 +4168,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_USERDATA_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_USERDATA_SQL);
             preparedStatement.setString(1, dataclassname);
             preparedStatement.setString(2, pubKey);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4237,7 +4203,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_USERDATA_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_USERDATA_SQL);
             preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
             preparedStatement.setString(2, userData.getDataclassname());
             preparedStatement.setBytes(3, userData.getData());
@@ -4272,7 +4238,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 stringBuffer.append(",'").append(str).append("'");
             sql += "(" + stringBuffer.substring(1) + ")";
 
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setLong(1, blocktype);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<UserData> list = new ArrayList<UserData>();
@@ -4307,7 +4273,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_USERDATA_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_USERDATA_SQL);
             preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
             preparedStatement.setBytes(2, userData.getData());
             preparedStatement.setString(3, userData.getDataclassname());
@@ -4333,7 +4299,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, payMultiSign.getOrderid());
             preparedStatement.setString(2, payMultiSign.getTokenid());
             preparedStatement.setString(3, payMultiSign.getToaddress());
@@ -4362,7 +4328,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, payMultiSignAddress.getOrderid());
             preparedStatement.setString(2, payMultiSignAddress.getPubKey());
             preparedStatement.setInt(3, payMultiSignAddress.getSign());
@@ -4389,7 +4355,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setInt(1, sign);
             preparedStatement.setBytes(2, signInputData);
             preparedStatement.setString(3, orderid);
@@ -4414,7 +4380,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -4438,7 +4404,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, orderid.trim());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -4474,7 +4440,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, orderid.trim());
             ResultSet resultSet = preparedStatement.executeQuery();
             List<PayMultiSignAddress> list = new ArrayList<PayMultiSignAddress>();
@@ -4507,7 +4473,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setString(2, orderid);
             preparedStatement.executeUpdate();
@@ -4540,7 +4506,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<PayMultiSign> list = new ArrayList<PayMultiSign>();
             while (resultSet.next()) {
@@ -4577,7 +4543,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(
+            preparedStatement = getConnection().prepareStatement(
                     "select count(*) as count from paymultisignaddress where orderid = ? and sign = 1");
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4607,7 +4573,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setBytes(1, hash);
             preparedStatement.setLong(2, outputindex);
             ResultSet results = preparedStatement.executeQuery();
@@ -4652,7 +4618,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
-            preparedStatement = conn.get().prepareStatement(getSelectSettingsSQL());
+            preparedStatement = getConnection().prepareStatement(getSelectSettingsSQL());
             preparedStatement.setString(1, name);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -4677,7 +4643,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_BATCHBLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_BATCHBLOCK_SQL);
             preparedStatement.setBytes(1, block.getHash().getBytes());
             preparedStatement.setBytes(2, Gzip.compress(block.bitcoinSerialize()));
             preparedStatement.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
@@ -4700,7 +4666,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_BATCHBLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_BATCHBLOCK_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4721,7 +4687,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BATCHBLOCK_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BATCHBLOCK_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<BatchBlock> list = new ArrayList<BatchBlock>();
             while (resultSet.next()) {
@@ -4751,7 +4717,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             preparedStatement.setString(2, userdatapubkey);
             preparedStatement.setString(3, status);
@@ -4774,7 +4740,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4796,7 +4762,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = getConnection().prepareStatement(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, status);
             preparedStatement.setString(2, userdataPubkey);
             preparedStatement.setString(3, pubkey);
@@ -4820,7 +4786,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -4850,7 +4816,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -4886,7 +4852,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Map<String, String> map = new HashMap<String, String>();
@@ -4914,7 +4880,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_CONFIRMED_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4939,7 +4905,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SPENDER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENDER_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4963,7 +4929,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENT_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4989,7 +4955,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
             preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -5014,7 +4980,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_ORDER_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -5040,7 +5006,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_OrderCancel_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_OrderCancel_SQL);
             preparedStatement.setBytes(1, orderCancel.getBlockHash().getBytes());
             preparedStatement.setBytes(2, orderCancel.getOrderBlockHash().getBytes());
         } catch (SQLException e) {
@@ -5066,7 +5032,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_ORDER_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_ORDER_SQL);
             for (OrderRecord record : records) {
                 preparedStatement.setBytes(1, record.getBlockHash().getBytes());
                 preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
@@ -5111,7 +5077,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_CONTRACT_EVENT_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_CONTRACT_EVENT_SQL);
             for (ContractEventRecord record : records) {
                 preparedStatement.setBytes(1, record.getBlockHash().getBytes());
 
@@ -5153,7 +5119,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
             preparedStatement.setBytes(2, initialBlockHash.getBytes());
             preparedStatement.setBytes(3, issuingMatcherBlockHash.getBytes());
@@ -5176,7 +5142,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
             for (OrderRecord o : orderRecords) {
                 preparedStatement.setBoolean(1, confirm);
                 preparedStatement.setBytes(2, o.getBlockHash().getBytes());
@@ -5203,7 +5169,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
             preparedStatement.setBoolean(1, spent);
             preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
             preparedStatement.setBytes(3, initialBlockHash.getBytes());
@@ -5227,7 +5193,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
             for (OrderRecord o : orderRecords) {
                 preparedStatement.setBoolean(1, o.isSpent());
                 preparedStatement.setBytes(2,
@@ -5256,7 +5222,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_ORDERS_SORTED_SQL);
+            s = getConnection().prepareStatement(SELECT_ORDERS_SORTED_SQL);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);
@@ -5302,7 +5268,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         try {
             // log.debug(sql);
-            s = conn.get().prepareStatement(sql);
+            s = getConnection().prepareStatement(sql);
             int i = 1;
 
             if (tokenid != null && !tokenid.trim().isEmpty()) {
@@ -5353,7 +5319,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL);
+            s = getConnection().prepareStatement(SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL);
             s.setString(1, tokenId);
             s.setInt(2, count);
             ResultSet resultSet = s.executeQuery();
@@ -5388,7 +5354,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL);
+            s = getConnection().prepareStatement(SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL);
             s.setString(1, tokenId);
             s.setInt(2, count);
             ResultSet resultSet = s.executeQuery();
@@ -5434,7 +5400,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
-            s = conn.get().prepareStatement(sql);
+            s = getConnection().prepareStatement(sql);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);
@@ -5467,7 +5433,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
+            s = getConnection().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
             s.setString(1, address);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
@@ -5501,7 +5467,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + LIMIT_5000);
+            s = getConnection().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + LIMIT_5000);
             s.setString(1, address);
             s.setString(2, address);
             ResultSet resultSet = s.executeQuery();
@@ -5536,7 +5502,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
+            s = getConnection().prepareStatement(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 // Parse it.
@@ -5586,7 +5552,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get()
+            preparedStatement = getConnection()
                     .prepareStatement(" insert into myserverblocks (prevhash, hash, inserttime) values (?,?,?) ");
             preparedStatement.setBytes(1, prevhash.getBytes());
             preparedStatement.setBytes(2, hash.getBytes());
@@ -5613,12 +5579,12 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement preparedStatement = null;
         PreparedStatement p2 = null;
         try {
-            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement = getConnection().prepareStatement(" select hash from myserverblocks where prevhash = ?");
             preparedStatement.setBytes(1, prevhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 byte[] hash = resultSet.getBytes(1);
-                p2 = conn.get().prepareStatement(" delete  from  myserverblocks  where prevhash = ?  and hash =?");
+                p2 = getConnection().prepareStatement(" delete  from  myserverblocks  where prevhash = ?  and hash =?");
                 p2.setBytes(1, prevhash.getBytes());
                 p2.setBytes(2, hash);
                 p2.executeUpdate();
@@ -5650,7 +5616,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement = getConnection().prepareStatement(" select hash from myserverblocks where prevhash = ?");
             preparedStatement.setBytes(1, prevhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
@@ -5673,7 +5639,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_MATCHING_EVENT_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
             preparedStatement.setString(1, match.getTxhash());
             preparedStatement.setString(2, match.getTokenid());
             preparedStatement.setLong(3, match.getPrice());
@@ -5706,7 +5672,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql += " where tokenid IN (" + buildINList(tokenIds) + " )" + "  ORDER BY inserttime DESC " + "LIMIT   "
                         + count;
             }
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
@@ -5734,7 +5700,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
+            preparedStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
             preparedStatement.setString(1, Utils.HEX.encode(hash.getBytes()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -5755,7 +5721,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
             preparedStatement.setBytes(1, domainNameBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -5783,7 +5749,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
+            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
             preparedStatement.setString(1, domainname);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -5813,7 +5779,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement sub_preparedStatement = null;
         String sql = "SELECT orderid,pubkey,sign,signInputData FROM exchange_multisign WHERE orderid=?";
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -5835,7 +5801,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             exchange.setMarket(resultSet.getString("market"));
 
             exchange.getSigs().add(resultSet.getBytes("signInputData"));
-            sub_preparedStatement = conn.get().prepareStatement(sql);
+            sub_preparedStatement = getConnection().prepareStatement(sql);
             sub_preparedStatement.setString(1, exchange.getToOrderId());
             ResultSet sub_resultSet = sub_preparedStatement.executeQuery();
             List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
@@ -5871,7 +5837,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             } else {
                 sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
             }
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(2, orderid);
             preparedStatement.setBytes(1, data);
             preparedStatement.executeUpdate();
@@ -5896,7 +5862,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         String sql = SELECT_EXCHANGE_SQL_A;
 
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, address);
             preparedStatement.setString(2, address);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -5937,7 +5903,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_EXCHANGE_SQL);
+            preparedStatement = getConnection().prepareStatement(INSERT_EXCHANGE_SQL);
             preparedStatement.setString(1, exchange.getOrderid());
             preparedStatement.setString(2, exchange.getFromAddress());
             preparedStatement.setString(3, exchange.getFromTokenHex());
@@ -5971,7 +5937,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(DELETE_EXCHANGE_SQL);
+            preparedStatement = getConnection().prepareStatement(DELETE_EXCHANGE_SQL);
             preparedStatement.setString(1, orderid);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -5994,7 +5960,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             String sql = "UPDATE exchange SET toSign = 1, signInputData = ? WHERE orderid = ?";
 
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(2, orderid);
             preparedStatement.setBytes(1, data);
             preparedStatement.executeUpdate();
@@ -6017,7 +5983,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
@@ -6050,7 +6016,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             for (String s : orderBlockHashs) {
                 sql.append(",'").append(s).append("'");
             }
-            preparedStatement = conn.get()
+            preparedStatement = getConnection()
                     .prepareStatement(SELECT_ORDERCANCEL_SQL + " AND orderblockhash IN (" + sql.substring(1) + ")");
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -6091,7 +6057,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 sql += " where tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate
                         + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
@@ -6121,7 +6087,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
             preparedStatement.setLong(3, System.currentTimeMillis());
@@ -6144,7 +6110,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(
+            preparedStatement = getConnection().prepareStatement(
                     "select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
@@ -6172,7 +6138,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, address);
             preparedStatement.setLong(2, System.currentTimeMillis());
             preparedStatement.executeUpdate();
@@ -6195,7 +6161,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, address);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -6216,7 +6182,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get()
+            preparedStatement = getConnection()
                     .prepareStatement("select count(1) as count from access_grant where address = ?");
             preparedStatement.setString(1, address);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -6248,7 +6214,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(sql);
+            preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
@@ -6275,7 +6241,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         PreparedStatement s = null;
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(BlockPrototype_SELECT_SQL + " where inserttime > ? limit 1 ");
+            s = getConnection().prepareStatement(BlockPrototype_SELECT_SQL + " where inserttime > ? limit 1 ");
             s.setLong(1, System.currentTimeMillis() - 30000);
             ResultSet results = s.executeQuery();
             if (results.next()) {
@@ -6303,7 +6269,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(BlockPrototype_INSERT_SQL);
+            preparedStatement = getConnection().prepareStatement(BlockPrototype_INSERT_SQL);
             preparedStatement.setBytes(1, previousblockhash.getBytes());
             preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
             preparedStatement.setLong(3, System.currentTimeMillis());
@@ -6330,7 +6296,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(BlockPrototype_DELETE_SQL);
+            preparedStatement = getConnection().prepareStatement(BlockPrototype_DELETE_SQL);
             preparedStatement.setBytes(1, previousblockhash.getBytes());
             preparedStatement.setBytes(2, previousbranchblockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -6353,7 +6319,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(" delete from blockprototype  where inserttime < ?");
+            preparedStatement = getConnection().prepareStatement(" delete from blockprototype  where inserttime < ?");
             preparedStatement.setLong(1, System.currentTimeMillis() - 30000);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -6374,7 +6340,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = conn.get().prepareStatement(INSERT_OrderRecordMatched);
+            preparedStatement = getConnection().prepareStatement(INSERT_OrderRecordMatched);
             for (OrderRecordMatched record : matchlist) {
                 preparedStatement.setBytes(1, record.getBlockHash().getBytes());
                 preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
@@ -6420,11 +6386,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         try {
             maybeConnect();
             if (tokenId == null || "".equals(tokenId)) {
-                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
+                s = getConnection().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
                         + " where matchblocktime > ?  ");
                 s.setLong(1, matchtime);
             } else {
-                s = conn.get().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
+                s = getConnection().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
                         + " where matchblocktime > ? and ( targettokenid=?" + " or offertokenid=? ");
                 s.setLong(1, matchtime);
                 s.setString(2, tokenId);
