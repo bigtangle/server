@@ -6,6 +6,7 @@
 package net.bigtangle.store;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -500,17 +501,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected NetworkParameters params;
     protected ThreadLocal<Connection> conn;
-    protected LinkedBlockingQueue<Connection> allConnections;
+   // protected LinkedBlockingQueue<Connection> allConnections;
     protected String connectionURL;
     protected int fullStoreDepth;
     protected String username;
     protected String password;
     protected String schemaName;
 
-    public ThreadLocal<Connection> getConnection() {
-        return this.conn;
-    }
-
+    
     /**
      * <p>
      * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
@@ -546,7 +544,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.username = username;
         this.password = password;
         this.conn = new ThreadLocal<Connection>();
-        this.allConnections = new LinkedBlockingQueue<Connection>();
+      //  this.allConnections = new LinkedBlockingQueue<Connection>();
     }
 
     public void create() throws BlockStoreException {
@@ -728,7 +726,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 conn.set(DriverManager.getConnection(connectionURL, props));
             }
 
-            allConnections.add(conn.get());
+           // allConnections.add(conn.get());
 
             // set the schema if one is needed
             synchronized (this) {
@@ -748,26 +746,21 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     private void logStack() {
 
+        log.debug("Thread name is {}.", Thread.currentThread().getName());
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        StringWriter mes = new StringWriter();
+        for (int i = 1; i < elements.length; i++) {
+            StackTraceElement s = elements[i];
+            mes.append("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":"
+                    + s.getLineNumber() + "  ) \n");
+        }
+        log.debug(mes.toString());
+      //  log.debug("allConnections size = "+ allConnections.size());
+    
     }
 
     @Override
-    public void close() {
-        synchronized (this) {
-            for (Connection conn : allConnections) {
-                try {
-                    if (!conn.getAutoCommit()) {
-                        conn.rollback();
-                    }
-                    conn.close();
-                    if (conn == this.conn.get()) {
-                        this.conn.set(null);
-                    }
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-            allConnections.clear();
-        }
+    public void close() { 
     }
 
     /**
