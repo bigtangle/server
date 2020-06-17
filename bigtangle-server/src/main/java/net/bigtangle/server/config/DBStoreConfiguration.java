@@ -4,10 +4,15 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -65,7 +70,20 @@ public class DBStoreConfiguration {
 
         return store;
     }
+    @Bean
+    public DataSource dataSource() throws BlockStoreException {
+        HikariConfig config = new HikariConfig();
 
+        config.setJdbcUrl(MySQLFullPrunedBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
+                + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC");
+        config.setUsername(username);
+        config.setPassword(password);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        return new HikariDataSource(config);
+
+    }
     public String getDbtype() {
         return dbtype;
     }
