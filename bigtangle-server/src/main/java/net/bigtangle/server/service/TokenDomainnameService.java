@@ -24,8 +24,7 @@ import net.bigtangle.utils.DomainnameUtil;
 @Service
 public class TokenDomainnameService {
 
-    @Autowired
-    protected FullPrunedBlockStore store;
+   
  
     @Autowired
     private NetworkParameters networkParameters;
@@ -38,7 +37,7 @@ public class TokenDomainnameService {
      * @throws BlockStoreException
      */
 
-    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash)
+    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,FullPrunedBlockStore store)
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
@@ -52,11 +51,11 @@ public class TokenDomainnameService {
                     .create("", false, multiSignAddresses);
             return response;
         } else {
-            Token token = this.store.getTokenByBlockHash(Sha256Hash.wrap(domainNameBlockHash));
+            Token token =  store.getTokenByBlockHash(Sha256Hash.wrap(domainNameBlockHash));
             final String domainName = token.getTokenname();
 
             List<MultiSignAddress> multiSignAddresses = this
-                    .queryDomainnameTokenMultiSignAddresses(token.getBlockHash());
+                    .queryDomainnameTokenMultiSignAddresses(token.getBlockHash(),store);
 
             PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
                     .create(domainName, false, multiSignAddresses);
@@ -71,7 +70,7 @@ public class TokenDomainnameService {
      * @return
      * @throws BlockStoreException
      */
-    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(Sha256Hash domainNameBlockHash)
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(Sha256Hash domainNameBlockHash,FullPrunedBlockStore store)
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
@@ -83,30 +82,30 @@ public class TokenDomainnameService {
             }
             return multiSignAddresses;
         } else {
-            Token token = this.store.queryDomainnameToken(domainNameBlockHash);
+            Token token = store.queryDomainnameToken(domainNameBlockHash);
             if (token == null)
                 throw new BlockStoreException("token not found");
 
             final String tokenid = token.getTokenid();
-            List<MultiSignAddress> multiSignAddresses = this.store
+            List<MultiSignAddress> multiSignAddresses =  store
                     .getMultiSignAddressListByTokenidAndBlockHashHex(tokenid, token.getBlockHash());
             return multiSignAddresses;
         }
     }
 
-    public AbstractResponse queryParentDomainnameBlockHash(String domainname) throws BlockStoreException {
+    public AbstractResponse queryParentDomainnameBlockHash(String domainname,FullPrunedBlockStore store) throws BlockStoreException {
         domainname = DomainnameUtil.matchParentDomainname(domainname);
-        return queryDomainnameBlockHash(domainname);
+        return queryDomainnameBlockHash(domainname,store);
     }
 
-    public AbstractResponse queryDomainnameBlockHash(String domainname) throws BlockStoreException {
+    public AbstractResponse queryDomainnameBlockHash(String domainname,FullPrunedBlockStore store) throws BlockStoreException {
         AbstractResponse response;
 
         if (StringUtils.isBlank(domainname)) {
 
             response = GetDomainTokenResponse.createGetDomainBlockHashResponse(Token.genesisToken(networkParameters));
         } else {
-            Token token = this.store.getTokensByDomainname(domainname);
+            Token token =  store.getTokensByDomainname(domainname);
             if (token == null) {
                 throw new BlockStoreException("token domain name not found : " + domainname);
             }

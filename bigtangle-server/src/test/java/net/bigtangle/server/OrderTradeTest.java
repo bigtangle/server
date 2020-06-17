@@ -135,7 +135,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         long price = 1;
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
 
         long amount = 77l;
         // split BIG
@@ -147,7 +147,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -278,7 +278,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         checkBalanceSum(Coin.valueOf(tradeAmount * 2, testKey.getPubKey()), wallet2Keys);
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
 
         long amount = 7700000000000l;
         // split BIG
@@ -289,7 +289,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();

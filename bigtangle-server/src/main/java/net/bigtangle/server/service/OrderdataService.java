@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.OrderCancel;
@@ -20,11 +19,8 @@ import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
 public class OrderdataService {
-
-    @Autowired
-    protected FullPrunedBlockStore store;
-
-    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid)
+  
+    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid, FullPrunedBlockStore store)
             throws BlockStoreException {
         if (addresses == null)
             addresses = new ArrayList<String>();
@@ -32,22 +28,22 @@ public class OrderdataService {
             addresses.add(address);
         }
         if (!spent) {
-            return getAllOpenOrders(addresses, tokenid);
+            return getAllOpenOrders(addresses, tokenid,store);
         } else {
             // only my closed orders
-            return getMyClosedOrders(addresses);
+            return getMyClosedOrders(addresses,store);
         }
     }
 
-    private AbstractResponse getAllOpenOrders(List<String> addresses, String tokenid) throws BlockStoreException {
-        List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(addresses, tokenid);
+    private AbstractResponse getAllOpenOrders(List<String> addresses, String tokenid, FullPrunedBlockStore store) throws BlockStoreException {
+        List<OrderRecord> allOrdersSorted = store .getAllOpenOrdersSorted(addresses, tokenid);
 
         HashSet<String> orderBlockHashs = new HashSet<String>();
         for (OrderRecord orderRecord : allOrdersSorted) {
             orderBlockHashs.add(orderRecord.getBlockHashHex());
         }
 
-        List<OrderCancel> orderCancels = this.store.getOrderCancelByOrderBlockHash(orderBlockHashs);
+        List<OrderCancel> orderCancels = store .getOrderCancelByOrderBlockHash(orderBlockHashs);
         HashMap<String, OrderCancel> orderCannelData = new HashMap<String, OrderCancel>();
         for (OrderCancel orderCancel : orderCancels) {
             orderCannelData.put(orderCancel.getOrderBlockHash().toString(), orderCancel);
@@ -61,23 +57,23 @@ public class OrderdataService {
             }
         }
 
-        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
+        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted,store));
     }
 
-    private AbstractResponse getMyClosedOrders(List<String> addresses) throws BlockStoreException {
-        List<OrderRecord> allOrdersSorted = store.getMyClosedOrders(addresses);
+    private AbstractResponse getMyClosedOrders(List<String> addresses, FullPrunedBlockStore store) throws BlockStoreException {
+        List<OrderRecord> allOrdersSorted = store .getMyClosedOrders(addresses);
 
-        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted));
+        return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted,store));
     }
 
-    public Map<String, Token> getTokename(List<OrderRecord> allOrdersSorted) throws BlockStoreException {
+    public Map<String, Token> getTokename(List<OrderRecord> allOrdersSorted, FullPrunedBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (OrderRecord d : allOrdersSorted) {
             tokenids.add(d.getOfferTokenid());
             tokenids.add(d.getTargetTokenid());
         }
         Map<String, Token> re = new HashMap<String, Token>();
-        List<Token> tokens = store.getTokensList(tokenids);
+        List<Token> tokens = store .getTokensList(tokenids);
         for (Token t : tokens) {
             re.put(t.getTokenid(), t);
         }

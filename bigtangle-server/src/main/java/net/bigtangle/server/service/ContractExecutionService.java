@@ -4,9 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.math.BigInteger;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -14,21 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.google.common.base.Stopwatch;
-
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.RewardInfo;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.Utils;
-import net.bigtangle.core.data.OrderMatchingResult;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullPrunedBlockGraph;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
@@ -46,8 +31,7 @@ import net.bigtangle.utils.Threading;
 @Service
 public class ContractExecutionService {
 
-    @Autowired
-    protected FullPrunedBlockStore store;
+ 
     @Autowired
     protected FullPrunedBlockGraph blockGraph;
     @Autowired

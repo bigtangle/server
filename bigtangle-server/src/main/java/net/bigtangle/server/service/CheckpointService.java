@@ -34,11 +34,11 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class CheckpointService {
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected  StoreService storeService;
 
    // private static final Logger log = LoggerFactory.getLogger(CheckpointService.class);
 
-    private List<UTXO> getOutputs(String tokenid) throws UTXOProviderException {
+    private List<UTXO> getOutputs(String tokenid,FullPrunedBlockStore store) throws UTXOProviderException, BlockStoreException {
         //Must be sorted with the  key of 
         return store.getOpenAllOutputs(tokenid);
     }
@@ -53,27 +53,27 @@ public class CheckpointService {
         return sumUnspent;
     }
 
-    private List<OrderRecord> orders(String tokenid) throws BlockStoreException {
+    private List<OrderRecord> orders(String tokenid,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getAllOpenOrdersSorted(null, tokenid);
 
     }
 
-    public Map<String, BigInteger> tokensumInitial() throws BlockStoreException {
+    public Map<String, BigInteger> tokensumInitial(FullPrunedBlockStore store) throws BlockStoreException {
 
         return store.getTokenAmountMap();
     }
 
-    public TokensumsMap checkToken() throws BlockStoreException, UTXOProviderException {
+    public TokensumsMap checkToken(FullPrunedBlockStore store) throws BlockStoreException, UTXOProviderException {
 
         TokensumsMap tokensumset = new TokensumsMap();
 
-        Map<String, BigInteger> tokensumsInitial = tokensumInitial();
+        Map<String, BigInteger> tokensumsInitial = tokensumInitial(store);
         Set<String> tokenids = tokensumsInitial.keySet();
         for (String tokenid : tokenids) {
             Tokensums tokensums = new Tokensums();
             tokensums.setTokenid(tokenid);
-            tokensums.setUtxos(getOutputs(tokenid));
-            tokensums.setOrders(orders(tokenid));
+            tokensums.setUtxos(getOutputs(tokenid,store));
+            tokensums.setOrders(orders(tokenid,store));
             tokensums.setInitial(tokensumsInitial.get(tokenid));
             tokensums.calculate();
 

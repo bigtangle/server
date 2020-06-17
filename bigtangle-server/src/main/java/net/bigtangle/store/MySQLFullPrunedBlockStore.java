@@ -5,6 +5,7 @@
 
 package net.bigtangle.store;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -398,11 +399,8 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
 
   
-    public MySQLFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
-            String username, String password) throws BlockStoreException {
-        super(params,
-                DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC",
-                fullStoreDepth, username, password, null);
+    public MySQLFullPrunedBlockStore(NetworkParameters params, Connection conn)  {
+        super(  params,   conn);
     }
 
     @Override

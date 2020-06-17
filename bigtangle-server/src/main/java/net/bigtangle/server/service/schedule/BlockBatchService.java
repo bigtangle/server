@@ -22,7 +22,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
- 
+import net.bigtangle.server.service.StoreService;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
 
@@ -32,8 +32,9 @@ public class BlockBatchService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockBatchService.class);
 
+
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected  StoreService storeService;
 
     @Autowired
     private NetworkParameters networkParameters;
@@ -76,11 +77,13 @@ public class BlockBatchService {
     }
 
     private void batchBlocks() throws BlockStoreException, Exception {
-        List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
+      FullPrunedBlockStore store = storeService.getStore();
+      try {
+        List<BatchBlock> batchBlocks =  store.getBatchBlockList();
         if (batchBlocks.isEmpty()) {
             return;
         }
-        Block block = blockService.getBlockPrototype();
+        Block block = blockService.getBlockPrototype(store);
         for (BatchBlock batchBlock : batchBlocks) {
             byte[] payloadBytes = batchBlock.getBlock();
             Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
@@ -92,9 +95,13 @@ public class BlockBatchService {
             return;
         }
         block.solve();
-        blockService.saveBlock(block);
+        blockService.saveBlock(block,store);
         for (BatchBlock batchBlock : batchBlocks) {
-            this.store.deleteBatchBlock(batchBlock.getHash());
+             store.deleteBatchBlock(batchBlock.getHash());
         }
+      }finally {
+          store.close(); 
+    }
+      
     }
 }

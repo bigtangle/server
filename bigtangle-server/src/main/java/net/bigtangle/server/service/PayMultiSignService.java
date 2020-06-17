@@ -27,31 +27,29 @@ import net.bigtangle.store.FullPrunedBlockStore;
 
 @Service
 public class PayMultiSignService {
-
-    @Autowired
-    protected FullPrunedBlockStore store;
+ 
 
     @Autowired
     private NetworkParameters networkParameters;
 
-    public AbstractResponse getPayMultiSignDetails(String orderid) throws BlockStoreException {
-        PayMultiSign payMultiSign = this.store.getPayMultiSignWithOrderid(orderid);
+    public AbstractResponse getPayMultiSignDetails(String orderid, FullPrunedBlockStore store) throws BlockStoreException {
+        PayMultiSign payMultiSign =  store.getPayMultiSignWithOrderid(orderid);
         return PayMultiSignDetailsResponse.create(payMultiSign);
     }
  
 
-    public void launchPayMultiSign(byte[] data) throws BlockStoreException, Exception {
+    public void launchPayMultiSign(byte[] data, FullPrunedBlockStore store) throws BlockStoreException, Exception {
         PayMultiSign payMultiSign = convertTransactionDataToPayMultiSign(data);
 
         String hashhex = payMultiSign.getOutputHashHex();
         long index = payMultiSign.getOutputindex();
-        List<OutputsMulti> outputsMultis = this.store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hashhex), index);
+        List<OutputsMulti> outputsMultis =  store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hashhex), index);
 
         if (outputsMultis.isEmpty()) {
             throw new BlockStoreException("multisignaddress list is empty");
         }
         // check param
-        this.store.insertPayPayMultiSign(payMultiSign);
+         store.insertPayPayMultiSign(payMultiSign);
         int i = 0;
         for (OutputsMulti outputsMulti : outputsMultis) {
             PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
@@ -59,18 +57,18 @@ public class PayMultiSignService {
             payMultiSignAddress.setSign(0);
             payMultiSignAddress.setPubKey(outputsMulti.getToAddress());
             payMultiSignAddress.setSignIndex(i);
-            this.store.insertPayMultiSignAddress(payMultiSignAddress);
+             store.insertPayMultiSignAddress(payMultiSignAddress);
             i++;
         }
     }
 
  
-    public AbstractResponse payMultiSign(Map<String, Object> request) throws BlockStoreException, Exception {
+    public AbstractResponse payMultiSign(Map<String, Object> request, FullPrunedBlockStore store) throws BlockStoreException, Exception {
         String orderid = (String) request.get("orderid");
 
-        PayMultiSign payMultiSign_ = this.store.getPayMultiSignWithOrderid(orderid);
+        PayMultiSign payMultiSign_ =  store.getPayMultiSignWithOrderid(orderid);
 
-        List<PayMultiSignAddress> payMultiSignAddresses_ = this.store.getPayMultiSignAddressWithOrderid(orderid);
+        List<PayMultiSignAddress> payMultiSignAddresses_ =  store.getPayMultiSignAddressWithOrderid(orderid);
         HashMap<String, PayMultiSignAddress> payMultiSignAddresseRes = new HashMap<String, PayMultiSignAddress>();
         for (PayMultiSignAddress payMultiSignAddress : payMultiSignAddresses_)
             payMultiSignAddresseRes.put(payMultiSignAddress.getPubKey(), payMultiSignAddress);
@@ -100,9 +98,9 @@ public class PayMultiSignService {
         // signIndex++;
 
         byte[] signInputData = Utils.HEX.decode((String) request.get("signInputData"));
-        this.store.updatePayMultiSignAddressSign(orderid, address0, 1, signInputData);
+         store.updatePayMultiSignAddressSign(orderid, address0, 1, signInputData);
 
-        int count = this.store.getCountPayMultiSignAddressStatus(orderid);
+        int count = store.getCountPayMultiSignAddressStatus(orderid);
         if (payMultiSign_.getMinsignnumber() <= count) {
             return PayMultiSignResponse.create(true);
         } else {
@@ -117,8 +115,8 @@ public class PayMultiSignService {
         return payMultiSign;
     }
 
-    public AbstractResponse getPayMultiSignList(List<String> pubKeys) throws BlockStoreException {
-        List<PayMultiSign> payMultiSigns = this.store.getPayMultiSignList(pubKeys);
+    public AbstractResponse getPayMultiSignList(List<String> pubKeys, FullPrunedBlockStore store) throws BlockStoreException {
+        List<PayMultiSign> payMultiSigns = store.getPayMultiSignList(pubKeys);
         List<PayMultiSignExt> payMultiSignExts = new ArrayList<PayMultiSignExt>();
         for (PayMultiSign payMultiSign : payMultiSigns) {
             PayMultiSignExt payMultiSignExt = new PayMultiSignExt();
@@ -138,8 +136,8 @@ public class PayMultiSignService {
         return PayMultiSignListResponse.create(payMultiSignExts);
     }
 
-    public AbstractResponse getPayMultiSignAddressList(String orderid) throws BlockStoreException {
-        List<PayMultiSignAddress> payMultiSignAddresses = this.store.getPayMultiSignAddressWithOrderid(orderid);
+    public AbstractResponse getPayMultiSignAddressList(String orderid, FullPrunedBlockStore store) throws BlockStoreException {
+        List<PayMultiSignAddress> payMultiSignAddresses =  store.getPayMultiSignAddressWithOrderid(orderid);
         return PayMultiSignAddressListResponse.create(payMultiSignAddresses);
     }
 }

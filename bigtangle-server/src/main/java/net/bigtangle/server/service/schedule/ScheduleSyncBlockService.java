@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.SyncBlockService;
@@ -32,7 +33,7 @@ public class ScheduleSyncBlockService {
      */
     @Async
     @Scheduled(fixedRate = 15000)
-    public void syncService() {
+    public void syncService() throws BlockStoreException {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             syncBlockService.startSingleProcess();
         }

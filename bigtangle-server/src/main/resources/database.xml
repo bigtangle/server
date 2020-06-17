@@ -18,7 +18,7 @@
 			value="${DB_PASSWORD:test1234}" />
 		<property name="minPoolSize" value="1" />
 		<property name="maxPoolSize"
-			value="20" />
+			value="150" />
 		<property name="initialPoolSize" value="10" />
 		<property name="testConnectionOnCheckin" value="true" />
 		<property name="idleConnectionTestPeriod" value="300" />

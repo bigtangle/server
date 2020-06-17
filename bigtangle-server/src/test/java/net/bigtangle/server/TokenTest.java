@@ -733,7 +733,7 @@ public class TokenTest extends AbstractIntegrationTest {
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         log.info("getTokensResponse : " + getTokensResponse);
         assertTrue(getTokensResponse.getTokens().size() == 1);
-        assertTrue(blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(),store).isConfirmed());
 
         requestParam.put("tokenid", walletAppKit.wallet().walletKeys().get(1).getPublicKeyAsHex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -742,7 +742,7 @@ public class TokenTest extends AbstractIntegrationTest {
         getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         log.info("getTokensResponse : " + getTokensResponse);
         assertTrue(getTokensResponse.getTokens().size() == 1);
-        assertTrue(!blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash()).isConfirmed());
+        assertTrue(!blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(),store).isConfirmed());
 
     }
 

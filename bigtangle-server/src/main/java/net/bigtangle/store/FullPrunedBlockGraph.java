@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +26,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -39,7 +41,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
@@ -80,9 +81,11 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
+import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
+import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -91,20 +94,26 @@ import net.bigtangle.server.utils.OrderBook;
  * </p>
  */
 @Service
-public class FullPrunedBlockGraph extends AbstractBlockGraph {
+public class FullPrunedBlockGraph {
 
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockGraph.class);
 
-    protected final FullPrunedBlockStore blockStore;
+    public final ReentrantLock chainlock = Threading.lock("chainLock");
 
-    @Autowired
-    public FullPrunedBlockGraph(NetworkParameters networkParameters, FullPrunedBlockStore blockStore)
-            throws BlockStoreException {
+    // Holds a block header and, optionally, a list of tx hashes or block's
+    // transactions
+    class OrphanBlock {
+        final Block block;
 
-        super(Context.create(networkParameters), blockStore);
-        this.blockStore = blockStore;
-        this.networkParameters = networkParameters;
+        OrphanBlock(Block block) {
+            this.block = block;
+        }
     }
+
+    // Holds blocks that we have received but can't plug into the chain yet, eg
+    // because they were created whilst we
+    // were downloading the block chain.
+    protected final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<>();
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -123,8 +132,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
     @Autowired
     private SyncBlockService syncBlockService;
-    
-    private void solidifyReward(Block block) throws BlockStoreException {
+    @Autowired
+    private StoreService storeService;
+
+    private void solidifyReward(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
@@ -134,117 +145,122 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
 
-    public boolean add(Block block, boolean allowUnsolid) throws BlockStoreException {
+    public boolean add(Block block, boolean allowUnsolid,FullPrunedBlockStore store) throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             chainlock.lock();
             try {
-                a = addChain(block, allowUnsolid, true);
+                a = addChain(block, allowUnsolid, true,store);
                 updateConfirmed(1);
             } finally {
                 chainlock.unlock();
             }
         } else {
-            a = addNonChain(block, allowUnsolid);
+            a = addNonChain(block, allowUnsolid,store);
         }
 
         return a;
     }
 
-    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting) throws BlockStoreException {
+    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting,FullPrunedBlockStore store) throws BlockStoreException {
 
-        // Check the block is partially formally valid and fulfills PoW
-        block.verifyHeader();
-        block.verifyTransactions();
+        
+            // Check the block is partially formally valid and fulfills PoW
+            block.verifyHeader();
+            block.verifyTransactions();
 
-        SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid);
+            SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid, store);
 
-        if (solidityState.isDirectlyMissing()) {
-            log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
-            orphanBlocks.put(block.getHash(), new OrphanBlock(block));
-            if (tryConnecting) {
-                tryConnectingOrphans();
+            if (solidityState.isDirectlyMissing()) {
+                log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
+                orphanBlocks.put(block.getHash(), new OrphanBlock(block));
+                if (tryConnecting) {
+                    tryConnectingOrphans(store);
+                }
+                return false;
             }
-            return false;
-        }
 
-        if (solidityState.isFailState()) {
-            return false;
-        }
+            if (solidityState.isFailState()) {
+                return false;
+            }
 
-        // Inherit solidity from predecessors if they are not solid
-        solidityState = validatorService.getMinPredecessorSolidity(block, false);
+            // Inherit solidity from predecessors if they are not solid
+            solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
 
-        // Sanity check
-        if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-            return false;
-        }
+            // Sanity check
+            if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+                return false;
+            }
 
-        // save the block
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            connectRewardBlock(block, solidityState);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            blockStore.defaultDatabaseBatchWrite();
-        }
-        if (tryConnecting)
-            tryConnectingOrphans();
+            // save the block
+            try {
+                store.beginDatabaseBatchWrite();
+                connectRewardBlock(block, solidityState, store);
+                store.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                store.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                store.defaultDatabaseBatchWrite();
+
+            }
+            if (tryConnecting)
+                tryConnectingOrphans(store);
+         
 
         return true;
     }
 
-    public boolean addNonChain(Block block, boolean allowUnsolid) throws BlockStoreException {
+    public boolean addNonChain(Block block, boolean allowUnsolid,FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
+      
+            block.verifyHeader();
+            block.verifyTransactions();
 
-        block.verifyHeader();
-        block.verifyTransactions();
+            SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
 
-        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid);
-
-        // If explicitly wanted (e.g. new block from local clients), this
-        // block must strictly be solid now.
-        if (!allowUnsolid) {
-            switch (solidityState.getState()) {
-            case MissingPredecessor:
-                throw new UnsolidException();
-            case MissingCalculation:
-            case Success:
-                break;
-            case Invalid:
-                throw new GenericInvalidityException();
+            // If explicitly wanted (e.g. new block from local clients), this
+            // block must strictly be solid now.
+            if (!allowUnsolid) {
+                switch (solidityState.getState()) {
+                case MissingPredecessor:
+                    throw new UnsolidException();
+                case MissingCalculation:
+                case Success:
+                    break;
+                case Invalid:
+                    throw new GenericInvalidityException();
+                }
             }
-        }
 
-        // Accept the block
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            connect(block, solidityState);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            blockStore.defaultDatabaseBatchWrite();
-        }
+            // Accept the block
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                connect(block, solidityState, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
+
+            }
+        
         return true;
     }
 
-    private void connectRewardBlock(final Block block, SolidityState solidityState)
+    private void connectRewardBlock(final Block block, SolidityState solidityState, FullPrunedBlockStore store)
             throws BlockStoreException, VerificationException {
 
         if (solidityState.isFailState()) {
-            connect(block, solidityState);
+            connect(block, solidityState, store);
             return;
         }
-        Block head = blockStore.get(blockStore.getMaxConfirmedReward().getBlockHash());
+        Block head = store.get(store.getMaxConfirmedReward().getBlockHash());
         if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
-            connect(block, solidityState);
-            rewardService.buildRewardChain(block);
+            connect(block, solidityState, store);
+            rewardService.buildRewardChain(block, store);
         } else {
             // This block connects to somewhere other than the top of the best
             // known chain. We treat these differently.
@@ -254,11 +270,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // block.getRewardInfo().moreWorkThan(head.getRewardInfo());
             if (haveNewBestChain) {
                 log.info("Block is causing a re-organize");
-                connect(block, solidityState);
-                rewardService.handleNewBestChain(block);
+                connect(block, solidityState, store);
+                rewardService.handleNewBestChain(block, store);
             } else {
                 // parallel chain, save as unconfirmed
-                connect(block, solidityState);
+                connect(block, solidityState, store);
             }
 
         }
@@ -275,11 +291,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @throws BlockStoreException
      * @throws VerificationException
      */
-    private void connect(final Block block, SolidityState solidityState)
+    private void connect(final Block block, SolidityState solidityState, FullPrunedBlockStore store)
             throws BlockStoreException, VerificationException {
 
-        blockStore.put(block);
-        solidifyBlock(block, solidityState, false);
+        store.put(block);
+        solidifyBlock(block, solidityState, false, store);
     }
 
     /**
@@ -306,7 +322,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         String address = "";
         try {
             if (script != null) {
-                address = script.getToAddress(params, true).toString();
+                address = script.getToAddress(networkParameters, true).toString();
             }
         } catch (Exception e) {
             // e.printStackTrace();
@@ -315,8 +331,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey,
-            long blocktype) throws BlockStoreException {
-        UserData userData = this.blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
+            long blocktype, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        UserData userData = blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
         if (userData == null) {
             userData = new UserData();
             userData.setBlockhash(blockhash);
@@ -324,15 +340,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             userData.setDataclassname(dataClassName.name());
             userData.setPubKey(pubKey);
             userData.setBlocktype(blocktype);
-            this.blockStore.insertUserData(userData);
+            blockStore.insertUserData(userData);
             return;
         }
         userData.setBlockhash(blockhash);
         userData.setData(data);
-        this.blockStore.updateUserData(userData);
+        blockStore.updateUserData(userData);
     }
 
- 
     /**
      * Adds the specified block and all approved blocks to the confirmed set.
      * This will connect all transactions of the block by marking used UTXOs
@@ -342,8 +357,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param milestoneNumber
      * @throws BlockStoreException
      */
-    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber)
-            throws BlockStoreException {
+    public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -362,7 +377,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
         // Confirm the block
-        confirmBlock(blockWrap);
+        confirmBlock(blockWrap, blockStore);
 
         // Keep track of confirmed blocks
         traversedBlockHashes.add(blockHash);
@@ -376,7 +391,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return
      * @throws BlockStoreException
      */
-    public Optional<OrderMatchingResult> calculateBlock(Block block) throws BlockStoreException {
+    public Optional<OrderMatchingResult> calculateBlock(Block block, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
 
         Transaction tx = null;
         OrderMatchingResult matchingResult = null;
@@ -391,16 +407,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            tx = generateVirtualMiningRewardTX(block);
-            insertVirtualUTXOs(block, tx);
+            tx = generateVirtualMiningRewardTX(block, blockStore);
+            insertVirtualUTXOs(block, tx, blockStore);
 
             // Get list of consumed orders, virtual order matching tx and newly
             // generated remaining order book
-            matchingResult = generateOrderMatching(block);
+            matchingResult = generateOrderMatching(block, blockStore);
             tx = matchingResult.getOutputTx();
 
-            insertVirtualUTXOs(block, tx);
-            insertVirtualOrderRecords(block, matchingResult.getRemainingOrders());
+            insertVirtualUTXOs(block, tx, blockStore);
+            insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             break;
@@ -425,11 +441,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return Optional.ofNullable(matchingResult);
     }
 
-    private void confirmBlock(BlockWrap block) throws BlockStoreException {
+    private void confirmBlock(BlockWrap block, FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         // Update block's transactions in db
         for (final Transaction tx : block.getBlock().getTransactions()) {
-            confirmTransaction(block, tx);
+            confirmTransaction(block, tx, blockStore);
         }
 
         // type-specific updates
@@ -444,24 +460,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_REWARD:
             // For rewards, update reward to be confirmed now
-            confirmReward(block);
-            confirmOrderMatching(block);
+            confirmReward(block, blockStore);
+            confirmOrderMatching(block, blockStore);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // For token creations, update token db
-            confirmToken(block);
+            confirmToken(block, blockStore);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
         case BLOCKTYPE_USERDATA:
         case BLOCKTYPE_CONTRACT_EVENT:
-            confirmVOSOrUserData(block);
+            confirmVOSOrUserData(block, blockStore);
             break;
         case BLOCKTYPE_CONTRACT_EXECUTE:
-           // confirmVOSExecute(block);
+            // confirmVOSExecute(block);
             break;
         case BLOCKTYPE_ORDER_OPEN:
-            confirmOrderOpen(block);
+            confirmOrderOpen(block, blockStore);
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
@@ -471,7 +487,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmVOSOrUserData(BlockWrap block) {
+    private void confirmVOSOrUserData(BlockWrap block, FullPrunedBlockStore blockStore) {
         Transaction tx = block.getBlock().getTransactions().get(0);
         if (tx.getData() != null && tx.getDataSignature() != null) {
             try {
@@ -486,22 +502,21 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 if (!success) {
                     throw new BlockStoreException("multisign signature error");
                 }
-                this.synchronizationUserData(block.getBlock().getHash(), DataClassName.valueOf(tx.getDataClassName()),
-                        tx.getData(), (String) multiSignBy.get("publickey"), block.getBlock().getBlockType().ordinal());
+                synchronizationUserData(block.getBlock().getHash(), DataClassName.valueOf(tx.getDataClassName()),
+                        tx.getData(), (String) multiSignBy.get("publickey"), block.getBlock().getBlockType().ordinal(),
+                        blockStore);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
- 
-
-    private void confirmOrderMatching(BlockWrap block) throws BlockStoreException {
+    private void confirmOrderMatching(BlockWrap block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
         // TODO don't calculate again, it should already have been calculated
         // before
-        OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock());
+        OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock(), blockStore);
 
         // All consumed order records are now spent by this block
 
@@ -512,7 +527,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateOrderSpent(actualCalculationResult.getSpentOrders());
 
         // Set virtual outputs confirmed
-        confirmVirtualCoinbaseTransaction(block);
+        confirmVirtualCoinbaseTransaction(block, blockStore);
 
         // Set new orders confirmed
 
@@ -520,17 +535,17 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         // Update the matching history in db
         tickerService.addMatchingEvents(actualCalculationResult,
-                actualCalculationResult.getOutputTx().getHashAsString(), block.getBlock().getTimeSeconds());
+                actualCalculationResult.getOutputTx().getHashAsString(), block.getBlock().getTimeSeconds(), blockStore);
     }
 
-    private void confirmOrderOpen(BlockWrap block) throws BlockStoreException {
+    private void confirmOrderOpen(BlockWrap block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Set own output confirmed
         blockStore.updateOrderConfirmed(block.getBlock().getHash(), Sha256Hash.ZERO_HASH, true);
     }
 
-    private void confirmReward(BlockWrap block) throws BlockStoreException {
+    private void confirmReward(BlockWrap block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Set virtual reward tx outputs confirmed
-        confirmVirtualCoinbaseTransaction(block);
+        confirmVirtualCoinbaseTransaction(block, blockStore);
 
         // Set used other output spent
         blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getBlock().getHash()), true,
@@ -540,7 +555,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
     }
 
-    private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders) {
+    private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders,
+            FullPrunedBlockStore blockStore) {
         try {
 
             blockStore.insertOrder(orders);
@@ -551,18 +567,18 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void insertVirtualUTXOs(Block block, Transaction virtualTx) {
+    private void insertVirtualUTXOs(Block block, Transaction virtualTx, FullPrunedBlockStore blockStore) {
         try {
             ArrayList<Transaction> txs = new ArrayList<Transaction>();
             txs.add(virtualTx);
-            connectUTXOs(block, txs);
+            connectUTXOs(block, txs, blockStore);
         } catch (BlockStoreException e) {
             // Expected after reorgs
             log.warn("Probably reinserting reward: ", e);
         }
     }
 
-    private void confirmToken(BlockWrap block) throws BlockStoreException {
+    private void confirmToken(BlockWrap block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Set used other output spent
         if (blockStore.getTokenPrevblockhash(block.getBlock().getHash()) != null)
             blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getBlock().getHash()), true,
@@ -572,7 +588,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
     }
 
-    private void confirmTransaction(BlockWrap block, Transaction tx) throws BlockStoreException {
+    private void confirmTransaction(BlockWrap block, Transaction tx, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         // Set used other outputs spent
         if (!tx.isCoinBase()) {
             for (TransactionInput in : tx.getInputs()) {
@@ -596,12 +613,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void confirmVirtualCoinbaseTransaction(BlockWrap block) throws BlockStoreException {
+    private void confirmVirtualCoinbaseTransaction(BlockWrap block, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         // Set own outputs confirmed
         blockStore.updateAllTransactionOutputsConfirmed(block.getBlock().getHash(), true);
     }
 
-    public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+    public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         // If already unconfirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -615,7 +634,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return;
 
         // Then unconfirm the block outputs
-        unconfirmBlockOutputs(block);
+        unconfirmBlockOutputs(block, blockStore);
 
         // Set unconfirmed
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -625,8 +644,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         traversedBlockHashes.add(blockHash);
     }
 
-    public void unconfirmRecursive(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+    public void unconfirmRecursive(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         // If already confirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -640,10 +659,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             return;
 
         // Unconfirm all dependents
-        unconfirmDependents(block, traversedBlockHashes);
+        unconfirmDependents(block, traversedBlockHashes, blockStore);
 
         // Then unconfirm the block itself
-        unconfirmBlockOutputs(block);
+        unconfirmBlockOutputs(block, blockStore);
 
         // Set unconfirmed
         blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -653,10 +672,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         traversedBlockHashes.add(blockHash);
     }
 
-    private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes) throws BlockStoreException {
+    private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
-            unconfirmRecursive(approver, traversedBlockHashes);
+            unconfirmRecursive(approver, traversedBlockHashes, blockStore);
         }
 
         // Disconnect all transaction output dependents
@@ -667,7 +687,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     unconfirmRecursive(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
-                            traversedBlockHashes);
+                            traversedBlockHashes, blockStore);
                 }
             }
         }
@@ -684,12 +704,12 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             break;
         case BLOCKTYPE_REWARD:
             // Unconfirm dependents
-            unconfirmRewardDependents(block, traversedBlockHashes);
-            unconfirmOrderMatchingDependents(block, traversedBlockHashes);
+            unconfirmRewardDependents(block, traversedBlockHashes, blockStore);
+            unconfirmOrderMatchingDependents(block, traversedBlockHashes, blockStore);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
             // Unconfirm dependents
-            unconfirmTokenDependents(block, traversedBlockHashes);
+            unconfirmTokenDependents(block, traversedBlockHashes, blockStore);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -700,7 +720,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
-            unconfirmOrderOpenDependents(block, traversedBlockHashes);
+            unconfirmOrderOpenDependents(block, traversedBlockHashes, blockStore);
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
@@ -710,11 +730,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void unconfirmOrderMatchingDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+    private void unconfirmOrderMatchingDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
-        OrderMatchingResult matchingResult = generateOrderMatching(block);
+        OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
         // Disconnect all virtual transaction output dependents
         Transaction tx = matchingResult.getOutputTx();
@@ -724,26 +744,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             if (utxo != null && utxo.isSpent()) {
                 unconfirmRecursive(blockStore
                         .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
-                        traversedBlockHashes);
+                        traversedBlockHashes, blockStore);
             }
         }
     }
 
-    private void unconfirmOrderOpenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+    private void unconfirmOrderOpenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         // Disconnect order record spender
         if (blockStore.getOrderSpent(block.getHash(), Sha256Hash.ZERO_HASH)) {
-            unconfirmRecursive(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getOrderSpender(block.getHash(), Sha256Hash.ZERO_HASH), traversedBlockHashes,
+                    blockStore);
         }
     }
 
-    private void unconfirmTokenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+    private void unconfirmTokenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         // Disconnect token record spender
         if (blockStore.getTokenSpent(block.getHash())) {
-            unconfirmRecursive(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getTokenSpender(block.getHashAsString()), traversedBlockHashes, blockStore);
         }
 
         // If applicable: Disconnect all domain definitions that were based on
@@ -752,27 +773,27 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         List<String> dependents = blockStore.getDomainDescendantConfirmedBlocks(token.getBlockHashHex());
         for (String b : dependents) {
-            unconfirmRecursive(Sha256Hash.wrap(b), traversedBlockHashes);
+            unconfirmRecursive(Sha256Hash.wrap(b), traversedBlockHashes, blockStore);
 
         }
     }
 
-    private void unconfirmRewardDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes)
-            throws BlockStoreException {
+    private void unconfirmRewardDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         // Disconnect reward record spender
         if (blockStore.getRewardSpent(block.getHash())) {
-            unconfirmRecursive(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes);
+            unconfirmRecursive(blockStore.getRewardSpender(block.getHash()), traversedBlockHashes, blockStore);
         }
 
         // Disconnect all virtual transaction output dependents
-        Transaction tx = generateVirtualMiningRewardTX(block);
+        Transaction tx = generateVirtualMiningRewardTX(block, blockStore);
         for (TransactionOutput txout : tx.getOutputs()) {
             UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
             if (utxo != null && utxo.isSpent()) {
                 unconfirmRecursive(blockStore
                         .getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
-                        traversedBlockHashes);
+                        traversedBlockHashes, blockStore);
             }
         }
     }
@@ -784,10 +805,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      *             if the block store had an underlying error or block does not
      *             exist in the block store at all.
      */
-    private void unconfirmBlockOutputs(Block block) throws BlockStoreException {
+    private void unconfirmBlockOutputs(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Unconfirm all transactions of the block
         for (Transaction tx : block.getTransactions()) {
-            unconfirmTransaction(tx, block);
+            unconfirmTransaction(tx, block, blockStore);
         }
 
         // Then unconfirm type-specific stuff
@@ -801,11 +822,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            unconfirmReward(block);
-            unconfirmOrderMatching(block);
+            unconfirmReward(block, blockStore);
+            unconfirmOrderMatching(block, blockStore);
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            unconfirmToken(block);
+            unconfirmToken(block, blockStore);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -816,7 +837,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
-            unconfirmOrderOpen(block);
+            unconfirmOrderOpen(block, blockStore);
             break;
         case BLOCKTYPE_ORDER_CANCEL:
             break;
@@ -826,10 +847,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void unconfirmOrderMatching(Block block) throws BlockStoreException {
+    private void unconfirmOrderMatching(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Get list of consumed orders, virtual order matching tx and newly
         // generated remaining order book
-        OrderMatchingResult matchingResult = generateOrderMatching(block);
+        OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
         // All consumed order records are now unspent by this block
         Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
@@ -840,23 +861,24 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateOrderSpent(updateOrder);
 
         // Set virtual outputs unconfirmed
-        unconfirmVirtualCoinbaseTransaction(block);
+        unconfirmVirtualCoinbaseTransaction(block, blockStore);
 
         blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
-        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.getTokenId2Events());
+        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.getTokenId2Events(),
+                blockStore);
     }
 
-    private void unconfirmOrderOpen(Block block) throws BlockStoreException {
+    private void unconfirmOrderOpen(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Set own output unconfirmed
 
         blockStore.updateOrderConfirmed(block.getHash(), Sha256Hash.ZERO_HASH, false);
     }
 
-    private void unconfirmReward(Block block) throws BlockStoreException {
+    private void unconfirmReward(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Unconfirm virtual tx
-        unconfirmVirtualCoinbaseTransaction(block);
+        unconfirmVirtualCoinbaseTransaction(block, blockStore);
 
         // Set used other output unspent
         blockStore.updateRewardSpent(blockStore.getRewardPrevBlockHash(block.getHash()), false, null);
@@ -865,7 +887,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.updateRewardConfirmed(block.getHash(), false);
     }
 
-    private void unconfirmToken(Block block) throws BlockStoreException {
+    private void unconfirmToken(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         // Set used other output unspent
         if (blockStore.getTokenPrevblockhash(block.getHash()) != null)
             blockStore.updateTokenSpent(blockStore.getTokenPrevblockhash(block.getHash()), false, null);
@@ -881,7 +903,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @param parentBlock
      * @throws BlockStoreException
      */
-    private void unconfirmTransaction(Transaction tx, Block parentBlock) throws BlockStoreException {
+    private void unconfirmTransaction(Transaction tx, Block parentBlock, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         // Set used outputs as unspent
         if (!tx.isCoinBase()) {
             for (TransactionInput txin : tx.getInputs()) {
@@ -896,13 +919,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void unconfirmVirtualCoinbaseTransaction(Block parentBlock) throws BlockStoreException {
+    private void unconfirmVirtualCoinbaseTransaction(Block parentBlock, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         // Set own outputs unconfirmed
         blockStore.updateAllTransactionOutputsConfirmed(parentBlock.getHash(), false);
     }
 
-    public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess)
-            throws BlockStoreException {
+    public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
 
         switch (solidityState.getState()) {
         case MissingCalculation:
@@ -911,11 +935,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             // Reward blocks follow different logic: If this is new, run
             // consensus logic
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                solidifyReward(block);
+                solidifyReward(block, blockStore);
                 return;
             }
             // Insert other blocks into waiting list
-            insertUnsolidBlock(block, solidityState);
+            insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case MissingPredecessor:
             if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
@@ -926,7 +950,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
 
             // Insert into waiting list
-            insertUnsolidBlock(block, solidityState);
+            insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case Success:
             // If already set, nothing to do here...
@@ -935,9 +959,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
             // TODO don't calculate again, it may already have been calculated
             // before
-            connectUTXOs(block);
-            connectTypeSpecificUTXOs(block);
-            calculateBlock(block);
+            connectUTXOs(block, blockStore);
+            connectTypeSpecificUTXOs(block, blockStore);
+            calculateBlock(block, blockStore);
 
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
                 // If we don't want to set the milestone success, initialize as
@@ -948,7 +972,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
             }
             if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                solidifyReward(block);
+                solidifyReward(block, blockStore);
                 return;
             }
 
@@ -960,7 +984,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    protected void insertUnsolidBlock(Block block, SolidityState solidityState) throws BlockStoreException {
+    protected void insertUnsolidBlock(Block block, SolidityState solidityState, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         if (solidityState.getState() == State.Success || solidityState.getState() == State.Invalid) {
             log.warn("Block should not be inserted into waiting list");
             return;
@@ -971,12 +996,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         blockStore.insertUnsolid(block, solidityState);
     }
 
-    protected void connectUTXOs(Block block) throws BlockStoreException, VerificationException {
+    protected void connectUTXOs(Block block, FullPrunedBlockStore blockStore)
+            throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();
-        connectUTXOs(block, transactions);
+        connectUTXOs(block, transactions, blockStore);
     }
 
-    private void connectUTXOs(Block block, List<Transaction> transactions) throws BlockStoreException {
+    private void connectUTXOs(Block block, List<Transaction> transactions, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         for (final Transaction tx : transactions) {
             boolean isCoinBase = tx.isCoinBase();
             List<UTXO> spendPending = new ArrayList<UTXO>();
@@ -1010,10 +1037,10 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (script.isSentToMultiSig()) {
 
                         for (ECKey ecKey : script.getPubKeys()) {
-                            String toaddress = ecKey.toAddress(params).toBase58();
+                            String toaddress = ecKey.toAddress(networkParameters).toBase58();
                             OutputsMulti outputsMulti = new OutputsMulti(newOut.getTxHash(), toaddress,
                                     newOut.getIndex());
-                            this.blockStore.insertOutputsMulti(outputsMulti);
+                            blockStore.insertOutputsMulti(outputsMulti);
                         }
                     }
                 }
@@ -1030,7 +1057,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                     if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
                         fromAddress = t.getFromAddress().toBase58();
                     } else {
-                        fromAddress = new Address(params,
+                        fromAddress = new Address(networkParameters,
                                 Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
 
                     }
@@ -1046,7 +1073,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         return fromAddress;
     }
 
-    private void connectTypeSpecificUTXOs(Block block) throws BlockStoreException {
+    private void connectTypeSpecificUTXOs(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
@@ -1059,7 +1086,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_REWARD:
             break;
         case BLOCKTYPE_TOKEN_CREATION:
-            connectToken(block);
+            connectToken(block, blockStore);
             break;
         case BLOCKTYPE_TRANSFER:
             break;
@@ -1068,20 +1095,20 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         case BLOCKTYPE_CONTRACT_EXECUTE:
             break;
         case BLOCKTYPE_ORDER_OPEN:
-            connectOrder(block);
+            connectOrder(block, blockStore);
             break;
         case BLOCKTYPE_ORDER_CANCEL:
-            connectCancelOrder(block);
+            connectCancelOrder(block, blockStore);
             break;
         case BLOCKTYPE_CONTRACT_EVENT:
-            connectContractEvent(block);
+            connectContractEvent(block, blockStore);
         default:
             break;
 
         }
     }
 
-    private void connectCancelOrder(Block block) throws BlockStoreException {
+    private void connectCancelOrder(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         try {
             OrderCancelInfo info = new OrderCancelInfo().parse(block.getTransactions().get(0).getData());
             OrderCancel record = new OrderCancel(info.getBlockHash());
@@ -1092,11 +1119,11 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectOrder(Block block) throws BlockStoreException {
+    private void connectOrder(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         try {
             OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
 
-            Coin offer = validatorService.countBurnedToken(block);
+            Coin offer = validatorService.countBurnedToken(block, blockStore);
             Side side = offer.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
 
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
@@ -1111,14 +1138,14 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         }
     }
 
-    private void connectContractEvent(Block block) throws BlockStoreException {
+    private void connectContractEvent(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         try {
             ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
-      
+
             ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
-            		reqInfo.getContractTokenid(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
-                    reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(),  
-                    reqInfo.getBeneficiaryAddress());
+                    reqInfo.getContractTokenid(), false, false, null, reqInfo.getTargetValue(),
+                    reqInfo.getTargetTokenid(), reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(),
+                    reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
             List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
             orders.add(record);
             blockStore.insertContractEvent(orders);
@@ -1126,7 +1153,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
             throw new RuntimeException(e);
         }
     }
-    private void connectToken(Block block) throws BlockStoreException {
+
+    private void connectToken(Block block, FullPrunedBlockStore blockStore) throws BlockStoreException {
         Transaction tx = block.getTransactions().get(0);
         if (tx.getData() != null) {
             try {
@@ -1137,7 +1165,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 tokenInfo.getToken().setConfirmed(false);
                 tokenInfo.getToken().setBlockHash(block.getHash());
 
-                this.blockStore.insertToken(block.getHash(), tokenInfo.getToken());
+                blockStore.insertToken(block.getHash(), tokenInfo.getToken());
 
                 // Correctly insert additional data
                 for (MultiSignAddress permissionedAddress : tokenInfo.getMultiSignAddresses()) {
@@ -1162,8 +1190,9 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
 
         Side side = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
         long price = o.price();
-        if(price <=0) log.warn(" price is wrong " +price);
-            //throw new RuntimeException(" price is wrong " +price);
+        if (price <= 0)
+            log.warn(" price is wrong " + price);
+        // throw new RuntimeException(" price is wrong " +price);
         long size = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? o.getTargetValue()
                 : o.getOfferValue();
         String tokenId = o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? o.getTargetTokenid()
@@ -1186,14 +1215,16 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      *         generated remaining MODIFIED order book
      * @throws BlockStoreException
      */
-    public OrderMatchingResult generateOrderMatching(Block block) throws BlockStoreException {
+    public OrderMatchingResult generateOrderMatching(Block block, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
 
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
-        return generateOrderMatching(block, rewardInfo);
+        return generateOrderMatching(block, rewardInfo, blockStore);
     }
 
-    public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo) throws BlockStoreException {
+    public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo,
+            FullPrunedBlockStore blockStore) throws BlockStoreException {
         TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
 
         // Get previous order matching block
@@ -1214,7 +1245,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
         for (OrderRecord r : remainingOrders.values()) {
             toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
         }
-        collectOrdersWithCancel(block, collectedBlocks, cancels, sortedNewOrders, toBeSpentOrders);
+        collectOrdersWithCancel(block, collectedBlocks, cancels, sortedNewOrders, toBeSpentOrders, blockStore);
         // sort order for execute in deterministic randomness
         Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
                 Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
@@ -1449,7 +1480,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void collectOrdersWithCancel(Block block, Set<Sha256Hash> collectedBlocks, List<OrderCancelInfo> cancels,
-            Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders) throws BlockStoreException {
+            Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
         for (Sha256Hash bHash : collectedBlocks) {
             BlockWrap b = blockStore.getBlockWrap(bHash);
             if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
@@ -1475,7 +1507,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * @return mining reward transaction
      * @throws BlockStoreException
      */
-    public Transaction generateVirtualMiningRewardTX(Block block) throws BlockStoreException {
+    public Transaction generateVirtualMiningRewardTX(Block block, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
 
         RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
         Set<Sha256Hash> candidateBlocks = rewardInfo.getBlocks();
@@ -1612,7 +1645,8 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
      * For each block in orphanBlocks, see if we can now fit it on top of the
      * chain and if so, do so.
      */
-    private void tryConnectingOrphans() throws VerificationException, BlockStoreException {
+    private void tryConnectingOrphans(FullPrunedBlockStore blockStore)
+            throws VerificationException, BlockStoreException {
         checkState(chainlock.isHeldByCurrentThread());
         // For each block in our orphan list, try and fit it onto the head of
         // the chain. If we succeed remove it
@@ -1648,7 +1682,7 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
                 // False here ensures we don't recurse infinitely downwards when
                 // connecting huge chains.
                 log.info("Connected orphan {}", orphanBlock.block.getHash());
-                if (addChain(orphanBlock.block, true, false)) {
+                if (addChain(orphanBlock.block, true, false,blockStore)) {
                     iter.remove();
                     blocksConnectedThisRound++;
                 }
@@ -1680,31 +1714,35 @@ public class FullPrunedBlockGraph extends AbstractBlockGraph {
     }
 
     private void updateConfirmed(int numberUpdates) throws BlockStoreException {
-        // First remove any blocks that should no longer be in the milestone
-        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
-        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (BlockEvaluation block : blocksToRemove)
-            unconfirm(block.getBlockHash(), traversedUnconfirms);
+        FullPrunedBlockStore blockStore = storeService.getStore();
+        try {
+            // First remove any blocks that should no longer be in the milestone
+            HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+            HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+            for (BlockEvaluation block : blocksToRemove)
+                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
 
-        long cutoffHeight = blockService.getCurrentCutoffHeight();
-        long maxHeight = blockService.getCurrentMaxHeight();
-        for (int i = 0; i < numberUpdates; i++) {
-            // Now try to find blocks that can be added to the milestone.
-            // DISALLOWS UNSOLID
-            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
+            long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
+            long maxHeight = blockService.getCurrentMaxHeight(blockStore);
+            for (int i = 0; i < numberUpdates; i++) {
+                // Now try to find blocks that can be added to the milestone.
+                // DISALLOWS UNSOLID
+                TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
 
-            // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);
+                // VALIDITY CHECKS
+                validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
 
-            // Finally add the resolved new blocks to the confirmed set
-            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-            for (BlockWrap block : blocksToAdd)
-                confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1);
+                // Finally add the resolved new blocks to the confirmed set
+                HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+                for (BlockWrap block : blocksToAdd)
+                    confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
 
-            // Exit condition: there are no more blocks to add
-            if (blocksToAdd.isEmpty())
-                break;
-
+                // Exit condition: there are no more blocks to add
+                if (blocksToAdd.isEmpty())
+                    break;
+            }
+        } finally {
+            blockStore.close();
         }
     }
 }

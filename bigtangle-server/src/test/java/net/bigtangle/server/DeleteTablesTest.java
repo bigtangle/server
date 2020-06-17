@@ -23,7 +23,7 @@ public class DeleteTablesTest extends AbstractIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-
+        store= storeService.getStore();
     }
 
     @Test

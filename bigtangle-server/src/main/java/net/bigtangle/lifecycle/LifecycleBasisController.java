@@ -1,11 +1,19 @@
 package net.bigtangle.lifecycle;
 
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.AbstractStreamHandler;
 import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullPrunedBlockStore;
 
 public abstract class LifecycleBasisController {
     private static final Logger log = LoggerFactory.getLogger(LifecycleBasisController.class);
@@ -90,12 +98,12 @@ public abstract class LifecycleBasisController {
         return bean;
     }
 
-    private FullPrunedBlockStore findStore() {
-        FullPrunedBlockStore bean = appContext.getBean(FullPrunedBlockStore.class);
-        if (bean == null) {
-            log.error("FullPrunedBlockStore - bean not found");
-        }
-        return bean;
+    private FullPrunedBlockStore findStore() throws BeansException, BlockStoreException, SQLException {
+        
+        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore( appContext.getBean(NetworkParameters.class),  
+                appContext.getBean(DataSource.class).getConnection());
+      
+        return store;
     }
 
     private LifecycleStatus buildLifecycleStatus(StatusCollector collected) {

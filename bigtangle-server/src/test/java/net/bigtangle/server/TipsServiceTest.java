@@ -66,30 +66,30 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), doublespendTX);
 
-        blockGraph.add(b1, true);
-        blockGraph.add(b2, true);
+        blockGraph.add(b1, true,store);
+        blockGraph.add(b2, true,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             assertTrue(tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash()));
         }
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -122,8 +122,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), doublespendTX);
 
-        blockGraph.add(b1, true);
-        blockGraph.add(b2, true);
+        blockGraph.add(b1, true,store);
+        blockGraph.add(b2, true,store);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -133,7 +133,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -146,15 +146,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -167,20 +167,20 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate blocks until passing first reward interval
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true,store);
 
         Block rollingBlock1 = rollingBlock;
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
+            blockGraph.add(rollingBlock1, true,store);
         }
 
         // Generate eligible mining reward blocks
         Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+                rollingBlock1.getHash(), rollingBlock1.getHash(),store);
         Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+                rollingBlock1.getHash(), rollingBlock1.getHash(),store);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -190,7 +190,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -206,12 +206,12 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         mcmcService.update();
         confirmationService.update();
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -266,7 +266,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -279,15 +279,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -340,7 +340,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -353,15 +353,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -400,7 +400,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -413,15 +413,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -469,7 +469,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair();
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -482,15 +482,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
         try {
-            tipsService.getValidatedBlockPairCompatibleWithExisting(b2);
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
             fail();
         } catch (VerificationException e) {
             // Expected

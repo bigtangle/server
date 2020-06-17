@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockPrototype;
@@ -40,7 +41,6 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
@@ -66,12 +66,11 @@ import net.bigtangle.utils.Gzip;
  * </p>
  */
 @Service
-public class BlockService {
+public class BlockService  {
 
-    @Autowired
-    protected FullPrunedBlockStore store;
-    // @Autowired
-    // private ValidatorService validatorService;
+   
+     @Autowired
+      private StoreService storeService;
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -90,49 +89,49 @@ public class BlockService {
 
     // cache only binary block only
     @Cacheable("blocks")
-    public Block getBlock(Sha256Hash blockhash) throws BlockStoreException, NoBlockException {
+    public Block getBlock(Sha256Hash blockhash, FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
         return store.get(blockhash);
     }
 
-    public BlockWrap getBlockWrap(Sha256Hash blockhash) throws BlockStoreException {
+    public BlockWrap getBlockWrap(Sha256Hash blockhash,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getBlockWrap(blockhash);
     }
 
-    public List<Block> getBlocks(List<Sha256Hash> hashes) throws BlockStoreException, NoBlockException {
+    public List<Block> getBlocks(List<Sha256Hash> hashes,FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
         List<Block> blocks = new ArrayList<Block>();
         for (Sha256Hash hash : hashes) {
-            blocks.add(getBlock(hash));
+            blocks.add(getBlock(hash,store));
         }
         return blocks;
     }
 
-    public List<BlockWrap> getBlockWraps(List<Sha256Hash> hashes) throws BlockStoreException {
+    public List<BlockWrap> getBlockWraps(List<Sha256Hash> hashes,FullPrunedBlockStore store) throws BlockStoreException {
         List<BlockWrap> blocks = new ArrayList<BlockWrap>();
         for (Sha256Hash hash : hashes) {
-            blocks.add(getBlockWrap(hash));
+            blocks.add(getBlockWrap(hash,store));
         }
         return blocks;
     }
 
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException {
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getBlockEvaluation(hash);
     }
 
-    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException {
+    public List<BlockEvaluation> getAllBlockEvaluations( FullPrunedBlockStore store) throws BlockStoreException {
         return store.getAllBlockEvaluations();
     }
 
-    public void saveBlock(Block block) throws Exception {
+    public void saveBlock(Block block,FullPrunedBlockStore store) throws Exception {
         Context context = new Context(networkParameters);
         Context.propagate(context);
         broadcastBlock(block);
-        blockgraph.add(block, false);
-        removeBlockPrototype(block);
+        blockgraph.add(block, false,store);
+        removeBlockPrototype(block, store);
      
 
     }
 
-    public void removeBlockPrototype(Block block) {
+    public void removeBlockPrototype(Block block,FullPrunedBlockStore store) {
         try {
             store.deleteBlockPrototype(block.getPrevBlockHash(), block.getPrevBranchBlockHash());
         } catch (BlockStoreException e) {
@@ -152,7 +151,7 @@ public class BlockService {
      * @param block
      * @throws BlockStoreException
      */
-    public void removeBlockAndApproversFrom(Collection<BlockWrap> blocks, BlockWrap startingBlock)
+    public void removeBlockAndApproversFrom(Collection<BlockWrap> blocks, BlockWrap startingBlock,FullPrunedBlockStore store)
             throws BlockStoreException {
 
         PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
@@ -191,7 +190,7 @@ public class BlockService {
      * @param evaluation
      * @throws BlockStoreException
      */
-    public void addConfirmedApproversTo(Collection<BlockWrap> blocks, BlockWrap startingBlock)
+    public void addConfirmedApproversTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,FullPrunedBlockStore store)
             throws BlockStoreException {
 
         PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
@@ -235,7 +234,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
-            long cutoffHeight, long prevMilestoneNumber, boolean throwException) throws BlockStoreException {
+            long cutoffHeight, long prevMilestoneNumber, boolean throwException,FullPrunedBlockStore store) throws BlockStoreException {
 
         PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
@@ -300,7 +299,7 @@ public class BlockService {
      * @throws BlockStoreException
      */
     public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,
-            long cutoffHeight) throws BlockStoreException {
+            long cutoffHeight,FullPrunedBlockStore store) throws BlockStoreException {
 
         PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
@@ -345,25 +344,25 @@ public class BlockService {
         return notMissingAnything;
     }
 
-    public AbstractResponse searchBlock(Map<String, Object> request) throws BlockStoreException {
+    public AbstractResponse searchBlock(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
         @SuppressWarnings("unchecked")
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
+        List<BlockEvaluationDisplay> evaluations =  store.getSearchBlockEvaluations(address, lastestAmount, height,
                 serverConfiguration.getMaxserachblocks());
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public AbstractResponse searchBlockByBlockHashs(Map<String, Object> request) throws BlockStoreException {
+    public AbstractResponse searchBlockByBlockHashs(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
         @SuppressWarnings("unchecked")
         List<String> blockhashs = (List<String>) request.get("blockhashs");
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluationsByhashs(blockhashs);
+        List<BlockEvaluationDisplay> evaluations =  store.getSearchBlockEvaluationsByhashs(blockhashs);
 
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public List<BlockWrap> getEntryPointCandidates() throws BlockStoreException {
+    public List<BlockWrap> getEntryPointCandidates(FullPrunedBlockStore store) throws BlockStoreException {
         return store.getEntryPoints();
     }
 
@@ -379,38 +378,38 @@ public class BlockService {
         }
     }
 
-    public void batchBlock(Block block) throws BlockStoreException {
+    public void batchBlock(Block block,FullPrunedBlockStore store) throws BlockStoreException {
 
-        this.store.insertBatchBlock(block);
+        store.insertBatchBlock(block);
     }
 
-    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
+    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime,FullPrunedBlockStore store) throws BlockStoreException {
 
-        this.store.insertMyserverblocks(prevhash, hash, inserttime);
+         store.insertMyserverblocks(prevhash, hash, inserttime);
     }
 
-    public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
+    public boolean existMyserverblocks(Sha256Hash prevhash,FullPrunedBlockStore store) throws BlockStoreException {
 
-        return this.store.existMyserverblocks(prevhash);
+        return  store.existMyserverblocks(prevhash);
     }
 
-    public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
+    public void deleteMyserverblocks(Sha256Hash prevhash,FullPrunedBlockStore store) throws BlockStoreException {
 
-        this.store.deleteMyserverblocks(prevhash);
+         store.deleteMyserverblocks(prevhash);
     }
 
-    public GetBlockListResponse blocksFromChainLength(Long start, Long end) throws BlockStoreException {
+    public GetBlockListResponse blocksFromChainLength(Long start, Long end, FullPrunedBlockStore store) throws BlockStoreException {
 
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
 
-    public Block getBlockPrototype() throws BlockStoreException, NoBlockException {
+    public Block getBlockPrototype(FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
         BlockPrototype re = store.getBlockPrototype();
         if (re == null) {
-            return getNewBlockPrototype();
+            return getNewBlockPrototype(store);
         } else {
-            Block r1 = getBlock(re.getPrevBlockHash());
-            Block r2 = getBlock(re.getPrevBranchBlockHash());
+            Block r1 = getBlock(re.getPrevBlockHash(),store);
+            Block r2 = getBlock(re.getPrevBranchBlockHash(),store);
             Block b = Block.createBlock(networkParameters, r1, r2);
             b.setMinerAddress(
                     Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
@@ -418,38 +417,38 @@ public class BlockService {
         }
     }
 
-    public void createBlockPrototypeCache() throws Exception {
+    public void createBlockPrototypeCache(FullPrunedBlockStore store) throws Exception {
         for (int i = 0; i < serverConfiguration.getBlockPrototypeCachesSize(); i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-            Block r1 = getBlock(tipsToApprove.getLeft());
-            Block r2 = getBlock(tipsToApprove.getRight());
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
+            Block r1 = getBlock(tipsToApprove.getLeft(),store);
+            Block r2 = getBlock(tipsToApprove.getRight(),store);
             store.insertBlockPrototype(r1.getHash(), r2.getHash());
         }
     }
 
-    private Block getNewBlockPrototype() throws BlockStoreException, NoBlockException {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair();
-        Block r1 = getBlock(tipsToApprove.getLeft());
-        Block r2 = getBlock(tipsToApprove.getRight());
+    private Block getNewBlockPrototype(FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
+        Block r1 = getBlock(tipsToApprove.getLeft(),store);
+        Block r2 = getBlock(tipsToApprove.getRight(),store);
         Block b = Block.createBlock(networkParameters, r1, r2);
         b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
         return b;
     }
 
-    public boolean getUTXOSpent(TransactionOutPoint txout) throws BlockStoreException {
+    public boolean getUTXOSpent(TransactionOutPoint txout,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isSpent();
     }
 
-    public boolean getUTXOConfirmed(TransactionOutPoint txout) throws BlockStoreException {
+    public boolean getUTXOConfirmed(TransactionOutPoint txout,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getOutputConfirmation(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
     }
 
-    public BlockEvaluation getUTXOSpender(TransactionOutPoint txout) throws BlockStoreException {
+    public BlockEvaluation getUTXOSpender(TransactionOutPoint txout,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getTransactionOutputSpender(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
     }
 
-    public UTXO getUTXO(TransactionOutPoint out) throws BlockStoreException {
+    public UTXO getUTXO(TransactionOutPoint out,FullPrunedBlockStore store) throws BlockStoreException {
         return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
     }
 
@@ -473,7 +472,7 @@ public class BlockService {
     /*
      * Block byte[] bytes
      */
-    public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid)
+    public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid )
             throws ProtocolException, BlockStoreException, NoBlockException {
         if (bytes == null)
             return null;
@@ -482,13 +481,15 @@ public class BlockService {
     }
 
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
+      FullPrunedBlockStore store = storeService.getStore();
+      try {
         if (store.getBlockEvaluation(block.getHash()) == null) { 
             try { 
                 if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                 logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
                 }
-                blockgraph.add(block, allowUnsolid);
-                removeBlockPrototype(block);
+                blockgraph.add(block, allowUnsolid,store);
+                removeBlockPrototype(block,store);
                 return Optional.of(block);
             } catch (ProofOfWorkException | UnsolidException e) {
                 return Optional.empty();
@@ -499,10 +500,14 @@ public class BlockService {
 
             }
         }
+      }finally {
+          store.close();
+    }
+       
         return Optional.empty();
     }
 
-    public void streamBlocks(Long heightstart, String kafka) throws BlockStoreException {
+    public void streamBlocks(Long heightstart, String kafka,FullPrunedBlockStore store) throws BlockStoreException {
         KafkaMessageProducer kafkaMessageProducer;
         if (kafka == null || "".equals(kafka)) {
             kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
@@ -512,22 +517,22 @@ public class BlockService {
         store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
     }
 
-    public void adjustHeightRequiredBlocks(Block block) throws BlockStoreException, NoBlockException {
-        adjustPrototyp(block);
-        long h = calcHeightRequiredBlocks(block);
+    public void adjustHeightRequiredBlocks(Block block, FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
+        adjustPrototyp(block,store);
+        long h = calcHeightRequiredBlocks(block,store);
         if (h > block.getHeight()) {
             logger.debug("adjustHeightRequiredBlocks" + block + " to " + h);
             block.setHeight(h);
         }
     }
 
-    public void adjustPrototyp(Block block) throws BlockStoreException, NoBlockException {
+    public void adjustPrototyp(Block block,FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
         // two hours for just getBlockPrototype
         int delaySeconds = 7200;
 
         if (block.getTimeSeconds() < System.currentTimeMillis() / 1000 - delaySeconds) {
             logger.debug("adjustPrototyp " + block);
-            Block newblock = getBlockPrototype();
+            Block newblock = getBlockPrototype(store);
             for (Transaction transaction : block.getTransactions()) {
                 newblock.addTransaction(transaction);
             }
@@ -535,8 +540,8 @@ public class BlockService {
         }
     }
 
-    public long calcHeightRequiredBlocks(Block block) throws BlockStoreException {
-        List<BlockWrap> requires = getAllRequirements(block);
+    public long calcHeightRequiredBlocks(Block block,FullPrunedBlockStore store) throws BlockStoreException {
+        List<BlockWrap> requires = getAllRequirements(block,store);
         long height = 0;
         for (BlockWrap b : requires) {
             height = Math.max(height, b.getBlock().getHeight());
@@ -544,7 +549,7 @@ public class BlockService {
         return height + 1;
     }
 
-    public List<BlockWrap> getAllRequirements(Block block) throws BlockStoreException {
+    public List<BlockWrap> getAllRequirements(Block block,FullPrunedBlockStore store) throws BlockStoreException {
         Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
         List<BlockWrap> result = new ArrayList<>();
         for (Sha256Hash pred : allPredecessorBlockHashes)
@@ -552,12 +557,12 @@ public class BlockService {
         return result;
     }
 
-    public long getCurrentMaxHeight() throws BlockStoreException {
+    public long getCurrentMaxHeight( FullPrunedBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         return store.get(maxConfirmedReward.getBlockHash()).getHeight() + NetworkParameters.FORWARD_BLOCK_HORIZON;
     }
 
-    public long getCurrentCutoffHeight() throws BlockStoreException {
+    public long getCurrentCutoffHeight( FullPrunedBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
         TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
@@ -571,7 +576,7 @@ public class BlockService {
         // NetworkParameters.FORWARD_BLOCK_HORIZON;
     }
 
-    public long getRewardCutoffHeight(Sha256Hash prevRewardHash) throws BlockStoreException {
+    public long getRewardCutoffHeight(Sha256Hash prevRewardHash, FullPrunedBlockStore store) throws BlockStoreException {
         Set<Sha256Hash> prevMilestoneBlocks = new HashSet<Sha256Hash>();
         Sha256Hash currPrevRewardHash = prevRewardHash;
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
@@ -657,20 +662,20 @@ public class BlockService {
     /*
      * failed blocks without conflict for retry
      */
-    public AbstractResponse findRetryBlocks(Map<String, Object> request) throws BlockStoreException {
+    public AbstractResponse findRetryBlocks(Map<String, Object> request,         FullPrunedBlockStore store  ) throws BlockStoreException {
         @SuppressWarnings("unchecked")
         List<String> address = (List<String>) request.get("address");
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
-        List<BlockEvaluationDisplay> evaluations = this.store.getSearchBlockEvaluations(address, lastestAmount, height,
+        List<BlockEvaluationDisplay> evaluations =  store.getSearchBlockEvaluations(address, lastestAmount, height,
                 serverConfiguration.getMaxserachblocks());
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public void checkBlockBeforeSave(Block block) throws BlockStoreException {
+    public void checkBlockBeforeSave(Block block, FullPrunedBlockStore store) throws BlockStoreException {
 
         block.verifyHeader();
-        if (!checkPossibleConflict(block))
+        if (!checkPossibleConflict(block,store))
             throw new VerificationException("Conflict Possible");
         checkDomainname(block);
     }
@@ -693,7 +698,7 @@ public class BlockService {
      * Transactions in a block may has spent output, It is not final that the
      * reject of the block Return false, if there is possible conflict
      */
-    public boolean checkPossibleConflict(Block block) throws BlockStoreException {
+    public boolean checkPossibleConflict(Block block, FullPrunedBlockStore store) throws BlockStoreException {
         // All used transaction outputs
         final List<Transaction> transactions = block.getTransactions();
         for (final Transaction tx : transactions) {

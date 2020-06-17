@@ -16,10 +16,10 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class AccessPermissionedService {
 
+    
     @Autowired
-    protected FullPrunedBlockStore store;
-
-    public AbstractResponse getSessionRandomNumResp(String pubKey) throws Exception {
+    protected  StoreService storeService;
+    public AbstractResponse getSessionRandomNumResp(String pubKey,FullPrunedBlockStore store) throws Exception {
         ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKey));
 
         String message = UUID.randomUUID().toString();
@@ -29,13 +29,13 @@ public class AccessPermissionedService {
 
         byte[] bytes = ECIESCoder.encrypt(ecKey.getPubKeyPoint(), payload);
         String verifyHex = Utils.HEX.encode(bytes);
-        this.store.insertAccessPermission(pubKey, Utils.HEX.encode(payload));
+        store .insertAccessPermission(pubKey, Utils.HEX.encode(payload));
         return SessionRandomNumResponse.create(verifyHex);
     }
 
-    public int checkSessionRandomNumResp(String pubKey, String accessToken) {
+    public int checkSessionRandomNumResp(String pubKey, String accessToken,FullPrunedBlockStore store) {
         try {
-            int count = this.store.getCountAccessPermissionByPubKey(pubKey, accessToken);
+            int count =  store .getCountAccessPermissionByPubKey(pubKey, accessToken);
             return count;
         } catch (Exception e) {
             return 0;

@@ -34,15 +34,14 @@ public class ConfirmationService {
     private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
     @Autowired
-    protected FullPrunedBlockGraph blockGraph;
-    @Autowired
-    protected FullPrunedBlockStore store;
+    protected FullPrunedBlockGraph blockGraph; 
  
     @Autowired
     private ValidatorService validatorService;
     @Autowired
     private BlockService blockService;
- 
+    @Autowired
+    private StoreService  storeService;
 
     public void startSingleProcess() {
         if (blockGraph.chainlock.isHeldByCurrentThread() || !blockGraph.chainlock.tryLock()) {
@@ -68,9 +67,10 @@ public class ConfirmationService {
     }
    
     public void update(int numberUpdates) throws BlockStoreException {
+        FullPrunedBlockStore  store=  storeService.getStore();
         try { 
             store.beginDatabaseBatchWrite();
-            updateConfirmed(numberUpdates);
+            updateConfirmed(numberUpdates,store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("updateConfirmed ", e);
@@ -89,28 +89,28 @@ public class ConfirmationService {
      * @throws JsonMappingException
      * @throws JsonParseException
      */
-    private void updateConfirmed(int numberUpdates)
+    private void updateConfirmed(int numberUpdates, FullPrunedBlockStore store)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockEvaluation block : blocksToRemove)
-            blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms);
+            blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms,store);
 
-        long cutoffHeight = blockService.getCurrentCutoffHeight();
-        long maxHeight = blockService.getCurrentMaxHeight();
+        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
+        long maxHeight = blockService.getCurrentMaxHeight(store);
         for (int i = 0; i < numberUpdates; i++) {
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
             TreeSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight, maxHeight);
 
             // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight);
+            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight,store);
 
             // Finally add the resolved new blocks to the confirmed set
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
             for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1);
+                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1,store);
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())

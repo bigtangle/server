@@ -270,13 +270,7 @@ public class FakeTxBuilder {
 
     
  
-    public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws Exception {
-        Pair<Sha256Hash, Sha256Hash> validatedBlockPair = tipsManager.getValidatedBlockPair();
-        Block b = blockStore.get(validatedBlockPair.getLeft()).createNextBlock(blockStore.get(validatedBlockPair.getRight()));
-        b.solve();
-        return b;
-    }
-
+ 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
        // Address to = new ECKey().toAddress(prev.getParams());
         Block b = prev.createNextBlock(prev);

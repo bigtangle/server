@@ -5,6 +5,7 @@
 
 package net.bigtangle.store.cassandra;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,11 @@ import net.bigtangle.store.DatabaseFullPrunedBlockStore;
  */
 
 public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
+
+    public CassandraBlockStore(NetworkParameters params, Connection conn) throws BlockStoreException {
+        super(params, conn);
+      
+    }
 
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "org.apache.cassandra.cql.jdbc.CassandraDriver";
@@ -71,12 +77,7 @@ public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
             + "   PRIMARY KEY (orderid) )";
 
 
-    public CassandraBlockStore(NetworkParameters params, int fullStoreDepth, String hostname, String dbName,
-            String username, String password) throws BlockStoreException {
-        super(params, hostname, fullStoreDepth, username, password, dbName);
-
-    }
-
+    
     @Override
     protected String getDuplicateKeyErrorCode() {
         return MYSQL_DUPLICATE_KEY_ERROR_CODE;

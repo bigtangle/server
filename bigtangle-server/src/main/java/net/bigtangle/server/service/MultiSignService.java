@@ -43,7 +43,7 @@ public class MultiSignService {
 
     private static final Logger log = LoggerFactory.getLogger(MultiSignService.class);
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected  StoreService storeService;
     @Autowired
     protected ValidatorService validatorService;
     @Autowired
@@ -53,34 +53,34 @@ public class MultiSignService {
     @Autowired
     private BlockService blockService;
 
-    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address)
+    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullPrunedBlockStore store )
             throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
-            List<MultiSign> multiSigns = this.store.getMultiSignListByAddress(address);
+            List<MultiSign> multiSigns =store.getMultiSignListByAddress(address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
         } else {
-            List<MultiSign> multiSigns = this.store.getMultiSignListByTokenidAndAddress(tokenid, address);
+            List<MultiSign> multiSigns = store .getMultiSignListByTokenidAndAddress(tokenid, address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
         }
     }
 
-    public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
-        int count = this.store.getCountMultiSignNoSign(tokenid, tokenindex, sign);
+    public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign, FullPrunedBlockStore store) throws BlockStoreException {
+        int count =store.getCountMultiSignNoSign(tokenid, tokenindex, sign);
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, List<String> addresses,
-            boolean isSign) throws Exception {
+            boolean isSign, FullPrunedBlockStore store) throws Exception {
         HashSet<String> a = new HashSet<String>();
         if (addresses != null) {
             a = new HashSet<String>(addresses);
         }
-        return getMultiSignListWithTokenid(tokenid, tokenindex, a, isSign);
+        return getMultiSignListWithTokenid(tokenid, tokenindex, a, isSign,store);
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, Set<String> addresses,
-            boolean isSign) throws Exception {
-        List<MultiSign> multiSigns = this.store.getMultiSignListByTokenid(tokenid, tokenindex, addresses, isSign);
+            boolean isSign, FullPrunedBlockStore store) throws Exception {
+        List<MultiSign> multiSigns = store.getMultiSignListByTokenid(tokenid, tokenindex, addresses, isSign);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
         for (MultiSign multiSign : multiSigns) {
             HashMap<String, Object> map = new HashMap<String, Object>();
@@ -115,15 +115,15 @@ public class MultiSignService {
     @Autowired
     private NetworkParameters networkParameters;
 
-    public AbstractResponse getNextTokenSerialIndex(String tokenid) throws BlockStoreException {
-        Token tokens = this.store.getCalMaxTokenIndex(tokenid);
+    public AbstractResponse getNextTokenSerialIndex(String tokenid, FullPrunedBlockStore store) throws BlockStoreException {
+        Token tokens = store.getCalMaxTokenIndex(tokenid);
         return TokenIndexResponse.createTokenSerialIndexResponse(tokens.getTokenindex() + 1, tokens.getBlockHash());
     }
 
-    public void saveMultiSign(Block block) throws BlockStoreException, Exception {
+    public void saveMultiSign(Block block,FullPrunedBlockStore store) throws BlockStoreException, Exception {
         // blockService.checkBlockBeforeSave(block);
         try {
-            this.store.beginDatabaseBatchWrite();
+             store.beginDatabaseBatchWrite();
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
@@ -135,7 +135,7 @@ public class MultiSignService {
             // Always needs domain owner signature
 
             multiSignAddresses.addAll(tokenDomainnameService
-                    .queryDomainnameTokenMultiSignAddresses(Sha256Hash.wrap(tokens.getDomainNameBlockHash())));
+                    .queryDomainnameTokenMultiSignAddresses(Sha256Hash.wrap(tokens.getDomainNameBlockHash()),store));
 
             // Add the entries to DB
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
@@ -169,52 +169,52 @@ public class MultiSignService {
             }
             store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokens.getTokenindex(),
                     block.bitcoinSerialize());
-            this.store.commitDatabaseBatchWrite();
+             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.error("", e);
-            this.store.abortDatabaseBatchWrite();
+            store.abortDatabaseBatchWrite();
         } finally {
-            this.store.defaultDatabaseBatchWrite();
+             store.defaultDatabaseBatchWrite();
         }
     }
 
-    public void deleteMultiSign(Block block) throws BlockStoreException, Exception {
+    public void deleteMultiSign(Block block,FullPrunedBlockStore store) throws BlockStoreException, Exception {
         try {
 
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
             final Token token = tokenInfo.getToken();
-            this.store.deleteMultiSign(token.getTokenid());
+             store.deleteMultiSign(token.getTokenid());
         } catch (Exception e) {
             // ignore
         }
     }
 
-    public void signTokenAndSaveBlock(Block block, boolean allowConflicts) throws Exception {
+    public void signTokenAndSaveBlock(Block block, boolean allowConflicts,FullPrunedBlockStore store) throws Exception {
         try {
-            validatorService.checkTokenUnique(block);
-            if (validatorService.checkFullTokenSolidity(block, 0, true) == SolidityState.getSuccessState()) {
-                this.saveMultiSign(block);
+            validatorService.checkTokenUnique(block,store);
+            if (validatorService.checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
+                this.saveMultiSign(block,store);
                 // check the block prototype and may do update
 
-                blockService.saveBlock(checkBlockPrototype(block));
-                deleteMultiSign(block);
+                blockService.saveBlock(checkBlockPrototype(block,store),store);
+                deleteMultiSign(block,store);
             } else {
                 // data save only on this server for multi signs, not in block.
-                this.saveMultiSign(block);
+                this.saveMultiSign(block,store);
             }
         } catch (InsufficientSignaturesException e) {
-            this.saveMultiSign(block);
+            this.saveMultiSign(block,store);
 
         }
     }
 
-    private Block checkBlockPrototype(Block oldBlock) throws BlockStoreException, NoBlockException {
+    private Block checkBlockPrototype(Block oldBlock,FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
 
         int time = 60 * 60 * 8;
         if (System.currentTimeMillis() / 1000 - oldBlock.getTimeSeconds() > time) {
-            Block block = blockService.getBlockPrototype();
+            Block block = blockService.getBlockPrototype(store);
             block.setBlockType(oldBlock.getBlockType());
             for (Transaction transaction : oldBlock.getTransactions()) {
                 block.addTransaction(transaction);

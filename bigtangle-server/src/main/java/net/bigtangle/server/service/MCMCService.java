@@ -42,8 +42,7 @@ public class MCMCService {
      
     @Autowired
     protected FullPrunedBlockGraph blockGraph;
-    @Autowired
-    protected FullPrunedBlockStore store;
+  
     @Autowired
     private TipsService tipsService;
 
@@ -52,6 +51,10 @@ public class MCMCService {
 
     @Autowired
     private NetworkParameters params;
+    
+    @Autowired
+    private StoreService  storeService;
+    
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -85,10 +88,11 @@ public class MCMCService {
         Context context = new Context(params);
         Context.propagate(context);
         // cleanupNonSolidMissingBlocks();
+        FullPrunedBlockStore store = storeService.getStore();
         try {
             store.beginDatabaseBatchWrite();
-            updateWeightAndDepth();
-            updateRating();
+            updateWeightAndDepth(store);
+            updateRating(store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);
@@ -108,11 +112,11 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateWeightAndDepth() throws BlockStoreException {
+    private void updateWeightAndDepth( FullPrunedBlockStore store) throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        long cutoffHeight = blockService.getCurrentCutoffHeight();
-        long maxHeight = blockService.getCurrentMaxHeight();
+        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
+        long maxHeight = blockService.getCurrentMaxHeight(store);
         PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
@@ -138,10 +142,10 @@ public class MCMCService {
 
             // Add all current references to both approved blocks
             Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevTrunk);
+            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevTrunk,store);
 
             Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch);
+            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch,store);
 
             // Update and dereference
             depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(),
@@ -154,7 +158,7 @@ public class MCMCService {
 
     private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
             HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers, HashMap<Sha256Hash, Long> depths,
-            Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash) throws BlockStoreException {
+            Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash, FullPrunedBlockStore store) throws BlockStoreException {
         Long currentDepth = depths.get(currentBlockHash);
         HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
         if (!approvers.containsKey(approvedBlockHash)) {
@@ -177,13 +181,13 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateRating() throws BlockStoreException {
+    private void updateRating( FullPrunedBlockStore store) throws BlockStoreException {
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
-        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS);
-        long cutoffHeight = blockService.getCurrentCutoffHeight();
-        long maxHeight = blockService.getCurrentMaxHeight();
+        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS,store);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
+        long maxHeight = blockService.getCurrentMaxHeight(store);
 
         // Initialize all approvers as UUID
         for (BlockWrap selectedTip : selectedTips) {
@@ -225,10 +229,10 @@ public class MCMCService {
             // Add all current references to both approved blocks (initialize if
             // not yet initialized)
             Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk);
+            subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk,store);
 
             Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            subUpdateRating(blockQueue, approvers, currentBlock, prevBranch);
+            subUpdateRating(blockQueue, approvers, currentBlock, prevBranch,store);
 
             // Update your rating if solid
             if (currentBlock.getBlockEvaluation().getSolid() == 2)
@@ -241,7 +245,7 @@ public class MCMCService {
     }
 
     private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
-            BlockWrap currentBlock, Sha256Hash prevTrunk) throws BlockStoreException {
+            BlockWrap currentBlock, Sha256Hash prevTrunk, FullPrunedBlockStore store) throws BlockStoreException {
         if (!approvers.containsKey(prevTrunk)) {
             BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
             if (prevBlock != null) {

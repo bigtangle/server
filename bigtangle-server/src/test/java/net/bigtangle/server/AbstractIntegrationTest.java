@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -88,6 +89,7 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ConfirmationService;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
+import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullPrunedBlockGraph;
@@ -136,8 +138,10 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected NetworkParameters networkParameters;
+
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected  StoreService storeService;
+    
     @Autowired
     protected TipsService tipsService;
     @Autowired
@@ -153,7 +157,7 @@ public abstract class AbstractIntegrationTest {
     public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
-
+    public FullPrunedBlockStore store ;
     public void testCreateDomainToken() throws Exception {
         this.walletKeys();
         this.initWalletKeysMapper();
@@ -170,7 +174,7 @@ public abstract class AbstractIntegrationTest {
         Block rollingBlock1 = startBlock;
         for (int i = 0; i < num; i++) {
             rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true);
+            blockGraph.add(rollingBlock1, true,store);
             blocksAddedAll.add(rollingBlock1);
         }
         return rollingBlock1;
@@ -203,13 +207,17 @@ public abstract class AbstractIntegrationTest {
     @Before
     public void setUp() throws Exception {
         Utils.unsetMockClock();
+        store= storeService.getStore();
         store.resetStore();
 
         this.walletKeys();
         this.initWalletKeysMapper();
 
     }
-
+    @After
+    public void close() throws Exception {
+        store.close();
+    }
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
         return resetAndMakeTestToken(testKey,BigInteger.valueOf(77777L), addedBlocks, 0);
@@ -239,14 +247,15 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
 
         return block;
     }
 
     protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+  
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft() );
         return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
     }
 
@@ -276,11 +285,11 @@ public abstract class AbstractIntegrationTest {
         block = predecessor.createNextBlock(predecessor);
         block.addTransaction(tx);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
 
         // Confirm and return
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
 
@@ -290,11 +299,11 @@ public abstract class AbstractIntegrationTest {
         // Create and add block
         block = predecessor.createNextBlock(predecessor);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
 
         // Confirm and return
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
 
@@ -304,7 +313,7 @@ public abstract class AbstractIntegrationTest {
         // Create and add block
         block = predecessor.createNextBlock(predecessor);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         return block;
     }
 
@@ -313,14 +322,15 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
         return block;
 
     }
 
     protected Block makeAndConfirmSellOrder1(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+         
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
     }
 
@@ -355,11 +365,11 @@ public abstract class AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
 
@@ -370,7 +380,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
     }
@@ -382,14 +392,15 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
     }
 
     protected Block makeAndConfirmBuyOrder1(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+       
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
 
         return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
     }
@@ -426,11 +437,11 @@ public abstract class AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         mcmcService.update();
         confirmationService.update();
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         mcmcService.update();
         confirmationService.update();
         return block;
@@ -439,7 +450,8 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
             throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+        
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
     }
 
@@ -462,23 +474,25 @@ public abstract class AbstractIntegrationTest {
         block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
         block = adjustSolve(block);
 
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         mcmcService.update();
         confirmationService.update();
         return block;
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+        
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         return makeAndConfirmOrderMatching(addedBlocks, predecessor);
     }
 
     protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
         // Generate matching block
+        
         Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
                 predecessor.getHash(), predecessor.getHash());
         addedBlocks.add(block);
@@ -492,7 +506,8 @@ public abstract class AbstractIntegrationTest {
     
 
     protected Block makeAndConfirmContractExecution(List<Block> addedBlocks) throws Exception {
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+       
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         
         Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
                 predecessor.getHash(), predecessor.getHash());
@@ -585,6 +600,7 @@ public abstract class AbstractIntegrationTest {
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException, InterruptedException,
             ExecutionException {
         // Snapshot current state
+  
         List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
         Map<Block, Boolean> blockConfirmed = new HashMap<>();
@@ -595,7 +611,7 @@ public abstract class AbstractIntegrationTest {
         // Redo and assert snapshot equal to new state
         store.resetStore();
         for (Block b : addedBlocks) {
-            blockGraph.add(b, true);
+            blockGraph.add(b, true,store);
         }
         mcmcService.update();
         confirmationService.update();
@@ -615,7 +631,7 @@ public abstract class AbstractIntegrationTest {
     protected Block createAndAddNextBlock(Block b1, Block b2)
             throws VerificationException, PrunedException, BlockStoreException {
         Block block = b1.createNextBlock(b2);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         return block;
     }
 
@@ -625,7 +641,7 @@ public abstract class AbstractIntegrationTest {
         Block block1 = b1.createNextBlock(b2);
         block1.addTransaction(prevOut);
         block1 = adjustSolve(block1);
-        this.blockGraph.add(block1, true);
+        this.blockGraph.add(block1, true,store);
         return block1;
     }
 
@@ -1334,7 +1350,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
         if (block != null)
-            blockService.saveBlock(block);
+            blockService.saveBlock(block,store);
         return block;
     }
 
@@ -1346,7 +1362,7 @@ public abstract class AbstractIntegrationTest {
     public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
             boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 
-        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch);
+        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch,store);
     }
 
     public void sendEmpty() throws JsonProcessingException, Exception {

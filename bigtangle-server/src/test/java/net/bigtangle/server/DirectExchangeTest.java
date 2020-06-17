@@ -69,9 +69,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        this.store.insertBatchBlock(block);
+        store.insertBatchBlock(block);
 
-        List<BatchBlock> batchBlocks = this.store.getBatchBlockList();
+        List<BatchBlock> batchBlocks = store.getBatchBlockList();
         assertTrue(batchBlocks.size() == 1);
 
         BatchBlock batchBlock = batchBlocks.get(0);
@@ -82,8 +82,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
 
-        this.store.deleteBatchBlock(batchBlock.getHash());
-        batchBlocks = this.store.getBatchBlockList();
+        store.deleteBatchBlock(batchBlock.getHash());
+        batchBlocks = store.getBatchBlockList();
         assertTrue(batchBlocks.size() == 0);
     }
 
@@ -159,7 +159,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     @Test
     public void testGiveMoney() throws Exception {
-        store.resetStore();
+        
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
@@ -186,7 +186,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     @Test
     public void testRatingRead() throws Exception {
-        store.resetStore();
+         
 
         ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));

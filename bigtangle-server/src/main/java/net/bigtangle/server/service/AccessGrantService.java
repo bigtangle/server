@@ -14,27 +14,29 @@ import net.bigtangle.store.FullPrunedBlockStore;
 public class AccessGrantService {
 
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected NetworkParameters networkParameters;
     @Autowired
-    private NetworkParameters networkParameters;
+    protected  StoreService storeService;
+    
+    public void addAccessGrant(String pubKey,FullPrunedBlockStore store) throws BlockStoreException {
+        byte[] buf = Utils.HEX.decode(pubKey);
+        ECKey ecKey = ECKey.fromPublicOnly(buf);
+        Address address = ecKey.toAddress(networkParameters); 
+        store. insertAccessGrant(address.toBase58());
+    
+    }
 
-    public void addAccessGrant(String pubKey) throws BlockStoreException {
+    public void deleteAccessGrant(String pubKey,FullPrunedBlockStore store) throws BlockStoreException 
+    {
         byte[] buf = Utils.HEX.decode(pubKey);
         ECKey ecKey = ECKey.fromPublicOnly(buf);
         Address address = ecKey.toAddress(networkParameters);
-        this.store.insertAccessGrant(address.toBase58());
+        store .deleteAccessGrant(address.toBase58());
     }
 
-    public void deleteAccessGrant(String pubKey) throws BlockStoreException {
-        byte[] buf = Utils.HEX.decode(pubKey);
-        ECKey ecKey = ECKey.fromPublicOnly(buf);
-        Address address = ecKey.toAddress(networkParameters);
-        this.store.deleteAccessGrant(address.toBase58());
-    }
-
-    public int getCountAccessGrantByAddress(String address) {
+    public int getCountAccessGrantByAddress(String address, FullPrunedBlockStore store) {
         try {
-            int count = this.store.getCountAccessGrantByAddress(address);
+            int count =  store.getCountAccessGrantByAddress(address);
             return count;
         } catch (Exception e) {
             return 0;

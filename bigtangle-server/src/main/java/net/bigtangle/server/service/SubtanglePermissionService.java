@@ -18,10 +18,9 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class SubtanglePermissionService {
 
-    @Autowired
-    protected FullPrunedBlockStore store;
+  
 
-    public boolean savePubkey(String pubkey, String signHex) throws BlockStoreException {
+    public boolean savePubkey(String pubkey, String signHex, FullPrunedBlockStore store) throws BlockStoreException {
         ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
 
         byte[] signOutput = Utils.HEX.decode(signHex);
@@ -34,7 +33,7 @@ public class SubtanglePermissionService {
 
     }
 
-    public void updateSubtanglePermission(String pubkey, String signHex, String userdataPubkey, String status)
+    public void updateSubtanglePermission(String pubkey, String signHex, String userdataPubkey, String status, FullPrunedBlockStore store)
             throws BlockStoreException {
 
             store.updateSubtanglePermission(pubkey, userdataPubkey, status);
@@ -42,19 +41,19 @@ public class SubtanglePermissionService {
 
     }
 
-    public AbstractResponse getSubtanglePermissionList(List<String> pubkeys) throws BlockStoreException {
+    public AbstractResponse getSubtanglePermissionList(List<String> pubkeys, FullPrunedBlockStore store) throws BlockStoreException {
 
         List<Map<String, String>> maps = store.getSubtanglePermissionListByPubkeys(pubkeys);
         return SubtangleResponse.createUserDataResponse(maps);
     }
 
-    public AbstractResponse getAllSubtanglePermissionList() throws BlockStoreException {
+    public AbstractResponse getAllSubtanglePermissionList(  FullPrunedBlockStore store) throws BlockStoreException {
 
         List<Map<String, String>> maps = store.getAllSubtanglePermissionList();
         return SubtangleResponse.createUserDataResponse(maps);
     }
 
-    public AbstractResponse getSubtanglePermissionList(String pubkey) throws BlockStoreException {
+    public AbstractResponse getSubtanglePermissionList(String pubkey, FullPrunedBlockStore store) throws BlockStoreException {
 
         List<Map<String, String>> maps = store.getSubtanglePermissionListByPubkey(pubkey);
         return SubtangleResponse.createUserDataResponse(maps);

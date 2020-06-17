@@ -93,7 +93,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify the order ticker has the correct price
         HashSet<String> a = new HashSet<String>();
         a.add(testTokenId);
-        assertEquals(1000l, tickerService.getLastMatchingEvents(a).getTickers().get(0).getPrice());
+        assertEquals(1000l, tickerService.getLastMatchingEvents(a,store).getTickers().get(0).getPrice());
 
         // Verify deterministic overall execution
 
@@ -182,19 +182,19 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify the best orders are correct
-        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2);
+        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2,store);
         assertEquals(2, bestOpenSellOrders.size());
         assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
         assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2);
+        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2,store);
         assertEquals(2, bestOpenBuyOrders.size());
         assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getBlockHash());
         assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getBlockHash());
 
-        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1);
+        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1,store);
         assertEquals(1, bestOpenSellOrders2.size());
         assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1);
+        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1,store);
         assertEquals(1, bestOpenBuyOrders2.size());
         assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getBlockHash());
 
@@ -236,7 +236,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify the  matched orders are correct
       long matchBlockTime = System.currentTimeMillis()/1000 - 1000000000;
-    List<OrderRecordMatched> matched = tickerService. getOrderRecordMatched(null, matchBlockTime);
+    List<OrderRecordMatched> matched = tickerService. getOrderRecordMatched(null, matchBlockTime,store);
       assertTrue(matched.size() == 2 );
  
 
@@ -681,7 +681,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+        Block predecessor = store.get(tipsService.getValidatedBlockPair( store).getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
@@ -713,9 +713,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
@@ -760,7 +760,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair().getLeft());
+        Block predecessor = store.get(tipsService.getValidatedBlockPair( store).getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
@@ -792,9 +792,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true);
+        this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -875,7 +875,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching and then unexecute it
         Block orderMatching = makeAndConfirmOrderMatching(addedBlocks);
-        blockGraph.unconfirm(orderMatching.getHash(), new HashSet<>());
+        blockGraph.unconfirm(orderMatching.getHash(), new HashSet<>(),store);
 
         // Verify the tokens did not change possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 0l);
@@ -1095,7 +1095,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         long price=1;
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount , null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
 
         long amount = 77l;
         //split BIG
@@ -1108,7 +1108,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcService.update();
         confirmationService.update();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);

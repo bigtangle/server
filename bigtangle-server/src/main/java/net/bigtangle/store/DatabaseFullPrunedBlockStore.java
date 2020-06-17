@@ -499,19 +499,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     protected NetworkParameters params;
     protected Connection conn;
-    // protected LinkedBlockingQueue<Connection> allConnections;
-    protected String connectionURL;
-    protected int fullStoreDepth;
-    protected String username;
-    protected String password;
-    protected String schemaName;
 
-    @Resource(name = "dataSource")
-    protected transient DataSource dataSource;
+    
 
     public Connection getConnection() throws SQLException {
-        if (conn == null)
-            conn = dataSource.getConnection();
+   
         return conn;
     }
 
@@ -540,24 +532,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If there is a failure to connect and/or initialise the
      *             database.
      */
-    public DatabaseFullPrunedBlockStore(NetworkParameters params, String connectionURL, int fullStoreDepth,
-            @Nullable String username, @Nullable String password, @Nullable String schemaName)
-            throws BlockStoreException {
+    public DatabaseFullPrunedBlockStore(NetworkParameters params, Connection conn)   {
         this.params = params;
-        this.fullStoreDepth = fullStoreDepth;
-        this.connectionURL = connectionURL;
-        this.schemaName = schemaName;
-        this.username = username;
-        this.password = password;
+        this.conn = conn;
     }
 
     public void create() throws BlockStoreException {
-        try {
-            Class.forName(getDatabaseDriverClass());
-            log.info(getDatabaseDriverClass() + " loaded. ");
-        } catch (ClassNotFoundException e) {
-            log.error("check CLASSPATH for database driver jar ", e);
-        }
+    
         maybeConnect();
 
         try {
@@ -719,7 +700,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected void maybeConnect() throws BlockStoreException {
     }
 
-    
     @Override
     public void close() {
         try {

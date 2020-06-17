@@ -23,33 +23,33 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class TokensService {
 
-    public AbstractResponse getTokenById(String tokenid) throws BlockStoreException {
-        List<Token> tokens = this.store.getTokenID(tokenid);
+    public AbstractResponse getTokenById(String tokenid, FullPrunedBlockStore store) throws BlockStoreException {
+        List<Token> tokens =  store.getTokenID(tokenid);
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
 
-    public AbstractResponse getToken(String blockhashString) throws BlockStoreException {
+    public AbstractResponse getToken(String blockhashString,FullPrunedBlockStore store) throws BlockStoreException {
         List<Token> tokens = new ArrayList<>();
-        tokens.add(this.store.getTokenByBlockHash(Sha256Hash.wrap(blockhashString)));
+        tokens.add( store.getTokenByBlockHash(Sha256Hash.wrap(blockhashString)));
         AbstractResponse response = GetTokensResponse.create(tokens);
         return response;
     }
 
-    public AbstractResponse getMarketTokensList() throws BlockStoreException {
+    public AbstractResponse getMarketTokensList( FullPrunedBlockStore store) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         list.addAll(store.getMarketTokenList());
         return GetTokensResponse.create(list);
     }
 
  
-    public GetTokensResponse searchTokens(String name) throws BlockStoreException {
+    public GetTokensResponse searchTokens(String name,FullPrunedBlockStore store) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>(); 
         list.addAll(store.getTokensList(name)); 
         Map<String, BigInteger> map = store.getTokenAmountMap();
         return GetTokensResponse.create(list, map);
     }
-    public GetTokensResponse searchExchangeTokens(String name) throws BlockStoreException {
+    public GetTokensResponse searchExchangeTokens(String name,FullPrunedBlockStore store) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
         if (name != null && !"".equals(name.trim())) {
         list.addAll(store.getTokensList(name));
@@ -66,6 +66,5 @@ public class TokensService {
     @Autowired
     protected NetworkParameters networkParameters;
 
-    @Autowired
-    protected FullPrunedBlockStore store;
+   
 }

@@ -5,6 +5,8 @@
 package net.bigtangle.server;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 import org.bitcoin.Secp256k1Context;
 import org.slf4j.Logger;
@@ -12,11 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullPrunedBlockStore;
 
 @Component
 public class BeforeStartup {
@@ -29,6 +32,9 @@ public class BeforeStartup {
         logger.debug("server config: " + serverConfiguration.toString());
         // set false in test
         if (serverConfiguration.getCreatetable()) {
+            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters,  
+                    dataSource.getConnection());
+
             store.create();
             // update tables to new version after initial setup
             store.updateDatabse();
@@ -58,7 +64,10 @@ public class BeforeStartup {
     @Autowired
     private ServerConfiguration serverConfiguration;
     @Autowired
-    FullPrunedBlockStore store;
+    NetworkParameters networkParameters;
+    @Autowired
+    protected transient DataSource dataSource; 
+    
     @Autowired
     BlockStreamHandler blockStreamHandler;
 }

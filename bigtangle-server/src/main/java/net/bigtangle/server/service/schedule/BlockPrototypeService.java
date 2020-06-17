@@ -27,6 +27,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.StoreService;
 import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.utils.Threading;
 
@@ -37,7 +38,7 @@ public class BlockPrototypeService {
     private static final Logger logger = LoggerFactory.getLogger(BlockPrototypeService.class);
 
     @Autowired
-    protected FullPrunedBlockStore store;
+    protected  StoreService storeService;
 
     @Autowired
     private BlockService blockService;
@@ -66,9 +67,9 @@ public class BlockPrototypeService {
 
         logger.info("BlockPrototypeService start");
         try {
-            store.deleteBlockPrototypeTimeout();
+           // storeService.getStore().deleteBlockPrototypeTimeout();
            //TODO too many DB connections timeboxed();
-            blockprototype();
+            timeboxed();
         } catch (Exception e) {
             logger.info("BlockPrototypeService error", e);
         } finally {
@@ -77,20 +78,22 @@ public class BlockPrototypeService {
 
     }
 
-    private void blockprototype() throws BlockStoreException, Exception {
-        this.blockService.createBlockPrototypeCache();
+    private void blockprototype(FullPrunedBlockStore store) throws BlockStoreException, Exception {
+        this.blockService.createBlockPrototypeCache(store  );
     }
     
     private void timeboxed( )
-            throws InterruptedException, ExecutionException {
+            throws InterruptedException, ExecutionException, BlockStoreException {
         final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
         ExecutorService executor = Executors.newSingleThreadExecutor();
+         FullPrunedBlockStore store= storeService.getStore();
+         store .deleteBlockPrototypeTimeout();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
                 logger.debug(" blockprototype  started  : "  );
-                blockService.createBlockPrototypeCache();
+                blockService.createBlockPrototypeCache(store);
                 return "";
             }
         });
@@ -103,6 +106,7 @@ public class BlockPrototypeService {
          
         } finally {
             executor.shutdownNow();
+            store.close();
         }
         logger.debug("blockprototype time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         

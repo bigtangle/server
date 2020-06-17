@@ -56,7 +56,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block next = rewardService.createReward(rewardBlock1.getHash());
+        Block next = rewardService.createReward(rewardBlock1.getHash(),store);
         blocksAddedAll.add(next);
 
         return next;
@@ -86,46 +86,46 @@ public class RewardService2Test extends AbstractIntegrationTest {
         log.debug(r2.toString());
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
-        Sha256Hash hash = checkpointService.checkToken().hash();
+        Sha256Hash hash = checkpointService.checkToken(store).hash();
         // replay
         store.resetStore();
 
         // replay first chain
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true);
+                blockGraph.add(b, true,store);
         }
         // check
         assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
         // replay second chain
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true);
+                blockGraph.add(b, true,store);
 
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
         Sha256Hash hash1=    checkSum();
-        assertTrue( hash.equals(checkpointService.checkToken().hash()));
+        assertTrue( hash.equals(checkpointService.checkToken(store).hash()));
         // replay second and then replay first
         store.resetStore();
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true);
+                blockGraph.add(b, true,store);
 
         }
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true);
+                blockGraph.add(b, true,store);
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
-        assertTrue( hash.equals(checkpointService.checkToken().hash()));
+        assertTrue( hash.equals(checkpointService.checkToken(store).hash()));
         Sha256Hash hash2=  checkSum();
         assertTrue(hash1.equals(hash2));
     }
 
     private   Sha256Hash checkSum() throws JsonProcessingException, Exception {
-        TokensumsMap map = checkpointService.checkToken();
+        TokensumsMap map = checkpointService.checkToken(store);
         Map<String, Tokensums> r11 = map.getTokensumsMap();
         for (Entry<String, Tokensums> a : r11.entrySet()) {
             assertTrue(" " + a.toString(), a.getValue().check());

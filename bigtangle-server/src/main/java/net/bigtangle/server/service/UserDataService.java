@@ -16,19 +16,17 @@ import net.bigtangle.store.FullPrunedBlockStore;
 @Service
 public class UserDataService {
 
-    @Autowired
-    protected FullPrunedBlockStore store;
-
-    public byte[] getUserData(String dataclassname, String pubKey) throws BlockStoreException {
-        UserData userData = this.store.queryUserDataWithPubKeyAndDataclassname(dataclassname, pubKey);
+    
+    public byte[] getUserData(String dataclassname, String pubKey,FullPrunedBlockStore store) throws BlockStoreException {
+        UserData userData =  store.queryUserDataWithPubKeyAndDataclassname(dataclassname, pubKey);
         if (userData != null) {
             return userData.getData();
         }
         return new byte[0];
     }
 
-    public AbstractResponse getUserDataList(int blocktype, List<String> pubKeyList) throws BlockStoreException {
-        List<UserData> userDatas = this.store.getUserDataListWithBlocktypePubKeyList(blocktype, pubKeyList);
+    public AbstractResponse getUserDataList(int blocktype, List<String> pubKeyList,FullPrunedBlockStore store) throws BlockStoreException {
+        List<UserData> userDatas =  store.getUserDataListWithBlocktypePubKeyList(blocktype, pubKeyList);
         List<String> dataList = new ArrayList<String>();
         for (UserData userData : userDatas) {
             if (userData.getData() == null) {

@@ -80,14 +80,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testVerificationFutureTimestamp() throws Exception {
         
 
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair( store);
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft(),store);
+        Block r2 = blockService.getBlock(tipsToApprove.getRight(),store);
         Block b = r2.createNextBlock(r1);
         b.setTime(1887836800); //  
         b.solve();
         try {
-            blockService.saveBlock(b);
+            blockService.saveBlock(b,store);
             fail();
         } catch (TimeTravelerException e) {
         }
@@ -97,24 +97,24 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testAdjustTimestamp() throws Exception {
         
 
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair( store);
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft(),store);
+        Block r2 = blockService.getBlock(tipsToApprove.getRight(),store);
         Block b = r2.createNextBlock(r1);
         b.setTime(1567836800); //  
         b.solve();
       
-         blockService.adjustPrototyp(b);
-         blockService.saveBlock(b);
+         blockService.adjustPrototyp(b,store);
+         blockService.saveBlock(b,store);
     }
 
     @Test
     public void testVerificationIncorrectPoW() throws Exception {
         
 
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair();
-        Block r1 = blockService.getBlock(tipsToApprove.getLeft());
-        Block r2 = blockService.getBlock(tipsToApprove.getRight());
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair( store);
+        Block r1 = blockService.getBlock(tipsToApprove.getLeft(),store);
+        Block r2 = blockService.getBlock(tipsToApprove.getRight(),store);
         Block b = r2.createNextBlock(r1);
         for (int i = 0; i < 300; i++) {
             b.setNonce(i);
@@ -125,7 +125,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             }
         }
         try {
-            blockService.saveBlock(b);
+            blockService.saveBlock(b,store);
             fail();
         } catch (ProofOfWorkException e) {
         }
@@ -161,7 +161,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Send over API method to disallow unsolids
         try {
-            blockService.saveBlock(block);
+            blockService.saveBlock(block,store);
             fail();
         } catch (VerificationException e) {
             // Expected
@@ -183,10 +183,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
-        blockService.saveBlock(depBlock);
+        blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid
-        syncBlockService.updateSolidity();
+        syncBlockService.updateSolidity( store);
         mcmcService.update();
         confirmationService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -205,10 +205,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
-        blockService.saveBlock(depBlock);
+        blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid
-        syncBlockService.updateSolidity();
+        syncBlockService.updateSolidity( store);
         mcmcService.update();
         confirmationService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -227,10 +227,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
-        blockService.saveBlock(depBlock);
+        blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid
-        syncBlockService.updateSolidity();
+        syncBlockService.updateSolidity( store);
         mcmcService.update();
         confirmationService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -246,7 +246,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
 
-        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), (long) -1,store);
 
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
@@ -264,10 +264,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
-        blockService.saveBlock(depBlock);
+        blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid
-        syncBlockService.updateSolidity();
+        syncBlockService.updateSolidity(  store);
         mcmcService.update();
         confirmationService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -289,18 +289,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blocks1.add(rollingBlock);
         }
         for (Block b : blocks1) {
-            blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+            blockGraph.add(b, true,store);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
         }
 
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         mcmcService.update();
         confirmationService.update();
 
         // Mining reward block should go through
-        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
 
         // Make more for next reward interval
         for (int i = 0; i < 1
@@ -309,23 +309,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             blocks2.add(rollingBlock);
         }
         for (Block b : blocks2) {
-            blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+            blockGraph.add(b, true,store);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
         }
 
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
-                rollingBlock.getHash());
-        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+                rollingBlock.getHash(),store);
+        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
 
         store.resetStore();
         for (Block b : blocks1) {
-            blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+            blockGraph.add(b, true,store);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
         }
         for (Block b : blocks2) {
-            blockGraph.add(b, true);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+            blockGraph.add(b, true,store);
+            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
         }
 
         // Add block allowing unsolids
@@ -335,7 +335,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()) == null);
 
         // Add missing dependency
-        blockService.saveBlock(rewardBlock1);
+        blockService.saveBlock(rewardBlock1,store);
         mcmcService.update();
         // After adding the missing dependency, should be solid
         blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
@@ -379,10 +379,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
         // Add missing dependency
-        blockService.saveBlock(depBlock);
+        blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid
-        syncBlockService.updateSolidity();
+        syncBlockService.updateSolidity( store);
         mcmcService.update();
         confirmationService.update();
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -406,13 +406,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
 
             rollingBlock = rollingBlockNew;
-            blockGraph.add(rollingBlock, true);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), (long) -1);
+            blockGraph.add(rollingBlock, true,store);
+            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
         }
 
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
 
         // The consensus number should now be equal to the previous number + 1
         assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
@@ -424,14 +424,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
 
             rollingBlock = rollingBlockNew;
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         try {
             Block failingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
             failingBlock.setLastMiningRewardBlock(2);
             failingBlock.solve();
-            blockGraph.add(failingBlock, false);
+            blockGraph.add(failingBlock, false,store);
             fail();
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
@@ -441,7 +441,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Block failingBlock = networkParameters.getGenesisBlock().createNextBlock(rollingBlock);
             failingBlock.setLastMiningRewardBlock(2);
             failingBlock.solve();
-            blockGraph.add(failingBlock, false);
+            blockGraph.add(failingBlock, false,store);
             fail();
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
@@ -450,10 +450,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         confirmationService.update();
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
-                    rollingBlock.getHash());
+                    rollingBlock.getHash(),store);
             failingBlock.setLastMiningRewardBlock(123);
             failingBlock.solve();
-            blockGraph.add(failingBlock, false);
+            blockGraph.add(failingBlock, false,store);
             fail();
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
@@ -474,7 +474,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             assertTrue(rollingBlock.getTimeSeconds() <= rollingBlockNew.getTimeSeconds());
 
             rollingBlock = rollingBlockNew;
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // The time is allowed to stay the same
@@ -482,14 +482,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         rollingBlock.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @
                                                              // 12:00am (UTC)
         rollingBlock.solve();
-        blockGraph.add(rollingBlock, true);
+        blockGraph.add(rollingBlock, true,store);
 
         // The time is not allowed to move backwards
         try {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
             rollingBlock.solve();
-            blockGraph.add(rollingBlock, false);
+            blockGraph.add(rollingBlock, false,store);
             fail();
         } catch (TimeReversionException e) {
         }
@@ -522,7 +522,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                     rollingBlock.setBlockType(type);
                     rollingBlock.addTransaction(tx);
                     rollingBlock.solve();
-                    blockGraph.add(rollingBlock, false);
+                    blockGraph.add(rollingBlock, false,store);
 
                     fail();
                 } catch (CoinbaseDisallowedException | UnsolidException e) {
@@ -542,19 +542,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm 1
-        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), (long) -1,store);
 
         // 1 should be confirmed now
-        UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        UTXO utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()),store);
+        UTXO utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()),store);
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 2 should be unconfirmed
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()),store);
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()),store);
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -562,7 +562,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Further manipulations on prev UTXOs
         UTXO origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+                .getOutPointFor(networkParameters.getGenesisBlock().getHash()),store);
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
         assertEquals(
@@ -571,19 +571,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 spenderBlock1.getHash());
 
         // Unconfirm 1
-        blockGraph.unconfirm(spenderBlock1.getHash(), new HashSet<>());
+        blockGraph.unconfirm(spenderBlock1.getHash(), new HashSet<>(),store);
 
         // 1 should be confirmed now
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()),store);
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()),store);
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 2 should be unconfirmed
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()),store);
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()),store);
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -591,24 +591,24 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Further manipulations on prev UTXOs
         origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+                .getOutPointFor(networkParameters.getGenesisBlock().getHash()),store);
         assertTrue(origUTXO.isConfirmed());
         assertFalse(origUTXO.isSpent());
 
         // Confirm 2
-        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), (long) -1);
+        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), (long) -1,store);
 
         // 2 should be confirmed now
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()));
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()),store);
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()),store);
         assertTrue(utxo1.isConfirmed());
         assertTrue(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
         assertFalse(utxo2.isSpent());
 
         // 1 should be unconfirmed
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()));
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()));
+        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()),store);
+        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()),store);
         assertFalse(utxo1.isConfirmed());
         assertFalse(utxo2.isConfirmed());
         assertFalse(utxo1.isSpent());
@@ -616,7 +616,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Further manipulations on prev UTXOs
         origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()));
+                .getOutPointFor(networkParameters.getGenesisBlock().getHash()),store);
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
         assertEquals(
@@ -642,7 +642,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
             block1.addTransaction(tx1);
             block1 = adjustSolve(block1);
-            this.blockGraph.add(block1, false);
+            this.blockGraph.add(block1, false,store);
             fail();
         } catch (ScriptException e) {
         }
@@ -708,7 +708,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
             block1.addTransaction(tx2);
             block1 = adjustSolve(block1);
-            this.blockGraph.add(block1, false);
+            this.blockGraph.add(block1, false,store);
             fail();
         } catch (InvalidTransactionException e) {
         }
@@ -754,7 +754,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Block b = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
             b.setBlockType(Type.BLOCKTYPE_INITIAL);
             b.solve();
-            blockGraph.add(b, false);
+            blockGraph.add(b, false,store);
             fail();
         } catch (GenesisBlockDisallowedException e) {
         }
@@ -800,18 +800,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate blocks until passing first reward interval
         for (int i = 0; i < 20; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with spending inputs
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget()*2);
 
         // Should not go through
         try {
             rewardBlock.solve();
-            blockGraph.add(rewardBlock, false);
+            blockGraph.add(rewardBlock, false,store);
             fail();
         }catch(VerificationException e) {
             
@@ -828,12 +828,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with spending inputs
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         Transaction tx = rewardBlock.getTransactions().get(0);
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -853,7 +853,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(rewardBlock, false);
+            blockGraph.add(rewardBlock, false,store);
 
             fail();
         } catch (TransactionOutputsDisallowedException e) {
@@ -869,19 +869,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with additional tx
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         Transaction tx = createTestTransaction();
         rewardBlock.addTransaction(tx);
         rewardBlock.solve();
 
         // Should not go through
         try {
-            blockGraph.add(rewardBlock, false);
+            blockGraph.add(rewardBlock, false,store);
 
             fail();
         } catch (IncorrectTransactionCountException e) {
@@ -897,18 +897,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with malformed tx data
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         rewardBlock.getTransactions().get(0).setData(null);
         rewardBlock.solve();
 
         // Should not go through
         try {
-            assertFalse(blockGraph.add(rewardBlock, false));
+            assertFalse(blockGraph.add(rewardBlock, false,store));
             fail();
         } catch (RuntimeException e) {
 
@@ -925,19 +925,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with malformed tx data
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         rewardBlock.getTransactions().get(0).setData(new byte[] { 2, 3, 4 });
         ;
         rewardBlock.solve();
 
         // Should not go through
         try {
-            assertFalse(blockGraph.add(rewardBlock, false));
+            assertFalse(blockGraph.add(rewardBlock, false,store));
             fail();
         } catch (RuntimeException e) {
         }
@@ -952,12 +952,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 1
                 + 1 + 1; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-            blockGraph.add(rollingBlock, true);
+            blockGraph.add(rollingBlock, true,store);
         }
 
         // Generate mining reward block with malformed fields
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash());
+                rollingBlock.getHash(), rollingBlock.getHash(),store);
         Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock3 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
@@ -990,14 +990,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         testBlock6.solve();
         testBlock7.solve();
 
-        assertFalse(blockGraph.add(testBlock3, false));
+        assertFalse(blockGraph.add(testBlock3, false,store));
         try {
-            blockGraph.add(testBlock4, false);
+            blockGraph.add(testBlock4, false,store);
             fail();
         } catch (VerificationException e) {
         }
         try {
-            blockGraph.add(testBlock5, false);
+            blockGraph.add(testBlock5, false,store);
             fail();
         } catch (VerificationException e) {
         }
@@ -1038,7 +1038,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (MissingTransactionDataException e) {
         }
@@ -1073,7 +1073,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (MalformedTransactionDataException e) {
         }
@@ -1110,7 +1110,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (MissingTransactionDataException e) {
         }
@@ -1147,7 +1147,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (MalformedTransactionDataException e) {
         }
@@ -1778,13 +1778,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Should not go through
             if (executors[i].expectsException()) {
                 try {
-                    blockGraph.add(block, false);
+                    blockGraph.add(block, false,store);
                     fail("Number " + i + " failed");
                 } catch (VerificationException e) {
                 }
             } else {
                 // always add
-                blockGraph.add(block, true);
+                blockGraph.add(block, true,store);
             }
         }
     }
@@ -1960,94 +1960,94 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Test
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (VerificationException e) {
         }
         try {
-            blockGraph.add(block2, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-
-        try {
-            blockGraph.add(block3, false);
-        } catch (VerificationException e) {
-            fail();
-        }
-        try {
-            blockGraph.add(block4, false);
-        } catch (VerificationException e) {
-            fail();
-        }
-        try {
-            blockGraph.add(block5, false);
-        } catch (VerificationException e) {
-            fail();
-        }
-        try {
-            blockGraph.add(block6, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block7, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block8, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block9, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block10, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block11, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block12, false);
-            fail();
-        } catch (VerificationException e) {
-        }
-        try {
-            blockGraph.add(block13, false);
+            blockGraph.add(block2, false,store);
             fail();
         } catch (VerificationException e) {
         }
 
         try {
-            blockGraph.add(block14, false);
+            blockGraph.add(block3, false,store);
         } catch (VerificationException e) {
             fail();
         }
         try {
-            blockGraph.add(block15, false);
+            blockGraph.add(block4, false,store);
         } catch (VerificationException e) {
             fail();
         }
         try {
-            blockGraph.add(block16, false);
+            blockGraph.add(block5, false,store);
         } catch (VerificationException e) {
             fail();
         }
         try {
-            blockGraph.add(block17, false);
+            blockGraph.add(block6, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block7, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block8, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block9, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block10, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block11, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block12, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+        try {
+            blockGraph.add(block13, false,store);
+            fail();
+        } catch (VerificationException e) {
+        }
+
+        try {
+            blockGraph.add(block14, false,store);
         } catch (VerificationException e) {
             fail();
         }
         try {
-            blockGraph.add(block18, false);
+            blockGraph.add(block15, false,store);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block16, false,store);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block17, false,store);
+        } catch (VerificationException e) {
+            fail();
+        }
+        try {
+            blockGraph.add(block18, false,store);
         } catch (VerificationException e) {
             fail();
         }
@@ -2066,7 +2066,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (IncorrectTransactionCountException e) {
         }
@@ -2119,7 +2119,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
 
             fail();
         } catch (IncorrectTransactionCountException e) {
@@ -2172,7 +2172,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
 
             fail();
         } catch (IncorrectTransactionCountException e) {
@@ -2196,7 +2196,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
 
             fail();
         } catch (NotCoinbaseException e) {
@@ -2233,7 +2233,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
 
             Block block = makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (InvalidDependencyException e) {
         }
@@ -2268,7 +2268,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
 
             Block block = makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (InvalidDependencyException e) {
         }
@@ -2303,7 +2303,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
 
             Block block = makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (PreviousTokenDisallowsException e) {
         }
@@ -2339,7 +2339,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
 
             Block block = makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (PreviousTokenDisallowsException e) {
         }
@@ -2374,7 +2374,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         try {
 
             Block block = makeTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
             fail();
         } catch (PreviousTokenDisallowsException e) {
         }
@@ -2427,7 +2427,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block, false);
+            blockGraph.add(block, false,store);
 
             fail();
         } catch (InvalidTransactionDataException e) {
@@ -2474,7 +2474,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        blockGraph.add(block1, false);
+        blockGraph.add(block1, false,store);
     }
 
     @Test
@@ -2491,7 +2491,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (IncorrectTransactionCountException e) {
         }
@@ -2519,7 +2519,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1,store);
         }
 
         Block block1 = null;
@@ -2580,7 +2580,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (IncorrectTransactionCountException e) {
         }
@@ -2610,7 +2610,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (InvalidOrderException e) {
         }
@@ -2638,7 +2638,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1,store);
         }
 
         Block block1 = null;
@@ -2699,7 +2699,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (InvalidOrderException e) {
         }
@@ -2727,7 +2727,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1,store);
         }
 
         Block block1 = null;
@@ -2769,7 +2769,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
             fail();
         } catch (InvalidOrderException e) {
         }
@@ -2796,7 +2796,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1);
+            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1,store);
         }
 
         Block block1 = null;
@@ -2837,7 +2837,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block1, false);
+            blockGraph.add(block1, false,store);
          //   fail();
         } catch (InvalidOrderException e) {
         }
@@ -2879,7 +2879,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block2, false);
+            blockGraph.add(block2, false,store);
             fail();
         } catch (InvalidOrderException e) {
             log.debug("",e);
@@ -2926,7 +2926,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        blockGraph.add(block1, false);
+        blockGraph.add(block1, false,store);
         mcmcService.update();
         confirmationService.update();
         Block block2 = null;
@@ -2950,7 +2950,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        blockGraph.add(block2, false);
+        blockGraph.add(block2, false,store);
     }
 
     @Test
@@ -2993,7 +2993,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
 
         // Should go through
-        blockGraph.add(block1, false);
+        blockGraph.add(block1, false,store);
 
         Block block2 = null;
         {
@@ -3020,7 +3020,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(block2, false);
+            blockGraph.add(block2, false,store);
             fail();
         } catch (VerificationException e) {
         }
