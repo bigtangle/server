@@ -32,12 +32,15 @@ public class BeforeStartup {
         logger.debug("server config: " + serverConfiguration.toString());
         // set false in test
         if (serverConfiguration.getCreatetable()) {
-            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters,  
+            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters,
                     dataSource.getConnection());
-
-            store.create();
-            // update tables to new version after initial setup
-            store.updateDatabse();
+            try {
+                store.create();
+                // update tables to new version after initial setup
+                store.updateDatabse();
+            } finally {
+                store.close();
+            }
         }
         Secp256k1Context.getContext();
         if (scheduleConfiguration.isMilestone_active()) {
@@ -45,7 +48,7 @@ public class BeforeStartup {
                 syncBlockService.startInit();
             } catch (Exception e) {
                 logger.error("", e);
-               //TODO sync checkpoint  System.exit(-1);
+                // TODO sync checkpoint System.exit(-1);
             }
         }
         serverConfiguration.setServiceReady(true);
@@ -66,8 +69,8 @@ public class BeforeStartup {
     @Autowired
     NetworkParameters networkParameters;
     @Autowired
-    protected transient DataSource dataSource; 
-    
+    protected transient DataSource dataSource;
+
     @Autowired
     BlockStreamHandler blockStreamHandler;
 }

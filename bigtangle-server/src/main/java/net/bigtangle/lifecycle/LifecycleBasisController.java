@@ -55,12 +55,16 @@ public abstract class LifecycleBasisController {
 
         try {
             FullPrunedBlockStore repository = findStore();
+            try {
             // only a generic access-test ...
             if (repository == null) {
                 status.setFailedMessage(DATABASE_NAME);
             } else {
                 repository.getSettingValue("version");
                 status.setOkMessage(DATABASE_NAME);
+            }
+            }finally {
+                repository.close(); 
             }
         } catch (Exception e) {
             log.error("database is down:" + e.getMessage(), e);
