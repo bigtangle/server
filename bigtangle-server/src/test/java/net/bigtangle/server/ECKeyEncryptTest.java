@@ -68,7 +68,7 @@ public class ECKeyEncryptTest extends AbstractIntegrationTest {
 
         Block b = walletAppKit.wallet().payMoneyToECKeyListMemoHex(null, giveMoneyResult, memoHex);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         
         return b;
     }

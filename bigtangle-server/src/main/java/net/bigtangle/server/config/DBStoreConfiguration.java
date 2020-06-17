@@ -47,29 +47,7 @@ public class DBStoreConfiguration {
     @Autowired
     ServerConfiguration serverConfiguration;
 
-    @Bean
-    public FullPrunedBlockStore store() throws BlockStoreException {
  
-        if ("cassandra".equalsIgnoreCase(dbtype))
-            return createCassandraBlockStore();
-        else
-            return createMysqlBlockStore();
-
-    }
-
-    private FullPrunedBlockStore createCassandraBlockStore() throws BlockStoreException {
-        CassandraBlockStore store = new CassandraBlockStore(networkParameters, fullStoreDepth, hostname + ":" + port,
-                dbName, username, password);
-        return store;
-    }
-
-    public FullPrunedBlockStore createMysqlBlockStore() throws BlockStoreException {
-
-        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters, fullStoreDepth,
-                hostname + ":" + port, dbName, username, password);
-
-        return store;
-    }
     @Bean
     public DataSource dataSource() throws BlockStoreException {
         HikariConfig config = new HikariConfig();
@@ -81,6 +59,8 @@ public class DBStoreConfiguration {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setMaximumPoolSize(100); 
+        config.setLeakDetectionThreshold(100000);
         return new HikariDataSource(config);
 
     }

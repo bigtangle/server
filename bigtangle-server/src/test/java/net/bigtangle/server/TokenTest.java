@@ -107,7 +107,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
 
         {
@@ -122,7 +122,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
         {
             final String tokenid = new ECKey().getPublicKeyAsHex();
@@ -136,7 +136,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
 
         {
@@ -148,7 +148,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
 
     }
@@ -169,7 +169,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
     }
 
@@ -188,7 +188,7 @@ public class TokenTest extends AbstractIntegrationTest {
             }
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
     }
     
@@ -207,7 +207,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
 
         {
 
@@ -220,7 +220,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
             sendEmpty(10);
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", currentToken.getToken().getTokenid());
             String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -252,7 +252,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -293,7 +293,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -339,7 +339,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -363,7 +363,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         List<UTXO> pharmalist = getBalance(false, pharmacy);
         String jsonString = pharmalist.get(0).getMemo();
         MemoInfo m = MemoInfo.parse(jsonString);
@@ -435,7 +435,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -475,7 +475,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         return key;
     }
 
@@ -543,7 +543,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -567,7 +567,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
                 "pay to user", 3, 20000);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         return userkeys;
@@ -580,7 +580,7 @@ public class TokenTest extends AbstractIntegrationTest {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", NetworkParameters.BIGTANGLE_TOKENID_STRING);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -596,7 +596,7 @@ public class TokenTest extends AbstractIntegrationTest {
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         sendEmpty(5);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
 
     }
 
@@ -632,7 +632,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
         String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
@@ -663,7 +663,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -712,16 +712,16 @@ public class TokenTest extends AbstractIntegrationTest {
 
         testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         testCreateToken(new ECKey(), "test");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         testCreateToken(new ECKey(), "test");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         testCreateToken(new ECKey(), "test");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         sendEmpty(20);
         // only one is ok.
 
@@ -793,7 +793,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
     }
 
     private TokenInfo createProductToken(ECKey key)
@@ -810,7 +810,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
         sendEmpty(10);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         return currentToken;
     }
 

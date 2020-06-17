@@ -99,6 +99,7 @@ public class MCMCService {
             store.abortDatabaseBatchWrite();
         } finally {
             store.defaultDatabaseBatchWrite();
+            store.close();
         }
        
 

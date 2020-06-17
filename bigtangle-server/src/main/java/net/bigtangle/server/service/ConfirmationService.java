@@ -62,12 +62,12 @@ public class ConfirmationService {
     }
 
     
-    public void update( ) throws BlockStoreException {
-        update(1);
+    public void update( FullPrunedBlockStore  store) throws BlockStoreException {
+        update(1,store);
     }
    
-    public void update(int numberUpdates) throws BlockStoreException {
-        FullPrunedBlockStore  store=  storeService.getStore();
+    public void update(int numberUpdates,FullPrunedBlockStore  store) throws BlockStoreException {
+        
         try { 
             store.beginDatabaseBatchWrite();
             updateConfirmed(numberUpdates,store);
@@ -75,9 +75,7 @@ public class ConfirmationService {
         } catch (Exception e) {
             log.debug("updateConfirmed ", e);
             store.abortDatabaseBatchWrite();
-        } finally {
-            store.defaultDatabaseBatchWrite();
-        }
+        } 
     }
 
     /**

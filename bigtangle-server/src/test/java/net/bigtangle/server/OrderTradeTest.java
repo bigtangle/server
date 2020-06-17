@@ -146,7 +146,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
 
         // Execute order matching
@@ -218,7 +218,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
     }
 
     private void payTestToken(ECKey testKey, long amount)
@@ -233,7 +233,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Open sell order for test tokens
     }
 
@@ -288,7 +288,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);

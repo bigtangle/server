@@ -174,7 +174,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
         Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -351,7 +351,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -393,7 +393,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell orders for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -503,7 +503,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -542,7 +542,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -1042,7 +1042,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -1107,7 +1107,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
 
         // Execute order matching
@@ -1134,7 +1134,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
     }
 
     private void payTestToken(ECKey testKey, long amount)
@@ -1149,7 +1149,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Open sell order for test tokens
     }
 

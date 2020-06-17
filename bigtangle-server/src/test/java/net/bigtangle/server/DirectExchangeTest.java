@@ -173,7 +173,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         List<UTXO> balance = getBalance(false, genesiskey);
         log.info("balance : " + balance);
         for (UTXO utxo : balance) {
@@ -200,7 +200,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
 
@@ -256,7 +256,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
                 log.info("UTXO : " + output);
             }
             mcmcService.update();
-            confirmationService.update();
+            confirmationService.update(store);
         }
     }
 
@@ -345,11 +345,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         testCreateToken(walletKeys.get(0), "test");
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         testCreateToken(walletKeys.get(1), "test2");
 
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         payToken(200, yourKey, walletKeys.get(0).getPubKey(), walletAppKit1.wallet());
         payToken(300, myKey, walletKeys.get(1).getPubKey(), walletAppKit2.wallet());
 

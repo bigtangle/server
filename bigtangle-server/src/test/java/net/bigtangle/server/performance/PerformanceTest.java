@@ -87,7 +87,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(),store);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // Mining reward block should go through
         mcmcService.update();
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
@@ -98,13 +98,13 @@ public class PerformanceTest extends AbstractIntegrationTest {
         Block rewardBlock3 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 fusingBlock.getHash(), rollingBlock1.getHash(),store);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         // No change
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash(),store).isConfirmed());
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash(),store).isConfirmed());
@@ -119,7 +119,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
         rewardService.createReward(rewardBlock3.getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(),store).isConfirmed());
@@ -133,7 +133,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
             blockGraph.add(b, true,store);
         }
         mcmcService.update();
-        confirmationService.update();
+        confirmationService.update(store);
         assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(),store).isConfirmed());
