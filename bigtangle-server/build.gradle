@@ -39,7 +39,7 @@ dependencies {
     
     compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12.3'
  
-	compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.4'
+	compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.5'
  
     compile project(':bigtangle-servercore')
     compile project(':bigtangle-docker')
