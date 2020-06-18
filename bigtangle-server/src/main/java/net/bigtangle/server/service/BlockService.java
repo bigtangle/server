@@ -481,7 +481,7 @@ public class BlockService  {
     }
 
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
-      FullPrunedBlockStore store = storeService.getStore();
+        FullPrunedBlockStore store = storeService.getStore();
       try {
         if (store.getBlockEvaluation(block.getHash()) == null) { 
             try { 

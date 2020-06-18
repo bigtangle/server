@@ -96,17 +96,18 @@ public class SyncBlockService {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
-
+         FullPrunedBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            sync(-1l,storeService.getStore());
+            sync(-1l,store);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
-        } finally {
+        } finally { 
             lock.unlock();
+            store.close();
         }
 
     }

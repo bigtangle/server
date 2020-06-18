@@ -32,13 +32,12 @@ public class BlockBatchService {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockBatchService.class);
 
-
     @Autowired
-    protected  StoreService storeService;
+    protected StoreService storeService;
 
     @Autowired
     private NetworkParameters networkParameters;
- 
+
     @Autowired
     private BlockService blockService;
 
@@ -77,31 +76,31 @@ public class BlockBatchService {
     }
 
     private void batchBlocks() throws BlockStoreException, Exception {
-      FullPrunedBlockStore store = storeService.getStore();
-      try {
-        List<BatchBlock> batchBlocks =  store.getBatchBlockList();
-        if (batchBlocks.isEmpty()) {
-            return;
-        }
-        Block block = blockService.getBlockPrototype(store);
-        for (BatchBlock batchBlock : batchBlocks) {
-            byte[] payloadBytes = batchBlock.getBlock();
-            Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
-            for (Transaction transaction : putBlock.getTransactions()) {
-                block.addTransaction(transaction);
+        FullPrunedBlockStore store = storeService.getStore();
+        try {
+            List<BatchBlock> batchBlocks = store.getBatchBlockList();
+            if (batchBlocks.isEmpty()) {
+                return;
             }
+            Block block = blockService.getBlockPrototype(store);
+            for (BatchBlock batchBlock : batchBlocks) {
+                byte[] payloadBytes = batchBlock.getBlock();
+                Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
+                for (Transaction transaction : putBlock.getTransactions()) {
+                    block.addTransaction(transaction);
+                }
+            }
+            if (block.getTransactions().size() == 0) {
+                return;
+            }
+            block.solve();
+            blockService.saveBlock(block, store);
+            for (BatchBlock batchBlock : batchBlocks) {
+                store.deleteBatchBlock(batchBlock.getHash());
+            }
+        } finally {
+            store.close();
         }
-        if (block.getTransactions().size() == 0) {
-            return;
-        }
-        block.solve();
-        blockService.saveBlock(block,store);
-        for (BatchBlock batchBlock : batchBlocks) {
-             store.deleteBatchBlock(batchBlock.getHash());
-        }
-      }finally {
-          store.close(); 
-    }
-      
+
     }
 }

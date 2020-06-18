@@ -35,9 +35,9 @@ public class HeathCheckService {
 
     @Autowired
     ServerConfiguration serverConfiguration;
-    
+
     @Autowired
-    private StoreService  storeService;
+    private StoreService storeService;
     @Autowired
     protected NetworkParameters networkParameters;
 
@@ -93,14 +93,14 @@ public class HeathCheckService {
     private StatusCollector checkDB(StatusCollector status) {
 
         try {
-           FullPrunedBlockStore store = storeService.getStore();
-           try {
-           store. getSettingValue("version");
-            status.setOkMessage(DATABASE_NAME);
-           }finally {
-               store.close();
-        }
-            
+            FullPrunedBlockStore store = storeService.getStore();
+            try {
+                store.getSettingValue("version");
+                status.setOkMessage(DATABASE_NAME);
+            } finally {
+                store.close();
+            }
+
         } catch (Exception e) {
             log.error("database is down:" + e.getMessage(), e);
             status.setFailedMessage(DATABASE_NAME);
