@@ -206,7 +206,7 @@ public class SyncBlockService {
                     blockService.addConnected(data, true);
                     break;
                 } catch (Exception e) {
-                    log.debug(s, e);
+                    log.debug(hash + s, e);
 
                     badserver.add(s);
                 }

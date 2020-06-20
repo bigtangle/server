@@ -145,108 +145,108 @@ public class FullPrunedBlockGraph {
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
 
-    public boolean add(Block block, boolean allowUnsolid,FullPrunedBlockStore store) throws BlockStoreException {
+    public boolean add(Block block, boolean allowUnsolid, FullPrunedBlockStore store) throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             chainlock.lock();
             try {
-                a = addChain(block, allowUnsolid, true,store);
+                a = addChain(block, allowUnsolid, true, store);
                 updateConfirmed(1);
             } finally {
                 chainlock.unlock();
             }
         } else {
-            a = addNonChain(block, allowUnsolid,store);
+            a = addNonChain(block, allowUnsolid, store);
         }
 
         return a;
     }
 
-    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting,FullPrunedBlockStore store) throws BlockStoreException {
+    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullPrunedBlockStore store)
+            throws BlockStoreException {
 
-        
-            // Check the block is partially formally valid and fulfills PoW
-            block.verifyHeader();
-            block.verifyTransactions();
+        // Check the block is partially formally valid and fulfills PoW
+        block.verifyHeader();
+        block.verifyTransactions();
 
-            SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid, store);
+        SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid, store);
 
-            if (solidityState.isDirectlyMissing()) {
-                log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
-                orphanBlocks.put(block.getHash(), new OrphanBlock(block));
-                if (tryConnecting) {
-                    tryConnectingOrphans(store);
-                }
-                return false;
-            }
-
-            if (solidityState.isFailState()) {
-                return false;
-            }
-
-            // Inherit solidity from predecessors if they are not solid
-            solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
-
-            // Sanity check
-            if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-                return false;
-            }
-
-            // save the block
-            try {
-                store.beginDatabaseBatchWrite();
-                connectRewardBlock(block, solidityState, store);
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                store.abortDatabaseBatchWrite();
-                throw e;
-            } finally {
-                store.defaultDatabaseBatchWrite();
-
-            }
-            if (tryConnecting)
+        if (solidityState.isDirectlyMissing()) {
+            log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
+            orphanBlocks.put(block.getHash(), new OrphanBlock(block));
+            if (tryConnecting) {
                 tryConnectingOrphans(store);
-         
+            }
+            return false;
+        }
+
+        if (solidityState.isFailState()) {
+            return false;
+        }
+
+        // Inherit solidity from predecessors if they are not solid
+        solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
+
+        // Sanity check
+        if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+            return false;
+        }
+
+        // save the block
+        try {
+            store.beginDatabaseBatchWrite();
+            connectRewardBlock(block, solidityState, store);
+            store.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            store.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            store.defaultDatabaseBatchWrite();
+
+        }
+        if (tryConnecting)
+            tryConnectingOrphans(store);
 
         return true;
     }
 
-    public boolean addNonChain(Block block, boolean allowUnsolid,FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public boolean addNonChain(Block block, boolean allowUnsolid, FullPrunedBlockStore blockStore)
+            throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
-      
-            block.verifyHeader();
-            block.verifyTransactions();
 
-            SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
+        block.verifyHeader();
+        block.verifyTransactions();
 
-            // If explicitly wanted (e.g. new block from local clients), this
-            // block must strictly be solid now.
-            if (!allowUnsolid) {
-                switch (solidityState.getState()) {
-                case MissingPredecessor:
-                    throw new UnsolidException();
-                case MissingCalculation:
-                case Success:
-                    break;
-                case Invalid:
-                    throw new GenericInvalidityException();
-                }
+        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
+
+        // If explicitly wanted (e.g. new block from local clients), this
+        // block must strictly be solid now.
+        if (!allowUnsolid) {
+            switch (solidityState.getState()) {
+            case MissingPredecessor:
+                throw new UnsolidException();
+            case MissingCalculation:
+            case Success:
+                break;
+            case Invalid:
+                throw new GenericInvalidityException();
             }
+        }
 
-            // Accept the block
-            try {
-                blockStore.beginDatabaseBatchWrite();
-                connect(block, solidityState, blockStore);
-                blockStore.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            } finally {
-                blockStore.defaultDatabaseBatchWrite();
+        // Accept the block
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            connect(block, solidityState, blockStore);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
 
-            }
-        
+        }
+
         return true;
     }
 
@@ -1667,6 +1667,13 @@ public class FullPrunedBlockGraph {
             Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();
+                // remove too old OrphanBlock
+                if (System.currentTimeMillis() - orphanBlock.block.getTimeSeconds() * 1000 > 2 * 60 * 60 * 1000) {
+                    iter.remove();
+                    blocksConnectedThisRound++;
+                    continue;
+                }
+
                 // Look up the blocks previous.
                 Block prev = blockStore.get(orphanBlock.block.getRewardInfo().getPrevRewardHash());
                 if (prev == null) {
@@ -1682,7 +1689,7 @@ public class FullPrunedBlockGraph {
                 // False here ensures we don't recurse infinitely downwards when
                 // connecting huge chains.
                 log.info("Connected orphan {}", orphanBlock.block.getHash());
-                if (addChain(orphanBlock.block, true, false,blockStore)) {
+                if (addChain(orphanBlock.block, true, false, blockStore)) {
                     iter.remove();
                     blocksConnectedThisRound++;
                 }
