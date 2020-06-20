@@ -88,8 +88,9 @@ public class BlockService  {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     // cache only binary block only
-    @Cacheable("blocks")
+    @Cacheable(value="blocksCache", key = "#blockhash")
     public Block getBlock(Sha256Hash blockhash, FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
+       // logger.debug("read from databse and no cache for:"+ blockhash);
         return store.get(blockhash);
     }
 
