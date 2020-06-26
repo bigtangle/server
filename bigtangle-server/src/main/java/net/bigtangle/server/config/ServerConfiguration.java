@@ -39,7 +39,7 @@ public class ServerConfiguration {
     private int syncblocks=500;
     
     private String indexhtml="https://www.bigtangle.org";
-    private int blockPrototypeCachesSize =10;
+    private int blockPrototypeCachesSize =1;
     private String dockerDBHost="mysql-test";
     
     public synchronized Boolean checkService() {
