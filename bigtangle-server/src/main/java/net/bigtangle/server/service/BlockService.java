@@ -127,7 +127,7 @@ public class BlockService  {
         Context.propagate(context);
         broadcastBlock(block);
         blockgraph.add(block, false,store);
-        removeBlockPrototype(block, store);
+       // removeBlockPrototype(block, store);
      
 
     }
@@ -405,6 +405,11 @@ public class BlockService  {
     }
 
     public Block getBlockPrototype(FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
+      
+       return getNewBlockPrototype(store);
+    }
+    
+    public Block getBlockPrototypeMayCache(FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
         BlockPrototype re = store.getBlockPrototype();
         if (re == null) {
             return getNewBlockPrototype(store);
@@ -490,7 +495,7 @@ public class BlockService  {
                 logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
                 }
                 blockgraph.add(block, allowUnsolid,store);
-                removeBlockPrototype(block,store);
+              //  removeBlockPrototype(block,store);
                 return Optional.of(block);
             } catch (ProofOfWorkException | UnsolidException e) {
                 return Optional.empty();

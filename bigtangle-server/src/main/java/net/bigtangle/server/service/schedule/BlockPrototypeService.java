@@ -49,7 +49,7 @@ public class BlockPrototypeService {
     @Autowired
     ServerConfiguration serverConfiguration;
 
-    @Scheduled(fixedRate = 1000)
+   // @Scheduled(fixedRate = 1000)
     public void batch() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             startSingleProcess();
