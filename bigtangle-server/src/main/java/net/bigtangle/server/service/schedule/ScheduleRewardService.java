@@ -31,7 +31,7 @@ public class ScheduleRewardService {
     ServerConfiguration serverConfiguration;
     
     @Async
-    @Scheduled(fixedRate = 50000)
+    @Scheduled(fixedDelayString = "${milestoneschedule.miningrate:50000}")
     public void updateReward() {
         if (scheduleConfiguration.isMining() && serverConfiguration.checkService()) {
             try {

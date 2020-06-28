@@ -28,9 +28,10 @@ db:
 
 service:
   milestoneschedule:
-    rate: ${SERVICE_MILESTONE_RATE:15000}
+    rate: ${SERVICE_MILESTONE_RATE:1000}
     active: ${SERVICE_MILESTONE_ACTIVE:false}
     mining: ${SERVICE_MINING:false}
+    miningrate: ${SERVICE_MINING_RATE:50000}
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}

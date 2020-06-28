@@ -29,7 +29,7 @@ public class ScheduleMCMCService {
     ServerConfiguration serverConfiguration;
     
     @Async
-    @Scheduled(fixedRate = 800)
+    @Scheduled(fixedDelayString = "${milestoneschedule.rate:500}")
     public void updatemcmcService() {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
