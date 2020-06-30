@@ -20,6 +20,9 @@ public class ScheduleConfiguration {
     @Value("${schedule.blockbatch:false}")
     boolean blockBatchService_active;
 
+    @Value("${schedule.miningrate:50000}")
+    Long miningrate;
+    
     public boolean isMilestone_active() {
         return milestone_active;
     }
@@ -42,6 +45,14 @@ public class ScheduleConfiguration {
 
     public void setMining(boolean mining) {
         this.mining = mining;
+    }
+
+    public Long getMiningrate() {
+        return miningrate;
+    }
+
+    public void setMiningrate(Long miningrate) {
+        this.miningrate = miningrate;
     }
 
   

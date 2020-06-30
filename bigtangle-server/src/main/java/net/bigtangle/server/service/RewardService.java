@@ -55,6 +55,7 @@ import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
@@ -85,7 +86,9 @@ public class RewardService {
     protected NetworkParameters networkParameters;
     @Autowired
     private StoreService  storeService;
-    
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     /**
@@ -224,7 +227,7 @@ public class RewardService {
 
     private Block rewardSolve(Block block, final BigInteger chainTargetFinal)
             throws InterruptedException, ExecutionException {
-        final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
+        final Duration timeout = Duration.ofMillis(scheduleConfiguration.getMiningrate());
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {

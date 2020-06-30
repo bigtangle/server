@@ -84,7 +84,7 @@ public class BlockPrototypeService {
     
     private void timeboxed( )
             throws InterruptedException, ExecutionException, BlockStoreException {
-        final Duration timeout = Duration.ofSeconds(serverConfiguration.getSolveRewardduration());
+        final Duration timeout = Duration.ofMillis(scheduleConfiguration.getMiningrate());
         ExecutorService executor = Executors.newSingleThreadExecutor();
          FullPrunedBlockStore store= storeService.getStore();
          store .deleteBlockPrototypeTimeout();

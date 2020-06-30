@@ -24,7 +24,7 @@ public class ServerConfiguration {
     private String clientversion;
     private Boolean permissioned;
     private String permissionadmin;
-    private int solveRewardduration = 50; // in seconds
+    
     private Boolean myserverblockOnly = false;
     private long maxserachblocks = 5000;
   
@@ -160,14 +160,7 @@ public class ServerConfiguration {
         this.serverurl = serverurl;
     }
 
-    public int getSolveRewardduration() {
-        return solveRewardduration;
-    }
-
-    public void setSolveRewardduration(int solveRewardduration) {
-        this.solveRewardduration = solveRewardduration;
-    }
-
+   
     public long getMaxserachblocks() {
         return maxserachblocks;
     }
@@ -237,7 +230,7 @@ public class ServerConfiguration {
         return "ServerConfiguration [requester=" + requester + ", port=" + port + ", net=" + net + ", mineraddress="
                 + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion + ", clientversion="
                 + clientversion + ", permissioned=" + permissioned + ", permissionadmin=" + permissionadmin
-                + ", solveRewardduration=" + solveRewardduration + ", myserverblockOnly=" + myserverblockOnly
+                + ", myserverblockOnly=" + myserverblockOnly
                 + ", maxserachblocks=" + maxserachblocks  
                 + ", serviceReady=" + serviceReady + ", createtable=" + createtable + ", alphaMCMC=" + alphaMCMC
                 + ", runKafkaStream=" + runKafkaStream + "]";
