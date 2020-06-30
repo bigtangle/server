@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "service")
 public class ScheduleConfiguration {
 
-    @Value("${milestoneschedule.active:false}")
+    @Value("${schedule.mcmc:false}")
     boolean milestone_active;
-    @Value("${milestoneschedule.mining:false}")
+    @Value("${schedule.mining:false}")
     boolean mining;
     
-    @Value("${blockBatchService.active:false}")
+    @Value("${schedule.blockbatch:false}")
     boolean blockBatchService_active;
 
     public boolean isMilestone_active() {

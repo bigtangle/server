@@ -47,8 +47,10 @@ public class BlockBatchService {
     @Autowired
     ServerConfiguration serverConfiguration;
 
-    @Scheduled(fixedRate = 10000)
-
+    /*
+     * create solved block from other not resolved blocks together as service
+     */
+    @Scheduled(fixedDelayString = "${service.schedule.blockbatchrate:50000}")
     public void batch() {
         if (scheduleConfiguration.isBlockBatchService_active() && serverConfiguration.checkService()) {
             startSingleProcess();

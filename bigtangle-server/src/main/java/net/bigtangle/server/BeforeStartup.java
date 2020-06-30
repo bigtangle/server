@@ -5,7 +5,6 @@
 package net.bigtangle.server;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.bitcoin.Secp256k1Context;

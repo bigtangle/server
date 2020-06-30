@@ -27,11 +27,15 @@ db:
 
 
 service:
-  milestoneschedule:
-    rate: ${SERVICE_MILESTONE_RATE:1000}
-    active: ${SERVICE_MILESTONE_ACTIVE:false}
+  schedule:
+    mcmc: ${SERVICE_MCMC:false}
+    mcmcrate: ${SERVICE_MCMC_RATE:1000}
     mining: ${SERVICE_MINING:false}
     miningrate: ${SERVICE_MINING_RATE:50000}
+    sync: ${SERVICE_SYNC:true}
+    syncrate: ${SERVICE_SYNC_RATE:50000}
+    blockbatch: ${SERVICE_BLOCKBATCH:false}
+    blockbatchrate: ${SERVICE_BLOCKBATCH_RATE:50000}
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}

@@ -27,12 +27,10 @@ public class ScheduleSyncBlockService {
     @Autowired
     ServerConfiguration serverConfiguration;
     /*
-     * unsolid blocks can be solid, if previous can be found in network etc.
-     * read data from table oder by insert time, use add Block to check again,
-     * if missing previous, it may request network for the blocks
+     * Sync the chain and block data direct via p2p 
      */
     @Async
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedDelayString = "${service.schedule.syncrate:50000}")
     public void syncService() throws BlockStoreException {
         if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             syncBlockService.startSingleProcess();
