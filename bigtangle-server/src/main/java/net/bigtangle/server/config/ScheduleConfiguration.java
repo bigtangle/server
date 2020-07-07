@@ -9,19 +9,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "service")
+
 public class ScheduleConfiguration {
 
-    @Value("${schedule.mcmc:false}")
+    @Value("${service.schedule.mcmc:false}")
     boolean milestone_active;
-    @Value("${schedule.mining:false}")
+    @Value("${service.schedule.mining:false}")
     boolean mining;
     
-    @Value("${schedule.blockbatch:false}")
+    @Value("${service.schedule.blockbatch:false}")
     boolean blockBatchService_active;
 
-    @Value("${schedule.miningrate:50000}")
+    @Value("${service.schedule.miningrate:50000}")
     Long miningrate;
+    @Value("${service.schedule.blockbatchrate:50000}")
+    Long blockbatchrate;
     
     public boolean isMilestone_active() {
         return milestone_active;
@@ -53,6 +55,14 @@ public class ScheduleConfiguration {
 
     public void setMiningrate(Long miningrate) {
         this.miningrate = miningrate;
+    }
+
+    public Long getBlockbatchrate() {
+        return blockbatchrate;
+    }
+
+    public void setBlockbatchrate(Long blockbatchrate) {
+        this.blockbatchrate = blockbatchrate;
     }
 
   

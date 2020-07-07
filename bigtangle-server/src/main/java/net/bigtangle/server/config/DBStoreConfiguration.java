@@ -16,9 +16,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.store.FullPrunedBlockStore;
 import net.bigtangle.store.MySQLFullPrunedBlockStore;
-import net.bigtangle.store.cassandra.CassandraBlockStore;
 
 @Configuration
 public class DBStoreConfiguration {
@@ -40,8 +38,7 @@ public class DBStoreConfiguration {
 
     @Value("${db.port:3306}")
     private String port;
-
-    private int fullStoreDepth = 10;
+ 
     @Autowired
     NetworkParameters networkParameters;
     @Autowired
@@ -59,6 +56,9 @@ public class DBStoreConfiguration {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.addDataSourceProperty("useServerPrepStmts", "true");
+        config.addDataSourceProperty("cacheResultSetMetadata", "true");
+        config.addDataSourceProperty("cacheServerConfiguration", "true");
         config.setMaximumPoolSize(100); 
         config.setLeakDetectionThreshold(100000);
         return new HikariDataSource(config);
