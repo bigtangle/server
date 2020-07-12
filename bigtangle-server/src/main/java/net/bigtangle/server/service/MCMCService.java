@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -186,10 +185,12 @@ public class MCMCService {
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
-        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS,store);
+        
         long cutoffHeight = blockService.getCurrentCutoffHeight(store);
         long maxHeight = blockService.getCurrentMaxHeight(store);
 
+        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS,maxHeight, store);
+        
         // Initialize all approvers as UUID
         for (BlockWrap selectedTip : selectedTips) {
             UUID randomUUID = UUID.randomUUID();

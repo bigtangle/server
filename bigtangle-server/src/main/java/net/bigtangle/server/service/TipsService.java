@@ -60,15 +60,17 @@ public class TipsService {
      */
     private class RatingTipWalker implements Callable<BlockWrap> {
         final BlockWrap entryPoint;
+        long maxHeight;
         final  FullPrunedBlockStore store;
-        public RatingTipWalker(final BlockWrap entryPoint,  FullPrunedBlockStore store) {
+        public RatingTipWalker(final BlockWrap entryPoint,  long maxHeight, FullPrunedBlockStore store) {
             this.entryPoint = entryPoint;
+             this. maxHeight=maxHeight;
             this.store = store;
         }
 
         @Override
         public BlockWrap call() throws Exception {
-            BlockWrap ratingTip = getRatingTip(entryPoint, Long.MAX_VALUE,store);
+            BlockWrap ratingTip = getRatingTip(entryPoint, Long.MAX_VALUE, maxHeight, store);
             return ratingTip;
         }
     }
@@ -85,7 +87,7 @@ public class TipsService {
      * @return A list of rating tips.
      * @throws BlockStoreException
      */
-    public Collection<BlockWrap> getRatingTips(int count,FullPrunedBlockStore store) throws BlockStoreException {
+    public Collection<BlockWrap> getRatingTips(int count, long maxHeight,FullPrunedBlockStore store) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
 
         List<BlockWrap> entryPoints = getEntryPoints(count,store);
@@ -93,7 +95,7 @@ public class TipsService {
         List<BlockWrap> ratingTips = new ArrayList<BlockWrap>(count);
 
         for (BlockWrap entryPoint : entryPoints) {
-            FutureTask<BlockWrap> future = new FutureTask<BlockWrap>(new RatingTipWalker(entryPoint,store));
+            FutureTask<BlockWrap> future = new FutureTask<BlockWrap>(new RatingTipWalker(entryPoint,maxHeight,store));
             executor.execute(future);
             ratingTipFutures.add(future);
         }
@@ -435,12 +437,12 @@ public class TipsService {
         return result;
     }
 
-    private BlockWrap getRatingTip(BlockWrap currentBlock, long maxTime,FullPrunedBlockStore store) throws BlockStoreException {
+    private BlockWrap getRatingTip(BlockWrap currentBlock, long maxTime,long maxHeight, FullPrunedBlockStore store) throws BlockStoreException {
         // Repeatedly perform transitions until the final tip is found
         List<BlockWrap> approvers = store.getNotInvalidApproverBlocks(currentBlock.getBlock().getHash());
         approvers.removeIf(b -> b.getBlockEvaluation().getInsertTime() > maxTime);
         BlockWrap nextBlock = performTransition(currentBlock, approvers);
-        long maxHeight = blockService.getCurrentMaxHeight(store);
+         
 
         while (currentBlock != nextBlock && nextBlock.getBlockEvaluation().getHeight() <= maxHeight) {
             currentBlock = nextBlock;
