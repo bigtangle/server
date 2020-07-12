@@ -22,8 +22,8 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
 
 /*
  *  This service offers maintenance functions to update the local state of the Tangle
@@ -34,7 +34,7 @@ public class ConfirmationService {
     private static final int WARNING_MILESTONE_UPDATE_LOOPS = 20;
 
     @Autowired
-    protected FullPrunedBlockGraph blockGraph; 
+    protected FullBlockGraph blockGraph; 
  
     @Autowired
     private ValidatorService validatorService;
@@ -62,11 +62,11 @@ public class ConfirmationService {
     }
 
     
-    public void update( FullPrunedBlockStore  store) throws BlockStoreException {
+    public void update( FullBlockStore  store) throws BlockStoreException {
         update(1,store);
     }
    
-    public void update(int numberUpdates,FullPrunedBlockStore  store) throws BlockStoreException {
+    public void update(int numberUpdates,FullBlockStore  store) throws BlockStoreException {
         
         try { 
             store.beginDatabaseBatchWrite();
@@ -87,7 +87,7 @@ public class ConfirmationService {
      * @throws JsonMappingException
      * @throws JsonParseException
      */
-    private void updateConfirmed(int numberUpdates, FullPrunedBlockStore store)
+    private void updateConfirmed(int numberUpdates, FullBlockStore store)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();

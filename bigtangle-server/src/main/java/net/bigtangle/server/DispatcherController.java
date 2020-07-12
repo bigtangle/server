@@ -67,7 +67,7 @@ import net.bigtangle.server.service.SubtanglePermissionService;
 import net.bigtangle.server.service.TokenDomainnameService;
 import net.bigtangle.server.service.TokensService;
 import net.bigtangle.server.service.UserDataService;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Gzip;
 
 @RestController
@@ -117,7 +117,7 @@ public class DispatcherController {
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
-        FullPrunedBlockStore store = storeService.getStore();
+        FullBlockStore store = storeService.getStore();
         byte[] bodyByte = new byte[0];
         try {
 
@@ -584,7 +584,7 @@ public class DispatcherController {
         return serverConfiguration.getIndexhtml();
     }
     
-    private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullPrunedBlockStore store)
+    private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullBlockStore store)
             throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
         String reqStr = new String(bodyByte, "UTF-8");
         @SuppressWarnings("unchecked")
@@ -597,7 +597,7 @@ public class DispatcherController {
         this.outPrintJSONString(httpServletResponse, response, watch);
     }
 
-    private void batchBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullPrunedBlockStore store)
+    private void batchBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullBlockStore store)
             throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
  
@@ -619,7 +619,7 @@ public class DispatcherController {
         }
     }
 
-    private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullPrunedBlockStore store)
+    private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,FullBlockStore store)
             throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
  
@@ -645,7 +645,7 @@ public class DispatcherController {
     }
 
     private boolean checkPermission(HttpServletResponse httpServletResponse,
-HttpServletRequest httprequest, Stopwatch watch,FullPrunedBlockStore store)
+HttpServletRequest httprequest, Stopwatch watch,FullBlockStore store)
             throws BlockStoreException, Exception {
         if (!serverConfiguration.getPermissioned()) {
             return true;
@@ -697,7 +697,7 @@ HttpServletRequest httprequest, Stopwatch watch,FullPrunedBlockStore store)
         }
     }
 
-    public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest,FullPrunedBlockStore store) {
+    public boolean checkAuth(HttpServletResponse httpServletResponse, HttpServletRequest httprequest,FullBlockStore store) {
         String header = httprequest.getHeader("accessToken");
         boolean flag = false;
         if (header != null && !header.trim().isEmpty()) {
@@ -758,12 +758,12 @@ HttpServletRequest httprequest, Stopwatch watch,FullPrunedBlockStore store)
     }
 
     // server may accept only block from his server
-    public void register(Block block,FullPrunedBlockStore store) throws BlockStoreException {
+    public void register(Block block,FullBlockStore store) throws BlockStoreException {
         if (serverConfiguration.getMyserverblockOnly())
             blockService.insertMyserverblocks(block.getPrevBlockHash(), block.getHash(), System.currentTimeMillis(),store);
     }
 
-    public void deleteRegisterBlock(Block block,FullPrunedBlockStore store) throws BlockStoreException {
+    public void deleteRegisterBlock(Block block,FullBlockStore store) throws BlockStoreException {
         if (serverConfiguration.getMyserverblockOnly()) {
             blockService.deleteMyserverblocks(block.getPrevBlockHash(),store);
         }

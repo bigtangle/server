@@ -35,7 +35,7 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.UUIDUtil;
 
 @Service
@@ -53,7 +53,7 @@ public class MultiSignService {
     @Autowired
     private BlockService blockService;
 
-    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullPrunedBlockStore store )
+    public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullBlockStore store )
             throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
             List<MultiSign> multiSigns =store.getMultiSignListByAddress(address);
@@ -64,13 +64,13 @@ public class MultiSignService {
         }
     }
 
-    public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign, FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign, FullBlockStore store) throws BlockStoreException {
         int count =store.getCountMultiSignNoSign(tokenid, tokenindex, sign);
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, List<String> addresses,
-            boolean isSign, FullPrunedBlockStore store) throws Exception {
+            boolean isSign, FullBlockStore store) throws Exception {
         HashSet<String> a = new HashSet<String>();
         if (addresses != null) {
             a = new HashSet<String>(addresses);
@@ -79,7 +79,7 @@ public class MultiSignService {
     }
 
     public AbstractResponse getMultiSignListWithTokenid(String tokenid, Integer tokenindex, Set<String> addresses,
-            boolean isSign, FullPrunedBlockStore store) throws Exception {
+            boolean isSign, FullBlockStore store) throws Exception {
         List<MultiSign> multiSigns = store.getMultiSignListByTokenid(tokenid, tokenindex, addresses, isSign);
         List<Map<String, Object>> multiSignList = new ArrayList<Map<String, Object>>();
         for (MultiSign multiSign : multiSigns) {
@@ -115,12 +115,12 @@ public class MultiSignService {
     @Autowired
     private NetworkParameters networkParameters;
 
-    public AbstractResponse getNextTokenSerialIndex(String tokenid, FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse getNextTokenSerialIndex(String tokenid, FullBlockStore store) throws BlockStoreException {
         Token tokens = store.getCalMaxTokenIndex(tokenid);
         return TokenIndexResponse.createTokenSerialIndexResponse(tokens.getTokenindex() + 1, tokens.getBlockHash());
     }
 
-    public void saveMultiSign(Block block,FullPrunedBlockStore store) throws BlockStoreException, Exception {
+    public void saveMultiSign(Block block,FullBlockStore store) throws BlockStoreException, Exception {
         // blockService.checkBlockBeforeSave(block);
         try {
              store.beginDatabaseBatchWrite();
@@ -178,7 +178,7 @@ public class MultiSignService {
         }
     }
 
-    public void deleteMultiSign(Block block,FullPrunedBlockStore store) throws BlockStoreException, Exception {
+    public void deleteMultiSign(Block block,FullBlockStore store) throws BlockStoreException, Exception {
         try {
 
             Transaction transaction = block.getTransactions().get(0);
@@ -191,7 +191,7 @@ public class MultiSignService {
         }
     }
 
-    public void signTokenAndSaveBlock(Block block, boolean allowConflicts,FullPrunedBlockStore store) throws Exception {
+    public void signTokenAndSaveBlock(Block block, boolean allowConflicts,FullBlockStore store) throws Exception {
         try {
             validatorService.checkTokenUnique(block,store);
             if (validatorService.checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
@@ -210,7 +210,7 @@ public class MultiSignService {
         }
     }
 
-    private Block checkBlockPrototype(Block oldBlock,FullPrunedBlockStore store) throws BlockStoreException, NoBlockException {
+    private Block checkBlockPrototype(Block oldBlock,FullBlockStore store) throws BlockStoreException, NoBlockException {
 
         int time = 60 * 60 * 8;
         if (System.currentTimeMillis() / 1000 - oldBlock.getTimeSeconds() > time) {

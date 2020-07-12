@@ -12,7 +12,7 @@ import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.store.DatabaseFullPrunedBlockStore;
+import net.bigtangle.store.DatabaseFullBlockStore;
 
 /**
  * <p>
@@ -23,7 +23,7 @@ import net.bigtangle.store.DatabaseFullPrunedBlockStore;
  * </p>
  */
 
-public class CassandraBlockStore extends DatabaseFullPrunedBlockStore {
+public class CassandraBlockStore extends DatabaseFullBlockStore {
 
     public CassandraBlockStore(NetworkParameters params, Connection conn) throws BlockStoreException {
         super(params, conn);

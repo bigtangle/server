@@ -50,7 +50,7 @@ import net.bigtangle.server.core.BlockWrap;
 
 /**
  * <p>
- * An implementor of FullPrunedBlockStore saves StoredBlock objects to some
+ * An implementor of FullBlockStore saves StoredBlock objects to some
  * storage mechanism.
  * </p>
  * 
@@ -63,8 +63,8 @@ import net.bigtangle.server.core.BlockWrap;
  * </p>
  * 
  * <p>
- * A FullPrunedBlockStore should function well as a standard {@link BlockStore}
- * and then be able to trivially switch to being used as a FullPrunedBlockStore.
+ * A FullBlockStore should function well as a standard {@link BlockStore}
+ * and then be able to trivially switch to being used as a FullBlockStore.
  * </p>
  * 
  * <p>
@@ -82,13 +82,13 @@ import net.bigtangle.server.core.BlockWrap;
  * </p>
  *
  * <p>
- * A FullPrunedBlockStore contains a map of hashes to [Full]StoredBlock. The
+ * A FullBlockStore contains a map of hashes to [Full]StoredBlock. The
  * hash is the double digest of the Bitcoin serialization of the block header,
  * <b>not</b> the header with the extra data as well.
  * </p>
  * 
  * <p>
- * A FullPrunedBlockStore also contains a map of hash+index to UTXO. Again, the
+ * A FullBlockStore also contains a map of hash+index to UTXO. Again, the
  * hash is a standard Bitcoin double-SHA256 hash of the transaction.
  * </p>
  *
@@ -96,7 +96,7 @@ import net.bigtangle.server.core.BlockWrap;
  * FullPrunedBlockStores are thread safe.
  * </p>
  */
-public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
+public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     /**
      * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or

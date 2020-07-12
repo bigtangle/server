@@ -28,7 +28,7 @@ import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.StoreService;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 @Component
@@ -78,7 +78,7 @@ public class BlockPrototypeService {
 
     }
 
-    private void blockprototype(FullPrunedBlockStore store) throws BlockStoreException, Exception {
+    private void blockprototype(FullBlockStore store) throws BlockStoreException, Exception {
         this.blockService.createBlockPrototypeCache(store  );
     }
     
@@ -86,7 +86,7 @@ public class BlockPrototypeService {
             throws InterruptedException, ExecutionException, BlockStoreException {
         final Duration timeout = Duration.ofMillis(scheduleConfiguration.getMiningrate());
         ExecutorService executor = Executors.newSingleThreadExecutor();
-         FullPrunedBlockStore store= storeService.getStore();
+         FullBlockStore store= storeService.getStore();
          store .deleteBlockPrototypeTimeout();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {

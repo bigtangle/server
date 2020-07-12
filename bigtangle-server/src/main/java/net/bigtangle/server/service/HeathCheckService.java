@@ -16,7 +16,7 @@ import net.bigtangle.health.KafkaHealthIndicator;
 import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.lifecycle.StatusCollector;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 /**
@@ -93,7 +93,7 @@ public class HeathCheckService {
     private StatusCollector checkDB(StatusCollector status) {
 
         try {
-            FullPrunedBlockStore store = storeService.getStore();
+            FullBlockStore store = storeService.getStore();
             try {
                 store.getSettingValue("version");
                 status.setOkMessage(DATABASE_NAME);

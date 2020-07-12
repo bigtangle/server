@@ -92,8 +92,8 @@ import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
@@ -126,7 +126,7 @@ public abstract class AbstractIntegrationTest {
     private HashMap<String, ECKey> walletKeyData = new HashMap<String, ECKey>();
 
     @Autowired
-    protected FullPrunedBlockGraph blockGraph;
+    protected FullBlockGraph blockGraph;
     @Autowired
     protected BlockService blockService;
     @Autowired
@@ -157,7 +157,7 @@ public abstract class AbstractIntegrationTest {
     public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
     public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
     protected static ObjectMapper objectMapper = new ObjectMapper();
-    public FullPrunedBlockStore store ;
+    public FullBlockStore store ;
     public void testCreateDomainToken() throws Exception {
         this.walletKeys();
         this.initWalletKeysMapper();

@@ -12,8 +12,8 @@ import org.springframework.context.ApplicationContext;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.kafka.AbstractStreamHandler;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.MySQLFullBlockStore;
 
 public abstract class LifecycleBasisController {
     private static final Logger log = LoggerFactory.getLogger(LifecycleBasisController.class);
@@ -54,7 +54,7 @@ public abstract class LifecycleBasisController {
     private StatusCollector checkDataStore(StatusCollector status) {
 
         try {
-            FullPrunedBlockStore repository = findStore();
+            FullBlockStore repository = findStore();
             try {
             // only a generic access-test ...
             if (repository == null) {
@@ -102,9 +102,9 @@ public abstract class LifecycleBasisController {
         return bean;
     }
 
-    private FullPrunedBlockStore findStore() throws BeansException, BlockStoreException, SQLException {
+    private FullBlockStore findStore() throws BeansException, BlockStoreException, SQLException {
         
-        MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore( appContext.getBean(NetworkParameters.class),  
+        MySQLFullBlockStore store = new MySQLFullBlockStore( appContext.getBean(NetworkParameters.class),  
                 appContext.getBean(DataSource.class).getConnection());
       
         return store;

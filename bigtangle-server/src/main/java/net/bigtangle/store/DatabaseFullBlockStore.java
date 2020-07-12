@@ -84,13 +84,13 @@ import net.bigtangle.utils.Gzip;
  * </p>
  * 
  */
-public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
+public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
     private static final String LIMIT_5000 = " limit 5000 ";
 
-    private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
+    private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
 
     public static final String VERSION_SETTING = "version";
 
@@ -509,7 +509,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * <p>
-     * Create a new DatabaseFullPrunedBlockStore, using the full connection URL
+     * Create a new DatabaseFullBlockStore, using the full connection URL
      * instead of a hostname and password, and optionally allowing a schema to
      * be specified.
      * </p>
@@ -532,7 +532,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *             If there is a failure to connect and/or initialise the
      *             database.
      */
-    public DatabaseFullPrunedBlockStore(NetworkParameters params, Connection conn)   {
+    public DatabaseFullBlockStore(NetworkParameters params, Connection conn)   {
         this.params = params;
         this.conn = conn;
     }
@@ -795,14 +795,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
         for (String sql : sqls) {
             if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullPrunedBlockStore :     " + sql);
+                log.debug("DatabaseFullBlockStore :     " + sql);
             }
             Statement s = getConnection().createStatement();
             try {
                 s.execute(sql);
 
             } catch (Exception e) {
-                log.debug("DatabaseFullPrunedBlockStore :     " + sql, e);
+                log.debug("DatabaseFullBlockStore :     " + sql, e);
 
             } finally {
                 s.close();
@@ -1089,7 +1089,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
+                BlockEvaluation blockEvaluation = setBlockEvaluationNumber(resultSet);
 
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
                 if (verifyHeader(block))
@@ -1882,7 +1882,14 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
         }
     }
-
+    private BlockEvaluation setBlockEvaluationNumber(ResultSet resultSet) throws SQLException {
+        
+        BlockEvaluation blockEvaluation =  BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+            resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4),
+            resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
+            resultSet.getLong(8), resultSet.getLong(10), resultSet.getBoolean(11));
+    return blockEvaluation;
+    }
     private BlockEvaluation setBlockEvaluation(ResultSet resultSet) throws SQLException {
         BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes("hash")),
                 resultSet.getLong("rating"), resultSet.getLong("depth"), resultSet.getLong("cumulativeweight"),

@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.store.FullPrunedBlockStore;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.MySQLFullBlockStore;
 
 @Service
 public class StoreService {
@@ -21,11 +21,11 @@ public class StoreService {
     protected NetworkParameters networkParameters;
 
     
-     public FullPrunedBlockStore getStore() throws BlockStoreException      {
+     public FullBlockStore getStore() throws BlockStoreException      {
         
-        MySQLFullPrunedBlockStore store;
+        MySQLFullBlockStore store;
         try {
-            store = new MySQLFullPrunedBlockStore(networkParameters, dataSource.getConnection());
+            store = new MySQLFullBlockStore(networkParameters, dataSource.getConnection());
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }

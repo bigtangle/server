@@ -21,7 +21,7 @@ import net.bigtangle.core.data.Tokensums;
 import net.bigtangle.core.data.TokensumsMap;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 
 /**
  * <p>
@@ -38,7 +38,7 @@ public class CheckpointService {
 
    // private static final Logger log = LoggerFactory.getLogger(CheckpointService.class);
 
-    private List<UTXO> getOutputs(String tokenid,FullPrunedBlockStore store) throws UTXOProviderException, BlockStoreException {
+    private List<UTXO> getOutputs(String tokenid,FullBlockStore store) throws UTXOProviderException, BlockStoreException {
         //Must be sorted with the  key of 
         return store.getOpenAllOutputs(tokenid);
     }
@@ -53,17 +53,17 @@ public class CheckpointService {
         return sumUnspent;
     }
 
-    private List<OrderRecord> orders(String tokenid,FullPrunedBlockStore store) throws BlockStoreException {
+    private List<OrderRecord> orders(String tokenid,FullBlockStore store) throws BlockStoreException {
         return store.getAllOpenOrdersSorted(null, tokenid);
 
     }
 
-    public Map<String, BigInteger> tokensumInitial(FullPrunedBlockStore store) throws BlockStoreException {
+    public Map<String, BigInteger> tokensumInitial(FullBlockStore store) throws BlockStoreException {
 
         return store.getTokenAmountMap();
     }
 
-    public TokensumsMap checkToken(FullPrunedBlockStore store) throws BlockStoreException, UTXOProviderException {
+    public TokensumsMap checkToken(FullBlockStore store) throws BlockStoreException, UTXOProviderException {
 
         TokensumsMap tokensumset = new TokensumsMap();
 

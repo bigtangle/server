@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 /**
@@ -33,7 +33,7 @@ public class ContractExecutionService {
 
  
     @Autowired
-    protected FullPrunedBlockGraph blockGraph;
+    protected FullBlockGraph blockGraph;
     @Autowired
     private BlockService blockService;
     @Autowired

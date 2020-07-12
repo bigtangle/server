@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -28,8 +29,8 @@ import net.bigtangle.core.data.DepthAndWeight;
 import net.bigtangle.core.data.Rating;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 /*
@@ -40,7 +41,7 @@ public class MCMCService {
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
      
     @Autowired
-    protected FullPrunedBlockGraph blockGraph;
+    protected FullBlockGraph blockGraph;
   
     @Autowired
     private TipsService tipsService;
@@ -72,7 +73,7 @@ public class MCMCService {
          //   log.info("mcmcService  started");
             Stopwatch watch = Stopwatch.createStarted();
             update();
-        //   log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+           log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
         } finally {
@@ -87,7 +88,7 @@ public class MCMCService {
         Context context = new Context(params);
         Context.propagate(context);
         // cleanupNonSolidMissingBlocks();
-        FullPrunedBlockStore store = storeService.getStore();
+        FullBlockStore store = storeService.getStore();
         try {
             store.beginDatabaseBatchWrite();
             updateWeightAndDepth(store);
@@ -112,7 +113,7 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateWeightAndDepth( FullPrunedBlockStore store) throws BlockStoreException {
+    private void updateWeightAndDepth( FullBlockStore store) throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
         long cutoffHeight = blockService.getCurrentCutoffHeight(store);
@@ -158,7 +159,7 @@ public class MCMCService {
 
     private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
             HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers, HashMap<Sha256Hash, Long> depths,
-            Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash, FullPrunedBlockStore store) throws BlockStoreException {
+            Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash, FullBlockStore store) throws BlockStoreException {
         Long currentDepth = depths.get(currentBlockHash);
         HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
         if (!approvers.containsKey(approvedBlockHash)) {
@@ -181,7 +182,7 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateRating( FullPrunedBlockStore store) throws BlockStoreException {
+    private void updateRating( FullBlockStore store) throws BlockStoreException {
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
@@ -247,7 +248,7 @@ public class MCMCService {
     }
 
     private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
-            BlockWrap currentBlock, Sha256Hash prevTrunk, FullPrunedBlockStore store) throws BlockStoreException {
+            BlockWrap currentBlock, Sha256Hash prevTrunk, FullBlockStore store) throws BlockStoreException {
         if (!approvers.containsKey(prevTrunk)) {
             BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
             if (prevBlock != null) {

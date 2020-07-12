@@ -21,7 +21,7 @@ import net.bigtangle.core.exception.BlockStoreException;
  * </p>
  */
 
-public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
+public class MySQLFullBlockStore extends DatabaseFullBlockStore {
 
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
@@ -399,7 +399,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
 
   
-    public MySQLFullPrunedBlockStore(NetworkParameters params, Connection conn)  {
+    public MySQLFullBlockStore(NetworkParameters params, Connection conn)  {
         super(  params,   conn);
     }
 

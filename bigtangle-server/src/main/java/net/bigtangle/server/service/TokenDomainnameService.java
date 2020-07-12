@@ -18,7 +18,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.DomainnameUtil;
 
 @Service
@@ -37,7 +37,7 @@ public class TokenDomainnameService {
      * @throws BlockStoreException
      */
 
-    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,FullPrunedBlockStore store)
+    public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,FullBlockStore store)
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
@@ -70,7 +70,7 @@ public class TokenDomainnameService {
      * @return
      * @throws BlockStoreException
      */
-    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(Sha256Hash domainNameBlockHash,FullPrunedBlockStore store)
+    public List<MultiSignAddress> queryDomainnameTokenMultiSignAddresses(Sha256Hash domainNameBlockHash,FullBlockStore store)
             throws BlockStoreException {
         if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHash())) {
             List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
@@ -93,12 +93,12 @@ public class TokenDomainnameService {
         }
     }
 
-    public AbstractResponse queryParentDomainnameBlockHash(String domainname,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse queryParentDomainnameBlockHash(String domainname,FullBlockStore store) throws BlockStoreException {
         domainname = DomainnameUtil.matchParentDomainname(domainname);
         return queryDomainnameBlockHash(domainname,store);
     }
 
-    public AbstractResponse queryDomainnameBlockHash(String domainname,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse queryDomainnameBlockHash(String domainname,FullBlockStore store) throws BlockStoreException {
         AbstractResponse response;
 
         if (StringUtils.isBlank(domainname)) {

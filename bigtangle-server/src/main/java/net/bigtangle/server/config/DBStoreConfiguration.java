@@ -16,7 +16,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullBlockStore;
 
 @Configuration
 public class DBStoreConfiguration {
@@ -49,7 +49,7 @@ public class DBStoreConfiguration {
     public DataSource dataSource() throws BlockStoreException {
         HikariConfig config = new HikariConfig();
 
-        config.setJdbcUrl(MySQLFullPrunedBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
+        config.setJdbcUrl(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
                 + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC");
         config.setUsername(username);
         config.setPassword(password);

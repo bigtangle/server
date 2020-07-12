@@ -18,19 +18,19 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ExchangeInfoResponse;
 import net.bigtangle.core.response.GetExchangeResponse;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 
 @Service
 public class ExchangeService {
 
  
 
-    public AbstractResponse getExchangeByOrderid(String orderid,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse getExchangeByOrderid(String orderid,FullBlockStore store) throws BlockStoreException {
         Exchange exchange =  store.getExchangeInfoByOrderid(orderid);
         return ExchangeInfoResponse.create(exchange);
     }
 
-    public AbstractResponse getBatchExchangeListByAddressListA(List<String> address,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse getBatchExchangeListByAddressListA(List<String> address,FullBlockStore store) throws BlockStoreException {
         List<Exchange> list = new ArrayList<Exchange>();
         for (String s : address) {
             list.addAll( store.getExchangeListWithAddressA(s));
@@ -38,7 +38,7 @@ public class ExchangeService {
         return GetExchangeResponse.create(list);
     }
 
-    public AbstractResponse saveExchange(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse saveExchange(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
         String orderid = (String) request.get("orderid");
         String fromAddress = (String) request.get("fromAddress");
         String fromTokenHex = (String) request.get("fromTokenHex");
@@ -57,13 +57,13 @@ public class ExchangeService {
         return AbstractResponse.createEmptyResponse();
     }
 
-    public AbstractResponse deleteExchange(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse deleteExchange(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
         String orderid = (String) request.get("orderid");
         store.deleteExchange(orderid);
         return AbstractResponse.createEmptyResponse();
     }
 
-    public AbstractResponse signMultiTransaction(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse signMultiTransaction(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String signInputDataHex = (String) request.get("signInputDataHex");
         String orderid = (String) request.get("orderid");
@@ -82,7 +82,7 @@ public class ExchangeService {
         return AbstractResponse.createEmptyResponse();
     }
 
-    public AbstractResponse signTransaction(Map<String, Object> request,FullPrunedBlockStore store) throws BlockStoreException {
+    public AbstractResponse signTransaction(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
         String dataHex = (String) request.get("dataHex");
         String orderid = (String) request.get("orderid");
 

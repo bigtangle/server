@@ -15,12 +15,12 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderdataResponse;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 
 @Service
 public class OrderdataService {
   
-    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid, FullPrunedBlockStore store)
+    public AbstractResponse getOrderdataList(boolean spent, String address, List<String> addresses, String tokenid, FullBlockStore store)
             throws BlockStoreException {
         if (addresses == null)
             addresses = new ArrayList<String>();
@@ -35,7 +35,7 @@ public class OrderdataService {
         }
     }
 
-    private AbstractResponse getAllOpenOrders(List<String> addresses, String tokenid, FullPrunedBlockStore store) throws BlockStoreException {
+    private AbstractResponse getAllOpenOrders(List<String> addresses, String tokenid, FullBlockStore store) throws BlockStoreException {
         List<OrderRecord> allOrdersSorted = store .getAllOpenOrdersSorted(addresses, tokenid);
 
         HashSet<String> orderBlockHashs = new HashSet<String>();
@@ -60,13 +60,13 @@ public class OrderdataService {
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted,store));
     }
 
-    private AbstractResponse getMyClosedOrders(List<String> addresses, FullPrunedBlockStore store) throws BlockStoreException {
+    private AbstractResponse getMyClosedOrders(List<String> addresses, FullBlockStore store) throws BlockStoreException {
         List<OrderRecord> allOrdersSorted = store .getMyClosedOrders(addresses);
 
         return OrderdataResponse.createOrderRecordResponse(allOrdersSorted, getTokename(allOrdersSorted,store));
     }
 
-    public Map<String, Token> getTokename(List<OrderRecord> allOrdersSorted, FullPrunedBlockStore store) throws BlockStoreException {
+    public Map<String, Token> getTokename(List<OrderRecord> allOrdersSorted, FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (OrderRecord d : allOrdersSorted) {
             tokenids.add(d.getOfferTokenid());

@@ -23,7 +23,7 @@ import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.StoreService;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 @Component
@@ -78,7 +78,7 @@ public class BlockBatchService {
     }
 
     private void batchBlocks() throws BlockStoreException, Exception {
-        FullPrunedBlockStore store = storeService.getStore();
+        FullBlockStore store = storeService.getStore();
         try {
             List<BatchBlock> batchBlocks = store.getBatchBlockList();
             if (batchBlocks.isEmpty()) {

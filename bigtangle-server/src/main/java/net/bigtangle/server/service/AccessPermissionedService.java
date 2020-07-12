@@ -11,7 +11,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.SessionRandomNumResponse;
 import net.bigtangle.encrypt.ECIESCoder;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockStore;
 
 @Service
 public class AccessPermissionedService {
@@ -19,7 +19,7 @@ public class AccessPermissionedService {
     
     @Autowired
     protected  StoreService storeService;
-    public AbstractResponse getSessionRandomNumResp(String pubKey,FullPrunedBlockStore store) throws Exception {
+    public AbstractResponse getSessionRandomNumResp(String pubKey,FullBlockStore store) throws Exception {
         ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(pubKey));
 
         String message = UUID.randomUUID().toString();
@@ -33,7 +33,7 @@ public class AccessPermissionedService {
         return SessionRandomNumResponse.create(verifyHex);
     }
 
-    public int checkSessionRandomNumResp(String pubKey, String accessToken,FullPrunedBlockStore store) {
+    public int checkSessionRandomNumResp(String pubKey, String accessToken,FullBlockStore store) {
         try {
             int count =  store .getCountAccessPermissionByPubKey(pubKey, accessToken);
             return count;

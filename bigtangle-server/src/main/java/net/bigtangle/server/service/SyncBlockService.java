@@ -37,8 +37,8 @@ import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.store.FullPrunedBlockGraph;
-import net.bigtangle.store.FullPrunedBlockStore;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 
@@ -54,7 +54,7 @@ public class SyncBlockService {
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
-    FullPrunedBlockGraph blockgraph;
+    FullBlockGraph blockgraph;
 
     @Autowired
     private BlockService blockService;
@@ -73,7 +73,7 @@ public class SyncBlockService {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
-       FullPrunedBlockStore store = storeService.getStore();
+       FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
@@ -96,7 +96,7 @@ public class SyncBlockService {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
-         FullPrunedBlockStore store = storeService.getStore();
+         FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
@@ -112,7 +112,7 @@ public class SyncBlockService {
 
     }
 
-    public void requestPrev(Block block, FullPrunedBlockStore store) {
+    public void requestPrev(Block block, FullBlockStore store) {
         try {
             if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
                 return;
@@ -155,7 +155,7 @@ public class SyncBlockService {
     /*
      * all very old unsolid blocks are deleted
      */
-    public void deleteOldUnsolidBlock( FullPrunedBlockStore store) throws Exception {
+    public void deleteOldUnsolidBlock( FullBlockStore store) throws Exception {
 
         store.deleteOldUnsolid(getTimeSeconds(1));
     }
@@ -164,7 +164,7 @@ public class SyncBlockService {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
-    public void updateSolidity(  FullPrunedBlockStore store)
+    public void updateSolidity(  FullBlockStore store)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         long cutoffHeight = blockService.getCurrentCutoffHeight(store);
         long maxHeight = blockService.getCurrentMaxHeight(store);
@@ -215,7 +215,7 @@ public class SyncBlockService {
         return data;
     }
 
-    public void requestBlocks(Block rewardBlock, FullPrunedBlockStore store) {
+    public void requestBlocks(Block rewardBlock, FullBlockStore store) {
         RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
         String[] re = serverConfiguration.getRequester().split(",");
@@ -233,12 +233,12 @@ public class SyncBlockService {
         }
     }
 
-    public void requestBlocks(long chainlength, String s, FullPrunedBlockStore store)
+    public void requestBlocks(long chainlength, String s, FullBlockStore store)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
         requestBlocks(chainlength, chainlength, s,store);
     }
 
-    public void requestBlocks(long chainlengthstart, long chainlengthend, String s, FullPrunedBlockStore store)
+    public void requestBlocks(long chainlengthstart, long chainlengthend, String s, FullBlockStore store)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -307,7 +307,7 @@ public class SyncBlockService {
         TXReward aTXReward;
     }
 
-    public void sync(Long chainlength, FullPrunedBlockStore store) throws Exception {
+    public void sync(Long chainlength, FullBlockStore store) throws Exception {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
@@ -347,7 +347,7 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, FullPrunedBlockStore store) throws Exception {
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, FullBlockStore store) throws Exception {
 
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;

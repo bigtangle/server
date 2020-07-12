@@ -18,7 +18,7 @@ import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.store.MySQLFullPrunedBlockStore;
+import net.bigtangle.store.MySQLFullBlockStore;
 
 @Component
 public class BeforeStartup {
@@ -31,7 +31,7 @@ public class BeforeStartup {
         logger.debug("server config: " + serverConfiguration.toString());
         // set false in test
         if (serverConfiguration.getCreatetable()) {
-            MySQLFullPrunedBlockStore store = new MySQLFullPrunedBlockStore(networkParameters,
+            MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters,
                     dataSource.getConnection());
             try {
                 store.create();
