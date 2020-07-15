@@ -114,7 +114,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
             throws JsonProcessingException, Exception, InterruptedException, ExecutionException, BlockStoreException {
         sendEmpty(5);
         mcmcService.update();
-        confirmationService.update(store);
+        
     }
 
     public void testTokens() throws JsonProcessingException, Exception {

@@ -66,7 +66,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
         mcmcService.update();
-        confirmationService.update(store);
+        
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
@@ -107,7 +107,7 @@ public class UserdataTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
         mcmcService.update();
-        confirmationService.update(store);
+        
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));

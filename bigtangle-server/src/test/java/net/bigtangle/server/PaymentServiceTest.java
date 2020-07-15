@@ -85,7 +85,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         mcmcService.update();
-        confirmationService.update(store);
+        
         checkBalance(amount0, wallet1Keys_part);
     }
 
@@ -172,7 +172,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         sendEmpty(5);
         mcmcService.update();
-        confirmationService.update(store);
+        
         //check the output histoty
         historyUTXOList(address.toBase58(),amount);
     }
@@ -201,7 +201,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         sendEmpty(5);
         mcmcService.update();
-        confirmationService.update(store);
+        
         //check the output histoty
         historyUTXOList(address.toBase58(),amount);
         //retry the block throw possible conflict
@@ -252,7 +252,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters), NetworkParameters.BIGTANGLE_TOKENID,
                 "0,3");
         mcmcService.update();
-        confirmationService.update(store);
+        
         ArrayList<ECKey> a = new ArrayList<ECKey>();
         a.add(to);
         List<UTXO> ulist = getBalance(false, a);
@@ -276,7 +276,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
         mcmcService.update();
-        confirmationService.update(store);
+        
     }
 
     private static String createDataSize(int msgSize) {

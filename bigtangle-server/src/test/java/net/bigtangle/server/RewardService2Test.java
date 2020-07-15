@@ -50,7 +50,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (int j = 1; j < 2; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
             mcmcService.update();
-            confirmationService.update(store);
+            
             sell(blocksAddedAll);
             buy(blocksAddedAll);
         }
@@ -137,7 +137,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
         blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
         mcmcService.update();
-        confirmationService.update(store);
+        
         // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
         // mcmcService.update();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(2));
@@ -183,7 +183,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcService.update();
-        confirmationService.update(store);
+        
         blocksAddedAll.add(b);
     }
 
@@ -215,7 +215,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
             blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                     orderRecord.getOfferValue(), null, null));
             mcmcService.update();
-            confirmationService.update(store);
+            
         }
 
     }
