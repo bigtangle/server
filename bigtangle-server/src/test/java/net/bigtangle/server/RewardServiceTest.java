@@ -191,7 +191,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         blocksAddedAll.addAll(a1);
         blocksAddedAll.addAll(a2);
         
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 5; i++) {
 
             // Check add in random order
             Collections.shuffle(blocksAddedAll);

@@ -702,9 +702,9 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         assertTrue(store.getTransactionOutput(block1.getHash(), tx1.getHash(), 0).isConfirmed());
         assertTrue(store.getTokenConfirmed(block1.getHash()));
 
-        // Remove it from the milestone
+        // Remove it from the confirmed
         Block rollingBlock = networkParameters.getGenesisBlock();
-        for (int i = 1; i <  15; i++) {
+        for (int i = 1; i <  35; i++) {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true,store);
             mcmcService.update();

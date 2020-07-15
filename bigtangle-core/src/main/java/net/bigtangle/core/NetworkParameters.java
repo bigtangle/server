@@ -106,8 +106,8 @@ public abstract class NetworkParameters {
     protected  ServerPool serverPool;
     
     // MCMC settings
-    public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 70;
-    public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 67;
+    public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 51;
+    public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 49;
     public static final int NUMBER_RATING_TIPS = 10;
     public static final int CONFIRMATION_UPPER_THRESHOLD = CONFIRMATION_UPPER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS
             / 100;

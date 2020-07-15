@@ -47,7 +47,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
     CheckpointService checkpointService;
 
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
-        for (int j = 1; j < 3; j++) {
+        for (int j = 1; j < 2; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
             mcmcService.update();
             confirmationService.update(store);
@@ -79,7 +79,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         testToken(a2);
         // second chain
         Block r2 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 10; i++) {
             r2 = createReward(r2, a2);
         }
         checkSum();
