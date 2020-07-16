@@ -79,7 +79,7 @@ public class MCMCService {
         try {
             // log.info("mcmcService started");
             Stopwatch watch = Stopwatch.createStarted();
-            update();
+            update(false);
             log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
@@ -89,7 +89,10 @@ public class MCMCService {
 
     }
 
-    public void update() throws InterruptedException, ExecutionException, BlockStoreException {
+    public void update( ) throws InterruptedException, ExecutionException, BlockStoreException {
+        update(true);
+    }
+    public void update(boolean updateconfirm) throws InterruptedException, ExecutionException, BlockStoreException {
 
         Context context = new Context(params);
         Context.propagate(context);
@@ -99,7 +102,7 @@ public class MCMCService {
             store.beginDatabaseBatchWrite();
             updateWeightAndDepth(store);
             updateRating(store);
-            updateConfirmed(1,store);
+           if(updateconfirm)  updateConfirmed(1,store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);
