@@ -26,6 +26,12 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -35,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -89,8 +94,13 @@ import net.bigtangle.utils.Threading;
 
 /**
  * <p>
- * A FullPrunedBlockChain works in conjunction with a
- * {@link FullBlockStore} to verify all the rules of the BigTangle system.
+ * A FullBlockGraph works in conjunction with a {@link FullBlockStore} to verify
+ * all the rules of the BigTangle system. Chain data as reward block is locked
+ * by ReentrantLock. It must be wait to run, reward block will add to chain if
+ * there is no exception. if the reward block is unsolid as missing previous
+ * block, then it can be in OrphanBlock. MCMC can add UTXO and can run only, if
+ * there is no add chain running and will be boxed timeout. Other blocks will be
+ * added in parallel.
  * </p>
  */
 @Service
@@ -100,8 +110,7 @@ public class FullBlockGraph {
 
     public final ReentrantLock chainlock = Threading.lock("chainLock");
 
-    // Holds a block header and, optionally, a list of tx hashes or block's
-    // transactions
+    // Holds a block as OrphanBlock
     class OrphanBlock {
         final Block block;
 
@@ -135,23 +144,13 @@ public class FullBlockGraph {
     @Autowired
     private StoreService storeService;
 
-    private void solidifyReward(Block block, FullBlockStore blockStore) throws BlockStoreException {
-
-        RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
-        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-        long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
-        long difficulty = rewardInfo.getDifficultyTargetReward();
-
-        blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
-    }
-
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             chainlock.lock();
             try {
                 a = addChain(block, allowUnsolid, true, store);
-                updateConfirmed(1);
+              //  updateConfirmed();
             } finally {
                 chainlock.unlock();
             }
@@ -160,6 +159,47 @@ public class FullBlockGraph {
         }
 
         return a;
+    }
+
+    /*
+     * run timeboxed 1 seconds and can run only, if there is no other
+     * ReentrantLock
+     */
+    public void updateConfirmed() throws BlockStoreException {
+
+        if (chainlock.isHeldByCurrentThread() || !chainlock.tryLock()) {
+            // not try to wait return
+            log.info("updateConfirmed no chainlock return ");
+            return;
+        }
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                FullBlockStore blockStore = storeService.getStore();
+                try {
+                    updateConfirmed(1, blockStore);
+                } finally {
+                    if (blockStore != null)
+                        blockStore.close();
+                }
+                return "";
+            }
+        });
+        try {
+            handler.get(1000l, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.info("TimeoutException cancel updateConfirmed ");
+            handler.cancel(true);
+        } catch (Exception e) {
+            // ignore
+            log.info("updateConfirmed",e);
+        } finally {
+            executor.shutdownNow();
+        }
+
     }
 
     private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
@@ -555,8 +595,7 @@ public class FullBlockGraph {
         blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
     }
 
-    private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders,
-            FullBlockStore blockStore) {
+    private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders, FullBlockStore blockStore) {
         try {
 
             blockStore.insertOrder(orders);
@@ -619,8 +658,8 @@ public class FullBlockGraph {
         blockStore.updateAllTransactionOutputsConfirmed(block.getBlock().getHash(), true);
     }
 
-    public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes,
-            FullBlockStore blockStore) throws BlockStoreException {
+    public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
+            throws BlockStoreException {
         // If already unconfirmed, return
         if (traversedBlockHashes.contains(blockHash))
             return;
@@ -672,8 +711,8 @@ public class FullBlockGraph {
         traversedBlockHashes.add(blockHash);
     }
 
-    private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
-            FullBlockStore blockStore) throws BlockStoreException {
+    private void unconfirmDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
+            throws BlockStoreException {
         // Unconfirm all approver blocks first
         for (Sha256Hash approver : blockStore.getSolidApproverBlockHashes(block.getHash())) {
             unconfirmRecursive(approver, traversedBlockHashes, blockStore);
@@ -1223,8 +1262,8 @@ public class FullBlockGraph {
         return generateOrderMatching(block, rewardInfo, blockStore);
     }
 
-    public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo,
-            FullBlockStore blockStore) throws BlockStoreException {
+    public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo, FullBlockStore blockStore)
+            throws BlockStoreException {
         TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
 
         // Get previous order matching block
@@ -1645,8 +1684,7 @@ public class FullBlockGraph {
      * For each block in orphanBlocks, see if we can now fit it on top of the
      * chain and if so, do so.
      */
-    private void tryConnectingOrphans(FullBlockStore blockStore)
-            throws VerificationException, BlockStoreException {
+    private void tryConnectingOrphans(FullBlockStore blockStore) throws VerificationException, BlockStoreException {
         checkState(chainlock.isHeldByCurrentThread());
         // For each block in our orphan list, try and fit it onto the head of
         // the chain. If we succeed remove it
@@ -1720,36 +1758,47 @@ public class FullBlockGraph {
         }
     }
 
-    private void updateConfirmed(int numberUpdates) throws BlockStoreException {
-        FullBlockStore blockStore = storeService.getStore();
-        try {
-            // First remove any blocks that should no longer be in the milestone
-            HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
-            HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-            for (BlockEvaluation block : blocksToRemove)
-                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+    // Start in new database connection to for potential database locks. Add
+    // chain must be atomic.
+ 
+    public void updateConfirmed(int numberUpdates, FullBlockStore blockStore) throws BlockStoreException {
 
-            long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
-            long maxHeight = blockService.getCurrentMaxHeight(blockStore);
-            for (int i = 0; i < numberUpdates; i++) {
-                // Now try to find blocks that can be added to the milestone.
-                // DISALLOWS UNSOLID
-                TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
+        // First remove any blocks that should no longer be in the milestone
+        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+        for (BlockEvaluation block : blocksToRemove)
+            unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
 
-                // VALIDITY CHECKS
-                validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
+        long maxHeight = blockService.getCurrentMaxHeight(blockStore);
+        for (int i = 0; i < numberUpdates; i++) {
+            // Now try to find blocks that can be added to the milestone.
+            // DISALLOWS UNSOLID
+            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
 
-                // Finally add the resolved new blocks to the confirmed set
-                HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-                for (BlockWrap block : blocksToAdd)
-                    confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+            // VALIDITY CHECKS
+            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
 
-                // Exit condition: there are no more blocks to add
-                if (blocksToAdd.isEmpty())
-                    break;
-            }
-        } finally {
-            blockStore.close();
+            // Finally add the resolved new blocks to the confirmed set
+            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+            for (BlockWrap block : blocksToAdd)
+                confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+
+            // Exit condition: there are no more blocks to add
+            if (blocksToAdd.isEmpty())
+                break;
         }
+
     }
+
+    private void solidifyReward(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+        RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
+        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
+        long currChainLength = blockStore.getRewardChainLength(prevRewardHash) + 1;
+        long difficulty = rewardInfo.getDifficultyTargetReward();
+
+        blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
+    }
+
 }

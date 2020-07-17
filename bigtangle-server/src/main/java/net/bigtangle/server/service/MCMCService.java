@@ -4,14 +4,12 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -22,11 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Stopwatch;
 
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
@@ -60,8 +55,6 @@ public class MCMCService {
     @Autowired
     private StoreService storeService;
 
-    @Autowired
-    private ValidatorService validatorService;
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -79,7 +72,7 @@ public class MCMCService {
         try {
             // log.info("mcmcService started");
             Stopwatch watch = Stopwatch.createStarted();
-            update(false);
+            update(false); 
             log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
@@ -89,20 +82,23 @@ public class MCMCService {
 
     }
 
-    public void update( ) throws InterruptedException, ExecutionException, BlockStoreException {
+    public void update() throws InterruptedException, ExecutionException, BlockStoreException {
         update(true);
     }
+
     public void update(boolean updateconfirm) throws InterruptedException, ExecutionException, BlockStoreException {
 
         Context context = new Context(params);
         Context.propagate(context);
-        // cleanupNonSolidMissingBlocks();
         FullBlockStore store = storeService.getStore();
         try {
             store.beginDatabaseBatchWrite();
             updateWeightAndDepth(store);
             updateRating(store);
-           if(updateconfirm)  updateConfirmed(1,store);
+            // TODO move updateConfirmed as task, Test run only with the same
+            // store
+            if (updateconfirm)
+                blockGraph.updateConfirmed(1, store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);
@@ -269,33 +265,4 @@ public class MCMCService {
         }
     }
 
-    private void updateConfirmed(int numberUpdates, FullBlockStore store)
-            throws BlockStoreException, JsonParseException, JsonMappingException, IOException {
-        // First remove any blocks that should no longer be in the milestone
-        HashSet<BlockEvaluation> blocksToRemove = store.getBlocksToUnconfirm();
-        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (BlockEvaluation block : blocksToRemove)
-            blockGraph.unconfirm(block.getBlockHash(), traversedUnconfirms, store);
-
-        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
-        long maxHeight = blockService.getCurrentMaxHeight(store);
-        for (int i = 0; i < numberUpdates; i++) {
-            // Now try to find blocks that can be added to the milestone.
-            // DISALLOWS UNSOLID
-            TreeSet<BlockWrap> blocksToAdd = store.getBlocksToConfirm(cutoffHeight, maxHeight);
-
-            // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, store);
-
-            // Finally add the resolved new blocks to the confirmed set
-            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-            for (BlockWrap block : blocksToAdd)
-                blockGraph.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, store);
-
-            // Exit condition: there are no more blocks to add
-            if (blocksToAdd.isEmpty())
-                break;
-
-        }
-    }
 }
