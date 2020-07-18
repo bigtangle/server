@@ -24,8 +24,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.annotation.Nullable;
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,13 +42,13 @@ import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
+import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.OrderRecordMatched;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -492,18 +490,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) " + "VALUES (?, ?, ?)";
     protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";
 
-    protected final String OrderRecordMatchedColumn = ORDER_TEMPLATE + ", txhash, matchblocktime";
-
-    protected final String INSERT_OrderRecordMatched = getInsert() + "  INTO OrderRecordMatched ("
-            + OrderRecordMatchedColumn + ") " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?)";
+    protected final String LockobjectColumn = " lockobjectid, lockobjectclass,  locktime";
+    protected final String INSERT_Lockobject = getInsert() + "  INTO Lockobject (" + LockobjectColumn + ") "
+            + " VALUES (?, ?, ?)";
 
     protected NetworkParameters params;
     protected Connection conn;
 
-    
-
     public Connection getConnection() throws SQLException {
-   
+
         return conn;
     }
 
@@ -532,13 +527,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      *             If there is a failure to connect and/or initialise the
      *             database.
      */
-    public DatabaseFullBlockStore(NetworkParameters params, Connection conn)   {
+    public DatabaseFullBlockStore(NetworkParameters params, Connection conn) {
         this.params = params;
         this.conn = conn;
     }
 
     public void create() throws BlockStoreException {
-    
+
         maybeConnect();
 
         try {
@@ -655,7 +650,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
         sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_BLOCKPROTOTYPE_TABLE);
-        sqlStatements.add("DROP TABLE OrderRecordMatched");
+        sqlStatements.add("DROP TABLE Lockobject");
         return sqlStatements;
     }
 
@@ -1882,14 +1877,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
+
     private BlockEvaluation setBlockEvaluationNumber(ResultSet resultSet) throws SQLException {
-        
-        BlockEvaluation blockEvaluation =  BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
-            resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4),
-            resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-            resultSet.getLong(8), resultSet.getLong(10), resultSet.getBoolean(11));
-    return blockEvaluation;
+
+        BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
+                resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(10),
+                resultSet.getBoolean(11));
+        return blockEvaluation;
     }
+
     private BlockEvaluation setBlockEvaluation(ResultSet resultSet) throws SQLException {
         BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes("hash")),
                 resultSet.getLong("rating"), resultSet.getLong("depth"), resultSet.getLong("cumulativeweight"),
@@ -6323,32 +6320,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public void insertOrderRecordMatched(List<OrderRecordMatched> matchlist) throws BlockStoreException {
+    public void insertLockobject(Lockobject lockobject) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_OrderRecordMatched);
-            for (OrderRecordMatched record : matchlist) {
-                preparedStatement.setBytes(1, record.getBlockHash().getBytes());
-                preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
-                preparedStatement.setLong(3, record.getOfferValue());
-                preparedStatement.setString(4, record.getOfferTokenid());
-                preparedStatement.setBoolean(5, record.isConfirmed());
-                preparedStatement.setBoolean(6, record.isSpent());
-                preparedStatement.setBytes(7,
-                        record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
-                preparedStatement.setLong(8, record.getTargetValue());
-                preparedStatement.setString(9, record.getTargetTokenid());
-                preparedStatement.setBytes(10, record.getBeneficiaryPubKey());
-                preparedStatement.setLong(11, record.getValidToTime());
-                preparedStatement.setLong(12, record.getValidFromTime());
-                preparedStatement.setString(13, record.getSide() == null ? null : record.getSide().name());
-                preparedStatement.setString(14, record.getBeneficiaryAddress());
-                preparedStatement.setString(15, record.getTransactionHash());
-                preparedStatement.setLong(16, record.getMatchBlockTime());
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
+            preparedStatement = getConnection().prepareStatement(INSERT_Lockobject);
+            preparedStatement.setString(1, lockobject.getLockobjectid());
+            preparedStatement.setString(2, lockobject.getLockobjectclass());
+            preparedStatement.setLong(3, lockobject.getLocktime());
+            preparedStatement.executeUpdate();
+
             preparedStatement.close();
 
         } catch (SQLException e) {
@@ -6365,27 +6346,19 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<OrderRecordMatched> selectOrderRecordMatched(String tokenId, long matchtime)
-            throws BlockStoreException {
+    public List<Lockobject> selectLockobject(String lockobkectid ) throws BlockStoreException {
 
         PreparedStatement s = null;
-        List<OrderRecordMatched> list = new ArrayList<OrderRecordMatched>();
+        List<Lockobject> list = new ArrayList<Lockobject>();
         try {
-            maybeConnect();
-            if (tokenId == null || "".equals(tokenId)) {
-                s = getConnection().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
-                        + " where matchblocktime > ?  ");
-                s.setLong(1, matchtime);
-            } else {
-                s = getConnection().prepareStatement(" select " + OrderRecordMatchedColumn + " from OrderRecordMatched "
-                        + " where matchblocktime > ? and ( targettokenid=?" + " or offertokenid=? ");
-                s.setLong(1, matchtime);
-                s.setString(2, tokenId);
-                s.setString(3, tokenId);
-            }
+   
+                s = getConnection().prepareStatement(" select " + LockobjectColumn + " from Lockobject "
+                        + " where   lockobkectid=?   "); 
+                s.setString(1, lockobkectid); 
+             
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                list.add(setOrderRecordMatched(resultSet));
+                list.add(setLockobject(resultSet));
             }
             return list;
         } catch (SQLException ex) {
@@ -6400,16 +6373,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    private OrderRecordMatched setOrderRecordMatched(ResultSet resultSet) throws SQLException {
-        return new OrderRecordMatched(Sha256Hash.wrap(resultSet.getBytes("blockhash")),
-                Sha256Hash.wrap(resultSet.getBytes("collectinghash")), resultSet.getLong("offercoinvalue"),
-                resultSet.getString("offertokenid"), resultSet.getBoolean("confirmed"), resultSet.getBoolean("spent"),
-                resultSet.getBytes("spenderblockhash") == null ? null
-                        : Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-                resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
-                resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
-                resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"), resultSet.getString("txhash"),
+    private Lockobject setLockobject(ResultSet resultSet) throws SQLException {
+        return new Lockobject(resultSet.getString("lockobjectid"), resultSet.getString("lockobjectclass"),
                 resultSet.getLong("matchblocktime"));
     }
 }

@@ -1,6 +1,5 @@
 package net.bigtangle.server.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,12 +7,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.OrderRecordMatched;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.data.OrderMatchingResult;
@@ -23,7 +20,6 @@ import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.core.response.AbstractResponse;
-import net.bigtangle.core.response.OrderMatchedResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.store.FullBlockStore;
 
@@ -53,29 +49,13 @@ public class OrderTickerService {
                     }
                 }
             }
-            addOrderMatchingResultDB(orderMatchingResult, transactionHash, matchBlockTime,store);
+          
         } catch (Exception e) {
             // this is analysis data and is not consensus relevant
         }
     }
 
-    /*
-     * for execution info, add the executed order record on database for
-     * analysis It is saved with the matchBlockTime and will be deleted after
-     * days
-     */
-    public void addOrderMatchingResultDB(OrderMatchingResult orderMatchingResult, String transactionHash,
-            long matchBlockTime,FullBlockStore store) throws BlockStoreException {
-        List<OrderRecordMatched> olist = new ArrayList<OrderRecordMatched>();
-        for (OrderRecord o : orderMatchingResult.getSpentOrders()) {
-            OrderRecordMatched f = OrderRecordMatched.fromOrderRecord(o);
-            f.setTransactionHash(transactionHash);
-            f.setMatchBlockTime(matchBlockTime);
-            olist.add(f);
-        }
-        store.insertOrderRecordMatched(olist);
-    }
-
+     
     public void removeMatchingEvents(Transaction outputTx, Map<String, List<Event>> tokenId2Events,FullBlockStore store)
             throws BlockStoreException {
         store.deleteMatchingEvents(outputTx.getHashAsString());
@@ -151,18 +131,5 @@ public class OrderTickerService {
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
     }
 
-    public OrderMatchedResponse getOrderRecordMatched(String tokenId, String matchBlockTime,FullBlockStore store)
-            throws BlockStoreException {
-        long inserttime = System.currentTimeMillis() / 1000 - 1000000000;
-        if (matchBlockTime != null && "".equals(matchBlockTime)) {
-            inserttime = Long.parseLong(matchBlockTime);
-        }
-
-        return OrderMatchedResponse.createOrderRecordResponse(store.selectOrderRecordMatched(tokenId, inserttime));
-    }
-
-    public List<OrderRecordMatched> getOrderRecordMatched(String tokenId, Long matchBlockTime,FullBlockStore store)
-            throws BlockStoreException {
-        return store.selectOrderRecordMatched(tokenId, matchBlockTime);
-    }
+ 
 }

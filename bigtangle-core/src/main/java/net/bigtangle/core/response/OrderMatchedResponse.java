@@ -7,24 +7,24 @@ package net.bigtangle.core.response;
 
 import java.util.List;
 
-import net.bigtangle.core.OrderRecordMatched;
+import net.bigtangle.core.Lockobject;
 
 public class OrderMatchedResponse extends AbstractResponse {
 
-    private List<OrderRecordMatched> orderRecordMatcheds;
+    private List<Lockobject> lockobjects;
  
-    public static OrderMatchedResponse createOrderRecordResponse(List<OrderRecordMatched> tickers) {
+    public static OrderMatchedResponse createOrderRecordResponse(List<Lockobject> tickers) {
         OrderMatchedResponse res = new OrderMatchedResponse();
-        res.orderRecordMatcheds =  tickers;
+        res.lockobjects =  tickers;
         return res;
     }
 
-    public List<OrderRecordMatched> getOrderRecordMatcheds() {
-        return orderRecordMatcheds;
+    public List<Lockobject> getOrderRecordMatcheds() {
+        return lockobjects;
     }
 
-    public void setOrderRecordMatcheds(List<OrderRecordMatched> orderRecordMatcheds) {
-        this.orderRecordMatcheds = orderRecordMatcheds;
+    public void setOrderRecordMatcheds(List<Lockobject> lockobjects) {
+        this.lockobjects = lockobjects;
     }
      
 }

@@ -15,7 +15,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.store.FullBlockGraph;
-import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
 
 /**

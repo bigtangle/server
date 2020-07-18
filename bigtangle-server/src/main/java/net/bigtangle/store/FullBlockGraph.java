@@ -147,10 +147,14 @@ public class FullBlockGraph {
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-            chainlock.lock();
+
             try {
+                try {
+                    chainlock.tryLock(1, TimeUnit.HOURS);
+                } catch (InterruptedException e) {
+                }
                 a = addChain(block, allowUnsolid, true, store);
-              //  updateConfirmed();
+                // updateConfirmed();
             } finally {
                 chainlock.unlock();
             }
@@ -195,7 +199,7 @@ public class FullBlockGraph {
             handler.cancel(true);
         } catch (Exception e) {
             // ignore
-            log.info("updateConfirmed",e);
+            log.info("updateConfirmed", e);
         } finally {
             executor.shutdownNow();
         }
@@ -1760,7 +1764,7 @@ public class FullBlockGraph {
 
     // Start in new database connection to for potential database locks. Add
     // chain must be atomic.
- 
+
     public void updateConfirmed(int numberUpdates, FullBlockStore blockStore) throws BlockStoreException {
 
         // First remove any blocks that should no longer be in the milestone

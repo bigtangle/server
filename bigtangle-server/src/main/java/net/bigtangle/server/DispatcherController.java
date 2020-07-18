@@ -533,16 +533,7 @@ public class DispatcherController {
                 this.accessGrantService.deleteAccessGrant(pubKey,store);
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse(), watch);
             }
-                break;
-            case getOrdermatched: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class); 
-                String matchBlockTime   = (String) request.get("matchblocktime");
-                String tokenid = (String) request.get("tokenid"); 
-                AbstractResponse response = orderTickerService.getOrderRecordMatched(tokenid, matchBlockTime,store) ;
-                this.outPrintJSONString(httpServletResponse, response, watch);
-            }
-                break;
+                break; 
             case getCheckPoint: { 
                 AbstractResponse response =CheckpointResponse.create(checkpointService.checkToken(store)) ;
                 this.outPrintJSONString(httpServletResponse, response, watch);

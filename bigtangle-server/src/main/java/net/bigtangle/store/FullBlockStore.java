@@ -28,7 +28,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.OrderRecordMatched;
+import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -50,8 +50,8 @@ import net.bigtangle.server.core.BlockWrap;
 
 /**
  * <p>
- * An implementor of FullBlockStore saves StoredBlock objects to some
- * storage mechanism.
+ * An implementor of FullBlockStore saves StoredBlock objects to some storage
+ * mechanism.
  * </p>
  * 
  * <p>
@@ -63,8 +63,8 @@ import net.bigtangle.server.core.BlockWrap;
  * </p>
  * 
  * <p>
- * A FullBlockStore should function well as a standard {@link BlockStore}
- * and then be able to trivially switch to being used as a FullBlockStore.
+ * A FullBlockStore should function well as a standard {@link BlockStore} and
+ * then be able to trivially switch to being used as a FullBlockStore.
  * </p>
  * 
  * <p>
@@ -82,14 +82,14 @@ import net.bigtangle.server.core.BlockWrap;
  * </p>
  *
  * <p>
- * A FullBlockStore contains a map of hashes to [Full]StoredBlock. The
- * hash is the double digest of the Bitcoin serialization of the block header,
+ * A FullBlockStore contains a map of hashes to [Full]StoredBlock. The hash is
+ * the double digest of the Bitcoin serialization of the block header,
  * <b>not</b> the header with the extra data as well.
  * </p>
  * 
  * <p>
- * A FullBlockStore also contains a map of hash+index to UTXO. Again, the
- * hash is a standard Bitcoin double-SHA256 hash of the transaction.
+ * A FullBlockStore also contains a map of hash+index to UTXO. Again, the hash
+ * is a standard Bitcoin double-SHA256 hash of the transaction.
  * </p>
  *
  * <p>
@@ -505,9 +505,11 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
             throws BlockStoreException;
-    void deleteBlockPrototypeTimeout( )    throws BlockStoreException;
-    void insertOrderRecordMatched(List<OrderRecordMatched> matchresults) throws BlockStoreException;
 
-    List<OrderRecordMatched> selectOrderRecordMatched(String tokenId,long matchtime) throws BlockStoreException;
-    
+    void deleteBlockPrototypeTimeout() throws BlockStoreException;
+
+    void insertLockobject(Lockobject lockobject) throws BlockStoreException;
+
+    List<Lockobject> selectLockobject(String lockobjectid) throws BlockStoreException;
+
 }
