@@ -32,7 +32,7 @@ public class ServerConfiguration {
     private Boolean serviceReady = false;
     private Boolean createtable = true;
 
-    private double alphaMCMC = -0.75;
+    private double alphaMCMC = -0.05;
     private Boolean runKafkaStream = false;
     //start sync from this checkpoint
     private Long checkpoint=-1l ;
