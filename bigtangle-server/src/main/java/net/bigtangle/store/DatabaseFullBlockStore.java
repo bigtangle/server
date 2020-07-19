@@ -194,7 +194,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time "
             + " FROM outputs  WHERE   confirmed=true and spent= false and tokenid = ?";
-
+   
     // Tables exist SQL.
     protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
@@ -1459,6 +1459,40 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
 
     }
+    
+    @Override
+    public List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException {
+
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            // Must be sorted for hash checkpoint
+            s = getConnection().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "  where blockhash =?");
+            s.setString(1, blockhash);
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                outputs.add(
+                        setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"), results));
+            }
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
+        }
+
+    }
+    
+    
+    
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {

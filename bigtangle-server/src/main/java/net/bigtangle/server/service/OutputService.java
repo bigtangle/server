@@ -41,10 +41,11 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @Service
 public class OutputService {
 
-    public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs,FullBlockStore store) throws BlockStoreException {
+    public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs, FullBlockStore store)
+            throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-                false,store);
+                false, store);
         Map<String, Coin> values = new HashMap<String, Coin>();
 
         for (TransactionOutput transactionOutput : transactionOutputs) {
@@ -68,21 +69,20 @@ public class OutputService {
             r.put("tokenName", entry.getValue().getTokenHex());
         }
 
-        return GetBalancesResponse.create(tokens, outputs, getTokename(outputs,store));
+        return GetBalancesResponse.create(tokens, outputs, getTokename(outputs, store));
     }
 
     @Autowired
     private NetworkParameters networkParameters;
- 
 
     protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
-            boolean excludeImmatureCoinbases,FullBlockStore store) {
+            boolean excludeImmatureCoinbases, FullBlockStore store) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
 
-            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs,store)) {
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, store)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
                 candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
@@ -95,10 +95,10 @@ public class OutputService {
     }
 
     public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
-            byte[] tokenid, boolean excludeImmatureCoinbases,FullBlockStore store) {
+            byte[] tokenid, boolean excludeImmatureCoinbases, FullBlockStore store) {
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
         try {
-            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid,store)) {
+            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid, store)) {
                 if (output.isSpent() || !output.isConfirmed())
                     continue;
                 candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
@@ -111,7 +111,7 @@ public class OutputService {
         return candidates;
     }
 
-    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid,FullBlockStore store)
+    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid, FullBlockStore store)
             throws UTXOProviderException {
         List<Address> addresses = new ArrayList<Address>();
         for (byte[] key : pubKeyHashs) {
@@ -122,7 +122,8 @@ public class OutputService {
         return list;
     }
 
-    private List<UTXO> getStoredOutputsFromUTXOProvider(Set<byte[]> pubKeyHashs,FullBlockStore store) throws UTXOProviderException {
+    private List<UTXO> getStoredOutputsFromUTXOProvider(Set<byte[]> pubKeyHashs, FullBlockStore store)
+            throws UTXOProviderException {
         List<Address> addresses = new ArrayList<Address>();
         for (byte[] key : pubKeyHashs) {
             Address address = new Address(networkParameters, key);
@@ -132,65 +133,81 @@ public class OutputService {
         return list;
     }
 
-    private List<UTXO> getOpenAllOutputs(String tokenid,FullBlockStore store) throws UTXOProviderException {
+    private List<UTXO> getOpenAllOutputs(String tokenid, FullBlockStore store) throws UTXOProviderException {
         return store.getOpenAllOutputs(tokenid);
 
     }
 
-    public GetOutputsResponse getOpenAllOutputsResponse(String tokenid,FullBlockStore store)
+    public GetOutputsResponse getOpenAllOutputsResponse(String tokenid, FullBlockStore store)
             throws BlockStoreException, UTXOProviderException {
-        List<UTXO> outputs = getOpenAllOutputs(tokenid,store);
-        return GetOutputsResponse.create(outputs, getTokename(outputs,store));
+        List<UTXO> outputs = getOpenAllOutputs(tokenid, store);
+        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
     }
 
-    public GetOutputsResponse getAccountOutputs(Set<byte[]> pubKeyHashs,FullBlockStore store) throws BlockStoreException {
+    public GetOutputsResponse getAccountOutputs(Set<byte[]> pubKeyHashs, FullBlockStore store)
+            throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-                false,store);
+                false, store);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-        return GetOutputsResponse.create(outputs, getTokename(outputs,store));
+        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
     }
 
-    public GetOutputsResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime,FullBlockStore store)
-            throws Exception {
+    public GetOutputsResponse getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime,
+            FullBlockStore store) throws Exception {
         List<UTXO> outputs = new ArrayList<UTXO>();
         // no check valid adress
         if ((fromaddress != null && !"".equals(fromaddress) && checkValidAddress(fromaddress))
                 || (toaddress != null && !"".equals(toaddress) && checkValidAddress(toaddress))) {
-            outputs =  store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
+            outputs = store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
         }
-        return GetOutputsResponse.create(outputs, getTokename(outputs,store));
+        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
     }
 
-    public GetOutputsResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid,FullBlockStore store) throws BlockStoreException {
+    public GetOutputsResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid, FullBlockStore store)
+            throws BlockStoreException {
         List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
         pubKeyHashs.add(pubKey);
 
         List<UTXO> outputs = new ArrayList<UTXO>();
         List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-                tokenid, false,store);
+                tokenid, false, store);
         for (TransactionOutput transactionOutput : transactionOutputs) {
             FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
             outputs.add(freeStandingTransactionOutput.getUTXO());
         }
-        return GetOutputsResponse.create(outputs, getTokename(outputs,store));
+        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
     }
 
-    public AbstractResponse getOutputsWithHexStr(String hexStr,FullBlockStore store) throws BlockStoreException {
-        UTXO output = getStoredOutputsWithHexStr(hexStr,store);
+    public AbstractResponse getOutputsWithHexStr(String hexStr, FullBlockStore store) throws BlockStoreException {
+        UTXO output = getStoredOutputsWithHexStr(hexStr, store);
         return OutputsDetailsResponse.create(output);
     }
 
-    public AbstractResponse getOutputsMultiList(String hexStr, int index,FullBlockStore store) throws BlockStoreException {
-        List<OutputsMulti> outputsMultis =  store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hexStr), index);
+    public AbstractResponse getOutputsByBlockhash(String hexStr, FullBlockStore store)
+            throws BlockStoreException, UTXOProviderException {
+        List<UTXO> outputs = store.getOpenOutputsByBlockhash(hexStr);
+        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
+
+    }
+
+    public AbstractResponse getOutputsWithBlockhashHexStr(String blockhash, FullBlockStore store)
+            throws BlockStoreException {
+        UTXO output = getStoredOutputsWithHexStr(blockhash, store);
+        return OutputsDetailsResponse.create(output);
+    }
+
+    public AbstractResponse getOutputsMultiList(String hexStr, int index, FullBlockStore store)
+            throws BlockStoreException {
+        List<OutputsMulti> outputsMultis = store.queryOutputsMultiByHashAndIndex(Utils.HEX.decode(hexStr), index);
 
         return OutputsDetailsResponse.create(outputsMultis);
     }
 
-    private UTXO getStoredOutputsWithHexStr(String hexStr,FullBlockStore store) throws BlockStoreException {
+    private UTXO getStoredOutputsWithHexStr(String hexStr, FullBlockStore store) throws BlockStoreException {
         String[] strs = hexStr.split(":");
         byte[] hash = Utils.HEX.decode(strs[0]);
         long outputindex = Long.parseLong(strs[1]);
@@ -198,7 +215,7 @@ public class OutputService {
         return utxo;
     }
 
-    public Map<String, Token> getTokename(List<UTXO> outxos,FullBlockStore store) throws BlockStoreException {
+    public Map<String, Token> getTokename(List<UTXO> outxos, FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (UTXO d : outxos) {
             tokenids.add(d.getTokenId());

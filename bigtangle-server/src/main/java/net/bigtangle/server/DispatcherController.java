@@ -371,7 +371,14 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
-
+            case outputsByBlockhash: {
+                String reqStr = new String(bodyByte, "UTF-8");
+                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+                String hashHex = (String) request.get("hashHex");
+                AbstractResponse response = walletService.getOutputsByBlockhash(hashHex,store);
+                this.outPrintJSONString(httpServletResponse, response, watch);
+            }
+                break;
             case regSubtangle: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

@@ -18,7 +18,7 @@ public enum ReqCmd {
 	// Block Order
 	getOrders, getOTCMarkets, getOrdersTicker, signOrder,getOrdermatched,
 	// Outputs
-	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,
+	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,outputsByBlockhash,
 
 	// payment
 	launchPayMultiSign, payMultiSign,

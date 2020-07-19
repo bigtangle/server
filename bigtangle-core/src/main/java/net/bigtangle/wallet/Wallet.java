@@ -1914,7 +1914,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 200000);
+        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3,
+                200000);
     }
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
@@ -2813,6 +2814,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         return solveAndPost(block);
 
+    }
+
+    public String fromAddress(Block block) throws BlockStoreException {
+        for (final Transaction tx : block.getTransactions()) {
+            for (TransactionInput t : tx.getInputs()) {
+                if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
+                    return t.getFromAddress().toBase58();
+                } else {
+                    return new Address(params,
+                            Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
+                }
+            }
+
+        }
+        return "";
     }
 
     public void changePassword(String password, String oldPassword) {

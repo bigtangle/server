@@ -44,6 +44,7 @@ import net.bigtangle.core.data.DepthAndWeight;
 import net.bigtangle.core.data.Rating;
 import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
@@ -509,5 +510,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void insertOrderRecordMatched(List<OrderRecordMatched> matchresults) throws BlockStoreException;
 
     List<OrderRecordMatched> selectOrderRecordMatched(String tokenId,long matchtime) throws BlockStoreException;
+
+    List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
     
 }
