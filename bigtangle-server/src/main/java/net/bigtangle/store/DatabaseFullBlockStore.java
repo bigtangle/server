@@ -24,8 +24,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.annotation.Nullable;
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,7 +192,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time "
             + " FROM outputs  WHERE   confirmed=true and spent= false and tokenid = ?";
-   
+
     // Tables exist SQL.
     protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
@@ -500,10 +498,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected NetworkParameters params;
     protected Connection conn;
 
-    
-
     public Connection getConnection() throws SQLException {
-   
+
         return conn;
     }
 
@@ -532,13 +528,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      *             If there is a failure to connect and/or initialise the
      *             database.
      */
-    public DatabaseFullBlockStore(NetworkParameters params, Connection conn)   {
+    public DatabaseFullBlockStore(NetworkParameters params, Connection conn) {
         this.params = params;
         this.conn = conn;
     }
 
     public void create() throws BlockStoreException {
-    
+
         maybeConnect();
 
         try {
@@ -1459,7 +1455,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
 
     }
-    
+
     @Override
     public List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException {
 
@@ -1490,9 +1486,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
 
     }
-    
-    
-    
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
@@ -1916,14 +1909,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
+
     private BlockEvaluation setBlockEvaluationNumber(ResultSet resultSet) throws SQLException {
-        
-        BlockEvaluation blockEvaluation =  BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
-            resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4),
-            resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
-            resultSet.getLong(8), resultSet.getLong(10), resultSet.getBoolean(11));
-    return blockEvaluation;
+
+        BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
+                resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
+                resultSet.getLong(6), resultSet.getLong(7), resultSet.getLong(8), resultSet.getLong(10),
+                resultSet.getBoolean(11));
+        return blockEvaluation;
     }
+
     private BlockEvaluation setBlockEvaluation(ResultSet resultSet) throws SQLException {
         BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes("hash")),
                 resultSet.getLong("rating"), resultSet.getLong("depth"), resultSet.getLong("cumulativeweight"),
@@ -3074,6 +3069,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             sql += " ORDER BY insertTime desc ";
         }
         List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
+        TXReward maxConfirmedReward = getMaxConfirmedReward();
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -3085,7 +3081,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                         resultSet.getLong("depth"), resultSet.getLong("cumulativeweight"), resultSet.getLong("height"),
                         resultSet.getLong("milestone"), resultSet.getLong("milestonelastupdate"),
                         resultSet.getLong("inserttime"), resultSet.getInt("blocktype"), resultSet.getLong("solid"),
-                        resultSet.getBoolean("confirmed"));
+                        resultSet.getBoolean("confirmed"), maxConfirmedReward.getChainLength());
                 result.add(blockEvaluation);
             }
             return result;
@@ -3117,6 +3113,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 + "  FROM  blocks WHERE hash = ? ";
 
         maybeConnect();
+        TXReward maxConfirmedReward = getMaxConfirmedReward();
         PreparedStatement preparedStatement = null;
         try {
 
@@ -3130,7 +3127,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             Sha256Hash.wrap(resultSet.getBytes(1)), resultSet.getLong(2), resultSet.getLong(3),
                             resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
                             resultSet.getLong(8), resultSet.getInt(9), resultSet.getLong("solid"),
-                            resultSet.getBoolean("confirmed"));
+                            resultSet.getBoolean("confirmed"), maxConfirmedReward.getChainLength());
                     result.add(blockEvaluation);
                 }
             }

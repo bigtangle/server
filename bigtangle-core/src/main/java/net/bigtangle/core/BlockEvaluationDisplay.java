@@ -6,6 +6,11 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 
     private Type blockType;
 
+    /*
+     * the latest chain number 
+     */
+    private long latestchainnumber;
+    
     public BlockEvaluationDisplay() {
     }
 
@@ -23,7 +28,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 
     public static BlockEvaluationDisplay build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
             long height, long milestone, long milestoneLastUpdateTime, long insertTime,
-            int blocktype, long solid, boolean confirmed) {
+            int blocktype, long solid, boolean confirmed, long latestchainnumber) {
         BlockEvaluationDisplay blockEvaluation = new BlockEvaluationDisplay();
         blockEvaluation.setBlockHash(blockhash);
         blockEvaluation.setNormalizeRating(rating);
@@ -37,6 +42,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         blockEvaluation.setBlockTypeInt(blocktype);
         blockEvaluation.setSolid(solid);
         blockEvaluation.setConfirmed(confirmed);
+        blockEvaluation.setLatestchainnumber(latestchainnumber);
         return blockEvaluation;
     }
 
@@ -48,6 +54,14 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         setRating(rating *100 / NetworkParameters.NUMBER_RATING_TIPS);
     }
     
+    public long getLatestchainnumber() {
+        return latestchainnumber;
+    }
+
+    public void setLatestchainnumber(long latestchainnumber) {
+        this.latestchainnumber = latestchainnumber;
+    }
+
     /**
      * 
      */
@@ -55,7 +69,8 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 
     @Override
     public String toString() {
-        return "  [blockType=" + blockType + "]" + super.toString();
+        return " blockType=" + blockType + ", latestchainnumber=" + latestchainnumber
+                + super.toString();
     }
 
 }
