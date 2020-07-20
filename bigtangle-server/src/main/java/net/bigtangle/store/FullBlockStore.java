@@ -23,12 +23,12 @@ import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
+import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -44,6 +44,7 @@ import net.bigtangle.core.data.DepthAndWeight;
 import net.bigtangle.core.data.Rating;
 import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
@@ -511,5 +512,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void insertLockobject(Lockobject lockobject) throws BlockStoreException;
 
     List<Lockobject> selectLockobject(String lockobjectid) throws BlockStoreException;
-
+ 
+    List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
+    
+      
 }
