@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import net.bigtangle.core.Json;
 import net.bigtangle.core.Utils;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;

@@ -22,12 +22,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
-import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
@@ -37,8 +35,10 @@ import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.data.UnsolidBlock;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 

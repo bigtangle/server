@@ -25,7 +25,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
@@ -36,6 +35,7 @@ import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 

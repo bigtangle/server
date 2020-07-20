@@ -16,12 +16,12 @@ import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)

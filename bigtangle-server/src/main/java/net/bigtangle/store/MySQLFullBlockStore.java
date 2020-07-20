@@ -359,11 +359,12 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    inserttime bigint,\n" 
             + "    CONSTRAINT tips_pk PRIMARY KEY (prevblockhash,prevbranchblockhash ) USING BTREE \n" + ")\n";
 
-    private static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n" 
-            + "    lockobjectid  char(40) NOT NULL,\n"
-            + "    lockobjectclass  char(40) NOT NULL,\n"
-            + "    locktime bigint NOT NULL,\n" 
-            + "    CONSTRAINT orders_pk PRIMARY KEY (lockobjectid)  \n" + ")\n";
+    private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
+            + "    hash binary(32) NOT NULL,\n" 
+            + "    block mediumblob NOT NULL,\n" 
+            + "    chainlength bigint,\n " 
+            + "    inserttime bigint NOT NULL,\n"
+            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")\n";
     
     
     // Some indexes to speed up stuff
@@ -437,7 +438,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE);
         sqlStatements.add(CREATE_BLOCKPROTOTYPE_TABLE);
-        sqlStatements.add(CREATE_LOCKOBJECT_TABLE);
+        sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         return sqlStatements;
     }
 

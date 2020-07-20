@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.bigtangle.core.data;
+package net.bigtangle.server.data;
 
 import com.google.common.collect.Lists;
 
@@ -29,7 +29,7 @@ import java.util.LinkedList;
 // This code is unit tested by the PeerGroup tests.
 
 /**
- * <p>A reusable object that will calculate, given a list of {@link net.bigtangle.core.data.PeerFilterProvider}s, a merged
+ * <p>A reusable object that will calculate, given a list of {@link net.bigtangle.server.data.PeerFilterProvider}s, a merged
  * {@link net.bigtangle.core.BloomFilter} and earliest key time for all of them.
  * Used by the {@link net.bigtangle.store.PeerGroup} class internally.</p>
  *

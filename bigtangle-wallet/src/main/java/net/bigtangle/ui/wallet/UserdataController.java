@@ -30,7 +30,6 @@ import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.MyHomeAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -45,6 +44,7 @@ import net.bigtangle.core.WatchedInfo;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
 public class UserdataController {

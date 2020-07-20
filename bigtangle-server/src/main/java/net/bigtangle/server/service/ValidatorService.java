@@ -41,13 +41,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
-import net.bigtangle.core.data.SolidityState;
-import net.bigtangle.core.data.SolidityState.State;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
@@ -90,9 +87,12 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
+import net.bigtangle.server.data.SolidityState;
+import net.bigtangle.server.data.SolidityState.State;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
+import net.bigtangle.utils.Json;
 
 @Service
 public class ValidatorService {

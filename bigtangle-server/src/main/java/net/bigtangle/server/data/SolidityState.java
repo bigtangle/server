@@ -1,4 +1,4 @@
-package net.bigtangle.core.data;
+package net.bigtangle.server.data;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TransactionOutPoint;

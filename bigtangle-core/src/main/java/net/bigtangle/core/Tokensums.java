@@ -1,4 +1,4 @@
-package net.bigtangle.core.data;
+package net.bigtangle.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -6,12 +6,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
-import net.bigtangle.core.DataClass;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.UTXO;
-import net.bigtangle.core.Utils;
 
 public class Tokensums  extends DataClass implements java.io.Serializable {
     /**

@@ -3,9 +3,11 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.core;
+package net.bigtangle.server.data;
 
 import java.util.Date;
+
+import net.bigtangle.core.Sha256Hash;
 
 public class BatchBlock implements java.io.Serializable {
 

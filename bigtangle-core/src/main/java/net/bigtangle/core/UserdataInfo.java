@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.utils.Json;
+
 public class UserdataInfo extends DataClass implements java.io.Serializable {
 
     private static final long serialVersionUID = 1554582498768357964L;

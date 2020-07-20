@@ -1,13 +1,9 @@
-package net.bigtangle.core.data;
+package net.bigtangle.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.TreeMap;
-
-import net.bigtangle.core.DataClass;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Utils;
 
 public class TokensumsMap extends DataClass implements java.io.Serializable {
     /**

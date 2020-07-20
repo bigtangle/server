@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.core;
+package net.bigtangle.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;

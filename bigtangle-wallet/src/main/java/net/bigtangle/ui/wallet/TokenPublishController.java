@@ -33,7 +33,6 @@ import javafx.scene.control.ToggleGroup;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.TokenInfo;
@@ -48,6 +47,7 @@ import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.IgnoreServiceException;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
 import net.bigtangle.ui.wallet.utils.WTUtils;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 

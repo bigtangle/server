@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import net.bigtangle.utils.Json;
+
 public class UserSettingData implements java.io.Serializable {
     /**
      * 

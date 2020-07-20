@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.core.data;
+package net.bigtangle.server.data;
 
 import net.bigtangle.core.BloomFilter;
 

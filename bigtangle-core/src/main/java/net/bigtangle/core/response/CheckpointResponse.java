@@ -6,7 +6,7 @@
 package net.bigtangle.core.response;
 
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.data.TokensumsMap;
+import net.bigtangle.core.TokensumsMap;
 
 public class CheckpointResponse extends AbstractResponse {
 

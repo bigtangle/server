@@ -3,9 +3,12 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.core;
+package net.bigtangle.server.data;
 
 import java.util.Arrays;
+
+import net.bigtangle.core.DataClass;
+import net.bigtangle.core.Sha256Hash;
 
 public class UnsolidBlock extends DataClass implements java.io.Serializable {
 

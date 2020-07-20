@@ -24,13 +24,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
 @RunWith(SpringRunner.class)

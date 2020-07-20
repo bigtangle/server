@@ -16,9 +16,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Tokensums;
+import net.bigtangle.core.TokensumsMap;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.data.Tokensums;
-import net.bigtangle.core.data.TokensumsMap;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.store.FullBlockStore;

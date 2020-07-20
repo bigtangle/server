@@ -7,7 +7,6 @@ package net.bigtangle.server.core;
 
 import com.google.common.base.Objects;
 
-import net.bigtangle.core.ConflictPoint;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutPoint;

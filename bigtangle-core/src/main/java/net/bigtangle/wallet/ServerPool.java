@@ -18,10 +18,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import net.bigtangle.core.Json;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
 /*

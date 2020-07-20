@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
-import net.bigtangle.core.data.OrderMatchingResult;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
@@ -21,6 +20,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
+import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.store.FullBlockStore;
 
 /**

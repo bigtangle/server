@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.bigtangle.core.data;
+package net.bigtangle.server.data;
 
 import java.nio.MappedByteBuffer;
 

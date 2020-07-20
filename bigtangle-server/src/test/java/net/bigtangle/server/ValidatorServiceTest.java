@@ -28,7 +28,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -70,6 +69,7 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.utils.Json;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)

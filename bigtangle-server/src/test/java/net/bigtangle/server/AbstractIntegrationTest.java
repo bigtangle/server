@@ -49,7 +49,6 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
@@ -59,7 +58,6 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.PrunedException;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
@@ -86,7 +84,6 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.BlockService;
- 
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
@@ -94,6 +91,7 @@ import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UUIDUtil;
@@ -627,14 +625,14 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected Block createAndAddNextBlock(Block b1, Block b2)
-            throws VerificationException, PrunedException, BlockStoreException {
+            throws VerificationException , BlockStoreException {
         Block block = b1.createNextBlock(b2);
         this.blockGraph.add(block, true,store);
         return block;
     }
 
     protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
-            throws VerificationException, PrunedException, BlockStoreException, JsonParseException,
+            throws VerificationException , BlockStoreException, JsonParseException,
             JsonMappingException, IOException {
         Block block1 = b1.createNextBlock(b2);
         block1.addTransaction(prevOut);

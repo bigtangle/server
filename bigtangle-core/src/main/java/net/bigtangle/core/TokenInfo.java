@@ -13,6 +13,8 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import net.bigtangle.utils.Json;
+
 public class TokenInfo extends DataClass implements java.io.Serializable {
 
     // TODO drop string from everywhere, stop using Sha256Hash.wrap, instead use

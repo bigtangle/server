@@ -16,14 +16,11 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
-import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -37,17 +34,20 @@ import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UTXOProvider;
-import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
-import net.bigtangle.core.data.ContractEventRecord;
-import net.bigtangle.core.data.DepthAndWeight;
-import net.bigtangle.core.data.Rating;
-import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.BatchBlock;
+import net.bigtangle.server.data.BlockPrototype;
+import net.bigtangle.server.data.ChainBlockQueue;
+import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.DepthAndWeight;
+import net.bigtangle.server.data.Rating;
+import net.bigtangle.server.data.SolidityState;
+import net.bigtangle.server.data.UnsolidBlock;
 
 /**
  * <p>
@@ -509,11 +509,11 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteBlockPrototypeTimeout() throws BlockStoreException;
 
-    void insertLockobject(Lockobject lockobject) throws BlockStoreException;
-
-    List<Lockobject> selectLockobject(String lockobjectid) throws BlockStoreException;
+    void insertLockobject(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
  
     List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
-    
+
+    List<ChainBlockQueue> selectChainblockqueue() throws BlockStoreException;
+    void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
       
 }

@@ -32,17 +32,14 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.BlockPrototype;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
-import net.bigtangle.core.Lockobject;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -58,13 +55,8 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UnsolidBlock;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.data.ContractEventRecord;
-import net.bigtangle.core.data.DepthAndWeight;
-import net.bigtangle.core.data.Rating;
-import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -73,6 +65,14 @@ import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.BatchBlock;
+import net.bigtangle.server.data.BlockPrototype;
+import net.bigtangle.server.data.ChainBlockQueue;
+import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.DepthAndWeight;
+import net.bigtangle.server.data.Rating;
+import net.bigtangle.server.data.SolidityState;
+import net.bigtangle.server.data.UnsolidBlock;
 import net.bigtangle.utils.Gzip;
 
 /**
@@ -490,9 +490,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  INTO blockprototype (prevblockhash, prevbranchblockhash, inserttime) " + "VALUES (?, ?, ?)";
     protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =? and prevbranchblockhash=?  ";
 
-    protected final String LockobjectColumn = " lockobjectid, lockobjectclass,  locktime";
-    protected final String INSERT_Lockobject = getInsert() + "  INTO Lockobject (" + LockobjectColumn + ") "
-            + " VALUES (?, ?, ?)";
+    protected final String ChainBlockQueueColumn = " hash, block, chainlength, orphan, inserttime";
+    protected final String INSERT_CHAINBLOCKQUEUE = getInsert() + "  INTO chainblockqueue (" + ChainBlockQueueColumn
+            + ") " + " VALUES (?, ?, ?,?,?)";
+    protected final String SELECT_CHAINBLOCKQUEUE_FORUPDATE = " select " + ChainBlockQueueColumn
+            + " from chainblockqueue for update ";
 
     protected NetworkParameters params;
     protected Connection conn;
@@ -650,7 +652,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
         sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_BLOCKPROTOTYPE_TABLE);
-        sqlStatements.add("DROP TABLE Lockobject");
+        sqlStatements.add("DROP TABLE ChainBlockQueue");
         return sqlStatements;
     }
 
@@ -6353,16 +6355,17 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public void insertLockobject(Lockobject lockobject) throws BlockStoreException {
+    public void insertLockobject(ChainBlockQueue chainBlockQueue) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_Lockobject);
-            preparedStatement.setString(1, lockobject.getLockobjectid());
-            preparedStatement.setString(2, lockobject.getLockobjectclass());
-            preparedStatement.setLong(3, lockobject.getLocktime());
+            preparedStatement = getConnection().prepareStatement(INSERT_CHAINBLOCKQUEUE);
+            preparedStatement.setBytes(1, chainBlockQueue.getHash());
+            preparedStatement.setBytes(2, chainBlockQueue.getBlock());
+            preparedStatement.setLong(3, chainBlockQueue.getChainlength());
+            preparedStatement.setBoolean(4, chainBlockQueue.isOrphan());
+            preparedStatement.setLong(5, chainBlockQueue.getInserttime());
             preparedStatement.executeUpdate();
-
             preparedStatement.close();
 
         } catch (SQLException e) {
@@ -6379,19 +6382,41 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<Lockobject> selectLockobject(String lockobkectid ) throws BlockStoreException {
+    public void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(" delete from chainblockqueue  where hash = ?");
+
+            for (ChainBlockQueue chainBlockQueue : chainBlockQueues) {
+                preparedStatement.setBytes(1, chainBlockQueue.getHash());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<ChainBlockQueue> selectChainblockqueue() throws BlockStoreException {
 
         PreparedStatement s = null;
-        List<Lockobject> list = new ArrayList<Lockobject>();
+        List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
-   
-                s = getConnection().prepareStatement(" select " + LockobjectColumn + " from Lockobject "
-                        + " where   lockobkectid=?   "); 
-                s.setString(1, lockobkectid); 
-             
+
+            s = getConnection().prepareStatement(SELECT_CHAINBLOCKQUEUE_FORUPDATE);
+
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                list.add(setLockobject(resultSet));
+                list.add(setChainBlockQueue(resultSet));
             }
             return list;
         } catch (SQLException ex) {
@@ -6406,8 +6431,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    private Lockobject setLockobject(ResultSet resultSet) throws SQLException {
-        return new Lockobject(resultSet.getString("lockobjectid"), resultSet.getString("lockobjectclass"),
-                resultSet.getLong("matchblocktime"));
+    private ChainBlockQueue setChainBlockQueue(ResultSet resultSet) throws SQLException {
+        return new ChainBlockQueue(resultSet.getBytes("hash"), resultSet.getBytes("block"),
+                resultSet.getLong("chainlength"), resultSet.getBoolean("orphan"), resultSet.getLong("inserttime"));
     }
 }

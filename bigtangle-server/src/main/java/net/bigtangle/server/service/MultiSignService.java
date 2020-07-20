@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
@@ -26,7 +25,6 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.data.SolidityState;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
@@ -35,7 +33,9 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
+import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.UUIDUtil;
 
 @Service

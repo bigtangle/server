@@ -14,13 +14,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import net.bigtangle.core.BatchBlock;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.store.FullBlockStore;

@@ -1,4 +1,6 @@
-package net.bigtangle.core;
+package net.bigtangle.server.data;
+
+import net.bigtangle.core.Sha256Hash;
 
 public class BlockPrototype {
 

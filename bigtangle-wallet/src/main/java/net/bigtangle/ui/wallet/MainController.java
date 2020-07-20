@@ -55,7 +55,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
@@ -70,6 +69,7 @@ import net.bigtangle.ui.wallet.utils.BlockFormat;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.easing.EasingMode;
 import net.bigtangle.ui.wallet.utils.easing.ElasticInterpolator;
+import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 

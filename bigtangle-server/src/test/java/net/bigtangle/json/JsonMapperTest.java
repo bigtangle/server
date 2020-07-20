@@ -8,12 +8,12 @@ import java.util.Random;
 import org.junit.Test;
 
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Json;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetOrderResponse;
+import net.bigtangle.utils.Json;
 
 public class JsonMapperTest {
 
