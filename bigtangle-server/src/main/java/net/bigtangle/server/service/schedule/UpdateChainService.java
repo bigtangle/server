@@ -14,26 +14,26 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.store.FullBlockGraph;
 
 @Component
 @EnableAsync
-public class UpdateConfirmService {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateConfirmService.class);
+public class UpdateChainService {
+    private static final Logger logger = LoggerFactory.getLogger(UpdateChainService.class);
     
-    @Autowired
-    private ScheduleConfiguration scheduleConfiguration;
+     
     @Autowired
     ServerConfiguration serverConfiguration;
     @Autowired
     protected FullBlockGraph blockGraph;
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
     @Async
-    @Scheduled(fixedDelayString = "${service.schedule.mcmcrate:1500}")
+    @Scheduled(fixedDelayString = "100")
     public void updateConfirmService() {
-        if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
+        if (scheduleConfiguration.isMilestone_active() &&  serverConfiguration.checkService()) {
             try { 
-                blockGraph.updateConfirmed(); 
+                blockGraph.updateChain(); 
             } catch (Exception e) {
                 logger.warn("updateConfirmService ", e);
             }

@@ -164,10 +164,10 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         store.resetStore();
         // replay first chain
         for (Block b : a1)
-            blockGraph.add(b, true,store);
+            blockGraph.add(b, true,true,store);
         // add second chain
         for (Block b : a2)
-            blockGraph.add(b, true,store);
+            blockGraph.add(b, true,true,store);
 
         // assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).getMilestone() == -1);
@@ -199,17 +199,17 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
             store.resetStore();
             // add many times to get chain out of order
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store); 
+                blockGraph.add(b, true,true,store); 
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
             for (Block b : blocksAddedAll)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
             assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).isConfirmed());
             assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(),store).getMilestone() == -1);
 

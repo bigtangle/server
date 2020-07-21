@@ -169,6 +169,7 @@ public class RewardService {
                 log.debug("resolved Reward is out of date.");
             } else {
                 blockService.saveBlock(block,store);
+                blockGraph.updateChain(true);
             }
         }
         return block;

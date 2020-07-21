@@ -93,14 +93,14 @@ public class RewardService2Test extends AbstractIntegrationTest {
         // replay first chain
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
         }
         // check
         assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
         // replay second chain
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
 
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
@@ -111,12 +111,12 @@ public class RewardService2Test extends AbstractIntegrationTest {
         store.resetStore();
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
 
         }
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true,store);
+                blockGraph.add(b, true,true,store);
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
         assertTrue( hash.equals(checkpointService.checkToken(store).hash()));

@@ -565,11 +565,13 @@ public class BlockService  {
 
     public long getCurrentMaxHeight( FullBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        if(maxConfirmedReward==null) return NetworkParameters.FORWARD_BLOCK_HORIZON;
         return store.get(maxConfirmedReward.getBlockHash()).getHeight() + NetworkParameters.FORWARD_BLOCK_HORIZON;
     }
 
     public long getCurrentCutoffHeight( FullBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        if(maxConfirmedReward==null) return 0;
         long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
         TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
         return store.get(confirmedAtHeightReward.getBlockHash()).getHeight();

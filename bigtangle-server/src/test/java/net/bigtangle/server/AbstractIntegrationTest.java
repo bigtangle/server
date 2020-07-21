@@ -318,6 +318,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
+        blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
         return block;
 
@@ -364,7 +365,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
@@ -375,7 +376,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().payContract(null, tokenId,   buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
@@ -387,7 +388,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
@@ -473,7 +474,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         mcmcService.update();
         
@@ -495,7 +496,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         return block;
     }
 
@@ -607,7 +608,7 @@ public abstract class AbstractIntegrationTest {
         // Redo and assert snapshot equal to new state
         store.resetStore();
         for (Block b : addedBlocks) {
-            blockGraph.add(b, true,store);
+            blockGraph.add(b, true,true,store);
         }
         mcmcService.update();
         
@@ -1345,8 +1346,10 @@ public abstract class AbstractIntegrationTest {
             boolean override) throws Exception {
 
         Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
-        if (block != null)
+        if (block != null) {
             blockService.saveBlock(block,store);
+            blockGraph.updateChain(true);
+        }
         return block;
     }
 

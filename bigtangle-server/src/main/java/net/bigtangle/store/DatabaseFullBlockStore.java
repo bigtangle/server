@@ -121,6 +121,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
     private static String DROP_CONTRACT_ACCOUNT_TABLE = "DROP TABLE contractaccount";
     private static String DROP_BLOCKPROTOTYPE_TABLE = "DROP TABLE blockprototype";
+    private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE chainblockqueue";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -493,8 +494,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String ChainBlockQueueColumn = " hash, block, chainlength, orphan, inserttime";
     protected final String INSERT_CHAINBLOCKQUEUE = getInsert() + "  INTO chainblockqueue (" + ChainBlockQueueColumn
             + ") " + " VALUES (?, ?, ?,?,?)";
-    protected final String SELECT_CHAINBLOCKQUEUE_FORUPDATE = " select " + ChainBlockQueueColumn
-            + " from chainblockqueue for update ";
+    protected final String SELECT_CHAINBLOCKQUEUE = " select " + ChainBlockQueueColumn + " from chainblockqueue  ";
 
     protected NetworkParameters params;
     protected Connection conn;
@@ -652,7 +652,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
         sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_BLOCKPROTOTYPE_TABLE);
-        sqlStatements.add("DROP TABLE ChainBlockQueue");
+        sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
         return sqlStatements;
     }
 
@@ -6355,7 +6355,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public void insertLockobject(ChainBlockQueue chainBlockQueue) throws BlockStoreException {
+    public void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -6368,8 +6368,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.executeUpdate();
             preparedStatement.close();
 
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
+        } catch (SQLException e) { 
+                // It is possible we try to add a duplicate Block if we
+                // upgraded
+                if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                    throw   new BlockStoreException(e);
+           
         } finally {
             if (preparedStatement != null) {
                 try {
@@ -6406,14 +6410,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<ChainBlockQueue> selectChainblockqueue() throws BlockStoreException {
+    public List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException {
 
         PreparedStatement s = null;
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
-        try {
-
-            s = getConnection().prepareStatement(SELECT_CHAINBLOCKQUEUE_FORUPDATE);
-
+        try { 
+            s = getConnection()
+                    .prepareStatement(SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength desc");
+            s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 list.add(setChainBlockQueue(resultSet));
@@ -6432,7 +6436,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     private ChainBlockQueue setChainBlockQueue(ResultSet resultSet) throws SQLException {
-        return new ChainBlockQueue(resultSet.getBytes("hash"), resultSet.getBytes("block"),
+        return new ChainBlockQueue(resultSet.getBytes("hash"), Gzip.decompress(resultSet.getBytes("block")),
                 resultSet.getLong("chainlength"), resultSet.getBoolean("orphan"), resultSet.getLong("inserttime"));
     }
 }

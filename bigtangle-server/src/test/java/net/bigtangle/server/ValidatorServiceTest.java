@@ -337,8 +337,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Add missing dependency
         blockService.saveBlock(rewardBlock1,store);
         mcmcService.update();
+        blockGraph.updateChain(true);
         // After adding the missing dependency, should be solid
-        blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
+        blockGraph.add(rewardBlock2, true,true,store);
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
     }

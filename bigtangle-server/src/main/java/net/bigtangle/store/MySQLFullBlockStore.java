@@ -363,6 +363,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    hash binary(32) NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n" 
             + "    chainlength bigint,\n " 
+            + "    orphan boolean,\n " 
             + "    inserttime bigint NOT NULL,\n"
             + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")\n";
     

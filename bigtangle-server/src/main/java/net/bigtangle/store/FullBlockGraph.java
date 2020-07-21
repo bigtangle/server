@@ -5,8 +5,6 @@
 
 package net.bigtangle.store;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -16,7 +14,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -78,6 +76,7 @@ import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
@@ -89,6 +88,7 @@ import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
+import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.Threading;
 
@@ -109,20 +109,6 @@ public class FullBlockGraph {
     private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
 
     public final ReentrantLock chainlock = Threading.lock("chainLock");
-
-    // Holds a block as OrphanBlock
-    class OrphanBlock {
-        final Block block;
-
-        OrphanBlock(Block block) {
-            this.block = block;
-        }
-    }
-
-    // Holds blocks that we have received but can't plug into the chain yet, eg
-    // because they were created whilst we
-    // were downloading the block chain.
-    protected final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<>();
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -147,17 +133,7 @@ public class FullBlockGraph {
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-
-            try {
-                try {
-                    chainlock.tryLock(1, TimeUnit.HOURS);
-                } catch (InterruptedException e) {
-                }
-                a = addChain(block, allowUnsolid, true, store);
-                // updateConfirmed();
-            } finally {
-                chainlock.unlock();
-            }
+            a = addChain(block, allowUnsolid, true, store);
         } else {
             a = addNonChain(block, allowUnsolid, store);
         }
@@ -165,26 +141,30 @@ public class FullBlockGraph {
         return a;
     }
 
+    public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store) throws BlockStoreException {
+        boolean a = add(block, allowUnsolid, store);
+        if(updatechain) {
+            updateChain(true);
+        }
+        return a;
+    }
+
     /*
      * run timeboxed 1 seconds and can run only, if there is no other
      * ReentrantLock
      */
-    public void updateConfirmed() throws BlockStoreException {
-
-        if (chainlock.isHeldByCurrentThread() || !chainlock.tryLock()) {
-            // not try to wait return
-            log.info("updateConfirmed no chainlock return ");
-            return;
-        }
+    private void updateConfirmedAndOrphan() throws BlockStoreException {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
+
                 FullBlockStore blockStore = storeService.getStore();
                 try {
-                    updateConfirmed(1, blockStore);
+                    updateConfirmed(blockStore);
+                    connectingOrphans(blockStore);
                 } finally {
                     if (blockStore != null)
                         blockStore.close();
@@ -193,13 +173,13 @@ public class FullBlockGraph {
             }
         });
         try {
-            handler.get(1000l, TimeUnit.MILLISECONDS);
+            handler.get(2000l, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.info("TimeoutException cancel updateConfirmed ");
+            log.info("TimeoutException cancel updateConfirmedAndOphan ");
             handler.cancel(true);
         } catch (Exception e) {
             // ignore
-            log.info("updateConfirmed", e);
+            log.info("updateConfirmedAndOphan", e);
         } finally {
             executor.shutdownNow();
         }
@@ -216,11 +196,7 @@ public class FullBlockGraph {
         SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid, store);
 
         if (solidityState.isDirectlyMissing()) {
-            log.warn("Block does not connect: {} prev {}", block, block.getPrevBlockHash());
-            orphanBlocks.put(block.getHash(), new OrphanBlock(block));
-            if (tryConnecting) {
-                tryConnectingOrphans(store);
-            }
+            saveChainBlockQueue(block, store, true);
             return false;
         }
 
@@ -236,10 +212,48 @@ public class FullBlockGraph {
             return false;
         }
 
+        saveChainBlockQueue(block, store, false);
+
+        return true;
+    }
+
+    public void updateChain() throws BlockStoreException {
+        updateChain(false);
+    }
+
+    public void updateChain(boolean wait) throws BlockStoreException {
+
+ 
+            if (wait) { 
+                chainlock.lock();
+            } else {
+                if (!chainlock.tryLock()) {
+                    // not try to wait return
+                    log.info("updateChain running return ");
+                    return;
+                }
+            }
+        
+
+        FullBlockStore blockStore = storeService.getStore();
+        try {
+            saveChainConnected(blockStore);
+            updateConfirmedAndOrphan();
+        } finally {
+            if (blockStore != null)
+                blockStore.close();
+        }
+
+    }
+
+    private void saveChainBlockQueue(Block block, FullBlockStore store, boolean orphan) throws BlockStoreException {
         // save the block
         try {
             store.beginDatabaseBatchWrite();
-            connectRewardBlock(block, solidityState, store);
+            ChainBlockQueue chainBlockQueue = new ChainBlockQueue(block.getHash().getBytes(),
+                    Gzip.compress(block.unsafeBitcoinSerialize()), block.getLastMiningRewardBlock(), orphan,
+                    block.getTimeSeconds());
+            store.insertChainBlockQueue(chainBlockQueue);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             store.abortDatabaseBatchWrite();
@@ -248,10 +262,61 @@ public class FullBlockGraph {
             store.defaultDatabaseBatchWrite();
 
         }
-        if (tryConnecting)
-            tryConnectingOrphans(store);
+    }
 
-        return true;
+    /*
+     *  
+     */
+    public void saveChainConnected(FullBlockStore store) throws VerificationException, BlockStoreException {
+        List<ChainBlockQueue> cbs = store.selectChainblockqueue(false);
+        for (ChainBlockQueue chainBlockQueue : cbs) {
+            saveChainConnected(chainBlockQueue, store);
+        }
+    }
+
+    private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
+            throws VerificationException, BlockStoreException {
+        
+
+        try {
+            store.beginDatabaseBatchWrite();
+            
+            // It can be down lock for update of this on database
+            Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
+            
+            // Check the block is partially formally valid and fulfills PoW
+            block.verifyHeader();
+            block.verifyTransactions();
+
+            SolidityState solidityState = validatorService.checkChainSolidity(block, true, store);
+
+            if (solidityState.isDirectlyMissing()) {
+                saveChainBlockQueue(block, store, true);
+                return ;
+            }
+
+            if (solidityState.isFailState()) {
+                return ;
+            }
+
+            // Inherit solidity from predecessors if they are not solid
+            solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
+
+            // Sanity check
+            if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+                return ;
+            } 
+            connectRewardBlock(block, solidityState, store);
+            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+            l.add(chainBlockQueue);
+            store.deleteChainBlockQueue(l);
+            store.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            store.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            store.defaultDatabaseBatchWrite();
+        }
     }
 
     public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore)
@@ -1684,84 +1749,78 @@ public class FullBlockGraph {
         return totalRewardCount;
     }
 
-    /**
-     * For each block in orphanBlocks, see if we can now fit it on top of the
-     * chain and if so, do so.
-     */
-    private void tryConnectingOrphans(FullBlockStore blockStore) throws VerificationException, BlockStoreException {
-        checkState(chainlock.isHeldByCurrentThread());
-        // For each block in our orphan list, try and fit it onto the head of
-        // the chain. If we succeed remove it
-        // from the list and keep going. If we changed the head of the list at
-        // the end of the round try again until
-        // we can't fit anything else on the top.
-        //
-        // This algorithm is kind of crappy, we should do a topo-sort then just
-        // connect them in order, but for small
-        // numbers of orphan blocks it does OK.
-
-        int blocksConnectedThisRound;
-        do {
-            blocksConnectedThisRound = 0;
-            if (orphanBlocks.size() > 0) {
-                log.debug("Orphan  size = {}", orphanBlocks.size());
-            }
-            Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
-            while (iter.hasNext()) {
-                OrphanBlock orphanBlock = iter.next();
-                // remove too old OrphanBlock
-                if (System.currentTimeMillis() - orphanBlock.block.getTimeSeconds() * 1000 > 2 * 60 * 60 * 1000) {
-                    iter.remove();
-                    blocksConnectedThisRound++;
-                    continue;
-                }
-
-                // Look up the blocks previous.
-                Block prev = blockStore.get(orphanBlock.block.getRewardInfo().getPrevRewardHash());
-                if (prev == null) {
-                    // This is still an unconnected/orphan block.
-                    // if (log.isDebugEnabled())
-                    // log.debug("Orphan block {} is not connectable right now",
-                    // orphanBlock.block.getHash());
-                    syncBlockService.requestBlock(orphanBlock.block.getRewardInfo().getPrevRewardHash());
-                    log.info("syncBlockService orphan {}", orphanBlock.block.getHash());
-                    continue;
-                }
-                // Otherwise we can connect it now.
-                // False here ensures we don't recurse infinitely downwards when
-                // connecting huge chains.
-                log.info("Connected orphan {}", orphanBlock.block.getHash());
-                if (addChain(orphanBlock.block, true, false, blockStore)) {
-                    iter.remove();
-                    blocksConnectedThisRound++;
-                }
-            }
-            if (blocksConnectedThisRound > 0) {
-                log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
-            }
-        } while (blocksConnectedThisRound > 0);
-
-        if (orphanBlocks.size() > 100)
-            orphanBlocks.clear();
-    }
-
-    /**
-     * Returns the hashes of the currently stored orphan blocks and then deletes
-     * them from this objects storage. Used by Peer when a filter exhaustion
-     * event has occurred and thus any orphan blocks that have been downloaded
-     * might be inaccurate/incomplete.
-     */
-    public Set<Sha256Hash> drainOrphanBlocks() {
-        chainlock.lock();
+    private void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         try {
-            Set<Sha256Hash> hashes = new HashSet<>(orphanBlocks.keySet());
-            orphanBlocks.clear();
-            return hashes;
+            blockStore.beginDatabaseBatchWrite();
+            tryConnectingOrphans(blockStore);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
         } finally {
-            chainlock.unlock();
+            blockStore.defaultDatabaseBatchWrite();
+
         }
     }
 
+    /**
+     * For each block in ChainBlockQueue as orphan block, see if we can now fit
+     * it on top of the chain and if so, do so.
+     */
+    private void tryConnectingOrphans(FullBlockStore store) throws VerificationException, BlockStoreException {
+
+        List<ChainBlockQueue> orphanBlocks = store.selectChainblockqueue(true);
+        if (orphanBlocks.size() > 0) {
+            log.debug("Orphan  size = {}", orphanBlocks.size());
+        }
+        for (ChainBlockQueue orphanBlock : orphanBlocks) {
+            // remove too old OrphanBlock
+            if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
+
+                List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+                l.add(orphanBlock);
+                store.deleteChainBlockQueue(l);
+                continue;
+            }
+
+            // Look up the blocks previous.
+            Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
+
+            Block prev = store.get(block.getRewardInfo().getPrevRewardHash());
+            if (prev == null) {
+                // This is still an unconnected/orphan block.
+                // if (log.isDebugEnabled())
+                // log.debug("Orphan block {} is not connectable right now",
+                // orphanBlock.block.getHash());
+                syncBlockService.requestBlock(block.getRewardInfo().getPrevRewardHash());
+                log.info("syncBlockService orphan {}", block.getHash());
+                continue;
+            }
+            // Otherwise we can connect it now.
+            // False here ensures we don't recurse infinitely downwards when
+            // connecting huge chains.
+            log.info("Connected orphan {}", block.getHash());
+            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+            l.add(orphanBlock);
+            store.deleteChainBlockQueue(l);
+            addChain(block, true, false, store);
+        }
+
+    }
+
+    public void updateConfirmed(FullBlockStore blockStore) throws BlockStoreException {
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            updateConfirmed(1, blockStore);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
+
+        }
+    }
     // Start in new database connection to for potential database locks. Add
     // chain must be atomic.
 

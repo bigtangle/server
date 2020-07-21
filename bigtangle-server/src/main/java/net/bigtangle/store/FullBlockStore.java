@@ -509,11 +509,11 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteBlockPrototypeTimeout() throws BlockStoreException;
 
-    void insertLockobject(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
+    void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
  
     List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
 
-    List<ChainBlockQueue> selectChainblockqueue() throws BlockStoreException;
+    List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException;
     void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
       
 }
