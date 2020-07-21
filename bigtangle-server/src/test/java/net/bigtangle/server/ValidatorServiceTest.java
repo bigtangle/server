@@ -296,6 +296,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
+        blockGraph.updateChain(true);
         mcmcService.update();
         
 
@@ -316,6 +317,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash(),store);
+        blockGraph.updateChain(true);
         blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
 
         store.resetStore();
@@ -330,7 +332,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add block allowing unsolids
         blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
-
+        blockGraph.updateChain(true);
         // Should not be solid
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()) == null);
 
@@ -340,6 +342,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockGraph.updateChain(true);
         // After adding the missing dependency, should be solid
         blockGraph.add(rewardBlock2, true,true,store);
+        syncBlockService.connectingOrphans(store);
+        blockGraph.updateChain(true);
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -448,13 +452,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Expected
         }
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
                     rollingBlock.getHash(),store);
+            blockGraph.updateChain(true);
             failingBlock.setLastMiningRewardBlock(123);
             failingBlock.solve();
             blockGraph.add(failingBlock, false,store);
+            blockGraph.updateChain(true);
             fail();
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected

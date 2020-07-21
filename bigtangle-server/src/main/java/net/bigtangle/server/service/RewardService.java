@@ -128,7 +128,7 @@ public class RewardService {
      * @throws Exception
      */
 
-    public Block createReward(FullBlockStore store) throws Exception {
+    private Block createReward(FullBlockStore store) throws Exception {
 
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
         Block reward = createReward(prevRewardHash,store);
@@ -168,8 +168,7 @@ public class RewardService {
             if (latest.getChainLength() >= block.getLastMiningRewardBlock()    ) {
                 log.debug("resolved Reward is out of date.");
             } else {
-                blockService.saveBlock(block,store);
-                blockGraph.updateChain(true);
+                blockService.saveBlock(block,store); 
             }
         }
         return block;

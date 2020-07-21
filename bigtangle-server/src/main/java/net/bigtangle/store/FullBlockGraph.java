@@ -85,7 +85,6 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
-import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
@@ -95,12 +94,14 @@ import net.bigtangle.utils.Threading;
 /**
  * <p>
  * A FullBlockGraph works in conjunction with a {@link FullBlockStore} to verify
- * all the rules of the BigTangle system. Chain data as reward block is locked
- * by ReentrantLock. It must be wait to run, reward block will add to chain if
- * there is no exception. if the reward block is unsolid as missing previous
- * block, then it can be in OrphanBlock. MCMC can add UTXO and can run only, if
- * there is no add chain running and will be boxed timeout. Other blocks will be
- * added in parallel.
+ * all the rules of the BigTangle system. Chain block as reward block is added
+ * first into ChainBlockQueue as other blocks will be added in parallel. The
+ * process of ChainBlockQueue is locked by ReentrantLock chainlock. It must be
+ * wait to run, chain block will add to chain if there is no exception. if the
+ * reward block is unsolid as missing previous block, then it can be in
+ * ChainBlockQueue as orphan block. UpdateConfirm can add UTXO using MCMC and
+ * can run only, if there is no add chain running and will be boxed timeout.
+ * 
  * </p>
  */
 @Service
@@ -121,12 +122,8 @@ public class FullBlockGraph {
     private OrderTickerService tickerService;
     @Autowired
     ServerConfiguration serverConfiguration;
-
     @Autowired
     private BlockService blockService;
-
-    @Autowired
-    private SyncBlockService syncBlockService;
     @Autowired
     private StoreService storeService;
 
@@ -141,9 +138,10 @@ public class FullBlockGraph {
         return a;
     }
 
-    public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store) throws BlockStoreException {
+    public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store)
+            throws BlockStoreException {
         boolean a = add(block, allowUnsolid, store);
-        if(updatechain) {
+        if (updatechain) {
             updateChain(true);
         }
         return a;
@@ -164,7 +162,6 @@ public class FullBlockGraph {
                 FullBlockStore blockStore = storeService.getStore();
                 try {
                     updateConfirmed(blockStore);
-                    connectingOrphans(blockStore);
                 } finally {
                     if (blockStore != null)
                         blockStore.close();
@@ -186,7 +183,7 @@ public class FullBlockGraph {
 
     }
 
-    private boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
+    public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
             throws BlockStoreException {
 
         // Check the block is partially formally valid and fulfills PoW
@@ -223,17 +220,15 @@ public class FullBlockGraph {
 
     public void updateChain(boolean wait) throws BlockStoreException {
 
- 
-            if (wait) { 
-                chainlock.lock();
-            } else {
-                if (!chainlock.tryLock()) {
-                    // not try to wait return
-                    log.info("updateChain running return ");
-                    return;
-                }
+        if (wait) {
+            chainlock.lock();
+        } else {
+            if (!chainlock.tryLock()) {
+                // not try to wait return
+                // log.info("updateChain running return ");
+                return;
             }
-        
+        }
 
         FullBlockStore blockStore = storeService.getStore();
         try {
@@ -276,14 +271,13 @@ public class FullBlockGraph {
 
     private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
             throws VerificationException, BlockStoreException {
-        
 
         try {
             store.beginDatabaseBatchWrite();
-            
+
             // It can be down lock for update of this on database
             Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
-            
+
             // Check the block is partially formally valid and fulfills PoW
             block.verifyHeader();
             block.verifyTransactions();
@@ -292,11 +286,11 @@ public class FullBlockGraph {
 
             if (solidityState.isDirectlyMissing()) {
                 saveChainBlockQueue(block, store, true);
-                return ;
+                return;
             }
 
             if (solidityState.isFailState()) {
-                return ;
+                return;
             }
 
             // Inherit solidity from predecessors if they are not solid
@@ -304,8 +298,8 @@ public class FullBlockGraph {
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-                return ;
-            } 
+                return;
+            }
             connectRewardBlock(block, solidityState, store);
             List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
             l.add(chainBlockQueue);
@@ -1747,65 +1741,6 @@ public class FullBlockGraph {
             rewarded++;
         }
         return totalRewardCount;
-    }
-
-    private void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            tryConnectingOrphans(blockStore);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            blockStore.defaultDatabaseBatchWrite();
-
-        }
-    }
-
-    /**
-     * For each block in ChainBlockQueue as orphan block, see if we can now fit
-     * it on top of the chain and if so, do so.
-     */
-    private void tryConnectingOrphans(FullBlockStore store) throws VerificationException, BlockStoreException {
-
-        List<ChainBlockQueue> orphanBlocks = store.selectChainblockqueue(true);
-        if (orphanBlocks.size() > 0) {
-            log.debug("Orphan  size = {}", orphanBlocks.size());
-        }
-        for (ChainBlockQueue orphanBlock : orphanBlocks) {
-            // remove too old OrphanBlock
-            if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
-
-                List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-                l.add(orphanBlock);
-                store.deleteChainBlockQueue(l);
-                continue;
-            }
-
-            // Look up the blocks previous.
-            Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
-
-            Block prev = store.get(block.getRewardInfo().getPrevRewardHash());
-            if (prev == null) {
-                // This is still an unconnected/orphan block.
-                // if (log.isDebugEnabled())
-                // log.debug("Orphan block {} is not connectable right now",
-                // orphanBlock.block.getHash());
-                syncBlockService.requestBlock(block.getRewardInfo().getPrevRewardHash());
-                log.info("syncBlockService orphan {}", block.getHash());
-                continue;
-            }
-            // Otherwise we can connect it now.
-            // False here ensures we don't recurse infinitely downwards when
-            // connecting huge chains.
-            log.info("Connected orphan {}", block.getHash());
-            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-            l.add(orphanBlock);
-            store.deleteChainBlockQueue(l);
-            addChain(block, true, false, store);
-        }
-
     }
 
     public void updateConfirmed(FullBlockStore blockStore) throws BlockStoreException {

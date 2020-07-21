@@ -56,7 +56,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block next = rewardService.createReward(rewardBlock1.getHash(),store);
+        Block next =  createReward(rewardBlock1.getHash(),store);
         blocksAddedAll.add(next);
 
         return next;

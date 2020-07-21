@@ -1252,6 +1252,11 @@ public abstract class AbstractIntegrationTest {
         return tokenIndexResponse;
     }
 
+    public Block createReward(Sha256Hash prevRewardHash,FullBlockStore store) throws Exception {
+        Block    block= rewardService.createReward(prevRewardHash, store);
+            blockGraph.updateChain(true);
+            return block;
+    }
     public void upstreamToken2LocalServer(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();

@@ -30,11 +30,13 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.UnsolidBlock;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
@@ -78,6 +80,7 @@ public class SyncBlockService {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
+            connectingOrphans(store);
             sync(-1l,store);
             // deleteOldUnsolidBlock();
             // updateSolidity();
@@ -414,4 +417,66 @@ public class SyncBlockService {
         }
         return null;
     }
+    
+    
+    public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
+        try {
+            blockStore.beginDatabaseBatchWrite();
+            tryConnectingOrphans(blockStore);
+            blockStore.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            blockStore.abortDatabaseBatchWrite();
+            throw e;
+        } finally {
+            blockStore.defaultDatabaseBatchWrite();
+
+        }
+    }
+
+    
+    /**
+     * For each block in ChainBlockQueue as orphan block, see if we can now fit
+     * it on top of the chain and if so, do so.
+     */
+    private void tryConnectingOrphans(FullBlockStore store) throws VerificationException, BlockStoreException {
+
+        List<ChainBlockQueue> orphanBlocks = store.selectChainblockqueue(true);
+        if (orphanBlocks.size() > 0) {
+            log.debug("Orphan  size = {}", orphanBlocks.size());
+        }
+        for (ChainBlockQueue orphanBlock : orphanBlocks) {
+            // remove too old OrphanBlock
+            if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
+
+                List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+                l.add(orphanBlock);
+                store.deleteChainBlockQueue(l);
+                continue;
+            }
+
+            // Look up the blocks previous.
+            Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
+
+            Block prev = store.get(block.getRewardInfo().getPrevRewardHash());
+            if (prev == null) {
+                // This is still an unconnected/orphan block.
+                // if (log.isDebugEnabled())
+                // log.debug("Orphan block {} is not connectable right now",
+                // orphanBlock.block.getHash());
+                requestBlock(block.getRewardInfo().getPrevRewardHash());
+                log.info("syncBlockService orphan {}", block.getHash());
+                continue;
+            }
+            // Otherwise we can connect it now.
+            // False here ensures we don't recurse infinitely downwards when
+            // connecting huge chains.
+            log.info("Connected orphan {}", block.getHash());
+            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+            l.add(orphanBlock);
+            store.deleteChainBlockQueue(l);
+            blockgraph.addChain(block, true, false, store);
+        }
+
+    }
+
 }
