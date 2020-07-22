@@ -172,13 +172,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
         Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
         mcmcService.update();
-        // Execute order matching
+        blockGraph.updateChain(true);
         makeAndConfirmOrderMatching(addedBlocks);
         blockGraph.updateChain(true);
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify the best orders are correct
+        Thread.sleep(1000);
         List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2,store);
         assertEquals(2, bestOpenSellOrders.size());
         assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());

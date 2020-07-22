@@ -516,8 +516,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Block bOrphan5 = createAndAddNextBlock(b5link, b5link);
         // syncBlockService.updateSolidity();
         mcmcService.update();
-        
-        blockService.createBlockPrototypeCache( store);
+     
         assertTrue(blockService.getBlockEvaluation(b1.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash(),store).isConfirmed());
@@ -546,7 +545,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b8link, b8link);
 
         mcmcService.update();
-        
+        blockGraph.updateChain(true);
         assertTrue(blockService.getBlockEvaluation(b1.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash(),store).isConfirmed());
@@ -572,17 +571,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         assertTrue(blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b1.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash(),store).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(b3.getHash(),store).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b5.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b5link.getHash()).isConfirmed());
-        // assertTrue(blockService.getBlockEvaluation(b6.getHash()).isConfirmed());
-        // assertTrue(blockService.getBlockEvaluation(b7.getHash()).isConfirmed());
-        // assertTrue(blockService.getBlockEvaluation(b8.getHash()).isConfirmed());
-        // assertTrue(blockService.getBlockEvaluation(b8link.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b9.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b10.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b11.getHash()).isConfirmed());
-        // assertFalse(blockService.getBlockEvaluation(b12.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(b3.getHash(),store).isConfirmed()); 
         assertFalse(blockService.getBlockEvaluation(b13.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b14.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(bOrphan1.getHash(),store).isConfirmed());

@@ -134,7 +134,10 @@ public class FullBlockGraph {
         } else {
             a = addNonChain(block, allowUnsolid, store);
         }
-
+        // update spend of origin UTXO to avoid double spent
+        if (a) {
+            updateTransactionOutputSpendPending(block);
+        }
         return a;
     }
 
@@ -347,7 +350,6 @@ public class FullBlockGraph {
             throw e;
         } finally {
             blockStore.defaultDatabaseBatchWrite();
-
         }
 
         return true;
@@ -1104,9 +1106,42 @@ public class FullBlockGraph {
         connectUTXOs(block, transactions, blockStore);
     }
 
-    private void connectUTXOs(Block block, List<Transaction> transactions, FullBlockStore blockStore)
+    // TODO update other output data can be deadlock, as non chain block
+    // run in parallel
+    private void updateTransactionOutputSpendPending(Block block) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+
+                FullBlockStore blockStore = storeService.getStore();
+                try {
+                    updateTransactionOutputSpendPending(block, blockStore);
+                } finally {
+                    if (blockStore != null)
+                        blockStore.close();
+                }
+                return "";
+            }
+        });
+        try {
+            handler.get(2000l, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.info("TimeoutException cancel updateTransactionOutputSpendPending ");
+            handler.cancel(true);
+        } catch (Exception e) {
+            // ignore
+            log.info("updateTransactionOutputSpendPending", e);
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
+
+    private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
             throws BlockStoreException {
-        for (final Transaction tx : transactions) {
+        for (final Transaction tx : block.getTransactions()) {
             boolean isCoinBase = tx.isCoinBase();
             List<UTXO> spendPending = new ArrayList<UTXO>();
             if (!isCoinBase) {
@@ -1119,8 +1154,16 @@ public class FullBlockGraph {
                     }
                 }
             }
+
             blockStore.updateTransactionOutputSpendPending(spendPending);
 
+        }
+    }
+
+    private void connectUTXOs(Block block, List<Transaction> transactions, FullBlockStore blockStore)
+            throws BlockStoreException {
+        for (final Transaction tx : transactions) {
+            boolean isCoinBase = tx.isCoinBase();
             List<UTXO> utxos = new ArrayList<UTXO>();
             for (TransactionOutput out : tx.getOutputs()) {
                 Script script = getScript(out.getScriptBytes());
@@ -1779,8 +1822,10 @@ public class FullBlockGraph {
 
             // Finally add the resolved new blocks to the confirmed set
             HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-            for (BlockWrap block : blocksToAdd)
+            for (BlockWrap block : blocksToAdd) {
                 confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+            }
+            // update the spending for help
 
             // Exit condition: there are no more blocks to add
             if (blocksToAdd.isEmpty())
