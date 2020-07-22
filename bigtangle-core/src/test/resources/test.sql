@@ -71,6 +71,10 @@ select count(*) from tips   ;
 SELECT blocks.hash, rating, depth, cumulativeweight,   height, milestone, milestonelastupdate, 
 inserttime,  block, solid, confirmed FROM blocks 
              INNER JOIN tips ON tips.hash=blocks.hash where milestone <0
+             
+  SELECT blocks.hash, rating, depth, cumulativeweight,   height, milestone, milestonelastupdate, 
+inserttime,  block, solid, confirmed  FROM blocks order by inserttime desc limit 50
+
 HELPER
 select * from tokenserial   ;
 
