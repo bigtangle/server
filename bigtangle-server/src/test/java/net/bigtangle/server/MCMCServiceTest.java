@@ -125,6 +125,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // Generate eligible mining reward blocks
         Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(),store);
+        blockGraph.updateChain(true);
         Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(),store);
         blockGraph.updateChain(true);
@@ -132,7 +133,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b2, b1);
 
         mcmcService.update();
-        
+        Thread.sleep(2000);
        // assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed() );
         assertTrue(blockService.getBlockEvaluation(b1.getHash(),store).isConfirmed()
                  );

@@ -303,11 +303,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-        mcmcService.update();
         
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
+        Thread.sleep(2000);
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 99950l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
