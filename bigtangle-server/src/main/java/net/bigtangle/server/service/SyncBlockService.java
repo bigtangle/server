@@ -51,7 +51,6 @@ import net.bigtangle.utils.Threading;
  */
 @Service
 public class SyncBlockService {
- 
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -69,19 +68,20 @@ public class SyncBlockService {
 
     protected final ReentrantLock lock = Threading.lock("syncBlockService");
     @Autowired
-    private StoreService  storeService;
+    private StoreService storeService;
+
     public void startSingleProcess() throws BlockStoreException {
         if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
-       FullBlockStore store = storeService.getStore();
+        FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
             connectingOrphans(store);
-            sync(-1l,store);
+            sync(-1l, store);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
@@ -99,16 +99,16 @@ public class SyncBlockService {
             log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
             return;
         }
-         FullBlockStore store = storeService.getStore();
+        FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
-            sync(-1l,store);
+            sync(-1l, store);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
-        } finally { 
+        } finally {
             lock.unlock();
             store.close();
         }
@@ -123,7 +123,7 @@ public class SyncBlockService {
 
             Block storedBlock0 = null;
             try {
-                storedBlock0 = blockService.getBlock(block.getPrevBlockHash(),store);
+                storedBlock0 = blockService.getBlock(block.getPrevBlockHash(), store);
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
@@ -132,13 +132,13 @@ public class SyncBlockService {
                 byte[] re = requestBlock(block.getPrevBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-                    blockgraph.add(req, true,store);
+                    blockgraph.add(req, true, store);
                 }
             }
             Block storedBlock1 = null;
 
             try {
-                storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash(),store);
+                storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash(), store);
             } catch (NoBlockException e) {
                 // Ok, no prev
             }
@@ -147,7 +147,7 @@ public class SyncBlockService {
                 byte[] re = requestBlock(block.getPrevBranchBlockHash());
                 if (re != null) {
                     Block req = (Block) networkParameters.getDefaultSerializer().makeBlock(re);
-                    blockgraph.add(req, true,store);
+                    blockgraph.add(req, true, store);
                 }
             }
         } catch (Exception e) {
@@ -158,7 +158,7 @@ public class SyncBlockService {
     /*
      * all very old unsolid blocks are deleted
      */
-    public void deleteOldUnsolidBlock( FullBlockStore store) throws Exception {
+    public void deleteOldUnsolidBlock(FullBlockStore store) throws Exception {
 
         store.deleteOldUnsolid(getTimeSeconds(1));
     }
@@ -167,7 +167,7 @@ public class SyncBlockService {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
-    public void updateSolidity(  FullBlockStore store)
+    public void updateSolidity(FullBlockStore store)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         long cutoffHeight = blockService.getCurrentCutoffHeight(store);
         long maxHeight = blockService.getCurrentMaxHeight(store);
@@ -176,14 +176,14 @@ public class SyncBlockService {
                 + " to max height: " + maxHeight);
         for (UnsolidBlock storedBlock : storedBlocklist) {
             if (storedBlock != null) {
-                Block req = blockService.getBlock(storedBlock.missingdependencyHash(),store);
+                Block req = blockService.getBlock(storedBlock.missingdependencyHash(), store);
 
                 if (req != null) {
                     store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
                     // if the block is there, now scan the rest unsolid
                     // blocks
                     if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        rewardService.scanWaitingBlocks(req,store);
+                        rewardService.scanWaitingBlocks(req, store);
                     }
                 } else {
                     requestBlock(storedBlock.missingdependencyHash());
@@ -192,7 +192,7 @@ public class SyncBlockService {
         }
 
     }
- 
+
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());
@@ -226,7 +226,7 @@ public class SyncBlockService {
         for (String s : re) {
             if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
                 try {
-                    requestBlocks(rewardInfo.getChainlength(), s,store);
+                    requestBlocks(rewardInfo.getChainlength(), s, store);
                     requestBlock(rewardInfo.getPrevRewardHash());
                 } catch (Exception e) {
                     log.debug(s, e);
@@ -238,7 +238,7 @@ public class SyncBlockService {
 
     public void requestBlocks(long chainlength, String s, FullBlockStore store)
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
-        requestBlocks(chainlength, chainlength, s,store);
+        requestBlocks(chainlength, chainlength, s, store);
     }
 
     public void requestBlocks(long chainlengthstart, long chainlengthend, String s, FullBlockStore store)
@@ -260,9 +260,9 @@ public class SyncBlockService {
         }
         Collections.sort(sortedBlocks, new SortbyBlock());
         for (Block block : sortedBlocks) {
-            //no genesis block
-            if(block.getHeight()>0) {
-            blockgraph.add(block, true,store); 
+            // no genesis block
+            if (block.getHeight() > 0) {
+                blockgraph.add(block, true, store);
             }
         }
 
@@ -334,7 +334,7 @@ public class SyncBlockService {
                             aMaxConfirmedReward.aTXReward = aTXReward;
                         }
                     }
-                    syncMaxConfirmedReward(aMaxConfirmedReward, my,store);
+                    syncMaxConfirmedReward(aMaxConfirmedReward, my, store);
                 }
             } catch (Exception e) {
                 log.debug("", e);
@@ -350,7 +350,8 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, FullBlockStore store) throws Exception {
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, FullBlockStore store)
+            throws Exception {
 
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
@@ -374,7 +375,7 @@ public class SyncBlockService {
                     + aMaxConfirmedReward.aTXReward.getChainLength());
             for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
                     .getChainLength(); i += serverConfiguration.getSyncblocks()) {
-                requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server,store);
+                requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
             }
 
         }
@@ -417,56 +418,58 @@ public class SyncBlockService {
         }
         return null;
     }
-    
-    
+
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            tryConnectingOrphans(blockStore);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            blockStore.defaultDatabaseBatchWrite();
-
-        }
-    }
-
-    
-    /**
-     * For each block in ChainBlockQueue as orphan block, see if we can now fit
-     * it on top of the chain and if so, do so.
-     */
-    private void tryConnectingOrphans(FullBlockStore store) throws VerificationException, BlockStoreException {
-
-        List<ChainBlockQueue> orphanBlocks = store.selectChainblockqueue(true);
+        List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
         if (orphanBlocks.size() > 0) {
             log.debug("Orphan  size = {}", orphanBlocks.size());
         }
         for (ChainBlockQueue orphanBlock : orphanBlocks) {
-            // remove too old OrphanBlock
-            if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
 
-                List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-                l.add(orphanBlock);
-                store.deleteChainBlockQueue(l);
-                continue;
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                tryConnectingOrphans(orphanBlock, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
+
             }
+        }
 
-            // Look up the blocks previous.
-            Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
+    }
 
-            Block prev = store.get(block.getRewardInfo().getPrevRewardHash());
-            if (prev == null) {
-                // This is still an unconnected/orphan block.
-                // if (log.isDebugEnabled())
-                // log.debug("Orphan block {} is not connectable right now",
-                // orphanBlock.block.getHash());
-                requestBlock(block.getRewardInfo().getPrevRewardHash());
-                log.info("syncBlockService orphan {}", block.getHash());
-                continue;
-            }
+    /**
+     * For each block in ChainBlockQueue as orphan block, see if we can now fit
+     * it on top of the chain and if so, do so.
+     */
+    private void tryConnectingOrphans(ChainBlockQueue orphanBlock, FullBlockStore store)
+            throws VerificationException, BlockStoreException {
+        // Look up the blocks previous.
+        Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
+
+        // remove too old OrphanBlock
+        if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
+            log.info("deleteChainBlockQueue too old  {}", block.toString());
+            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+            l.add(orphanBlock);
+            store.deleteChainBlockQueue(l);
+            return;
+        }
+
+        Block prev = store.get(block.getRewardInfo().getPrevRewardHash());
+        if (prev == null) {
+
+            // This is still an unconnected/orphan block.
+            // if (log.isDebugEnabled())
+            // log.debug("Orphan block {} is not connectable right now",
+            // orphanBlock.block.getHash());
+            requestBlock(block.getRewardInfo().getPrevRewardHash());
+            log.info("syncBlockService orphan {}", block.toString());
+
+        } else {
             // Otherwise we can connect it now.
             // False here ensures we don't recurse infinitely downwards when
             // connecting huge chains.
