@@ -105,9 +105,7 @@ public class SyncBlockService {
             Context context = new Context(networkParameters);
             Context.propagate(context);
             sync(-1l, store);
-            // deleteOldUnsolidBlock();
-            // updateSolidity();
-            // log.debug(" end SyncBlockService Single: ");
+            blockgraph.updateChain(true);
         } finally {
             lock.unlock();
             store.close();
