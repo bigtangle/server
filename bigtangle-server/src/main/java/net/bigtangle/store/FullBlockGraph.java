@@ -288,6 +288,7 @@ public class FullBlockGraph {
             SolidityState solidityState = validatorService.checkChainSolidity(block, true, store);
 
             if (solidityState.isDirectlyMissing()) {
+                log.info("Block isDirectlyMissing" + block.toString());
                 saveChainBlockQueue(block, store, true);
                 return;
             }

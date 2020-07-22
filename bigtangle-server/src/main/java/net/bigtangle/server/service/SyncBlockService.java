@@ -81,7 +81,7 @@ public class SyncBlockService {
             Context context = new Context(networkParameters);
             Context.propagate(context);
             connectingOrphans(store);
-            sync(-1l, store);
+            sync(-1l, false, store);
             // deleteOldUnsolidBlock();
             // updateSolidity();
             // log.debug(" end SyncBlockService Single: ");
@@ -105,7 +105,7 @@ public class SyncBlockService {
             Context context = new Context(networkParameters);
             Context.propagate(context);
             cleanupChainBlockQueue(store);
-            sync(-1l, store);
+            sync(-1l, true,store);
             blockgraph.updateChain(true);
             log.debug(" end startInit: ");
         } finally {
@@ -310,7 +310,7 @@ public class SyncBlockService {
         TXReward aTXReward;
     }
 
-    public void sync(Long chainlength, FullBlockStore store) throws Exception {
+    public void sync(Long chainlength, boolean initsync,FullBlockStore store) throws Exception {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
@@ -334,7 +334,7 @@ public class SyncBlockService {
                             aMaxConfirmedReward.aTXReward = aTXReward;
                         }
                     }
-                    syncMaxConfirmedReward(aMaxConfirmedReward, my, store);
+                    syncMaxConfirmedReward(aMaxConfirmedReward, my, initsync,store);
                 }
             } catch (Exception e) {
                 log.debug("", e);
@@ -350,7 +350,7 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, FullBlockStore store)
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, boolean initsync, FullBlockStore store)
             throws Exception {
 
         if (my == null || aMaxConfirmedReward.aTXReward == null)
@@ -377,7 +377,7 @@ public class SyncBlockService {
                     .getChainLength(); i += serverConfiguration.getSyncblocks()) {
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
             }
-
+                if(initsync) blockgraph.updateChain(true);
         }
         // log.debug(" finish sync " + aMaxConfirmedReward.server + " ");
     }
