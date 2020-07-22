@@ -101,11 +101,13 @@ public class SyncBlockService {
         }
         FullBlockStore store = storeService.getStore();
         try {
-            // log.debug(" Start SyncBlockService Single: ");
+            log.debug(" Start SyncBlockService startInit: ");
             Context context = new Context(networkParameters);
             Context.propagate(context);
+            cleanupChainBlockQueue(store);
             sync(-1l, store);
             blockgraph.updateChain(true);
+            log.debug(" end startInit: ");
         } finally {
             lock.unlock();
             store.close();
@@ -417,6 +419,13 @@ public class SyncBlockService {
         return null;
     }
 
+    public void cleanupChainBlockQueue(FullBlockStore blockStore) throws BlockStoreException {
+ 
+        List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+        l.addAll( blockStore.selectChainblockqueue(true));
+        l.addAll( blockStore.selectChainblockqueue(false));
+        blockStore.deleteChainBlockQueue(l);
+    }
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
         if (orphanBlocks.size() > 0) {
