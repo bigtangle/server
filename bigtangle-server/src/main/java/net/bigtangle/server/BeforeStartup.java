@@ -44,6 +44,7 @@ public class BeforeStartup {
         Secp256k1Context.getContext();
         if (scheduleConfiguration.isMilestone_active()) {
             try {
+                logger.debug("syncBlockService startInit" );
                 syncBlockService.startInit();
             } catch (Exception e) {
                 logger.error("", e);
