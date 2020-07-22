@@ -138,6 +138,7 @@ public class DispatcherController {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
                 register(rollingBlock, store);
+                logger.debug(" getTip "+ rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }

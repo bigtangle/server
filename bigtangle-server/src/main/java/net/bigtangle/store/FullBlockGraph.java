@@ -787,7 +787,7 @@ public class FullBlockGraph {
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-                if (utxo.isSpent()) {
+                if (utxo!=null && utxo.isSpent()) {
                     unconfirmRecursive(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
