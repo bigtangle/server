@@ -105,7 +105,7 @@ public class SyncBlockService {
             Context context = new Context(networkParameters);
             Context.propagate(context);
             cleanupChainBlockQueue(store);
-            sync(-1l, true,store);
+            sync(-1l, true, store);
             blockgraph.updateChain(true);
             log.debug(" end startInit: ");
         } finally {
@@ -310,7 +310,7 @@ public class SyncBlockService {
         TXReward aTXReward;
     }
 
-    public void sync(Long chainlength, boolean initsync,FullBlockStore store) throws Exception {
+    public void sync(Long chainlength, boolean initsync, FullBlockStore store) throws Exception {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
@@ -334,7 +334,7 @@ public class SyncBlockService {
                             aMaxConfirmedReward.aTXReward = aTXReward;
                         }
                     }
-                    syncMaxConfirmedReward(aMaxConfirmedReward, my, initsync,store);
+                    syncMaxConfirmedReward(aMaxConfirmedReward, my, initsync, store);
                 }
             } catch (Exception e) {
                 log.debug("", e);
@@ -350,8 +350,8 @@ public class SyncBlockService {
      * chains data. match the block hash to find the sync chain length, then
      * sync the chain data.
      */
-    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, boolean initsync, FullBlockStore store)
-            throws Exception {
+    public void syncMaxConfirmedReward(MaxConfirmedReward aMaxConfirmedReward, TXReward my, boolean initsync,
+            FullBlockStore store) throws Exception {
 
         if (my == null || aMaxConfirmedReward.aTXReward == null)
             return;
@@ -376,8 +376,12 @@ public class SyncBlockService {
             for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
                     .getChainLength(); i += serverConfiguration.getSyncblocks()) {
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
+                if (initsync) {
+                    log.debug(" updateChain " );
+                    blockgraph.updateChain(true);
+                }
             }
-                if(initsync) blockgraph.updateChain(true);
+       
         }
         // log.debug(" finish sync " + aMaxConfirmedReward.server + " ");
     }
@@ -420,14 +424,17 @@ public class SyncBlockService {
     }
 
     public void cleanupChainBlockQueue(FullBlockStore blockStore) throws BlockStoreException {
- 
+
         List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-        l.addAll( blockStore.selectChainblockqueue(true));
-        l.addAll( blockStore.selectChainblockqueue(false));
+        l.addAll(blockStore.selectChainblockqueue(true));
+        l.addAll(blockStore.selectChainblockqueue(false));
         blockStore.deleteChainBlockQueue(l);
     }
+
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
+
+        long cut = blockService.getCurrentCutoffHeight(blockStore);
         if (orphanBlocks.size() > 0) {
             log.debug("Orphan  size = {}", orphanBlocks.size());
         }
@@ -435,7 +442,7 @@ public class SyncBlockService {
 
             try {
                 blockStore.beginDatabaseBatchWrite();
-                tryConnectingOrphans(orphanBlock, blockStore);
+                tryConnectingOrphans(orphanBlock, cut, blockStore);
                 blockStore.commitDatabaseBatchWrite();
             } catch (Exception e) {
                 blockStore.abortDatabaseBatchWrite();
@@ -452,14 +459,15 @@ public class SyncBlockService {
      * For each block in ChainBlockQueue as orphan block, see if we can now fit
      * it on top of the chain and if so, do so.
      */
-    private void tryConnectingOrphans(ChainBlockQueue orphanBlock, FullBlockStore store)
+    private void tryConnectingOrphans(ChainBlockQueue orphanBlock, long cut, FullBlockStore store)
             throws VerificationException, BlockStoreException {
         // Look up the blocks previous.
         Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
 
-        // remove too old OrphanBlock
-        if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000) {
-            log.info("deleteChainBlockQueue too old  {}", block.toString());
+        // remove too old OrphanBlock and cutoff chain length
+        if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000
+                || block.getLastMiningRewardBlock() < cut) {
+            log.info("deleteChainBlockQueue too old with cut {} ,   {}", cut, block.toString());
             List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
             l.add(orphanBlock);
             store.deleteChainBlockQueue(l);
