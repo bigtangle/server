@@ -59,12 +59,16 @@ select * from orders   ;
 select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
+ 
 select * from txreward  order by chainlength desc ;
 select count(distinct(difficulty)) from txreward   ;
 delete    from txreward where  difficulty <= 2490057664
 select * from matching   ;
 select * from  multisignaddress
 select * from  multisign
+
+select count(*) from chainblockqueue   ;
+select  *  from chainblockqueue where orphan = true 
 MCMC 
 select * from tips   ;
 select count(*) from tips   ;

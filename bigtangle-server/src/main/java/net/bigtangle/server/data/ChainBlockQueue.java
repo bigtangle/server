@@ -5,6 +5,10 @@
 
 package net.bigtangle.server.data;
 
+import java.util.Arrays;
+
+import net.bigtangle.core.Utils;
+
 public class ChainBlockQueue {
 
     private byte[] hash;
@@ -64,6 +68,11 @@ public class ChainBlockQueue {
 
     public void setOrphan(boolean orphan) {
         this.orphan = orphan;
+    }
+
+    @Override
+    public String toString() {
+        return "  chainlength= " + chainlength +", hash=" + Utils.HEX.encode(hash )   +   ", orphan=" + orphan  ;
     }
 
 }

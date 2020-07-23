@@ -860,7 +860,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(rewardBlock, false,store);
+            blockGraph.add(rewardBlock, false,true,store);
 
             fail();
         } catch (TransactionOutputsDisallowedException e) {
@@ -888,7 +888,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            blockGraph.add(rewardBlock, false,store);
+            blockGraph.add(rewardBlock, false,true,store);
 
             fail();
         } catch (IncorrectTransactionCountException e) {
@@ -915,7 +915,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            assertFalse(blockGraph.add(rewardBlock, false,store));
+            assertFalse(blockGraph.add(rewardBlock, false,true, store));
             fail();
         } catch (RuntimeException e) {
 
@@ -944,7 +944,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should not go through
         try {
-            assertFalse(blockGraph.add(rewardBlock, false,store));
+            assertFalse(blockGraph.add(rewardBlock, false,true,store));
             fail();
         } catch (RuntimeException e) {
         }
@@ -965,6 +965,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate mining reward block with malformed fields
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
+        blockGraph.updateChain(true);
         Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock3 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
@@ -997,14 +998,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         testBlock6.solve();
         testBlock7.solve();
 
-        assertFalse(blockGraph.add(testBlock3, false,store));
+        blockGraph.add(testBlock3, true,true,store) ;
         try {
-            blockGraph.add(testBlock4, false,store);
+            blockGraph.add(testBlock4, false,true,store);
             fail();
         } catch (VerificationException e) {
         }
         try {
-            blockGraph.add(testBlock5, false,store);
+            blockGraph.add(testBlock5, false,true,store);
             fail();
         } catch (VerificationException e) {
         }

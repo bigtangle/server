@@ -192,26 +192,7 @@ public class FullBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
         block.verifyTransactions();
-
-        SolidityState solidityState = validatorService.checkChainSolidity(block, !allowUnsolid, store);
-
-        if (solidityState.isDirectlyMissing()) {
-            saveChainBlockQueue(block, store, true);
-            return false;
-        }
-
-        if (solidityState.isFailState()) {
-            return false;
-        }
-
-        // Inherit solidity from predecessors if they are not solid
-        solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
-
-        // Sanity check
-        if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-            return false;
-        }
-
+        //no more check add data
         saveChainBlockQueue(block, store, false);
 
         return true;
