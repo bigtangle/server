@@ -6386,6 +6386,25 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
+    public void deleteAllChainBlockQueue( ) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+          preparedStatement = getConnection().prepareStatement(" delete from chainblockqueue ");
+          preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+        
+    @Override
     public void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {

@@ -515,5 +515,6 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException;
     void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
+    void deleteAllChainBlockQueue() throws BlockStoreException;
       
 }

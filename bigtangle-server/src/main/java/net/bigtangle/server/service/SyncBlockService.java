@@ -424,11 +424,8 @@ public class SyncBlockService {
     }
 
     public void cleanupChainBlockQueue(FullBlockStore blockStore) throws BlockStoreException {
-
-        List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-        l.addAll(blockStore.selectChainblockqueue(true));
-        l.addAll(blockStore.selectChainblockqueue(false));
-        blockStore.deleteChainBlockQueue(l);
+    
+        blockStore.deleteAllChainBlockQueue();
     }
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
