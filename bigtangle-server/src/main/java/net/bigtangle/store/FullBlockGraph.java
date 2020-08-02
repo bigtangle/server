@@ -134,13 +134,22 @@ public class FullBlockGraph {
         } else {
             a = addNonChain(block, allowUnsolid, store);
         }
-        // update spend of origin UTXO to avoid double spent
+        // update spend of origin UTXO to avoid create of double spent
         if (a) {
             updateTransactionOutputSpendPending(block);
         }
         return a;
     }
 
+    public boolean addNoSpendPending(Block block, boolean allowUnsolid,   FullBlockStore store) throws BlockStoreException {
+        boolean a;
+        if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+            a = addChain(block, allowUnsolid, true, store);
+        } else {
+            a = addNonChain(block, allowUnsolid, store);
+        } 
+        return a;
+    }
     public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store)
             throws BlockStoreException {
         boolean a = add(block, allowUnsolid, store);
@@ -151,10 +160,10 @@ public class FullBlockGraph {
     }
 
     /*
-     * run timeboxed 1 seconds and can run only, if there is no other
+     * run timeboxed updateConfirmed and can run only, if there is no other
      * ReentrantLock
      */
-    private void updateConfirmedAndOrphan() throws BlockStoreException {
+    private void updateConfirmed() throws BlockStoreException {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -175,11 +184,11 @@ public class FullBlockGraph {
         try {
             handler.get(2000l, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.info("TimeoutException cancel updateConfirmedAndOphan ");
+            log.info("TimeoutException cancel updateConfirmed ");
             handler.cancel(true);
         } catch (Exception e) {
             // ignore
-            log.info("updateConfirmedAndOphan", e);
+            log.info("updateConfirmed", e);
         } finally {
             executor.shutdownNow();
         }
@@ -217,7 +226,7 @@ public class FullBlockGraph {
         FullBlockStore blockStore = storeService.getStore();
         try {
             saveChainConnected(blockStore);
-            updateConfirmedAndOrphan();
+            updateConfirmed();
         } finally {
             if (blockStore != null)
                 blockStore.close();

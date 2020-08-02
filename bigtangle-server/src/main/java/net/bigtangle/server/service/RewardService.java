@@ -128,7 +128,7 @@ public class RewardService {
      * @throws Exception
      */
 
-    private Block createReward(FullBlockStore store) throws Exception {
+    public Block createReward(FullBlockStore store) throws Exception {
 
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
         Block reward = createReward(prevRewardHash,store);

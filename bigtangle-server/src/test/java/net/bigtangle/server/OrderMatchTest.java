@@ -179,7 +179,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify the best orders are correct
-        Thread.sleep(1000);
+     
+        makeAndConfirmOrderMatching(addedBlocks);
+        rewardService.createReward(store);
+        blockGraph.updateChain(true);
         List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2,store);
         assertEquals(2, bestOpenSellOrders.size());
         assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
@@ -306,8 +309,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-
-        Thread.sleep(2000);
+        sendEmpty(10);
+        mcmcService.update();
+        blockGraph.updateChain(true);
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 99950l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
