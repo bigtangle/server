@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Context;
@@ -260,9 +262,9 @@ public class SyncBlockService {
         }
         Collections.sort(sortedBlocks, new SortbyBlock());
         for (Block block : sortedBlocks) {
-            // no genesis block
+            // no genesis block and no spend pending set
             if (block.getHeight() > 0) {
-                blockgraph.add(block, true, store);
+                blockgraph.addNoSpendPending(block, true, store);
             }
         }
 
@@ -373,13 +375,16 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
+        
             for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
                     .getChainLength(); i += serverConfiguration.getSyncblocks()) {
+                Stopwatch watch = Stopwatch.createStarted();
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
                 if (initsync) {
-                    log.debug(" updateChain " );
+                   // log.debug(" updateChain " );
                     blockgraph.updateChain(true);
                 }
+                log.debug(  " synced second="   +  watch.elapsed(TimeUnit.SECONDS));
             }
        
         }
