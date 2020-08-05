@@ -222,17 +222,15 @@ public class FullBlockGraph {
         } else {
             if (!chainlock.tryLock()) {
                 // not try to wait return
-               // log.info("updateChain running return ");
+                // log.info("updateChain running return ");
                 return;
             }
         }
 
         FullBlockStore blockStore = storeService.getStore();
         try {
-            // log.info("mcmcService started");
-            Stopwatch watch = Stopwatch.createStarted();
-            saveChainConnected(blockStore);
-            log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            // log.info("mcmcService started"); 
+            saveChainConnected(blockStore); 
             updateConfirmed();
         } finally {
             chainlock.unlock();
@@ -265,9 +263,13 @@ public class FullBlockGraph {
      */
     public void saveChainConnected(FullBlockStore store) throws VerificationException, BlockStoreException {
         List<ChainBlockQueue> cbs = store.selectChainblockqueue(false);
-        log.info("selectChainblockqueue with size  " + cbs.size());
-        for (ChainBlockQueue chainBlockQueue : cbs) {
-            saveChainConnected(chainBlockQueue, store);
+        if (cbs != null && !cbs.isEmpty()) {
+            Stopwatch watch = Stopwatch.createStarted();
+            log.info("selectChainblockqueue with size  " + cbs.size());
+            for (ChainBlockQueue chainBlockQueue : cbs) {
+                saveChainConnected(chainBlockQueue, store);
+            }
+            log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
 
