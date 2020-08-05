@@ -40,6 +40,7 @@ import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
+import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -169,6 +170,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             final Stopwatch watch = Stopwatch.createStarted();
             byte[] keyBytes = SCrypt.scrypt(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
             watch.stop();
+            logStack();
             log.info("Deriving key took {} for {} scrypt iterations.", watch, scryptParameters.getN());
             return new KeyParameter(keyBytes);
         } catch (Exception e) {
@@ -181,6 +183,20 @@ public class KeyCrypterScrypt implements KeyCrypter {
         }
     }
 
+    
+    private static void logStack() {
+        log.debug("Thread name is {}.", Thread.currentThread().getName());
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        StringWriter mes = new StringWriter();
+        for (int i = 1; i < elements.length; i++) {
+            StackTraceElement s = elements[i];
+            mes.append("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":"
+                    + s.getLineNumber() + "  ) \n");
+        }
+        log.debug(mes.toString());
+
+    }
+    
     /**
      * Password based encryption using AES - CBC 256 bits.
      */

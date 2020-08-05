@@ -218,7 +218,7 @@ public class FullBlockGraph {
         } else {
             if (!chainlock.tryLock()) {
                 // not try to wait return
-                // log.info("updateChain running return ");
+                  log.info("updateChain running return ");
                 return;
             }
         }
@@ -257,6 +257,7 @@ public class FullBlockGraph {
      */
     public void saveChainConnected(FullBlockStore store) throws VerificationException, BlockStoreException {
         List<ChainBlockQueue> cbs = store.selectChainblockqueue(false);
+        log.info("selectChainblockqueue with size  " + cbs.size());
         for (ChainBlockQueue chainBlockQueue : cbs) {
             saveChainConnected(chainBlockQueue, store);
         }
