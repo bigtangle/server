@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Stopwatch;
+
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -141,15 +143,17 @@ public class FullBlockGraph {
         return a;
     }
 
-    public boolean addNoSpendPending(Block block, boolean allowUnsolid,   FullBlockStore store) throws BlockStoreException {
+    public boolean addNoSpendPending(Block block, boolean allowUnsolid, FullBlockStore store)
+            throws BlockStoreException {
         boolean a;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
             a = addChain(block, allowUnsolid, true, store);
         } else {
             a = addNonChain(block, allowUnsolid, store);
-        } 
+        }
         return a;
     }
+
     public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store)
             throws BlockStoreException {
         boolean a = add(block, allowUnsolid, store);
@@ -201,7 +205,7 @@ public class FullBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
         block.verifyHeader();
         block.verifyTransactions();
-        //no more check add data
+        // no more check add data
         saveChainBlockQueue(block, store, false);
 
         return true;
@@ -218,16 +222,20 @@ public class FullBlockGraph {
         } else {
             if (!chainlock.tryLock()) {
                 // not try to wait return
-                  log.info("updateChain running return ");
+                log.info("updateChain running return ");
                 return;
             }
         }
 
         FullBlockStore blockStore = storeService.getStore();
         try {
+            // log.info("mcmcService started");
+            Stopwatch watch = Stopwatch.createStarted();
             saveChainConnected(blockStore);
+            log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
             updateConfirmed();
         } finally {
+            chainlock.unlock();
             if (blockStore != null)
                 blockStore.close();
         }
@@ -779,7 +787,7 @@ public class FullBlockGraph {
         for (Transaction tx : block.getTransactions()) {
             for (TransactionOutput txout : tx.getOutputs()) {
                 UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-                if (utxo!=null && utxo.isSpent()) {
+                if (utxo != null && utxo.isSpent()) {
                     unconfirmRecursive(
                             blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
                                     .getBlockHash(),
