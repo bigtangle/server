@@ -222,7 +222,7 @@ public class FullBlockGraph {
         } else {
             if (!chainlock.tryLock()) {
                 // not try to wait return
-                log.info("updateChain running return ");
+               // log.info("updateChain running return ");
                 return;
             }
         }
