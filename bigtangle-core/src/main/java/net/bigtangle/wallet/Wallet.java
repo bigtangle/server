@@ -93,6 +93,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
@@ -1925,8 +1926,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // int sleep = 60000;
         try {
             return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo);
-        } catch (InsufficientMoneyException e) {
-            log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
+        } catch (InsufficientMoneyException | ConflictPossibleException e) {
+            log.debug(" Exception " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
                 repeat -= 1;
                 try {
@@ -1945,7 +1946,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
         try {
             return payMoneyToECKeyListMemoEncrypt(aesKey, giveMoneyResult, tokenid, memoHex);
-        } catch (InsufficientMoneyException e) {
+        } catch (InsufficientMoneyException | ConflictPossibleException e) {
             log.debug("InsufficientMoneyException " + giveMoneyResult + " repeat time =" + repeat);
             if (repeat > 0) {
                 repeat -= 1;

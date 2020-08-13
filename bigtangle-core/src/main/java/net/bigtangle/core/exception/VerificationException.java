@@ -249,4 +249,10 @@ public class VerificationException extends RuntimeException {
             super(msg);
         }
     }
+    public static class ConflictPossibleException extends VerificationException {
+        public ConflictPossibleException(String msg) {
+            super(msg);
+        }
+    }
+    
 }

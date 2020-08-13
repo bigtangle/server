@@ -47,6 +47,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
+import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -694,7 +695,7 @@ public class BlockService {
 
         block.verifyHeader();
         if (!checkPossibleConflict(block, store))
-            throw new VerificationException("Conflict Possible");
+            throw new ConflictPossibleException("Conflict Possible");
         checkDomainname(block);
     }
 
