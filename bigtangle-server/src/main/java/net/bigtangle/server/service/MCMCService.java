@@ -98,7 +98,7 @@ public class MCMCService {
             // TODO move updateConfirmed as task, Test run only with the same
             // store
             if (updateconfirm)
-                blockGraph.updateConfirmed(1, store);
+                blockGraph.updateConfirmedDo( store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             log.debug("update  ", e);

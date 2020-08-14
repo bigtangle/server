@@ -1791,7 +1791,7 @@ public class FullBlockGraph {
     public void updateConfirmed(FullBlockStore blockStore) throws BlockStoreException {
         try {
             blockStore.beginDatabaseBatchWrite();
-            updateConfirmed(1, blockStore);
+            updateConfirmedDo( blockStore);
             blockStore.commitDatabaseBatchWrite();
         } catch (Exception e) {
             blockStore.abortDatabaseBatchWrite();
@@ -1804,7 +1804,7 @@ public class FullBlockGraph {
     // Start in new database connection to for potential database locks. Add
     // chain must be atomic.
 
-    public void updateConfirmed(int numberUpdates, FullBlockStore blockStore) throws BlockStoreException {
+    public void updateConfirmedDo(  FullBlockStore blockStore) throws BlockStoreException {
 
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
@@ -1814,7 +1814,7 @@ public class FullBlockGraph {
 
         long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
         long maxHeight = blockService.getCurrentMaxHeight(blockStore);
-        for (int i = 0; i < numberUpdates; i++) {
+        
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
             TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
@@ -1827,12 +1827,9 @@ public class FullBlockGraph {
             for (BlockWrap block : blocksToAdd) {
                 confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
             }
-            // update the spending for help
-
-            // Exit condition: there are no more blocks to add
-            if (blocksToAdd.isEmpty())
-                break;
-        }
+          
+           
+       
 
     }
 
