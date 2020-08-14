@@ -10,6 +10,7 @@ import java.util.HashSet;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -21,16 +22,22 @@ import net.bigtangle.core.TokenInfo;
 public class BlockWrap {
     protected Block block;
     protected BlockEvaluation blockEvaluation;
+    protected BlockMCMC mcmc;
     protected NetworkParameters params;
 
     protected BlockWrap() {
         super();
     }
 
-    public BlockWrap(Block block, BlockEvaluation blockEvaluation, NetworkParameters params) {
+    public BlockWrap(Block block, BlockEvaluation blockEvaluation, BlockMCMC mcmc, NetworkParameters params) {
         super();
         this.block = block;
-        this.blockEvaluation = blockEvaluation;
+        this.blockEvaluation = blockEvaluation; 
+        if (mcmc == null)
+            this.mcmc = BlockMCMC.defaultBlockMCMC(blockEvaluation.getBlockHash());
+        else {
+            this.mcmc = mcmc;
+        }
         this.params = params;
     }
 
@@ -40,6 +47,14 @@ public class BlockWrap {
 
     public BlockEvaluation getBlockEvaluation() {
         return blockEvaluation;
+    }
+
+    public BlockMCMC getMcmc() {
+        return mcmc;
+    }
+
+    public void setMcmc(BlockMCMC mcmc) {
+        this.mcmc = mcmc;
     }
 
     public NetworkParameters getParams() {

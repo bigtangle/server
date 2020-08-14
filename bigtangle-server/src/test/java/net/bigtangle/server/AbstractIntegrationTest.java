@@ -602,7 +602,7 @@ public abstract class AbstractIntegrationTest {
         List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
         Map<Block, Boolean> blockConfirmed = new HashMap<>();
         for (Block b : addedBlocks) {
-            blockConfirmed.put(b, store.getBlockEvaluation(b.getHash()).isConfirmed());
+            blockConfirmed.put(b, blockService.getBlockEvaluation(b.getHash(),store).isConfirmed());
         }
 
         // Redo and assert snapshot equal to new state
@@ -1409,7 +1409,7 @@ public abstract class AbstractIntegrationTest {
             // conflicts
             int res = 0;
             for (BlockEvaluationDisplay b : a) {
-                if (b.getRating() < 70) {
+                if (b.getMcmc().getRating() < 70) {
                     res += 1;
                 }
             }

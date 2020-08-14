@@ -196,15 +196,15 @@ public class BlockEvaluationController {
                 BlockEvaluationDisplay blockEvaluation = blockEvaluations.get(i);
                 String tempKey = blockEvaluation.getBlockHexStr();
                 String tempValue = keyMap.get(tempKey);
-                String tempRating = String.valueOf(blockEvaluation.getRating());
-                String tempCumulativeWeight = String.valueOf(blockEvaluation.getCumulativeWeight());
+                String tempRating = String.valueOf(blockEvaluation.getMcmc().getRating());
+                String tempCumulativeWeight = String.valueOf(blockEvaluation.getMcmc().getCumulativeWeight());
 
                 Map<String, Object> map = new HashMap<String, Object>();
 
                 map.put("blockHexStr", blockEvaluation.getBlockHexStr());
-                map.put("rating", blockEvaluation.getRating());
-                map.put("depth", blockEvaluation.getDepth());
-                map.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
+                map.put("rating", blockEvaluation.getMcmc().getRating());
+                map.put("depth", blockEvaluation.getMcmc().getDepth());
+                map.put("cumulativeWeight", blockEvaluation.getMcmc().getCumulativeWeight());
 
                 map.put("height", blockEvaluation.getHeight());
                 map.put("milestone", blockEvaluation.getMilestone());
@@ -214,21 +214,21 @@ public class BlockEvaluationController {
                 map.put("maintained", "");
                 map.put("blocktype", blockEvaluation.getBlockType().name());
                 if (tempValue.equalsIgnoreCase("m-c1-c2")) {
-                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
-                    String tempRating1 = String.valueOf(map1.getRating());
-                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
+                    BlockEvaluationDisplay map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getMcmc().getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getMcmc().getCumulativeWeight());
 
-                    BlockEvaluation map2 = blockEvaluations.get(i + 2);
-                    String tempRating2 = String.valueOf(map2.getRating());
-                    String tempCumulativeWeight2 = String.valueOf(map2.getCumulativeWeight());
+                    BlockEvaluationDisplay map2 = blockEvaluations.get(i + 2);
+                    String tempRating2 = String.valueOf(map2.getMcmc().getRating());
+                    String tempCumulativeWeight2 = String.valueOf(map2.getMcmc().getCumulativeWeight());
                     map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
                     map.put("cumulativeWeight",
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 2;
                 } else if (tempValue.equalsIgnoreCase("m-c1-0")) {
-                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
-                    String tempRating1 = String.valueOf(map1.getRating());
-                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
+                    BlockEvaluationDisplay map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getMcmc().getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getMcmc().getCumulativeWeight());
 
                     String tempRating2 = "-";
                     String tempCumulativeWeight2 = "-";
@@ -237,20 +237,20 @@ public class BlockEvaluationController {
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 1;
                 } else if (tempValue.equalsIgnoreCase("m-0-c2")) {
-                    BlockEvaluation map2 = blockEvaluations.get(i + 1);
+                    BlockEvaluationDisplay map2 = blockEvaluations.get(i + 1);
                     String tempRating1 = "-";
                     String tempCumulativeWeight1 = "-";
 
-                    String tempRating2 = String.valueOf(map2.getRating());
-                    String tempCumulativeWeight2 = String.valueOf(map2.getCumulativeWeight());
+                    String tempRating2 = String.valueOf(map2.getMcmc().getRating());
+                    String tempCumulativeWeight2 = String.valueOf(map2.getMcmc().getCumulativeWeight());
                     map.put("rating", tempRating + ";" + tempRating1 + ";" + tempRating2);
                     map.put("cumulativeWeight",
                             tempCumulativeWeight + ";" + tempCumulativeWeight1 + ";" + tempCumulativeWeight2);
                     i = i + 1;
                 } else if (tempValue.equalsIgnoreCase("0-c1-c2")) {
-                    BlockEvaluation map1 = blockEvaluations.get(i + 1);
-                    String tempRating1 = String.valueOf(map1.getRating());
-                    String tempCumulativeWeight1 = String.valueOf(map1.getCumulativeWeight());
+                    BlockEvaluationDisplay map1 = blockEvaluations.get(i + 1);
+                    String tempRating1 = String.valueOf(map1.getMcmc().getRating());
+                    String tempCumulativeWeight1 = String.valueOf(map1.getMcmc().getCumulativeWeight());
 
                     map.put("rating", "-;" + tempRating + ";" + tempRating1);
                     map.put("cumulativeWeight", "-;" + tempCumulativeWeight + ";" + tempCumulativeWeight1);
@@ -378,9 +378,9 @@ public class BlockEvaluationController {
                 Map<String, Object> dataRow = new HashMap<>();
                 dataRow.put("hash",
                         blockEvaluation.getBlockHash() == null ? "" : blockEvaluation.getBlockHash().toString());
-                dataRow.put("rating", blockEvaluation.getRating());
-                dataRow.put("depth", blockEvaluation.getDepth());
-                dataRow.put("cumulativeWeight", blockEvaluation.getCumulativeWeight());
+                dataRow.put("rating", blockEvaluation.getMcmc().getRating());
+                dataRow.put("depth", blockEvaluation.getMcmc().getDepth());
+                dataRow.put("cumulativeWeight", blockEvaluation.getMcmc().getCumulativeWeight());
                 dataRow.put("height", blockEvaluation.getHeight());
 
                 dataRow.put("milestone", blockEvaluation.getMilestone());

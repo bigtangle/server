@@ -509,8 +509,8 @@ public class ValidatorService {
         // Sort conflicts internally by descending rating, then cumulative
         // weight.
         Comparator<ConflictCandidate> byDescendingRating = getConflictComparator()
-                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getRating())
-                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getCumulativeWeight())
+                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getMcmc().getRating())
+                .thenComparingLong((ConflictCandidate e) -> e.getBlock().getMcmc().getCumulativeWeight())
                 .thenComparingLong((ConflictCandidate e) -> -e.getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparing((ConflictCandidate e) -> e.getBlock().getBlockEvaluation().getBlockHash()).reversed();
 
@@ -523,8 +523,8 @@ public class ValidatorService {
         // Sort conflicts among each other by descending max(rating).
         Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
                 .thenComparingLong(
-                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation().getRating())
-                .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getBlockEvaluation()
+                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc().getRating())
+                .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc()
                         .getCumulativeWeight())
                 .thenComparingLong(
                         (TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation().getInsertTime())

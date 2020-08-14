@@ -229,8 +229,8 @@ public class FullBlockGraph {
 
         FullBlockStore blockStore = storeService.getStore();
         try {
-            // log.info("mcmcService started"); 
-            saveChainConnected(blockStore); 
+            // log.info("mcmcService started");
+            saveChainConnected(blockStore);
             updateConfirmed();
         } finally {
             chainlock.unlock();
@@ -1060,7 +1060,7 @@ public class FullBlockGraph {
             break;
         case Success:
             // If already set, nothing to do here...
-            if (blockStore.getBlockEvaluation(block.getHash()).getSolid() == 2)
+            if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
                 return;
 
             // TODO don't calculate again, it may already have been calculated
@@ -1789,47 +1789,47 @@ public class FullBlockGraph {
     }
 
     public void updateConfirmed(FullBlockStore blockStore) throws BlockStoreException {
-        try {
-            blockStore.beginDatabaseBatchWrite();
-            updateConfirmedDo( blockStore);
-            blockStore.commitDatabaseBatchWrite();
-        } catch (Exception e) {
-            blockStore.abortDatabaseBatchWrite();
-            throw e;
-        } finally {
-            blockStore.defaultDatabaseBatchWrite();
-
-        }
-    }
-    // Start in new database connection to for potential database locks. Add
-    // chain must be atomic.
-
-    public void updateConfirmedDo(  FullBlockStore blockStore) throws BlockStoreException {
-
+  
         // First remove any blocks that should no longer be in the milestone
         HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (BlockEvaluation block : blocksToRemove)
-            unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+        for (BlockEvaluation block : blocksToRemove) {
+            try {
+                blockStore.beginDatabaseBatchWrite();
 
+                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
+            }
+        }
         long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
         long maxHeight = blockService.getCurrentMaxHeight(blockStore);
-        
-            // Now try to find blocks that can be added to the milestone.
-            // DISALLOWS UNSOLID
-            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
 
-            // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
+        // Now try to find blocks that can be added to the milestone.
+        // DISALLOWS UNSOLID
+        TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
 
-            // Finally add the resolved new blocks to the confirmed set
-            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-            for (BlockWrap block : blocksToAdd) {
+        // VALIDITY CHECKS
+        validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
+
+        // Finally add the resolved new blocks to the confirmed set
+        HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+        for (BlockWrap block : blocksToAdd) {
+            try {
+                blockStore.beginDatabaseBatchWrite();
                 confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
             }
-          
-           
-       
+        }
 
     }
 

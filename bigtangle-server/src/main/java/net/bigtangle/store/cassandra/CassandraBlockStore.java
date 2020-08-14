@@ -148,16 +148,6 @@ public class CassandraBlockStore extends DatabaseFullBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-  
-    @Override
-    protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        return getUpdate() + " outputs SET spent = ?, spenderblockhash = ? WHERE hash = ? AND outputindex= ?";
-    }
-
-    @Override
-    protected String getUpdateBlockEvaluationDepthSQL() {
-        return getUpdate() + " blockevaluation SET depth = ? WHERE blockhash = ?";
-    }
 
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {

@@ -28,6 +28,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
@@ -44,10 +45,10 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
-import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
@@ -55,7 +56,6 @@ import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.data.BlockPrototype;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.DomainValidator;
@@ -115,14 +115,13 @@ public class BlockService {
         return blocks;
     }
 
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
-        return store.getBlockEvaluation(hash);
+  
+    public     BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
+        return store.getBlockWrap(hash).getBlockEvaluation();
     }
-
-    public List<BlockEvaluation> getAllBlockEvaluations(FullBlockStore store) throws BlockStoreException {
-        return store.getAllBlockEvaluations();
+    public     BlockMCMC getBlockMCMC(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
+        return store.getBlockWrap(hash).getMcmc();
     }
-
     public void saveBlock(Block block, FullBlockStore store) throws Exception {
         Context context = new Context(networkParameters);
         Context.propagate(context);
@@ -131,15 +130,7 @@ public class BlockService {
         // removeBlockPrototype(block, store);
 
     }
-
-    public void removeBlockPrototype(Block block, FullBlockStore store) {
-        try {
-            store.deleteBlockPrototype(block.getPrevBlockHash(), block.getPrevBranchBlockHash());
-        } catch (BlockStoreException e) {
-            // ignore this and delete will be done by schedule
-        }
-    }
-
+ 
     public long getTimeSeconds(int days) throws Exception {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
@@ -412,29 +403,8 @@ public class BlockService {
 
         return getNewBlockPrototype(store);
     }
-
-    public Block getBlockPrototypeMayCache(FullBlockStore store) throws BlockStoreException, NoBlockException {
-        BlockPrototype re = store.getBlockPrototype();
-        if (re == null) {
-            return getNewBlockPrototype(store);
-        } else {
-            Block r1 = getBlock(re.getPrevBlockHash(), store);
-            Block r2 = getBlock(re.getPrevBranchBlockHash(), store);
-            Block b = Block.createBlock(networkParameters, r1, r2);
-            b.setMinerAddress(
-                    Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
-            return b;
-        }
-    }
-
-    public void createBlockPrototypeCache(FullBlockStore store) throws Exception {
-        for (int i = 0; i < serverConfiguration.getBlockPrototypeCachesSize(); i++) {
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
-            Block r1 = getBlock(tipsToApprove.getLeft(), store);
-            Block r2 = getBlock(tipsToApprove.getRight(), store);
-            store.insertBlockPrototype(r1.getHash(), r2.getHash());
-        }
-    }
+ 
+ 
 
     private Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException, NoBlockException {
         Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
@@ -493,7 +463,7 @@ public class BlockService {
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
         FullBlockStore store = storeService.getStore();
         try {
-            if (store.getBlockEvaluation(block.getHash()) == null) {
+            if (!store.existBlock(block.getHash()) ) {
                 try {
                     if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                         logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
@@ -517,15 +487,7 @@ public class BlockService {
         return Optional.empty();
     }
 
-    public void streamBlocks(Long heightstart, String kafka, FullBlockStore store) throws BlockStoreException {
-        KafkaMessageProducer kafkaMessageProducer;
-        if (kafka == null || "".equals(kafka)) {
-            kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-        } else {
-            kafkaMessageProducer = new KafkaMessageProducer(kafka, kafkaConfiguration.getTopicOutName(), true);
-        }
-        store.streamBlocks(heightstart, kafkaMessageProducer, serverConfiguration.getMineraddress());
-    }
+ 
 
     public void adjustHeightRequiredBlocks(Block block, FullBlockStore store)
             throws BlockStoreException, NoBlockException {

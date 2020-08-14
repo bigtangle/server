@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -39,7 +38,6 @@ import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ChainBlockQueue;
-import net.bigtangle.server.data.UnsolidBlock;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
@@ -61,9 +59,7 @@ public class SyncBlockService {
 
     @Autowired
     private BlockService blockService;
-
-    @Autowired
-    private RewardService rewardService;
+ 
     @Autowired
     protected ServerConfiguration serverConfiguration;
     private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
@@ -169,32 +165,7 @@ public class SyncBlockService {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
-    public void updateSolidity(FullBlockStore store)
-            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
-        long maxHeight = blockService.getCurrentMaxHeight(store);
-        List<UnsolidBlock> storedBlocklist = store.getNonSolidMissingBlocks(cutoffHeight, maxHeight);
-        log.debug("getNonSolidMissingBlocks size = " + storedBlocklist.size() + " from cutoff height: " + cutoffHeight
-                + " to max height: " + maxHeight);
-        for (UnsolidBlock storedBlock : storedBlocklist) {
-            if (storedBlock != null) {
-                Block req = blockService.getBlock(storedBlock.missingdependencyHash(), store);
-
-                if (req != null) {
-                    store.updateMissingBlock(storedBlock.missingdependencyHash(), false);
-                    // if the block is there, now scan the rest unsolid
-                    // blocks
-                    if (store.getBlockEvaluation(req.getHash()).getSolid() >= 1) {
-                        rewardService.scanWaitingBlocks(req, store);
-                    }
-                } else {
-                    requestBlock(storedBlock.missingdependencyHash());
-                }
-            }
-        }
-
-    }
-
+ 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());

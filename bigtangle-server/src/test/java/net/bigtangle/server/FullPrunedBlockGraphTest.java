@@ -954,8 +954,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.confirm(block2.getHash(), new HashSet<>(), (long) -1,store);
 
         // Should be confirmed now
-        assertTrue(store.getBlockEvaluation(block1.getHash()).isConfirmed());
-        assertTrue(store.getBlockEvaluation(block2.getHash()).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(block1.getHash(),store).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(block2.getHash(),store).isConfirmed());
         UTXO utxo11 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()),store);
         UTXO utxo21 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(block1.getHash()),store);
         assertNotNull(utxo11);
@@ -973,8 +973,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirmRecursive(block1.getHash(), new HashSet<>(),store);
 
         // Both should be unconfirmed now
-        assertFalse(store.getBlockEvaluation(block1.getHash()).isConfirmed());
-        assertFalse(store.getBlockEvaluation(block2.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(block1.getHash(),store).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(block2.getHash(),store).isConfirmed());
 
         final UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(block1.getHash()),store);
         assertNotNull(utxo1);
@@ -1232,7 +1232,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         blockGraph.unconfirmRecursive(rewardBlock.getHash(), new HashSet<>(),store);
 
         // Verify the dependent spending block is unconfirmed too
-        assertFalse(store.getBlockEvaluation(utxoSpendingBlock.getHash()).isConfirmed());
+        assertFalse(blockService.getBlockEvaluation(utxoSpendingBlock.getHash(),store).isConfirmed());
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);

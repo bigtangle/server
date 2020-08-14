@@ -56,4 +56,6 @@ public interface BlockStore {
      * @return The network params.
      */
     NetworkParameters getParams();
+
+    boolean existBlock(Sha256Hash hash) throws BlockStoreException;
 }

@@ -201,7 +201,7 @@ public class TipsService {
         // Repeat: Proceed on path to be included first (highest rating else
         // random)
         while (nextLeft != left && nextRight != right) {
-            if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+            if (nextLeft. getMcmc().getRating() > nextRight.getMcmc().getRating()) {
                 // Terminate if next left approves too many new milestone blocks
                 @SuppressWarnings("unchecked")
                 HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
@@ -364,7 +364,7 @@ public class TipsService {
         // Repeat: Proceed on path to be included first (highest rating else
         // random)
         while (nextLeft != left && nextRight != right) {
-            if (nextLeft.getBlockEvaluation().getRating() > nextRight.getBlockEvaluation().getRating()) {
+            if (nextLeft.getMcmc().getRating() > nextRight.getMcmc().getRating()) {
                 // Go left
                 left = nextLeft;
                 if (!blockService.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight,store))
@@ -471,13 +471,13 @@ public class TipsService {
         } else {
             double[] transitionWeights = new double[candidates.size()];
             double transitionWeightSum = 0;
-            long currentCumulativeWeight = currentBlock.getBlockEvaluation().getCumulativeWeight();
+            long currentCumulativeWeight = currentBlock.getMcmc().getCumulativeWeight();
 
             // Calculate the unnormalized transition weights
             for (int i = 0; i < candidates.size(); i++) {
                 // Calculate transition weights
                 transitionWeights[i] = Math.exp(serverConfiguration.getAlphaMCMC()
-                        * (currentCumulativeWeight - candidates.get(i).getBlockEvaluation().getCumulativeWeight()));
+                        * (currentCumulativeWeight - candidates.get(i).getMcmc().getCumulativeWeight()));
                 transitionWeightSum += transitionWeights[i];
             }
 
@@ -525,10 +525,10 @@ public class TipsService {
         if (candidates.isEmpty())
             throw new IllegalArgumentException("Candidate list is empty.");
 
-        double maxBlockWeight = candidates.stream().mapToLong(e -> e.getBlockEvaluation().getCumulativeWeight()).max()
+        double maxBlockWeight = candidates.stream().mapToLong(e -> e.getMcmc().getCumulativeWeight()).max()
                 .orElse(1L);
         double normalizedBlockWeightSum = candidates.stream()
-                .mapToDouble(e -> e.getBlockEvaluation().getCumulativeWeight() / maxBlockWeight).sum();
+                .mapToDouble(e -> e.getMcmc().getCumulativeWeight() / maxBlockWeight).sum();
         List<BlockWrap> results = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
@@ -536,7 +536,7 @@ public class TipsService {
             double selectionRealization = seed.nextDouble() * normalizedBlockWeightSum;
             for (int selection = 0; selection < candidates.size(); selection++) {
                 BlockWrap selectedBlock = candidates.get(selection);
-                selectionRealization -= selectedBlock.getBlockEvaluation().getCumulativeWeight() / maxBlockWeight;
+                selectionRealization -= selectedBlock.getMcmc().getCumulativeWeight() / maxBlockWeight;
                 if (selectionRealization <= 0) {
                     results.add(selectedBlock);
                     break;

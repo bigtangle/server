@@ -11,6 +11,10 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
      */
     private long latestchainnumber;
     
+    
+    BlockMCMC mcmc;
+    
+    
     public BlockEvaluationDisplay() {
     }
 
@@ -26,15 +30,11 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         this.blockType = blockType;
     }
 
-    public static BlockEvaluationDisplay build(Sha256Hash blockhash, long rating, long depth, long cumulativeWeight,
+    public static BlockEvaluationDisplay build(Sha256Hash blockhash, 
             long height, long milestone, long milestoneLastUpdateTime, long insertTime,
             int blocktype, long solid, boolean confirmed, long latestchainnumber) {
         BlockEvaluationDisplay blockEvaluation = new BlockEvaluationDisplay();
-        blockEvaluation.setBlockHash(blockhash);
-        blockEvaluation.setNormalizeRating(rating);
-        blockEvaluation.setDepth(depth);
-        blockEvaluation.setCumulativeWeight(cumulativeWeight);
-
+        blockEvaluation.setBlockHash(blockhash); 
         blockEvaluation.setHeight(height);
         blockEvaluation.setMilestone(milestone);
         blockEvaluation.setMilestoneLastUpdateTime(milestoneLastUpdateTime);
@@ -51,7 +51,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
     }
 
     public void setNormalizeRating(long rating) {
-        setRating(rating *100 / NetworkParameters.NUMBER_RATING_TIPS);
+        mcmc.setRating(rating *100 / NetworkParameters.NUMBER_RATING_TIPS);
     }
     
     public long getLatestchainnumber() {
@@ -60,6 +60,14 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 
     public void setLatestchainnumber(long latestchainnumber) {
         this.latestchainnumber = latestchainnumber;
+    }
+
+    public BlockMCMC getMcmc() {
+        return mcmc;
+    }
+
+    public void setMcmc(BlockMCMC mcmc) {
+        this.mcmc = mcmc;
     }
 
     /**

@@ -635,29 +635,8 @@ public class RewardService {
         return true;
     }
 
-    public void scanWaitingBlocks(Block block, Set<Sha256Hash> updateSet, FullBlockStore store) throws BlockStoreException {
-        // Finally, look in the solidity waiting queue for blocks that are still
-        // waiting
-        for (Block b : store.getUnsolidBlocks(block.getHash().getBytes())) {
-            if (updateSet != null && !updateSet.contains(b.getHash()))
-                continue;
-            try {
-                // Clear from waiting list
-                store.deleteUnsolid(b.getHash());
-                // If going through or waiting for more dependencies, all is
-                // good
-                solidifyWaiting(b,store);
-            } catch (VerificationException e) {
-                // If the block is deemed invalid, we do not propagate the error
-                // upwards
-                log.debug(e.getMessage());
-            }
-        }
-    }
-
-    public void scanWaitingBlocks(Block block, FullBlockStore store) throws BlockStoreException {
-        scanWaitingBlocks(block, null,store);
-    }
+ 
+  
 
     public SolidityState checkRewardDifficulty(Block rewardBlock, FullBlockStore store) throws BlockStoreException {
         RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());

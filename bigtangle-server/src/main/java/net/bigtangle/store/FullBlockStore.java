@@ -38,16 +38,13 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
-import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.BatchBlock;
-import net.bigtangle.server.data.BlockPrototype;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.Rating;
 import net.bigtangle.server.data.SolidityState;
-import net.bigtangle.server.data.UnsolidBlock;
 
 /**
  * <p>
@@ -149,17 +146,12 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
-
-    public List<BlockWrap> getApproverBlocks(Sha256Hash hash) throws BlockStoreException;
+ 
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
-
-    public List<BlockEvaluation> getAllBlockEvaluations() throws BlockStoreException;
-
-    public BlockEvaluation getBlockEvaluation(Sha256Hash hash) throws BlockStoreException;
-
+  
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException;
 
@@ -172,11 +164,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
-    /* Block Evaluation */
-    public void updateBlockEvaluationCumulativeWeight(Sha256Hash blockhash, long weight) throws BlockStoreException;
-
-    public void updateBlockEvaluationDepth(Sha256Hash blockhash, long depth) throws BlockStoreException;
-
+   
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException;
 
     public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException;
@@ -304,8 +292,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
             throws BlockStoreException;
 
-    public void streamBlocks(long heightstart, KafkaMessageProducer kafkaMessageProducer, String serveraddress)
-            throws BlockStoreException;
+     
 
     public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException;
 
@@ -385,8 +372,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     byte[] getSettingValue(String name) throws BlockStoreException;
 
-    public List<UnsolidBlock> getNonSolidMissingBlocks(long cutoffHeight, long maxHeight) throws BlockStoreException;
-
+   
     void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
 
     void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
@@ -415,9 +401,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException;
 
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
-
-    HashSet<Block> getUnsolidBlocks(byte[] dep) throws BlockStoreException;
-
+  
     List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
 
     List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException;
@@ -498,17 +482,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
     ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
-
-    BlockPrototype getBlockPrototype() throws BlockStoreException;
-
-    void insertBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
-            throws BlockStoreException;
-
-    void deleteBlockPrototype(Sha256Hash previousblockhash, Sha256Hash previousbranchblockhash)
-            throws BlockStoreException;
-
-    void deleteBlockPrototypeTimeout() throws BlockStoreException;
-
+ 
     void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
  
     List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;

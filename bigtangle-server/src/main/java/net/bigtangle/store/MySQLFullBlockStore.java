@@ -43,17 +43,11 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
             + "    mineraddress binary(20) NOT NULL,\n"
             + "    blocktype bigint NOT NULL,\n" 
-
-            //dynamic data
-            //MCMC rating,depth,cumulativeweight
-            + "    rating bigint NOT NULL,\n"
-            + "    depth bigint NOT NULL,\n" 
-            + "    cumulativeweight bigint NOT NULL,\n"
             //reward block chain length is here milestone
             + "    milestone bigint NOT NULL,\n"
             + "    milestonelastupdate bigint NOT NULL,\n"  
             + "    confirmed boolean NOT NULL,\n"
-       
+     
             //solid is result of validation of the block, 
             + "    solid bigint NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
@@ -61,16 +55,17 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + ") ENGINE=InnoDB ";
 
     
-    private static final String CREATE_UNSOLIDBLOCKS_TABLE = "CREATE TABLE unsolidblocks (\n"
+    private static final String CREATE_MCMC_TABLE = "CREATE TABLE mcmc (\n" 
             + "    hash binary(32) NOT NULL,\n" 
-            + "    block mediumblob NOT NULL,\n" 
-            + "    inserttime bigint NOT NULL,\n"
-            + "    reason bigint NOT NULL,\n" 
-            + "    missingdependency mediumblob NOT NULL,\n" 
-            + "    height bigint ,\n"
-            + "    directlymissing boolean NOT NULL,\n" 
-            + "    CONSTRAINT unsolidblocks_pk PRIMARY KEY (hash) \n" + ") ENGINE=InnoDB";
-
+            //dynamic data
+            //MCMC rating,depth,cumulativeweight
+            + "    rating bigint NOT NULL,\n"
+            + "    depth bigint NOT NULL,\n" 
+            + "    cumulativeweight bigint NOT NULL,\n"
+            + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n" 
+            + ") ENGINE=InnoDB ";
+    
+ 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n" 
             + "    blockhash binary(32) NOT NULL,\n" 
             + "    hash binary(32) NOT NULL,\n"
@@ -352,13 +347,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "   chainlength bigint NOT NULL,\n" 
             + "   resultdata blob NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
-    // Cached block prototype for performance
-    private static final String CREATE_BLOCKPROTOTYPE_TABLE = "CREATE TABLE blockprototype (\n"
-            + "    prevblockhash  binary(32) NOT NULL,\n"
-            + "    prevbranchblockhash  binary(32) NOT NULL,\n" 
-            + "    inserttime bigint,\n" 
-            + "    CONSTRAINT tips_pk PRIMARY KEY (prevblockhash,prevbranchblockhash ) USING BTREE \n" + ")\n";
-
+   
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
             + "    hash binary(32) NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n" 
@@ -406,8 +395,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
 
     protected List<String> getCreateTablesSQL1() {
         List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_BLOCKS_TABLE);
-        sqlStatements.add(CREATE_UNSOLIDBLOCKS_TABLE);
+        sqlStatements.add(CREATE_BLOCKS_TABLE); 
         sqlStatements.add(CREATE_OUTPUT_TABLE);
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
@@ -427,6 +415,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_MCMC_TABLE); 
  
         return sqlStatements;
     }
@@ -437,8 +426,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
-        sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE);
-        sqlStatements.add(CREATE_BLOCKPROTOTYPE_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         return sqlStatements;
     }
@@ -503,15 +491,6 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-    @Override
-    protected String getUpdateBlockEvaluationCumulativeweightSQL() {
-        return UPDATE_BLOCKEVALUATION_CUMULATIVEWEIGHT_SQL;
-    }
-
-    @Override
-    protected String getUpdateBlockEvaluationDepthSQL() {
-        return UPDATE_BLOCKEVALUATION_DEPTH_SQL;
-    }
 
     @Override
     public String getUpdateBlockEvaluationMilestoneSQL() {
