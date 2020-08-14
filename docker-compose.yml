@@ -4,12 +4,10 @@ networks:
     driver: bridge
 services:
   mysql-bigtangle:
-    image: bigtangle/mysql
+    image: registry.dasimi.com/mysql
     container_name: mysql-bigtangle
-    volumen:
-        /data/var/lib/mysql:/var/lib/mysql
-    ports:
-    - 3306:3306
+    volumes:
+        /data/mysql-bigtangle/var/lib/mysql:/var/lib/mysql
     networks:
     - bigtangle-bridged-network
     environment: 
@@ -17,25 +15,26 @@ services:
       MYSQL_DATABASE: info
     
   bigtangle-server:
-    image: bigtangle/bigtangle-server
+    image: registry.dasimi.com/bigtangle-server
     container_name: bigtangle-server
     ports:
-    - 8080:8080
+    - 8086:8086
     depends_on:
     - mysql-bigtangle
     networks:
     - bigtangle-bridged-network
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka.bigtangle.org:9092
+      KAFKA_BOOTSTRAP_SERVERS:
       DB_HOSTNAME: mysql-bigtangle
       DB_PASSWORD: testpassword
-      SERVER_PORT: 8088
+      SERVER_PORT: 8086
       DB_NAME: info
-      SERVICE_MILESTONE_ACTIVE: true
+      SERVICE_MCMC: true
+      SERVICE_MINING: false
       SERVER_MINERADDRESS: 1MxiDdUWQ5Aek872tJHpnGe7j75pwaGdZE 
       TOPIC_OUT_NAME: bigtangle
       CONSUMERIDSUFFIX:  
-      REQUESTER: https://p.bigtangle.org:8088, https://p.bigtangle.de:8088
+      REQUESTER: https://p.bigtangle.de:8088
       SERVER_NET: Mainnet
       
 

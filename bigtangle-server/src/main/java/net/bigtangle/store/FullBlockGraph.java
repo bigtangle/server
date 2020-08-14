@@ -1045,7 +1045,7 @@ public class FullBlockGraph {
                 return;
             }
             // Insert other blocks into waiting list
-            insertUnsolidBlock(block, solidityState, blockStore);
+           // insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case MissingPredecessor:
             if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
@@ -1056,7 +1056,7 @@ public class FullBlockGraph {
             blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
 
             // Insert into waiting list
-            insertUnsolidBlock(block, solidityState, blockStore);
+            //insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case Success:
             // If already set, nothing to do here...
