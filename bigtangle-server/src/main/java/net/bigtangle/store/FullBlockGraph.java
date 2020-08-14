@@ -186,7 +186,7 @@ public class FullBlockGraph {
             }
         });
         try {
-            handler.get(2000l, TimeUnit.MILLISECONDS);
+            handler.get(30000l, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.info("TimeoutException cancel updateConfirmed ");
             handler.cancel(true);
