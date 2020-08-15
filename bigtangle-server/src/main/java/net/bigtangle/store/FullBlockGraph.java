@@ -1090,18 +1090,7 @@ public class FullBlockGraph {
         }
     }
 
-    protected void insertUnsolidBlock(Block block, SolidityState solidityState, FullBlockStore blockStore)
-            throws BlockStoreException {
-        if (solidityState.getState() == State.Success || solidityState.getState() == State.Invalid) {
-            log.warn("Block should not be inserted into waiting list");
-            return;
-        }
-
-        // Insert waiting into solidity waiting queue until dependency is
-        // resolved
-        blockStore.insertUnsolid(block, solidityState);
-    }
-
+  
     protected void connectUTXOs(Block block, FullBlockStore blockStore)
             throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();

@@ -148,12 +148,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "milestone, milestonelastupdate,  inserttime,  solid, confirmed  )"
             + " VALUES(?, ?, ?, ?, ?,?, ?, ?, ?, ? ,  ?, ? )";
 
-    protected final String INSERT_UNSOLIDBLOCKS_SQL = getInsert()
-            + "  INTO unsolidblocks(hash,   block,  inserttime  , reason, missingdependency, height, directlymissing)"
-            + " VALUES(?, ?, ?, ?, ?, ?, ?)";
-
-    protected final String UPDATE_SET_MISSING_BLOCK_SQL = getUpdate()
-            + " unsolidblocks set directlymissing=? WHERE missingdependency=?";
+ 
 
     protected final String INSERT_OUTPUTS_SQL = getInsert()
             + " INTO outputs (hash, outputindex, coinvalue, scriptbytes, toaddress, addresstargetable,"
@@ -188,9 +183,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     // Tables exist SQL.
     protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
-    protected final String DELETE_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE hash = ?";
-    protected final String DELETE_OLD_UNSOLIDBLOCKS_SQL = "DELETE FROM unsolidblocks WHERE height <= ?";
-
+  
     protected final String SELECT_BLOCKEVALUATION_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE hash = ?" + afterSelect();
 
@@ -198,9 +191,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " height, milestone, milestonelastupdate,  inserttime, "
             + "  block, solid, confirmed FROM blocks WHERE hash = ?" + afterSelect();
 
-    protected final String SELECT_NONSOLID_MISSINGBLOCKS_SQL = "select   hash, "
-            + "  inserttime,  reason,   missingdependency,   height,\n"
-            + "              directlymissing from unsolidblocks where height > ? and height <= ?";
+   
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " FROM blocks, mcmc  WHERE solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
@@ -1712,8 +1703,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<BlockWrap> getEntryPoints() throws BlockStoreException {
-        long currChainLength = getMaxConfirmedReward().getChainLength();
+    public List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException {
+       // long currChainLength = getMaxConfirmedReward().getChainLength();
         long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
         List<BlockWrap> resultQueue = new ArrayList<BlockWrap>();
         maybeConnect();
@@ -1744,39 +1735,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
-    public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException {
-        long currChainLength = getMaxConfirmedReward().getChainLength();
-        long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
-        PriorityQueue<BlockWrap> resultQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
-            preparedStatement.setLong(1, minChainLength);
-            preparedStatement.setLong(2, currChainLength);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-
-                Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if (verifyHeader(block))
-                    resultQueue.add(new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
-            }
-            return resultQueue;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
+  
 
     private BlockEvaluation setBlockEvaluationNumber(ResultSet resultSet) throws SQLException {
 
@@ -1897,31 +1856,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
-    @Override
-    public void updateMissingBlock(Sha256Hash hash, boolean b) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-
-        try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_SET_MISSING_BLOCK_SQL);
-            preparedStatement.setBoolean(1, b);
-            preparedStatement.setBytes(2, hash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-
-    }
-
+ 
     @Override
     public void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException {
 
@@ -2024,48 +1959,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
-
-    @Override
-    public void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-            preparedStatement = getConnection().prepareStatement(DELETE_UNSOLIDBLOCKS_SQL);
-            preparedStatement.setBytes(1, blockhash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteOldUnsolid(long height) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-            preparedStatement = getConnection().prepareStatement(DELETE_OLD_UNSOLIDBLOCKS_SQL);
-            preparedStatement.setLong(1, height);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
+ 
  
     public long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException {
 
@@ -2096,51 +1990,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
-
-    @Override
-    public void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException {
-        if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
-            return;
-        }
-        PreparedStatement preparedStatement = null;
-        maybeConnect();
-        try {
-            preparedStatement = getConnection().prepareStatement(INSERT_UNSOLIDBLOCKS_SQL);
-            preparedStatement.setBytes(1, block.getHash().getBytes());
-            preparedStatement.setBytes(2, Gzip.compress(block.bitcoinSerialize()));
-            preparedStatement.setLong(3, block.getTimeSeconds());
-            preparedStatement.setLong(4, solidityState.getState().ordinal());
-
-            preparedStatement.setLong(6, block.getHeight());
-            switch (solidityState.getState()) {
-            case MissingCalculation:
-            case MissingPredecessor:
-                preparedStatement.setBytes(5, solidityState.getMissingDependency().getBytes());
-                preparedStatement.setBoolean(7, solidityState.isDirectlyMissing());
-                break;
-            case Success:
-                throw new RuntimeException("Should not happen");
-            case Invalid:
-                throw new RuntimeException("Should not happen");
-            default:
-                throw new RuntimeException("Not Implemented");
-
-            }
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
+ 
     @Override
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException {

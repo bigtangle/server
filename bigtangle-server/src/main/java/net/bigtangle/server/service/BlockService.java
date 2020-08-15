@@ -356,8 +356,8 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public List<BlockWrap> getEntryPointCandidates(FullBlockStore store) throws BlockStoreException {
-        return store.getEntryPoints();
+    public List<BlockWrap> getEntryPointCandidates(long currChainLength,FullBlockStore store) throws BlockStoreException {
+        return store.getEntryPoints(currChainLength);
     }
 
     public void broadcastBlock(Block block) {

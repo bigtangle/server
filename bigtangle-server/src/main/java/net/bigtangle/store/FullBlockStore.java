@@ -44,7 +44,6 @@ import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.Rating;
-import net.bigtangle.server.data.SolidityState;
 
 /**
  * <p>
@@ -157,8 +156,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight)
             throws BlockStoreException;
-
-    public PriorityQueue<BlockWrap> getEntryPointsAscending() throws BlockStoreException;
+ 
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
@@ -371,14 +369,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     byte[] getSettingValue(String name) throws BlockStoreException;
-
-   
-    void insertUnsolid(Block block, SolidityState solidityState) throws BlockStoreException;
-
-    void deleteUnsolid(Sha256Hash blockhash) throws BlockStoreException;
-
-    void deleteOldUnsolid(long toHeight) throws BlockStoreException;
-
+ 
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 
     void insertBatchBlock(Block block) throws BlockStoreException;
@@ -443,9 +434,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException;
 
     void updateAllConfirmedToMilestone(long milestoneNumber) throws BlockStoreException;
-
-    void updateMissingBlock(Sha256Hash storedBlock, boolean b) throws BlockStoreException;
-
+ 
     TXReward getMaxSolidReward() throws BlockStoreException;
 
     long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
@@ -454,7 +443,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
 
-    List<BlockWrap> getEntryPoints() throws BlockStoreException;
+    List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException;
 
     List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
 

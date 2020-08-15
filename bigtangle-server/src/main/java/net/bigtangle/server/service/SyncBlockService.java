@@ -153,14 +153,7 @@ public class SyncBlockService {
         }
     }
 
-    /*
-     * all very old unsolid blocks are deleted
-     */
-    public void deleteOldUnsolidBlock(FullBlockStore store) throws Exception {
-
-        store.deleteOldUnsolid(getTimeSeconds(1));
-    }
-
+ 
     public long getTimeSeconds(int days) throws Exception {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }

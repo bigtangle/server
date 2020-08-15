@@ -90,7 +90,7 @@ public class TipsService {
     public Collection<BlockWrap> getRatingTips(int count, long maxHeight,FullBlockStore store) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
 
-        List<BlockWrap> entryPoints = getEntryPoints(count,store);
+        List<BlockWrap> entryPoints = getEntryPoints(count,maxHeight,store);
         List<Future<BlockWrap>> ratingTipFutures = new ArrayList<Future<BlockWrap>>(count);
         List<BlockWrap> ratingTips = new ArrayList<BlockWrap>(count);
 
@@ -162,7 +162,8 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash,FullBlockStore store)
             throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2,store);
+        List<BlockWrap> entryPoints = getEntryPoints(2,
+                blockService.getCurrentMaxHeight(store), store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
         return getValidatedRewardBlockPair(currentApprovedNonMilestoneBlocks, left, right, prevRewardHash,store);
@@ -327,7 +328,7 @@ public class TipsService {
 
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,FullBlockStore store)
             throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2,store);
+        List<BlockWrap> entryPoints = getEntryPoints(2,blockService.getCurrentCutoffHeight(store),store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, left, right,store);
@@ -335,7 +336,7 @@ public class TipsService {
 
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
             BlockWrap left,FullBlockStore store) throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(1,store);
+        List<BlockWrap> entryPoints = getEntryPoints(1,blockService.getCurrentCutoffHeight(store),store);
         BlockWrap right = entryPoints.get(0);
         return getValidatedBlockPair(currentApprovedNonMilestoneBlocks, left, right,store);
     }
@@ -503,8 +504,8 @@ public class TipsService {
      * @return hashes of the entry points
      * @throws Exception
      */
-    private List<BlockWrap> getEntryPoints(int count,FullBlockStore store) throws BlockStoreException {
-        List<BlockWrap> candidates = blockService.getEntryPointCandidates(store);
+    private List<BlockWrap> getEntryPoints(int count, long currChainLength,FullBlockStore store) throws BlockStoreException {
+        List<BlockWrap> candidates = blockService.getEntryPointCandidates(currChainLength,store);
         if (candidates.isEmpty()) {
             candidates.add(store.getBlockWrap(store.getMaxConfirmedReward().getBlockHash()));
         }
