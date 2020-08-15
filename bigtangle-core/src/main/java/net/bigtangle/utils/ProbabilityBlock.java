@@ -27,16 +27,19 @@ https://bitcoin.org/bitcoin.pdf
  */
 public class ProbabilityBlock {
 
-    public double attackerSuccessProbability(double q, int z) {
+    public static double attackerSuccessProbability(double q, long z) {
         double p = 1.0 - q;
-        double lambda = z * (q / p);
+        double pq= (q / p);
+        double lambda = z * pq;
         double sum = 1.0;
         int i, k;
         for (k = 0; k <= z; k++) {
             double poisson = Math.exp(-lambda);
-            for (i = 1; i <= k; i++)
+            for (i = 1; i <= k; i++) {
                 poisson *= lambda / i;
-            sum -= poisson * (1 - Math.pow(q / p, z - k));
+            }
+            sum -= poisson * (1 - Math.pow(pq, z - k));
+
         }
         return sum;
     }

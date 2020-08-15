@@ -2745,7 +2745,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                         resultSet.getLong("milestone"), resultSet.getLong("milestonelastupdate"),
                         resultSet.getLong("inserttime"), resultSet.getInt("blocktype"), resultSet.getLong("solid"),
                         resultSet.getBoolean("confirmed"), maxConfirmedReward.getChainLength());
-                blockEvaluation.setMcmc(getMCMC(blockEvaluation.getBlockHash()));
+                blockEvaluation.setMcmcWithDefault(getMCMC(blockEvaluation.getBlockHash()));
                 result.add(blockEvaluation);
             }
             return result;
@@ -2791,7 +2791,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             resultSet.getLong("milestone"), resultSet.getLong("milestonelastupdate"),
                             resultSet.getLong("inserttime"), resultSet.getInt("blocktype"), resultSet.getLong("solid"),
                             resultSet.getBoolean("confirmed"), maxConfirmedReward.getChainLength());
-                    blockEvaluation.setMcmc(getMCMC(blockEvaluation.getBlockHash()));
+                    blockEvaluation.setMcmcWithDefault(getMCMC(blockEvaluation.getBlockHash()));
                     result.add(blockEvaluation);
                 }
             }

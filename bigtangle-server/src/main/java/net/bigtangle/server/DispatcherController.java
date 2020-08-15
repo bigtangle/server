@@ -137,7 +137,7 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
-                register(rollingBlock, store);
+               // register(rollingBlock, store);
                 logger.debug(" getTip "+ rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
@@ -619,12 +619,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, resp, watch);
             } else {
                 blockService.batchBlock(block, store);
-                deleteRegisterBlock(block, store);
+               // deleteRegisterBlock(block, store);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
         } else {
             blockService.batchBlock(block, store);
-            deleteRegisterBlock(block, store);
+           // deleteRegisterBlock(block, store);
             this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
         }
     }

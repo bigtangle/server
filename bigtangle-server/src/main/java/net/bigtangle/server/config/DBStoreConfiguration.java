@@ -60,7 +60,7 @@ public class DBStoreConfiguration {
         config.addDataSourceProperty("cacheResultSetMetadata", "true");
         config.addDataSourceProperty("cacheServerConfiguration", "true");
         config.setMaximumPoolSize(100); 
-        config.setLeakDetectionThreshold(100000);
+        config.setLeakDetectionThreshold(300000);
         return new HikariDataSource(config);
 
     }
