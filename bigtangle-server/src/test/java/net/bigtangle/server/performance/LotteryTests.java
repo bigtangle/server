@@ -32,7 +32,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
-import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.utils.Json;
@@ -161,7 +160,7 @@ public class LotteryTests extends AbstractIntegrationTest {
     private void mcmc()
             throws JsonProcessingException, Exception, InterruptedException, ExecutionException, BlockStoreException {
         sendEmpty(5);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
     }
 

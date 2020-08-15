@@ -42,7 +42,7 @@ public class ConflicTest extends AbstractIntegrationTest {
     @Test
     public void testPayConflict() throws Exception {
         
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         // Generate two conflicting blocks
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -69,7 +69,7 @@ public class ConflicTest extends AbstractIntegrationTest {
         blockGraph.add(b2, true,store);
         sendEmpty(3);
         //add blocks and want to get fast resolve of double spending
-        mcmcService.update();
+        mcmcServiceUpdate();
          
         BlockEvaluation b1e = blockService.getBlockEvaluation(b1.getHash(),store);
         
@@ -81,7 +81,7 @@ public class ConflicTest extends AbstractIntegrationTest {
         assertTrue(b1e.isConfirmed()
                 || blockEvaluation.isConfirmed());
 
-        mcmcService.update();
+        mcmcServiceUpdate();
         //
         assertFalse(b1e.isConfirmed()
                 && blockEvaluation.isConfirmed());

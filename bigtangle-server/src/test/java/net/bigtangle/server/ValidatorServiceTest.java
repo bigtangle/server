@@ -186,7 +186,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock,store);
 
         // After adding the missing dependency, should be solid 
-        mcmcService.update();
+        mcmcServiceUpdate();
         rewardService. solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -208,8 +208,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
        
-        mcmcService.update();
-        
+        mcmcServiceUpdate();
+        rewardService. solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -230,7 +230,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
        
-        mcmcService.update();
+        mcmcServiceUpdate();
         rewardService. solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -267,7 +267,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
  
-        mcmcService.update();
+        mcmcServiceUpdate();
         rewardService. solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -296,7 +296,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
         blockGraph.updateChain(true);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
 
         // Mining reward block should go through
@@ -337,7 +337,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1,store);
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         // After adding the missing dependency, should be solid
         blockGraph.add(rewardBlock2, true,true,store);
@@ -387,7 +387,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
        
-        mcmcService.update();
+        mcmcServiceUpdate();
         rewardService. solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -450,7 +450,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
         }
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
@@ -2934,7 +2934,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Should go through
         blockGraph.add(block1, false,store);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         Block block2 = null;
         {

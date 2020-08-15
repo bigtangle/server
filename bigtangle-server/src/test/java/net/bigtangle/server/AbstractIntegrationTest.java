@@ -319,7 +319,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         blockGraph.updateChain(true);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcService.update();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
         return block;
 
     }
@@ -364,7 +364,7 @@ public abstract class AbstractIntegrationTest {
         block = adjustSolve(block);
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
@@ -375,7 +375,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().payContract(null, tokenId,   buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
@@ -387,7 +387,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
@@ -435,11 +435,11 @@ public abstract class AbstractIntegrationTest {
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
         this.blockGraph.add(block, true,store);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         return block;
 
@@ -473,10 +473,10 @@ public abstract class AbstractIntegrationTest {
 
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         return block;
     }
@@ -495,7 +495,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-        mcmcService.update();
+        mcmcServiceUpdate();
         blockGraph.updateChain(true);
         return block;
     }
@@ -511,7 +511,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         return block;
     }
@@ -610,7 +610,7 @@ public abstract class AbstractIntegrationTest {
         for (Block b : addedBlocks) {
             blockGraph.add(b, true,true,store);
         }
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
@@ -789,7 +789,7 @@ public abstract class AbstractIntegrationTest {
         // testCreateMultiSig();
         // testCreateMarket();
         testInitTransferWallet();
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         // testInitTransferWalletPayToTestPub();
         List<UTXO> ux = getBalance();
@@ -888,7 +888,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void checkBalance(Coin coin, List<ECKey> a) throws Exception {
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
@@ -904,7 +904,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void checkBalanceSum(Coin coin, List<ECKey> a) throws Exception {
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         List<UTXO> ulist = getBalance(false, a);
 
@@ -932,7 +932,7 @@ public abstract class AbstractIntegrationTest {
 
         String tokenid = createFirstMultisignToken(keys, tokenInfo);
 
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         BigInteger amount = new BigInteger("200000");
         Coin basecoin = new Coin(amount, tokenid);
@@ -1458,4 +1458,10 @@ public abstract class AbstractIntegrationTest {
         return w. createToken(key, domainname, increment, token, addresses,pubkeyTo, memoInfo);
 
     }
+    
+    public void  mcmcServiceUpdate() throws InterruptedException, ExecutionException, BlockStoreException {
+        mcmcService.update();
+        blockGraph.updateConfirmed(store);
+    }
+    
 }

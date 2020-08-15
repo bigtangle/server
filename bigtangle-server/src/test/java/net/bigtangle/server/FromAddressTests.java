@@ -113,7 +113,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
     private void mcmc()
             throws JsonProcessingException, Exception, InterruptedException, ExecutionException, BlockStoreException {
         sendEmpty(5);
-        mcmcService.update();
+        mcmcServiceUpdate();
         
     }
 

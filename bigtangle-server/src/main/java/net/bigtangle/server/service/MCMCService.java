@@ -72,7 +72,7 @@ public class MCMCService {
         try {
             // log.info("mcmcService started");
             Stopwatch watch = Stopwatch.createStarted();
-            update(false);
+            update();
             log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
@@ -83,35 +83,24 @@ public class MCMCService {
     }
 
     public void update() throws InterruptedException, ExecutionException, BlockStoreException {
-        update(true);
-    }
-
-    public void update(boolean updateconfirm) throws InterruptedException, ExecutionException, BlockStoreException {
-
+     
         Context context = new Context(params);
         Context.propagate(context);
         FullBlockStore store = storeService.getStore();
+
         try {
-
-            try {
-                store.beginDatabaseBatchWrite();
-                updateWeightAndDepth(store);
-                updateRating(store);
-                store.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                log.debug("update  ", e);
-                store.abortDatabaseBatchWrite();
-            } finally {
-                store.defaultDatabaseBatchWrite();
-            }
-            // TODO move updateConfirmed as task, Test run only with the same
-            // store
-
-            if (updateconfirm)
-                blockGraph.updateConfirmed(store);
+            store.beginDatabaseBatchWrite();
+            updateWeightAndDepth(store);
+            updateRating(store);
+            store.commitDatabaseBatchWrite();
+        } catch (Exception e) {
+            log.debug("update  ", e);
+            store.abortDatabaseBatchWrite();
         } finally {
+            store.defaultDatabaseBatchWrite();
             store.close();
         }
+
     }
 
     /**

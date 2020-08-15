@@ -54,6 +54,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         mcmc.setRating(rating *100 / NetworkParameters.NUMBER_RATING_TIPS);
     }
     
+
     public long getLatestchainnumber() {
         return latestchainnumber;
     }

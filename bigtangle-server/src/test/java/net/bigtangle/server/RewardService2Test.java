@@ -49,7 +49,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
         for (int j = 1; j < 2; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
-            mcmcService.update();
+            mcmcServiceUpdate();
             
             sell(blocksAddedAll);
             buy(blocksAddedAll);
@@ -136,14 +136,14 @@ public class RewardService2Test extends AbstractIntegrationTest {
     public void testToken(List<Block> blocksAddedAll) throws Exception {
 
         blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
-        // mcmcService.update();
+        // mcmcServiceUpdate();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(2));
-        // mcmcService.update();
+        // mcmcServiceUpdate();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(3));
-        // mcmcService.update();
+        // mcmcServiceUpdate();
         // sendEmpty(20);
     }
 
@@ -182,7 +182,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         walletAppKit1.wallet().importKey(fromkey);
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
-        mcmcService.update();
+        mcmcServiceUpdate();
         
         blocksAddedAll.add(b);
     }
@@ -214,7 +214,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
             walletAppKit.wallet().setServerURL(contextRoot);
             blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                     orderRecord.getOfferValue(), null, null));
-            mcmcService.update();
+            mcmcServiceUpdate();
             
         }
 
