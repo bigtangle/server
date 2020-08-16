@@ -99,7 +99,7 @@ public class MCMCService {
         try {
             handler.get(30000, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.debug(" reward solve Timeout  ");
+            log.debug(" mcmcService  Timeout  ");
             handler.cancel(true);
         } finally {
             executor.shutdownNow();
@@ -111,15 +111,13 @@ public class MCMCService {
 
         FullBlockStore store = storeService.getStore();
 
-        try {
-     
+        try { 
             updateWeightAndDepth(store);
             updateRating(store);
             deleteMCMC(store);
         } catch (Exception e) {
             log.debug("update  ", e);
-        } finally {
-            store.defaultDatabaseBatchWrite();
+        } finally { 
             store.close();
         }
 
