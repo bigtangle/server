@@ -13,7 +13,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
@@ -118,6 +123,32 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings("rawtypes") 
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                processDo(reqCmd, contentBytes, httpServletResponse, httprequest);
+                return "";
+            }
+        });
+        try {
+            handler.get(300000, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            logger.debug(" process  Timeout  ");
+            handler.cancel(true);
+            AbstractResponse resp = ErrorResponse.create(100);
+            StringWriter sw = new StringWriter(); 
+            resp.setMessage(sw.toString());
+            gzipBinary(httpServletResponse, resp);
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
+    @SuppressWarnings("unchecked")
+    public void processDo(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
+            HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         Stopwatch watch = Stopwatch.createStarted();
         FullBlockStore store = storeService.getStore();
         byte[] bodyByte = new byte[0];
@@ -137,8 +168,8 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
-               // register(rollingBlock, store);
-                logger.debug(" getTip "+ rollingBlock.toString());
+                // register(rollingBlock, store);
+                logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
@@ -551,7 +582,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, AbstractResponse.createEmptyResponse(), watch);
             }
                 break;
-       
+
             case getCheckPoint: {
                 AbstractResponse response = CheckpointResponse.create(checkpointService.checkToken(store));
                 this.outPrintJSONString(httpServletResponse, response, watch);
@@ -619,12 +650,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, resp, watch);
             } else {
                 blockService.batchBlock(block, store);
-               // deleteRegisterBlock(block, store);
+                // deleteRegisterBlock(block, store);
                 this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
             }
         } else {
             blockService.batchBlock(block, store);
-           // deleteRegisterBlock(block, store);
+            // deleteRegisterBlock(block, store);
             this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch);
         }
     }

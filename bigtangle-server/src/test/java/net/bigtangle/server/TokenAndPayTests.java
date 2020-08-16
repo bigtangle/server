@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSignAddress;
@@ -168,7 +167,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     // @Before
     public Block getRollingBlock(ECKey outKey) throws Exception {
-        Context.propagate(new Context(networkParameters));
+    
         Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
         blockGraph.add(rollingBlock, true,store);
         for (int i = 1; i < networkParameters.getSpendableCoinbaseDepth(); i++) {

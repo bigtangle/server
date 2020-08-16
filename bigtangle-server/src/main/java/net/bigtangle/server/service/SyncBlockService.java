@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -76,8 +75,7 @@ public class SyncBlockService {
         FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
-            Context context = new Context(networkParameters);
-            Context.propagate(context);
+ 
             connectingOrphans(store);
             sync(-1l, false, store);
             // deleteOldUnsolidBlock();
@@ -100,8 +98,7 @@ public class SyncBlockService {
         FullBlockStore store = storeService.getStore();
         try {
             log.debug(" Start SyncBlockService startInit: ");
-            Context context = new Context(networkParameters);
-            Context.propagate(context);
+ 
             cleanupChainBlockQueue(store);
             sync(-1l, true, store);
             blockgraph.updateChain(true);

@@ -173,6 +173,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
 
+    public void deleteMCMC(  long chainlenght) throws BlockStoreException;
+    
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
             Sha256Hash spenderBlock) throws BlockStoreException;

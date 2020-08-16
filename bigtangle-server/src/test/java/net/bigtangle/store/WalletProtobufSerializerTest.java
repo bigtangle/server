@@ -19,7 +19,6 @@ import org.junit.Test;
 import com.google.protobuf.ByteString;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.params.MainNetParams;
@@ -42,14 +41,14 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        Context ctx = new Context(PARAMS);
+    
         myWatchedKey = new ECKey();
-        myWallet = new Wallet(PARAMS);
+        myWallet =   Wallet.fromKeys(PARAMS,myWatchedKey);
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myWallet.importKey(myKey);
         myAddress = myKey.toAddress(PARAMS);
-        myWallet = new Wallet(PARAMS);
+        myWallet =  Wallet.fromKeys(PARAMS,myKey);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
  
@@ -77,8 +76,8 @@ public class WalletProtobufSerializerTest {
         for (int i = 0 ; i < 20 ; i++) {
             myKey = new ECKey();
             myAddress = myKey.toAddress(PARAMS);
-            myWallet = new Wallet(PARAMS);
-            myWallet.importKey(myKey);
+            myWallet =   Wallet.fromKeys(PARAMS, myKey) ;
+      
             Wallet wallet1 = roundTrip(myWallet);
             assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
             assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());

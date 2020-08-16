@@ -28,8 +28,7 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.InvalidCipherTextException;
-
-import net.bigtangle.core.Context;
+ 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.encrypt.ECIESCoder;
@@ -57,8 +56,7 @@ public class WalletUtil {
         KeyChainGroup kcg;
         kcg = new KeyChainGroup(params);
         kcg.setLookaheadSize(size);
-        Context context = new Context(params);
-        Context.propagate(context);
+ 
         Wallet wallet = new Wallet(params, kcg); // default
 
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -69,8 +67,7 @@ public class WalletUtil {
 
     public static Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
             throws IOException, UnreadableWalletException {
-        Context context = new Context(params);
-        Context.propagate(context);
+ 
         Wallet wallet;
         try {
 

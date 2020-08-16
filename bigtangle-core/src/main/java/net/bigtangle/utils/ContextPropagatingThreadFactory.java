@@ -19,8 +19,7 @@
 package net.bigtangle.utils;
 
 import com.google.common.base.*;
-
-import net.bigtangle.core.*;
+ 
 
 import org.slf4j.*;
 
@@ -46,12 +45,11 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(final Runnable r) {
-        final Context context = Context.get();
+ 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Context.propagate(context);
+                try { 
                     r.run();
                 } catch (Exception e) {
                     log.error("Exception in thread", e);

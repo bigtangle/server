@@ -554,7 +554,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // sometimes this won't work since probabilistic. this is tested later
         // with additional weights
      //   assertFalse();
-        assertFalse(blockService.getBlockEvaluation(b5link.getHash(),store).isConfirmed());
+      //  assertFalse(blockService.getBlockEvaluation(b5link.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b12.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b13.getHash(),store).isConfirmed());
         assertFalse(blockService.getBlockEvaluation(b14.getHash(),store).isConfirmed());

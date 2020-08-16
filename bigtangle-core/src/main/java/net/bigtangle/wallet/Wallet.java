@@ -64,7 +64,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
+
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ContractExecutionResult;
 import net.bigtangle.core.ECKey;
@@ -171,7 +171,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     @GuardedBy("keyChainGroupLock")
     private Set<Script> watchedScripts;
 
-    protected final Context context;
     protected final NetworkParameters params;
 
     protected volatile WalletFiles vFileManager;
@@ -198,35 +197,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     @GuardedBy("lock")
     private List<TransactionSigner> signers;
 
-    /**
-     * Creates a new, empty wallet with a randomly chosen seed and no
-     * transactions. Make sure to provide for sufficient backup! Any keys will
-     * be derived from the seed. If you want to restore a wallet from disk
-     * instead, see {@link #loadFromFile}.
-     */
-    public Wallet(NetworkParameters params) {
-        this(Context.getOrCreate(params));
-    }
-
-    public Wallet(NetworkParameters params, String url) {
-        this(Context.getOrCreate(params), url);
-    }
-
-    /**
-     * Creates a new, empty wallet with a randomly chosen seed and no
-     * transactions. Make sure to provide for sufficient backup! Any keys will
-     * be derived from the seed. If you want to restore a wallet from disk
-     * instead, see {@link #loadFromFile}.
-     */
-    // TODO remove this
-    public Wallet(Context context) {
-        this(context, new KeyChainGroup(context.getParams()), null);
-    }
-
-    public Wallet(Context context, String url) {
-        this(context, new KeyChainGroup(context.getParams()), url);
-    }
-
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
     }
@@ -244,6 +214,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         group.importKeys(keys);
         return new Wallet(params, group);
     }
+    public Wallet(NetworkParameters params ) {
+        this(params, new KeyChainGroup(params), null);
+    }
 
     /*
      * Creates a wallet containing a given set of keys. All further keys will be
@@ -260,12 +233,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this(Context.getOrCreate(params), keyChainGroup, null);
+        this(params, keyChainGroup, null);
     }
 
-    private Wallet(Context context, KeyChainGroup keyChainGroup, String url) {
-        this.context = context;
-        this.params = context.getParams();
+    private Wallet(NetworkParameters params, KeyChainGroup keyChainGroup, String url) {
+
+        this.params = params;
         this.keyChainGroup = checkNotNull(keyChainGroup);
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             this.keyChainGroup.setLookaheadSize(5); // Cut down excess
@@ -973,11 +946,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     /** Returns the parameters this wallet was created with. */
     public NetworkParameters getParams() {
         return params;
-    }
-
-    /** Returns the API context that this wallet was created with. */
-    public Context getContext() {
-        return context;
     }
 
     /**
@@ -1923,11 +1891,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             String memo, int repeat, int sleep)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
-        // int sleep = 60000;
         try {
             return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo);
-        } catch (InsufficientMoneyException | ConflictPossibleException e) {
-            log.debug(" Exception " + giveMoneyResult + " repeat time =" + repeat);
+        } catch (InsufficientMoneyException e) {
+            log.debug(  " InsufficientMoneyException  " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
             if (repeat > 0) {
                 repeat -= 1;
                 try {
@@ -1936,7 +1903,23 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 }
                 return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, repeat, sleep);
             }
+        } catch (RuntimeException e) {
+            if (e.getMessage()
+                    .contains("net.bigtangle.core.exception.VerificationException$ConflictPossibleException")) {
+                log.debug(e.getMessage() + "   " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
+                if (repeat > 0) {
+                    repeat -= 1;
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e1) {
+                    }
+                    return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, repeat, sleep);
+                }
+            } else {
+                throw e;
+            }
         }
+
         throw new InsufficientMoneyException("InsufficientMoneyException " + giveMoneyResult);
 
     }

@@ -32,7 +32,7 @@ import com.google.common.base.MoreObjects;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.Context;
+ 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Transaction;
@@ -101,7 +101,7 @@ public class SendRequest {
      * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
      * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
      */
-    public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
+    public boolean ensureMinRequiredFee = false;
 
     /**
      * If true (the default), the inputs will be signed.

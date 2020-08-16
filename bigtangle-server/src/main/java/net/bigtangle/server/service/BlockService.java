@@ -29,7 +29,6 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.RewardInfo;
@@ -123,8 +122,7 @@ public class BlockService {
         return store.getBlockWrap(hash).getMcmc();
     }
     public void saveBlock(Block block, FullBlockStore store) throws Exception {
-        Context context = new Context(networkParameters);
-        Context.propagate(context);
+ 
         broadcastBlock(block);
         blockgraph.add(block, false, store);
         // removeBlockPrototype(block, store);

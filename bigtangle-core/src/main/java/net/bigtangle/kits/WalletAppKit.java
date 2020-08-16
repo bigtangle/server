@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-import net.bigtangle.core.Context;
+ 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
@@ -109,27 +109,20 @@ public class WalletAppKit extends AbstractIdleService {
     @Nullable
     protected DeterministicSeed restoreFromSeed;
 
-    protected volatile Context context;
+  
 
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files
      * will be stored in the given directory.
      */
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), directory, filePrefix);
-    }
-
-    /**
-     * Creates a new WalletAppKit, with the given {@link Context}. Files will be
-     * stored in the given directory.
-     */
-    public WalletAppKit(Context context, File directory, String filePrefix) {
-        this.context = context;
-        this.params = checkNotNull(context.getParams());
+        
+        this.params =params;
         this.directory = checkNotNull(directory);
-        this.filePrefix = checkNotNull(filePrefix);
+        this.filePrefix = checkNotNull(filePrefix);  
     }
 
+  
    
     /**
      * If true, will register a shutdown hook to stop the library. Defaults to
@@ -260,7 +253,7 @@ public class WalletAppKit extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
-        Context.propagate(context);
+ 
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());
@@ -346,8 +339,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     @Override
     protected void shutDown() throws Exception {
-        // Runs in a separate thread.
-        Context.propagate(context);
+ 
 
         vWallet.saveToFile(vWalletFile);
         vWallet = null;

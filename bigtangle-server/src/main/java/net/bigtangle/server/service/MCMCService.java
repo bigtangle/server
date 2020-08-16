@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+ 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,8 +12,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -22,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
 
-import net.bigtangle.core.Context;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -49,9 +54,7 @@ public class MCMCService {
     @Autowired
     private BlockService blockService;
 
-    @Autowired
-    private NetworkParameters params;
-
+  
     @Autowired
     private StoreService storeService;
 
@@ -72,7 +75,7 @@ public class MCMCService {
         try {
             // log.info("mcmcService started");
             Stopwatch watch = Stopwatch.createStarted();
-            update();
+            updateBoxed();
             log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
@@ -82,20 +85,39 @@ public class MCMCService {
 
     }
 
+    private void updateBoxed() throws InterruptedException, ExecutionException {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                update();
+                return "";
+            }
+        }); 
+        try {
+            handler.get(30000, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.debug(" reward solve Timeout  ");
+            handler.cancel(true);
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
+
     public void update() throws InterruptedException, ExecutionException, BlockStoreException {
-     
-        Context context = new Context(params);
-        Context.propagate(context);
+
         FullBlockStore store = storeService.getStore();
 
         try {
-            store.beginDatabaseBatchWrite();
+     
             updateWeightAndDepth(store);
             updateRating(store);
-            store.commitDatabaseBatchWrite();
+            deleteMCMC(store);
         } catch (Exception e) {
             log.debug("update  ", e);
-            store.abortDatabaseBatchWrite();
         } finally {
             store.defaultDatabaseBatchWrite();
             store.close();
@@ -103,6 +125,10 @@ public class MCMCService {
 
     }
 
+    
+    private void deleteMCMC(FullBlockStore store) throws BlockStoreException { 
+        store.deleteMCMC(store.getMaxConfirmedReward().getChainLength() - 500);
+    }
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
      * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks

@@ -315,6 +315,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String INSERT_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getInsert()
             + " into mcmc ( cumulativeweight  , depth   , hash, rating  ) VALUES (?,?,?, ?)  ";
 
+    protected final String DELETE_MCMC_CHAINLENGHT_SQL =  " delete from mcmc where "
+            + "hash in (select mcmc.hash from blocks, mcmc where mcmc.hash=blocks.hash and chainglength < ? )  ";
+
    
     protected final String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
             + " blocks SET milestone = ?, milestonelastupdate= ?  WHERE hash = ?";
@@ -1758,6 +1761,29 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
+    @Override
+    public void deleteMCMC(long chainlength) throws BlockStoreException { 
+        PreparedStatement preparedStatement = null;
+        maybeConnect();
+
+        try {
+            preparedStatement = getConnection().prepareStatement(DELETE_MCMC_CHAINLENGHT_SQL);
+            preparedStatement.setLong(1, chainlength); 
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+
+    }
+        
     @Override
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException {
         PreparedStatement preparedStatement = null;

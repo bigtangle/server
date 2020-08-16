@@ -44,19 +44,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
-import net.bigtangle.core.Context;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Transaction.SigHash;
-import net.bigtangle.core.exception.ScriptException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UnsafeByteArrayOutputStream;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.ScriptException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script.VerifyFlag;
@@ -75,7 +74,7 @@ public class ScriptTest {
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
+    
     }
 
     @Test
