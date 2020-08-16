@@ -1461,7 +1461,7 @@ public abstract class AbstractIntegrationTest {
     
     public void  mcmcServiceUpdate() throws InterruptedException, ExecutionException, BlockStoreException {
         mcmcService.update();
-        blockGraph.updateConfirmed(store);
+        blockGraph.updateConfirmed();
     }
     
 }

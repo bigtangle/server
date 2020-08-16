@@ -163,32 +163,28 @@ public class FullBlockGraph {
         return a;
     }
 
+    public void updateConfirmed() throws BlockStoreException {
+        updateConfirmedDo();
+    }
     /*
      * run timeboxed updateConfirmed and can run only, if there is no other
      * ReentrantLock
      */
-    private void updateConfirmed() throws BlockStoreException {
+    public void updateConfirmedTimeBoxed() throws BlockStoreException {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-
-                FullBlockStore blockStore = storeService.getStore();
-                try {
-                    updateConfirmed(blockStore);
-                } finally {
-                    if (blockStore != null)
-                        blockStore.close();
-                }
+                updateConfirmedDo();
                 return "";
             }
         });
         try {
-            handler.get(30000l, TimeUnit.MILLISECONDS);
+            handler.get(3000l, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.info("TimeoutException cancel updateConfirmed ");
+            log.info("Timeout cancel updateConfirmed ");
             handler.cancel(true);
         } catch (Exception e) {
             // ignore
@@ -1045,7 +1041,7 @@ public class FullBlockGraph {
                 return;
             }
             // Insert other blocks into waiting list
-           // insertUnsolidBlock(block, solidityState, blockStore);
+            // insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case MissingPredecessor:
             if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
@@ -1056,7 +1052,7 @@ public class FullBlockGraph {
             blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
 
             // Insert into waiting list
-            //insertUnsolidBlock(block, solidityState, blockStore);
+            // insertUnsolidBlock(block, solidityState, blockStore);
             break;
         case Success:
             // If already set, nothing to do here...
@@ -1090,7 +1086,6 @@ public class FullBlockGraph {
         }
     }
 
-  
     protected void connectUTXOs(Block block, FullBlockStore blockStore)
             throws BlockStoreException, VerificationException {
         List<Transaction> transactions = block.getTransactions();
@@ -1777,49 +1772,52 @@ public class FullBlockGraph {
         return totalRewardCount;
     }
 
-    public void updateConfirmed(FullBlockStore blockStore) throws BlockStoreException {
-  
-        // First remove any blocks that should no longer be in the milestone
-        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
-        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-        for (BlockEvaluation block : blocksToRemove) {
-            try {
-                blockStore.beginDatabaseBatchWrite();
+    public void updateConfirmedDo() throws BlockStoreException {
+        FullBlockStore blockStore = storeService.getStore();
+        try {
+            // First remove any blocks that should no longer be in the milestone
+            HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+            HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+            for (BlockEvaluation block : blocksToRemove) {
 
-                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
-                blockStore.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            } finally {
-                blockStore.defaultDatabaseBatchWrite();
+                try {
+                    blockStore.beginDatabaseBatchWrite();
+                    unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+                    blockStore.commitDatabaseBatchWrite();
+                } catch (Exception e) {
+                    blockStore.abortDatabaseBatchWrite();
+                    throw e;
+                } finally {
+                    blockStore.defaultDatabaseBatchWrite(); 
+                }
             }
-        }
-        long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
-        long maxHeight = blockService.getCurrentMaxHeight(blockStore);
+            long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
+            long maxHeight = blockService.getCurrentMaxHeight(blockStore);
 
-        // Now try to find blocks that can be added to the milestone.
-        // DISALLOWS UNSOLID
-        TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
+            // Now try to find blocks that can be added to the milestone.
+            // DISALLOWS UNSOLID
+            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
 
-        // VALIDITY CHECKS
-        validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
+            // VALIDITY CHECKS
+            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
 
-        // Finally add the resolved new blocks to the confirmed set
-        HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-        for (BlockWrap block : blocksToAdd) {
-            try {
-                blockStore.beginDatabaseBatchWrite();
-                confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
-                blockStore.commitDatabaseBatchWrite();
-            } catch (Exception e) {
-                blockStore.abortDatabaseBatchWrite();
-                throw e;
-            } finally {
-                blockStore.defaultDatabaseBatchWrite();
+            // Finally add the resolved new blocks to the confirmed set
+            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+            for (BlockWrap block : blocksToAdd) {
+                try {
+                    blockStore.beginDatabaseBatchWrite();
+                    confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+                    blockStore.commitDatabaseBatchWrite();
+                } catch (Exception e) {
+                    blockStore.abortDatabaseBatchWrite();
+                    throw e;
+                } finally {
+                    blockStore.defaultDatabaseBatchWrite();
+                }
             }
+        } finally {
+            blockStore.close();
         }
-
     }
 
     private void solidifyReward(Block block, FullBlockStore blockStore) throws BlockStoreException {

@@ -75,8 +75,8 @@ public class MCMCService {
         try {
             // log.info("mcmcService started");
             Stopwatch watch = Stopwatch.createStarted();
-            updateBoxed();
-            log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+             update();
+            log.info(  "mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.error("mcmcService ", e);
         } finally {
@@ -85,7 +85,7 @@ public class MCMCService {
 
     }
 
-    private void updateBoxed() throws InterruptedException, ExecutionException {
+    private String updateBoxed() throws InterruptedException, ExecutionException {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -93,18 +93,19 @@ public class MCMCService {
             @Override
             public String call() throws Exception {
                 update();
-                return "";
+                return "finish";
             }
         }); 
         try {
-            handler.get(30000, TimeUnit.MILLISECONDS);
+           return handler.get(3000, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug(" mcmcService  Timeout  ");
             handler.cancel(true);
+            return "cancel";
         } finally {
             executor.shutdownNow();
         }
-
+    
     }
 
     public void update() throws InterruptedException, ExecutionException, BlockStoreException {
