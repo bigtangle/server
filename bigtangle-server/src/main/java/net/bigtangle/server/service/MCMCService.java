@@ -77,6 +77,7 @@ public class MCMCService {
             Stopwatch watch = Stopwatch.createStarted();
              update();
             log.info(  "mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
         } catch (Exception e) {
             log.error("mcmcService ", e);
         } finally {

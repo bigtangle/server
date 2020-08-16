@@ -169,7 +169,7 @@ public class DispatcherController {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
                 // register(rollingBlock, store);
-                logger.debug(" getTip " + rollingBlock.toString());
+              //  logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
@@ -610,12 +610,14 @@ public class DispatcherController {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, bodyByte.length, exception);
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
-            exception.printStackTrace(new PrintWriter(sw));
-
+            exception.printStackTrace(new PrintWriter(sw)); 
             resp.setMessage(sw.toString());
             this.outPrintJSONString(httpServletResponse, resp, watch);
         } finally {
             store.close();
+            if( watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
+            logger.info(  reqCmd + " takes {} " , watch.elapsed(TimeUnit.MILLISECONDS));
+            watch.stop();
         }
     }
 
@@ -792,8 +794,8 @@ public class DispatcherController {
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response, Stopwatch watch)
             throws Exception {
-
-        response.setDuration(watch.elapsed(TimeUnit.MILLISECONDS));
+       long duration = watch.elapsed(TimeUnit.MILLISECONDS); 
+        response.setDuration(duration);
         gzipBinary(httpServletResponse, response);
     }
 
