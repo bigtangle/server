@@ -214,7 +214,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         group.importKeys(keys);
         return new Wallet(params, group);
     }
-    public Wallet(NetworkParameters params ) {
+
+    public Wallet(NetworkParameters params) {
         this(params, new KeyChainGroup(params), null);
     }
 
@@ -1878,13 +1879,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, 200000);
+        int sleep = 60000;
+        return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, sleep);
     }
 
     public Block payMoneyToECKeyListMemoHex(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3,
-                200000);
+        int sleep = 60000;
+        return payMoneyToECKeyListMemoHex(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo, 3, sleep);
     }
 
     public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
@@ -1894,7 +1896,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo);
         } catch (InsufficientMoneyException e) {
-            log.debug(  " InsufficientMoneyException  " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
+            log.debug(
+                    " InsufficientMoneyException  " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
             if (repeat > 0) {
                 repeat -= 1;
                 try {
