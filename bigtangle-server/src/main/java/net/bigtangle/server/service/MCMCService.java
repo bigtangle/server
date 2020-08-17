@@ -30,6 +30,7 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.DepthAndWeight;
@@ -114,9 +115,10 @@ public class MCMCService {
         FullBlockStore store = storeService.getStore();
 
         try { 
-            updateWeightAndDepth(store);
-            updateRating(store);
-            deleteMCMC(store);
+            TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+            updateWeightAndDepth(maxConfirmedReward,store);
+            updateRating(maxConfirmedReward,store);
+            deleteMCMC(maxConfirmedReward,store);
         } catch (Exception e) {
             log.debug("update  ", e);
         } finally { 
@@ -126,8 +128,8 @@ public class MCMCService {
     }
 
     
-    private void deleteMCMC(FullBlockStore store) throws BlockStoreException { 
-        store.deleteMCMC(store.getMaxConfirmedReward().getChainLength() - 500);
+    private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException { 
+        store.deleteMCMC(maxConfirmedReward.getChainLength() - 500);
     }
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
@@ -136,11 +138,11 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateWeightAndDepth(FullBlockStore store) throws BlockStoreException {
+    private void updateWeightAndDepth(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
-        long maxHeight = blockService.getCurrentMaxHeight(store);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,store);
+        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,store);
         PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
@@ -206,13 +208,13 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateRating(FullBlockStore store) throws BlockStoreException {
+    private void updateRating(TXReward maxConfirmedReward,FullBlockStore store) throws BlockStoreException {
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
 
-        long cutoffHeight = blockService.getCurrentCutoffHeight(store);
-        long maxHeight = blockService.getCurrentMaxHeight(store);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,store);
+        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,store);
 
         Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS, maxHeight,
                 store);

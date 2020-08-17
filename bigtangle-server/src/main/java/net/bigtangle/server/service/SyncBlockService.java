@@ -396,8 +396,8 @@ public class SyncBlockService {
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
-
-        long cut = blockService.getCurrentCutoffHeight(blockStore);
+        TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
+        long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward,blockStore);
         if (orphanBlocks.size() > 0) {
             log.debug("Orphan  size = {}", orphanBlocks.size());
         }

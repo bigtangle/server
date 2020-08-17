@@ -60,6 +60,7 @@ import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -1791,8 +1792,9 @@ public class FullBlockGraph {
                     blockStore.defaultDatabaseBatchWrite(); 
                 }
             }
-            long cutoffHeight = blockService.getCurrentCutoffHeight(blockStore);
-            long maxHeight = blockService.getCurrentMaxHeight(blockStore);
+            TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
+            long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,blockStore);
+            long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,blockStore);
 
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID
