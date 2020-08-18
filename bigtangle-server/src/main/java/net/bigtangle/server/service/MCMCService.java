@@ -111,9 +111,12 @@ public class MCMCService {
                     log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 watch.stop();
             }
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             log.error("mcmcService ", e);
+            if(!e.getLocalizedMessage().contains("java.sql.SQLIntegrityConstraintViolationException") ) {
             store.deleteLockobject(LOCKID);
+            }
         } finally {
             store.close();
         }
