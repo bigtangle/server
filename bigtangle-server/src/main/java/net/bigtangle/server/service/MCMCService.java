@@ -62,6 +62,29 @@ public class MCMCService {
     private StoreService storeService;
 
     public void startSingleProcess() throws BlockStoreException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                startSingleProcessDo();
+                return "finish";
+            }
+        });
+        try {
+            handler.get(LockTimeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.debug(" mcmcService  Timeout  ");
+            handler.cancel(true);
+        } catch (Exception e) {
+            log.debug(" mcmcService     ", e);
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
+
+    public void startSingleProcessDo() throws BlockStoreException {
         FullBlockStore store = storeService.getStore();
         try {
             // log.info("mcmcService started");
@@ -74,14 +97,14 @@ public class MCMCService {
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
             } else {
-                log.info("mcmcService running  at start = " + Utils.dateTimeFormat (lock.getLocktime()));
+                log.info("mcmcService running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
-                updateBoxed(store);
+                update(store);
                 store.deleteLockobject(LOCKID);
-                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)  
-                log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
+                    log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 watch.stop();
             }
         } catch (Exception e) {
@@ -93,28 +116,7 @@ public class MCMCService {
 
     }
 
-    private String updateBoxed(FullBlockStore store) throws InterruptedException, ExecutionException {
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
-            @Override
-            public String call() throws Exception {
-                update(store);
-                return "finish";
-            }
-        });
-        try {
-            return handler.get(LockTimeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            log.debug(" mcmcService  Timeout  ");
-            handler.cancel(true);
-            return "cancel";
-        } finally {
-            executor.shutdownNow();
-        }
-
-    }
+ 
 
     public void update(FullBlockStore store) throws InterruptedException, ExecutionException, BlockStoreException {
 
@@ -218,8 +220,8 @@ public class MCMCService {
         long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
         long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
 
-        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS, maxHeight,
-                store);
+        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(maxConfirmedReward,
+                NetworkParameters.NUMBER_RATING_TIPS, maxHeight, store);
 
         // Initialize all approvers as UUID
         for (BlockWrap selectedTip : selectedTips) {

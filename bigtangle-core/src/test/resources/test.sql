@@ -1,5 +1,4 @@
 select * from blocks  where milestone <0 order by height desc ;
-select * from unsolidblocks order by height;
 select * from orders   ;
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
@@ -17,13 +16,19 @@ select * from orders where spent=0 and confirmed=1  ;
 
 select * from mcmc  ;
 
+select *  FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 
+AND confirmed = false   AND mcmc.rating >= 5;
+
+
+
 select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
 select * from blocks order by milestone;
 select * from blocks where milestone <0 ;
 select * from blocks where milestone > 0 ;
 select max(height) FROM blocks
-select count(*) FROM blocks, mcmc  WHERE solid=2 AND milestone = -1 AND confirmed = false
+select count(*) FROM blocks, mcmc  WHERE 
+blocks.hash = mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false
 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
@@ -57,6 +62,7 @@ select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
 
+
 select * from blocks where blocktype> 9 and milestone =  37 ;
 OUTPUTS
 select * from outputs where tokenid !='bc' ;
@@ -75,7 +81,7 @@ select * from  multisign
 
 select count(*) from chainblockqueue   ;
 select  *  from chainblockqueue where orphan = true 
-MCMC 
+ 
 select * from tips   ;
 select count(*) from tips   ;
 SELECT blocks.hash, rating, depth, cumulativeweight,   height, milestone, milestonelastupdate, 

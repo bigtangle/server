@@ -135,7 +135,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  height, milestone, milestonelastupdate,  inserttime,  block, solid, confirmed";
     protected final String SELECT_MCMC_TEMPLATE = "  hash, rating, depth, cumulativeweight ";
 
-    protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
+    protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE (prevblockhash = ? or prevbranchblockhash = ?) AND solid >= 0 " + afterSelect();
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " FROM blocks WHERE (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 " + afterSelect();

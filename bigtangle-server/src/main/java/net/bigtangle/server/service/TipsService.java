@@ -87,11 +87,11 @@ public class TipsService {
      * @return A list of rating tips.
      * @throws BlockStoreException
      */
-    public Collection<BlockWrap> getRatingTips(int count, long maxHeight, FullBlockStore store)
+    public Collection<BlockWrap> getRatingTips(TXReward maxConfirmedReward,int count, long maxHeight, FullBlockStore store)
             throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
 
-        List<BlockWrap> entryPoints = getEntryPoints(count, maxHeight, store);
+        List<BlockWrap> entryPoints = getEntryPoints(count, maxConfirmedReward.getChainLength(), store);
         List<Future<BlockWrap>> ratingTipFutures = new ArrayList<Future<BlockWrap>>(count);
         List<BlockWrap> ratingTips = new ArrayList<BlockWrap>(count);
 
@@ -164,7 +164,7 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2, blockService.getCurrentMaxHeight(maxConfirmedReward, store),
+        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
                 store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
@@ -315,7 +315,7 @@ public class TipsService {
 
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, FullBlockStore store) throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2, blockService.getCurrentCutoffHeight(maxConfirmedReward, store),
+        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
                 store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
