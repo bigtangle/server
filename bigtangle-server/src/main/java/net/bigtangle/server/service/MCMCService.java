@@ -31,6 +31,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
@@ -45,7 +46,7 @@ import net.bigtangle.store.FullBlockStore;
 public class MCMCService {
     private static final String LOCKID = "mcmc";
 
-    private static final int LockTimeout = 3000;
+ 
 
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
 
@@ -60,7 +61,9 @@ public class MCMCService {
 
     @Autowired
     private StoreService storeService;
-
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
+    
     public void startSingleProcess() throws BlockStoreException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -72,7 +75,7 @@ public class MCMCService {
             }
         });
         try {
-            handler.get(LockTimeout, TimeUnit.MILLISECONDS);
+            handler.get(scheduleConfiguration.getMcmcrate(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug(" mcmcService  Timeout  ");
             handler.cancel(true);
@@ -93,7 +96,7 @@ public class MCMCService {
             if (lock == null) {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - LockTimeout) {
+            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate()*10) {
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;

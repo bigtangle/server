@@ -5,7 +5,6 @@
 package net.bigtangle.server.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,6 +13,8 @@ public class ScheduleConfiguration {
 
     @Value("${service.schedule.mcmc:false}")
     boolean milestone_active;
+    @Value("${service.schedule.mcmcrate:500}")
+    Long mcmcrate;
     @Value("${service.schedule.mining:false}")
     boolean mining;
     
@@ -63,6 +64,14 @@ public class ScheduleConfiguration {
 
     public void setBlockbatchrate(Long blockbatchrate) {
         this.blockbatchrate = blockbatchrate;
+    }
+
+    public Long getMcmcrate() {
+        return mcmcrate;
+    }
+
+    public void setMcmcrate(Long mcmcrate) {
+        this.mcmcrate = mcmcrate;
     }
 
   
