@@ -226,6 +226,7 @@ public class FullBlockGraph {
                 if (lock.getLocktime() < System.currentTimeMillis() - LockTime) {
                     store.deleteLockobject(LOCKID);
                     store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
                 } else {
                     if (lock.getLocktime() < System.currentTimeMillis() - 2000)
                         log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));

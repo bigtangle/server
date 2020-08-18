@@ -112,6 +112,7 @@ public class RewardService {
             } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMiningrate()) {
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
             } else {
                 log.info("reward running return:  " + Utils.dateTimeFormat (lock.getLocktime()));
             }

@@ -96,6 +96,7 @@ public class MCMCService {
             } else if (lock.getLocktime() < System.currentTimeMillis() - LockTimeout) {
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
             } else {
                 log.info("mcmcService running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
             }
