@@ -162,7 +162,48 @@ public class FullBlockGraph {
     }
 
     public void updateConfirmed() throws BlockStoreException {
-        updateConfirmedDo();
+        String LOCKID = "chain";
+        int LockTime = 1000000;
+        FullBlockStore store = storeService.getStore();
+        try {
+            // log.info("create Reward started");
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                try {
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
+                } catch (Exception e) {
+                    // ignore
+                }
+            } else {
+                if (lock.getLocktime() < System.currentTimeMillis() - LockTime) {
+                    store.deleteLockobject(LOCKID);
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
+                } else {
+                    if (lock.getLocktime() < System.currentTimeMillis() - 2000)
+                        log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+                }
+            }
+            if (canrun) {
+                Stopwatch watch = Stopwatch.createStarted();
+                updateConfirmedDo();
+                store.deleteLockobject(LOCKID);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                    log.info("updateConfirmed time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                }
+                watch.stop();
+            }
+        } catch (Exception e) {
+            store.deleteLockobject(LOCKID);
+            throw e;
+        } finally {
+            if (store != null)
+                store.close();
+        }
+        
+       ;
     }
 
     /*
@@ -176,7 +217,7 @@ public class FullBlockGraph {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-                updateConfirmedDo();
+                updateConfirmed();
                 return "";
             }
         });
@@ -207,7 +248,10 @@ public class FullBlockGraph {
     }
 
     public void updateChain() throws BlockStoreException {
-
+        updateChainConnected();
+        updateConfirmedTimeBoxed();
+    }
+    public void  updateChainConnected() throws BlockStoreException {
         String LOCKID = "chain";
         int LockTime = 1000000;
         FullBlockStore store = storeService.getStore();
@@ -234,8 +278,7 @@ public class FullBlockGraph {
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
-                saveChainConnected(store);
-                updateConfirmed();
+                saveChainConnected(store); 
                 store.deleteLockobject(LOCKID);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -252,6 +295,8 @@ public class FullBlockGraph {
 
     }
 
+
+    
     private void saveChainBlockQueue(Block block, FullBlockStore store, boolean orphan) throws BlockStoreException {
         // save the block
         try {
