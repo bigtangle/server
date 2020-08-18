@@ -100,8 +100,9 @@ public class SyncBlockService {
             log.debug(" Start SyncBlockService startInit: ");
  
             cleanupChainBlockQueue(store);
+            store. deleteAllLockobject();
             sync(-1l, true, store);
-            blockgraph.updateChain(true);
+            blockgraph.updateChain();
             log.debug(" end startInit: ");
         } finally {
             lock.unlock();
@@ -343,7 +344,7 @@ public class SyncBlockService {
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
                 if (initsync) {
                    // log.debug(" updateChain " );
-                    blockgraph.updateChain(true);
+                    blockgraph.updateChain();
                 }
                 log.debug(  " synced second="   +  watch.elapsed(TimeUnit.SECONDS));
             }

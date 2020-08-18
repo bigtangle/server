@@ -43,6 +43,7 @@ import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
 
 /**
@@ -481,5 +482,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException;
     void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
     void deleteAllChainBlockQueue() throws BlockStoreException;
-      
+    LockObject selectLockobject(String lockobjectid) throws BlockStoreException;
+    void deleteLockobject(String lockobjectid) throws BlockStoreException;
+    void deleteAllLockobject() throws BlockStoreException;
+    void insertLockobject( LockObject lockobject ) throws BlockStoreException;
 }

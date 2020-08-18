@@ -8,7 +8,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -57,12 +55,12 @@ import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
-import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -71,7 +69,7 @@ import net.bigtangle.utils.Threading;
  */
 @Service
 public class RewardService {
- 
+
     @Autowired
     protected FullBlockGraph blockGraph;
     @Autowired
@@ -85,37 +83,47 @@ public class RewardService {
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
-    private StoreService  storeService;
+    private StoreService storeService;
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
+    private static final String  LOCKID = "reward";
+ 
     /**
      * Scheduled update function that updates the Tangle
      * 
      * @throws BlockStoreException
      */
 
-    protected final ReentrantLock lock = Threading.lock("RewardService");
-
     // createReward is time boxed and can run parallel.
     public void startSingleProcess() throws BlockStoreException {
-        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  RewardService running. Returning...");
-            return;
-        }
+
         FullBlockStore store = storeService.getStore();
-        
+
         try {
             // log.info("create Reward started");
-           
-            createReward(store);
-         
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
+            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMiningrate()) {
+                store.deleteLockobject(LOCKID);
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+            } else {
+                log.info("reward running return:  " + Utils.dateTimeFormat (lock.getLocktime()));
+            }
+            if (canrun) {
+                createReward(store);
+                store.deleteLockobject(LOCKID);
+            }
+
         } catch (Exception e) {
             log.error("create Reward end  ", e);
-        } finally {
-            lock.unlock();
+            store.deleteLockobject(LOCKID);
+        } finally { 
             store.close();
         }
 
@@ -131,66 +139,69 @@ public class RewardService {
     public Block createReward(FullBlockStore store) throws Exception {
 
         Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
-        Block reward = createReward(prevRewardHash,store);
+        Block reward = createReward(prevRewardHash, store);
         if (reward != null) {
             log.debug(" reward block is created: " + reward);
         }
         return reward;
     }
 
-    public Block createReward(Sha256Hash prevRewardHash,FullBlockStore store) throws Exception {
+    public Block createReward(Sha256Hash prevRewardHash, FullBlockStore store) throws Exception {
         try {
             Stopwatch watch = Stopwatch.createStarted();
-            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash,store);
+            Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash, store);
             log.debug("  getValidatedRewardBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-            return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight(),store);
-        } catch (CutoffException | InfeasiblePrototypeException  | NullPointerException e ) {
+            return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight(), store);
+        } catch (CutoffException | InfeasiblePrototypeException | NullPointerException e) {
             // fall back to use prev reward as tip
             log.debug(" fall back to use prev reward as tip: ", e);
             Block prevreward = store.get(prevRewardHash);
-            return createReward(prevRewardHash, prevreward.getHash(), prevreward.getHash(),store);
+            return createReward(prevRewardHash, prevreward.getHash(), prevreward.getHash(), store);
         }
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, FullBlockStore store) throws Exception {
-        return createReward(prevRewardHash, prevTrunk, prevBranch, null,store);
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            FullBlockStore store) throws Exception {
+        return createReward(prevRewardHash, prevTrunk, prevBranch, null, store);
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride, FullBlockStore store)
-            throws Exception {
+    public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride,
+            FullBlockStore store) throws Exception {
 
-        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride,store);
+        Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride, store);
 
         if (block != null) {
             // check, if the reward block is too old to avoid conflict.
             TXReward latest = store.getMaxConfirmedReward();
-            if (latest.getChainLength() >= block.getLastMiningRewardBlock()    ) {
+            if (latest.getChainLength() >= block.getLastMiningRewardBlock()) {
                 log.debug("resolved Reward is out of date.");
             } else {
-                blockService.saveBlock(block,store); 
+                blockService.saveBlock(block, store);
             }
         }
         return block;
     }
 
-    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, FullBlockStore store)
+    public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+            FullBlockStore store)
             throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null,store);
+        return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null, store);
     }
 
     public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            Long timeOverride, FullBlockStore store) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+            Long timeOverride, FullBlockStore store)
+            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
         Stopwatch watch = Stopwatch.createStarted();
 
-        Block r1 = blockService.getBlock(prevTrunk,store);
-        Block r2 = blockService.getBlock(prevBranch,store);
+        Block r1 = blockService.getBlock(prevTrunk, store);
+        Block r2 = blockService.getBlock(prevBranch, store);
 
         long currentTime = Math.max(System.currentTimeMillis() / 1000,
                 Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
         if (timeOverride != null)
             currentTime = timeOverride;
-        RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime,store);
+        RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
 
         Block block = Block.createBlock(networkParameters, r1, r2);
 
@@ -212,22 +223,21 @@ public class RewardService {
         }
 
         block.addTransaction(tx);
-        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(block, currRewardInfo,store);
+        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(block, currRewardInfo, store);
         currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
         tx.setData(currRewardInfo.toByteArray());
-        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(block,store);
+        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(block, store);
         currRewardInfo.setMiningResult(miningTx.getHash());
         tx.setData(currRewardInfo.toByteArray());
 
-        blockService.adjustHeightRequiredBlocks(block,store);
+        blockService.adjustHeightRequiredBlocks(block, store);
         final BigInteger chainTargetFinal = chainTarget;
         log.debug("prepare Reward time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         return rewardSolve(block, chainTargetFinal);
     }
 
     private Block rewardSolve(Block block, final BigInteger chainTargetFinal)
-            throws InterruptedException, ExecutionException {
-        final Duration timeout = Duration.ofMillis(scheduleConfiguration.getMiningrate());
+            throws InterruptedException, ExecutionException { 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
@@ -240,7 +250,7 @@ public class RewardService {
         });
         Stopwatch watch = Stopwatch.createStarted();
         try {
-            handler.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            handler.get(scheduleConfiguration.getMiningrate(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug(" reward solve Timeout  ");
             handler.cancel(true);
@@ -252,13 +262,15 @@ public class RewardService {
         return block;
     }
 
-    public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
+    public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request, FullBlockStore store)
+            throws BlockStoreException {
 
         return GetTXRewardResponse.create(store.getMaxConfirmedReward());
 
     }
 
-    public GetTXRewardListResponse getAllConfirmedReward(Map<String, Object> request,FullBlockStore store) throws BlockStoreException {
+    public GetTXRewardListResponse getAllConfirmedReward(Map<String, Object> request, FullBlockStore store)
+            throws BlockStoreException {
 
         return GetTXRewardListResponse.create(store.getAllConfirmedReward());
 
@@ -291,28 +303,28 @@ public class RewardService {
         Transaction tx = new Transaction(networkParameters);
 
         Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
-        long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash,store);
+        long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
         try {
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
-                    true,store);
+                    true, store);
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
-                    true,store);
+                    true, store);
         } catch (CutoffException e) {
 
             // Robustness
             e.printStackTrace();
             blocks = new HashSet<Sha256Hash>();
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
-                    false,store);
+                    false, store);
             blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
-                    false,store);
+                    false, store);
         }
 
-        long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime,store);
+        long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -340,24 +352,24 @@ public class RewardService {
 
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
         Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
-        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(),store);
+        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
 
         // Check all referenced blocks have their requirements
-        SolidityState solidityState = checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight,store);
+        SolidityState solidityState = checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight, store);
         if (!solidityState.isSuccessState())
             throw new VerificationException(" checkReferencedBlockRequirements is failed: " + solidityState.toString());
 
         // Solidify referenced blocks
-        solidifyBlocks(currRewardInfo,store);
+        solidifyBlocks(currRewardInfo, store);
 
         // Ensure the new difficulty and tx is set correctly
-        checkGeneratedReward(newMilestoneBlock,store);
+        checkGeneratedReward(newMilestoneBlock, store);
 
         // Sanity check: No reward blocks are approved
-        checkContainsNoRewardBlocks(newMilestoneBlock,store);
+        checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
         // Check: At this point, predecessors must be solid
-        solidityState = validatorService.checkSolidity(newMilestoneBlock, false,store);
+        solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store);
         if (!solidityState.isSuccessState())
             throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString());
 
@@ -365,7 +377,7 @@ public class RewardService {
         List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
         HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
         for (Sha256Hash wipeBlock : wipeBlocks)
-            blockGraph.unconfirm(wipeBlock, traversedBlockHashes,store);
+            blockGraph.unconfirm(wipeBlock, traversedBlockHashes, store);
 
         // Find conflicts in the dependency set
         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
@@ -374,7 +386,7 @@ public class RewardService {
         allApprovedNewBlocks.add(store.getBlockWrap(newMilestoneBlock.getHash()));
 
         // If anything is already spent, no-go
-        boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks,store);
+        boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks, store);
         // Optional<ConflictCandidate> spentInput =
         // findFirstSpentInput(allApprovedNewBlocks);
 
@@ -403,11 +415,12 @@ public class RewardService {
 
         // Otherwise, all predecessors exist and were at least
         // solid > 0, so we should be able to confirm everything
-        blockGraph.solidifyBlock(newMilestoneBlock, solidityState, true,store);
+        blockGraph.solidifyBlock(newMilestoneBlock, solidityState, true, store);
         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
         for (BlockWrap approvedBlock : allApprovedNewBlocks)
-            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber,store);
+            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber,
+                    store);
 
     }
 
@@ -419,7 +432,7 @@ public class RewardService {
             referencedBlocks.add(store.get(hash));
         }
         for (Block block : referencedBlocks) {
-            solidifyWaiting(block,store);
+            solidifyWaiting(block, store);
         }
     }
 
@@ -428,7 +441,8 @@ public class RewardService {
      * different chain having higher total work.
      * 
      */
-    public void handleNewBestChain(Block newChainHead, FullBlockStore store) throws BlockStoreException, VerificationException {
+    public void handleNewBestChain(Block newChainHead, FullBlockStore store)
+            throws BlockStoreException, VerificationException {
         // checkState(lock.isHeldByCurrentThread());
         // This chain has overtaken the one we currently believe is best.
         // Reorganize is required.
@@ -437,7 +451,7 @@ public class RewardService {
         // need to examine the
         // chain from beyond this block to find differences.
         Block head = getChainHead(store);
-        final Block splitPoint = findSplit(newChainHead, head,store);
+        final Block splitPoint = findSplit(newChainHead, head, store);
         if (splitPoint == null) {
             log.info(" splitPoint is null, the chain ist not complete: ", newChainHead);
             return;
@@ -451,9 +465,9 @@ public class RewardService {
         // new part.
         LinkedList<Block> oldBlocks = new LinkedList<Block>();
         if (!head.getHash().equals(splitPoint.getHash())) {
-            oldBlocks = getPartialChain(head, splitPoint,store);
+            oldBlocks = getPartialChain(head, splitPoint, store);
         }
-        final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint,store);
+        final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint, store);
         // Disconnect each transaction in the previous best chain that is no
         // longer in the new best chain
         for (Block oldBlock : oldBlocks) {
@@ -465,14 +479,14 @@ public class RewardService {
                         milestoneNumber);
                 // Unconfirm anything not confirmed by milestone
                 for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-                    blockGraph.unconfirm(wipeBlock.getBlockHash(), new HashSet<>(),store);
+                    blockGraph.unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
             }
         }
         Block cursor;
         // Walk in ascending chronological order.
         for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
             cursor = it.next();
-            buildRewardChain(cursor,store);
+            buildRewardChain(cursor, store);
             // if we build a chain longer than head, do a commit, even it may be
             // failed after this.
             if (cursor.getRewardInfo().getChainlength() > head.getRewardInfo().getChainlength()) {
@@ -485,7 +499,7 @@ public class RewardService {
         // setChainHead(storedNewHead);
     }
 
-    private Block getChainHead( FullBlockStore store) throws BlockStoreException {
+    private Block getChainHead(FullBlockStore store) throws BlockStoreException {
         return store.get(store.getMaxConfirmedReward().getBlockHash());
     }
 
@@ -524,7 +538,8 @@ public class RewardService {
      * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher
      * is included, lower is not.
      */
-    private LinkedList<Block> getPartialChain(Block higher, Block lower, FullBlockStore store) throws BlockStoreException {
+    private LinkedList<Block> getPartialChain(Block higher, Block lower, FullBlockStore store)
+            throws BlockStoreException {
         checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
         LinkedList<Block> results = new LinkedList<>();
         Block cursor = higher;
@@ -539,10 +554,11 @@ public class RewardService {
     }
 
     @SuppressWarnings("unused")
-    private Optional<ConflictCandidate> findFirstSpentInput(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
+    private Optional<ConflictCandidate> findFirstSpentInput(HashSet<BlockWrap> allApprovedNewBlocks,
+            FullBlockStore store) {
         return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).filter(c -> {
             try {
-                return validatorService.hasSpentDependencies(c,store);
+                return validatorService.hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
                 return true;
@@ -553,7 +569,7 @@ public class RewardService {
     private boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
         return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
             try {
-                return validatorService.hasSpentDependencies(c,store);
+                return validatorService.hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
                 return true;
@@ -564,8 +580,8 @@ public class RewardService {
     /*
      * check blocks are in not in milestone
      */
-    private SolidityState checkReferencedBlockRequirements(Block newMilestoneBlock, long cutoffHeight, FullBlockStore store)
-            throws BlockStoreException {
+    private SolidityState checkReferencedBlockRequirements(Block newMilestoneBlock, long cutoffHeight,
+            FullBlockStore store) throws BlockStoreException {
 
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
@@ -608,19 +624,19 @@ public class RewardService {
 
         RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
                 newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(),
-                newMilestoneBlock.getTimeSeconds(),store);
+                newMilestoneBlock.getTimeSeconds(), store);
         if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
             throw new VerificationException("Incorrect difficulty target");
         }
 
-        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock,store);
+        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock, store);
 
         // Only check the Hash of OrderMatchingResult
         if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
             throw new VerificationException("OrderMatchingResult transactions output is wrong.");
         }
 
-        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(newMilestoneBlock,store);
+        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(newMilestoneBlock, store);
 
         // Only check the Hash of OrderMatchingResult
         if (!currRewardInfo.getMiningResult().equals(miningTx.getHash())) {
@@ -630,13 +646,10 @@ public class RewardService {
 
     public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
 
-        SolidityState solidityState = validatorService.checkSolidity(block, false,store);
-        blockGraph.solidifyBlock(block, solidityState, false,store);
+        SolidityState solidityState = validatorService.checkSolidity(block, false, store);
+        blockGraph.solidifyBlock(block, solidityState, false, store);
         return true;
     }
-
- 
-  
 
     public SolidityState checkRewardDifficulty(Block rewardBlock, FullBlockStore store) throws BlockStoreException {
         RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
@@ -653,12 +666,13 @@ public class RewardService {
                 && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
             throw new VerificationException("Previous reward block is not reward block.");
 
-        checkRewardDifficulty(rewardBlock, rewardInfo, prevRewardBlock,store);
+        checkRewardDifficulty(rewardBlock, rewardInfo, prevRewardBlock, store);
 
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkRewardReferencedBlocks(Block rewardBlock, FullBlockStore store) throws BlockStoreException {
+    public SolidityState checkRewardReferencedBlocks(Block rewardBlock, FullBlockStore store)
+            throws BlockStoreException {
         try {
             RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
@@ -675,7 +689,7 @@ public class RewardService {
                 throw new VerificationException("Previous reward block is not reward block.");
 
             // Get all blocks approved by previous reward blocks
-            long cutoffHeight = blockService.getRewardCutoffHeight(prevRewardHash,store);
+            long cutoffHeight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
             for (Sha256Hash hash : rewardInfo.getBlocks()) {
                 BlockWrap block = store.getBlockWrap(hash);
@@ -684,7 +698,7 @@ public class RewardService {
                 if (block.getBlock().getHeight() <= cutoffHeight)
                     throw new VerificationException("Referenced blocks are below cutoff height.");
 
-                SolidityState requirementResult = checkRequiredBlocks(rewardInfo, block,store);
+                SolidityState requirementResult = checkRequiredBlocks(rewardInfo, block, store);
                 if (!requirementResult.isSuccessState()) {
                     return requirementResult;
                 }
@@ -700,7 +714,8 @@ public class RewardService {
     /*
      * check only if the blocks in database
      */
-    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block, FullBlockStore store) throws BlockStoreException {
+    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block, FullBlockStore store)
+            throws BlockStoreException {
         Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
         for (Sha256Hash reqHash : requiredBlocks) {
             BlockWrap req = store.getBlockWrap(reqHash);
@@ -714,13 +729,13 @@ public class RewardService {
         return SolidityState.getSuccessState();
     }
 
-    private void checkRewardDifficulty(Block rewardBlock, RewardInfo rewardInfo, Block prevRewardBlock, FullBlockStore store)
-            throws BlockStoreException {
+    private void checkRewardDifficulty(Block rewardBlock, RewardInfo rewardInfo, Block prevRewardBlock,
+            FullBlockStore store) throws BlockStoreException {
 
         // check difficulty
         Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
         long difficulty = calculateNextChainDifficulty(prevRewardHash, rewardInfo.getChainlength(),
-                rewardBlock.getTimeSeconds(),store);
+                rewardBlock.getTimeSeconds(), store);
 
         if (difficulty != rewardInfo.getDifficultyTargetReward()) {
             throw new VerificationException("getDifficultyTargetReward does not match.");
@@ -728,8 +743,8 @@ public class RewardService {
 
     }
 
-    public long calculateNextChainDifficulty(Sha256Hash prevRewardHash, long currChainLength, long currentTime, FullBlockStore store)
-            throws BlockStoreException {
+    public long calculateNextChainDifficulty(Sha256Hash prevRewardHash, long currChainLength, long currentTime,
+            FullBlockStore store) throws BlockStoreException {
 
         if (currChainLength % NetworkParameters.INTERVAL != 0) {
             return store.getRewardDifficulty(prevRewardHash);

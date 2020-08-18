@@ -318,7 +318,7 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
         return block;
 
@@ -365,7 +365,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
@@ -376,7 +376,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().payContract(null, tokenId,   buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
@@ -388,7 +388,7 @@ public abstract class AbstractIntegrationTest {
         Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
 
@@ -474,7 +474,7 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true,store);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         mcmcServiceUpdate();
         
@@ -496,7 +496,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         return block;
     }
 
@@ -1254,7 +1254,7 @@ public abstract class AbstractIntegrationTest {
 
     public Block createReward(Sha256Hash prevRewardHash,FullBlockStore store) throws Exception {
         Block    block= rewardService.createReward(prevRewardHash, store);
-            blockGraph.updateChain(true);
+            blockGraph.updateChain();
             return block;
     }
     public void upstreamToken2LocalServer(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
@@ -1353,7 +1353,7 @@ public abstract class AbstractIntegrationTest {
         Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
         if (block != null) {
             blockService.saveBlock(block,store);
-            blockGraph.updateChain(true);
+            blockGraph.updateChain();
         }
         return block;
     }
@@ -1460,7 +1460,7 @@ public abstract class AbstractIntegrationTest {
     }
     
     public void  mcmcServiceUpdate() throws InterruptedException, ExecutionException, BlockStoreException {
-        mcmcService.update();
+        mcmcService.update(store);
         blockGraph.updateConfirmed();
     }
     

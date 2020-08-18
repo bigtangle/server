@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
- 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,7 +18,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,19 +29,24 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.DepthAndWeight;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
-import net.bigtangle.utils.Threading;
 
 /*
- *  This service offers maintenance functions to update the local state of the Tangle
+ *  This service offers maintenance functions to update the local mcmc state of the Tangle
  */
 @Service
 public class MCMCService {
+    private static final String LOCKID = "mcmc";
+
+    private static final int LockTimeout = 3000;
+
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
 
     @Autowired
@@ -55,51 +58,54 @@ public class MCMCService {
     @Autowired
     private BlockService blockService;
 
-  
     @Autowired
     private StoreService storeService;
 
-    /**
-     * Scheduled update function that updates the Tangle
-     * 
-     * @throws BlockStoreException
-     */
-
-    protected final ReentrantLock lock = Threading.lock("mcmcService");
-
-    public void startSingleProcess() {
-        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
-            log.debug(this.getClass().getName() + "  mcmcService running. Returning...");
-            return;
-        }
-
+    public void startSingleProcess() throws BlockStoreException {
+        FullBlockStore store = storeService.getStore();
         try {
             // log.info("mcmcService started");
-            Stopwatch watch = Stopwatch.createStarted();
-             update();
-            log.info(  "mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-            watch.stop();
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
+            } else if (lock.getLocktime() < System.currentTimeMillis() - LockTimeout) {
+                store.deleteLockobject(LOCKID);
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+            } else {
+                log.info("mcmcService running  at start = " + Utils.dateTimeFormat (lock.getLocktime()));
+            }
+            if (canrun) {
+                Stopwatch watch = Stopwatch.createStarted();
+                updateBoxed(store);
+                store.deleteLockobject(LOCKID);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)  
+                log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                watch.stop();
+            }
         } catch (Exception e) {
             log.error("mcmcService ", e);
+            store.deleteLockobject(LOCKID);
         } finally {
-            lock.unlock();
+            store.close();
         }
 
     }
 
-    private String updateBoxed() throws InterruptedException, ExecutionException {
+    private String updateBoxed(FullBlockStore store) throws InterruptedException, ExecutionException {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-                update();
+                update(store);
                 return "finish";
             }
-        }); 
+        });
         try {
-           return handler.get(3000, TimeUnit.MILLISECONDS);
+            return handler.get(LockTimeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug(" mcmcService  Timeout  ");
             handler.cancel(true);
@@ -107,30 +113,26 @@ public class MCMCService {
         } finally {
             executor.shutdownNow();
         }
-    
+
     }
 
-    public void update() throws InterruptedException, ExecutionException, BlockStoreException {
+    public void update(FullBlockStore store) throws InterruptedException, ExecutionException, BlockStoreException {
 
-        FullBlockStore store = storeService.getStore();
-
-        try { 
+        try {
             TXReward maxConfirmedReward = store.getMaxConfirmedReward();
-            updateWeightAndDepth(maxConfirmedReward,store);
-            updateRating(maxConfirmedReward,store);
-            deleteMCMC(maxConfirmedReward,store);
+            updateWeightAndDepth(maxConfirmedReward, store);
+            updateRating(maxConfirmedReward, store);
+            deleteMCMC(maxConfirmedReward, store);
         } catch (Exception e) {
             log.debug("update  ", e);
-        } finally { 
-            store.close();
         }
 
     }
 
-    
-    private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException { 
+    private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
         store.deleteMCMC(maxConfirmedReward.getChainLength() - 500);
     }
+
     /**
      * Update cumulative weight: the amount of blocks a block is approved by.
      * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks
@@ -141,8 +143,8 @@ public class MCMCService {
     private void updateWeightAndDepth(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
         // Begin from the highest maintained height blocks and go backwards from
         // there
-        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,store);
-        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,store);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
+        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
         PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
         HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
         HashMap<Sha256Hash, Long> depths = new HashMap<>();
@@ -208,13 +210,13 @@ public class MCMCService {
      * 
      * @throws BlockStoreException
      */
-    private void updateRating(TXReward maxConfirmedReward,FullBlockStore store) throws BlockStoreException {
+    private void updateRating(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
         // Select #tipCount solid tips via MCMC
         HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
                 NetworkParameters.NUMBER_RATING_TIPS);
 
-        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,store);
-        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,store);
+        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
+        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
 
         Collection<BlockWrap> selectedTips = tipsService.getRatingTips(NetworkParameters.NUMBER_RATING_TIPS, maxHeight,
                 store);

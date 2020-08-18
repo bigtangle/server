@@ -69,8 +69,8 @@ import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
-import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.utils.Gzip;
 
 /**
@@ -119,6 +119,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private static String DROP_CONTRACT_ACCOUNT_TABLE = "DROP TABLE contractaccount";
     private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE chainblockqueue";
     private static String DROP_MCMC_TABLE = "DROP TABLE mcmc";
+    private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -189,11 +190,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  block, solid, confirmed FROM blocks WHERE hash = ?" + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks, mcmc  WHERE solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
+            + " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
             + " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks , mcmc WHERE solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
+            + "  FROM blocks , mcmc WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
             + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD + afterSelect();
 
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
@@ -309,7 +310,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String INSERT_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getInsert()
             + " into mcmc ( cumulativeweight  , depth   , hash, rating  ) VALUES (?,?,?, ?)  ";
 
-    protected final String SELECT_MCMC_CHAINLENGHT_SQL = "  select mcmc.hash "    
+    protected final String SELECT_MCMC_CHAINLENGHT_SQL = "  select mcmc.hash "
             + " from blocks, mcmc where mcmc.hash=blocks.hash and milestone < ?    ";
 
     protected final String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
@@ -624,6 +625,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(DROP_MCMC_TABLE);
+        sqlStatements.add(DROP_LOCKOBJECT_TABLE);
         return sqlStatements;
     }
 
@@ -6074,4 +6076,91 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         return new ChainBlockQueue(resultSet.getBytes("hash"), Gzip.decompress(resultSet.getBytes("block")),
                 resultSet.getLong("chainlength"), resultSet.getBoolean("orphan"), resultSet.getLong("inserttime"));
     }
+
+    @Override
+    public void insertLockobject(LockObject lockObject) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement(" insert into lockobject (lockobjectid, locktime) values (?, ?)  ");
+            preparedStatement.setString(1, lockObject.getLockobjectid());
+            preparedStatement.setLong(2, lockObject.getLocktime());
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteLockobject(String lockobjectid) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(" delete from lockobject  where lockobjectid = ?");
+            preparedStatement.setString(1, lockobjectid);
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteAllLockobject() throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(" delete from lockobject ");
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public LockObject selectLockobject(String lockobjectid) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement(" select lockobjectid, locktime from lockobject  where lockobjectid = ?");
+            preparedStatement.setString(1, lockobjectid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+               return new LockObject(lockobjectid, resultSet.getLong("locktime"));
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
 }

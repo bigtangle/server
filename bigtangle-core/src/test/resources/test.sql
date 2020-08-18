@@ -21,6 +21,10 @@ select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
 select * from blocks order by milestone;
 select * from blocks where milestone <0 ;
+select * from blocks where milestone > 0 ;
+select max(height) FROM blocks
+select count(*) FROM blocks, mcmc  WHERE solid=2 AND milestone = -1 AND confirmed = false
+
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
 JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339

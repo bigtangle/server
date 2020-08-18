@@ -125,10 +125,10 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // Generate eligible mining reward blocks
         Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock1.getHash(), rollingBlock1.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         syncBlockService.connectingOrphans(store);
         createAndAddNextBlock(b2, b1);
 
@@ -456,10 +456,10 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         // Generate mining reward blocks
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         createAndAddNextBlock(rewardBlock1, rewardBlock2);
 
         // One of them shall win
@@ -547,7 +547,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         createAndAddNextBlock(b8link, b8link);
 
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         assertTrue(blockService.getBlockEvaluation(b1.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b2.getHash(),store).isConfirmed());
         assertTrue(blockService.getBlockEvaluation(b3.getHash(),store).isConfirmed());

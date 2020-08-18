@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -81,6 +80,7 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
@@ -92,7 +92,6 @@ import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
-import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -111,8 +110,6 @@ import net.bigtangle.utils.Threading;
 public class FullBlockGraph {
 
     private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
-
-    public final ReentrantLock chainlock = Threading.lock("chainLock");
 
     @Autowired
     protected NetworkParameters networkParameters;
@@ -159,7 +156,7 @@ public class FullBlockGraph {
             throws BlockStoreException {
         boolean a = add(block, allowUnsolid, store);
         if (updatechain) {
-            updateChain(true);
+            updateChain();
         }
         return a;
     }
@@ -167,6 +164,7 @@ public class FullBlockGraph {
     public void updateConfirmed() throws BlockStoreException {
         updateConfirmedDo();
     }
+
     /*
      * run timeboxed updateConfirmed and can run only, if there is no other
      * ReentrantLock
@@ -209,30 +207,46 @@ public class FullBlockGraph {
     }
 
     public void updateChain() throws BlockStoreException {
-        updateChain(false);
-    }
 
-    public void updateChain(boolean wait) throws BlockStoreException {
-
-        if (wait) {
-            chainlock.lock();
-        } else {
-            if (!chainlock.tryLock()) {
-                // not try to wait return
-                // log.info("updateChain running return ");
-                return;
-            }
-        }
-
-        FullBlockStore blockStore = storeService.getStore();
+        String LOCKID = "chain";
+        int LockTime = 1000000;
+        FullBlockStore store = storeService.getStore();
         try {
-            // log.info("mcmcService started");
-            saveChainConnected(blockStore);
-            updateConfirmed();
+            // log.info("create Reward started");
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                try {
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
+                } catch (Exception e) {
+                    // ignore
+                }
+            } else {
+                if (lock.getLocktime() < System.currentTimeMillis() - LockTime) {
+                    store.deleteLockobject(LOCKID);
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                } else {
+                    if (lock.getLocktime() < System.currentTimeMillis() - 2000)
+                        log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+                }
+            }
+            if (canrun) {
+                Stopwatch watch = Stopwatch.createStarted();
+                saveChainConnected(store);
+                updateConfirmed();
+                store.deleteLockobject(LOCKID);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                    log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                }
+                watch.stop();
+            }
+        } catch (Exception e) {
+            store.deleteLockobject(LOCKID);
+            throw e;
         } finally {
-            chainlock.unlock();
-            if (blockStore != null)
-                blockStore.close();
+            if (store != null)
+                store.close();
         }
 
     }
@@ -1789,12 +1803,12 @@ public class FullBlockGraph {
                     blockStore.abortDatabaseBatchWrite();
                     throw e;
                 } finally {
-                    blockStore.defaultDatabaseBatchWrite(); 
+                    blockStore.defaultDatabaseBatchWrite();
                 }
             }
             TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
-            long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward,blockStore);
-            long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward,blockStore);
+            long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
+            long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, blockStore);
 
             // Now try to find blocks that can be added to the milestone.
             // DISALLOWS UNSOLID

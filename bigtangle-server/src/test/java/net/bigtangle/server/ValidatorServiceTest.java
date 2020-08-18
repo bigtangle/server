@@ -295,7 +295,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         mcmcServiceUpdate();
         
 
@@ -316,7 +316,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
 
         store.resetStore();
@@ -331,18 +331,18 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add block allowing unsolids
         blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         // Should not be solid
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()) == null);
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1,store);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         // After adding the missing dependency, should be solid
         blockGraph.add(rewardBlock2, true,true,store);
         syncBlockService.connectingOrphans(store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         assertTrue(store.getBlockWrap(rewardBlock2.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(rewardBlock1.getHash()).getBlockEvaluation().getSolid() == 2);
     }
@@ -451,15 +451,15 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Expected
         }
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
                     rollingBlock.getHash(),store);
-            blockGraph.updateChain(true);
+            blockGraph.updateChain();
             failingBlock.setLastMiningRewardBlock(123);
             failingBlock.solve();
             blockGraph.add(failingBlock, false,store);
-            blockGraph.updateChain(true);
+            blockGraph.updateChain();
             fail();
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
@@ -964,7 +964,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Generate mining reward block with malformed fields
         Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(),store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
         Block testBlock3 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());

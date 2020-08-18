@@ -172,9 +172,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
         Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         makeAndConfirmOrderMatching(addedBlocks);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
@@ -182,7 +182,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
      
         makeAndConfirmOrderMatching(addedBlocks);
         rewardService.createReward(store);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2,store);
         assertEquals(2, bestOpenSellOrders.size());
         assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
@@ -311,7 +311,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
         sendEmpty(10);
         mcmcServiceUpdate();
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 99950l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
@@ -1002,7 +1002,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        blockGraph.updateChain(true);
+        blockGraph.updateChain();
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 

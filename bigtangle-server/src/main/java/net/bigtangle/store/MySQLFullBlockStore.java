@@ -354,8 +354,11 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    chainlength bigint,\n " 
             + "    orphan boolean,\n " 
             + "    inserttime bigint NOT NULL,\n"
-            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")\n";
-    
+            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ") ENGINE=InnoDB \n";
+    private static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n" 
+            + "    lockobjectid varchar(255) NOT NULL,\n"  
+            + "    locktime bigint NOT NULL,\n"
+            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
     
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
@@ -428,6 +431,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
+        sqlStatements.add(CREATE_LOCKOBJECT_TABLE);
         return sqlStatements;
     }
 
