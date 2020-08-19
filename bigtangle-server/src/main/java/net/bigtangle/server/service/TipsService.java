@@ -105,7 +105,8 @@ public class TipsService {
             try {
                 ratingTips.add(future.get());
             } catch (InterruptedException thrownE) {
-                throw new RuntimeException(thrownE); // Shouldn't happen
+               //cancel with timeout
+                //throw new RuntimeException(thrownE); // Shouldn't happen
             } catch (ExecutionException thrownE) {
                 throw new BlockStoreException(thrownE); // Shouldn't happen
             }

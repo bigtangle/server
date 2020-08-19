@@ -437,9 +437,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException;
 
     void updateAllConfirmedToMilestone(long milestoneNumber) throws BlockStoreException;
- 
-    TXReward getMaxSolidReward() throws BlockStoreException;
-
+   
     long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
 
     TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;

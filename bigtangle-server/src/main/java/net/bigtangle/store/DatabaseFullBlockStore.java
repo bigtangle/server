@@ -201,7 +201,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
 
     protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE height > ? AND height <= ? AND solid = 2 " + afterSelect();
+            + " FROM blocks WHERE milestone = -1 and height > ? AND height <= ? AND solid = 2 " + afterSelect();
 
     protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
             + "FROM blocks WHERE milestone = -1 AND confirmed = 1 " + afterSelect();
@@ -358,10 +358,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
     protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=?";
-    protected final String SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL = "SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, txreward.difficulty, txreward.chainlength FROM txreward"
-            + "  JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1 AND chainlength="
-            + "(SELECT MAX(chainlength) FROM txreward JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1)";
-    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
+       protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
             + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
             + "WHERE confirmed = 1 order by chainlength ";
 
@@ -3700,31 +3697,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
-    public TXReward getMaxSolidReward() throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_MAX_SOLID_REWARD_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-
-                return setReward(resultSet);
-            } else
-                return null;
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
+   
 
     @Override
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException {

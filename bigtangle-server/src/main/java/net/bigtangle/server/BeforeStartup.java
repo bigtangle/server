@@ -29,6 +29,8 @@ public class BeforeStartup {
     public void run() throws Exception {
 
         logger.debug("server config: " + serverConfiguration.toString());
+        logger.debug("Schedule: " + scheduleConfiguration.toString());
+        
         // set false in test
         if (serverConfiguration.getCreatetable()) {
             MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters,
@@ -41,6 +43,7 @@ public class BeforeStartup {
                 store.close();
             }
         }
+   
         Secp256k1Context.getContext();
         if (scheduleConfiguration.isMilestone_active()) {
             try {
@@ -73,4 +76,5 @@ public class BeforeStartup {
 
     @Autowired
     BlockStreamHandler blockStreamHandler;
+  
 }

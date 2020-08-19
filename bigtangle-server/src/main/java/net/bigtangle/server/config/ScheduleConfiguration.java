@@ -74,6 +74,13 @@ public class ScheduleConfiguration {
         this.mcmcrate = mcmcrate;
     }
 
+    @Override
+    public String toString() {
+        return "ScheduleConfiguration [milestone_active=" + milestone_active + ", mcmcrate=" + mcmcrate + ", mining="
+                + mining + ", blockBatchService_active=" + blockBatchService_active + ", miningrate=" + miningrate
+                + ", blockbatchrate=" + blockbatchrate + "]";
+    }
+
   
 
 }

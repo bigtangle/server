@@ -30,6 +30,10 @@ select max(height) FROM blocks
 select count(*) FROM blocks, mcmc  WHERE 
 blocks.hash = mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false
 
+select  *  FROM blocks, mcmc  WHERE 
+blocks.hash = mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false
+
+select  * FROM blocks WHERE milestone = -1   AND solid = 2
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
 JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339

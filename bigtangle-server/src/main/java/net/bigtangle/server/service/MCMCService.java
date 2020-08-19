@@ -96,7 +96,7 @@ public class MCMCService {
             if (lock == null) {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate()*10) {
+            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate()*100) {
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
@@ -185,8 +185,11 @@ public class MCMCService {
             subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch, store);
 
             // Update and dereference
+            //Only not in chain
+            if(currentBlock.getBlockEvaluation().getMilestone() < 0 ) {
             depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
                     depths.get(currentBlockHash)));
+            }
             approvers.remove(currentBlockHash);
             depths.remove(currentBlockHash);
         }
@@ -275,7 +278,8 @@ public class MCMCService {
             subUpdateRating(blockQueue, approvers, currentBlock, prevBranch, store);
 
             // Update your rating if solid
-            if (currentBlock.getBlockEvaluation().getSolid() == 2)
+            if (currentBlock.getBlockEvaluation().getSolid() == 2 && 
+                  currentBlock.getBlockEvaluation().getMilestone() < 0 )
                 ratings.add(new Rating(currentBlock.getBlockHash(), approvers.get(currentBlock.getBlockHash()).size()));
             approvers.remove(currentBlock.getBlockHash());
         }
