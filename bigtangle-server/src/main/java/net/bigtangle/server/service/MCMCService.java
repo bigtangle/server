@@ -38,6 +38,7 @@ import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 /*
  *  This service offers maintenance functions to update the local mcmc state of the Tangle
@@ -64,8 +65,13 @@ public class MCMCService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
     
+   
+    
     public void startSingleProcess() throws BlockStoreException {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+      //  ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("MCMC"));
+
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
             @Override
@@ -141,7 +147,7 @@ public class MCMCService {
     }
 
     private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-        store.deleteMCMC(maxConfirmedReward.getChainLength() - 500);
+        store.deleteMCMC(maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
     }
 
     /**

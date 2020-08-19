@@ -136,11 +136,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_MCMC_TEMPLATE = "  hash, rating, depth, cumulativeweight ";
 
     protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks WHERE (prevblockhash = ? or prevbranchblockhash = ?) AND solid >= 0 " + afterSelect();
+            + "  , rating, depth, cumulativeweight "
+            + "  FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid >= 0 "
+            + afterSelect();
+
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 " + afterSelect();
-    protected final String SELECT_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE prevblockhash = ?  or" + "  prevbranchblockhash = ? " + afterSelect();
+            + " ,  rating, depth, cumulativeweight "
+            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 " + afterSelect();
+ 
     protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks "
             + "WHERE blocks.prevblockhash = ? or blocks.prevbranchblockhash = ?" + afterSelect();
 
@@ -358,7 +361,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
     protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
             + " WHERE confirmed = 1 AND chainlength=?";
-       protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
+    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
             + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
             + "WHERE confirmed = 1 order by chainlength ";
 
@@ -1017,11 +1020,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluationNumber(resultSet);
-
+                BlockMCMC mcmc = setBlockMCMC(resultSet);
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if (verifyHeader(block)) {
-
-                    storedBlocks.add(new BlockWrap(block, blockEvaluation, getMCMC(hash), params));
+                if (verifyHeader(block)) { 
+                    storedBlocks.add(new BlockWrap(block, blockEvaluation, mcmc, params));
                 }
             }
             return storedBlocks;
@@ -1055,11 +1057,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-
+                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet); 
+                BlockMCMC mcmc = setBlockMCMC(resultSet);
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
                 if (verifyHeader(block))
-                    storedBlocks.add(new BlockWrap(block, blockEvaluation, getMCMC(hash), params));
+                    storedBlocks.add(new BlockWrap(block, blockEvaluation, mcmc, params));
             }
             return storedBlocks;
         } catch (SQLException ex) {
@@ -3697,8 +3699,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-   
-
     @Override
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException {
         maybeConnect();
@@ -6120,7 +6120,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setString(1, lockobjectid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-               return new LockObject(lockobjectid, resultSet.getLong("locktime"));
+                return new LockObject(lockobjectid, resultSet.getLong("locktime"));
             }
             return null;
         } catch (SQLException e) {
