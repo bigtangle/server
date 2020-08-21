@@ -105,6 +105,9 @@ public abstract class NetworkParameters {
     //List of servers can be used
     protected  ServerPool serverPool;
     
+    //List of based token for order
+    protected List<String> orderBaseTokens;
+    
     // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 51;
     public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 45;
@@ -504,6 +507,14 @@ public abstract class NetworkParameters {
             rootPermission.add(new PermissionDomainname(s, ""));
         }
         return rootPermission;
+    }
+
+    public List<String> getOrderBaseTokens() {
+        return orderBaseTokens;
+    }
+
+    public void setOrderBaseTokens(List<String> orderBaseTokens) {
+        this.orderBaseTokens = orderBaseTokens;
     }
 
     public ServerPool getServerPool() {

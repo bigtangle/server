@@ -2175,6 +2175,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,
             Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException,
             UTXOProviderException, NoTokenException {
+        return buyOrder(aesKey, tokenId, buyPrice, buyAmount, validToTime, validFromTime,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
+    }
+    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,
+            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException, InsufficientMoneyException,
+            UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
         Token t = checkTokenId(tokenId);
         // Burn BIG to buy
@@ -2198,7 +2204,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
 
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
-                Side.BUY, beneficiary.toAddress(params).toBase58());
+                Side.BUY, beneficiary.toAddress(params).toBase58(),orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
         signTransaction(tx, aesKey);
@@ -2290,9 +2296,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         return re;
     }
-
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
             Long validFromTime)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+      return  sellOrder(aesKey, tokenId, sellPrice, sellAmount, validToTime, validFromTime,  
+              NetworkParameters.BIGTANGLE_TOKENID_STRING);
+    }
+    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
+            Long validFromTime,String orderBaseToken)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token t = checkTokenId(tokenId);
         // Burn tokens to sell
@@ -2323,7 +2334,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         OrderOpenInfo info = new OrderOpenInfo(total.longValue(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
-                beneficiary.toAddress(params).toBase58());
+                beneficiary.toAddress(params).toBase58(),orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 

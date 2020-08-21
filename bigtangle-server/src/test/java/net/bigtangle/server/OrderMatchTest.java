@@ -223,16 +223,16 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-        showOrders();
+        checkOrders(1);
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-        showOrders();
+        checkOrders(2);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        showOrders();
-
+     
+   
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
@@ -425,7 +425,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-
+        sendEmpty(10);
+        mcmcServiceUpdate();
+        blockGraph.updateChain();
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 50000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 50l);
@@ -458,8 +460,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 50, addedBlocks);
-
+        sendEmpty(10);
         mcmcServiceUpdate();
+        blockGraph.updateChain();
         
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -499,7 +502,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 50, addedBlocks);
 
         mcmcServiceUpdate();
-        
+        sendEmpty(10);
+        mcmcServiceUpdate();
+        blockGraph.updateChain();
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -644,7 +649,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58());
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -723,7 +728,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58());
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -1012,8 +1017,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     // test buy order with multiple inputs
-    public void testBuy() throws Exception {
-
+    public void testBuy() throws Exception { 
         File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
@@ -1030,10 +1034,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
         walletAppKit2.wallet().setServerURL(contextRoot);
-        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
- 
-     
- 
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey); 
       
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1042,16 +1043,16 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
 
-        long amountToken = 88l;
+        long amountToken = 2*88l;
         //split token
         payTestToken(testKey,amountToken);
-        payTestToken(testKey,amountToken);
-        checkBalanceSum(Coin.valueOf(2*amountToken   , testKey.getPubKey()), wallet2Keys);
-        
+        mcmcServiceUpdate();
+          
         long tradeAmount = 100l;
         long price=1;
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount , null, null);
-        addedBlocks.add(block);
+        addedBlocks.add(block); 
+        mcmcServiceUpdate();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
 
         long amount = 77l;
@@ -1063,8 +1064,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open buy order for test tokens
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        mcmcServiceUpdate();
-        
+        mcmcServiceUpdate(); 
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
 
         // Execute order matching
@@ -1074,7 +1074,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify the tokens changed position 
         checkBalanceSum( Coin.valueOf(tradeAmount*price, NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys); 
         
-        checkBalanceSum(Coin.valueOf(2*amountToken - tradeAmount , testKey.getPubKey()), wallet2Keys);
+        checkBalanceSum(Coin.valueOf(amountToken - tradeAmount , testKey.getPubKey()), wallet2Keys);
        
         checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet1Keys);
         checkBalanceSum( Coin.valueOf(2*amount - tradeAmount*price , NetworkParameters.BIGTANGLE_TOKENID)

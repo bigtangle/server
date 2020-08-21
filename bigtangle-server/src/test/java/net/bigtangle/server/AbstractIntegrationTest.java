@@ -56,10 +56,8 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
-import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
@@ -318,57 +316,14 @@ public abstract class AbstractIntegrationTest {
 
         Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
+        // Confirm
+        mcmcServiceUpdate();
         blockGraph.updateChain();
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
         return block;
 
     }
-
-    protected Block makeAndConfirmSellOrder1(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            List<Block> addedBlocks) throws Exception {
-         
-        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
-        return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount, addedBlocks, predecessor);
-    }
-
-    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            List<Block> addedBlocks, Block predecessor) throws Exception {
-        Block block = null;
-        Transaction tx = new Transaction(networkParameters);
-        OrderOpenInfo info = new OrderOpenInfo(sellPrice * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                beneficiary.getPubKey(), null, null, Side.SELL, beneficiary.toAddress(networkParameters).toBase58());
-        tx.setData(info.toByteArray());
-        tx.setDataClassName("OrderOpen");
-
-        // Burn tokens to sell
-        Coin amount = Coin.valueOf(sellAmount, tokenId);
-        List<UTXO> outputs = getBalance(false, beneficiary).stream()
-                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenId))
-                .filter(out -> out.getValue().getValue().compareTo(amount.getValue()) > 0).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-        // amount, testKey));
-        tx.addOutput(
-                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
-
-        // Create block with order
-        block = predecessor.createNextBlock(predecessor);
-        block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block = adjustSolve(block);
-        this.blockGraph.add(block, true,store);
-        addedBlocks.add(block);
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-        return block;
-    }
+  
 
     protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId,  BigInteger buyAmount, String contractTokenid,
             List<Block> addedBlocks) throws Exception {
@@ -394,56 +349,9 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    protected Block makeAndConfirmBuyOrder1(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            List<Block> addedBlocks) throws Exception {
-       
-        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+    
 
-        return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, addedBlocks, predecessor);
-    }
-
-    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            List<Block> addedBlocks, Block predecessor) throws Exception {
-        Block block = null;
-        Transaction tx = new Transaction(networkParameters);
-        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), null, null, Side.BUY,
-                beneficiary.toAddress(networkParameters).toBase58());
-        tx.setData(info.toByteArray());
-        tx.setDataClassName("OrderOpen");
-
-        // Burn BIG to buy
-        Coin amount = Coin.valueOf(buyAmount * buyPrice, NetworkParameters.BIGTANGLE_TOKENID);
-        List<UTXO> outputs = getBalance(false, beneficiary).stream()
-                .filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
-                        .equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-                .filter(out -> out.getValue().getValue().compareTo(amount.getValue()) > 0).collect(Collectors.toList());
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-        // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-        // amount, testKey));
-        tx.addOutput(
-                new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), beneficiary));
-        TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-        Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-        TransactionSignature sig = new TransactionSignature(beneficiary.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
-
-        // Create block with order
-        block = predecessor.createNextBlock(predecessor);
-        block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-        block = adjustSolve(block);
-        this.blockGraph.add(block, true,store);
-        mcmcServiceUpdate();
-        
-        addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-        mcmcServiceUpdate();
-        
-        return block;
-
-    }
+     
 
     protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
             throws Exception {
@@ -593,6 +501,13 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
+    protected void checkOrders(int ordersize) throws BlockStoreException {
+        // Snapshot current state
+    assertTrue(  store.getAllOpenOrdersSorted(null, null).size() == ordersize);
+      
+    }
+
+    
     protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks)
             throws BlockStoreException, JsonParseException, JsonMappingException, IOException, InterruptedException,
             ExecutionException {

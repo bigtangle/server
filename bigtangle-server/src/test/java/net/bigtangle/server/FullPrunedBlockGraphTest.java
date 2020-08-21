@@ -174,7 +174,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Set the order
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58());
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -327,7 +327,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Set the order
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                testKey.toAddress(networkParameters).toBase58());
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -373,7 +373,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -444,7 +444,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         {
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey(), null,
-                    null, Side.BUY, testKey.toAddress(networkParameters).toBase58());
+                    null, Side.BUY, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -497,7 +497,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         {
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey(),
-                    null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+                    null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -692,7 +692,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Set the order
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                testKey.toAddress(networkParameters).toBase58());
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -739,7 +739,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -814,7 +814,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         {
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, Utils.HEX.encode(testKey.getPubKey()), testKey.getPubKey(), null,
-                    null, Side.BUY, testKey.toAddress(networkParameters).toBase58());
+                    null, Side.BUY, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -867,7 +867,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         {
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, NetworkParameters.BIGTANGLE_TOKENID_STRING, testKey.getPubKey(),
-                    null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58());
+                    null, null, Side.SELL, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 

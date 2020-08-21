@@ -30,6 +30,9 @@ public class OrderRecord extends SpentBlock {
     // Side can be calculated as Big Coin as only base trading coin
     private Side side;
 
+    //Base token for the order
+    private String orderBaseToken;
+    
     /*
      * for wallet set the order status from cancel
      */
@@ -43,7 +46,7 @@ public class OrderRecord extends SpentBlock {
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
             String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, String side,
-            String beneficiaryAddress) {
+            String beneficiaryAddress, String orderBaseToken) {
         super();
         this.setBlockHash(initialBlockHash);
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
@@ -60,12 +63,15 @@ public class OrderRecord extends SpentBlock {
         this.validFromTime = validFromTime;
         this.side = Side.valueOf(side);
         this.beneficiaryAddress = beneficiaryAddress;
+        this.orderBaseToken = orderBaseToken;
+        
     }
 
     public static OrderRecord cloneOrderRecord(OrderRecord old) {
         return new OrderRecord(old.getBlockHash(), old.issuingMatcherBlockHash, old.offerValue, old.offerTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
-                old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress);
+                old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress,
+                old.getOrderBaseToken());
     }
 
     /*
@@ -184,6 +190,14 @@ public class OrderRecord extends SpentBlock {
 
     public void setCancelPendingTime(long cancelPendingTime) {
         this.cancelPendingTime = cancelPendingTime;
+    }
+
+    public String getOrderBaseToken() {
+        return orderBaseToken;
+    }
+
+    public void setOrderBaseToken(String orderBaseToken) {
+        this.orderBaseToken = orderBaseToken;
     }
 
     @Override

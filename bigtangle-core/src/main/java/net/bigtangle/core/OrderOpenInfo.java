@@ -26,13 +26,16 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private Long validFromTime;
     // owner public address of the order for query
     private String beneficiaryAddress;
-    
+    //Base token for the order
+    private String orderBaseToken;
+  
+     
     public OrderOpenInfo() {
         super();
     }
 
     public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli,
-            Long validFromTimeMilli, Side side,  String beneficiaryAddress) {
+            Long validFromTimeMilli, Side side,  String beneficiaryAddress, String orderBaseToken) {
         super();
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
@@ -48,6 +51,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
             this.validToTime = Math.min(validToTimeMilli / 1000, validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX);
         }
         this.beneficiaryAddress = beneficiaryAddress;
+        this.orderBaseToken = orderBaseToken;
     }
 
     public byte[] getBeneficiaryPubKey() {
@@ -98,7 +102,12 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
                 dos.writeInt(beneficiaryAddress.getBytes("UTF-8").length);
                 dos.write(beneficiaryAddress.getBytes("UTF-8"));
             }
-            
+            dos.writeBoolean(orderBaseToken != null);
+            if (orderBaseToken != null) {
+                dos.writeInt(orderBaseToken.getBytes("UTF-8").length);
+                dos.write(orderBaseToken.getBytes("UTF-8"));
+            }
+              
             dos.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,7 +126,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         dis.readFully(beneficiaryPubKey);
         targetTokenid = Utils.readNBytesString(dis); 
         beneficiaryAddress = Utils.readNBytesString(dis); 
-        
+        orderBaseToken = Utils.readNBytesString(dis); 
         return this;
     }
 
@@ -136,7 +145,8 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     public String toString() {
         return "OrderOpenInfo  \n targetValue=" + targetValue + ", \n targetTokenid=" + targetTokenid 
                 + ", \n validToTime=" + validToTime + ",  \n validFromTime="
-                + validFromTime + ", \n beneficiaryAddress=" + beneficiaryAddress;
+                + validFromTime + ", \n beneficiaryAddress=" + beneficiaryAddress
+                + ", \n orderBaseToken=" + orderBaseToken ;
     }
 
     public Long getValidToTime() {
@@ -161,6 +171,14 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     public void setBeneficiaryAddress(String beneficiaryAddress) {
         this.beneficiaryAddress = beneficiaryAddress;
+    }
+
+    public String getOrderBaseToken() {
+        return orderBaseToken;
+    }
+
+    public void setOrderBaseToken(String orderBaseToken) {
+        this.orderBaseToken = orderBaseToken;
     }
 
 }

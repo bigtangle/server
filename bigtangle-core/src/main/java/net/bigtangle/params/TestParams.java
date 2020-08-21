@@ -39,6 +39,10 @@ public class TestParams extends AbstractBitcoinNetParams {
         genesisPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
         permissionDomainname = ImmutableList.of(genesisPub);
 
+        orderBaseTokens = ImmutableList.of(BIGTANGLE_TOKENID_STRING, 
+                //CNY Test
+                "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a");
+        
         // Equihash Settings
         equihashN = 100;
         equihashK = 4;

@@ -134,7 +134,10 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
                 // a number used to track operations on the
                 // order, e.g. increasing by one when refreshing
                 // order is valid after this time
-            + "    validFromTime bigint,\n" 
+            + "    validFromTime bigint,\n"            
+               // order base token
+            + "    orderbasetoken varchar(255),\n" 
+            
             // true iff a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
             // true if used by a confirmed  ordermatch block (either

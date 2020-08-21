@@ -26,7 +26,7 @@ public class ServerConfiguration {
     private String permissionadmin;
     
     private Boolean myserverblockOnly = false;
-    private long maxserachblocks = 5000;
+    private long maxsearchblocks = 5000;
   
     // does not reply all service request until service is set ready
     private Boolean serviceReady = false;
@@ -41,7 +41,7 @@ public class ServerConfiguration {
     private String indexhtml="https://www.bigtangle.org";
     private int blockPrototypeCachesSize =1;
     private String dockerDBHost="mysql-test";
-    
+ 
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -161,14 +161,7 @@ public class ServerConfiguration {
     }
 
    
-    public long getMaxserachblocks() {
-        return maxserachblocks;
-    }
-
-    public void setMaxserachblocks(long maxserachblocks) {
-        this.maxserachblocks = maxserachblocks;
-    }
-
+  
     public double getAlphaMCMC() {
         return alphaMCMC;
     }
@@ -231,9 +224,17 @@ public class ServerConfiguration {
                 + mineraddress + ", serverurl=" + serverurl + ", serverversion=" + serverversion + ", clientversion="
                 + clientversion + ", permissioned=" + permissioned + ", permissionadmin=" + permissionadmin
                 + ", myserverblockOnly=" + myserverblockOnly
-                + ", maxserachblocks=" + maxserachblocks  
+                + ", maxsearchblocks=" + maxsearchblocks  
                 + ", serviceReady=" + serviceReady + ", createtable=" + createtable + ", alphaMCMC=" + alphaMCMC
                 + ", runKafkaStream=" + runKafkaStream + "]";
+    }
+
+    public long getMaxsearchblocks() {
+        return maxsearchblocks;
+    }
+
+    public void setMaxsearchblocks(long maxsearchblocks) {
+        this.maxsearchblocks = maxsearchblocks;
     }
 
 }

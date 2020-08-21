@@ -2452,7 +2452,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2534,7 +2534,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2604,7 +2604,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2653,7 +2653,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2742,7 +2742,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test2", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2811,7 +2811,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s with Price 0.5
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(4, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2854,7 +2854,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "BIG"s with Price 0.5
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(1, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2904,7 +2904,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 
@@ -2971,7 +2971,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, "test", testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58());
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
 

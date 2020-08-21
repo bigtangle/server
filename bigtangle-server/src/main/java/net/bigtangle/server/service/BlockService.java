@@ -341,7 +341,7 @@ public class BlockService {
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
         List<BlockEvaluationDisplay> evaluations = store.getSearchBlockEvaluations(address, lastestAmount, height,
-                serverConfiguration.getMaxserachblocks());
+                serverConfiguration.getMaxsearchblocks());
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
@@ -647,7 +647,7 @@ public class BlockService {
         String lastestAmount = request.get("lastestAmount") == null ? "0" : request.get("lastestAmount").toString();
         long height = request.get("height") == null ? 0l : Long.valueOf(request.get("height").toString());
         List<BlockEvaluationDisplay> evaluations = store.getSearchBlockEvaluations(address, lastestAmount, height,
-                serverConfiguration.getMaxserachblocks());
+                serverConfiguration.getMaxsearchblocks());
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
