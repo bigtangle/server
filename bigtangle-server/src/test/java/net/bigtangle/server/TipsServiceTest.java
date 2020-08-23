@@ -68,25 +68,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         blockGraph.add(b1, true,store);
         blockGraph.add(b2, true,store);
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
-            assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
-        }
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
-            assertTrue(tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b2.getHash()));
-        }
-
+     
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
-
-        for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
-            assertTrue(tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b1.getHash()));
+       //  blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        for (int i = 0; i < 5; i++) {
+            createAndAddNextBlock(b1, b1);
         }
+        mcmcServiceUpdate();
+ 
 
         try {
             tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
@@ -310,7 +300,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
-
+     
+        mcmcServiceUpdate();
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
@@ -332,14 +323,11 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block b2 = saveTokenUnitTestWithTokenname(tokenInfo3, coinbase3, outKey, null);
 
-        for (int i = 0; i < 5; i++) {
-            createAndAddNextBlock(block1, block1);
-        }
-        mcmcServiceUpdate();
-        
+         
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
+            mcmcServiceUpdate();
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
@@ -353,8 +341,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
+        mcmcServiceUpdate();
         blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
-
         for (int i = 0; i < 20; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));

@@ -157,12 +157,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         return userkeys;
     }
 
-    private void mcmc()
-            throws JsonProcessingException, Exception, InterruptedException, ExecutionException, BlockStoreException {
-        sendEmpty(5);
-        mcmcServiceUpdate();
-        
-    }
+ 
 
     public void testTokens() throws JsonProcessingException, Exception {
 

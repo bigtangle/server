@@ -12,7 +12,7 @@ public class MatchResult implements Serializable{
     private long executedQuantity; 
     private String txhash;
     private String tokenid;
-
+    private String basetokenid;
     private long inserttime;
 
     public MatchResult() {
@@ -20,12 +20,13 @@ public class MatchResult implements Serializable{
      
     }
 
-    public MatchResult(String txhash, String tokenid, long price, long executedQuantity, long inserttime) {
+    public MatchResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity, long inserttime) {
 
         this.price = price;
         this.executedQuantity = executedQuantity;
         this.inserttime = inserttime;
         this.tokenid = tokenid;
+        this.basetokenid = basetokenid; 
         this.txhash = txhash;
     }
 
@@ -68,6 +69,21 @@ public class MatchResult implements Serializable{
     public void setTxhash(String txhash) {
         this.txhash = txhash;
     }
- 
+
+    public String getBasetokenid() {
+        return basetokenid;
+    }
+
+    public void setBasetokenid(String basetokenid) {
+        this.basetokenid = basetokenid;
+    }
+
+    @Override
+    public String toString() {
+        return "MatchResult [price=" + price + ", executedQuantity=" + executedQuantity + ", txhash=" + txhash
+                + ", tokenid=" + tokenid + ", basetokenid=" + basetokenid + ", inserttime=" + inserttime + "]";
+    }
+
+   
 
 }

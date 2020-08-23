@@ -160,6 +160,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
             + "    txhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL,\n" 
+            + "    basetokenid varchar(255) NOT NULL,\n" 
             + "    price bigint NOT NULL,\n"
             + "    executedQuantity bigint NOT NULL,\n" 
             + "    inserttime bigint NOT NULL,\n"

@@ -381,8 +381,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     /* MATCHING EVENTS */
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
-            + " INTO matching (txhash, tokenid,  price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?)";
-    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,  price, executedQuantity, inserttime "
+            + " INTO matching (txhash, tokenid, basetokenid, price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
             + "FROM matching ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
 
@@ -5349,13 +5349,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void insertMatchingEvent(MatchResult match) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
+        log.debug("insertMatchingEvent: " +match.toString());
         try {
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
             preparedStatement.setString(1, match.getTxhash());
             preparedStatement.setString(2, match.getTokenid());
-            preparedStatement.setLong(3, match.getPrice());
-            preparedStatement.setLong(4, match.getExecutedQuantity());
-            preparedStatement.setLong(5, match.getInserttime());
+            preparedStatement.setString(3, match.getBasetokenid());
+            preparedStatement.setLong(4, match.getPrice());
+            preparedStatement.setLong(5, match.getExecutedQuantity());
+            preparedStatement.setLong(6, match.getInserttime());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5389,8 +5391,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
                 list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
-
-                        resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5)));
+                        resultSet.getString(3),
+                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
             }
             return list;
         } catch (SQLException ex) {
@@ -5774,8 +5776,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
                 list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
-
-                        resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5)));
+                        resultSet.getString(3),
+                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
             }
             return list;
         } catch (SQLException ex) {

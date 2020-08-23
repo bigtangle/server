@@ -18,6 +18,7 @@ import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
+import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.server.data.OrderMatchingResult;
@@ -39,10 +40,10 @@ public class OrderTickerService {
         // Map<String, MatchResult> matchResultList = new HashMap<String,
         // MatchResult>();
         try {
-            for (Entry<String, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
+            for (Entry<TradePair, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
                 for (Event event : entry.getValue()) {
                     if (event instanceof Match) {
-                        MatchResult f = new MatchResult(transactionHash, entry.getKey(),
+                        MatchResult f = new MatchResult(transactionHash, entry.getKey().getOrderToken(),entry.getKey().getOrderBaseToken(),
                                 ((OrderBookEvents.Match) event).price, ((OrderBookEvents.Match) event).executedQuantity,
                                 matchBlockTime);
                         store.insertMatchingEvent(f);
@@ -56,7 +57,7 @@ public class OrderTickerService {
     }
 
      
-    public void removeMatchingEvents(Transaction outputTx, Map<String, List<Event>> tokenId2Events,FullBlockStore store)
+    public void removeMatchingEvents(Transaction outputTx,  FullBlockStore store)
             throws BlockStoreException {
         store.deleteMatchingEvents(outputTx.getHashAsString());
     }

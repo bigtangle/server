@@ -242,7 +242,7 @@ public abstract class AbstractIntegrationTest {
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
         blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
-
+        mcmcServiceUpdate();
         return block;
     }
 
@@ -383,8 +383,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
         mcmcServiceUpdate();
         blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-        mcmcServiceUpdate();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); 
         
         return block;
     }
@@ -405,6 +404,7 @@ public abstract class AbstractIntegrationTest {
         // Confirm
         mcmcServiceUpdate();
         blockGraph.updateChain();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
         return block;
     }
 
@@ -1291,7 +1291,7 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    public void sendEmpty(int c) throws JsonProcessingException, Exception {
+    public void sendEmpty(int c) throws JsonProcessingException {
 
         for (int i = 0; i < c; i++) {
             try {
@@ -1379,4 +1379,10 @@ public abstract class AbstractIntegrationTest {
         blockGraph.updateConfirmed();
     }
     
+    public void mcmc() throws JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException 
+              {
+        sendEmpty(5);
+        mcmcServiceUpdate();
+        
+    }
 }

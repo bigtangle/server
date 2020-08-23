@@ -87,11 +87,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-
+        mcmcServiceUpdate();
         // Verify the order ticker has the correct price
         HashSet<String> a = new HashSet<String>();
         a.add(testTokenId);
-        assertEquals(1000l, tickerService.getLastMatchingEvents(a,store).getTickers().get(0).getPrice());
+        assertEquals(1000l, tickerService.getLastMatchingEvents(a, store).getTickers().get(0).getPrice());
 
         // Verify deterministic overall execution
 
@@ -179,24 +179,24 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
         // Verify the best orders are correct
-     
+
         makeAndConfirmOrderMatching(addedBlocks);
         rewardService.createReward(store);
         blockGraph.updateChain();
-        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2,store);
+        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2, store);
         assertEquals(2, bestOpenSellOrders.size());
         assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
         assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2,store);
-       
+        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2, store);
+
         assertEquals(2, bestOpenBuyOrders.size());
         assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getBlockHash());
         assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getBlockHash());
 
-        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1,store);
+        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1, store);
         assertEquals(1, bestOpenSellOrders2.size());
         assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1,store);
+        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1, store);
         assertEquals(1, bestOpenBuyOrders2.size());
         assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getBlockHash());
 
@@ -204,8 +204,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     }
 
-    
-    
     @Test
     public void buy() throws Exception {
 
@@ -231,8 +229,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-     
-   
+
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
@@ -306,7 +303,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         sendEmpty(10);
@@ -329,7 +326,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
-        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -350,7 +346,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell orders for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
         mcmcServiceUpdate();
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -444,8 +440,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0); 
-        List<Block> addedBlocks = new ArrayList<>(); 
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -463,7 +459,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         sendEmpty(10);
         mcmcServiceUpdate();
         blockGraph.updateChain();
-        
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -524,8 +520,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0); 
-        List<Block> addedBlocks = new ArrayList<>(); 
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -631,10 +627,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0);
-        ;
-        List<Block> addedBlocks = new ArrayList<>();
-
+        ECKey testKey = walletKeys.get(0); 
+        List<Block> addedBlocks = new ArrayList<>(); 
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -643,7 +637,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair( store).getLeft());
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
@@ -675,10 +669,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true,store);
+        this.blockGraph.add(block, true, store);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
-
+        mcmcServiceUpdate();
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
+     
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
@@ -711,7 +706,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testValidToTime() throws Exception {
         ECKey testKey = walletKeys.get(0);
-        ;
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token
@@ -722,7 +716,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens with timeout
-        Block predecessor = store.get(tipsService.getValidatedBlockPair( store).getLeft());
+        Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
         long sellAmount = (long) 100;
         Block block = null;
         Transaction tx = new Transaction(networkParameters);
@@ -754,9 +748,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block = adjustSolve(block);
-        this.blockGraph.add(block, true,store);
+        this.blockGraph.add(block, true, store);
         addedBlocks.add(block);
-        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1,store);
+        mcmcServiceUpdate();
+        this.blockGraph.confirm(block.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -837,7 +832,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching and then unexecute it
         Block orderMatching = makeAndConfirmOrderMatching(addedBlocks);
-        blockGraph.unconfirm(orderMatching.getHash(), new HashSet<>(),store);
+        blockGraph.unconfirm(orderMatching.getHash(), new HashSet<>(), store);
 
         // Verify the tokens did not change possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 0l);
@@ -1004,7 +999,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeAndConfirmSellOrder(testKey, testTokenId, 123, 23, addedBlocks);
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 789, 15, addedBlocks);
         mcmcServiceUpdate();
-    
+
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         blockGraph.updateChain();
@@ -1017,7 +1012,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     @Test
     // test buy order with multiple inputs
-    public void testBuy() throws Exception { 
+    public void testBuy() throws Exception {
         File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
@@ -1034,53 +1029,51 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
         walletAppKit2.wallet().setServerURL(contextRoot);
-        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey); 
-      
+        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
+
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
- 
+
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
 
-        long amountToken = 2*88l;
-        //split token
-        payTestToken(testKey,amountToken);
+        long amountToken = 2 * 88l;
+        // split token
+        payTestToken(testKey, amountToken);
         mcmcServiceUpdate();
-          
+
         long tradeAmount = 100l;
-        long price=1;
-        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount , null, null);
-        addedBlocks.add(block); 
+        long price = 1;
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
 
         long amount = 77l;
-        //split BIG
+        // split BIG
         payBig(amount);
         payBig(amount);
-        checkBalanceSum( Coin.valueOf(2*amount   , NetworkParameters.BIGTANGLE_TOKENID)
-                , wallet1Keys);
+        checkBalanceSum(Coin.valueOf(2 * amount, NetworkParameters.BIGTANGLE_TOKENID), wallet1Keys);
         // Open buy order for test tokens
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        mcmcServiceUpdate(); 
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
+        mcmcServiceUpdate();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();
 
-        // Verify the tokens changed position 
-        checkBalanceSum( Coin.valueOf(tradeAmount*price, NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys); 
-        
-        checkBalanceSum(Coin.valueOf(amountToken - tradeAmount , testKey.getPubKey()), wallet2Keys);
-       
+        // Verify the tokens changed position
+        checkBalanceSum(Coin.valueOf(tradeAmount * price, NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys);
+
+        checkBalanceSum(Coin.valueOf(amountToken - tradeAmount, testKey.getPubKey()), wallet2Keys);
+
         checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet1Keys);
-        checkBalanceSum( Coin.valueOf(2*amount - tradeAmount*price , NetworkParameters.BIGTANGLE_TOKENID)
-                , wallet1Keys);
+        checkBalanceSum(Coin.valueOf(2 * amount - tradeAmount * price, NetworkParameters.BIGTANGLE_TOKENID),
+                wallet1Keys);
     }
- 
 
     private void payBig(long amount) throws JsonProcessingException, IOException, InsufficientMoneyException,
             InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
@@ -1091,7 +1084,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcServiceUpdate();
-        
+
     }
 
     private void payTestToken(ECKey testKey, long amount)
@@ -1106,7 +1099,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcServiceUpdate();
-        
+
         // Open sell order for test tokens
     }
 

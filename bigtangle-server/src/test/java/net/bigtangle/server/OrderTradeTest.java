@@ -218,23 +218,23 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcServiceUpdate();
-        
+        blockGraph.confirm(b.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
+
     }
 
     private void payTestToken(ECKey testKey, long amount)
             throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
             ExecutionException, BlockStoreException, UTXOProviderException {
-        Block b;
+       
         HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
 
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
-        b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+       Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcServiceUpdate();
-        
-        // Open sell order for test tokens
+ 
     }
 
     @Test
@@ -283,6 +283,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         long amount = 7700000000000l;
         // split BIG
         payBig(amount);
+        mcmcServiceUpdate();
         checkBalanceSum(Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID), wallet1Keys);
         // Open buy order for test tokens
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);

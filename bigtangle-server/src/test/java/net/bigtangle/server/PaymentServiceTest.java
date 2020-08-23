@@ -170,7 +170,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        sendEmpty(5);
+       // sendEmpty(5);
         mcmcServiceUpdate();
         
         //check the output histoty
@@ -199,7 +199,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         rollingBlock.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        sendEmpty(5);
+        //sendEmpty(5);
         mcmcServiceUpdate();
         
         //check the output histoty

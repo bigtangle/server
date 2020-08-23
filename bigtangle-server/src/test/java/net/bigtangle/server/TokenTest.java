@@ -105,7 +105,7 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-            sendEmpty(10);
+            
             mcmcServiceUpdate();
             
         }
@@ -120,7 +120,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
 
             }
-            sendEmpty(10);
+           
             mcmcServiceUpdate();
             
         }
@@ -134,7 +134,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
 
             }
-            sendEmpty(10);
+       
             mcmcServiceUpdate();
             
         }
@@ -146,7 +146,6 @@ public class TokenTest extends AbstractIntegrationTest {
 
             walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
 
-            sendEmpty(10);
             mcmcServiceUpdate();
             
         }
@@ -167,7 +166,7 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-            sendEmpty(10);
+          //  sendEmpty(10);
             mcmcServiceUpdate();
             
         }
@@ -186,7 +185,7 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-            sendEmpty(10);
+           // sendEmpty(10);
             mcmcServiceUpdate();
             
         }
@@ -205,7 +204,7 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
         walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
 
-        sendEmpty(10);
+       // sendEmpty(10);
         mcmcServiceUpdate();
         
 
@@ -218,7 +217,7 @@ public class TokenTest extends AbstractIntegrationTest {
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
-            sendEmpty(10);
+          //  sendEmpty(10);
             mcmcServiceUpdate();
             
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -250,7 +249,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 TokenType.identity.ordinal(), issuer.getPublicKeyAsHex(), walletAppKit1.wallet());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-        sendEmpty(10);
+       // sendEmpty(10);
         mcmcServiceUpdate();
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -291,7 +290,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-        sendEmpty(10);
+       // sendEmpty(10);
         mcmcServiceUpdate();
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -337,7 +336,7 @@ public class TokenTest extends AbstractIntegrationTest {
                 userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-        sendEmpty(10);
+       // sendEmpty(10);
         mcmcServiceUpdate();
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -361,7 +360,7 @@ public class TokenTest extends AbstractIntegrationTest {
         MemoInfo memoInfo = p.encryptToMemo(pharmacy);
         userWallet.setServerURL(contextRoot);
         Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
-        sendEmpty(10);
+      //  sendEmpty(10);
         mcmcServiceUpdate();
         
         List<UTXO> pharmalist = getBalance(false, pharmacy);
@@ -472,8 +471,7 @@ public class TokenTest extends AbstractIntegrationTest {
         final String tokenid = key.getPublicKeyAsHex();
         walletAppKit1.wallet().publishDomainName(key, tokenid, "id.shop", aesKey, "");
         walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
-
-        sendEmpty(10);
+ 
         mcmcServiceUpdate();
         
         return key;
@@ -594,7 +592,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
                 "pay to user", 3, 20000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
-        sendEmpty(5);
+         
         mcmcServiceUpdate();
         
 
@@ -722,7 +720,7 @@ public class TokenTest extends AbstractIntegrationTest {
         testCreateToken(new ECKey(), "test");
         mcmcServiceUpdate();
         
-        sendEmpty(20);
+       
         // only one is ok.
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -791,7 +789,7 @@ public class TokenTest extends AbstractIntegrationTest {
             walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
 
         }
-        sendEmpty(10);
+ 
         mcmcServiceUpdate();
         
     }
@@ -808,7 +806,7 @@ public class TokenTest extends AbstractIntegrationTest {
         for (int i = 0; i < keys.size(); i++) {
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), keys.get(i), aesKey);
         }
-        sendEmpty(10);
+        //sendEmpty(10);
         mcmcServiceUpdate();
         
         return currentToken;

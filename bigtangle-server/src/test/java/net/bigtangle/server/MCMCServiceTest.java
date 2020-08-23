@@ -243,15 +243,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
                 && blockService.getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
-                || blockService.getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
-
-        mcmcServiceUpdate();
-
-        assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
-                && blockService.getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
-        assertTrue(blockService.getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
-                || blockService.getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
+ 
     }
 
     @Test

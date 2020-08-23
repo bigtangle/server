@@ -75,6 +75,7 @@ import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
+import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
@@ -202,8 +203,6 @@ public class FullBlockGraph {
             if (store != null)
                 store.close();
         }
-
-        ;
     }
 
     /*
@@ -1028,7 +1027,7 @@ public class FullBlockGraph {
         blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
-        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), matchingResult.getTokenId2Events(),
+        tickerService.removeMatchingEvents(matchingResult.getOutputTx() ,
                 blockStore);
     }
 
@@ -1376,7 +1375,7 @@ public class FullBlockGraph {
         }
     }
 
-    private void insertIntoOrderBooks(OrderRecord o, TreeMap<String, OrderBook> orderBooks,
+    private void insertIntoOrderBooks(OrderRecord o, TreeMap<TradePair, OrderBook> orderBooks,
             ArrayList<OrderRecord> orderId2Order, long orderId) {
 
         Side side = o.getSide();
@@ -1386,16 +1385,17 @@ public class FullBlockGraph {
         if (price <= 0)
             log.warn(" price is wrong " + price);
         // throw new RuntimeException(" price is wrong " +price);
+        String tradetokenId = o.getOfferTokenid().equals(o.getOrderBaseToken()) ? o.getTargetTokenid()
+                : o.getOfferTokenid();
 
-        String tokenId = o.getOrderBaseToken();
-        long size = 
-                o.getOfferTokenid().equals(tokenId) ? o.getTargetValue()
-                : o.getOfferValue(); 
-   
-        OrderBook orderBook = orderBooks.get(tokenId);
+        long size = o.getOfferTokenid().equals(o.getOrderBaseToken()) ? o.getTargetValue() : o.getOfferValue();
+
+        TradePair tokenPaar = new TradePair(tradetokenId, o.getOrderBaseToken());
+
+        OrderBook orderBook = orderBooks.get(tokenPaar);
         if (orderBook == null) {
             orderBook = new OrderBook(new OrderBookEvents());
-            orderBooks.put(tokenId, orderBook);
+            orderBooks.put(tokenPaar, orderBook);
         }
         orderId2Order.add(o);
         orderBook.enter(orderId, side, price, size);
@@ -1464,7 +1464,7 @@ public class FullBlockGraph {
         // order books
         int orderId = 0;
         ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
-        TreeMap<String, OrderBook> orderBooks = new TreeMap<String, OrderBook>();
+        TreeMap<TradePair, OrderBook> orderBooks = new TreeMap<TradePair, OrderBook>();
 
         // Add old orders first without not valid yet
         for (OrderRecord o : sortedOldOrders.values()) {
@@ -1485,13 +1485,14 @@ public class FullBlockGraph {
         }
 
         // Collect and process all matching events
-        Map<String, List<Event>> tokenId2Events = new HashMap<>();
-        for (Entry<String, OrderBook> orderBook : orderBooks.entrySet()) {
+        Map<TradePair, List<Event>> tokenId2Events = new HashMap<>();
+        for (Entry<TradePair, OrderBook> orderBook : orderBooks.entrySet()) {
             processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
         }
 
-        for (OrderRecord o : remainingOrders.values())
-        {      o.setDefault();}
+        for (OrderRecord o : remainingOrders.values()) {
+            o.setDefault();
+        }
 
         // Make deterministic tx with proceeds
         Transaction tx = createOrderPayoutTransaction(block, payouts);
@@ -1523,11 +1524,10 @@ public class FullBlockGraph {
 
     private void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
             HashMap<Sha256Hash, OrderRecord> remainingOrders, ArrayList<OrderRecord> orderId2Order,
-            Map<String, List<Event>> tokenId2Events, Entry<String, OrderBook> orderBook) {
-        String orderBaseToken = orderBook.getKey();
+            Map<TradePair, List<Event>> tokenId2Events, Entry<TradePair, OrderBook> orderBook) {
+        String orderBaseToken = orderBook.getKey().getOrderBaseToken();
         List<Event> events = ((OrderBookEvents) orderBook.getValue().listener()).collect();
-        tokenId2Events.put(orderBaseToken, events);
-
+ 
         for (Event event : events) {
             if (!(event instanceof Match))
                 continue;
@@ -1541,16 +1541,18 @@ public class FullBlockGraph {
             // Now disburse proceeds accordingly
             long executedPrice = matchEvent.price;
             long executedAmount = matchEvent.executedQuantity;
+            if (!orderBook.getKey().equals(incomingOrder.getTargetTokenid()))
 
-            if (matchEvent.incomingSide == Side.BUY) {
-                processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder, restingPubKey,
-                        incomingPubKey, executedPrice, executedAmount);
-
-            } else {
-                processIncomingSell(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder, restingPubKey,
-                        incomingPubKey, executedPrice, executedAmount);
-            }
+                if (matchEvent.incomingSide == Side.BUY) {
+                    processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
+                            restingPubKey, incomingPubKey, executedPrice, executedAmount); 
+                } else {
+                    processIncomingSell(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
+                            restingPubKey, incomingPubKey, executedPrice, executedAmount);
+       
+                }
         }
+        tokenId2Events.put(orderBook.getKey(), events);
     }
 
     private void processIncomingSell(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
@@ -1600,8 +1602,7 @@ public class FullBlockGraph {
 
         // The difference in price is returned to the incoming
         // beneficiary
-        payout(payouts, incomingPubKey, orderBaseToken,
-                executedAmount * (incomingPrice - executedPrice));
+        payout(payouts, incomingPubKey, orderBaseToken, executedAmount * (incomingPrice - executedPrice));
 
         // Finally, the orders could be fulfilled now, so we can
         // remove them from the order list

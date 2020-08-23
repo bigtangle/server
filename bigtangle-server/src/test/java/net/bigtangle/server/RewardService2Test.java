@@ -69,6 +69,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         List<Block> a2 = new ArrayList<Block>();
         // first chains
         testToken(a1);
+        mcmcServiceUpdate();
         Block r1 = networkParameters.getGenesisBlock();
         for (int i = 0; i < 3; i++) {
             r1 = createReward(r1, a1);
@@ -165,7 +166,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
                 walletAppKit.wallet().setServerURL(contextRoot);
-                blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, q, null, null));
+                blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(), null, null));
 
             }
         }
@@ -180,10 +181,9 @@ public class RewardService2Test extends AbstractIntegrationTest {
                     3333000000L / LongMath.pow(2, j));
         }
         walletAppKit1.wallet().importKey(fromkey);
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
-        // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcServiceUpdate();
-        
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
+        mcmcServiceUpdate();
         blocksAddedAll.add(b);
     }
 

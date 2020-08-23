@@ -9,19 +9,20 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
+import net.bigtangle.core.ordermatch.TradePair;
 
 public class OrderMatchingResult {
     Set<OrderRecord> spentOrders;
     Transaction outputTx;
     Collection<OrderRecord> remainingOrders; 
-    Map<String, List<Event>> tokenId2Events;
+    Map<TradePair, List<Event>> tokenId2Events;
 
     public OrderMatchingResult() {
 
     }
 
     public OrderMatchingResult(Set<OrderRecord> spentOrders, Transaction outputTx,
-            Collection<OrderRecord> remainingOrders, Map<String, List<Event>> tokenId2Events) {
+            Collection<OrderRecord> remainingOrders, Map<TradePair, List<Event>> tokenId2Events) {
         this.spentOrders = spentOrders;
         this.outputTx = outputTx;
         this.remainingOrders = remainingOrders;
@@ -63,11 +64,11 @@ public class OrderMatchingResult {
         this.remainingOrders = remainingOrders;
     }
 
-    public Map<String, List<Event>> getTokenId2Events() {
+    public Map<TradePair, List<Event>> getTokenId2Events() {
         return tokenId2Events;
     }
 
-    public void setTokenId2Events(Map<String, List<Event>> tokenId2Events) {
+    public void setTokenId2Events(Map<TradePair, List<Event>> tokenId2Events) {
         this.tokenId2Events = tokenId2Events;
     }
 
