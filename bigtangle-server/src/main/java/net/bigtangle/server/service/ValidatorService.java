@@ -1579,6 +1579,13 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
    
+         if (!networkParameters.getOrderBaseTokens().contains(orderInfo.getOrderBaseToken())) {
+             if (throwExceptions)
+                 throw new InvalidOrderException("Invalid exchange combination. Ensure order base token."
+                          );
+             return SolidityState.getFailState();
+         }
+         
         // Check that we have a correct price given in full BIGs
         // OK
 

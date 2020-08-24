@@ -49,7 +49,6 @@ import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -260,11 +259,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens
-        makeAndConfirmSellOrder(testKey, testTokenId, 1, 2, yuan,addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1, 2, yuan.getPublicKeyAsHex(),addedBlocks);
         checkOrders(1);
 
         // Open buy order for test tokens
-        makeAndConfirmBuyOrder(yuan, testTokenId, 1, 2,yuan, addedBlocks);
+        makeAndConfirmBuyOrder(yuan, testTokenId, 1, 2,yuan.getPublicKeyAsHex(), addedBlocks);
         checkOrders(2);
 
         // Execute order matching
@@ -300,11 +299,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens
-        makeAndConfirmSellOrder(testKey, testTokenId, 1, 2, yuan,addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1, 2, yuan.getPublicKeyAsHex(),addedBlocks);
         checkOrders(1);
 
         // Open buy order for test tokens
-        makeAndConfirmBuyOrder(yuan, testTokenId, 1, 2,yuan, addedBlocks);
+        makeAndConfirmBuyOrder(yuan, testTokenId, 1, 2,yuan.getPublicKeyAsHex(), addedBlocks);
         checkOrders(2);
 
         
@@ -320,15 +319,27 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 
         // Verify the tokens changed possession
-        // Verify the tokens changed possession
+ 
         assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
         assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), 2l);
 
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
+        assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
+
+        
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
 
-        // Verify deterministic overall execution
+        // Verify the order ticker has the correct price
+        HashSet<String> a = new HashSet<String>();
+        a.add(testTokenId);
+        List<MatchResult> tickers = tickerService.getLastMatchingEvents(a, store).getTickers();
+        assertEquals(  tickers.size(), 2 ); 
+        assertTrue(1000l == tickers.get(0).getPrice()
+                || 1l == tickers.get(0).getPrice() );
+     
 
     }
     
@@ -1182,34 +1193,18 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     private void payTestToken(ECKey testKey, long amount)
             throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
             ExecutionException, BlockStoreException, UTXOProviderException {
-        Block b;
+        
         HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
 
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
-        b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        Block  b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcServiceUpdate();
 
         // Open sell order for test tokens
     }
-
-    private void payTestToken(ECKey testKey,ECKey tokey, long amount)
-            throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
-            ExecutionException, BlockStoreException, UTXOProviderException {
-        
-        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
-
-        giveMoneyTestToken.put(tokey.toAddress(networkParameters).toString(), amount);
-        
-        Wallet fromKeys = Wallet.fromKeys(networkParameters, testKey);
-        fromKeys.setServerURL(contextRoot) ;
-        Block  b =fromKeys.payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
-       
-        mcmcServiceUpdate();
  
-    }
-
     
 }

@@ -317,24 +317,16 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
-        w.setServerURL(contextRoot);
-        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
-        addedBlocks.add(block);
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
-        return block;
 
+        return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
     }
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-            ECKey basetoken, List<Block> addedBlocks) throws Exception {
+            String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
-        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null,
-                basetoken.getPublicKeyAsHex());
+        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken);
         addedBlocks.add(block);
         // Confirm
         mcmcServiceUpdate();
@@ -359,22 +351,17 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
-        w.setServerURL(contextRoot);
-        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
-        addedBlocks.add(block);
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
-        return block;
+
+        return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
 
     }
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-            ECKey basetoken, List<Block> addedBlocks) throws Exception {
+            String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
-        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken.getPublicKeyAsHex());
+        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken);
         addedBlocks.add(block);
         mcmcServiceUpdate();
         blockGraph.updateChain();

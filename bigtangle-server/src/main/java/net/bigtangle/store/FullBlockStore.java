@@ -414,7 +414,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
-    List<MatchResult> getLastMatchingEvents(Set<String> tokenId, int count) throws BlockStoreException;
+    List<MatchResult> getLastMatchingEvents(Set<String> tokenId, Set<String> basetoken,  int count) throws BlockStoreException;
 
     Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException;
 

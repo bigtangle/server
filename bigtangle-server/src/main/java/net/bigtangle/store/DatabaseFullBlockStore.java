@@ -142,8 +142,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " ,  rating, depth, cumulativeweight "
-            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 " + afterSelect();
- 
+            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 "
+            + afterSelect();
+
     protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks "
             + "WHERE blocks.prevblockhash = ? or blocks.prevbranchblockhash = ?" + afterSelect();
 
@@ -1022,7 +1023,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 BlockEvaluation blockEvaluation = setBlockEvaluationNumber(resultSet);
                 BlockMCMC mcmc = setBlockMCMC(resultSet);
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-                if (verifyHeader(block)) { 
+                if (verifyHeader(block)) {
                     storedBlocks.add(new BlockWrap(block, blockEvaluation, mcmc, params));
                 }
             }
@@ -1057,7 +1058,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
-                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet); 
+                BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
                 BlockMCMC mcmc = setBlockMCMC(resultSet);
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
                 if (verifyHeader(block))
@@ -4995,9 +4996,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
                 resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
                 resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"),
-                resultSet.getString("orderbasetoken"));
- 
+                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"));
+
     }
 
     @Override
@@ -5349,7 +5349,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void insertMatchingEvent(MatchResult match) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        log.debug("insertMatchingEvent: " +match.toString());
+        log.debug("insertMatchingEvent: " + match.toString());
         try {
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
             preparedStatement.setString(1, match.getTxhash());
@@ -5373,25 +5373,31 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, int count) throws BlockStoreException {
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetoken, int count)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_MATCHING_EVENT;
-            if (tokenIds == null || tokenIds.isEmpty()) {
-                sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
-
+            String tokenid = "";
+            if (tokenIds != null && !tokenIds.isEmpty()) {
+                tokenid = "  tokenid IN (" + buildINList(tokenIds) + " )";
+            }
+            String basetokenid = "";
+            if (basetoken != null && !basetoken.isEmpty()) {
+                basetokenid = "  order IN (" + buildINList(basetoken) + " )";
+            }
+            if ("".equals(tokenid) && "".equals(basetokenid)) {
+                sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             } else {
-                sql += " where tokenid IN (" + buildINList(tokenIds) + " )" + "  ORDER BY inserttime DESC " + "LIMIT   "
-                        + count;
+                sql += " where" + tokenid + basetokenid + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
             preparedStatement = getConnection().prepareStatement(sql);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
-                        resultSet.getString(3),
+                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
             }
             return list;
@@ -5775,8 +5781,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2),
-                        resultSet.getString(3),
+                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
             }
             return list;

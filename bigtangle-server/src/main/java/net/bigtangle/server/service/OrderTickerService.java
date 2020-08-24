@@ -95,21 +95,24 @@ public class OrderTickerService {
      * @throws BlockStoreException
      */
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,FullBlockStore store) throws BlockStoreException {
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds, MAXCOUNT);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,null, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
     }
+ 
+    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, Set<String> baseTokens, FullBlockStore store) throws BlockStoreException {
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,baseTokens, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
-    // @Cacheable(cacheNames = "priceticker")
+    }
+ 
+    
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, int count,FullBlockStore store) throws BlockStoreException {
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds, count);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,null, count);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
     }
-
-    // @CacheEvict(cacheNames = "priceticker")
-    public void evictAllCacheValues() {
-    }
+ 
 
     public Map<String, Token> getTokename(List<MatchResult> res,FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
