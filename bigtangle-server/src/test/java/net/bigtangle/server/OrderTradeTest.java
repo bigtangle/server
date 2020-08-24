@@ -271,7 +271,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         // Make test token
         // = 9;
         long tokennumber = tradeAmount * 1000;
-        resetAndMakeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, tokendecimal);
+        makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, tokendecimal);
         String testTokenId = testKey.getPublicKeyAsHex();
 
         payTestToken(testKey, tradeAmount * 2);

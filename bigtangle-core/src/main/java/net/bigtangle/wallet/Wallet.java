@@ -2183,11 +2183,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
         Token t = checkTokenId(tokenId);
-        // Burn BIG to buy
-        Coin amount = new Coin(totalAmount(buyPrice, buyAmount, t.getDecimals()), NetworkParameters.BIGTANGLE_TOKENID)
+        // Burn base token to buy
+        Coin amount = new Coin(totalAmount(buyPrice, buyAmount, t.getDecimals()),orderBaseToken)
                 .negate();
         Transaction tx = new Transaction(params);
-        List<UTXO> coinList = getSpendableUTXO(aesKey, NetworkParameters.BIGTANGLE_TOKENID);
+        List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
         ECKey beneficiary = null;
         for (UTXO u : coinList) {
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
@@ -2332,7 +2332,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
         }
 
-        OrderOpenInfo info = new OrderOpenInfo(total.longValue(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
+        OrderOpenInfo info = new OrderOpenInfo(total.longValue(), orderBaseToken,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
                 beneficiary.toAddress(params).toBase58(),orderBaseToken);
         tx.setData(info.toByteArray());

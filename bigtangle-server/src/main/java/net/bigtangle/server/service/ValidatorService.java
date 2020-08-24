@@ -1573,15 +1573,12 @@ public class ValidatorService {
         }
 
         // Check that either the burnt token or the target token is BIG
-        if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                && orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                || !burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-                        && !orderInfo.getTargetTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+         if (checkOrderBaseToken(orderInfo, burnedCoins)) {
             if (throwExceptions)
-                throw new InvalidOrderException("Invalid exchange combination. Ensure BIG is sold or bought.");
+                throw new InvalidOrderException("Invalid exchange combination. Ensure order base token is sold or bought.");
             return SolidityState.getFailState();
         }
-
+   
         // Check that we have a correct price given in full BIGs
         // OK
 
@@ -1616,6 +1613,13 @@ public class ValidatorService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    private boolean checkOrderBaseToken(OrderOpenInfo orderInfo, Coin burnedCoins) {
+        return burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())
+                && orderInfo.getTargetTokenid().equals(orderInfo.getOrderBaseToken())
+                || !burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())
+                        && !orderInfo.getTargetTokenid().equals(orderInfo.getOrderBaseToken());
     }
 
     /**
