@@ -74,4 +74,9 @@ public class TradePair implements Comparable<TradePair> {
 
     }
 
+    @Override
+    public String toString() {
+        return "TradePair [orderToken=" + orderToken + ", orderBaseToken=" + orderBaseToken + "]";
+    }
+
 }

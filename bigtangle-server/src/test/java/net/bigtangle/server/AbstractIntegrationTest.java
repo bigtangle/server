@@ -317,8 +317,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-
-        Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        w.setServerURL(contextRoot);
+        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null);
         addedBlocks.add(block);
         // Confirm
         mcmcServiceUpdate();
@@ -330,8 +331,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             ECKey basetoken, List<Block> addedBlocks) throws Exception {
-
-        Block block = walletAppKit.wallet().sellOrder(null, tokenId, sellPrice, sellAmount, null, null,
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        w.setServerURL(contextRoot);
+        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null,
                 basetoken.getPublicKeyAsHex());
         addedBlocks.add(block);
         // Confirm
@@ -344,8 +346,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId, BigInteger buyAmount,
             String contractTokenid, List<Block> addedBlocks) throws Exception {
-
-        Block block = walletAppKit.wallet().payContract(null, tokenId, buyAmount, null, null, contractTokenid);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        w.setServerURL(contextRoot);
+        Block block = w.payContract(null, tokenId, buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
         mcmcServiceUpdate();
         blockGraph.updateChain();
@@ -356,8 +359,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-
-        Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        w.setServerURL(contextRoot);
+        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null);
         addedBlocks.add(block);
         mcmcServiceUpdate();
         blockGraph.updateChain();
@@ -368,9 +372,9 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             ECKey basetoken, List<Block> addedBlocks) throws Exception {
-
-        Block block = walletAppKit.wallet().buyOrder(null, tokenId, buyPrice, buyAmount, null, null,
-                basetoken.getPublicKeyAsHex());
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        w.setServerURL(contextRoot);
+        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken.getPublicKeyAsHex());
         addedBlocks.add(block);
         mcmcServiceUpdate();
         blockGraph.updateChain();

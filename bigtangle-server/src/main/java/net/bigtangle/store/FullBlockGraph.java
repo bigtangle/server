@@ -1314,7 +1314,7 @@ public class FullBlockGraph {
             OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
 
             Coin offer = validatorService.countBurnedToken(block, blockStore);
-            Side side = offer.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING) ? Side.BUY : Side.SELL;
+            Side side = offer.getTokenHex().equals(reqInfo.getOrderBaseToken()) ? Side.BUY : Side.SELL;
 
             OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
                     offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
@@ -1541,7 +1541,7 @@ public class FullBlockGraph {
             // Now disburse proceeds accordingly
             long executedPrice = matchEvent.price;
             long executedAmount = matchEvent.executedQuantity;
-            if (!orderBook.getKey().equals(incomingOrder.getTargetTokenid()))
+         //   if (!orderBook.getKey().getOrderToken().equals(incomingOrder.getTargetTokenid()))
 
                 if (matchEvent.incomingSide == Side.BUY) {
                     processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,

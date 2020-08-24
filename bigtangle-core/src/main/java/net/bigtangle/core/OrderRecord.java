@@ -78,7 +78,7 @@ public class OrderRecord extends SpentBlock {
      * price is in BIG with decimals
      */
     public long price() {
-       return getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+       return getOfferTokenid().equals(getOrderBaseToken())
                 ?  getOfferValue() /  getTargetValue()
                 :  getTargetValue() /  getOfferValue();
   

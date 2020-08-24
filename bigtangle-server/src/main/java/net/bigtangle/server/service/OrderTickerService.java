@@ -36,7 +36,7 @@ public class OrderTickerService {
     public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash, long matchBlockTime
             ,FullBlockStore store)
             throws BlockStoreException {
-        // collect the spend order volumn and ticker to write to database
+        // collect the spend order volumes and ticker to write to database
         // Map<String, MatchResult> matchResultList = new HashMap<String,
         // MatchResult>();
         try {
