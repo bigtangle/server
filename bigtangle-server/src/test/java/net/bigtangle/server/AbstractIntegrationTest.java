@@ -421,7 +421,7 @@ public abstract class AbstractIntegrationTest {
         // Confirm
         mcmcServiceUpdate();
         blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
         return block;
     }
 

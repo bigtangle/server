@@ -411,9 +411,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        sendEmpty(10);
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
+ 
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 99950l);
         assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
