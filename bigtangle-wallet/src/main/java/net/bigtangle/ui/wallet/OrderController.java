@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,6 +56,7 @@ import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetOrderResponse;
 import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
 import net.bigtangle.ui.wallet.utils.TextFieldValidator;
@@ -63,6 +65,7 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
+import net.bigtangle.utils.OrderUtil;
 
 public class OrderController extends ExchangeController {
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
@@ -351,8 +354,19 @@ public class OrderController extends ExchangeController {
             requestParam.put("addresses", address);
         }
 
-        Main.walletAppKit.wallet().getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
+     //   Main.walletAppKit.wallet().getOrderMap(matched, address, orderData, Main.getText("BUY"), Main.getText("SELL"));
 
+         requestParam = new HashMap<String, Object>();
+        requestParam.put("spent", matched ? "false" : "true");
+        requestParam.put("addresses", address);
+        String response0 = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        OrderUtil.orderMap(orderdataResponse,  MonetaryFormat.FIAT.noCode(), orderData  , Locale.getDefault());
+        
+        
+        
         getOTCOrder(requestParam, orderData, CONTEXT_ROOT);
         orderidCol.setCellValueFactory(new MapValueFactory("orderId"));
         addressCol.setCellValueFactory(new MapValueFactory("address"));
