@@ -24,5 +24,9 @@ public  class  Rating  {
     public void setRating(long rating) {
         this.rating = rating;
     }
+    @Override
+    public String toString() {
+        return "Rating [blockhash=" + blockhash + ", rating=" + rating + "]";
+    }
     
 }

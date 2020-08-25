@@ -142,8 +142,8 @@ public class BlockEvaluation implements Serializable {
     @Override
     public String toString() {
         return "BlockEvaluation [blockHash=" + blockHash + ", height=" + height + ", milestone=" + milestone
-                + ", milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", insertTime=" + insertTime + ", solid="
-                + solid + ", confirmed=" + confirmed + "]";
+                + " \n , milestoneLastUpdateTime=" + milestoneLastUpdateTime + ", insertTime=" + insertTime + ", solid="
+                + solid + "\n, confirmed=" + confirmed + "]";
     }
 
  

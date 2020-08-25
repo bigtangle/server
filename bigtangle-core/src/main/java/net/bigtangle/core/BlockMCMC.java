@@ -72,5 +72,11 @@ public class BlockMCMC implements Serializable {
     public void setCumulativeWeight(long cumulativeWeight) {
         this.cumulativeWeight = cumulativeWeight;
     }
+
+    @Override
+    public String toString() {
+        return "BlockMCMC [blockHash=" + blockHash + ", rating=" + rating + ", depth=" + depth + ", cumulativeWeight="
+                + cumulativeWeight + "]";
+    }
  
 }

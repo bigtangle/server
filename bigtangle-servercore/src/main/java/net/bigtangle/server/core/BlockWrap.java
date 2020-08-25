@@ -72,7 +72,9 @@ public class BlockWrap {
 
     @Override
     public String toString() {
-        return block.toString();
+        return block.toString()+" \n"
+                +blockEvaluation.toString() +" \n"
+                +mcmc.toString()+" \n";
     }
 
     @Override

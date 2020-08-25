@@ -135,20 +135,19 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         long price = 1;
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
+        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
 
         long amount = 77l;
         // split BIG
         payBig(amount);
+        Thread.sleep(2000);
+        mcmcServiceUpdate();
         payBig(amount);
         checkBalanceSum(Coin.valueOf(2 * amount, NetworkParameters.BIGTANGLE_TOKENID), wallet1Keys);
         // Open buy order for test tokens
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
-
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
         showOrders();
@@ -218,23 +217,24 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmcServiceUpdate();
-        blockGraph.confirm(b.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
+        // blockGraph.confirm(b.getHash(), new HashSet<>(), (long) -1,store); //
+        // mcmcServiceUpdate();
 
     }
 
     private void payTestToken(ECKey testKey, long amount)
             throws JsonProcessingException, IOException, InsufficientMoneyException, InterruptedException,
             ExecutionException, BlockStoreException, UTXOProviderException {
-       
+
         HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
 
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
-       Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         mcmcServiceUpdate();
- 
+
     }
 
     @Test
@@ -244,10 +244,10 @@ public class OrderTradeTest extends AbstractIntegrationTest {
 
     @Test
     public void testBuySellWithDecimal1() throws Exception {
-        testBuySellWithDecimalDo(100, 777000000l,2);
+        testBuySellWithDecimalDo(100, 777000000l, 2);
     }
 
-    public void testBuySellWithDecimalDo(long price, long tradeAmount,int tokendecimal) throws Exception {
+    public void testBuySellWithDecimalDo(long price, long tradeAmount, int tokendecimal) throws Exception {
         File f3 = new File("./logs/", "bigtangle3.wallet");
         if (f3.exists()) {
             f3.delete();
@@ -278,7 +278,9 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         checkBalanceSum(Coin.valueOf(tradeAmount * 2, testKey.getPubKey()), wallet2Keys);
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store); // mcmcServiceUpdate();
+        mcmcServiceUpdate();
+        // blockGraph.confirm(block.getHash(), new HashSet<>(), (long)
+        // -1,store); // mcmcServiceUpdate();
 
         long amount = 7700000000000l;
         // split BIG
@@ -289,11 +291,12 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         block = walletAppKit1.wallet().buyOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,store);
+
+        // blockGraph.confirm(block.getHash(), new HashSet<>(), (long)
+        // -1,store);
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
-        showOrders();
+        // showOrders();
         // Verify the tokens changed position
         checkBalanceSum(new Coin(walletAppKit1.wallet().totalAmount(tradeAmount, price, tokendecimal),
                 NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys);

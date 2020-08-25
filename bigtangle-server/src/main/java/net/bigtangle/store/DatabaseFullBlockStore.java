@@ -205,7 +205,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
 
     protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE milestone = -1 and height > ? AND height <= ? AND solid = 2 " + afterSelect();
+            + " FROM blocks WHERE   height > ? AND height <= ? AND solid = 2 " + afterSelect();
 
     protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
             + "FROM blocks WHERE milestone = -1 AND confirmed = 1 " + afterSelect();

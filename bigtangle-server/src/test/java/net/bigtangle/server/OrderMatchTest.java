@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -249,8 +250,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         //base token
         ECKey  yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv) ); 
-        resetAndMakeTestToken(yuan,addedBlocks);
-        
+    
+        long tokennumber = 888888 * 1000;
+        makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
         // Make test token
         resetAndMakeTestToken(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();

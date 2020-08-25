@@ -65,12 +65,15 @@ public class MCMCService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
     
+    ExecutorService executor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors());
+
    
     
     public void startSingleProcess() throws BlockStoreException {
       //  ExecutorService executor = Executors.newSingleThreadExecutor();
-        ExecutorService executor = Executors.newFixedThreadPool(
-                Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("MCMC"));
+         if(executor.isShutdown()) executor = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
@@ -103,6 +106,7 @@ public class MCMCService {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
             } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate()*100) {
+                log.info("mcmcService   out date delete and insert: " + Utils.dateTimeFormat(lock.getLocktime()));
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;

@@ -1586,10 +1586,10 @@ public class ValidatorService {
              return SolidityState.getFailState();
          }
          
-        // Check that we have a correct price given in full BIGs
+        // Check that we have a correct price given in full  Base Token
         // OK
 
-        if (burnedCoins.getTokenHex().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+        if (burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())) {
             if (burnedCoins.getValue().longValue() % orderInfo.getTargetValue() != 0
                     || burnedCoins.getValue().longValue() / orderInfo.getTargetValue() <= 0) {
                 if (throwExceptions)
