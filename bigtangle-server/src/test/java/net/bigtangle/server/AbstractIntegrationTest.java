@@ -245,7 +245,7 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+       // blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
         mcmcServiceUpdate();
         return block;
     }
@@ -364,8 +364,8 @@ public abstract class AbstractIntegrationTest {
         Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+      //  blockGraph.updateChain();
+      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
         return block;
 
     }
@@ -399,8 +399,8 @@ public abstract class AbstractIntegrationTest {
         this.blockGraph.add(block, true, store);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+      //  blockGraph.updateChain();
+      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
 
         return block;
     }
@@ -420,7 +420,7 @@ public abstract class AbstractIntegrationTest {
 
         // Confirm
         mcmcServiceUpdate();
-        blockGraph.updateChain();
+     //   blockGraph.updateChain();
       //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
         return block;
     }

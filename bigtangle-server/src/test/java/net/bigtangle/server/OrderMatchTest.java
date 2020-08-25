@@ -1151,7 +1151,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
         addedBlocks.add(block);
         mcmcServiceUpdate();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
+     //   blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
 
         long amount = 77l;
         // split BIG
