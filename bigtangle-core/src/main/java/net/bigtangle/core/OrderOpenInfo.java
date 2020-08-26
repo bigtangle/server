@@ -37,6 +37,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli,
             Long validFromTimeMilli, Side side,  String beneficiaryAddress, String orderBaseToken) {
         super();
+        setVersion(2);
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
         this.beneficiaryPubKey = beneficiaryPubKey;
@@ -126,7 +127,11 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         dis.readFully(beneficiaryPubKey);
         targetTokenid = Utils.readNBytesString(dis); 
         beneficiaryAddress = Utils.readNBytesString(dis); 
-        orderBaseToken = Utils.readNBytesString(dis); 
+        if (getVersion() > 1) {
+            orderBaseToken = Utils.readNBytesString(dis); 
+        } else {
+            orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING; 
+        }
         return this;
     }
 

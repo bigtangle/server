@@ -188,11 +188,11 @@ public class MCMCService {
             subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch, store);
 
             // Update and dereference
-            // Only not in chain
-            if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
+            // TODO reduce the update
+           // if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
                 depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(),
                         approvers.get(currentBlockHash).size(), depths.get(currentBlockHash)));
-            }
+           
             approvers.remove(currentBlockHash);
             depths.remove(currentBlockHash);
         }

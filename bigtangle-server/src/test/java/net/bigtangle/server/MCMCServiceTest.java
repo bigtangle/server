@@ -154,7 +154,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
-
+        mcmcServiceUpdate();
         // Generate two subsequent issuances
 
         Block conflictBlock1, conflictBlock2;

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,7 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.response.OrderTickerResponse;
+import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
@@ -49,6 +52,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.OrderUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -306,7 +310,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(yuan, testTokenId, 1, 2,yuan.getPublicKeyAsHex(), addedBlocks);
-        checkOrders(2);
+      
 
         
         // Open sell order for test tokens
@@ -315,7 +319,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
    
-
+        checkOrdersPriceFormat();
+        
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
 
@@ -1205,6 +1210,19 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open sell order for test tokens
     }
- 
+    protected void checkOrdersPriceFormat() throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+
+        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
+        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault());
+        assertTrue(orderData.size() == 4);
+        for (Map<String, Object> map : orderData) {
+            assertTrue(map.get("price").equals("0.001") || map.get("price").equals("1"));
+        }
+    }
+
     
 }

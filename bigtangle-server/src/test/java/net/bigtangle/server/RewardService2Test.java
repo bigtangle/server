@@ -166,8 +166,11 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (UTXO utxo : utxos) {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
                 walletAppKit.wallet().setServerURL(contextRoot);
+                try {
                 blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(), null, null));
-
+                }catch (InsufficientMoneyException e) {
+                    // ignore: handle exception
+                }
             }
         }
     }

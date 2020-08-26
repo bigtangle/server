@@ -14,8 +14,9 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.response.OrderdataResponse;
 
 public class OrderUtil {
-    public static void orderMap(OrderdataResponse orderdataResponse, MonetaryFormat mf ,
+    public static void orderMap(OrderdataResponse orderdataResponse, 
             List<Map<String, Object>> orderData, Locale local) {
+        MonetaryFormat mf=   MonetaryFormat.FIAT.noCode();
         
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             HashMap<String, Object> map = new HashMap<String, Object>();
