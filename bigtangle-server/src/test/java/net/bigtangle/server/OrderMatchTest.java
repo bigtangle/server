@@ -319,7 +319,17 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
    
-        checkOrdersPriceFormat();
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+
+        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+        List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
+        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault());
+        assertTrue(orderData.size() == 4);
+        for (Map<String, Object> map : orderData) {
+            assertTrue(map.get("price").equals("0.001") || map.get("price").equals("1"));
+        }
         
         // Execute order matching
         makeAndConfirmOrderMatching(addedBlocks);
@@ -1211,6 +1221,33 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Open sell order for test tokens
     }
     protected void checkOrdersPriceFormat() throws Exception {
+
+    }
+
+    
+    
+    @Test
+    public void chechDecimalFormat( ) throws Exception {
+
+        
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        //base token
+        ECKey  yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv) );  
+        makeTestToken(yuan, BigInteger.valueOf(10000000), addedBlocks, 2);
+        
+        // Make test token
+        makeTestToken(testKey, BigInteger.valueOf(20000000), addedBlocks, 2);
+        String testTokenId = testKey.getPublicKeyAsHex();
+ 
+           // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 10, 200, yuan.getPublicKeyAsHex(),addedBlocks);
+        checkOrders(1);
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(yuan, testTokenId, 10, 200,yuan.getPublicKeyAsHex(), addedBlocks);
+      
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
         String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
@@ -1218,11 +1255,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
         OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault());
-        assertTrue(orderData.size() == 4);
+        assertTrue(orderData.size() == 2);
         for (Map<String, Object> map : orderData) {
-            assertTrue(map.get("price").equals("0.001") || map.get("price").equals("1"));
+            assertTrue(map.get("price").equals("0.01") );
         }
-    }
 
-    
+    }
 }
