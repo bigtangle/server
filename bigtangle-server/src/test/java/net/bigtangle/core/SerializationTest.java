@@ -69,7 +69,7 @@ public class SerializationTest {
     
     @Test
     public void testOrderOpenInfoSerialization() throws IOException {
-        OrderOpenInfo info1 = new OrderOpenInfo(2l, "test1", new byte[] { 2 }, 3l, 4l, Side.SELL, "test2", NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        OrderOpenInfo info1 = new OrderOpenInfo(2l, "test1", new byte[] { 2 }, 3l, 4l, Side.SELL, "test2", NetworkParameters.BIGTANGLE_TOKENID_STRING,1l);
         OrderOpenInfo info2 = new OrderOpenInfo().parse(info1.toByteArray());
 
         assertArrayEquals(info1.toByteArray(), info2.toByteArray());

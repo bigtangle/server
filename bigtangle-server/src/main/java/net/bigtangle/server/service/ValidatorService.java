@@ -53,7 +53,6 @@ import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -1586,13 +1585,10 @@ public class ValidatorService {
         }
 
         // Check that we have a correct price given in full Base Token
-        // OK
-
-        /*
-         * if (!checkPrice(orderInfo, burnedCoins)) { if (throwExceptions) throw
-         * new InvalidOrderException("The given order's price is not integer.");
-         * return SolidityState.getFailState(); }
-         */
+           if (orderInfo.getPrice() < 0) { if (throwExceptions) throw
+           new InvalidOrderException("The given order's price is not integer.");
+           return SolidityState.getFailState(); }
+          
         if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(),
                 NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
@@ -1610,26 +1606,7 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    /*
-     * price in long is in Base token
-     */
-    private boolean checkPrice(OrderOpenInfo reqInfo, Coin burnedCoins, FullBlockStore blockStore)
-            throws BlockStoreException {
-
-        Coin offer = burnedCoins;
-        Side side = offer.getTokenHex().equals(reqInfo.getOrderBaseToken()) ? Side.BUY : Side.SELL;
-
-        OrderRecord record = new OrderRecord(null, Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
-                offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
-                reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
-                reqInfo.getBeneficiaryAddress(), reqInfo.getOrderBaseToken());
-        if (blockGraph.price(record, blockStore) <= 0) {
-            logger.debug("price is not valid" + blockGraph.price(record, blockStore) + "\n" + record);
-            return false;
-        } else {
-            return true;
-        }
-    }
+ 
 
     private boolean checkOrderBaseToken(OrderOpenInfo orderInfo, Coin burnedCoins) {
         return burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())

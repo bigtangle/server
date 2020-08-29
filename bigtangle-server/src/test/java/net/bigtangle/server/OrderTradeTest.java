@@ -1,6 +1,5 @@
 package net.bigtangle.server;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -10,8 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
@@ -30,13 +27,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.kits.WalletAppKit;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.service.OrderTickerService;
-import net.bigtangle.utils.Json;
-import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.OrderUtil;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -248,7 +240,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
 
     @Test
     public void testBuySellWithDecimal() throws Exception {
-        testBuySellWithDecimalDo(100000000000l, 70000000, 9);
+        testBuySellWithDecimalDo(100000l, 70000000, 9);
     }
 
     @Test
@@ -309,7 +301,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
         // showOrders();
         // Verify the tokens changed position
-        checkBalanceSum(new Coin(walletAppKit1.wallet().totalAmount(tradeAmount, price, tokendecimal),
+        checkBalanceSum(new Coin(walletAppKit1.wallet().totalAmount(tradeAmount, price ),
                 NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys);
 
         checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet2Keys);

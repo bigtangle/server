@@ -2161,10 +2161,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * It must use BigInteger to calculation
      */
 
-    public BigInteger totalAmount(long buyPrice, long buyAmount, int tokenDecimal) {
+    public BigInteger totalAmount(long buyPrice, long buyAmount ) {
 
-        BigInteger re = BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount))
-                .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
+        BigInteger re = BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount) );
 
         if (re.compareTo(BigInteger.ONE) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid target total value: " + re);
@@ -2182,9 +2181,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException, InsufficientMoneyException,
             UTXOProviderException, NoTokenException {
         // add client check if the tokenid exists
-        Token t = checkTokenId(tokenId);
+       // Token t = checkTokenId(tokenId);
         // Burn base token to buy
-        Coin amount = new Coin(totalAmount(buyPrice, buyAmount, t.getDecimals()),orderBaseToken)
+        Coin amount = new Coin(totalAmount(buyPrice, buyAmount),orderBaseToken)
                 .negate();
         Transaction tx = new Transaction(params);
         List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
@@ -2204,7 +2203,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
 
         OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
-                Side.BUY, beneficiary.toAddress(params).toBase58(),orderBaseToken);
+                Side.BUY, beneficiary.toAddress(params).toBase58(),orderBaseToken, buyPrice);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
         signTransaction(tx, aesKey);
@@ -2305,7 +2304,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
             Long validFromTime,String orderBaseToken)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
-        Token t = checkTokenId(tokenId);
+        //Token t = checkTokenId(tokenId);
         // Burn tokens to sell
         Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
 
@@ -2327,14 +2326,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throw new InsufficientMoneyException("");
         }
 
-        BigInteger total = totalAmount(sellPrice, sellAmount, t.getDecimals());
+        BigInteger total = totalAmount(sellPrice, sellAmount);
         if (total.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
         }
 
         OrderOpenInfo info = new OrderOpenInfo(total.longValue(), orderBaseToken,
                 beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
-                beneficiary.toAddress(params).toBase58(),orderBaseToken);
+                beneficiary.toAddress(params).toBase58(),orderBaseToken,sellPrice);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 

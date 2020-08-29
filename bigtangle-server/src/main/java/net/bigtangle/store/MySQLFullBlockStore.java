@@ -137,7 +137,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    validFromTime bigint,\n"            
                // order base token
             + "    orderbasetoken varchar(255),\n" 
-            
+             + "   price bigint,\n" 
             // true iff a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
             // true if used by a confirmed  ordermatch block (either

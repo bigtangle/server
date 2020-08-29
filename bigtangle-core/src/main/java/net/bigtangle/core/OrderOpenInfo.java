@@ -28,14 +28,15 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private String beneficiaryAddress;
     //Base token for the order
     private String orderBaseToken;
-  
+    //price from the order 
+    private Long price;
      
     public OrderOpenInfo() {
         super();
     }
 
     public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli,
-            Long validFromTimeMilli, Side side,  String beneficiaryAddress, String orderBaseToken) {
+            Long validFromTimeMilli, Side side,  String beneficiaryAddress, String orderBaseToken, Long price) {
         super();
         setVersion(2);
         this.targetValue = targetValue;
@@ -53,6 +54,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         }
         this.beneficiaryAddress = beneficiaryAddress;
         this.orderBaseToken = orderBaseToken;
+        this.price = price;
     }
 
     public byte[] getBeneficiaryPubKey() {
@@ -108,7 +110,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
                 dos.writeInt(orderBaseToken.getBytes("UTF-8").length);
                 dos.write(orderBaseToken.getBytes("UTF-8"));
             }
-              
+            dos.writeLong(price);  
             dos.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -129,6 +131,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         beneficiaryAddress = Utils.readNBytesString(dis); 
         if (getVersion() > 1) {
             orderBaseToken = Utils.readNBytesString(dis); 
+             price=dis.readLong();
         } else {
             orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING; 
         }
@@ -184,6 +187,14 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     public void setOrderBaseToken(String orderBaseToken) {
         this.orderBaseToken = orderBaseToken;
+    }
+
+    public Long getPrice() {
+        return price;
+    }
+
+    public void setPrice(Long price) {
+        this.price = price;
     }
 
 }

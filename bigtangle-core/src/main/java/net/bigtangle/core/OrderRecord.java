@@ -30,8 +30,11 @@ public class OrderRecord extends SpentBlock {
     // Side can be calculated as Big Coin as only base trading coin
     private Side side;
 
-    //Base token for the order
+    //price from the order open
     private String orderBaseToken;
+    
+    //Base token for the order
+    private Long price;
     
     /*
      * for wallet set the order status from cancel
@@ -46,7 +49,7 @@ public class OrderRecord extends SpentBlock {
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
             String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, String side,
-            String beneficiaryAddress, String orderBaseToken) {
+            String beneficiaryAddress, String orderBaseToken, Long price) {
         super();
         this.setBlockHash(initialBlockHash);
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
@@ -64,16 +67,24 @@ public class OrderRecord extends SpentBlock {
         this.side = Side.valueOf(side);
         this.beneficiaryAddress = beneficiaryAddress;
         this.orderBaseToken = orderBaseToken;
-        
+        this.price = price;
     }
 
     public static OrderRecord cloneOrderRecord(OrderRecord old) {
         return new OrderRecord(old.getBlockHash(), old.issuingMatcherBlockHash, old.offerValue, old.offerTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
                 old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress,
-                old.getOrderBaseToken());
+                old.getOrderBaseToken(),old.getPrice());
     }
 
+
+    public Long getPrice() {
+        return price;
+    }
+
+    public void setPrice(Long price) {
+        this.price = price;
+    }
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;

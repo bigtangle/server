@@ -222,7 +222,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
-            + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken ";
+            + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price ";
     protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders WHERE collectinghash = ?";
 
@@ -233,8 +233,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " FROM orders WHERE blockhash = ? AND collectinghash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
             + "  INTO orders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
-            + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress, orderbasetoken) "
-            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?)";
+            + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress, orderbasetoken, price) "
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?)";
     protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
             + "  INTO contractevent (blockhash,   contracttokenid, confirmed, spent, spenderblockhash, "
             + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime,  beneficiaryaddress) "
@@ -4736,6 +4736,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.setString(13, record.getSide() == null ? null : record.getSide().name());
                 preparedStatement.setString(14, record.getBeneficiaryAddress());
                 preparedStatement.setString(15, record.getOrderBaseToken());
+                preparedStatement.setLong(16, record.getPrice());
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
@@ -4996,7 +4997,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
                 resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
                 resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"));
+                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"), resultSet.getLong("price"));
 
     }
 
