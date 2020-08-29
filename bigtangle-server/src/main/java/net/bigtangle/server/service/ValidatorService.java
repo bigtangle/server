@@ -1585,7 +1585,7 @@ public class ValidatorService {
         }
 
         // Check that we have a correct price given in full Base Token
-        if (orderInfo.getPrice() < 0 && orderInfo.getVersion() > 1) {
+        if (orderInfo.getPrice() != null && orderInfo.getPrice() <= 0 && orderInfo.getVersion() > 1) {
             if (throwExceptions)
                 throw new InvalidOrderException("The given order's price is not integer.");
             return SolidityState.getFailState();
