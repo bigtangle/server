@@ -1585,10 +1585,12 @@ public class ValidatorService {
         }
 
         // Check that we have a correct price given in full Base Token
-           if (orderInfo.getPrice() < 0) { if (throwExceptions) throw
-           new InvalidOrderException("The given order's price is not integer.");
-           return SolidityState.getFailState(); }
-          
+        if (orderInfo.getPrice() < 0 && orderInfo.getVersion() > 1) {
+            if (throwExceptions)
+                throw new InvalidOrderException("The given order's price is not integer.");
+            return SolidityState.getFailState();
+        }
+
         if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(),
                 NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
@@ -1605,8 +1607,6 @@ public class ValidatorService {
 
         return SolidityState.getSuccessState();
     }
-
- 
 
     private boolean checkOrderBaseToken(OrderOpenInfo orderInfo, Coin burnedCoins) {
         return burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())

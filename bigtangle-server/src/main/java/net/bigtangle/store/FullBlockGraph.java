@@ -1320,6 +1320,7 @@ public class FullBlockGraph {
                     offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
                     reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
                     reqInfo.getBeneficiaryAddress(), reqInfo.getOrderBaseToken(), reqInfo.getPrice());
+            versionPrice(record, reqInfo);
             List<OrderRecord> orders = new ArrayList<OrderRecord>();
             orders.add(record);
             blockStore.insertOrder(orders);
@@ -1328,6 +1329,18 @@ public class FullBlockGraph {
         }
     }
 
+    /*
+     * price is in version 1 not in OrderOpenInfo
+     */
+    public void  versionPrice(OrderRecord record ,OrderOpenInfo reqInfo  ) {
+        if(reqInfo.getVersion() == 1) { 
+            record.setPrice( record. getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
+                ?  record.getOfferValue() / record. getTargetValue()
+                :  record.getTargetValue() / record. getOfferValue());
+        }
+    }
+
+    
     private void connectContractEvent(Block block, FullBlockStore blockStore) throws BlockStoreException {
         try {
             ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
