@@ -1230,23 +1230,24 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void chechDecimalFormat( ) throws Exception {
 
         
-        ECKey testKey = walletKeys.get(0);
+        ECKey dollarKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
-        //base token
+        //base token yuan with decimal 2
         ECKey  yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv) );  
         makeTestToken(yuan, BigInteger.valueOf(10000000), addedBlocks, 2);
         
-        // Make test token
-        makeTestToken(testKey, BigInteger.valueOf(20000000), addedBlocks, 2);
-        String testTokenId = testKey.getPublicKeyAsHex();
+        // Make test token with decimal 2
+        makeTestToken(dollarKey, BigInteger.valueOf(20000000), addedBlocks, 2);
+        String dollar = dollarKey.getPublicKeyAsHex();
  
-           // Open sell order for test tokens
-        makeAndConfirmSellOrder(testKey, testTokenId, 10, 200, yuan.getPublicKeyAsHex(),addedBlocks);
+           // Open sell order for  dollar, price 0.1 yuan for 2 dollar  Block Transaction=20 in dollar
+        makeAndConfirmSellOrder(dollarKey, dollar, 10, 20000, yuan.getPublicKeyAsHex(),addedBlocks);
+       //targeValue=20 (0.2 yuan) 
         checkOrders(1);
 
-        // Open buy order for test tokens
-        makeAndConfirmBuyOrder(yuan, testTokenId, 10, 200,yuan.getPublicKeyAsHex(), addedBlocks);
+        // Open buy order for dollar, target value=2 dollar Block Transaction= 20 in Yuan
+        makeAndConfirmBuyOrder(yuan, dollar, 10, 20000,yuan.getPublicKeyAsHex(), addedBlocks);
       
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
@@ -1257,8 +1258,13 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault());
         assertTrue(orderData.size() == 2);
         for (Map<String, Object> map : orderData) {
-            assertTrue(map.get("price").equals("0.01") );
+            assertTrue(map.get("price").equals("0.1") );
         }
 
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        showOrders();
+
+        
     }
 }

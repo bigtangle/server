@@ -74,15 +74,6 @@ public class OrderRecord extends SpentBlock {
                 old.getOrderBaseToken());
     }
 
-    /*
-     * price is in BIG with decimals
-     */
-    public long price() {
-       return getOfferTokenid().equals(getOrderBaseToken())
-                ?  getOfferValue() /  getTargetValue()
-                :  getTargetValue() /  getOfferValue();
-  
-    }
 
     public boolean isTimeouted(long blockTime) {
         return blockTime > validToTime;

@@ -53,6 +53,7 @@ import net.bigtangle.core.OrderOpenInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -267,8 +268,7 @@ public class ValidatorService {
         }
     }
 
-    public boolean hasConfirmedDependencies(ConflictCandidate c, FullBlockStore store)
-            throws BlockStoreException {
+    public boolean hasConfirmedDependencies(ConflictCandidate c, FullBlockStore store) throws BlockStoreException {
         switch (c.getConflictPoint().getType()) {
         case TXOUT:
             return blockService.getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint(), store);
@@ -475,7 +475,7 @@ public class ValidatorService {
         HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
         for (BlockWrap b : conflictingConfirmedBlocks.stream().filter(b -> losingBlocks.contains(b))
                 .collect(Collectors.toList())) {
-            blockGraph.unconfirmRecursive(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms,store);
+            blockGraph.unconfirmRecursive(b.getBlockEvaluation().getBlockHash(), traversedUnconfirms, store);
         }
 
         // For candidates that have been eliminated (conflictingOutPoints in
@@ -522,10 +522,9 @@ public class ValidatorService {
 
         // Sort conflicts among each other by descending max(rating).
         Comparator<TreeSet<ConflictCandidate>> byDescendingSetRating = getConflictSetComparator()
+                .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc().getRating())
                 .thenComparingLong(
-                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc().getRating())
-                .thenComparingLong((TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc()
-                        .getCumulativeWeight())
+                        (TreeSet<ConflictCandidate> s) -> s.first().getBlock().getMcmc().getCumulativeWeight())
                 .thenComparingLong(
                         (TreeSet<ConflictCandidate> s) -> -s.first().getBlock().getBlockEvaluation().getInsertTime())
                 .thenComparing(
@@ -1573,38 +1572,27 @@ public class ValidatorService {
         }
 
         // Check that either the burnt token or the target token is BIG
-         if (checkOrderBaseToken(orderInfo, burnedCoins)) {
+        if (checkOrderBaseToken(orderInfo, burnedCoins)) {
             if (throwExceptions)
-                throw new InvalidOrderException("Invalid exchange combination. Ensure order base token is sold or bought.");
+                throw new InvalidOrderException(
+                        "Invalid exchange combination. Ensure order base token is sold or bought.");
             return SolidityState.getFailState();
         }
-   
-         if (!networkParameters.getOrderBaseTokens().contains(orderInfo.getOrderBaseToken())) {
-             if (throwExceptions)
-                 throw new InvalidOrderException("Invalid exchange combination. Ensure order base token."
-                          );
-             return SolidityState.getFailState();
-         }
-         
-        // Check that we have a correct price given in full  Base Token
-        // OK
 
-        if (burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())) {
-            if (burnedCoins.getValue().longValue() % orderInfo.getTargetValue() != 0
-                    || burnedCoins.getValue().longValue() / orderInfo.getTargetValue() <= 0) {
-                if (throwExceptions)
-                    throw new InvalidOrderException("The given order's price is not integer.");
-                return SolidityState.getFailState();
-            }
-        } else {
-            if (orderInfo.getTargetValue() % burnedCoins.getValue().longValue() != 0
-                    || orderInfo.getTargetValue() / burnedCoins.getValue().longValue() <= 0) {
-                if (throwExceptions)
-                    throw new InvalidOrderException("The given order's price is not integer.");
-                return SolidityState.getFailState();
-            }
+        if (!networkParameters.getOrderBaseTokens().contains(orderInfo.getOrderBaseToken())) {
+            if (throwExceptions)
+                throw new InvalidOrderException("Invalid exchange combination. Ensure order base token.");
+            return SolidityState.getFailState();
         }
 
+        // Check that we have a correct price given in full Base Token
+        // OK
+
+        /*
+         * if (!checkPrice(orderInfo, burnedCoins)) { if (throwExceptions) throw
+         * new InvalidOrderException("The given order's price is not integer.");
+         * return SolidityState.getFailState(); }
+         */
         if (orderInfo.getValidToTime() > Math.addExact(orderInfo.getValidFromTime(),
                 NetworkParameters.ORDER_TIMEOUT_MAX)) {
             if (throwExceptions)
@@ -1620,6 +1608,27 @@ public class ValidatorService {
         }
 
         return SolidityState.getSuccessState();
+    }
+
+    /*
+     * price in long is in Base token
+     */
+    private boolean checkPrice(OrderOpenInfo reqInfo, Coin burnedCoins, FullBlockStore blockStore)
+            throws BlockStoreException {
+
+        Coin offer = burnedCoins;
+        Side side = offer.getTokenHex().equals(reqInfo.getOrderBaseToken()) ? Side.BUY : Side.SELL;
+
+        OrderRecord record = new OrderRecord(null, Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
+                offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
+                reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
+                reqInfo.getBeneficiaryAddress(), reqInfo.getOrderBaseToken());
+        if (blockGraph.price(record, blockStore) <= 0) {
+            logger.debug("price is not valid" + blockGraph.price(record, blockStore) + "\n" + record);
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private boolean checkOrderBaseToken(OrderOpenInfo orderInfo, Coin burnedCoins) {
@@ -1780,8 +1789,8 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
-    public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions,
-            FullBlockStore store) throws BlockStoreException {
+    public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions, FullBlockStore store)
+            throws BlockStoreException {
         if (block.getTransactions().size() != 1) {
             if (throwExceptions)
                 throw new IncorrectTransactionCountException();
@@ -1968,7 +1977,8 @@ public class ValidatorService {
             List<MultiSignAddress> prevDomainPermissionedAddresses = tokenDomainnameService
                     .queryDomainnameTokenMultiSignAddresses(
                             prevDomain == null ? networkParameters.getGenesisBlock().getHash()
-                                    : prevDomain.getBlockHash(),store);
+                                    : prevDomain.getBlockHash(),
+                            store);
             SolidityState domainPermission = checkDomainPermission(prevDomainPermissionedAddresses,
                     txSignatures.getMultiSignBies(), 1,
                     // TODO remove the high level domain sign
@@ -2220,18 +2230,18 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        SolidityState difficultyResult = rewardService.checkRewardDifficulty(block,store);
+        SolidityState difficultyResult = rewardService.checkRewardDifficulty(block, store);
         if (!difficultyResult.isSuccessState()) {
             return difficultyResult;
         }
 
-        SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block,store);
+        SolidityState referenceResult = rewardService.checkRewardReferencedBlocks(block, store);
         if (!referenceResult.isSuccessState()) {
             return referenceResult;
         }
 
         // Solidify referenced blocks
-        rewardService.solidifyBlocks(block.getRewardInfo(),store);
+        rewardService.solidifyBlocks(block.getRewardInfo(), store);
 
         return SolidityState.getSuccessState();
     }

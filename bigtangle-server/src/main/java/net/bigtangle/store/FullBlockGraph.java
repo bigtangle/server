@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -93,6 +94,7 @@ import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
+import net.bigtangle.utils.OrderUtil;
 
 /**
  * <p>
@@ -1027,8 +1029,7 @@ public class FullBlockGraph {
         blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
         // Update the matching history in db
-        tickerService.removeMatchingEvents(matchingResult.getOutputTx() ,
-                blockStore);
+        tickerService.removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
     }
 
     private void unconfirmOrderOpen(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -1376,12 +1377,12 @@ public class FullBlockGraph {
     }
 
     private void insertIntoOrderBooks(OrderRecord o, TreeMap<TradePair, OrderBook> orderBooks,
-            ArrayList<OrderRecord> orderId2Order, long orderId) {
+            ArrayList<OrderRecord> orderId2Order, long orderId, FullBlockStore blockStore) throws BlockStoreException {
 
         Side side = o.getSide();
-        // o.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)
-        // ? Side.BUY : Side.SELL;
-        long price = o.price();
+        // must be in in base unit ;
+
+        long price = price(o, blockStore);
         if (price <= 0)
             log.warn(" price is wrong " + price);
         // throw new RuntimeException(" price is wrong " +price);
@@ -1399,6 +1400,41 @@ public class FullBlockGraph {
         }
         orderId2Order.add(o);
         orderBook.enter(orderId, side, price, size);
+    }
+
+    /*
+     * price is in Base token
+     */
+    public long price(OrderRecord o, FullBlockStore blockStore) throws BlockStoreException {
+        // keep compatible
+        if (o.getOrderBaseToken().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING)) {
+            if (o.getOfferTokenid().equals(o.getOrderBaseToken())) {
+                // buy
+                return o.getOfferValue() / o.getTargetValue();
+            } else {
+                // sell
+                return o.getTargetValue() / o.getOfferValue();
+            }
+        } else {
+            // add other base token
+            Set<String> tokenids = new HashSet<String>();
+            tokenids.add(o.getOrderBaseToken());
+            if( blockStore.getTokensList(tokenids).isEmpty()) {
+                log.debug("no base token" + o.getOrderBaseToken());
+            }
+            Token base = blockStore.getTokensList(tokenids).get(0);
+            if (o.getOfferTokenid().equals(o.getOrderBaseToken())) {
+                // buy
+                return OrderUtil.calc(o.getOfferValue(), LongMath.checkedPow(10, base.getDecimals()),
+                        o.getTargetValue());
+            } else {
+                // sell
+                return OrderUtil.calc(o.getTargetValue(), LongMath.checkedPow(10, base.getDecimals()),
+                        o.getOfferValue());
+
+            }
+
+        }
     }
 
     /**
@@ -1469,19 +1505,19 @@ public class FullBlockGraph {
         // Add old orders first without not valid yet
         for (OrderRecord o : sortedOldOrders.values()) {
             if (o.isValidYet(block.getTimeSeconds()) && o.isValidYet(prevMatchingBlock.getTimeSeconds()))
-                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++);
+                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
         }
 
         // Now orders not valid before but valid now
         for (OrderRecord o : sortedOldOrders.values()) {
             if (o.isValidYet(block.getTimeSeconds()) && !o.isValidYet(prevMatchingBlock.getTimeSeconds()))
-                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++);
+                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
         }
 
         // Now new orders that are valid yet
         for (OrderRecord o : sortedNewOrders.values()) {
             if (o.isValidYet(block.getTimeSeconds()))
-                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++);
+                insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
         }
 
         // Collect and process all matching events
@@ -1527,7 +1563,7 @@ public class FullBlockGraph {
             Map<TradePair, List<Event>> tokenId2Events, Entry<TradePair, OrderBook> orderBook) {
         String orderBaseToken = orderBook.getKey().getOrderBaseToken();
         List<Event> events = ((OrderBookEvents) orderBook.getValue().listener()).collect();
- 
+
         for (Event event : events) {
             if (!(event instanceof Match))
                 continue;
@@ -1541,16 +1577,17 @@ public class FullBlockGraph {
             // Now disburse proceeds accordingly
             long executedPrice = matchEvent.price;
             long executedAmount = matchEvent.executedQuantity;
-         //   if (!orderBook.getKey().getOrderToken().equals(incomingOrder.getTargetTokenid()))
+            // if
+            // (!orderBook.getKey().getOrderToken().equals(incomingOrder.getTargetTokenid()))
 
-                if (matchEvent.incomingSide == Side.BUY) {
-                    processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
-                            restingPubKey, incomingPubKey, executedPrice, executedAmount); 
-                } else {
-                    processIncomingSell(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
-                            restingPubKey, incomingPubKey, executedPrice, executedAmount);
-       
-                }
+            if (matchEvent.incomingSide == Side.BUY) {
+                processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder, restingPubKey,
+                        incomingPubKey, executedPrice, executedAmount);
+            } else {
+                processIncomingSell(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
+                        restingPubKey, incomingPubKey, executedPrice, executedAmount);
+
+            }
         }
         tokenId2Events.put(orderBook.getKey(), events);
     }
