@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.common.math.LongMath;
+
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.response.OrderdataResponse;
@@ -23,7 +25,7 @@ public class OrderUtil {
             Token base = orderdataResponse.getTokennames().get(orderRecord.getOrderBaseToken());
             if (orderRecord.getOrderBaseToken().equals(orderRecord.getOfferTokenid())) {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
-
+               
                 map.put("type", "buy");
                 map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
@@ -34,7 +36,7 @@ public class OrderUtil {
                     map.put("tokenname", orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid())
                             .getTokennameDisplay());
                 }
-                map.put("total", mf.format(orderRecord.getOfferValue()));
+                map.put("total", mf.format(orderRecord.getOfferValue()/ LongMath.pow(10, t.getDecimals()),base.getDecimals() ));
             } else {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
                 map.put("type", "sell");
@@ -43,7 +45,7 @@ public class OrderUtil {
 
                 map.put("price", mf.format(  orderRecord.getPrice(),base.getDecimals() ));
 
-                map.put("total", mf.format(orderRecord.getTargetValue()));
+                map.put("total", mf.format(orderRecord.getTargetValue() / LongMath.pow(10, t.getDecimals()), base.getDecimals()  ));
 
                 if (orderdataResponse.getTokennames() != null
                         && orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()) != null)

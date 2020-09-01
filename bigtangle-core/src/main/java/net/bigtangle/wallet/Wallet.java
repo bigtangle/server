@@ -2195,7 +2195,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             tx.addInput(u.getBlockHash(), spendableOutput);
             if (!amount.isNegative()) {
                 tx.addOutput(amount, beneficiary);
-                break;
+                 break;
             }
         }
         if (beneficiary == null || amount.isNegative()) {
