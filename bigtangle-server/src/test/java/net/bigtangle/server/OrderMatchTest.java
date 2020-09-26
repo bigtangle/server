@@ -752,7 +752,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l);
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 3,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -831,7 +832,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l);
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 3,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -1154,7 +1156,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         long tradeAmount = 100l;
         long price = 1;
-        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null,  
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
         addedBlocks.add(block);
         mcmcServiceUpdate();
         // blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1,
@@ -1227,7 +1230,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         makeTestToken(dollarKey, BigInteger.valueOf(20000000), addedBlocks, 2);
         String dollar = dollarKey.getPublicKeyAsHex();
 
-        // Open sell order for dollar, price 0.1 yuan for 2 dollar Block
+        // Open sell order for dollar, price 0.1 yuan for 200 dollar Block
         // Transaction=20 in dollar
         makeAndConfirmSellOrder(dollarKey, dollar, 700, 20000, yuan.getPublicKeyAsHex(), addedBlocks);
 

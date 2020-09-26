@@ -15,10 +15,10 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     private static final long FROMTIME = System.currentTimeMillis() / 1000 - 5;
     private static final long serialVersionUID = 433387247051352702L;
-    
+
     private long targetValue;
     private String targetTokenid;
-    //public key is needed for verify 
+    // public key is needed for verify
     private byte[] beneficiaryPubKey;
     // valid until this date, maximum is set in Network parameter
     private Long validToTime;
@@ -26,17 +26,21 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
     private Long validFromTime;
     // owner public address of the order for query
     private String beneficiaryAddress;
-    //Base token for the order
+    // Base token for the order
     private String orderBaseToken;
-    //price from the order 
+    // price from the order
     private Long price;
+
+    private long offerValue;
+    private String offerTokenid;
      
     public OrderOpenInfo() {
         super();
     }
 
     public OrderOpenInfo(long targetValue, String targetTokenid, byte[] beneficiaryPubKey, Long validToTimeMilli,
-            Long validFromTimeMilli, Side side,  String beneficiaryAddress, String orderBaseToken, Long price) {
+            Long validFromTimeMilli, Side side, String beneficiaryAddress, String orderBaseToken, Long price,
+            long offerValue, String offerTokenid) {
         super();
         setVersion(2);
         this.targetValue = targetValue;
@@ -47,7 +51,7 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         } else {
             this.validFromTime = validFromTimeMilli / 1000;
         }
-		if (validToTimeMilli == null) {
+        if (validToTimeMilli == null) {
             this.validToTime = validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX;
         } else {
             this.validToTime = Math.min(validToTimeMilli / 1000, validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX);
@@ -55,39 +59,17 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         this.beneficiaryAddress = beneficiaryAddress;
         this.orderBaseToken = orderBaseToken;
         this.price = price;
-    }
-
-    public byte[] getBeneficiaryPubKey() {
-        return beneficiaryPubKey;
-    }
-
-    public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
-        this.beneficiaryPubKey = beneficiaryPubKey;
-    }
-
-    public long getTargetValue() {
-        return targetValue;
-    }
-
-    public void setTargetValue(long targetValue) {
-        this.targetValue = targetValue;
-    }
-
-    public String getTargetTokenid() {
-        return targetTokenid;
-    }
-
-    public void setTargetTokenid(String targetTokenid) {
-        this.targetTokenid = targetTokenid;
+        this.offerValue = offerValue;
+        this.offerTokenid = offerTokenid;
     }
 
     public byte[] toByteArray() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             DataOutputStream dos = new DataOutputStream(baos);
-            
+
             dos.write(super.toByteArray());
-            
+
             dos.writeLong(targetValue);
             dos.writeLong(validToTime);
             dos.writeLong(validFromTime);
@@ -110,30 +92,37 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
                 dos.writeInt(orderBaseToken.getBytes("UTF-8").length);
                 dos.write(orderBaseToken.getBytes("UTF-8"));
             }
-            dos.writeLong(price);  
+            dos.writeLong(price);
+            dos.writeLong(offerValue);
+            dos.writeBoolean(offerTokenid != null);
+            if (offerTokenid != null) {
+                dos.writeInt(offerTokenid.getBytes("UTF-8").length);
+                dos.write(offerTokenid.getBytes("UTF-8"));
+            }
             dos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return baos.toByteArray();
     }
-    
-    public OrderOpenInfo parseDIS(DataInputStream dis) throws IOException {
-        super.parseDIS(dis);
 
+    public OrderOpenInfo parseDIS(DataInputStream dis) throws IOException {
+        super.parseDIS(dis); 
         targetValue = dis.readLong();
         validToTime = dis.readLong();
         validFromTime = dis.readLong();
         int size = dis.readInt();
         beneficiaryPubKey = new byte[size];
         dis.readFully(beneficiaryPubKey);
-        targetTokenid = Utils.readNBytesString(dis); 
-        beneficiaryAddress = Utils.readNBytesString(dis); 
+        targetTokenid = Utils.readNBytesString(dis);
+        beneficiaryAddress = Utils.readNBytesString(dis);
         if (getVersion() > 1) {
-            orderBaseToken = Utils.readNBytesString(dis); 
-             price=dis.readLong();
+            orderBaseToken = Utils.readNBytesString(dis);
+            price = dis.readLong();
+            offerValue = dis.readLong();
+            offerTokenid = Utils.readNBytesString(dis);      
         } else {
-            orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING; 
+            orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING;
         }
         return this;
     }
@@ -143,18 +132,22 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
         DataInputStream dis = new DataInputStream(bain);
 
         parseDIS(dis);
-        
+
         dis.close();
         bain.close();
         return this;
-    }    
+    }
+
     
+    public boolean buy() {
+        return  offerTokenid.equals( getOrderBaseToken());
+    }
     @Override
     public String toString() {
-        return "OrderOpenInfo  \n targetValue=" + targetValue + ", \n targetTokenid=" + targetTokenid 
-                + ", \n validToTime=" + validToTime + ",  \n validFromTime="
-                + validFromTime + ", \n beneficiaryAddress=" + beneficiaryAddress
-                + ", \n orderBaseToken=" + orderBaseToken ;
+        return "OrderOpenInfo  \n targetValue=" + targetValue + ", \n targetTokenid=" + targetTokenid
+                + ", \n validToTime=" + validToTime + ",  \n validFromTime=" + validFromTime
+                + ", \n beneficiaryAddress=" + beneficiaryAddress + " \n offerValue=" + offerValue
+                + ", \n offerTokenid=" + offerTokenid + ", \n orderBaseToken=" + orderBaseToken;
     }
 
     public Long getValidToTime() {
@@ -195,6 +188,46 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     public void setPrice(Long price) {
         this.price = price;
+    }
+
+    public byte[] getBeneficiaryPubKey() {
+        return beneficiaryPubKey;
+    }
+
+    public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
+        this.beneficiaryPubKey = beneficiaryPubKey;
+    }
+
+    public long getTargetValue() {
+        return targetValue;
+    }
+
+    public void setTargetValue(long targetValue) {
+        this.targetValue = targetValue;
+    }
+
+    public String getTargetTokenid() {
+        return targetTokenid;
+    }
+
+    public void setTargetTokenid(String targetTokenid) {
+        this.targetTokenid = targetTokenid;
+    }
+
+    public long getOfferValue() {
+        return offerValue;
+    }
+
+    public void setOfferValue(long offerValue) {
+        this.offerValue = offerValue;
+    }
+
+    public String getOfferTokenid() {
+        return offerTokenid;
+    }
+
+    public void setOfferTokenid(String offerTokenid) {
+        this.offerTokenid = offerTokenid;
     }
 
 }

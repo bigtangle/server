@@ -254,5 +254,9 @@ public class VerificationException extends RuntimeException {
             super(msg);
         }
     }
-    
+    public static class OrderImpossibleException extends VerificationException {
+        public OrderImpossibleException(String msg) {
+            super(msg);
+        }
+    }
 }

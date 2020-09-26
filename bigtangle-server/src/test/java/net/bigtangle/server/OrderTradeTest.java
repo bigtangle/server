@@ -133,7 +133,8 @@ public class OrderTradeTest extends AbstractIntegrationTest {
 
         long tradeAmount = 100l;
         long price = 1;
-        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null,  
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
         addedBlocks.add(block);
       //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
         mcmcServiceUpdate();
@@ -201,7 +202,8 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         long tradeAmount = 10l;
         long price = Long.MAX_VALUE;
         try {
-            Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+            Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null,  
+                    NetworkParameters.BIGTANGLE_TOKENID_STRING);
             fail();
         } catch (VerificationException e) {
             // TODO: handle exception
@@ -269,22 +271,22 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
-        // Make test token
-        // = 9;
-        long tokennumber = tradeAmount * 1000;
-        makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, tokendecimal);
+        // Make test token 
+     
+        makeTestToken(testKey, BigInteger.valueOf(tradeAmount * 1000), addedBlocks, tokendecimal);
         String testTokenId = testKey.getPublicKeyAsHex();
 
         payTestToken(testKey, tradeAmount * 2);
         checkBalanceSum(Coin.valueOf(tradeAmount * 2, testKey.getPubKey()), wallet2Keys);
-        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null);
+        Block block = walletAppKit2.wallet().sellOrder(null, testTokenId, price, tradeAmount, null, null,  
+                NetworkParameters.BIGTANGLE_TOKENID_STRING);
         addedBlocks.add(block);
         mcmcServiceUpdate();
           blockGraph.confirm(block.getHash(), new HashSet<>(), (long)
           -1,store); // mcmcServiceUpdate();
 
         long amount = 7700000000000l;
-        // split BIG
+     
         payBig(amount);
         mcmcServiceUpdate();
         checkBalanceSum(Coin.valueOf(amount, NetworkParameters.BIGTANGLE_TOKENID), wallet1Keys);
@@ -301,7 +303,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         makeAndConfirmOrderMatching(addedBlocks);
         // showOrders();
         // Verify the tokens changed position
-        checkBalanceSum(new Coin(walletAppKit1.wallet().totalAmount(tradeAmount, price ),
+        checkBalanceSum(new Coin(walletAppKit1.wallet().totalAmount(tradeAmount, price,tokendecimal ),
                 NetworkParameters.BIGTANGLE_TOKENID), wallet2Keys);
 
         checkBalanceSum(Coin.valueOf(tradeAmount, testKey.getPubKey()), wallet2Keys);

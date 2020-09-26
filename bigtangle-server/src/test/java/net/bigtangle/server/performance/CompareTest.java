@@ -23,7 +23,7 @@ import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.service.SyncBlockService;
 
-//@Ignore
+ @Ignore
 public class CompareTest {
     public static boolean testnet = true;
     public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "p.") + "bigtangle.de:"

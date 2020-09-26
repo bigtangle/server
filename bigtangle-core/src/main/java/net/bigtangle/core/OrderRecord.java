@@ -32,7 +32,7 @@ public class OrderRecord extends SpentBlock {
 
     //price from the order open
     private String orderBaseToken;
-    
+    private int tokenDecimals;
     //Base token for the order
     private Long price;
     
@@ -49,7 +49,7 @@ public class OrderRecord extends SpentBlock {
     public OrderRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, long offerValue,
             String offerTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, long targetValue,
             String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, String side,
-            String beneficiaryAddress, String orderBaseToken, Long price) {
+            String beneficiaryAddress, String orderBaseToken, Long price, int tokenDecimals) {
         super();
         this.setBlockHash(initialBlockHash);
         this.issuingMatcherBlockHash = issuingMatcherBlockHash;
@@ -68,13 +68,14 @@ public class OrderRecord extends SpentBlock {
         this.beneficiaryAddress = beneficiaryAddress;
         this.orderBaseToken = orderBaseToken;
         this.price = price;
+        this.tokenDecimals = tokenDecimals;
     }
 
     public static OrderRecord cloneOrderRecord(OrderRecord old) {
         return new OrderRecord(old.getBlockHash(), old.issuingMatcherBlockHash, old.offerValue, old.offerTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
                 old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.side.name(), old.beneficiaryAddress,
-                old.getOrderBaseToken(),old.getPrice());
+                old.getOrderBaseToken(),old.getPrice(), old.getTokenDecimals());
     }
 
 
@@ -200,6 +201,16 @@ public class OrderRecord extends SpentBlock {
 
     public void setOrderBaseToken(String orderBaseToken) {
         this.orderBaseToken = orderBaseToken;
+    }
+
+ 
+
+    public int getTokenDecimals() {
+        return tokenDecimals;
+    }
+
+    public void setTokenDecimals(int tokenDecimals) {
+        this.tokenDecimals = tokenDecimals;
     }
 
     @Override

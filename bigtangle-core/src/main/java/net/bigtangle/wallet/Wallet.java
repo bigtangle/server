@@ -64,7 +64,6 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
-
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ContractExecutionResult;
 import net.bigtangle.core.ECKey;
@@ -95,6 +94,7 @@ import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.exception.VerificationException.OrderImpossibleException;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -2158,12 +2158,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * It must use BigInteger to calculation
+     * It must use BigInteger to calculation to avoid overflow. Order can handle
+     * only Long
      */
+    public BigInteger totalAmount(long price, long amount, int tokenDecimal) {
 
-    public BigInteger totalAmount(long buyPrice, long buyAmount ) {
-
-        BigInteger re = BigInteger.valueOf(buyPrice).multiply(BigInteger.valueOf(buyAmount) );
+        BigInteger re = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
+                .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
 
         if (re.compareTo(BigInteger.ONE) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid target total value: " + re);
@@ -2177,33 +2178,45 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return buyOrder(aesKey, tokenId, buyPrice, buyAmount, validToTime, validFromTime,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING);
     }
-    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,
-            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException, InsufficientMoneyException,
-            UTXOProviderException, NoTokenException {
+
+    /*
+     * Buy order is defined as
+     * offervalue = targetValue * price / 10**targetDecimal
+     * offerToken=orderBaseToken
+     * 
+     */
+    public Block buyOrder(KeyParameter aesKey, String targetTokenId, long buyPrice, long targetValue, Long validToTime,
+            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException,
+            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+
+        if (targetTokenId.equals(orderBaseToken))
+            throw new OrderImpossibleException("buy token is base token ");
+
         // add client check if the tokenid exists
-       // Token t = checkTokenId(tokenId);
-        // Burn base token to buy
-        Coin amount = new Coin(totalAmount(buyPrice, buyAmount),orderBaseToken)
-                .negate();
+        Token t = checkTokenId(targetTokenId);
+        // Burn orderBaseToken to buy
+        Coin offerValue = new Coin(totalAmount(buyPrice, targetValue, t.getDecimals()),
+                Utils.HEX.decode(orderBaseToken)).negate();
         Transaction tx = new Transaction(params);
         List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
         ECKey beneficiary = null;
         for (UTXO u : coinList) {
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
             beneficiary = getECKey(aesKey, u.getAddress());
-            amount = spendableOutput.getValue().add(amount);
+            offerValue = spendableOutput.getValue().add(offerValue);
             tx.addInput(u.getBlockHash(), spendableOutput);
-            if (!amount.isNegative()) {
-                tx.addOutput(amount, beneficiary);
-                 break;
+            if (!offerValue.isNegative()) {
+                tx.addOutput(offerValue, beneficiary);
+                break;
             }
         }
-        if (beneficiary == null || amount.isNegative()) {
+        if (beneficiary == null || offerValue.isNegative()) {
             throw new InsufficientMoneyException("");
         }
 
-        OrderOpenInfo info = new OrderOpenInfo(buyAmount, tokenId, beneficiary.getPubKey(), validToTime, validFromTime,
-                Side.BUY, beneficiary.toAddress(params).toBase58(),orderBaseToken, buyPrice);
+        OrderOpenInfo info = new OrderOpenInfo(targetValue, targetTokenId, beneficiary.getPubKey(), validToTime,
+                validFromTime, Side.BUY, beneficiary.toAddress(params).toBase58(), orderBaseToken, buyPrice,
+                offerValue.getValue().longValue(), orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
         signTransaction(tx, aesKey);
@@ -2213,11 +2226,89 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = params.getDefaultSerializer().makeBlock(data);
 
-        // block = predecessor.createNextBlock();
         block.addTransaction(tx);
         block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 
         return solveAndPost(block);
+    }
+
+    /*
+     * Sell Order is defined as
+     * targetvalue = offervalue * price / 10**offerDecimal
+     * targetToken=orderBaseToken
+     */
+    public Block sellOrder(KeyParameter aesKey, String offerTokenId, long sellPrice, long offervalue, Long validToTime,
+            Long validFromTime, String orderBaseToken)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        if (offerTokenId.equals(orderBaseToken))
+            throw new OrderImpossibleException("sell token is base token ");
+
+        Token t = checkTokenId(offerTokenId);
+        // Burn tokens to sell
+        Coin offerValueCoin = Coin.valueOf(offervalue, offerTokenId).negate();
+
+        Transaction tx = new Transaction(params);
+
+        List<UTXO> coinList = getSpendableUTXO(aesKey, offerValueCoin.getTokenid());
+        ECKey beneficiary = null;
+        for (UTXO u : coinList) {
+            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
+            beneficiary = getECKey(aesKey, u.getAddress());
+            offerValueCoin = spendableOutput.getValue().add(offerValueCoin);
+            tx.addInput(u.getBlockHash(), spendableOutput);
+            if (!offerValueCoin.isNegative()) {
+                tx.addOutput(offerValueCoin, beneficiary);
+                break;
+            }
+        }
+        if (beneficiary == null || offerValueCoin.isNegative()) {
+            throw new InsufficientMoneyException("");
+        }
+        // get the base token
+        BigInteger targetvalue = totalAmount(sellPrice, offervalue, t.getDecimals());
+        if (targetvalue.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new InvalidTransactionDataException("Invalid  max: " + targetvalue + " > " + Long.MAX_VALUE);
+        }
+
+        OrderOpenInfo info = new OrderOpenInfo(targetvalue.longValue(), orderBaseToken, beneficiary.getPubKey(),
+                validToTime, validFromTime, Side.SELL, beneficiary.toAddress(params).toBase58(), orderBaseToken,
+                sellPrice, offerValueCoin.getValue().longValue(), offerTokenId);
+        tx.setData(info.toByteArray());
+        tx.setDataClassName("OrderOpen");
+
+        signTransaction(tx, aesKey);
+        // Create block with order
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = params.getDefaultSerializer().makeBlock(data);
+
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+
+        return solveAndPost(block);
+    }
+
+    public Block cancelOrder(Sha256Hash orderblockhash, ECKey legitimatingKey)
+            throws JsonProcessingException, IOException {
+        // Make an order op
+        Transaction tx = new Transaction(params);
+        OrderCancelInfo info = new OrderCancelInfo(orderblockhash);
+        tx.setData(info.toByteArray());
+
+        // Legitimate it by signing
+        Sha256Hash sighash1 = tx.getHash();
+        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
+        byte[] buf1 = party1Signature.encodeToDER();
+        tx.setDataSignature(buf1);
+
+        Block block = getTip();
+
+        block.addTransaction(tx);
+        block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
+
+        return solveAndPost(block);
+
     }
 
     public Block payContract(KeyParameter aesKey, String tokenId, BigInteger payAmount, Long validToTime,
@@ -2294,82 +2385,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
         return re;
-    }
-    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
-            Long validFromTime)
-            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
-      return  sellOrder(aesKey, tokenId, sellPrice, sellAmount, validToTime, validFromTime,  
-              NetworkParameters.BIGTANGLE_TOKENID_STRING);
-    }
-    public Block sellOrder(KeyParameter aesKey, String tokenId, long sellPrice, long sellAmount, Long validToTime,
-            Long validFromTime,String orderBaseToken)
-            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
-        //Token t = checkTokenId(tokenId);
-        // Burn tokens to sell
-        Coin amount = Coin.valueOf(sellAmount, tokenId).negate();
-
-        Transaction tx = new Transaction(params);
-
-        List<UTXO> coinList = getSpendableUTXO(aesKey, amount.getTokenid());
-        ECKey beneficiary = null;
-        for (UTXO u : coinList) {
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
-            beneficiary = getECKey(aesKey, u.getAddress());
-            amount = spendableOutput.getValue().add(amount);
-            tx.addInput(u.getBlockHash(), spendableOutput);
-            if (!amount.isNegative()) {
-                tx.addOutput(amount, beneficiary);
-                break;
-            }
-        }
-        if (beneficiary == null || amount.isNegative()) {
-            throw new InsufficientMoneyException("");
-        }
-
-        BigInteger total = totalAmount(sellPrice, sellAmount);
-        if (total.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-            throw new InvalidTransactionDataException("Invalid  max: " + total + " > " + Long.MAX_VALUE);
-        }
-
-        OrderOpenInfo info = new OrderOpenInfo(total.longValue(), orderBaseToken,
-                beneficiary.getPubKey(), validToTime, validFromTime, Side.SELL,
-                beneficiary.toAddress(params).toBase58(),orderBaseToken,sellPrice);
-        tx.setData(info.toByteArray());
-        tx.setDataClassName("OrderOpen");
-
-        signTransaction(tx, aesKey);
-        // Create block with order
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = params.getDefaultSerializer().makeBlock(data);
-
-        block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-
-        return solveAndPost(block);
-    }
-
-    public Block cancelOrder(Sha256Hash orderblockhash, ECKey legitimatingKey)
-            throws JsonProcessingException, IOException {
-        // Make an order op
-        Transaction tx = new Transaction(params);
-        OrderCancelInfo info = new OrderCancelInfo(orderblockhash);
-        tx.setData(info.toByteArray());
-
-        // Legitimate it by signing
-        Sha256Hash sighash1 = tx.getHash();
-        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
-        tx.setDataSignature(buf1);
-
-        Block block = getTip();
-
-        block.addTransaction(tx);
-        block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
-
-        return solveAndPost(block);
-
     }
 
     public Block paySubtangle(KeyParameter aesKey, String outputStr, ECKey connectKey, Address toAddressInSubtangle,
