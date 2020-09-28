@@ -628,7 +628,7 @@ public class OrderController extends ExchangeController {
 
         if (typeStr.equals("sell")) {
             Main.walletAppKit.wallet().sellOrder(Main.getAesKey(), tokenid, price.getValue().longValue(),
-                    quantity.getValue().longValue(), totime, fromtime);
+                    quantity.getValue().longValue(), totime, fromtime, NetworkParameters.BIGTANGLE_TOKENID_STRING);
         } else {
             Main.walletAppKit.wallet().buyOrder(Main.getAesKey(), tokenid, price.getValue().longValue(),
                     quantity.getValue().longValue(), totime, fromtime);
