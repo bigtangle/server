@@ -1569,21 +1569,20 @@ public class ValidatorService {
                 throw new InvalidOrderException("The order is too large.");
             return SolidityState.getFailState();
         }
+        // calculate the offervalue for version == 1
+        if (orderInfo.getVersion() == 1) {
+            orderInfo.setOfferValue(burnedCoins.getValue().longValue());
+            orderInfo.setOfferTokenid(burnedCoins.getTokenHex());
+        }
 
         // Check that the tx inputs only burn must be the offerValue
-        if(orderInfo.buy()) {
-        if (burnedCoins.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
+
+        if (!burnedCoins.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
             if (throwExceptions)
                 throw new InvalidOrderException("The Transaction data burnedCoins is not same as OfferValue .");
             return SolidityState.getFailState();
         }
-        }else {
-            if (burnedCoins.equals(new Coin(orderInfo.getTargetValue(), Utils.HEX.decode(orderInfo.getTargetTokenid())))) {
-                if (throwExceptions)
-                    throw new InvalidOrderException("The Transaction data burnedCoins is not same as OfferValue .");
-                return SolidityState.getFailState();
-            }  
-        }
+
         // Check that either the burnt token or the target token base token
         if (checkOrderBaseToken(orderInfo, burnedCoins)) {
             if (throwExceptions)

@@ -2412,7 +2412,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 3,
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 2,
                     NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
@@ -2866,9 +2866,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Block block1 = null;
         {
             // Make a buy order for "test"s
+            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l,3,
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l,amount.getValue().longValue(),
                     NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");
@@ -2877,7 +2878,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
                     outputs.get(0));
-            Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        
             // BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
             // amount, testKey));
             tx.addOutput(
@@ -2937,7 +2938,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Make a buy order for "test"s
             Transaction tx = new Transaction(networkParameters);
             OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null, Side.BUY,
-                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l,3,
+                    testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l,2,
                     NetworkParameters.BIGTANGLE_TOKENID_STRING);
             tx.setData(info.toByteArray());
             tx.setDataClassName("OrderOpen");

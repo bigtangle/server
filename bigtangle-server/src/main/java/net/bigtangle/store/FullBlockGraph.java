@@ -385,7 +385,9 @@ public class FullBlockGraph {
         block.verifyTransactions();
 
         SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
-
+        if(solidityState.isFailState()) {
+            log.debug(solidityState.toString());
+        }
         // If explicitly wanted (e.g. new block from local clients), this
         // block must strictly be solid now.
         if (!allowUnsolid) {
@@ -1314,8 +1316,12 @@ public class FullBlockGraph {
     private void connectOrder(Block block, FullBlockStore blockStore) throws BlockStoreException {
         try {
             OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
-
-            Coin offer = validatorService.countBurnedToken(block, blockStore);
+            Coin burned = validatorService.countBurnedToken(block, blockStore);
+            // calculate the offervalue for version == 1 
+            if (reqInfo.getVersion() == 1) {
+                reqInfo.setOfferValue(burned.getValue().longValue());
+                reqInfo.setOfferTokenid(burned.getTokenHex());
+            } 
             boolean buy = reqInfo.buy();
             Side side = buy ? Side.BUY : Side.SELL;
             int decimals = 0;
@@ -1324,8 +1330,8 @@ public class FullBlockGraph {
             } else {
                 decimals = blockStore.getTokenID(reqInfo.getOfferTokenid()).get(0).getDecimals();
             }
-            OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, offer.getValue().longValue(),
-                    offer.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
+            OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, burned.getValue().longValue(),
+                    burned.getTokenHex(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
                     reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
                     reqInfo.getBeneficiaryAddress(), reqInfo.getOrderBaseToken(), reqInfo.getPrice(), decimals);
             versionPrice(record, reqInfo);

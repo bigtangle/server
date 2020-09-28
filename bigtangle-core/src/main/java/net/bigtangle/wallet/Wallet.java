@@ -2216,7 +2216,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         OrderOpenInfo info = new OrderOpenInfo(targetValue, targetTokenId, beneficiary.getPubKey(), validToTime,
                 validFromTime, Side.BUY, beneficiary.toAddress(params).toBase58(), orderBaseToken, buyPrice,
-                offerValue.getValue().longValue(), orderBaseToken);
+                totalAmount(buyPrice, targetValue, t.getDecimals()).longValue(), orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
         signTransaction(tx, aesKey);
@@ -2241,27 +2241,27 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             Long validFromTime, String orderBaseToken)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         if (offerTokenId.equals(orderBaseToken))
-            throw new OrderImpossibleException("sell token is base token ");
+            throw new OrderImpossibleException("sell token is not allowed as base token ");
 
         Token t = checkTokenId(offerTokenId);
         // Burn tokens to sell
-        Coin offerValueCoin = Coin.valueOf(offervalue, offerTokenId).negate();
+        Coin myCoin = Coin.valueOf(offervalue, offerTokenId).negate();
 
         Transaction tx = new Transaction(params);
 
-        List<UTXO> coinList = getSpendableUTXO(aesKey, offerValueCoin.getTokenid());
+        List<UTXO> coinList = getSpendableUTXO(aesKey, myCoin.getTokenid());
         ECKey beneficiary = null;
         for (UTXO u : coinList) {
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
             beneficiary = getECKey(aesKey, u.getAddress());
-            offerValueCoin = spendableOutput.getValue().add(offerValueCoin);
+            myCoin = spendableOutput.getValue().add(myCoin);
             tx.addInput(u.getBlockHash(), spendableOutput);
-            if (!offerValueCoin.isNegative()) {
-                tx.addOutput(offerValueCoin, beneficiary);
+            if (!myCoin.isNegative()) {
+                tx.addOutput(myCoin, beneficiary);
                 break;
             }
         }
-        if (beneficiary == null || offerValueCoin.isNegative()) {
+        if (beneficiary == null || myCoin.isNegative()) {
             throw new InsufficientMoneyException("");
         }
         // get the base token
@@ -2272,7 +2272,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         OrderOpenInfo info = new OrderOpenInfo(targetvalue.longValue(), orderBaseToken, beneficiary.getPubKey(),
                 validToTime, validFromTime, Side.SELL, beneficiary.toAddress(params).toBase58(), orderBaseToken,
-                sellPrice, offerValueCoin.getValue().longValue(), offerTokenId);
+                sellPrice, offervalue, offerTokenId);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 

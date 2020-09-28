@@ -122,7 +122,8 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
             offerValue = dis.readLong();
             offerTokenid = Utils.readNBytesString(dis);      
         } else {
-            orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING;
+            orderBaseToken = NetworkParameters.BIGTANGLE_TOKENID_STRING; 
+             
         }
         return this;
     }
@@ -140,14 +141,15 @@ public class OrderOpenInfo extends DataClass implements java.io.Serializable {
 
     
     public boolean buy() {
-        return  offerTokenid.equals( getOrderBaseToken());
+        return  !targetTokenid.equals( getOrderBaseToken());
     }
     @Override
     public String toString() {
         return "OrderOpenInfo  \n targetValue=" + targetValue + ", \n targetTokenid=" + targetTokenid
                 + ", \n validToTime=" + validToTime + ",  \n validFromTime=" + validFromTime
                 + ", \n beneficiaryAddress=" + beneficiaryAddress + " \n offerValue=" + offerValue
-                + ", \n offerTokenid=" + offerTokenid + ", \n orderBaseToken=" + orderBaseToken;
+                + ", \n offerTokenid=" + offerTokenid + ", \n orderBaseToken=" + orderBaseToken
+                + ", \n price=" + price;
     }
 
     public Long getValidToTime() {

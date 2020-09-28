@@ -752,8 +752,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), null, System.currentTimeMillis() + waitTime, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 3,
-                NetworkParameters.BIGTANGLE_TOKENID_STRING);
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, sellAmount,
+                testTokenId);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
@@ -832,8 +832,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         Transaction tx = new Transaction(networkParameters);
         OrderOpenInfo info = new OrderOpenInfo((long) 1000 * sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
                 testKey.getPubKey(), System.currentTimeMillis() - 10000, null, Side.SELL,
-                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 3,
-                NetworkParameters.BIGTANGLE_TOKENID_STRING);
+                testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, sellAmount,
+                testTokenId);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
 
