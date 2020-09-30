@@ -9,13 +9,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.response.OrderdataResponse;
 
 public class OrderUtil {
     public static void orderMap(OrderdataResponse orderdataResponse, List<Map<String, Object>> orderData,
-            Locale local) {
+            Locale local,    NetworkParameters params) {
         MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
 
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
@@ -23,12 +24,12 @@ public class OrderUtil {
             Token base = orderdataResponse.getTokennames().get(orderRecord.getOrderBaseToken());
             if (orderRecord.getOrderBaseToken().equals(orderRecord.getOfferTokenid())) {
                 Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
-               
+                Integer priceshift = params.getOrderPriceShift(orderRecord.getOrderBaseToken());
                 map.put("type", "buy");
                 map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getTargetTokenid());
-
-              map.put("price", mf.format( orderRecord.getPrice() , base.getDecimals()));
+      
+              map.put("price", mf.format( orderRecord.getPrice() , base.getDecimals()+priceshift));
                 if (orderdataResponse.getTokennames() != null
                         && orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()) != null) {
                     map.put("tokenname", orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid())
@@ -40,8 +41,8 @@ public class OrderUtil {
                 map.put("type", "sell");
                 map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
                 map.put("tokenId", orderRecord.getOfferTokenid());
-
-                map.put("price", mf.format(  orderRecord.getPrice(),base.getDecimals() ));
+                Integer priceshift = params.getOrderPriceShift(orderRecord.getOrderBaseToken());
+                map.put("price", mf.format(  orderRecord.getPrice(),base.getDecimals()+priceshift ));
 
                 map.put("total", mf.format(orderRecord.getTargetValue() , base.getDecimals()  ));
 

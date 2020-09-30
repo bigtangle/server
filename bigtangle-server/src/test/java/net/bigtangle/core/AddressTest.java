@@ -107,34 +107,7 @@ public class AddressTest {
     }
 
  
-    @Test
-    public void getAltNetwork() throws Exception {
-        // An alternative network
-        class AltNetwork extends MainNetParams {
-            AltNetwork() {
-                super();
-                id = "alt.network";
-                addressHeader = 48;
-                p2shHeader = 5;
-                acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
-            }
-        }
-        AltNetwork altNetwork = new AltNetwork();
-        // Add new network params
-        Networks.register(altNetwork);
-        // Check if can parse address
-        NetworkParameters params = Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-        assertEquals(altNetwork.getId(), params.getId());
-        // Check if main network works as before
-        params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MainNetParams.get().getId(), params.getId());
-        // Unregister network
-        Networks.unregister(altNetwork);
-        try {
-            Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            fail();
-        } catch (AddressFormatException e) { }
-    }
+ 
     
     @Test
     public void p2shAddress() throws Exception {

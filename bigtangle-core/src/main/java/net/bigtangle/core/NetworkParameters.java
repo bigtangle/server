@@ -517,6 +517,15 @@ public abstract class NetworkParameters {
         this.orderBaseTokens = orderBaseTokens;
     }
 
+    /*
+     * Order Price is in orderBaseToken and is used as Long, 
+     * to enable the representation of value smaller than the unit of  orderBaseToken
+     * this factor is used to shift the small price into long value.
+     * It can not be changed after the initial set. 
+     */
+    public  abstract Integer getOrderPriceShift(String orderBaseTokens) ;
+
+    
     public ServerPool getServerPool() {
         return serverPool;
     }

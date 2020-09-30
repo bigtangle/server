@@ -80,17 +80,7 @@ public class BitcoinURITest {
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, null, null));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, "", ""));
 
-        // different scheme
-        final NetworkParameters alternativeParameters = new MainNetParams() {
-            @Override
-            public String getUriScheme() {
-                return "test";
-            }
-        };
-
-        assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
-                BitcoinURI.convertToBitcoinURI(Address.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS),
-                        NO_CODE.parse("12.34"), "Hello", "AMessage"));
+  
     }
 
     @Test

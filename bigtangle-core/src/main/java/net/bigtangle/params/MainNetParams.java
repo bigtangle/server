@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 import com.google.common.collect.ImmutableList;
 
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.wallet.ServerPool;
 
 /**
@@ -32,6 +33,8 @@ import net.bigtangle.wallet.ServerPool;
  * services.
  */
 public class MainNetParams extends AbstractBitcoinNetParams {
+    private static final String CNY = //CNY
+    "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba";
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
@@ -62,8 +65,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "0222c35110844bf00afd9b7f08788d79ef6edc0dce19be6182b44e07501e637a58");
 
         orderBaseTokens = ImmutableList.of(BIGTANGLE_TOKENID_STRING, 
-                //CNY
-                "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba");
+                CNY);
 
         
         // Equihash Settings
@@ -105,6 +107,16 @@ public class MainNetParams extends AbstractBitcoinNetParams {
             instance = new MainNetParams();
         }
         return instance;
+    }
+
+
+    @Override
+    public Integer getOrderPriceShift(String orderBaseTokens) {
+        if (CNY.equals(orderBaseTokens))
+            return 6;
+        if (BIGTANGLE_TOKENID_STRING.equals(orderBaseTokens))
+            return 0;
+        throw new VerificationException("orderBaseTokens is not allowed");
     }
 
 }

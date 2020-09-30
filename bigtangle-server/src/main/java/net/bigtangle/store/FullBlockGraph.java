@@ -1545,6 +1545,7 @@ public class FullBlockGraph {
 
         // Make deterministic tx with proceeds
         Transaction tx = createOrderPayoutTransaction(block, payouts);
+        log.debug(tx.toString());
         return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
@@ -1568,6 +1569,7 @@ public class FullBlockGraph {
                 .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
         tx.setMemo(new MemoInfo("Order Payout"));
+        
         return tx;
     }
 
@@ -1651,8 +1653,9 @@ public class FullBlockGraph {
 
         // The resting order receives the basetoken according to its price
         // resting is sell order
+        Integer priceshift = networkParameters.getOrderPriceShift(baseToken);
         payout(payouts, restingPubKey, baseToken,
-                totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()));
+                totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
 
         // The incoming order receives the tokens
         payout(payouts, incomingPubKey, incomingOrder.getTargetTokenid(), executedAmount);
@@ -1660,15 +1663,15 @@ public class FullBlockGraph {
         // The difference in price is returned to the incoming
         // beneficiary
         payout(payouts, incomingPubKey, baseToken,
-                totalAmount(executedAmount, (incomingPrice - executedPrice), incomingOrder.getTokenDecimals()));
+                totalAmount(executedAmount, (incomingPrice - executedPrice), incomingOrder.getTokenDecimals()+priceshift));
 
         // Finally, the orders could be fulfilled now, so we can
         // remove them from the order list
         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount);
         restingOrder.setTargetValue(restingOrder.getTargetValue()
-                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()));
+                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
         incomingOrder.setOfferValue(incomingOrder.getOfferValue()
-                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()));
+                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()+priceshift));
         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount);
         if (sellableAmount == executedAmount) {
             remainingOrders.remove(restingOrder.getBlockHash());
