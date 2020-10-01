@@ -286,7 +286,100 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify deterministic overall execution
 
     }
+    @Test
+    public void buyBaseTokenSmall() throws Exception {
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
 
+        // base token
+        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        int  priceshift=1000000;
+        long tokennumber = priceshift * 1000;
+        makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
+        // Make test token 
+        makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, 2);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+     
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
+        checkOrders(1);
+        makeAndConfirmOrderMatching(addedBlocks);
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(yuan, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
+        checkOrders(2);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+ 
+     
+      
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
+        assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift*1l);
+
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // Verify deterministic overall execution
+
+    }
+
+    @Test
+    public void buyBaseTokenSmallRemainder() throws Exception {
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // base token
+        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        int  priceshift=1000000;
+        long tokennumber = priceshift * 1000;
+        makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
+        // Make test token 
+        makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, 2);
+        String testTokenId = testKey.getPublicKeyAsHex();
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+     
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
+        checkOrders(1);
+        makeAndConfirmOrderMatching(addedBlocks);
+        // Open buy order for test tokens, the  100 can not be executed
+        makeAndConfirmBuyOrder(yuan, testTokenId, 200, priceshift + 100, yuan.getPublicKeyAsHex(), addedBlocks);
+        checkOrders(2);
+
+        // Execute order matching
+        makeAndConfirmOrderMatching(addedBlocks);
+        checkOrders(1);
+     
+      
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
+        assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift*1l);
+
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
+        
+        makeAndConfirmOrderMatching(addedBlocks);
+        checkOrders(1);
+      
+        // Verify the tokens changed possession
+        assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
+        assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift*1l);
+
+        
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        
+        
+        // Verify deterministic overall execution
+
+    }
     @Test
     public void buyBaseTokenMixed() throws Exception {
 
