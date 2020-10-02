@@ -369,7 +369,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
       
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
-        assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift*1l);
+        assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift*1l+100);
 
         
         // Verify token amount invariance

@@ -1616,14 +1616,14 @@ public class FullBlockGraph {
         long sellableAmount = incomingOrder.getOfferValue();
         long buyableAmount = restingOrder.getTargetValue();
         long incomingPrice = incomingOrder.getPrice();
-
+        Integer priceshift = networkParameters.getOrderPriceShift(baseToken);
         // The resting order receives the tokens
         payout(payouts, restingPubKey, restingOrder.getTargetTokenid(), executedAmount);
 
         // The incoming order receives the base token according to the
         // resting price
         payout(payouts, incomingPubKey, baseToken,
-                totalAmount(executedAmount, executedPrice, incomingOrder.getTokenDecimals()));
+                totalAmount(executedAmount, executedPrice, incomingOrder.getTokenDecimals()+priceshift));
 
         // Finally, the orders could be fulfilled now, so we can
         // remove them from the order list
@@ -1631,9 +1631,9 @@ public class FullBlockGraph {
         // executed amounts
         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount);
         incomingOrder.setTargetValue(incomingOrder.getTargetValue()
-                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()));
+                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()+priceshift));
         restingOrder.setOfferValue(restingOrder.getOfferValue()
-                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()));
+                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount);
         if (sellableAmount == executedAmount) {
             remainingOrders.remove(incomingOrder.getBlockHash());
