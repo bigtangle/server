@@ -38,7 +38,6 @@ import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
-import net.bigtangle.utils.ContextPropagatingThreadFactory;
 
 /*
  *  This service offers maintenance functions to update the local mcmc state of the Tangle
@@ -63,12 +62,10 @@ public class MCMCService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
-    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
     public void startSingleProcess() throws BlockStoreException {
         // ExecutorService executor = Executors.newSingleThreadExecutor();
-        if (executor.isShutdown())
-            executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
@@ -189,10 +186,10 @@ public class MCMCService {
 
             // Update and dereference
             // TODO reduce the update
-           // if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
-                depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(),
-                        approvers.get(currentBlockHash).size(), depths.get(currentBlockHash)));
-           
+            // if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
+            depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
+                    depths.get(currentBlockHash)));
+
             approvers.remove(currentBlockHash);
             depths.remove(currentBlockHash);
         }
