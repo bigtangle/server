@@ -76,7 +76,7 @@ public class CheckpointService {
             tokensums.setOrders(orders(tokenid,store));
             tokensums.setInitial(tokensumsInitial.get(tokenid));
             tokensums.calculate();
-
+            tokensumset.getTokensumsMap().put( tokenid,tokensums);
         }
         return tokensumset;
     }

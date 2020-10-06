@@ -259,4 +259,11 @@ public class VerificationException extends RuntimeException {
             super(msg);
         }
     }
+    
+    public static class OrderWithRemainderException extends VerificationException {
+        public OrderWithRemainderException(String msg) {
+            super(msg);
+        }
+    }
+    
 }

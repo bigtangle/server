@@ -326,7 +326,7 @@ public abstract class AbstractIntegrationTest {
             String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
-        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken);
+        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken,true);
         addedBlocks.add(block);
         // Confirm
         mcmcServiceUpdate();
@@ -361,7 +361,7 @@ public abstract class AbstractIntegrationTest {
             String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
-        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken);
+        Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken,true);
         addedBlocks.add(block);
         mcmcServiceUpdate();
       //  blockGraph.updateChain();

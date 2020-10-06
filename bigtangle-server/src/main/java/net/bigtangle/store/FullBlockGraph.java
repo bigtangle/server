@@ -73,6 +73,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
@@ -1687,9 +1688,16 @@ public class FullBlockGraph {
      */
     public Long totalAmount(long price, long amount, int tokenDecimal) {
 
-        BigInteger re = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
-                .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
-
+     
+        BigInteger[] rearray = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
+                .divideAndRemainder(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
+        BigInteger re = rearray[0];
+        BigInteger remainder = rearray[1];
+        if (remainder.compareTo(BigInteger.ZERO) > 0) {
+            // This remainder will cut
+          log.debug("Price and quantity value with remainder " + remainder);
+        }
+        
         if (re.compareTo(BigInteger.ZERO) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid target total value: " + re);
         }

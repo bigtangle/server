@@ -35,7 +35,7 @@ public class CheckpointRemote {
  
     private static final Logger log = LoggerFactory.getLogger(CheckpointRemote.class);
 
-    private List<UTXO> getOutputs(String server, String tokenid)
+    public List<UTXO> getOutputs(String server, String tokenid)
             throws IOException, JsonProcessingException, JsonMappingException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);

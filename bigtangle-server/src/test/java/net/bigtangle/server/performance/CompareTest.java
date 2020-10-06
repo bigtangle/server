@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +19,11 @@ import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Tokensums;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.server.AbstractIntegrationTest;
-import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.service.SyncBlockService;
 
- @Ignore
+//@Ignore
 public class CompareTest {
-    public static boolean testnet = true;
+    public static boolean testnet = false;
     public static String HTTPS_BIGTANGLE_DE = "https://" + (testnet ? "test." : "p.") + "bigtangle.de:"
             + (testnet ? "8089" : "8088") + "/";
     public static String HTTPS_BIGTANGLE_INFO = "https://" + (testnet ? "test." : "p.") + "bigtangle.info:"
@@ -36,13 +34,21 @@ public class CompareTest {
 
     public static String TESTSERVER1 = HTTPS_BIGTANGLE_INFO;
 
-    public static String TESTSERVER2 = HTTPS_BIGTANGLE_DE;
+    public static String TESTSERVER2 = HTTPS_BIGTANGLE_ORG;
     protected static final Logger log = LoggerFactory.getLogger(AbstractIntegrationTest.class);
     SyncBlockService syncBlockService;
     CheckpointRemote checkpointService;
 
     @Test
     public void diffThread() throws Exception {
+
+        syncBlockService = new SyncBlockService();
+        checkpointService = new CheckpointRemote();
+        testComapre("bc");
+        testComapre("03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba");
+    }
+
+    public void diffThread2() throws Exception {
         // System.setProperty("https.proxyHost",
         // "anwproxy.anwendungen.localnet.de");
         // System.setProperty("https.proxyPort", "3128");
@@ -112,6 +118,31 @@ public class CompareTest {
                 log.error("\n " + " not found " + a);
             }
         }
+    }
+
+    public void testComapre(String tokenid) throws Exception {
+        List<UTXO> t1 = checkpointService.getOutputs(TESTSERVER1, tokenid);
+        List<UTXO> t2 = checkpointService.getOutputs(TESTSERVER2, tokenid);
+        compareUTXO(t1, t2);
+    }
+
+    private void compareUTXO(List<UTXO> t1, List<UTXO> t2) {
+
+        log.debug("\n " + TESTSERVER1 + " utxo size : " + t1.size() + "\n " + TESTSERVER2 + ": " + t2.size());
+
+        for (int i = 0; i < t1.size(); i++) {
+            UTXO a = t1.get(i);
+            UTXO u = t2.get(i);
+            if (a.getBlockHashHex().equals(u.getBlockHashHex()) && a.getIndex() == u.getIndex()
+                    && a.getValue().equals(u.getValue())) {
+             //   log.debug("\n " + a.toString());
+            } else {
+                log.error("\n " + " difference " + a + "\n" + u);
+            }
+        }
+
+        log.debug("Finish compareUTXO");
+
     }
 
     private UTXO find(List<UTXO> t1, UTXO u) {

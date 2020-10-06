@@ -50,13 +50,13 @@ public class RewardService2Test extends AbstractIntegrationTest {
         for (int j = 1; j < 2; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
             mcmcServiceUpdate();
-            
+
             sell(blocksAddedAll);
             buy(blocksAddedAll);
         }
 
         // Generate mining reward block
-        Block next =  createReward(rewardBlock1.getHash(),store);
+        Block next = createReward(rewardBlock1.getHash(), store);
         blocksAddedAll.add(next);
 
         return next;
@@ -94,38 +94,38 @@ public class RewardService2Test extends AbstractIntegrationTest {
         // replay first chain
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true,true,store);
+                blockGraph.add(b, true, true, store);
         }
         // check
         assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
         // replay second chain
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true,true,store);
+                blockGraph.add(b, true, true, store);
 
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
-        Sha256Hash hash1=    checkSum();
-        assertTrue( hash.equals(checkpointService.checkToken(store).hash()));
+        Sha256Hash hash1 = checkSum();
+        assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
         // replay second and then replay first
         store.resetStore();
         for (Block b : a2) {
             if (b != null)
-                blockGraph.add(b, true,true,store);
+                blockGraph.add(b, true, true, store);
 
         }
         for (Block b : a1) {
             if (b != null)
-                blockGraph.add(b, true,true,store);
+                blockGraph.add(b, true, true, store);
         }
         assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
-        assertTrue( hash.equals(checkpointService.checkToken(store).hash()));
-        Sha256Hash hash2=  checkSum();
+        assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+        Sha256Hash hash2 = checkSum();
         assertTrue(hash1.equals(hash2));
     }
 
-    private   Sha256Hash checkSum() throws JsonProcessingException, Exception {
+    private Sha256Hash checkSum() throws JsonProcessingException, Exception {
         TokensumsMap map = checkpointService.checkToken(store);
         Map<String, Tokensums> r11 = map.getTokensumsMap();
         for (Entry<String, Tokensums> a : r11.entrySet()) {
@@ -138,7 +138,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
         blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
         mcmcServiceUpdate();
-        
+
         // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
         // mcmcServiceUpdate();
         // testCreateToken(walletAppKit.wallet().walletKeys().get(2));
@@ -167,8 +167,10 @@ public class RewardService2Test extends AbstractIntegrationTest {
             if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
                 walletAppKit.wallet().setServerURL(contextRoot);
                 try {
-                blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(), null, null,NetworkParameters.BIGTANGLE_TOKENID_STRING));
-                }catch (InsufficientMoneyException e) {
+                    blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000,
+                            utxo.getValue().getValue().longValue(), null, null,
+                            NetworkParameters.BIGTANGLE_TOKENID_STRING, true));
+                } catch (InsufficientMoneyException e) {
                     // ignore: handle exception
                 }
             }
@@ -216,9 +218,9 @@ public class RewardService2Test extends AbstractIntegrationTest {
             long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
             walletAppKit.wallet().setServerURL(contextRoot);
             blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
-                    orderRecord.getOfferValue(), null, null));
+                    orderRecord.getOfferValue(), null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
             mcmcServiceUpdate();
-            
+
         }
 
     }

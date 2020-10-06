@@ -60,7 +60,7 @@ select * from outputs  where spent=0 and confirmed=1 ;
 select * from orders  where spent=0 and confirmed=1 ;
 select * from ordercancel
 update blocks set milestone=0    where height=0
-select * from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
+select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
 
@@ -71,7 +71,9 @@ select * from blocks where blocktype> 9 and milestone =  37 ;
 OUTPUTS
 select * from outputs where tokenid !='bc' ;
 select * from tokens   ;
-select * from orders   ;
+select * from orders  where orderbasetoken !='bc' limit 1 ;
+
+
 select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
@@ -140,4 +142,8 @@ delete from vm_deposit where amount <= 0
 select userid ,useraccount, amount,  d.status, pubkey from vm_deposit d
              join Account a on d.userid=a.id
              join wechatinvite w on a.email=w.wechatId and w.pubkey is not null;
+select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc";
+select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc" group by toaddress;
 
+
+select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba";

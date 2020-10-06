@@ -95,6 +95,7 @@ import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.OrderImpossibleException;
+import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -2161,22 +2162,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * It must use BigInteger to calculation to avoid overflow. Order can handle
      * only Long
      */
-    public BigInteger totalAmount(long price, long amount, int tokenDecimal) {
+    public BigInteger totalAmount(long price, long amount, int tokenDecimal, boolean allowRemainder) {
 
-        BigInteger re = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
-                .divide(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
-
+        BigInteger[] rearray = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
+                .divideAndRemainder(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
+        BigInteger re = rearray[0];
+        BigInteger remainder = rearray[1];
+        if (remainder.compareTo(BigInteger.ZERO) > 0 && !allowRemainder) {
+            // This remainder will cut
+            throw new OrderWithRemainderException("Invalid price and quantity value with remainder " + remainder);
+        }
         if (re.compareTo(BigInteger.ONE) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid target total value: " + re);
         }
         return re;
-    }
-
-    public Block buyOrder(KeyParameter aesKey, String tokenId, long buyPrice, long buyAmount, Long validToTime,
-            Long validFromTime) throws JsonProcessingException, IOException, InsufficientMoneyException,
-            UTXOProviderException, NoTokenException {
-        return buyOrder(aesKey, tokenId, buyPrice, buyAmount, validToTime, validFromTime,
-                NetworkParameters.BIGTANGLE_TOKENID_STRING);
     }
 
     /*
@@ -2186,21 +2185,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * 
      */
     public Block buyOrder(KeyParameter aesKey, String targetTokenId, long buyPrice, long targetValue, Long validToTime,
-            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException,
             InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token targetToken = checkTokenId(targetTokenId);
-        return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken);
+        return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,allowRemainder);
     }
 
     public Block buyOrder(KeyParameter aesKey, Token targetToken, long buyPrice, long targetValue, Long validToTime,
-            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException,
             InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
         if (targetToken.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("buy token is base token ");
         Integer priceshift = params.getOrderPriceShift(orderBaseToken);
         // Burn orderBaseToken to buy
-        Coin offerValue = new Coin(totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift),
+        Coin offerValue = new Coin(totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift,allowRemainder),
                 Utils.HEX.decode(orderBaseToken)).negate();
         Transaction tx = new Transaction(params);
         List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
@@ -2221,7 +2220,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         OrderOpenInfo info = new OrderOpenInfo(targetValue, targetToken.getTokenid(), beneficiary.getPubKey(),
                 validToTime, validFromTime, Side.BUY, beneficiary.toAddress(params).toBase58(), orderBaseToken,
-                buyPrice, totalAmount(buyPrice, targetValue, targetToken.getDecimals()+priceshift).longValue(), orderBaseToken);
+                buyPrice, totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift,allowRemainder).longValue(),
+                orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
         signTransaction(tx, aesKey);
@@ -2243,14 +2243,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * targetToken=orderBaseToken
      */
     public Block sellOrder(KeyParameter aesKey, String offerTokenId, long sellPrice, long offervalue, Long validToTime,
-            Long validFromTime, String orderBaseToken) throws JsonProcessingException, IOException, NoTokenException,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException, NoTokenException,
             InsufficientMoneyException, UTXOProviderException {
         Token t = checkTokenId(offerTokenId);
-        return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken);
+        return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,allowRemainder);
     }
 
     public Block sellOrder(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
-            Long validFromTime, String orderBaseToken)
+            Long validFromTime, String orderBaseToken, boolean allowRemainder)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         if (t.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("sell token is not allowed as base token ");
@@ -2276,7 +2276,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throw new InsufficientMoneyException("");
         }
         // get the base token
-        BigInteger targetvalue = totalAmount(sellPrice, offervalue, t.getDecimals() + priceshift);
+        BigInteger targetvalue = totalAmount(sellPrice, offervalue, t.getDecimals() + priceshift,allowRemainder);
         if (targetvalue.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid  max: " + targetvalue + " > " + Long.MAX_VALUE);
         }
