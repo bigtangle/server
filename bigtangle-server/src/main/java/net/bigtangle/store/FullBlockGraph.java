@@ -386,7 +386,7 @@ public class FullBlockGraph {
         block.verifyTransactions();
 
         SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
-        if(solidityState.isFailState()) {
+        if (solidityState.isFailState()) {
             log.debug(solidityState.toString());
         }
         // If explicitly wanted (e.g. new block from local clients), this
@@ -1318,11 +1318,11 @@ public class FullBlockGraph {
         try {
             OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
             Coin burned = validatorService.countBurnedToken(block, blockStore);
-            // calculate the offervalue for version == 1 
+            // calculate the offervalue for version == 1
             if (reqInfo.getVersion() == 1) {
                 reqInfo.setOfferValue(burned.getValue().longValue());
                 reqInfo.setOfferTokenid(burned.getTokenHex());
-            } 
+            }
             boolean buy = reqInfo.buy();
             Side side = buy ? Side.BUY : Side.SELL;
             int decimals = 0;
@@ -1546,7 +1546,7 @@ public class FullBlockGraph {
 
         // Make deterministic tx with proceeds
         Transaction tx = createOrderPayoutTransaction(block, payouts);
-        log.debug(tx.toString());
+        // log.debug(tx.toString());
         return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
     }
 
@@ -1570,7 +1570,7 @@ public class FullBlockGraph {
                 .createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
         tx.addInput(input);
         tx.setMemo(new MemoInfo("Order Payout"));
-        
+
         return tx;
     }
 
@@ -1624,7 +1624,7 @@ public class FullBlockGraph {
         // The incoming order receives the base token according to the
         // resting price
         payout(payouts, incomingPubKey, baseToken,
-                totalAmount(executedAmount, executedPrice, incomingOrder.getTokenDecimals()+priceshift));
+                totalAmount(executedAmount, executedPrice, incomingOrder.getTokenDecimals() + priceshift));
 
         // Finally, the orders could be fulfilled now, so we can
         // remove them from the order list
@@ -1632,9 +1632,9 @@ public class FullBlockGraph {
         // executed amounts
         incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount);
         incomingOrder.setTargetValue(incomingOrder.getTargetValue()
-                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()+priceshift));
+                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals() + priceshift));
         restingOrder.setOfferValue(restingOrder.getOfferValue()
-                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
+                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
         restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount);
         if (sellableAmount == executedAmount) {
             remainingOrders.remove(incomingOrder.getBlockHash());
@@ -1656,23 +1656,23 @@ public class FullBlockGraph {
         // resting is sell order
         Integer priceshift = networkParameters.getOrderPriceShift(baseToken);
         payout(payouts, restingPubKey, baseToken,
-                totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
+                totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
 
         // The incoming order receives the tokens
         payout(payouts, incomingPubKey, incomingOrder.getTargetTokenid(), executedAmount);
 
         // The difference in price is returned to the incoming
         // beneficiary
-        payout(payouts, incomingPubKey, baseToken,
-                totalAmount(executedAmount, (incomingPrice - executedPrice), incomingOrder.getTokenDecimals()+priceshift));
+        payout(payouts, incomingPubKey, baseToken, totalAmount(executedAmount, (incomingPrice - executedPrice),
+                incomingOrder.getTokenDecimals() + priceshift));
 
         // Finally, the orders could be fulfilled now, so we can
         // remove them from the order list
         restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount);
         restingOrder.setTargetValue(restingOrder.getTargetValue()
-                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals()+priceshift));
+                - totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
         incomingOrder.setOfferValue(incomingOrder.getOfferValue()
-                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals()+priceshift));
+                - totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals() + priceshift));
         incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount);
         if (sellableAmount == executedAmount) {
             remainingOrders.remove(restingOrder.getBlockHash());
@@ -1688,16 +1688,16 @@ public class FullBlockGraph {
      */
     public Long totalAmount(long price, long amount, int tokenDecimal) {
 
-     
         BigInteger[] rearray = BigInteger.valueOf(price).multiply(BigInteger.valueOf(amount))
                 .divideAndRemainder(BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
         BigInteger re = rearray[0];
         BigInteger remainder = rearray[1];
         if (remainder.compareTo(BigInteger.ZERO) > 0) {
             // This remainder will cut
-          log.debug("Price and quantity value with remainder " + remainder);
+            log.debug("Price and quantity value with remainder " + remainder + "/"
+                    + BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
         }
-        
+
         if (re.compareTo(BigInteger.ZERO) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid target total value: " + re);
         }
