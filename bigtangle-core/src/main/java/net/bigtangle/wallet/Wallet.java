@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.ConnectException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -75,7 +73,6 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
@@ -101,7 +98,6 @@ import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
-import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
@@ -119,7 +115,6 @@ import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.Json;
-import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -2683,52 +2678,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             return oldBlock;
         }
     }
-
-    public void getOrderMap(boolean matched, List<String> address, List<Map<String, Object>> orderData, String buytext,
-            String sellText) throws IOException, JsonProcessingException, JsonParseException, JsonMappingException {
-
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("spent", matched ? "false" : "true");
-        requestParam.put("addresses", address);
-        String response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-
-        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
-
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            HashMap<String, Object> map = new HashMap<String, Object>();
-
-            if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
-                map.put("type", buytext);
-                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getTargetTokenid());
-                map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(calc(orderRecord.getOfferValue(), LongMath.pow(10, t.getDecimals()),
-                        orderRecord.getTargetValue())));
-            } else {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
-                map.put("type", sellText);
-                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getOfferTokenid());
-                map.put("tokenname", t.getTokennameDisplay());
-                map.put("price", mf.format(calc(orderRecord.getTargetValue(), LongMath.pow(10, t.getDecimals()),
-                        orderRecord.getOfferValue())));
-            }
-            map.put("orderId", orderRecord.getBlockHashHex());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
-            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
-            map.put("address", ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(params).toString());
-            map.put("initialBlockHashHex", orderRecord.getBlockHashHex());
-            map.put("cancelPending", orderRecord.isCancelPending());
-            // map.put("state", Main.getText( (String)
-            // requestParam.get("state")));
-            orderData.add(map);
-        }
-    }
+ 
 
     public Long calc(long m, long factor, long d) {
         return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
