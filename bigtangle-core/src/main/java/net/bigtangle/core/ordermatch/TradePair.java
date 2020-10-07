@@ -14,11 +14,17 @@ public class TradePair implements Comparable<TradePair> {
     // Base token for the order
     private String orderBaseToken;
 
+    // paar to make order of the orderToken+orderBaseToken, dollar-yuan and yuan-doaller are different
+    private String paar;
+    
     public TradePair(String orderToken, String orderBaseToken) {
         super();
         this.orderToken = orderToken;
         this.orderBaseToken = orderBaseToken;
+        this.paar=orderToken+orderBaseToken;
     }
+
+     
 
     @Override
     public int hashCode() {
@@ -26,8 +32,11 @@ public class TradePair implements Comparable<TradePair> {
         int result = 1;
         result = prime * result + ((orderBaseToken == null) ? 0 : orderBaseToken.hashCode());
         result = prime * result + ((orderToken == null) ? 0 : orderToken.hashCode());
+        result = prime * result + ((paar == null) ? 0 : paar.hashCode());
         return result;
     }
+
+
 
     @Override
     public boolean equals(Object obj) {
@@ -48,8 +57,15 @@ public class TradePair implements Comparable<TradePair> {
                 return false;
         } else if (!orderToken.equals(other.orderToken))
             return false;
+        if (paar == null) {
+            if (other.paar != null)
+                return false;
+        } else if (!paar.equals(other.paar))
+            return false;
         return true;
     }
+
+
 
     public String getOrderToken() {
         return orderToken;
@@ -67,11 +83,21 @@ public class TradePair implements Comparable<TradePair> {
         this.orderBaseToken = orderBaseToken;
     }
 
+    public String getPaar() {
+        return paar;
+    }
+
+
+
+    public void setPaar(String paar) {
+        this.paar = paar;
+    }
+
+
+
     @Override
     public int compareTo(TradePair other) {
-        int last = this.getOrderToken().compareTo(other.getOrderToken());
-        return last == 0 ? this.orderBaseToken.compareTo(other.orderBaseToken) : last;
-
+        return this.getPaar().compareTo(other.getPaar()); 
     }
 
     @Override
