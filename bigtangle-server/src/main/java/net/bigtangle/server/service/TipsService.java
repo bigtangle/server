@@ -125,7 +125,8 @@ public class TipsService {
      * @throws BlockStoreException
      */
     public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(FullBlockStore store) throws BlockStoreException {
-        return getValidatedBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), store);
+     
+      return getValidatedBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), store);
     }
 
     /**
@@ -165,13 +166,30 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
+      
+        Pair<Sha256Hash, Sha256Hash> candidate = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
+        if(!candidate.getLeft().equals(candidate.getRight())) {
+            return candidate;
+        }
+        for (int i = 0; i <20; i++) {
+           Pair<Sha256Hash, Sha256Hash> paar = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
+           if(!paar.getLeft().equals(paar.getRight())) {
+               return paar;
+           }
+        }
+        return candidate;
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPairDo(TXReward maxConfirmedReward,
+            HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
+            throws BlockStoreException {
         List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
                 store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
         return getValidatedRewardBlockPair(currentApprovedNonMilestoneBlocks, left, right, prevRewardHash, store);
     }
-
+    
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(
             HashSet<BlockWrap> currentApprovedUnconfirmedBlocks, BlockWrap left, BlockWrap right,
             Sha256Hash prevRewardHash, FullBlockStore store) throws BlockStoreException {

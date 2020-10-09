@@ -1,5 +1,8 @@
 package net.bigtangle.core;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.utils.ProbabilityBlock;
 
@@ -14,6 +17,10 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
 
     BlockMCMC mcmc;
 
+    
+    private BigDecimal totalrating;
+   
+    
     public void setMcmcWithDefault(BlockMCMC mcmc) {
         if (mcmc == null) {
             this.mcmc = BlockMCMC.defaultBlockMCMC(getBlockHash());
@@ -58,10 +65,7 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
         setBlockType(Type.values()[blocktype]);
     }
 
-    public void setNormalizeRating(long rating) {
-        mcmc.setRating(rating * 100 / NetworkParameters.NUMBER_RATING_TIPS);
-    }
-
+  
     // use ProbabilityBlock.attackerSuccessProbability(0.3, z))
     public void setNormalizeRating() {
         if (getMilestone() > 0) {
@@ -69,12 +73,14 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
             if (diff > 100)
                 diff = 100;
             double attact = ProbabilityBlock.attackerSuccessProbability(0.3, diff);
-            mcmc.setRating(Math.round((100 * (1.0 - attact))));
+            totalrating = new BigDecimal(  (100 * (1.0 - attact) ));
+            totalrating=   totalrating.setScale(2, RoundingMode.CEILING);
         } else {
             // 1 - ProbabilityBlock.attackerSuccessProbability(0.3, 1) = 0.37
-            mcmc.setRating(mcmc.getRating() * 37 / NetworkParameters.NUMBER_RATING_TIPS);
-
+            totalrating = new BigDecimal( mcmc.getRating() * 37 / NetworkParameters.NUMBER_RATING_TIPS);
+            totalrating=     totalrating.setScale(2, RoundingMode.CEILING);
         }
+         
     }
 
     public long getLatestchainnumber() {
@@ -92,6 +98,15 @@ public class BlockEvaluationDisplay extends BlockEvaluation {
     public void setMcmc(BlockMCMC mcmc) {
         this.mcmc = mcmc;
     }
+
+    public BigDecimal getTotalrating() {
+        return totalrating;
+    }
+
+    public void setTotalrating(BigDecimal totalrating) {
+        this.totalrating = totalrating;
+    }
+ 
 
     /**
      * 
