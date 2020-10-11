@@ -54,14 +54,12 @@ public class TokensService {
         if (name != null && !"".equals(name.trim())) {
         list.addAll(store.getTokensList(name));
         }else {
+            list.addAll(store.getTokenID( NetworkParameters.BIGTANGLE_TOKENID_STRING));  
             list.addAll(store.getTokensListFromDomain("bigtangle"));   
-        }
+          }
         Map<String, BigInteger> map = store.getTokenAmountMap();
         return GetTokensResponse.create(list, map);
-    }
-
- 
-   
+    } 
  
     @Autowired
     protected NetworkParameters networkParameters;

@@ -121,15 +121,16 @@ public class CompareTest {
     }
 
     public void testComapre(String tokenid) throws Exception {
-        List<UTXO> t1 = checkpointService.getOutputs(TESTSERVER1, tokenid);
+       
         List<UTXO> t2 = checkpointService.getOutputs(TESTSERVER2, tokenid);
+        List<UTXO> t1 = checkpointService.getOutputs(TESTSERVER1, tokenid);
         compareUTXO(t1, t2);
     }
 
     private void compareUTXO(List<UTXO> t1, List<UTXO> t2) {
 
         log.debug("\n " + TESTSERVER1 + " utxo size : " + t1.size() + "\n " + TESTSERVER2 + ": " + t2.size());
-
+        if(t1.size() != t2.size()) return ;
         for (int i = 0; i < t1.size(); i++) {
             UTXO a = t1.get(i);
             UTXO u = t2.get(i);
