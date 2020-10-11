@@ -118,7 +118,7 @@ public class OrderTickerService {
         Set<String> tokenids = new HashSet<String>();
         for (MatchResult d : res) {
             tokenids.add(d.getTokenid());
-
+            tokenids.add(d.getBasetokenid());
         }
         Map<String, Token> re = new HashMap<String, Token>();
         List<Token> tokens = store.getTokensList(tokenids);
