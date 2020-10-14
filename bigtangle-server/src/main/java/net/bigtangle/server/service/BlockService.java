@@ -114,21 +114,22 @@ public class BlockService {
         return blocks;
     }
 
-  
-    public     BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
+    public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
         return store.getBlockWrap(hash).getBlockEvaluation();
     }
-    public     BlockMCMC getBlockMCMC(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
+
+    public BlockMCMC getBlockMCMC(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
         return store.getBlockWrap(hash).getMcmc();
     }
+
     public void saveBlock(Block block, FullBlockStore store) throws Exception {
- 
+
         broadcastBlock(block);
         blockgraph.add(block, false, store);
         // removeBlockPrototype(block, store);
 
     }
- 
+
     public long getTimeSeconds(int days) throws Exception {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
@@ -354,7 +355,8 @@ public class BlockService {
         return GetBlockEvaluationsResponse.create(evaluations);
     }
 
-    public List<BlockWrap> getEntryPointCandidates(long currChainLength,FullBlockStore store) throws BlockStoreException {
+    public List<BlockWrap> getEntryPointCandidates(long currChainLength, FullBlockStore store)
+            throws BlockStoreException {
         return store.getEntryPoints(currChainLength);
     }
 
@@ -401,17 +403,31 @@ public class BlockService {
 
         return getNewBlockPrototype(store);
     }
- 
- 
 
     private Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException, NoBlockException {
-        Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
+        Pair<Sha256Hash, Sha256Hash> tipsToApprove = getValidatedBlockPair(store);
         Block r1 = getBlock(tipsToApprove.getLeft(), store);
         Block r2 = getBlock(tipsToApprove.getRight(), store);
         Block b = Block.createBlock(networkParameters, r1, r2);
         b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
         return b;
+    }
+
+    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(FullBlockStore store)
+            throws BlockStoreException, NoBlockException {
+        Pair<Sha256Hash, Sha256Hash> candidate = tipService.getValidatedBlockPair(store);
+
+        if (!candidate.getLeft().equals(candidate.getRight())) {
+            return candidate;
+        }
+        for (int i = 0; i < 20; i++) {
+            Pair<Sha256Hash, Sha256Hash> paar = tipService.getValidatedBlockPair(store);
+            if (!paar.getLeft().equals(paar.getRight())) {
+                return paar;
+            }
+        }
+        return candidate;
     }
 
     public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
@@ -461,7 +477,7 @@ public class BlockService {
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
         FullBlockStore store = storeService.getStore();
         try {
-            if (!store.existBlock(block.getHash()) ) {
+            if (!store.existBlock(block.getHash())) {
                 try {
                     if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
                         logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
@@ -484,8 +500,6 @@ public class BlockService {
 
         return Optional.empty();
     }
-
- 
 
     public void adjustHeightRequiredBlocks(Block block, FullBlockStore store)
             throws BlockStoreException, NoBlockException {
@@ -528,15 +542,15 @@ public class BlockService {
         return result;
     }
 
-    public long getCurrentMaxHeight(TXReward maxConfirmedReward,FullBlockStore store) throws BlockStoreException {
-       // TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+    public long getCurrentMaxHeight(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
+        // TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         if (maxConfirmedReward == null)
             return NetworkParameters.FORWARD_BLOCK_HORIZON;
         return store.get(maxConfirmedReward.getBlockHash()).getHeight() + NetworkParameters.FORWARD_BLOCK_HORIZON;
     }
 
     public long getCurrentCutoffHeight(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-      //  TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        // TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         if (maxConfirmedReward == null)
             return 0;
         long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
@@ -557,9 +571,9 @@ public class BlockService {
         for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
             Block currRewardBlock;
             try {
-                currRewardBlock = getBlock(currPrevRewardHash, store); 
+                currRewardBlock = getBlock(currPrevRewardHash, store);
                 RewardInfo currRewardInfo = new RewardInfo()
-                        .parseChecked(currRewardBlock.getTransactions().get(0).getData()); 
+                        .parseChecked(currRewardBlock.getTransactions().get(0).getData());
                 if (currPrevRewardHash.equals(networkParameters.getGenesisBlock().getHash()))
                     return 0;
 

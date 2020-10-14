@@ -253,7 +253,7 @@ public class RewardService {
         try {
             handler.get(scheduleConfiguration.getMiningrate(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.debug(" reward solve Timeout  ");
+            log.debug(" reward solve Timeout  {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
             handler.cancel(true);
             return null;
         } finally {
