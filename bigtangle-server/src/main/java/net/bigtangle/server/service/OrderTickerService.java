@@ -94,7 +94,9 @@ public class OrderTickerService {
      * @return a list of up to n last prices in ascending occurrence
      * @throws BlockStoreException
      */
-    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,FullBlockStore store) throws BlockStoreException {
+    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,String basetoken,FullBlockStore store) throws BlockStoreException {
+        Set<String> basetokens = new HashSet<String>();
+        basetokens.add(basetoken);
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds,null, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
@@ -107,10 +109,11 @@ public class OrderTickerService {
     }
  
     
-    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, int count,FullBlockStore store) throws BlockStoreException {
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,null, count);
+    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,String basetoken, int count,FullBlockStore store) throws BlockStoreException {
+        Set<String> basetokens = new HashSet<String>();
+        basetokens.add(basetoken);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetokens, count);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
-
     }
  
 
@@ -129,9 +132,11 @@ public class OrderTickerService {
     }
 
     @Cacheable("priceticker")
-    public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate,FullBlockStore store)
+    public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids,String basetoken, Long startDate, Long endDate,FullBlockStore store)
             throws BlockStoreException {
-        List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, startDate, endDate, MAXCOUNT);
+        Set<String> basetokens = new HashSet<String>();
+        basetokens.add(basetoken);
+        List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, basetokens,startDate, endDate, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
     }
 

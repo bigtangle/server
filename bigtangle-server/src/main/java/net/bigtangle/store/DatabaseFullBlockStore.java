@@ -5375,7 +5375,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetoken, int count)
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetokens, int count)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -5386,8 +5386,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 tokenid = "  tokenid IN (" + buildINList(tokenIds) + " )";
             }
             String basetokenid = "";
-            if (basetoken != null && !basetoken.isEmpty()) {
-                basetokenid = "  order IN (" + buildINList(basetoken) + " )";
+            if (basetokens != null && !basetokens.isEmpty()) {
+                basetokenid = "  basetokenid IN (" + buildINList(basetokens) + " )";
             }
             if ("".equals(tokenid) && "".equals(basetokenid)) {
                 sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
@@ -5765,17 +5765,25 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Long startDate, Long endDate, int count)
+    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Set<String> basetoken, Long startDate, Long endDate, int count)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_MATCHING_EVENT;
+            
+            String basetokenid = "";
+            if (basetoken != null && !basetoken.isEmpty()) {
+                basetokenid = "where  basetokenid IN (" + buildINList(basetoken) + " )";
+            }
+            
             if (tokenIds == null || tokenIds.isEmpty()) {
                 sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
 
             } else {
-                sql += " where tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate
+                if("".equals(basetokenid))  sql += " where";
+                
+                sql += "  tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate
                         + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
             preparedStatement = getConnection().prepareStatement(sql);

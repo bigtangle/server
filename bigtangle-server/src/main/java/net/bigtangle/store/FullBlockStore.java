@@ -452,7 +452,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
-    List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenids, Long startDate, Long endDate, int count)
+    List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenids, Set<String> basetoken, Long startDate, Long endDate, int count)
             throws BlockStoreException;
 
     void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException;

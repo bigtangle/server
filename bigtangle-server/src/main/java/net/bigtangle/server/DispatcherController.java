@@ -463,15 +463,16 @@ public class DispatcherController {
                 Long startDate = (Long) request.get("startDate");
                 Long endDate = (Long) request.get("endDate");
                 Integer count = (Integer) request.get("count");
+                String basetoken = (String) request.get("basetoken");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
                 if (count != null) {
-                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, count, store);
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids,basetoken, count, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else if (startDate == null || endDate == null) {
-                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, store);
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken,store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else {
-                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids,
+                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids,basetoken,
                             startDate / 1000, endDate / 1000, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 }

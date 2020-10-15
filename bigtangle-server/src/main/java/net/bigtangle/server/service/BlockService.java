@@ -414,6 +414,10 @@ public class BlockService {
         return b;
     }
 
+    /*
+     * prefer tip from two different previous block.
+     * This is modified mcmc
+     */
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(FullBlockStore store)
             throws BlockStoreException, NoBlockException {
         Pair<Sha256Hash, Sha256Hash> candidate = tipService.getValidatedBlockPair(store);
@@ -421,7 +425,7 @@ public class BlockService {
         if (!candidate.getLeft().equals(candidate.getRight())) {
             return candidate;
         }
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 5; i++) {
             Pair<Sha256Hash, Sha256Hash> paar = tipService.getValidatedBlockPair(store);
             if (!paar.getLeft().equals(paar.getRight())) {
                 return paar;
