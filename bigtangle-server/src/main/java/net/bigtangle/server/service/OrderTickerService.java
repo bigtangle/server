@@ -97,7 +97,7 @@ public class OrderTickerService {
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,String basetoken,FullBlockStore store) throws BlockStoreException {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,null, MAXCOUNT);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetokens, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
     }

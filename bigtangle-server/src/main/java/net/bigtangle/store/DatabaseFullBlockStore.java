@@ -5383,17 +5383,17 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             String sql = SELECT_MATCHING_EVENT;
             String tokenid = "";
             if (tokenIds != null && !tokenIds.isEmpty()) {
-                tokenid = "  tokenid IN (" + buildINList(tokenIds) + " )";
+                tokenid = "  tokenid IN ( " + buildINList(tokenIds) + " )";
             }
             String basetokenid = "";
             if (basetokens != null && !basetokens.isEmpty()) {
                 if(!"".equals(tokenid)) basetokenid += " and "; 
-                basetokenid += "  basetokenid IN (" + buildINList(basetokens) + " )";
+                basetokenid += "  basetokenid IN ( " + buildINList(basetokens) + " )";
             }
             if ("".equals(tokenid) && "".equals(basetokenid)) {
                 sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             } else {
-                sql += " where" + tokenid + basetokenid + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
+                sql += " where " + tokenid + basetokenid + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
             preparedStatement = getConnection().prepareStatement(sql);
 
