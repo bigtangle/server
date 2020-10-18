@@ -35,9 +35,10 @@ public class KafkaBridge {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaBridge.class);
 
-    String kafkaServerFrom = "10.1.70.11:9092,10.1.70.12:9092,10.1.70.13:9092";
+    String kafkaServerFrom = "10.1.70.12:9092,10.1.70.13:9092";
     String kafkaServerTo = "test.kafka.bigtangle.de:9092";
-
+    String topicFrom ="bigtangle";
+    String topicTo ="tokens";
     public static void main(String[] args) {
         KafkaBridge kafkaBridge = new KafkaBridge();
         // TODO auto discover
@@ -47,7 +48,7 @@ public class KafkaBridge {
 
     public void runStream() {
 
-        runStream(kafkaServerFrom, "bigtangle");
+        runStream(kafkaServerFrom, topicFrom);
 
     }
 
@@ -87,7 +88,7 @@ public class KafkaBridge {
     public boolean broadcast(byte[] data, String bootstrapServers) {
 
         try {
-            sendMessage(data, "bigtangle", bootstrapServers);
+            sendMessage(data, topicTo, bootstrapServers);
             return true;
         } catch (InterruptedException e) { 
             log.error("",e);
