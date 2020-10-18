@@ -5387,7 +5387,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
             String basetokenid = "";
             if (basetokens != null && !basetokens.isEmpty()) {
-                basetokenid = "  basetokenid IN (" + buildINList(basetokens) + " )";
+                if(!"".equals(tokenid)) basetokenid += " and "; 
+                basetokenid += "  basetokenid IN (" + buildINList(basetokens) + " )";
             }
             if ("".equals(tokenid) && "".equals(basetokenid)) {
                 sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
