@@ -456,7 +456,7 @@ public class BlockService {
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes) {
 
         try {
-
+            logger.debug("addConnectedFromKafka from sendkey:" + key.toString() );
             return addConnected(Gzip.decompress(bytes), true);
         } catch (VerificationException e) {
             return null;
@@ -473,9 +473,11 @@ public class BlockService {
     public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid)
             throws ProtocolException, BlockStoreException, NoBlockException {
         if (bytes == null)
-            return null;
-
-        return addConnectedBlock((Block) networkParameters.getDefaultSerializer().makeBlock(bytes), allowUnsolid);
+            return null; 
+        Block makeBlock = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
+        logger.debug(" addConnected  Blockhash=" + makeBlock.getHashAsString() + " height ="
+                + makeBlock.getHeight() + " block: " + makeBlock.toString() );
+        return addConnectedBlock(makeBlock, allowUnsolid);
     }
 
     public Optional<Block> addConnectedBlock(Block block, boolean allowUnsolid) throws BlockStoreException {
