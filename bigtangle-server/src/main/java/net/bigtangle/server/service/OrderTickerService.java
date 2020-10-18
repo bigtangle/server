@@ -132,7 +132,7 @@ public class OrderTickerService {
     }
 
     @Cacheable("priceticker")
-    public AbstractResponse getTimeBetweenMatchingEvents(Set<String> tokenids,String basetoken, Long startDate, Long endDate,FullBlockStore store)
+    public OrderTickerResponse getTimeBetweenMatchingEvents(Set<String> tokenids,String basetoken, Long startDate, Long endDate,FullBlockStore store)
             throws BlockStoreException {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);

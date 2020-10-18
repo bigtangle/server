@@ -4998,7 +4998,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
                 resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
                 resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"), resultSet.getLong("price"), resultSet.getInt("tokendecimals"));
+                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"),
+                resultSet.getLong("price"), resultSet.getInt("tokendecimals"));
 
     }
 
@@ -5387,7 +5388,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
             String basetokenid = "";
             if (basetokens != null && !basetokens.isEmpty()) {
-                if(!"".equals(tokenid)) basetokenid += " and "; 
+                if (!"".equals(tokenid))
+                    basetokenid += " and ";
                 basetokenid += "  basetokenid IN ( " + buildINList(basetokens) + " )";
             }
             if ("".equals(tokenid) && "".equals(basetokenid)) {
@@ -5766,26 +5768,34 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Set<String> basetoken, Long startDate, Long endDate, int count)
-            throws BlockStoreException {
+    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Set<String> basetoken, Long startDate,
+            Long endDate, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_MATCHING_EVENT;
-            
+
             String basetokenid = "";
             if (basetoken != null && !basetoken.isEmpty()) {
-                basetokenid = "where  basetokenid IN (" + buildINList(basetoken) + " )";
+                basetokenid = " where  basetokenid IN ( " + buildINList(basetoken) + " ) ";
             }
-            
+
             if (tokenIds == null || tokenIds.isEmpty()) {
                 sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
 
             } else {
-                if("".equals(basetokenid))  sql += " where";
-                
-                sql += "  tokenid IN (" + buildINList(tokenIds) + " ) AND inserttime >= " + startDate
-                        + " AND inserttime <=" + endDate + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
+                if ("".equals(basetokenid))
+                    sql += " where ";
+                else {
+                    sql +=basetokenid + " and ";
+                }
+                sql += "  tokenid IN ( " + buildINList(tokenIds) + " ) ";
+
+                if (startDate != null)
+                    sql += " AND inserttime >= " + startDate;
+                if (endDate != null)
+                    sql += " AND inserttime  =< " + endDate;
+                sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             }
             preparedStatement = getConnection().prepareStatement(sql);
 

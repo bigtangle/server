@@ -99,6 +99,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertEquals(1000l, tickerService.getLastMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING, store)
                 .getTickers().get(0).getPrice());
 
+        
+        assertEquals(1000l, tickerService.getTimeBetweenMatchingEvents(   
+                a, NetworkParameters.BIGTANGLE_TOKENID_STRING,null,null, store)
+                .getTickers().get(0).getPrice());
+
+        assertEquals(1000l, tickerService.getTimeBetweenMatchingEvents(   
+                a, NetworkParameters.BIGTANGLE_TOKENID_STRING,(System.currentTimeMillis()- 10000000)  / 1000 ,null, store)
+                .getTickers().get(0).getPrice());
+ 
         // Verify deterministic overall execution
 
         // check the method of client service
