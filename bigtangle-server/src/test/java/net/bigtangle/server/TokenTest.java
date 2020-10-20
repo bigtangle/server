@@ -489,6 +489,7 @@ public class TokenTest extends AbstractIntegrationTest {
         IdentityData identityData = new IdentityData();
         identityData.setIdentityCore(identityCore);
         identityData.setIdentificationnumber("120123456789012345");
+        identityData.uniqueNameIdentity();
         byte[] photo = "readFile".getBytes();
         // readFile(new File("F:\\img\\cc_aes1.jpg"));
         identityData.setPhoto(photo);

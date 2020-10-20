@@ -232,9 +232,10 @@ public class SerializationTest {
         IdentityData identityData = new IdentityData();
         identityData.setIdentityCore(identityCore);
         identityData.setIdentificationnumber("120123456789012345"); 
+        identityCore.setDateofbirth( "20201231");
         identityData.setPhoto( "readFile".getBytes());
         identityData.setIdentityCore(identityCore);
-      
+        identityData.uniqueNameIdentity();
         IdentityData id = new IdentityData().parse(identityData.toByteArray());
         assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
    

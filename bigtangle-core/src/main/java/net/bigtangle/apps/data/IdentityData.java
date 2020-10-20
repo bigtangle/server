@@ -83,7 +83,7 @@ public class IdentityData extends DataClass implements java.io.Serializable {
             Utils.writeNBytesString(dos, identityCore.getSurname());
             Utils.writeNBytesString(dos, identityCore.getForenames());
             Utils.writeNBytesString(dos, identityCore.getDateofbirth());
-            return Sha256Hash.wrap(baos.toByteArray()).toString();
+            return Sha256Hash.of(baos.toByteArray()).toString();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
