@@ -7,8 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import net.bigtangle.core.DataClass;
-import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
+import net.bigtangle.utils.Base58;
 
 public class IdentityData extends DataClass implements java.io.Serializable {
 
@@ -83,7 +83,7 @@ public class IdentityData extends DataClass implements java.io.Serializable {
             Utils.writeNBytesString(dos, identityCore.getSurname());
             Utils.writeNBytesString(dos, identityCore.getForenames());
             Utils.writeNBytesString(dos, identityCore.getDateofbirth());
-            return Sha256Hash.of(baos.toByteArray()).toString();
+            return  Base58.encode(Utils.sha256hash160(baos.toByteArray())); 
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
