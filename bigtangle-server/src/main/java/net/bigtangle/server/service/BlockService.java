@@ -368,7 +368,7 @@ public class BlockService {
 
             kafkaMessageProducer.sendMessage(block.bitcoinSerialize(), serverConfiguration.getMineraddress());
         } catch (InterruptedException | ExecutionException | IOException e) {
-            logger.warn("", e);
+            logger.warn(block.toString(), e);
         }
     }
 
