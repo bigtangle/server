@@ -73,7 +73,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
-import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
@@ -92,6 +91,7 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
+import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
@@ -131,6 +131,8 @@ public class FullBlockGraph {
     private BlockService blockService;
     @Autowired
     private StoreService storeService;
+    @Autowired
+    private SyncBlockService syncBlockService;
 
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean a;
@@ -349,7 +351,9 @@ public class FullBlockGraph {
 
             if (solidityState.isDirectlyMissing()) {
                 log.info("Block isDirectlyMissing" + block.toString());
-                saveChainBlockQueue(block, store, true);
+                // saveChainBlockQueue(block, store, true);
+                // sync the DirectlyMissing
+                syncBlockService.requestBlocks(block , store);
                 return;
             }
 
