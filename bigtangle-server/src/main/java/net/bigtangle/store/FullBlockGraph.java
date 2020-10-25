@@ -252,7 +252,7 @@ public class FullBlockGraph {
 
     public void updateChain() throws BlockStoreException {
         updateChainConnected();
-        updateConfirmedTimeBoxed();
+      //  updateConfirmedTimeBoxed();
     }
 
     public void updateChainConnected() throws BlockStoreException {
@@ -1924,22 +1924,7 @@ public class FullBlockGraph {
     public void updateConfirmedDo() throws BlockStoreException {
         FullBlockStore blockStore = storeService.getStore();
         try {
-            // First remove any blocks that should no longer be in the milestone
-            HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
-            HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-            for (BlockEvaluation block : blocksToRemove) {
-
-                try {
-                    blockStore.beginDatabaseBatchWrite();
-                    unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
-                    blockStore.commitDatabaseBatchWrite();
-                } catch (Exception e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
-                } finally {
-                    blockStore.defaultDatabaseBatchWrite();
-                }
-            }
+            checkUnconfirm(blockStore);
             TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
             long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
             long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, blockStore);
@@ -1967,6 +1952,25 @@ public class FullBlockGraph {
             }
         } finally {
             blockStore.close();
+        }
+    }
+
+    private void checkUnconfirm(FullBlockStore blockStore) throws BlockStoreException  {
+        // First remove any blocks that should no longer be in the milestone
+        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+        for (BlockEvaluation block : blocksToRemove) {
+
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
+            }
         }
     }
 

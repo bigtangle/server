@@ -508,9 +508,16 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         a.add(testTokenId);
         List<MatchResult> tickers = tickerService
                 .getLastMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING, store).getTickers();
-        assertEquals(tickers.size(), 2);
-        assertTrue(1000l == tickers.get(0).getPrice() || priceshift == tickers.get(0).getPrice());
+        assertEquals(tickers.size(), 1);
+        assertTrue(1000l == tickers.get(0).getPrice()  );
 
+        a = new HashSet<String>();
+        a.add(testTokenId);
+         tickers = tickerService
+                .getLastMatchingEvents(a, yuan.getPublicKeyAsHex(), store).getTickers();
+        assertEquals(tickers.size(), 1);
+        assertTrue( priceshift == tickers.get(0).getPrice());
+        
         // Verify the tokens changed possession
 
         assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);

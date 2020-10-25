@@ -194,12 +194,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "  block, solid, confirmed FROM blocks WHERE hash = ?" + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
-            + " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
+            + " FROM blocks  WHERE  solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
+            + " AND height <= ?   "  + afterSelect();
 
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks , mcmc WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
-            + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD + afterSelect();
+            + "  FROM blocks  WHERE  solid=2 AND milestone = -1 AND confirmed = true   "
+             + afterSelect();
 
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();

@@ -394,6 +394,15 @@ public class SyncBlockService {
     
         blockStore.deleteAllChainBlockQueue();
     }
+    
+    /*
+     * remove the outputs, which is out of data and spent
+     */
+    public void pruneOutputs(FullBlockStore blockStore) throws BlockStoreException {
+        
+        blockStore.deleteAllChainBlockQueue();
+    }
+    
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
