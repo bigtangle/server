@@ -58,7 +58,7 @@ public class SyncBlockService {
 
     @Autowired
     private BlockService blockService;
- 
+
     @Autowired
     protected ServerConfiguration serverConfiguration;
     private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
@@ -75,7 +75,7 @@ public class SyncBlockService {
         FullBlockStore store = storeService.getStore();
         try {
             // log.debug(" Start SyncBlockService Single: ");
- 
+
             connectingOrphans(store);
             sync(-1l, false, store);
             // deleteOldUnsolidBlock();
@@ -98,9 +98,9 @@ public class SyncBlockService {
         FullBlockStore store = storeService.getStore();
         try {
             log.debug(" Start SyncBlockService startInit: ");
- 
+
             cleanupChainBlockQueue(store);
-            store. deleteAllLockobject();
+            store.deleteAllLockobject();
             sync(-1l, true, store);
             blockgraph.updateChain();
             log.debug(" end startInit: ");
@@ -151,12 +151,10 @@ public class SyncBlockService {
         }
     }
 
- 
     public long getTimeSeconds(int days) throws Exception {
         return System.currentTimeMillis() / 1000 - days * 60 * 24 * 60;
     }
 
- 
     public byte[] requestBlock(Sha256Hash hash) {
         // block from network peers
         // log.debug("requestBlock" + hash.toString());
@@ -190,8 +188,7 @@ public class SyncBlockService {
         for (String s : re) {
             if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
                 try {
-                    requestBlocks(rewardInfo.getChainlength(), s, store);
-                    requestBlock(rewardInfo.getPrevRewardHash());
+                    requestBlocks(rewardInfo.getChainlength() - 2, rewardInfo.getChainlength(), s, store);
                 } catch (Exception e) {
                     log.debug(s, e);
                     badserver.add(s);
@@ -337,18 +334,18 @@ public class SyncBlockService {
             TXReward re = findSync(remotes, mylist);
             log.debug(" start sync remote ChainLength: " + re.getChainLength() + " to: "
                     + aMaxConfirmedReward.aTXReward.getChainLength());
-        
+
             for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
                     .getChainLength(); i += serverConfiguration.getSyncblocks()) {
                 Stopwatch watch = Stopwatch.createStarted();
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
                 if (initsync) {
-                   // log.debug(" updateChain " );
+                    // log.debug(" updateChain " );
                     blockgraph.updateChain();
                 }
-                log.debug(  " synced second="   +  watch.elapsed(TimeUnit.SECONDS));
+                log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
             }
-       
+
         }
         // log.debug(" finish sync " + aMaxConfirmedReward.server + " ");
     }
@@ -391,14 +388,14 @@ public class SyncBlockService {
     }
 
     public void cleanupChainBlockQueue(FullBlockStore blockStore) throws BlockStoreException {
-    
+
         blockStore.deleteAllChainBlockQueue();
     }
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
         List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
         TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
-        long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward,blockStore);
+        long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
         if (orphanBlocks.size() > 0) {
             log.debug("Orphan  size = {}", orphanBlocks.size());
         }
