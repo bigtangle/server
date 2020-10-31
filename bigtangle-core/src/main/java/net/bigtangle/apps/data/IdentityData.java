@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import net.bigtangle.core.DataClass;
 import net.bigtangle.core.Utils;
@@ -74,25 +75,18 @@ public class IdentityData extends DataClass implements java.io.Serializable {
 
     /*
      * This is unique token name for a identity using Hash
+     * Only pro country
      */
     public String uniqueNameIdentity() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-        try {
-            Utils.writeNBytesString(dos, identificationnumber);
-            Utils.writeNBytesString(dos, identityCore.getSurname());
-            Utils.writeNBytesString(dos, identityCore.getForenames());
-            Utils.writeNBytesString(dos, identityCore.getDateofbirth());
-            return  Base58.encode(Utils.sha256hash160(baos.toByteArray())); 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                dos.close();
-            } catch (IOException e) {
 
-            }
+        try {
+            if (identificationnumber == null)
+                identificationnumber = "";
+            return Base58.encode(Utils.sha256hash160(identificationnumber.trim().getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            return "";
         }
+
     }
 
     public String getCode() {
