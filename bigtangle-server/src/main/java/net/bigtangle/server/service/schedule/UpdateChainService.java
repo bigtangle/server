@@ -30,7 +30,7 @@ public class UpdateChainService {
     private ScheduleConfiguration scheduleConfiguration;
     @Async
     @Scheduled(fixedDelayString = "100")
-    public void updateConfirmService() {
+    public void updateChain() {
         if (scheduleConfiguration.isMilestone_active() &&  serverConfiguration.checkService()) {
             try { 
                 blockGraph.updateChain(); 

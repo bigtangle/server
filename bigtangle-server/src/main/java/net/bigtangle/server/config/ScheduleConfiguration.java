@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-
 public class ScheduleConfiguration {
 
     @Value("${service.schedule.mcmc:false}")
@@ -17,7 +16,7 @@ public class ScheduleConfiguration {
     Long mcmcrate;
     @Value("${service.schedule.mining:false}")
     boolean mining;
-    
+
     @Value("${service.schedule.blockbatch:false}")
     boolean blockBatchService_active;
 
@@ -25,7 +24,10 @@ public class ScheduleConfiguration {
     Long miningrate;
     @Value("${service.schedule.blockbatchrate:50000}")
     Long blockbatchrate;
-    
+
+    @Value("${service.schedule.syncrate:50000}")
+    Long syncrate;
+
     public boolean isMilestone_active() {
         return milestone_active;
     }
@@ -74,13 +76,19 @@ public class ScheduleConfiguration {
         this.mcmcrate = mcmcrate;
     }
 
+    public Long getSyncrate() {
+        return syncrate;
+    }
+
+    public void setSyncrate(Long syncrate) {
+        this.syncrate = syncrate;
+    }
+
     @Override
     public String toString() {
         return "ScheduleConfiguration [milestone_active=" + milestone_active + ", mcmcrate=" + mcmcrate + ", mining="
                 + mining + ", blockBatchService_active=" + blockBatchService_active + ", miningrate=" + miningrate
-                + ", blockbatchrate=" + blockbatchrate + "]";
+                + ", blockbatchrate=" + blockbatchrate + ", syncrate=" + syncrate + "]";
     }
-
-  
 
 }

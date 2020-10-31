@@ -73,7 +73,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
-import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
@@ -92,6 +91,7 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
+import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
@@ -131,6 +131,8 @@ public class FullBlockGraph {
     private BlockService blockService;
     @Autowired
     private StoreService storeService;
+    @Autowired
+    private SyncBlockService syncBlockService;
 
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean a;
@@ -188,7 +190,7 @@ public class FullBlockGraph {
                     canrun = true;
                 } else {
                     if (lock.getLocktime() < System.currentTimeMillis() - 2000)
-                        log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+                        log.info("updateConfirmed running start = " + Utils.dateTimeFormat(lock.getLocktime()));
                 }
             }
             if (canrun) {
@@ -348,8 +350,11 @@ public class FullBlockGraph {
             SolidityState solidityState = validatorService.checkChainSolidity(block, true, store);
 
             if (solidityState.isDirectlyMissing()) {
-                log.info("Block isDirectlyMissing" + block.toString());
-                saveChainBlockQueue(block, store, true);
+                log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store);
+                // sync the lastest chain from remote start from the -2 rewards
+                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2);
                 return;
             }
 
@@ -365,9 +370,7 @@ public class FullBlockGraph {
                 return;
             }
             connectRewardBlock(block, solidityState, store);
-            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-            l.add(chainBlockQueue);
-            store.deleteChainBlockQueue(l);
+            deleteChainQueue(chainBlockQueue, store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             store.abortDatabaseBatchWrite();
@@ -375,6 +378,12 @@ public class FullBlockGraph {
         } finally {
             store.defaultDatabaseBatchWrite();
         }
+    }
+
+    private void deleteChainQueue(ChainBlockQueue chainBlockQueue, FullBlockStore store) throws BlockStoreException {
+        List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+        l.add(chainBlockQueue);
+        store.deleteChainBlockQueue(l);
     }
 
     public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore)
