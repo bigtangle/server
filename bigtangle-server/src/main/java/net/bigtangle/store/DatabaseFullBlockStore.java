@@ -6056,7 +6056,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
             s = getConnection()
-                    .prepareStatement(SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc");
+                    .prepareStatement(SELECT_CHAINBLOCKQUEUE + " where orphan =? " 
+            + " order by chainlength asc" + " limit 200");
             s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {

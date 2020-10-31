@@ -190,7 +190,7 @@ public class FullBlockGraph {
                     canrun = true;
                 } else {
                     if (lock.getLocktime() < System.currentTimeMillis() - 2000)
-                        log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+                        log.info("updateConfirmed running start = " + Utils.dateTimeFormat(lock.getLocktime()));
                 }
             }
             if (canrun) {
@@ -350,10 +350,11 @@ public class FullBlockGraph {
             SolidityState solidityState = validatorService.checkChainSolidity(block, true, store);
 
             if (solidityState.isDirectlyMissing()) {
-                log.info("Block isDirectlyMissing" + block.toString());
-                // saveChainBlockQueue(block, store, true);
-                // sync the DirectlyMissing
-                syncBlockService.requestBlocks(block , store);
+                log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store);
+                // sync the lastest chain from remote start from the -2 rewards
+                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2);
                 return;
             }
 
@@ -369,9 +370,7 @@ public class FullBlockGraph {
                 return;
             }
             connectRewardBlock(block, solidityState, store);
-            List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-            l.add(chainBlockQueue);
-            store.deleteChainBlockQueue(l);
+            deleteChainQueue(chainBlockQueue, store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             store.abortDatabaseBatchWrite();
@@ -379,6 +378,12 @@ public class FullBlockGraph {
         } finally {
             store.defaultDatabaseBatchWrite();
         }
+    }
+
+    private void deleteChainQueue(ChainBlockQueue chainBlockQueue, FullBlockStore store) throws BlockStoreException {
+        List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
+        l.add(chainBlockQueue);
+        store.deleteChainBlockQueue(l);
     }
 
     public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore)

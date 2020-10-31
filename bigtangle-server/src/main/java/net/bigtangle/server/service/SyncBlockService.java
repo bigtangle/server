@@ -10,8 +10,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +39,14 @@ import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ChainBlockQueue;
+import net.bigtangle.server.data.LockObject;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.Threading;
 
 /**
  * <p>
@@ -62,39 +67,80 @@ public class SyncBlockService {
     @Autowired
     protected ServerConfiguration serverConfiguration;
     private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
+    private static final String LOCKID = "sync";
 
-    protected final ReentrantLock lock = Threading.lock("syncBlockService");
+    @Autowired
+    private ScheduleConfiguration scheduleConfiguration;
+
     @Autowired
     private StoreService storeService;
 
-    public void startSingleProcess() throws BlockStoreException {
-        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
-            log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
-            return;
-        }
-        FullBlockStore store = storeService.getStore();
-        try {
-            // log.debug(" Start SyncBlockService Single: ");
+    public void startSingleProcess(Long chainlength) throws BlockStoreException {
+        // ExecutorService executor = Executors.newSingleThreadExecutor();
 
-            connectingOrphans(store);
-            sync(-1l, false, store);
-            // deleteOldUnsolidBlock();
-            // updateSolidity();
-            // log.debug(" end SyncBlockService Single: ");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                startSingleProcessDo(chainlength);
+                return "finish";
+            }
+        });
+        try {
+            handler.get(scheduleConfiguration.getSyncrate() * 2, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.debug(" sync  Timeout  ");
+            handler.cancel(true);
         } catch (Exception e) {
-            log.warn("SyncBlockService ", e);
+            log.debug(" sync     ", e);
         } finally {
-            lock.unlock();
+            executor.shutdownNow();
+        }
+
+    }
+
+    public void startSingleProcessDo(Long chainlength) throws BlockStoreException {
+
+        FullBlockStore store = storeService.getStore();
+        try { 
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
+            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getSyncrate() * 100) {
+                log.info("sync   out date delete and insert: " + Utils.dateTimeFormat(lock.getLocktime()));
+                store.deleteLockobject(LOCKID);
+                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                canrun = true;
+            } else {
+                log.info("sync running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
+            }
+            if (canrun) {
+                Stopwatch watch = Stopwatch.createStarted();
+                connectingOrphans(store);
+                sync(-1l, false, store);
+
+                store.deleteLockobject(LOCKID);
+                // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
+                log.info("sync time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                watch.stop();
+            }
+        } catch (Exception e) {
+            log.error("sync ", e);
+            if (!e.getLocalizedMessage().contains("java.sql.SQLIntegrityConstraintViolationException")) {
+                store.deleteLockobject(LOCKID);
+            }
+        } finally {
             store.close();
         }
 
     }
 
     public void startInit() throws Exception {
-        if (lock.isHeldByCurrentThread() || !lock.tryLock()) {
-            log.debug(this.getClass().getName() + " syncBlockService running. Returning...");
-            return;
-        }
+
         FullBlockStore store = storeService.getStore();
         try {
             log.debug(" Start SyncBlockService startInit: ");
@@ -105,7 +151,6 @@ public class SyncBlockService {
             blockgraph.updateChain();
             log.debug(" end startInit: ");
         } finally {
-            lock.unlock();
             store.close();
         }
 
@@ -270,8 +315,9 @@ public class SyncBlockService {
         String server;
         TXReward aTXReward;
     }
+ 
 
-    public void sync(Long chainlength, boolean initsync, FullBlockStore store) throws Exception {
+    public void sync(Long chainlength, boolean initsync, FullBlockStore store) throws BlockStoreException {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
