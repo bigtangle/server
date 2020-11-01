@@ -238,7 +238,17 @@ public class SerializationTest {
        System.out.println(identityData.uniqueNameIdentity());
         IdentityData id = new IdentityData().parse(identityData.toByteArray());
         assertTrue(id.getIdentificationnumber().equals("120123456789012345"));
-   
+        assertTrue(identityData.uniqueNameIdentity().equals(identityData.uniqueNameIdentity()));
+        IdentityData identityData2 = new IdentityData(); 
+        identityData2.setIdentificationnumber("546120123456789012345"); 
+        assertTrue(!identityData.uniqueNameIdentity().equals(identityData2.uniqueNameIdentity()));
+        IdentityData identityData3 = new IdentityData(); 
+        assertTrue(!identityData.uniqueNameIdentity().equals(identityData3.uniqueNameIdentity()));
+        IdentityData identityData4 = new IdentityData(); 
+        identityData2.setIdentificationnumber(null); 
+        assertTrue(identityData4.uniqueNameIdentity().equals(identityData4.uniqueNameIdentity()));
+        assertTrue(identityData3.uniqueNameIdentity().equals(identityData4.uniqueNameIdentity()));
+           
     }
 
     @Test

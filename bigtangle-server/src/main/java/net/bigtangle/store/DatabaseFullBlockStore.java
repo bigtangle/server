@@ -210,6 +210,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
             + "FROM blocks WHERE milestone = -1 AND confirmed = 1 " + afterSelect();
 
+    protected final String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block "
+            + "FROM blocks WHERE milestone = -1 AND height >= ? " + afterSelect();
+    
     protected final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash,"
             + " blocks.height, milestone, milestonelastupdate, " + " inserttime,  solid, blocks.confirmed "
             + " FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
@@ -968,6 +971,35 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         return re;
     }
 
+
+    public List<byte[]> blocksFromNonChainHeigth(long heigth ) throws BlockStoreException {
+        // Optimize for chain head
+        List<byte[]> re = new ArrayList<byte[]>();
+        maybeConnect();
+        PreparedStatement s = null;
+        // log.info("find block hexStr : " + hash.toString());
+        try {
+            s = getConnection().prepareStatement(SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL);
+            s.setLong(1, heigth); 
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                re.add(Gzip.decompress(results.getBytes("block")));
+            }
+            return re;
+        } catch (Exception ex) {
+            log.warn("", ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+        return re;
+    }
+    
     private boolean verifyHeader(Block block) {
         try {
             block.verifyHeader();

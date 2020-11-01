@@ -291,12 +291,11 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<Block> findRetryBlocks(long minheight) throws BlockStoreException;
 
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
-            throws BlockStoreException;
-
-     
+            throws BlockStoreException; 
 
     public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException;
-
+    public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException;
+    
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
     public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid,

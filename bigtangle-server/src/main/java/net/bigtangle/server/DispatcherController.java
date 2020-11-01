@@ -124,7 +124,7 @@ public class DispatcherController {
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        @SuppressWarnings("rawtypes") 
+        @SuppressWarnings("rawtypes")
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
@@ -138,7 +138,7 @@ public class DispatcherController {
             logger.debug(" process  Timeout  ");
             handler.cancel(true);
             AbstractResponse resp = ErrorResponse.create(100);
-            StringWriter sw = new StringWriter(); 
+            StringWriter sw = new StringWriter();
             resp.setMessage(sw.toString());
             gzipBinary(httpServletResponse, resp);
         } finally {
@@ -146,6 +146,7 @@ public class DispatcherController {
         }
 
     }
+
     @SuppressWarnings("unchecked")
     public void processDo(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
@@ -169,7 +170,7 @@ public class DispatcherController {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
                 // register(rollingBlock, store);
-               logger.debug(" getTip " + rollingBlock.toString());
+                logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
@@ -292,6 +293,11 @@ public class DispatcherController {
                 GetBlockListResponse response = this.blockService.blocksFromChainLength(
                         Long.valueOf((String) request.get("start")), Long.valueOf((String) request.get("end")), store);
 
+                this.outPrintJSONString(httpServletResponse, response, watch);
+            }
+                break;
+            case blocksFromNonChainHeight: {
+                GetBlockListResponse response = this.blockService.blocksFromNonChainHeigth(store);
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
                 break;
@@ -466,13 +472,14 @@ public class DispatcherController {
                 String basetoken = (String) request.get("basetoken");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
                 if (count != null) {
-                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids,basetoken, count, store);
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken, count,
+                            store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else if (startDate == null || endDate == null) {
-                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken,store);
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else {
-                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids,basetoken,
+                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, basetoken,
                             startDate / 1000, endDate / 1000, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 }
@@ -611,13 +618,13 @@ public class DispatcherController {
             logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, bodyByte.length, exception);
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
-            exception.printStackTrace(new PrintWriter(sw)); 
+            exception.printStackTrace(new PrintWriter(sw));
             resp.setMessage(sw.toString());
             this.outPrintJSONString(httpServletResponse, resp, watch);
         } finally {
             store.close();
-            if( watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
-            logger.info(  reqCmd + " takes {} " , watch.elapsed(TimeUnit.MILLISECONDS));
+            if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
+                logger.info(reqCmd + " takes {} ", watch.elapsed(TimeUnit.MILLISECONDS));
             watch.stop();
         }
     }
@@ -795,7 +802,7 @@ public class DispatcherController {
 
     public void outPrintJSONString(HttpServletResponse httpServletResponse, AbstractResponse response, Stopwatch watch)
             throws Exception {
-       long duration = watch.elapsed(TimeUnit.MILLISECONDS); 
+        long duration = watch.elapsed(TimeUnit.MILLISECONDS);
         response.setDuration(duration);
         gzipBinary(httpServletResponse, response);
     }

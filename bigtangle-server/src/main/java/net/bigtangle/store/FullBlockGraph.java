@@ -354,11 +354,14 @@ public class FullBlockGraph {
                         + block.toString());
                 deleteChainQueue(chainBlockQueue, store);
                 // sync the lastest chain from remote start from the -2 rewards
-                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2);
+                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
                 return;
             }
 
             if (solidityState.isFailState()) {
+                log.debug("Block isFailState. remove it from ChainBlockQueue."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store); 
                 return;
             }
 
@@ -367,6 +370,9 @@ public class FullBlockGraph {
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+                log.debug("Block isFailState. remove it from ChainBlockQueue."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store); 
                 return;
             }
             connectRewardBlock(block, solidityState, store);

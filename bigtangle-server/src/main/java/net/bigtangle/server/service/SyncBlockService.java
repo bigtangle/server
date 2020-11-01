@@ -50,7 +50,14 @@ import net.bigtangle.utils.OkHttp3Util;
 
 /**
  * <p>
- * Provides services for blocks.
+ * Provides services for sync blocks from remote servers via p2p.
+ * 
+ * sync remote chain data from chainlength,
+ * if chainlength = null, then sync the chain data from the total rating with
+ * chain 100%
+ * For the sync from given checkpoint, the server must be restarted.
+ * 
+ * 
  * </p>
  */
 @Service
@@ -75,7 +82,21 @@ public class SyncBlockService {
     @Autowired
     private StoreService storeService;
 
-    public void startSingleProcess(Long chainlength) throws BlockStoreException {
+    // default start sync of chain and non chain data
+    public void startSingleProcess() throws BlockStoreException {
+        TXReward my = null;
+        FullBlockStore store = storeService.getStore();
+        try {
+            my = store.getMaxConfirmedReward();
+        } finally {
+            store.close();
+        }
+        if (my != null) {
+            startSingleProcess(my.getChainLength() - 100, true);
+        }
+    }
+
+    public void startSingleProcess(Long chainlength, boolean nonchain) throws BlockStoreException {
         // ExecutorService executor = Executors.newSingleThreadExecutor();
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -84,7 +105,7 @@ public class SyncBlockService {
         final Future<String> handler = executor.submit(new Callable() {
             @Override
             public String call() throws Exception {
-                startSingleProcessDo(chainlength);
+                startSingleProcessDo(chainlength, nonchain);
                 return "finish";
             }
         });
@@ -101,10 +122,10 @@ public class SyncBlockService {
 
     }
 
-    public void startSingleProcessDo(Long chainlength) throws BlockStoreException {
+    public void startSingleProcessDo(Long chainlength, boolean nonchain) throws BlockStoreException {
 
         FullBlockStore store = storeService.getStore();
-        try { 
+        try {
             LockObject lock = store.selectLockobject(LOCKID);
             boolean canrun = false;
             if (lock == null) {
@@ -121,8 +142,8 @@ public class SyncBlockService {
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
                 connectingOrphans(store);
-                sync(-1l, false, store);
-
+                syncChain(-1l, false, store);
+                syncNonChained(store);
                 store.deleteLockobject(LOCKID);
                 // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
                 log.info("sync time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -144,10 +165,9 @@ public class SyncBlockService {
         FullBlockStore store = storeService.getStore();
         try {
             log.debug(" Start SyncBlockService startInit: ");
-
             cleanupChainBlockQueue(store);
             store.deleteAllLockobject();
-            sync(-1l, true, store);
+            syncChain(-1l, true, store);
             blockgraph.updateChain();
             log.debug(" end startInit: ");
         } finally {
@@ -274,6 +294,28 @@ public class SyncBlockService {
 
     }
 
+    public void requestNoncĆhainBlocks(String s, FullBlockStore store)
+            throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
+        log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " at server: " + s);
+        List<Block> sortedBlocks = new ArrayList<Block>();
+        for (byte[] data : blockbytelist.getBlockbytelist()) {
+            sortedBlocks.add(networkParameters.getDefaultSerializer().makeBlock(data));
+        }
+        Collections.sort(sortedBlocks, new SortbyBlock());
+        for (Block block : sortedBlocks) {
+            // no genesis block and no spend pending set
+            if (block.getHeight() > 0) {
+                blockgraph.add(block, true, store);
+            }
+        }
+
+    }
+
     public TXReward getMaxConfirmedReward(String s) throws JsonProcessingException, IOException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -315,9 +357,8 @@ public class SyncBlockService {
         String server;
         TXReward aTXReward;
     }
- 
 
-    public void sync(Long chainlength, boolean initsync, FullBlockStore store) throws BlockStoreException {
+    public void syncChain(Long chainlength, boolean initsync, FullBlockStore store) throws BlockStoreException {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
         MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
@@ -348,6 +389,23 @@ public class SyncBlockService {
             }
         }
 
+    }
+
+    /*
+     * sync the remote data that not in chain
+     */
+    public void syncNonChained(FullBlockStore store) throws BlockStoreException {
+        // mcmcService.cleanupNonSolidMissingBlocks();
+        String[] re = serverConfiguration.getRequester().split(",");
+        for (String s : re) { 
+            if (s != null && !"".equals(s)) {
+                try { 
+                    requestNoncĆhainBlocks(s, store);
+                } catch (Exception e) {
+                    log.debug("", e);
+                }
+            }
+        }
     }
 
     /*
