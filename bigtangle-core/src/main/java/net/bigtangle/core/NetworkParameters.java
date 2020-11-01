@@ -112,7 +112,11 @@ public abstract class NetworkParameters {
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 51;
     public static final int CONFIRMATION_LOWER_THRESHOLD_PERCENT = 45;
     public static final int NUMBER_RATING_TIPS = 10;
-   
+    public static final int CONFIRMATION_UPPER_THRESHOLD = CONFIRMATION_UPPER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS
+            / 100;
+    public static final int CONFIRMATION_LOWER_THRESHOLD = CONFIRMATION_LOWER_THRESHOLD_PERCENT * NUMBER_RATING_TIPS
+            / 100;
+
     // Token ID for System Coin
     public static final String BIGTANGLE_TOKENID_STRING = "bc";
     public static final byte[] BIGTANGLE_TOKENID = HEX.decode(BIGTANGLE_TOKENID_STRING);

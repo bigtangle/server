@@ -131,7 +131,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             if (hit1 && hit2)
                 break;
         }
-        assertTrue(hit1 ||hit2);
+        assertTrue(hit1);
+        assertTrue(hit2);
 
         // After confirming one of them into the milestone, only that one block
         // is now available
@@ -397,7 +398,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             if (hit1 && hit2)
                 break;
         }
-        assertTrue(hit1 || hit2);
+        assertTrue(hit1);
+        assertTrue(hit2);
 
         // After confirming one of them into the milestone, only that one block
         // is now available
@@ -465,7 +467,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             if (hit1 && hit2)
                 break;
         }
-        assertTrue(hit1 ||hit2);
+        assertTrue(hit1);
+        assertTrue(hit2);
 
         // After confirming one of them into the milestone, only that one block
         // is now available
