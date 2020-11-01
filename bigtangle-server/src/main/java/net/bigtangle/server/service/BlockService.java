@@ -399,6 +399,12 @@ public class BlockService {
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
 
+    public GetBlockListResponse blocksFromNonChainHeigth(FullBlockStore store) throws BlockStoreException {
+        TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        return GetBlockListResponse
+                .create(store.blocksFromNonChainHeigth(getCurrentCutoffHeight(maxConfirmedReward, store)));
+    }
+
     public Block getBlockPrototype(FullBlockStore store) throws BlockStoreException, NoBlockException {
 
         return getNewBlockPrototype(store);
@@ -456,7 +462,7 @@ public class BlockService {
     public Optional<Block> addConnectedFromKafka(byte[] key, byte[] bytes) {
 
         try {
-            logger.debug("addConnectedFromKafka from sendkey:" + key.toString() );
+            logger.debug("addConnectedFromKafka from sendkey:" + key.toString());
             return addConnected(Gzip.decompress(bytes), true);
         } catch (VerificationException e) {
             return null;
@@ -473,10 +479,10 @@ public class BlockService {
     public Optional<Block> addConnected(byte[] bytes, boolean allowUnsolid)
             throws ProtocolException, BlockStoreException, NoBlockException {
         if (bytes == null)
-            return null; 
+            return null;
         Block makeBlock = (Block) networkParameters.getDefaultSerializer().makeBlock(bytes);
-        logger.debug(" addConnected  Blockhash=" + makeBlock.getHashAsString() + " height ="
-                + makeBlock.getHeight() + " block: " + makeBlock.toString() );
+        logger.debug(" addConnected  Blockhash=" + makeBlock.getHashAsString() + " height =" + makeBlock.getHeight()
+                + " block: " + makeBlock.toString());
         return addConnectedBlock(makeBlock, allowUnsolid);
     }
 

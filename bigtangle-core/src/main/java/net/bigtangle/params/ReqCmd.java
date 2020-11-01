@@ -10,7 +10,7 @@ public enum ReqCmd {
 
 	getTip, adjustHeight, findRetryBlocks,
 	// Chain
-	getChainNumber, getAllConfirmedReward, blocksFromChainLength,
+	getChainNumber, getAllConfirmedReward, blocksFromChainLength,blocksFromNonChainHeight,
 	// Token
 	searchTokens, getTokenById, getTokenIndex, getTokenSignByAddress, searchExchangeTokens,
 

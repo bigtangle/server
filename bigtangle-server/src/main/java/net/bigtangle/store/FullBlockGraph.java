@@ -354,7 +354,7 @@ public class FullBlockGraph {
                         + block.toString());
                 deleteChainQueue(chainBlockQueue, store);
                 // sync the lastest chain from remote start from the -2 rewards
-                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2);
+                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
                 return;
             }
 
