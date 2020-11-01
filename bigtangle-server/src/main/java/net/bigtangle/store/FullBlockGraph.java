@@ -359,6 +359,9 @@ public class FullBlockGraph {
             }
 
             if (solidityState.isFailState()) {
+                log.debug("Block isFailState. remove it from ChainBlockQueue."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store); 
                 return;
             }
 
@@ -367,6 +370,9 @@ public class FullBlockGraph {
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
+                log.debug("Block isFailState. remove it from ChainBlockQueue."
+                        + block.toString());
+                deleteChainQueue(chainBlockQueue, store); 
                 return;
             }
             connectRewardBlock(block, solidityState, store);
