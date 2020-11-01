@@ -68,6 +68,10 @@ public class SyncServiceTest extends AbstractIntegrationTest {
         }
         serverConfiguration.setRequester(contextRoot);
         syncBlockService.startSingleProcess();
+        for (int i = 0; i < 130; i++) {
+        createReward(r1, a1);
+        }
+        syncBlockService.startSingleProcess();
     }
 
     public void testToken(List<Block> blocksAddedAll) throws Exception {
