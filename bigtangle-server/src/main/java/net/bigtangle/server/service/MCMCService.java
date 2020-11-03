@@ -132,7 +132,9 @@ public class MCMCService {
             long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
             updateWeightAndDepth(maxConfirmedReward, cutoffHeight, maxHeight, store);
             updateRating(maxConfirmedReward, cutoffHeight, maxHeight, store);
-            deleteMCMC(maxConfirmedReward, store);
+            // TODO delete means recovery must be done eventually
+            // TODO milestone -1 is also deleted, must delete only those where height < ? instead.
+//            deleteMCMC(maxConfirmedReward, store);
         } catch (Exception e) {
             log.debug("update  ", e);
         }

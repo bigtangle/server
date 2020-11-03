@@ -218,9 +218,102 @@ public abstract class AbstractIntegrationTest {
         store.close();
     }
 
+    protected void payBigTo(ECKey beneficiary, long amount) throws Exception {
+    	payBigTo(beneficiary, amount, new ArrayList<>());
+    }
+
+    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, long amount)
+            throws Exception {
+    	payTestTokenTo(beneficiary, testKey, amount, new ArrayList<>());
+    }
+
+    protected void payBig(long amount) throws Exception {
+    	payBig(amount, new ArrayList<>());
+    }
+
+    protected void payTestToken(ECKey testKey, long amount)
+            throws Exception {
+    	payTestToken(testKey, amount, new ArrayList<>());
+    }
+
+    protected void payBigTo(ECKey beneficiary, long amount, List<Block> addedBlocks) throws Exception {
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+
+        giveMoneyResult.put(beneficiary.toAddress(networkParameters).toString(), amount);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        addedBlocks.add(b);
+        makeRewardBlock(addedBlocks);
+    }
+
+    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, long amount, List<Block> addedBlocks)
+            throws Exception {
+
+        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
+
+        giveMoneyTestToken.put(beneficiary.toAddress(networkParameters).toString(), amount);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        addedBlocks.add(b);
+        makeRewardBlock(addedBlocks);
+        // Open sell order for test tokens
+    }
+
+    protected void payBig(long amount, List<Block> addedBlocks) throws Exception {
+        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+
+        giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), amount);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payBig");
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        addedBlocks.add(b);
+        makeRewardBlock(addedBlocks);
+    }
+
+    protected void payTestToken(ECKey testKey, long amount, List<Block> addedBlocks)
+            throws Exception {
+
+        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
+
+        giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
+
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        // log.debug("block " + (b == null ? "block is null" : b.toString()));
+
+        addedBlocks.add(b);
+        makeRewardBlock(addedBlocks);
+        // Open sell order for test tokens
+    }
+
     protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
-        return makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
+        Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
+		return block;
+    }
+
+    protected Block resetAndMakeTestTokenWithSpare(ECKey testKey, List<Block> addedBlocks)
+            throws JsonProcessingException, Exception, BlockStoreException {
+        Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
+        payTestTokenTo(testKey, testKey, 50000, addedBlocks);
+        payTestTokenTo(testKey, testKey, 40000, addedBlocks);
+        payTestTokenTo(testKey, testKey, 30000, addedBlocks);
+        payTestTokenTo(testKey, testKey, 20000, addedBlocks);
+        payTestTokenTo(testKey, testKey, 10000, addedBlocks);
+		return block;
+    }
+
+    protected void generateSpareChange(ECKey beneficiary, List<Block> addedBlocks)
+            throws JsonProcessingException, Exception, BlockStoreException {
+        payBigTo(beneficiary, 500000, addedBlocks);
+        payBigTo(beneficiary, 400000, addedBlocks);
+        payBigTo(beneficiary, 300000, addedBlocks);
+        payBigTo(beneficiary, 200000, addedBlocks);
+        payBigTo(beneficiary, 100000, addedBlocks);
     }
 
     protected Block resetAndMakeTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks)
@@ -245,8 +338,7 @@ public abstract class AbstractIntegrationTest {
 
         block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
         addedBlocks.add(block);
-       // blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
-        mcmcServiceUpdate();
+        makeRewardBlock(addedBlocks);
         return block;
     }
 
@@ -287,7 +379,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock(addedBlocks);
         return block;
     }
 
@@ -301,7 +393,7 @@ public abstract class AbstractIntegrationTest {
         addedBlocks.add(block);
 
         // Confirm and return
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock(addedBlocks);
         return block;
     }
 
@@ -315,25 +407,39 @@ public abstract class AbstractIntegrationTest {
         return block;
     }
 
-    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+    protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
 
-        return makeAndConfirmSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
+        return makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
     }
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+            List<Block> addedBlocks) throws Exception {
+
+        Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
+        makeRewardBlock(addedBlocks);
+        return block;
+    }
+
+    protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
-        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken,true);
+        Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken, true);
         addedBlocks.add(block);
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store); // mcmcServiceUpdate();
         return block;
 
+    }
+
+    protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+    		String basetoken, List<Block> addedBlocks) throws Exception {
+
+        Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
+        		basetoken, addedBlocks);
+        makeRewardBlock(addedBlocks);
+        return block;
     }
 
     protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId, BigInteger buyAmount,
@@ -342,42 +448,54 @@ public abstract class AbstractIntegrationTest {
         w.setServerURL(contextRoot);
         Block block = w.payContract(null, tokenId, buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
-        blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock(addedBlocks);
         return block;
 
+    }
+
+    protected Block makeBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            List<Block> addedBlocks) throws Exception {
+
+        Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
+                NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
+        return block;
     }
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
 
-        return makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
+        Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-
+        makeRewardBlock(addedBlocks);
+        return block;
     }
 
-    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+    protected Block makeBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
         Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken,true);
         addedBlocks.add(block);
-        mcmcServiceUpdate();
-      //  blockGraph.updateChain();
-      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
         return block;
-
     }
 
-    protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
+    protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+            String basetoken, List<Block> addedBlocks) throws Exception {
+
+        Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
+        		basetoken, addedBlocks);
+        makeRewardBlock(addedBlocks);
+        return block;
+    }
+
+    protected Block makeCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks)
             throws Exception {
 
         Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
-        return makeAndConfirmCancelOp(order, legitimatingKey, addedBlocks, predecessor);
+        return makeCancelOp(order, legitimatingKey, addedBlocks, predecessor);
     }
 
-    protected Block makeAndConfirmCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks,
+    protected Block makeCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks,
             Block predecessor) throws Exception {
         // Make an order op
         Transaction tx = new Transaction(networkParameters);
@@ -398,30 +516,29 @@ public abstract class AbstractIntegrationTest {
 
         this.blockGraph.add(block, true, store);
         addedBlocks.add(block);
-        mcmcServiceUpdate();
-      //  blockGraph.updateChain();
-      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
 
         return block;
     }
 
-    protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks) throws Exception {
-
+    protected Block makeRewardBlock() throws Exception {
         Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
-        return makeAndConfirmOrderMatching(addedBlocks, predecessor);
+        return makeRewardBlock(predecessor);
     }
 
-    protected Block makeAndConfirmOrderMatching(List<Block> addedBlocks, Block predecessor) throws Exception {
-        // Generate matching block
-
-        Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
-                predecessor.getHash(), predecessor.getHash());
+    protected Block makeRewardBlock(List<Block> addedBlocks) throws Exception {
+    	Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+        Block block = makeRewardBlock(predecessor);
         addedBlocks.add(block);
+		return block;
+    }
 
-        // Confirm
-        mcmcServiceUpdate();
-     //   blockGraph.updateChain();
-      //  blockGraph.confirm(block.getHash(), new HashSet<>(), (long) -1, store);
+    protected Block makeRewardBlock(Block predecessor) throws Exception {
+        return makeRewardBlock(predecessor.getHash());
+    }
+
+    protected Block makeRewardBlock(Sha256Hash predecessor) throws Exception {
+        Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(),
+                predecessor, predecessor);
         return block;
     }
 
@@ -429,12 +546,12 @@ public abstract class AbstractIntegrationTest {
 
         Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
 
-        Block block = createAndAddOrderMatchingBlock(store.getMaxConfirmedReward().getBlockHash(),
+        Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(),
                 predecessor.getHash(), predecessor.getHash());
         addedBlocks.add(block);
 
         // Confirm
-        mcmcServiceUpdate();
+        makeRewardBlock();
 
         return block;
     }
@@ -539,11 +656,10 @@ public abstract class AbstractIntegrationTest {
         for (Block b : addedBlocks) {
             blockGraph.add(b, true, true, store);
         }
-        mcmcServiceUpdate();
 
         List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
         List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
-        assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString()); // Works
+        assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString());
         assertEquals(allUTXOsSorted.toString(), allUTXOsSorted2.toString());
     }
 
@@ -716,7 +832,7 @@ public abstract class AbstractIntegrationTest {
         // testCreateMultiSig();
         // testCreateMarket();
         testInitTransferWallet();
-        mcmcServiceUpdate();
+        makeRewardBlock();
 
         // testInitTransferWalletPayToTestPub();
         List<UTXO> ux = getBalance();
@@ -815,8 +931,6 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void checkBalance(Coin coin, List<ECKey> a) throws Exception {
-        mcmcServiceUpdate();
-
         List<UTXO> ulist = getBalance(false, a);
         UTXO myutxo = null;
         for (UTXO u : ulist) {
@@ -831,8 +945,6 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected void checkBalanceSum(Coin coin, List<ECKey> a) throws Exception {
-        mcmcServiceUpdate();
-
         List<UTXO> ulist = getBalance(false, a);
 
         Coin sum = new Coin(0, coin.getTokenid());
@@ -859,7 +971,7 @@ public abstract class AbstractIntegrationTest {
 
         String tokenid = createFirstMultisignToken(keys, tokenInfo);
 
-        mcmcServiceUpdate();
+        makeRewardBlock();
 
         BigInteger amount = new BigInteger("200000");
         Coin basecoin = new Coin(amount, tokenid);
@@ -1179,12 +1291,6 @@ public abstract class AbstractIntegrationTest {
         return tokenIndexResponse;
     }
 
-    public Block createReward(Sha256Hash prevRewardHash, FullBlockStore store) throws Exception {
-        Block block = rewardService.createReward(prevRewardHash, store);
-        blockGraph.updateChain();
-        return block;
-    }
-
     public void upstreamToken2LocalServer(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -1270,31 +1376,14 @@ public abstract class AbstractIntegrationTest {
         return permissionedAddressesResponse;
     }
 
-    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
+    public Block makeRewardBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
             throws Exception {
-        return createAndAddOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
-    }
-
-    public Block createAndAddOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws Exception {
-
-        Block block = createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, override);
+        Block block = rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, store);
         if (block != null) {
             blockService.saveBlock(block, store);
             blockGraph.updateChain();
         }
         return block;
-    }
-
-    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch)
-            throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-        return createOrderMatchingBlock(prevHash, prevTrunk, prevBranch, false);
-    }
-
-    public Block createOrderMatchingBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
-            boolean override) throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-
-        return rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, store);
     }
 
     public void sendEmpty() throws JsonProcessingException, Exception {
@@ -1391,7 +1480,7 @@ public abstract class AbstractIntegrationTest {
 
     public void mcmcServiceUpdate() throws InterruptedException, ExecutionException, BlockStoreException {
         mcmcService.update(store);
-        blockGraph.updateConfirmed();
+//        blockGraph.updateConfirmed();
     }
 
     public void mcmc() throws JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {

@@ -83,6 +83,7 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
@@ -135,17 +136,26 @@ public class FullBlockGraph {
     private SyncBlockService syncBlockService;
 
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
-        boolean a;
+        boolean added;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-            a = addChain(block, allowUnsolid, true, store);
+            added = addChain(block, allowUnsolid, true, store);
         } else {
-            a = addNonChain(block, allowUnsolid, store);
+            added = addNonChain(block, allowUnsolid, store);
         }
+        
         // update spend of origin UTXO to avoid create of double spent
-        if (a) {
+        if (added) {
             updateTransactionOutputSpendPending(block);
         }
-        return a;
+
+        // Initialize MCMC
+        if (store.getMCMC(block.getHash()) == null) {
+            ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+            depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
+            store.updateBlockEvaluationWeightAndDepth(depthAndWeight);
+        }
+        
+        return added;
     }
 
     public boolean addNoSpendPending(Block block, boolean allowUnsolid, FullBlockStore store)
@@ -1240,7 +1250,7 @@ public class FullBlockGraph {
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-                        System.currentTimeMillis() / 1000);
+                        block.getTimeSeconds());
 
                 if (!newOut.isZero()) {
                     utxos.add(newOut);

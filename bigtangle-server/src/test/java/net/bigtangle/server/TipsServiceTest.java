@@ -135,10 +135,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -192,10 +192,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        mcmcServiceUpdate();
+        makeRewardBlock(b1);
         
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -222,6 +222,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
+        Block confBlock = makeRewardBlock();
 
         // Generate two subsequent issuances
         Block b1, b2;
@@ -234,7 +235,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1, block1);
+            b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
         }
         {
             TokenInfo tokenInfo2 = new TokenInfo();
@@ -245,12 +246,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, block1, block1);
+            b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
         }
-        for (int i = 0; i < 5; i++) {
-            createAndAddNextBlock(block1, block1);
-        }
-        mcmcServiceUpdate();
         
         boolean hit1 = false;
         boolean hit2 = false;
@@ -268,10 +265,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -299,8 +296,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
+        Block confBlock = makeRewardBlock();
      
-        mcmcServiceUpdate();
         // Generate two subsequent issuances
         TokenInfo tokenInfo2 = new TokenInfo();
         Coin coinbase2 = Coin.valueOf(666, pubKey);
@@ -310,9 +307,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = saveTokenUnitTestWithTokenname (tokenInfo2, coinbase2, outKey, null);
-
-        mcmcServiceUpdate();
+        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
         
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -322,13 +317,13 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b2 = saveTokenUnitTestWithTokenname(tokenInfo3, coinbase3, outKey, null);
+        Block b2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, confBlock, confBlock);
 
          
         boolean hit1 = false;
         boolean hit2 = false;
+        mcmcServiceUpdate();
         for (int i = 0; i < 150; i++) {
-            mcmcServiceUpdate();
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
@@ -338,14 +333,14 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 break;
         }
         assertTrue(hit1);
-      //  assertTrue(hit2);
+        assertTrue(hit2);
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        mcmcServiceUpdate();
-      //  blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        makeRewardBlock(b1);
+
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
              assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -384,7 +379,6 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
         }
-        mcmcServiceUpdate();
         
         boolean hit1 = false;
         boolean hit2 = false;
@@ -401,10 +395,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -469,10 +463,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // After confirming one of them into the milestone, only that one block
         // is now available
-        blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPairCompatibleWithExisting(b1,store);
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 

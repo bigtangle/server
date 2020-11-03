@@ -172,7 +172,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
         }
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
         List<UTXO> balance = getBalance(false, genesiskey);
         log.info("balance : " + balance);
@@ -199,7 +199,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
         }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -255,7 +255,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
             for (UTXO output : this.getBalance(true, outKey)) {
                 log.info("UTXO : " + output);
             }
-            mcmcServiceUpdate();
+            makeRewardBlock();
             
         }
     }
@@ -344,11 +344,11 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
         testCreateToken(walletKeys.get(0), "test");
 
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
         testCreateToken(walletKeys.get(1), "test2");
 
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
         payToken(200, yourKey, walletKeys.get(0).getPubKey(), walletAppKit1.wallet());
         payToken(300, myKey, walletKeys.get(1).getPubKey(), walletAppKit2.wallet());
@@ -403,6 +403,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
                 Json.jsonmapper().writeValueAsString(addressList).getBytes());
         log.info(response);
+        
+        makeRewardBlock();
         checkBalance(new Coin(3, walletKeys.get(1).getPubKey()), walletAppKit1.wallet().walletKeys(null));
         checkBalance(new Coin(2, walletKeys.get(0).getPubKey()), walletAppKit2.wallet().walletKeys(null));
     }
@@ -581,6 +583,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         rollingBlock.solve();
         checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
         log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+        makeRewardBlock();
 
         checkBalance(coinbase, wallet.walletKeys(null));
     }

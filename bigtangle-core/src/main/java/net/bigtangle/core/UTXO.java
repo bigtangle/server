@@ -29,9 +29,7 @@ import net.bigtangle.script.Script;
 
 /**
  * A UTXO message contains the information necessary to check a spending
- * transaction and consensus logic. It does not stand for Unspent Transaction
- * Output but for Used Transaction Output, i.e. they are not necessarily
- * unspent.
+ * transaction.
  */
 public class UTXO extends SpentBlock {
 

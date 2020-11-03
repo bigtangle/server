@@ -51,7 +51,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
         w.setServerURL(contextRoot);
         accountKey = new ECKey(); 
         testTokens();
-        rewardService.createReward(store);
+        makeRewardBlock();
         createUserPay(accountKey);
 
     }
@@ -117,7 +117,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
         String domain = "";
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
                 BigInteger.valueOf(10000000l));
-        mcmcServiceUpdate();
+        makeRewardBlock();
     }
 
     public Address getAddress() {

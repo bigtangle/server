@@ -41,7 +41,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
     public void createNonChain(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
         for (int j = 1; j < 2; j++) {
             payMoneyToWallet1(j, blocksAddedAll);
-            mcmcServiceUpdate();
+            makeRewardBlock(blocksAddedAll);
 
             sell(blocksAddedAll);
             buy(blocksAddedAll);
@@ -51,7 +51,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
 
         // Generate mining reward block
-        Block next = createReward(rewardBlock1.getHash(), store);
+        Block next = makeRewardBlock(rewardBlock1.getHash());
         blocksAddedAll.add(next);
 
         return next;
@@ -61,7 +61,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
     public void testSync() throws Exception {
         List<Block> a1 = new ArrayList<Block>();
         testToken(a1);
-        mcmcServiceUpdate();
+        makeRewardBlock(a1);
         Block r1 = networkParameters.getGenesisBlock();
         for (int i = 0; i < 3; i++) {
             createNonChain(r1, a1);
@@ -77,7 +77,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
     public void testToken(List<Block> blocksAddedAll) throws Exception {
 
         blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
-        mcmcServiceUpdate();
+        makeRewardBlock(blocksAddedAll);
 
     }
 
@@ -119,10 +119,9 @@ public class SyncServiceTest extends AbstractIntegrationTest {
                     3333000000L / LongMath.pow(2, j));
         }
         walletAppKit1.wallet().importKey(fromkey);
-        mcmcServiceUpdate();
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
-        mcmcServiceUpdate();
         blocksAddedAll.add(b);
+        makeRewardBlock(blocksAddedAll);
     }
 
     public void buy(List<Block> blocksAddedAll) throws Exception {
@@ -152,7 +151,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
             walletAppKit.wallet().setServerURL(contextRoot);
             blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
                     orderRecord.getOfferValue(), null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
-            mcmcServiceUpdate();
+            makeRewardBlock(blocksAddedAll);
 
         }
 

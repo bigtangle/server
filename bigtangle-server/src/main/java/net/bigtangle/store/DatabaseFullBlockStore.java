@@ -810,6 +810,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             insertToken(bigtangle.getBlockHash(), bigtangle);
             updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
 
+            // insert MCMC table
+            ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+            depthAndWeight.add(new DepthAndWeight(params.getGenesisBlock().getHash(), 1, 0));
+            updateBlockEvaluationWeightAndDepth(depthAndWeight);
+
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }

@@ -492,7 +492,7 @@ public class BlockService {
             if (!store.existBlock(block.getHash())) {
                 try {
                     if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-                        logger.debug(" connected  received chain block  " + block.getLastMiningRewardBlock());
+                        logger.debug(" connected received chain block  " + block.getLastMiningRewardBlock());
                     }
                     blockgraph.add(block, allowUnsolid, store);
                     // removeBlockPrototype(block,store);
@@ -500,7 +500,7 @@ public class BlockService {
                 } catch (ProofOfWorkException | UnsolidException e) {
                     return Optional.empty();
                 } catch (Exception e) {
-                    logger.debug(" can not added block  Blockhash=" + block.getHashAsString() + " height ="
+                    logger.debug(" cannot add block: Blockhash=" + block.getHashAsString() + " height ="
                             + block.getHeight() + " block: " + block.toString(), e);
                     return Optional.empty();
 
@@ -515,7 +515,7 @@ public class BlockService {
 
     public void adjustHeightRequiredBlocks(Block block, FullBlockStore store)
             throws BlockStoreException, NoBlockException {
-        adjustPrototyp(block, store);
+        adjustPrototype(block, store);
         long h = calcHeightRequiredBlocks(block, store);
         if (h > block.getHeight()) {
             logger.debug("adjustHeightRequiredBlocks" + block + " to " + h);
@@ -523,12 +523,12 @@ public class BlockService {
         }
     }
 
-    public void adjustPrototyp(Block block, FullBlockStore store) throws BlockStoreException, NoBlockException {
+    public void adjustPrototype(Block block, FullBlockStore store) throws BlockStoreException, NoBlockException {
         // two hours for just getBlockPrototype
         int delaySeconds = 7200;
 
         if (block.getTimeSeconds() < System.currentTimeMillis() / 1000 - delaySeconds) {
-            logger.debug("adjustPrototyp " + block);
+            logger.debug("adjustPrototype " + block);
             Block newblock = getBlockPrototype(store);
             for (Transaction transaction : block.getTransactions()) {
                 newblock.addTransaction(transaction);

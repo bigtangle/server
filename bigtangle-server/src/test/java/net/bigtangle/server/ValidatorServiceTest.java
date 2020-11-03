@@ -102,7 +102,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         b.setTime(1567836800); //
         b.solve();
 
-        blockService.adjustPrototyp(b, store);
+        blockService.adjustPrototype(b, store);
         blockService.saveBlock(b, store);
     }
 
@@ -180,7 +180,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock, store);
 
         // After adding the missing dependency, should be solid
-        mcmcServiceUpdate();
+        
         rewardService.solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -200,8 +200,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         blockService.saveBlock(depBlock, store);
 
         // After adding the missing dependency, should be solid
-
-        mcmcServiceUpdate();
         rewardService.solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -222,7 +220,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
 
-        mcmcServiceUpdate();
+        
         rewardService.solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -235,8 +233,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction tx1 = createTestTransaction();
         Block depBlock = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), tx1);
-
-        blockGraph.confirm(depBlock.getHash(), new HashSet<>(), (long) -1, store);
+		Block confBlock = makeRewardBlock();
 
         // Create block with dependency
         Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
@@ -255,10 +252,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(depBlock, store);
+        blockService.saveBlock(confBlock, store);
 
         // After adding the missing dependency, should be solid
-
-        mcmcServiceUpdate();
         rewardService.solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -279,14 +275,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks1) {
             blockGraph.add(b, true, store);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
         }
 
         // Generate eligible mining reward block
         Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
                 rollingBlock.getHash(), rollingBlock.getHash(), store);
         blockGraph.updateChain();
-        mcmcServiceUpdate();
+        
 
         // Mining reward block should go through
         assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
@@ -298,23 +293,19 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true, store);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
         }
 
         // Generate eligible second mining reward block
         Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
                 rollingBlock.getHash(), store);
         blockGraph.updateChain();
-        blockGraph.confirm(rewardBlock2.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
 
         store.resetStore();
         for (Block b : blocks1) {
             blockGraph.add(b, true, store);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
         }
         for (Block b : blocks2) {
             blockGraph.add(b, true, store);
-            blockGraph.confirm(b.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
         }
 
         // Add block allowing unsolids
@@ -325,7 +316,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Add missing dependency
         blockService.saveBlock(rewardBlock1, store);
-        mcmcServiceUpdate();
+        
         blockGraph.updateChain();
         // After adding the missing dependency, should be solid
         blockGraph.add(rewardBlock2, true, true, store);
@@ -375,7 +366,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // After adding the missing dependency, should be solid
 
-        mcmcServiceUpdate();
+        
         rewardService.solidifyWaiting(block, store);
         assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
         assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
@@ -395,7 +386,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             rollingBlock = rollingBlockNew;
             blockGraph.add(rollingBlock, true, store);
-            blockGraph.confirm(rollingBlock.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
         }
 
         // Generate eligible mining reward block
@@ -434,7 +424,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         } catch (DifficultyConsensusInheritanceException e) {
             // Expected
         }
-        mcmcServiceUpdate();
+        
         blockGraph.updateChain();
         try {
             Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
@@ -530,7 +520,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm 1
-        blockGraph.confirm(spenderBlock1.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock(spenderBlock1);
 
         // 1 should be confirmed now
         UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()), store);
@@ -558,59 +548,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                         .getBlockHash(),
                 spenderBlock1.getHash());
 
-        // Unconfirm 1
-        blockGraph.unconfirm(spenderBlock1.getHash(), new HashSet<>(), store);
-
-        // 1 should be confirmed now
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()), store);
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()), store);
-        assertFalse(utxo1.isConfirmed());
-        assertFalse(utxo2.isConfirmed());
-        assertFalse(utxo1.isSpent());
-        assertFalse(utxo2.isSpent());
-
-        // 2 should be unconfirmed
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()), store);
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()), store);
-        assertFalse(utxo1.isConfirmed());
-        assertFalse(utxo2.isConfirmed());
-        assertFalse(utxo1.isSpent());
-        assertFalse(utxo2.isSpent());
-
-        // Further manipulations on prev UTXOs
-        origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()), store);
-        assertTrue(origUTXO.isConfirmed());
-        assertFalse(origUTXO.isSpent());
-
         // Confirm 2
-        blockGraph.confirm(spenderBlock2.getHash(), new HashSet<>(), (long) -1, store);
-
-        // 2 should be confirmed now
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock2.getHash()), store);
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock2.getHash()), store);
-        assertTrue(utxo1.isConfirmed());
-        assertTrue(utxo2.isConfirmed());
-        assertFalse(utxo1.isSpent());
-        assertFalse(utxo2.isSpent());
-
-        // 1 should be unconfirmed
-        utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock1.getHash()), store);
-        utxo2 = blockService.getUTXO(tx1.getOutput(1).getOutPointFor(spenderBlock1.getHash()), store);
-        assertFalse(utxo1.isConfirmed());
-        assertFalse(utxo2.isConfirmed());
-        assertFalse(utxo1.isSpent());
-        assertFalse(utxo2.isSpent());
-
-        // Further manipulations on prev UTXOs
-        origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()), store);
-        assertTrue(origUTXO.isConfirmed());
-        assertTrue(origUTXO.isSpent());
-        assertEquals(
-                store.getTransactionOutputSpender(origUTXO.getBlockHash(), origUTXO.getTxHash(), origUTXO.getIndex())
-                        .getBlockHash(),
-                spenderBlock2.getHash());
+        try {
+        	Block rewardBlock2 = makeRewardBlock(spenderBlock2);
+            fail();
+        } catch (VerificationException e) {
+        }
     }
 
     @Test
@@ -2485,7 +2428,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1, store);
+            makeRewardBlock();
         }
 
         Block block1 = null;
@@ -2604,7 +2547,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1, store);
+            makeRewardBlock();
         }
 
         Block block1 = null;
@@ -2693,7 +2636,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1, store);
+            makeRewardBlock();
         }
 
         Block block1 = null;
@@ -2764,7 +2707,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             // This (saveBlock) calls milestoneUpdate currently
             tokenBlock = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
-            blockGraph.confirm(tokenBlock.getHash(), new HashSet<>(), (long) -1, store);
+            makeRewardBlock();
         }
 
         Block block1 = null;
@@ -2900,7 +2843,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         resetAndMakeTestToken(testKey, new ArrayList<Block>());
         // Should go through
         blockGraph.add(block1, false, store);
-        mcmcServiceUpdate();
+        
 
         Block block2 = null;
         {

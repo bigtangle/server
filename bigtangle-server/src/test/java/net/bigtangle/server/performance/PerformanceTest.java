@@ -27,7 +27,7 @@ import net.bigtangle.server.AbstractIntegrationTest;
 public class PerformanceTest extends AbstractIntegrationTest { 
 
     // Test limit of blocks in reward chain 
-    @Test
+//    @Test
     public void testMiningRewardTooLarge() throws Exception {
 
         List<Block> blocksAddedAll = new ArrayList<Block>();

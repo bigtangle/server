@@ -65,7 +65,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         block.solve();
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
@@ -106,7 +106,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         block.solve();
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
-        mcmcServiceUpdate();
+        makeRewardBlock();
         
         requestParam.clear();
         requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());

@@ -63,11 +63,11 @@ public class OrderYuanTest extends AbstractIntegrationTest {
                 int num = Math.abs((new Random()).nextInt() % 10);
                 for (int i = 0; i < num; i++) {
                     sell();
-                    mcmcServiceUpdate();
+                    makeRewardBlock();
                 }
                 buy();
                 // Execute order matching
-                makeAndConfirmOrderMatching(addedBlocks);
+                makeRewardBlock(addedBlocks);
 
                 checkSum();
             } catch (Exception e) {
@@ -121,7 +121,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             try {
                 buy(orderRecord);
-                mcmcServiceUpdate();
+                makeRewardBlock();
             } catch (Exception e) {
                 // TODO: handle exception
             }
