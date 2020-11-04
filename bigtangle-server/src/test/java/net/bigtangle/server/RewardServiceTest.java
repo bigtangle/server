@@ -57,7 +57,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
     }
 
     // Test difficulty transition 
-    //@Test
+    @Test
     public void testDifficultyTransition2() throws Exception {
 
     	long currentTime = networkParameters.getGenesisBlock().getTimeSeconds();

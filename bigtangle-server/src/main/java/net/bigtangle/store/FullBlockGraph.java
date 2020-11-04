@@ -148,12 +148,6 @@ public class FullBlockGraph {
             updateTransactionOutputSpendPending(block);
         }
 
-        // Initialize MCMC
-        if (store.getMCMC(block.getHash()) == null) {
-            ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-            depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
-            store.updateBlockEvaluationWeightAndDepth(depthAndWeight);
-        }
         
         return added;
     }
@@ -1193,6 +1187,13 @@ public class FullBlockGraph {
                 FullBlockStore blockStore = storeService.getStore();
                 try {
                     updateTransactionOutputSpendPending(block, blockStore);
+
+                    // Initialize MCMC
+                    if (blockStore.getMCMC(block.getHash()) == null) {
+                        ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+                        depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
+                        blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
+                    }
                 } finally {
                     if (blockStore != null)
                         blockStore.close();

@@ -419,7 +419,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(yuan, testTokenId, 200, priceshift + 100, yuan.getPublicKeyAsHex(), addedBlocks);
-        checkOrders(0);
+        checkOrders(1);
 
         // Verify the tokens changed possession
         assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
