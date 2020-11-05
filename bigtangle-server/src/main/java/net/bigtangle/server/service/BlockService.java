@@ -431,7 +431,7 @@ public class BlockService {
         if (!candidate.getLeft().equals(candidate.getRight())) {
             return candidate;
         }
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
             Pair<Sha256Hash, Sha256Hash> paar = tipService.getValidatedBlockPair(store);
             if (!paar.getLeft().equals(paar.getRight())) {
                 return paar;

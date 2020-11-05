@@ -171,7 +171,7 @@ public class TipsService {
         if(!candidate.getLeft().equals(candidate.getRight())) {
             return candidate;
         }
-        for (int i = 0; i <20; i++) {
+        for (int i = 0; i <5; i++) {
            Pair<Sha256Hash, Sha256Hash> paar = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
            if(!paar.getLeft().equals(paar.getRight())) {
                return paar;
