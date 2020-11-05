@@ -39,7 +39,7 @@ public class RandomNumberBlock extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block next =  createReward(rewardBlock1.getHash(),store);
+        Block next =  makeRewardBlock(rewardBlock1.getHash());
         blocksAddedAll.add(next);
 
         return next;

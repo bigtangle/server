@@ -19,6 +19,7 @@ import java.util.TreeSet;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
@@ -163,6 +164,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
+    public BlockMCMC getMCMC(Sha256Hash hash) throws BlockStoreException;
    
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException;
 

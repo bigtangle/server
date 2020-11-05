@@ -81,10 +81,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash(), store);
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
+        Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
+
         // Should exist now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
@@ -231,7 +230,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), tx1);
 
         // Confirm
-        blockGraph.confirm(spenderBlock.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock();
 
         // Should be confirmed now
         final UTXO utxo1 = blockService.getUTXO(tx1.getOutput(0).getOutPointFor(spenderBlock.getHash()), store);
@@ -266,12 +265,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash(), store);
+        Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock1.getHash(), rollingBlock1.getHash());
 
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
@@ -307,7 +303,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         // This (saveBlock) calls milestoneUpdate currently
         Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
-        blockGraph.confirm(block1.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock();
 
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(block1.getHash()));
@@ -319,7 +315,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
-        resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+        Block rollingBlock = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
   
         // Set the order
         Transaction tx = new Transaction(networkParameters);
@@ -345,20 +341,19 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         input.setScriptSig(inputScript);
 
         // Create block with UTXOs
-        Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
+        Block block1 = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
         block1.addTransaction(tx);
         block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
         block1.solve();
-        resetAndMakeTestToken(testKey, new ArrayList<Block>());
         this.blockGraph.add(block1, true, store);
 
-        blockGraph.confirm(block1.getHash(), new HashSet<>(), (long) -1, store);
+        makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), rollingBlock.getHash(), block1.getHash());
 
         // Ensure the order is confirmed now
         OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
         assertNotNull(order);
         assertTrue(order.isConfirmed());
-        assertFalse(order.isSpent());
+        assertTrue(order.isSpent());
     }
 
     @Test
@@ -404,19 +399,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             this.blockGraph.add(block1, true, store);
         }
 
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = block1;
-        for (int i = 0; i < 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true, store);
-        }
-
-        // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
-
-        // Confirm
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>(), (long) -1, store);
+        // Generate matching blocks
+        Block rewardBlock1 = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), 
+        		store.getMaxConfirmedReward().getBlockHash(), block1.getHash());
 
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -445,19 +430,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         String testTokenId = testKey.getPublicKeyAsHex();
         // Make a buy order for testKey.getPubKey()s
 
-        Block block1 = makeAndConfirmBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
+        Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
 
         // Make a sell order for testKey.getPubKey()s
         // Open sell order for test tokens
-        Block block3 = makeAndConfirmSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
+        Block block3 = makeSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
 
         // Generate matching block
         // Execute order matching
-        Block rewardBlock1 = makeAndConfirmOrderMatching(addedBlocks);
-
-        // Confirm
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>(), (long) -1, store);
-
+        Block rewardBlock1 = makeRewardBlock(addedBlocks);
+        
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
@@ -534,12 +516,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock11 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash(), store);
+        Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
 
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
@@ -647,7 +626,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey(); 
-        resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+        Block block = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
         Block block1 = null;
         {
             // Make a buy order for "test"s
@@ -683,16 +662,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             this.blockGraph.add(block1, true, store);
         }
 
-        // Generate blocks until passing first reward interval
-        Block rollingBlock1 = block1;
-        for (int i = 0; i < 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true, store);
-        }
-
         // Generate matching block
-        Block rewardBlock1 = createAndAddOrderMatchingBlock(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash());
+        Block rewardBlock1 = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), 
+        		store.getMaxConfirmedReward().getBlockHash(), block1.getHash());
 
         // Confirm
         blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>(), (long) -1, store);
@@ -728,17 +700,15 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         String testTokenId = testKey.getPublicKeyAsHex();
         // Make a buy order for testKey.getPubKey()s
 
-        Block block1 = makeAndConfirmBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
+        Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
 
         // Make a sell order for testKey.getPubKey()s
         // Open sell order for test tokens
-        Block block3 = makeAndConfirmSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
+        Block block3 = makeSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
 
         // Generate matching block
         // Execute order matching
-        Block rewardBlock1 = makeAndConfirmOrderMatching(addedBlocks);
-        // Confirm
-        blockGraph.confirm(rewardBlock1.getHash(), new HashSet<>(), (long) -1, store);
+        Block rewardBlock1 = makeRewardBlock(addedBlocks);
 
         // Unconfirm
         blockGraph.unconfirm(rewardBlock1.getHash(), new HashSet<>(), store);
@@ -824,12 +794,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true, store);
         }
-        Block rewardBlock11 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash(), store);
+        Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
 
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
@@ -840,12 +807,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             rollingBlock = rollingBlock.createNextBlock(rollingBlock);
             blockGraph.add(rollingBlock, true, store);
         }
-        Block rewardBlock2 = rewardService.createReward(rewardBlock11.getHash(), rollingBlock.getHash(),
-                rollingBlock.getHash(), store);
+        Block rewardBlock2 = makeRewardBlock(rewardBlock11.getHash(), rollingBlock.getHash(),
+                rollingBlock.getHash());
 
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
         assertTrue(store.getRewardSpent(rewardBlock11.getHash()));
@@ -895,12 +859,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         }
 
         // Generate mining reward block
-        Block rewardBlock = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock.getHash(), rollingBlock.getHash(), store);
+        Block rewardBlock = makeRewardBlock(networkParameters.getGenesisBlock().getHash(),
+                rollingBlock.getHash(), rollingBlock.getHash());
 
-        // Confirm
-        mcmcServiceUpdate();
-        blockGraph.updateChain();
         // Should be confirmed now
         assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
         assertFalse(store.getRewardSpent(rewardBlock.getHash()));
@@ -925,7 +886,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx);
 
         // Confirm
-        mcmcServiceUpdate();
         blockGraph.confirm(spenderBlock.getHash(), new HashSet<Sha256Hash>(), (long) -1, store);
 
         // Should be confirmed now
@@ -985,7 +945,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // need other blocks beforehand.
             Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
             firstIssuance = block1.getHash();
-            mcmcServiceUpdate();
+            makeRewardBlock();
         }
 
         // Generate a subsequent issuance
@@ -1006,12 +966,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             // need other blocks beforehand.
             Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
             subseqIssuance = block1.getHash();
-            mcmcServiceUpdate();
+            makeRewardBlock();
         }
 
         // Confirm
-        // blockGraph.confirm(firstIssuance, new HashSet<>(), (long) -1,store);
-        // blockGraph.confirm(subseqIssuance, new HashSet<>(), (long) -1,store);
+        blockGraph.confirm(firstIssuance, new HashSet<>(), (long) -1,store);
+        blockGraph.confirm(subseqIssuance, new HashSet<>(), (long) -1,store);
 
         // Should be confirmed now
         assertTrue(store.getTokenConfirmed(subseqIssuance));
@@ -1041,13 +1001,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open sell order for test tokens
-        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+        makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
         // Open buy order for test tokens
-        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+        makeBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
         // Execute order matching
-        Block rewardBlock = makeAndConfirmOrderMatching(addedBlocks);
+        Block rewardBlock = makeRewardBlock(addedBlocks);
 
         // Generate spending block
         Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));

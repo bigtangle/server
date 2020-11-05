@@ -318,7 +318,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " into mcmc ( cumulativeweight  , depth   , hash, rating  ) VALUES (?,?,?, ?)  ";
 
     protected final String SELECT_MCMC_CHAINLENGHT_SQL = "  select mcmc.hash "
-            + " from blocks, mcmc where mcmc.hash=blocks.hash and milestone < ?    ";
+            + " from blocks, mcmc where mcmc.hash=blocks.hash and milestone < ?  and milestone > 0  ";
 
     protected final String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
             + " blocks SET milestone = ?, milestonelastupdate= ?  WHERE hash = ?";
@@ -809,6 +809,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             Token bigtangle = Token.genesisToken(params);
             insertToken(bigtangle.getBlockHash(), bigtangle);
             updateTokenConfirmed(params.getGenesisBlock().getHash(), true);
+
+            // insert MCMC table
+            ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+            depthAndWeight.add(new DepthAndWeight(params.getGenesisBlock().getHash(), 1, 0));
+            updateBlockEvaluationWeightAndDepth(depthAndWeight);
 
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.

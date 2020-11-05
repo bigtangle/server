@@ -42,8 +42,6 @@ public class ConflicTest extends AbstractIntegrationTest {
     @Test
     public void testPayConflict() throws Exception {
         
-        mcmcServiceUpdate();
-        
         // Generate two conflicting blocks
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
