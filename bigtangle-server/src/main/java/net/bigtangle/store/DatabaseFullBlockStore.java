@@ -1854,7 +1854,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.executeBatch();
             insertStatement.executeBatch();
         } catch (SQLException e) {
-            throw new BlockStoreException(e);
+            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
+                throw new BlockStoreException(e);
+ 
         } finally {
             if (insertStatement != null) {
                 try {
