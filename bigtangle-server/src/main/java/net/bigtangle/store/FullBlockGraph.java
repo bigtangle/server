@@ -104,11 +104,12 @@ import net.bigtangle.utils.OrderUtil;
  * A FullBlockGraph works in conjunction with a {@link FullBlockStore} to verify
  * all the rules of the BigTangle system. Chain block as reward block is added
  * first into ChainBlockQueue as other blocks will be added in parallel. The
- * process of ChainBlockQueue is locked by ReentrantLock chainlock. It must be
- * wait to run, chain block will add to chain if there is no exception. if the
- * reward block is unsolid as missing previous block, then it can be in
- * ChainBlockQueue as orphan block. UpdateConfirm can add UTXO using MCMC and
- * can run only, if there is no add chain running and will be boxed timeout.
+ * process of ChainBlockQueue by update chain is locked by database.
+ * Chain block will add to chain if there is no exception. if the
+ * reward block is unsolid as missing previous block, then it will trigger a
+ * sync and be deleted.
+ * UpdateConfirm can add UTXO using MCMC and can run only as part of update
+ * chain and will be boxed timeout.
  * 
  * </p>
  */
@@ -142,16 +143,19 @@ public class FullBlockGraph {
         } else {
             added = addNonChain(block, allowUnsolid, store);
         }
-        
+
+        // TODO move this function to wallet,
         // update spend of origin UTXO to avoid create of double spent
         if (added) {
             updateTransactionOutputSpendPending(block);
         }
 
-        
         return added;
     }
 
+    /*
+     * speedup of sync without updateTransactionOutputSpendPending.
+     */
     public boolean addNoSpendPending(Block block, boolean allowUnsolid, FullBlockStore store)
             throws BlockStoreException {
         boolean a;
@@ -172,77 +176,6 @@ public class FullBlockGraph {
         return a;
     }
 
-    public void updateConfirmed() throws BlockStoreException {
-        String LOCKID = "chain";
-        int LockTime = 1000000;
-        FullBlockStore store = storeService.getStore();
-        try {
-            // log.info("create Reward started");
-            LockObject lock = store.selectLockobject(LOCKID);
-            boolean canrun = false;
-            if (lock == null) {
-                try {
-                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
-                    canrun = true;
-                } catch (Exception e) {
-                    // ignore
-                }
-            } else {
-                if (lock.getLocktime() < System.currentTimeMillis() - LockTime) {
-                    store.deleteLockobject(LOCKID);
-                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
-                    canrun = true;
-                } else {
-                    if (lock.getLocktime() < System.currentTimeMillis() - 2000)
-                        log.info("updateConfirmed running start = " + Utils.dateTimeFormat(lock.getLocktime()));
-                }
-            }
-            if (canrun) {
-                Stopwatch watch = Stopwatch.createStarted();
-                updateConfirmedDo();
-                store.deleteLockobject(LOCKID);
-                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
-                    log.info("updateConfirmed time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-                }
-                watch.stop();
-            }
-        } catch (Exception e) {
-            store.deleteLockobject(LOCKID);
-            throw e;
-        } finally {
-            if (store != null)
-                store.close();
-        }
-    }
-
-    /*
-     * run timeboxed updateConfirmed and can run only, if there is no other
-     * ReentrantLock
-     */
-    public void updateConfirmedTimeBoxed() throws BlockStoreException {
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
-            @Override
-            public String call() throws Exception {
-                updateConfirmed();
-                return "";
-            }
-        });
-        try {
-            handler.get(3000l, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            log.info("Timeout cancel updateConfirmed ");
-            handler.cancel(true);
-        } catch (Exception e) {
-            // ignore
-            log.info("updateConfirmed", e);
-        } finally {
-            executor.shutdownNow();
-        }
-
-    }
 
     public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
             throws BlockStoreException {
@@ -363,9 +296,8 @@ public class FullBlockGraph {
             }
 
             if (solidityState.isFailState()) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue."
-                        + block.toString());
-                deleteChainQueue(chainBlockQueue, store); 
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
+                deleteChainQueue(chainBlockQueue, store);
                 return;
             }
 
@@ -374,9 +306,8 @@ public class FullBlockGraph {
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue."
-                        + block.toString());
-                deleteChainQueue(chainBlockQueue, store); 
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
+                deleteChainQueue(chainBlockQueue, store);
                 return;
             }
             connectRewardBlock(block, solidityState, store);
@@ -2004,6 +1935,78 @@ public class FullBlockGraph {
         long difficulty = rewardInfo.getDifficultyTargetReward();
 
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
+    }
+    public void updateConfirmed() throws BlockStoreException {
+        String LOCKID = "chain";
+        int LockTime = 1000000;
+        FullBlockStore store = storeService.getStore();
+        try {
+            // log.info("create Reward started");
+            LockObject lock = store.selectLockobject(LOCKID);
+            boolean canrun = false;
+            if (lock == null) {
+                try {
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
+                } catch (Exception e) {
+                    // ignore
+                }
+            } else {
+                if (lock.getLocktime() < System.currentTimeMillis() - LockTime) {
+                    store.deleteLockobject(LOCKID);
+                    store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+                    canrun = true;
+                } else {
+                    if (lock.getLocktime() < System.currentTimeMillis() - 2000)
+                        log.info("updateConfirmed running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+                }
+            }
+            if (canrun) {
+                Stopwatch watch = Stopwatch.createStarted();
+                updateConfirmedDo();
+                store.deleteLockobject(LOCKID);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                    log.info("updateConfirmed time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                }
+                watch.stop();
+            }
+        } catch (Exception e) {
+            store.deleteLockobject(LOCKID);
+            throw e;
+        } finally {
+            if (store != null)
+                store.close();
+        }
+    }
+
+    /*
+     * run timeboxed updateConfirmed, there is no transaction here.
+     * Timeout will cancel the rest of update confirm and can be update from
+     * next run
+     */
+    public void updateConfirmedTimeBoxed() throws BlockStoreException {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        final Future<String> handler = executor.submit(new Callable() {
+            @Override
+            public String call() throws Exception {
+                updateConfirmed();
+                return "";
+            }
+        });
+        try {
+            handler.get(3000l, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.info("Timeout cancel updateConfirmed ");
+            handler.cancel(true);
+        } catch (Exception e) {
+            // ignore
+            log.info("updateConfirmed", e);
+        } finally {
+            executor.shutdownNow();
+        }
+
     }
 
 }
