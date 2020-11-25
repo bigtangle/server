@@ -30,34 +30,51 @@ import net.bigtangle.utils.OkHttp3Util;
  * 1) check the server chain length 
  * 2) check the response speed of the server
  * 3) check the health of the server
- * 4) balance of the server select for random 
+ * 4) calculate balance of the server select for random 
+ * 5) discover server start from NetworkParameter.getServers
+ * 6) save servers with kafka server in Userdata Block to read
+ * 7) 
  */
 public class ServerPool {
 
     private List<ServerState> servers = new ArrayList<ServerState>();
     private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
+
     // get a best server to be used and balance with random
     public ServerState getServer() {
         return servers.get(0);
     }
 
-    public void addServer(String s) {
+    public synchronized void addServer(String s) throws JsonProcessingException, IOException {
         Long time = System.currentTimeMillis();
         TXReward chain;
-        try {
-            chain = getChainNumber(s);
-            ServerState serverState = new ServerState();
-            serverState.setServerurl(s);
-            serverState.setResponseTime(System.currentTimeMillis() - time);
-            serverState.setChainlength(chain.getChainLength());
-            servers.add(serverState);
-        } catch (Exception e) {
-            log.debug("", e);
-        }
+        chain = getChainNumber(s);
+        ServerState serverState = new ServerState();
+        serverState.setServerurl(s);
+        serverState.setResponseTime(System.currentTimeMillis() - time);
+        serverState.setChainlength(chain.getChainLength());
+        servers.add(serverState);
         Collections.sort(servers, new SortbyChain());
     }
 
-    public void removeServer(ServerState serverState) {
+    /*
+     * Check the server of chain number and response time and remove staled
+     * servers
+     */
+    public synchronized void checkServers() {
+        for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
+            ServerState a = iter.next();
+            try {
+                addServer(a.getServerurl());
+            } catch (Exception e) {
+                log.debug("addServer failed and remove it", e);
+                iter.remove();
+            }
+
+        }
+    }
+
+    public synchronized void removeServer(ServerState serverState) {
         for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
             ServerState a = iter.next();
             if (serverState.getServerurl().equals(a.getServerurl())) {
@@ -66,22 +83,31 @@ public class ServerPool {
         }
     }
 
-    public void addServers(List<String> serverCandidates) {
-        servers = new ArrayList<ServerState>(); 
+    public synchronized void addServers(List<String> serverCandidates) {
+        servers = new ArrayList<ServerState>();
         for (String s : serverCandidates) {
-            addServer(s); 
-        } 
+            try {
+                addServer(s);
+            } catch (JsonProcessingException e) {
+            } catch (IOException e) {
+            }
+        }
     }
 
+    /*
+     * the order of sort
+     * response time indicate different server zone and service quality
+     * chain number indicate the longest chain is valid, but it is ok, that the there is small differences
+     * 
+     */
     public class SortbyChain implements Comparator<ServerState> {
-        // Used for sorting in ascending order of
-        // roll number
+        // Used for sorting in descending order of chain number and response time
         public int compare(ServerState a, ServerState b) {
-            if (a.getChainlength() == b.getChainlength()) {
+            if (a.getChainlength() - b.getChainlength() <= 1) {
+                // if only one chain difference use the response time for sort
                 return a.getResponseTime() > b.getResponseTime() ? 1 : -1;
             }
-
-            return a.getChainlength() < b.getChainlength() ? -1 : 1;
+            return a.getChainlength() > b.getChainlength() ? -1 : 1;
         }
     }
 
@@ -96,7 +122,5 @@ public class ServerPool {
         return aTXRewardResponse.getTxReward();
 
     }
-    
-    
 
 }

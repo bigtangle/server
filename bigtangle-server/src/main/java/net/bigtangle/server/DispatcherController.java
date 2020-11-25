@@ -75,6 +75,7 @@ import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
+import net.bigtangle.utils.OkHttp3Util;
 
 @RestController
 @RequestMapping("/")
@@ -133,7 +134,7 @@ public class DispatcherController {
             }
         });
         try {
-            handler.get(300000, TimeUnit.MILLISECONDS);
+            handler.get(serverConfiguration.getTimeoutMinute(), TimeUnit.MINUTES);
         } catch (TimeoutException e) {
             logger.debug(" process  Timeout  ");
             handler.cancel(true);
@@ -631,7 +632,7 @@ public class DispatcherController {
 
     @RequestMapping("/")
     public String index() {
-        return serverConfiguration.getIndexhtml();
+        return "Bigtangle";
     }
 
     private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,

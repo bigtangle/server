@@ -2535,6 +2535,31 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
+    public Block saveUserdata(ECKey userKey, Transaction transaction)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        Block block = params.getDefaultSerializer().makeBlock(data);
+
+        Sha256Hash sighash = transaction.getHash();
+        ECKey.ECDSASignature party1Signature = userKey.sign(sighash);
+        byte[] buf1 = party1Signature.encodeToDER();
+
+        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+        MultiSignBy multiSignBy0 = new MultiSignBy();
+        multiSignBy0.setAddress(userKey.toAddress(params).toBase58());
+        multiSignBy0.setPublickey(Utils.HEX.encode(userKey.getPubKey()));
+        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+        multiSignBies.add(multiSignBy0);
+        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        block.addTransaction(transaction);
+        block.setBlockType(Type.BLOCKTYPE_USERDATA);
+        return solveAndPost(block);
+    }
+    
     public void publishDomainName(ECKey ownerKey, String tokenid, String tokenname, KeyParameter aesKey,
             String description) throws Exception {
         GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);

@@ -38,7 +38,7 @@ public class OkHttp3Util {
 
     private static final Logger logger = LoggerFactory.getLogger(OkHttp3Util.class);
 
-    private static long timeoutMinute = 16;
+    public static long timeoutMinute = 45;
     private static OkHttpClient client = null;
     public static String pubkey;
     public static String signHex;

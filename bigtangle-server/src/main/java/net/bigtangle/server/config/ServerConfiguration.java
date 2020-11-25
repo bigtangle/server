@@ -6,6 +6,8 @@ package net.bigtangle.server.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import net.bigtangle.utils.OkHttp3Util;
  
 @Component
 @ConfigurationProperties(prefix = "server")
@@ -37,11 +39,12 @@ public class ServerConfiguration {
     //start sync from this checkpoint
     private Long checkpoint=-1l ;
     private int syncblocks=500;
-    
-    private String indexhtml="https://www.bigtangle.org";
-    private int blockPrototypeCachesSize =1;
+  
     private String dockerDBHost="mysql-test";
- 
+    //save in the userdata with pubkey
+    private String[] exchangelist= new String[] {};
+    private  long timeoutMinute = OkHttp3Util.timeoutMinute;
+    
     public synchronized Boolean checkService() {
         if (!serviceReady) {
             try {
@@ -192,24 +195,8 @@ public class ServerConfiguration {
 
     public void setSyncblocks(int syncblocks) {
         this.syncblocks = syncblocks;
-    }
-
-    public String getIndexhtml() {
-        return indexhtml;
-    }
-
-    public void setIndexhtml(String indexhtml) {
-        this.indexhtml = indexhtml;
-    }
-
-    public int getBlockPrototypeCachesSize() {
-        return blockPrototypeCachesSize;
-    }
-
-    public void setBlockPrototypeCachesSize(int blockPrototypeCachesSize) {
-        this.blockPrototypeCachesSize = blockPrototypeCachesSize;
-    }
-
+    } 
+ 
     public String getDockerDBHost() {
         return dockerDBHost;
     }
@@ -235,6 +222,22 @@ public class ServerConfiguration {
 
     public void setMaxsearchblocks(long maxsearchblocks) {
         this.maxsearchblocks = maxsearchblocks;
+    }
+
+    public String[] getExchangelist() {
+        return exchangelist;
+    }
+
+    public void setExchangelist(String[] exchangelist) {
+        this.exchangelist = exchangelist;
+    }
+
+    public long getTimeoutMinute() {
+        return timeoutMinute;
+    }
+
+    public void setTimeoutMinute(long timeoutMinute) {
+        this.timeoutMinute = timeoutMinute;
     }
 
 }
