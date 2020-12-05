@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
@@ -286,10 +287,13 @@ public class WalletAppKit extends AbstractIdleService {
             wallet = loadWallet(false);
         }
 
-    
+        setupAutoSave(wallet);
         return wallet;
     }
  
+    protected void setupAutoSave(Wallet wallet) {
+        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
+    }
 
     public Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream) throws Exception {
         Wallet wallet;

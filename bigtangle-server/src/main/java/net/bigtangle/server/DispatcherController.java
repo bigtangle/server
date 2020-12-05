@@ -75,7 +75,6 @@ import net.bigtangle.server.service.UserDataService;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
-import net.bigtangle.utils.OkHttp3Util;
 
 @RestController
 @RequestMapping("/")

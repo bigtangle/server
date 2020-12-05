@@ -54,7 +54,7 @@ public class LotteryExecution {
 	public void start() throws Exception {
 		ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(contractTokenid));
 		walletAdmin = Wallet.fromKeys(params, ecKey);
-		walletAdmin.setServerURL(contextRoot);
+	//	walletAdmin.setServerURL(contextRoot);
 		List<ContractEventInfo> player = getContractEventInfo(contractTokenid);
 		// TODO 100 millions raw
 		// Must be sorted new UtilSort().sortContractEventInfo(player);

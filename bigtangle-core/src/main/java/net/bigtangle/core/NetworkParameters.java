@@ -40,7 +40,6 @@ import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
-import net.bigtangle.wallet.ServerPool;
 
 /**
  * <p>
@@ -102,9 +101,7 @@ public abstract class NetworkParameters {
     protected String genesisPub;
     //List of root permissionDomainname
     protected List<String> permissionDomainname;
-    //List of servers can be used
-    protected  ServerPool serverPool;
-    
+   
     //List of based token for order
     protected List<String> orderBaseTokens;
     
@@ -484,7 +481,8 @@ public abstract class NetworkParameters {
     }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);
-    public abstract   void  serverSeeds() ;
+    //initial server seeds to start, those server can register new servers and return other servers
+    public abstract   String[]  serverSeeds() ;
     
     public static enum ProtocolVersion {
         MINIMUM(70000), PONG(60001), BLOOM_FILTER(70000), CURRENT(70001);
@@ -525,13 +523,5 @@ public abstract class NetworkParameters {
      */
     public  abstract Integer getOrderPriceShift(String orderBaseTokens) ;
 
-    
-    public ServerPool getServerPool() {
-        return serverPool;
-    }
-
-    public void setServerPool(ServerPool serverPool) {
-        this.serverPool = serverPool;
-    }
-    
+     
 }

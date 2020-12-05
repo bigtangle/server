@@ -11,7 +11,7 @@ import java.util.Arrays;
 import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.wallet.ServerPool;
+import net.bigtangle.pool.server.ServerPool;
 
 /**
  * Parameters for the main production network on which people trade goods and
@@ -52,10 +52,8 @@ public class TestParams extends AbstractBitcoinNetParams {
 
     }
 
-    public void serverSeeds() {
-        String[] urls = new String[] { "https://test.bigtangle.de:8089/", "https://test.bigtangle.info:8089/" };
-        serverPool = new ServerPool();
-        serverPool.addServers(Arrays.asList(urls));
+    public String[] serverSeeds() {
+        return new String[] { "https://test.bigtangle.de:8089/", "https://test.bigtangle.info:8089/" };
 
     }
 

@@ -21,12 +21,10 @@
 package net.bigtangle.params;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import com.google.common.collect.ImmutableList;
 
 import net.bigtangle.core.exception.VerificationException;
-import net.bigtangle.wallet.ServerPool;
 
 /**
  * Parameters for the main production network on which people trade goods and
@@ -92,12 +90,11 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
     }
 
-    public void serverSeeds() {
-        String[] urls = new String[] { "https://p.bigtangle.de:8088/",
+    public String[] serverSeeds() {
+          return  new String[] { "https://p.bigtangle.de:8088/",
                 "https://p.bigtangle.org:8088/",
                 "https://p.bigtangle.info:8088/" };
-        serverPool = new ServerPool();
-        serverPool.addServers(Arrays.asList(urls));
+ 
     }
 
     private static MainNetParams instance;

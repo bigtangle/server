@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
@@ -108,6 +109,7 @@ import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.pool.server.ServerPool;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.signers.LocalTransactionSigner;
@@ -149,7 +151,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     // The various pools below give quick access to wallet-relevant transactions
 
     // server url for connected
-    protected String serverurl;
+    protected ServerPool serverPool;
     // indicator, if the server allows client mining address in the block and
     // this depends on the server
     protected boolean allowClientMining = false;
@@ -254,7 +256,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         signers = new ArrayList<TransactionSigner>();
         addTransactionSigner(new LocalTransactionSigner());
 
-        this.serverurl = url;
+        this.serverPool = new ServerPool(params);
     }
 
     public NetworkParameters getNetworkParameters() {
@@ -1169,6 +1171,20 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
+    public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
+            @Nullable WalletFiles.Listener eventListener) {
+        lock.lock();
+        try {
+            checkState(vFileManager == null, "Already auto saving this wallet.");
+            WalletFiles manager = new WalletFiles(this, f, delayTime, timeUnit);
+            if (eventListener != null)
+                manager.setListener(eventListener);
+            vFileManager = manager;
+            return manager;
+        } finally {
+            lock.unlock();
+        }
+    }
     /******************************************************************************************************************/
 
     protected static class FeeCalculation {
@@ -1691,17 +1707,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public String getServerURL() {
-        if (serverurl == null) {
-            this.params.serverSeeds();
-            serverurl = this.params.getServerPool().getServer().getServerurl();
+        if (serverPool == null) {
+            serverPool = new ServerPool(params);
         }
-        return serverurl;
+        return serverPool.getServer().getServerurl();
     }
 
-    public void setServerURL(String url) {
-        this.serverurl = url;
+    public void setServerPool( ServerPool serverPool) { 
+            this.serverPool = serverPool; 
     }
-
     public KeyChainGroup getKeyChainGroup() {
         return this.keyChainGroup;
     }
@@ -2180,21 +2194,23 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * 
      */
     public Block buyOrder(KeyParameter aesKey, String targetTokenId, long buyPrice, long targetValue, Long validToTime,
-            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException,
-            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException,
+            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         Token targetToken = checkTokenId(targetTokenId);
-        return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,allowRemainder);
+        return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
+                allowRemainder);
     }
 
     public Block buyOrder(KeyParameter aesKey, Token targetToken, long buyPrice, long targetValue, Long validToTime,
-            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException,
-            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException,
+            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
         if (targetToken.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("buy token is base token ");
         Integer priceshift = params.getOrderPriceShift(orderBaseToken);
         // Burn orderBaseToken to buy
-        Coin offerValue = new Coin(totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift,allowRemainder),
+        Coin offerValue = new Coin(
+                totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift, allowRemainder),
                 Utils.HEX.decode(orderBaseToken)).negate();
         Transaction tx = new Transaction(params);
         List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
@@ -2215,7 +2231,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         OrderOpenInfo info = new OrderOpenInfo(targetValue, targetToken.getTokenid(), beneficiary.getPubKey(),
                 validToTime, validFromTime, Side.BUY, beneficiary.toAddress(params).toBase58(), orderBaseToken,
-                buyPrice, totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift,allowRemainder).longValue(),
+                buyPrice,
+                totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift, allowRemainder).longValue(),
                 orderBaseToken);
         tx.setData(info.toByteArray());
         tx.setDataClassName("OrderOpen");
@@ -2238,10 +2255,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * targetToken=orderBaseToken
      */
     public Block sellOrder(KeyParameter aesKey, String offerTokenId, long sellPrice, long offervalue, Long validToTime,
-            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException, IOException, NoTokenException,
-            InsufficientMoneyException, UTXOProviderException {
+            Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException,
+            IOException, NoTokenException, InsufficientMoneyException, UTXOProviderException {
         Token t = checkTokenId(offerTokenId);
-        return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,allowRemainder);
+        return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder);
     }
 
     public Block sellOrder(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
@@ -2271,7 +2288,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throw new InsufficientMoneyException("");
         }
         // get the base token
-        BigInteger targetvalue = totalAmount(sellPrice, offervalue, t.getDecimals() + priceshift,allowRemainder);
+        BigInteger targetvalue = totalAmount(sellPrice, offervalue, t.getDecimals() + priceshift, allowRemainder);
         if (targetvalue.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
             throw new InvalidTransactionDataException("Invalid  max: " + targetvalue + " > " + Long.MAX_VALUE);
         }
@@ -2559,7 +2576,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         block.setBlockType(Type.BLOCKTYPE_USERDATA);
         return solveAndPost(block);
     }
-    
+
     public void publishDomainName(ECKey ownerKey, String tokenid, String tokenname, KeyParameter aesKey,
             String description) throws Exception {
         GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(tokenname);
@@ -2703,7 +2720,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             return oldBlock;
         }
     }
- 
 
     public Long calc(long m, long factor, long d) {
         return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
@@ -2855,6 +2871,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public void setClientMiningAddress(byte[] clientMiningAddress) {
         this.clientMiningAddress = clientMiningAddress;
+    }
+
+    //use the fixed server 
+    public void setServerURL(String contextRoot) { 
+        serverPool=new ServerPool(params, contextRoot);
     }
 
 }

@@ -182,7 +182,7 @@ public class PayOTCOrder {
 
         SendRequest request = SendRequest.forTx(transaction);
         request.aesKey = aesKey;
-        this.wallet().setServerURL(this.serverURL);
+        //this.wallet().setServerURL(this.serverURL);
         this.wallet().signTransaction(request);
 
         byte[] data = OkHttp3Util.postAndGetBlock(this.serverURL + ReqCmd.getTip.name(),
@@ -295,7 +295,7 @@ public class PayOTCOrder {
         // fromAddress00);
 
         List<TransactionOutput> candidates = this.wallet().transforSpendCandidates(outputs);
-        this.wallet().setServerURL(this.serverURL);
+        //this.wallet().setServerURL(this.serverURL);
         this.wallet().completeTx(req, candidates, false, addressResult);
         this.wallet().signTransaction(req);
 
