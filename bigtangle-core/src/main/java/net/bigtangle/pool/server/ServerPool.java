@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.NetworkParameters;
@@ -45,13 +46,14 @@ public class ServerPool {
 
     private List<ServerState> servers = new ArrayList<ServerState>();
     private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
-    private   ScheduledThreadPoolExecutor houseKeepingExecutorService;
+    private ScheduledThreadPoolExecutor houseKeepingExecutorService;
     private final long HOUSEKEEPING_PERIOD_MS = Long.getLong("net.bigtangle.pool.server.housekeeping.periodMs",
             SECONDS.toMillis(200));
     protected final NetworkParameters params;
-    
+    protected String[] fixservers;
+
     public ServerPool(NetworkParameters params) {
-        this.params=params;
+        this.params = params;
         DefaultThreadFactory threadFactory = new DefaultThreadFactory(" housekeeper", true);
         this.houseKeepingExecutorService = new ScheduledThreadPoolExecutor(1, threadFactory,
                 new ThreadPoolExecutor.DiscardPolicy());
@@ -60,26 +62,32 @@ public class ServerPool {
 
         this.houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(), 0L, HOUSEKEEPING_PERIOD_MS,
                 MILLISECONDS);
-      //  init(params);
+        // init(params);
     }
-    public void serverSeeds( ) {
-        for (String s: params.serverSeeds()) {
+
+    public void serverSeeds() {
+        for (String s : params.serverSeeds()) {
             try {
                 addServer(s);
-            } catch ( Exception e) {
-               log.debug("",e);
-                
-            }  
+            } catch (Exception e) {
+                log.debug("", e);
+
+            }
         }
     }
-    public ServerPool(NetworkParameters params, String fixserver) {
-        this.params=params;
-        try {
-            addServer(fixserver);
-        } catch ( Exception e) {
-            log.debug("",e);
-        }  
+
+    public ServerPool(NetworkParameters params, String[] fixservers) {
+        this.fixservers = fixservers;
+        this.params = params; 
+        for (String fixserver : this.fixservers) {
+            try {
+                addServer(fixserver);
+            } catch (Exception e) {
+                log.debug("", e);
+            }
+        }
     }
+
     // get a best server to be used and balance with random
     public ServerState getServer() {
         return servers.get(0);
@@ -172,7 +180,7 @@ public class ServerPool {
 
         @Override
         public void run() {
-            log.debug("HouseKeeper running  checkServers" );
+            log.debug("HouseKeeper running  checkServers");
             checkServers(); // Try to maintain minimum connections
         }
     }
@@ -198,9 +206,9 @@ public class ServerPool {
     public List<ServerState> getServers() {
         return servers;
     }
+
     public void setServers(List<ServerState> servers) {
         this.servers = servers;
     }
-    
-    
+
 }

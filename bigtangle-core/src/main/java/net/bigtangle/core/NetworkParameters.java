@@ -37,6 +37,7 @@ import com.google.common.math.LongMath;
 
 import net.bigtangle.equihash.EquihashProof;
 import net.bigtangle.params.MainNetParams;
+import net.bigtangle.pool.server.ServerPool;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.MonetaryFormat;
@@ -123,7 +124,7 @@ public abstract class NetworkParameters {
     public static final boolean USE_EQUIHASH = false;
     protected int equihashN;
     protected int equihashK;
-
+    protected ServerPool serverPool;
     /**
      * The version number at the start of the network.
      */
@@ -513,6 +514,14 @@ public abstract class NetworkParameters {
 
     public void setOrderBaseTokens(List<String> orderBaseTokens) {
         this.orderBaseTokens = orderBaseTokens;
+    }
+
+    public ServerPool getServerPool() {
+        return serverPool;
+    }
+
+    public void setServerPool(ServerPool serverPool) {
+        this.serverPool = serverPool;
     }
 
     /*

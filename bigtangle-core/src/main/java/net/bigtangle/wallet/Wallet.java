@@ -2875,7 +2875,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     //use the fixed server 
     public void setServerURL(String contextRoot) { 
-        serverPool=new ServerPool(params, contextRoot);
+        serverPool=new ServerPool(params, new String[] {contextRoot});
     }
 
 }
