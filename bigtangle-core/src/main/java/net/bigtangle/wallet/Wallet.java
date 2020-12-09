@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.NoDataException;
 import net.bigtangle.core.exception.NoTokenException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -94,11 +96,13 @@ import net.bigtangle.core.exception.VerificationException.ConflictPossibleExcept
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.OrderImpossibleException;
 import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
+import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
+import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
@@ -117,6 +121,7 @@ import net.bigtangle.signers.MissingSigResolutionSigner;
 import net.bigtangle.signers.TransactionSigner;
 import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.Json;
+import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
@@ -1185,6 +1190,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             lock.unlock();
         }
     }
+
     /******************************************************************************************************************/
 
     protected static class FeeCalculation {
@@ -1713,9 +1719,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return serverPool.getServer().getServerurl();
     }
 
-    public void setServerPool( ServerPool serverPool) { 
-            this.serverPool = serverPool; 
+    public void setServerPool(ServerPool serverPool) {
+        this.serverPool = serverPool;
     }
+
     public KeyChainGroup getKeyChainGroup() {
         return this.keyChainGroup;
     }
@@ -2806,6 +2813,28 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
+    public BigDecimal getLastPrice(String tokenid, String basetoken)
+            throws JsonProcessingException, IOException, NoDataException {
+        List<String> tokenids = new ArrayList<String>();
+        tokenids.add(tokenid);
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenids", tokenids);
+        requestParam.put("count", 1);
+        requestParam.put("basetoken", basetoken);
+        String response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrdersTicker.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
+        if (orderTickerResponse != null && !orderTickerResponse.getTickers().isEmpty()) {
+            MatchResult matchResult = orderTickerResponse.getTickers().get(0);
+            Token base = orderTickerResponse.getTokennames().get(matchResult.getBasetokenid());
+            Integer priceshift = params.getOrderPriceShift(matchResult.getBasetokenid());
+            // price is in orderbasetoken
+            String price = MonetaryFormat.FIAT.noCode().format(matchResult.getPrice(), base.getDecimals() + priceshift);
+            return new BigDecimal(price);
+        }
+        throw new NoDataException();
+    }
+
     public Block contractExecution(String tokenId, BigInteger payAmount, String beneficiary,
             List<ContractEventInfo> contractEventRecords, String contractTokenid)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
@@ -2873,9 +2902,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         this.clientMiningAddress = clientMiningAddress;
     }
 
-    //use the fixed server 
-    public void setServerURL(String contextRoot) { 
-        serverPool=new ServerPool(params, new String[] {contextRoot});
+    // use the fixed server
+    public void setServerURL(String contextRoot) {
+        serverPool = new ServerPool(params, new String[] { contextRoot });
     }
 
 }

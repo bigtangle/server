@@ -5,7 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -21,8 +20,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -38,9 +35,6 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.InsufficientMoneyException;
-import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.core.response.OrderdataResponse;
@@ -165,6 +159,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
             // TODO check the execute ordering. price is 1000 or 1001
             assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
         }
+        
+        //check wallet 
+        
+       BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+       assertTrue(a.compareTo( new BigDecimal("0.001")) ==0);
     }
 
     @Test
