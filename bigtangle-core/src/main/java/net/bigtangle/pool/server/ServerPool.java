@@ -48,7 +48,7 @@ public class ServerPool {
     private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
     private ScheduledThreadPoolExecutor houseKeepingExecutorService;
     private final long HOUSEKEEPING_PERIOD_MS = Long.getLong("net.bigtangle.pool.server.housekeeping.periodMs",
-            SECONDS.toMillis(200));
+            SECONDS.toMillis(600));
     protected final NetworkParameters params;
     protected String[] fixservers;
 
@@ -122,10 +122,10 @@ public class ServerPool {
         }
     }
 
-    public synchronized void removeServer(ServerState serverState) {
+    public synchronized void removeServer(String server  ) {
         for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
             ServerState a = iter.next();
-            if (serverState.getServerurl().equals(a.getServerurl())) {
+            if (a.getServerurl().equals(server)) {
                 iter.remove();
             }
         }

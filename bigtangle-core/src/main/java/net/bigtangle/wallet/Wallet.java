@@ -1727,30 +1727,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return this.keyChainGroup;
     }
 
-    public boolean checkOutput(Map<String, Coin> valueOut) {
-
-        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-            // System.out.println(entry.getKey() + "/" + entry.getValue());
-            if (entry.getValue().signum() < 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean checkInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
-
-        for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
-            if (!valueInput.containsKey(entry.getKey())) {
-                return false;
-            } else {
-                if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
-                    return false;
-            }
-        }
-        return true;
-    }
-
     /*
      * get all keys in the wallet
      */
@@ -1882,10 +1858,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             OkHttp3Util.post(getServerURL() + ReqCmd.signToken.name(), adjust.bitcoinSerialize());
             return adjust;
         } catch (ConnectException e) {
-            this.params.serverSeeds();
+            serverConnectException();
             throw e;
         }
 
+    }
+
+    private void serverConnectException() {
+        this.params.serverSeeds();
     }
 
     // pay the BIGTANGLE_TOKENID from the list HashMap<String, Long>
@@ -2400,7 +2380,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             OkHttp3Util.post(getServerURL() + ReqCmd.saveBlock.name(), adjust.bitcoinSerialize());
             return adjust;
         } catch (ConnectException e) {
-            this.params.serverSeeds();
+            this.serverPool.removeServer(getServerURL());
             throw e;
         }
 
