@@ -42,7 +42,7 @@ public class ServerConfiguration {
   
     private String dockerDBHost="mysql-test";
     //save in the userdata with pubkey
-    private String[] exchangelist= new String[] {};
+    private String[] exchangelist= new String[] {"02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975"};
     private  long timeoutMinute = OkHttp3Util.timeoutMinute;
     
     public synchronized Boolean checkService() {

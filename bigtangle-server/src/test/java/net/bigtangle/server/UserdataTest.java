@@ -2,9 +2,11 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,8 +18,10 @@ import net.bigtangle.core.Contact;
 import net.bigtangle.core.ContactInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
@@ -99,6 +103,40 @@ public class UserdataTest extends AbstractIntegrationTest {
         // TODO encrypt and decrypt the contactInfo0
         walletAppKit.wallet().saveUserdata(outKey, transaction);
 
+    }
+
+    @Test
+    public void testExchangeUserdata() throws Exception {
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+        block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
+        ECKey outKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        makeTestToken(outKey, BigInteger.valueOf(1000 * 1000), new ArrayList<>(), 0);
+
+        Transaction transaction = new Transaction(networkParameters);
+        Contact contact = new Contact();
+        contact.setName("mytokenforexcahnge");
+        contact.setAddress(outKey.getPublicKeyAsHex());
+        ContactInfo contactInfo0 = new ContactInfo();
+        List<Contact> list = new ArrayList<Contact>();
+        list.add(contact);
+        contactInfo0.setContactList(list);
+
+        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
+        transaction.setData(contactInfo0.toByteArray());
+
+        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        makeRewardBlock();
+        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
+
+        assertTrue(getTokensResponse.getTokens().stream().map(Token::getTokenid).collect(Collectors.toList())
+                .contains(outKey.getPublicKeyAsHex()));
 
     }
+
 }
