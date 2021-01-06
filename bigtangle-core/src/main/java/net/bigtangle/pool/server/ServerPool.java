@@ -54,6 +54,7 @@ public class ServerPool {
 
     public ServerPool(NetworkParameters params) {
         this.params = params;
+        /*
         DefaultThreadFactory threadFactory = new DefaultThreadFactory(" housekeeper", true);
         this.houseKeepingExecutorService = new ScheduledThreadPoolExecutor(1, threadFactory,
                 new ThreadPoolExecutor.DiscardPolicy());
@@ -62,6 +63,7 @@ public class ServerPool {
 
         this.houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(), 0L, HOUSEKEEPING_PERIOD_MS,
                 MILLISECONDS);
+                */
         // init(params);
     }
 
