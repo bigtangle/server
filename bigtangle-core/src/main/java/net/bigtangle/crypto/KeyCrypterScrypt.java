@@ -170,7 +170,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             final Stopwatch watch = Stopwatch.createStarted();
             byte[] keyBytes = SCrypt.scrypt(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
             watch.stop();
-            logStack();
+           // logStack();
             log.info("Deriving key took {} for {} scrypt iterations.", watch, scryptParameters.getN());
             return new KeyParameter(keyBytes);
         } catch (Exception e) {
