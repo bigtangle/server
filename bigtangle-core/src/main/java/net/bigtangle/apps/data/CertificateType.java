@@ -1,6 +1,8 @@
 package net.bigtangle.apps.data;
 
 public enum CertificateType {
+
+    vaccinationCertificate,
     //凭证
     certificate, 
     //驾照
