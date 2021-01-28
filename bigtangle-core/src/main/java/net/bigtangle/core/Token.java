@@ -239,7 +239,7 @@ public class Token extends SpentBlock implements java.io.Serializable {
         this.decimals = decimals;
     }
 
-    public String getTokennameDisplay() {
+    public String getTokenFullname() {
         if (domainName == null || "null".equals(domainName) || "".equals(domainName))
             return tokenname;
         else {
@@ -250,6 +250,9 @@ public class Token extends SpentBlock implements java.io.Serializable {
            
             }
         }
+    }
+    public String getTokennameDisplay() {
+        return getTokenFullname();
     }
 
     public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
