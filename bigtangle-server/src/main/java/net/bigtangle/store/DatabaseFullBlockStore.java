@@ -212,7 +212,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     protected final String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block "
             + "FROM blocks WHERE milestone = -1 AND height >= ? " + afterSelect();
-    
+
     protected final String SELECT_OUTPUT_SPENDER_SQL = "SELECT blocks.hash,"
             + " blocks.height, milestone, milestonelastupdate, " + " inserttime,  solid, blocks.confirmed "
             + " FROM blocks INNER JOIN outputs ON outputs.spenderblockhash=blocks.hash"
@@ -976,8 +976,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         return re;
     }
 
-
-    public List<byte[]> blocksFromNonChainHeigth(long heigth ) throws BlockStoreException {
+    public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException {
         // Optimize for chain head
         List<byte[]> re = new ArrayList<byte[]>();
         maybeConnect();
@@ -985,7 +984,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         // log.info("find block hexStr : " + hash.toString());
         try {
             s = getConnection().prepareStatement(SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL);
-            s.setLong(1, heigth); 
+            s.setLong(1, heigth);
             ResultSet results = s.executeQuery();
             while (results.next()) {
                 re.add(Gzip.decompress(results.getBytes("block")));
@@ -1004,7 +1003,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
         return re;
     }
-    
+
     private boolean verifyHeader(Block block) {
         try {
             block.verifyHeader();
@@ -1856,7 +1855,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw new BlockStoreException(e);
- 
+
         } finally {
             if (insertStatement != null) {
                 try {
@@ -3069,6 +3068,38 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 }
             }
         }
+    }
+
+    @Override
+    public List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException {
+        List<Token> list = new ArrayList<Token>();
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(
+                    SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE tokenid IN ( " + buildINList(tokenids) + " ) ");
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Token tokens = new Token();
+                setToken(resultSet, tokens);
+                list.add(tokens);
+            }
+            return list;
+        } catch (Exception ex) {
+
+            throw new BlockStoreException(ex);
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+
     }
 
     @Override
@@ -5826,7 +5857,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 if ("".equals(basetokenid))
                     sql += " where ";
                 else {
-                    sql +=basetokenid + " and ";
+                    sql += basetokenid + " and ";
                 }
                 sql += "  tokenid IN ( " + buildINList(tokenIds) + " ) ";
 
@@ -6094,9 +6125,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         PreparedStatement s = null;
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
-            s = getConnection()
-                    .prepareStatement(SELECT_CHAINBLOCKQUEUE + " where orphan =? " 
-            + " order by chainlength asc" + " limit 550");
+            s = getConnection().prepareStatement(
+                    SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit 550");
             s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {

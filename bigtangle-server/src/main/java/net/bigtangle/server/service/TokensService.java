@@ -7,8 +7,10 @@ package net.bigtangle.server.service;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,10 +70,8 @@ public class TokensService {
         if (name != null && !"".equals(name.trim())) {
             list.addAll(store.getTokensList(name));
         } else {
-            list.addAll(store.getTokenID(NetworkParameters.BIGTANGLE_TOKENID_STRING));
-            list.addAll(store.getTokensListFromDomain("bigtangle"));
+            addExchangeTokensInUserdata(list, store);
         }
-        addExchangeTokensInUserdata(list, store);
         Map<String, BigInteger> map = store.getTokenAmountMap();
         return GetTokensResponse.create(list, map);
     }
@@ -80,11 +80,14 @@ public class TokensService {
         for (String pubKey : serverConfiguration.getExchangelist()) {
             try {
                 byte[] buf = userDataService.getUserData(DataClassName.CONTACTINFO.name(), pubKey, store);
-                ContactInfo contactInfo1; 
-                contactInfo1 = new ContactInfo().parse(buf); 
+                ContactInfo contactInfo1;
+                contactInfo1 = new ContactInfo().parse(buf);
+                Set<String> tokenids = new HashSet<String>();
+                tokenids.add(NetworkParameters.BIGTANGLE_TOKENID_STRING);
                 for (Contact contact : contactInfo1.getContactList()) {
-                    list.addAll(store.getTokenID(contact.getAddress()));
+                    tokenids.add(contact.getAddress());
                 }
+                list.addAll(store.getTokenID(tokenids));
             } catch (IOException e) {
                 logger.info("addExchangeTokensInUserdata", e);
             }

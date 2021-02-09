@@ -427,6 +427,7 @@ public final class MonetaryFormat {
     }
 
     public BigInteger parseValue(String str, int smallestUnitExponent) {
+        str= str.trim();
         StringWriter s = new StringWriter();
         for (int i = 0; i < smallestUnitExponent; i++) {
             s.append("0");

@@ -485,4 +485,6 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void deleteLockobject(String lockobjectid) throws BlockStoreException;
     void deleteAllLockobject() throws BlockStoreException;
     void insertLockobject( LockObject lockobject ) throws BlockStoreException;
+
+    List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException;
 }
