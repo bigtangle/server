@@ -416,13 +416,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders WHERE confirmed=1 AND spent=0 ";
 
-    protected final String SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=0 AND offertokenid=? " + " ORDER BY targetcoinvalue / offercoinvalue ASC"
-            + " LIMIT ?";
-    protected final String SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=0 AND targettokenid=? " + " ORDER BY offercoinvalue / targetcoinvalue DESC"
-            + " LIMIT ?";
-
     protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
             + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
     protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
@@ -4974,37 +4967,33 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
+    /*
+     * all spent order and older than a month will be deleted from order table.
+     */
     @Override
-    public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
+    public void cleanUpClosedOrders() throws BlockStoreException {
+
         maybeConnect();
-        PreparedStatement s = null;
+        PreparedStatement deleteStatement = null;
         try {
-            s = getConnection().prepareStatement(SELECT_ORDERS_SORTED_SQL);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
+
+            deleteStatement = getConnection()
+                    .prepareStatement(" delete FROM orders WHERE confirmed=1 AND spent=1 AND validToTime < ? ");
+            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 10* NetworkParameters.ORDER_TIMEOUT_MAX  );
+            deleteStatement.executeBatch();
+        } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
-            if (s != null) {
+
+            if (deleteStatement != null) {
                 try {
-                    s.close();
+                    deleteStatement.close();
                 } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
+                    throw new BlockStoreException("Could not close statement");
                 }
             }
         }
+
     }
 
     @Override
@@ -5074,76 +5063,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<OrderRecord> getBestOpenSellOrders(String tokenId, int count) throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = getConnection().prepareStatement(SELECT_BEST_OPEN_SELL_ORDERS_SORTED_SQL);
-            s.setString(1, tokenId);
-            s.setInt(2, count);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = getConnection().prepareStatement(SELECT_BEST_OPEN_BUY_ORDERS_SORTED_SQL);
-            s.setString(1, tokenId);
-            s.setInt(2, count);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
     public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
         if (addresses == null || addresses.isEmpty())
@@ -5186,76 +5105,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
-
-    @Override
-    public List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = getConnection().prepareStatement(SELECT_MY_REMAINING_OPEN_ORDERS_SQL);
-            s.setString(1, address);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException {
-        List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = getConnection().prepareStatement(SELECT_MY_INITIAL_OPEN_ORDERS_SQL + LIMIT_5000);
-            s.setString(1, address);
-            s.setString(2, address);
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
-        }
-    }
-
+  
     @Override
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
         List<UTXO> result = new ArrayList<>();

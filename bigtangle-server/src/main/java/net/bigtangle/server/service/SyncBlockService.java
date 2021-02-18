@@ -408,6 +408,16 @@ public class SyncBlockService {
         }
     }
 
+    
+    /*
+     *  for performance of order table, we do remove the all spent and order older than month
+     */
+    public void cleanUpClosedOrder(FullBlockStore store) throws BlockStoreException {
+        // mcmcService.cleanupNonSolidMissingBlocks();
+        
+    }
+
+    
     /*
      * check difference to remote servers and does sync. ask the remote
      * getMaxConfirmedReward to compare the my getMaxConfirmedReward if the

@@ -10,7 +10,6 @@ import java.util.Set;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -19,7 +18,6 @@ import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
 import net.bigtangle.core.ordermatch.TradePair;
-import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.store.FullBlockStore;
@@ -62,30 +60,7 @@ public class OrderTickerService {
         store.deleteMatchingEvents(outputTx.getHashAsString());
     }
 
-    /**
-     * Returns up to n best currently open sell orders
-     * 
-     * @param tokenId
-     *            the id of the token
-     * @return up to n best currently open sell orders
-     * @throws BlockStoreException
-     */
-    public List<OrderRecord> getBestOpenSellOrders(String tokenId, int count,FullBlockStore store) throws BlockStoreException {
-        return store.getBestOpenSellOrders(tokenId, count);
-    }
-
-    /**
-     * Returns up to n best currently open buy orders
-     * 
-     * @param tokenId
-     *            the id of the token
-     * @return up to n best currently open buy orders
-     * @throws BlockStoreException
-     */
-    public List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count,FullBlockStore store) throws BlockStoreException {
-        return store.getBestOpenBuyOrders(tokenId, count);
-    }
-
+ 
     /**
      * Returns a list of up to n last prices in ascending occurrence
      * 

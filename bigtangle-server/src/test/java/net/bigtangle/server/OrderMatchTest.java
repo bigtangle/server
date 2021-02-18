@@ -165,58 +165,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
        BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
        assertTrue(a.compareTo( new BigDecimal("0.001")) ==0);
     }
-
-    @Test
-    public void orderTickerSearch() throws Exception {
-
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0);
-        List<Block> addedBlocks = new ArrayList<>();
-
-        // Make test token
-        resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
-        String testTokenId = testKey.getPublicKeyAsHex();
-        generateSpareChange(genesisKey, addedBlocks);
-
-        // Get current existing token amount
-        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
-        // Open sell order for test tokens
-        Block s1 = makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-        Block s2 = makeAndConfirmSellOrder(testKey, testTokenId, 2000, 100, addedBlocks);
-
-        // Open buy order for test tokens
-        Block b1 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 100, 100, addedBlocks);
-        Block b2 = makeAndConfirmBuyOrder(genesisKey, testTokenId, 10, 100, addedBlocks);
-
-        // Verify token amount invariance
-        assertCurrentTokenAmountEquals(origTokenAmounts);
-
-        // Verify the best orders are correct
-        makeRewardBlock(addedBlocks);
-        
-        List<OrderRecord> bestOpenSellOrders = tickerService.getBestOpenSellOrders(testTokenId, 2, store);
-        assertEquals(2, bestOpenSellOrders.size());
-        assertEquals(s1.getHash(), bestOpenSellOrders.get(0).getBlockHash());
-        assertEquals(s2.getHash(), bestOpenSellOrders.get(1).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders = tickerService.getBestOpenBuyOrders(testTokenId, 2, store);
-
-        assertEquals(2, bestOpenBuyOrders.size());
-        assertEquals(b1.getHash(), bestOpenBuyOrders.get(0).getBlockHash());
-        assertEquals(b2.getHash(), bestOpenBuyOrders.get(1).getBlockHash());
-
-        List<OrderRecord> bestOpenSellOrders2 = tickerService.getBestOpenSellOrders(testTokenId, 1, store);
-        assertEquals(1, bestOpenSellOrders2.size());
-        assertEquals(s1.getHash(), bestOpenSellOrders2.get(0).getBlockHash());
-        List<OrderRecord> bestOpenBuyOrders2 = tickerService.getBestOpenBuyOrders(testTokenId, 1, store);
-        assertEquals(1, bestOpenBuyOrders2.size());
-        assertEquals(b1.getHash(), bestOpenBuyOrders2.get(0).getBlockHash());
-
-        // Verify deterministic overall execution
-        readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-    }
-
+ 
     @Test
     public void buy() throws Exception {
 
@@ -1192,14 +1141,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<String> a = new ArrayList<String>();
         a.add(genesisKey.toAddress(networkParameters).toBase58());
         List<OrderRecord> closedOrders = store.getMyClosedOrders(a);
-        List<OrderRecord> openOrders = store
-                .getMyRemainingOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
-        List<OrderRecord> initialOrders = store
-                .getMyInitialOpenOrders(genesisKey.toAddress(networkParameters).toBase58());
-
+           
         System.out.println(closedOrders.toString());
-        System.out.println(openOrders.toString());
-        System.out.println(initialOrders.toString());
+         
     }
 
     @Test

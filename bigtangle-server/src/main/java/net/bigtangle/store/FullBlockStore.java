@@ -217,6 +217,10 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
+
+    public void cleanUpClosedOrders( )
+            throws BlockStoreException;
+    
     public TXReward getMaxConfirmedReward() throws BlockStoreException;
 
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException;
@@ -274,8 +278,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException;
 
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
-
-    public List<OrderRecord> getAllOrdersSorted() throws BlockStoreException;
+ 
 
     public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 
@@ -396,15 +399,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException;
 
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
-  
-    List<OrderRecord> getMyRemainingOpenOrders(String address) throws BlockStoreException;
-
-    List<OrderRecord> getMyInitialOpenOrders(String address) throws BlockStoreException;
-
-    List<OrderRecord> getBestOpenSellOrders(String tokenId, int count) throws BlockStoreException;
-
-    List<OrderRecord> getBestOpenBuyOrders(String tokenId, int count) throws BlockStoreException;
-
+   
     void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException;
 
     void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;

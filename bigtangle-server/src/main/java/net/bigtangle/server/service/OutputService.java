@@ -63,10 +63,6 @@ public class OutputService {
         List<Coin> tokens = new ArrayList<Coin>();
         for (Map.Entry<String, Coin> entry : values.entrySet()) {
             tokens.add(entry.getValue());
-            HashMap<String, Object> r = new HashMap<String, Object>();
-            r.put("value", entry.getValue().getValue());
-            r.put("tokenHex", entry.getValue().getTokenHex());
-            r.put("tokenName", entry.getValue().getTokenHex());
         }
 
         return GetBalancesResponse.create(tokens, outputs, getTokename(outputs, store));
