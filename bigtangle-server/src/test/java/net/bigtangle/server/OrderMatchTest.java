@@ -143,8 +143,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        List<String> tokenids = new ArrayList<String>();
-
+        List<String> tokenids = new ArrayList<String>(); 
         requestParam.put("tokenids", tokenids);
         requestParam.put("basetoken",  NetworkParameters.BIGTANGLE_TOKENID_STRING);
         String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
@@ -153,17 +152,21 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
         for (MatchResult m : orderTickerResponse.getTickers()) {
-            assertTrue(m.getTokenid().equals(testTokenId));
+            if(m.getTokenid().equals(testTokenId)) {
             // assertTrue(m.getExecutedQuantity() == 78||
             // m.getExecutedQuantity() == 22);
             // TODO check the execute ordering. price is 1000 or 1001
             assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
+            }
         }
         
         //check wallet 
         
        BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
        assertTrue(a.compareTo( new BigDecimal("0.001")) ==0);
+       
+       
+       
     }
  
     @Test
@@ -240,7 +243,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         List<String> tokenids = new ArrayList<String>();
-
+        requestParam.put("count", 1);
         requestParam.put("tokenids", tokenids);
         requestParam.put("basetoken",  yuan.getPublicKeyAsHex());
         String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
@@ -249,8 +252,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
         for (MatchResult m : orderTickerResponse.getTickers()) {
-            assertTrue(m.getTokenid().equals(testTokenId));
+            if(m.getTokenid().equals(testTokenId)) {
                 assertTrue(  m.getPrice() == priceshift);
+            }
         }
 
         

@@ -168,6 +168,16 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    PRIMARY KEY (id) \n" 
             + ") ENGINE=InnoDB\n";
 
+    private static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n" 
+            + "    txhash varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" 
+            + "    basetokenid varchar(255) NOT NULL,\n" 
+            + "    price bigint NOT NULL,\n"
+            + "    executedQuantity bigint NOT NULL,\n" 
+            + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" 
+            + ") ENGINE=InnoDB\n";
+    
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash binary(32) NOT NULL,\n" 
     		+ "    confirmed boolean NOT NULL,\n"
@@ -424,7 +434,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_TABLE);
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_MCMC_TABLE); 
- 
+        sqlStatements.add(CREATE_MATCHING_LAST_TABLE);
         return sqlStatements;
     }
 

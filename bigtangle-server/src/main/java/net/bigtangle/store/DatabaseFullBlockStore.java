@@ -120,6 +120,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE chainblockqueue";
     private static String DROP_MCMC_TABLE = "DROP TABLE mcmc";
     private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
+    private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE matchinglast";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -387,8 +388,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
             + " INTO matching (txhash, tokenid, basetokenid, price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
-            + "FROM matching ";
+            + "FROM matchinglast ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
+    // lastest MATCHING EVENTS
+    protected final String INSERT_MATCHING_EVENT_LAST_SQL = getInsert()
+            + " INTO matchinglast (txhash, tokenid, basetokenid, price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?)";
+    protected final String SELECT_MATCHING_EVENT_LAST = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
+            + "FROM matchinglast ";
+    protected final String DELETE_MATCHING_EVENT_LAST_BY_KEY = "DELETE FROM matchinglast WHERE tokenid = ? and basetokenid=?";
 
     /* OTHER */
     protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex) values (?, ?, ?)";
@@ -623,6 +630,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(DROP_MCMC_TABLE);
         sqlStatements.add(DROP_LOCKOBJECT_TABLE);
+        sqlStatements.add(DROP_MATCHING_LAST_TABLE);
         return sqlStatements;
     }
 
@@ -4979,7 +4987,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             deleteStatement = getConnection()
                     .prepareStatement(" delete FROM orders WHERE confirmed=1 AND spent=1 AND validToTime < ? ");
-            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 10* NetworkParameters.ORDER_TIMEOUT_MAX  );
+            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -4996,6 +5004,39 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
+    
+    /*
+     * all spent UTXO History and older than the before time, minimum 60 days
+     */
+    @Override
+    public void cleanUpHistoryUTXO( Long beforetime) throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement deleteStatement = null;
+        try {
+
+            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 -  60*24*60*60 );
+            deleteStatement = getConnection()
+                    .prepareStatement(" delete FROM outputs WHERE  spent=1 AND time < ? ");
+            deleteStatement.setLong(1,minTime);
+                    //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.executeBatch();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+
+            if (deleteStatement != null) {
+                try {
+                    deleteStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+
+    }
+
+    
     @Override
     public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
@@ -5105,7 +5146,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             }
         }
     }
-  
+
     @Override
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
         List<UTXO> result = new ArrayList<>();
@@ -5282,6 +5323,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setLong(5, match.getExecutedQuantity());
             preparedStatement.setLong(6, match.getInserttime());
             preparedStatement.executeUpdate();
+            insertMatchingEventLast(match);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5295,13 +5337,53 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
+    public void insertMatchingEventLast(MatchResult match) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        PreparedStatement deleteStatement = null; 
+        try {
+
+            deleteStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_LAST_BY_KEY); 
+            deleteStatement.setString(1, match.getTokenid());
+            deleteStatement.setString(2, match.getBasetokenid());
+            deleteStatement.executeUpdate();
+
+            preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
+            preparedStatement.setString(1, match.getTxhash());
+            preparedStatement.setString(2, match.getTokenid());
+            preparedStatement.setString(3, match.getBasetokenid());
+            preparedStatement.setLong(4, match.getPrice());
+            preparedStatement.setLong(5, match.getExecutedQuantity());
+            preparedStatement.setLong(6, match.getInserttime());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (deleteStatement != null) {
+                try {
+                    deleteStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetokens, int count)
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetokens)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_MATCHING_EVENT;
+            String sql = SELECT_MATCHING_EVENT_LAST;
             String tokenid = "";
             if (tokenIds != null && !tokenIds.isEmpty()) {
                 tokenid = "  tokenid IN ( " + buildINList(tokenIds) + " )";
@@ -5313,9 +5395,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 basetokenid += "  basetokenid IN ( " + buildINList(basetokens) + " )";
             }
             if ("".equals(tokenid) && "".equals(basetokenid)) {
-                sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             } else {
-                sql += " where " + tokenid + basetokenid + "  ORDER BY inserttime DESC " + "LIMIT   " + count;
+                sql += " where " + tokenid + basetokenid;
             }
             preparedStatement = getConnection().prepareStatement(sql);
 

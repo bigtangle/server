@@ -472,7 +472,7 @@ public class DispatcherController {
                 String basetoken = (String) request.get("basetoken");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
                 if (count != null) {
-                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken, count,
+                    AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken,
                             store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else if (startDate == null || endDate == null) {

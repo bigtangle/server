@@ -72,25 +72,16 @@ public class OrderTickerService {
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,String basetoken,FullBlockStore store) throws BlockStoreException {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetokens, MAXCOUNT);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetokens);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
     }
  
     public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds, Set<String> baseTokens, FullBlockStore store) throws BlockStoreException {
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,baseTokens, MAXCOUNT);
+        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,baseTokens );
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
 
-    }
- 
-    
-    public OrderTickerResponse getLastMatchingEvents(Set<String> tokenIds,String basetoken, int count,FullBlockStore store) throws BlockStoreException {
-        Set<String> basetokens = new HashSet<String>();
-        basetokens.add(basetoken);
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetokens, count);
-        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
-    }
- 
+    } 
 
     public Map<String, Token> getTokename(List<MatchResult> res,FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
