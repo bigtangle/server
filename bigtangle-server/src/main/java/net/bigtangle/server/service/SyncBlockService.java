@@ -143,10 +143,7 @@ public class SyncBlockService {
                 Stopwatch watch = Stopwatch.createStarted();
                 connectingOrphans(store);
                 syncChain(-1l, false, store);
-                syncNonChained(store);
-                cleanUpClosedOrder(store);
-                cleanUpHistoryUTXO(store);
-                cleanUpHistoryPrice(store);
+                syncNonChained(store); 
                 store.deleteLockobject(LOCKID);
                 // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
                 log.info("sync time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -411,32 +408,7 @@ public class SyncBlockService {
         }
     }
 
-    
-    /*
-     *  for performance of order table, we do remove the all spent and order older than month
-     */
-    public void cleanUpClosedOrder(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpClosedOrders();
-        
-    }
-
-    
-    /*
-     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
-     */
-    public void cleanUpHistoryUTXO(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpHistoryUTXO(60*24*60*60L);
-        
-    }
-
-    /*
-     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
-     */
-    public void cleanUpHistoryPrice(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpPriceTicker(60*24*60*60L);
-        
-    }
-    
+   
     /*
      * check difference to remote servers and does sync. ask the remote
      * getMaxConfirmedReward to compare the my getMaxConfirmedReward if the
@@ -475,9 +447,7 @@ public class SyncBlockService {
                 if (initsync) {
                     // log.debug(" updateChain " );
                     blockgraph.updateChain();
-                    cleanUpClosedOrder(store);
-                    cleanUpHistoryUTXO(store);
-                    cleanUpHistoryPrice(store);
+                
                 }
                 log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
             }

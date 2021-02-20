@@ -1964,6 +1964,7 @@ public class FullBlockGraph {
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
                 updateConfirmedDo();
+                cleanUp(store);
                 store.deleteLockobject(LOCKID);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("updateConfirmed time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -1979,6 +1980,38 @@ public class FullBlockGraph {
         }
     }
 
+    
+    public void cleanUp(FullBlockStore store) throws BlockStoreException {
+        cleanUpClosedOrder(store);
+        cleanUpHistoryUTXO(store);
+        cleanUpHistoryPrice(store);
+        
+    }
+    /*
+     *  for performance of order table, we do remove the all spent and order older than month
+     */
+    public void cleanUpClosedOrder(FullBlockStore store) throws BlockStoreException {
+        store.cleanUpClosedOrders();
+        
+    }
+
+    
+    /*
+     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
+     */
+    public void cleanUpHistoryUTXO(FullBlockStore store) throws BlockStoreException {
+        store.cleanUpHistoryUTXO(60*24*60*60L);
+        
+    }
+
+    /*
+     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
+     */
+    public void cleanUpHistoryPrice(FullBlockStore store) throws BlockStoreException {
+        store.cleanUpPriceTicker(60*24*60*60L);
+        
+    }
+    
     /*
      * run timeboxed updateConfirmed, there is no transaction here.
      * Timeout will cancel the rest of update confirm and can be update from
