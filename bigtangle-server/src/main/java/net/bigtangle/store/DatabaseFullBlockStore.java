@@ -4986,7 +4986,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         try {
 
             deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM orders WHERE confirmed=1 AND spent=1 AND validToTime < ? ");
+                    .prepareStatement(" delete FROM orders WHERE  spent=1 AND validToTime < ? limit 1000 ");
             deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeBatch();
         } catch (SQLException e) {
@@ -5017,7 +5017,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 -  60*24*60*60 );
             deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM outputs WHERE  spent=1 AND time < ? ");
+                    .prepareStatement(" delete FROM outputs WHERE  spent=1 AND time < ?  limit 1000 ");
             deleteStatement.setLong(1,minTime);
                     //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeBatch();
@@ -5037,6 +5037,38 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     
+    
+    /*
+     * all spent UTXO History and older than the before time, minimum 60 days
+     */
+    @Override
+    public void cleanUpPriceTicker( Long beforetime) throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement deleteStatement = null;
+        try {
+
+            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 -  60*24*60*60 );
+            deleteStatement = getConnection()
+                    .prepareStatement(" delete FROM matching WHERE inserttime < ?  limit 1000 ");
+            deleteStatement.setLong(1,minTime);
+                    //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.executeBatch();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+
+            if (deleteStatement != null) {
+                try {
+                    deleteStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+
+    }
+
     @Override
     public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();

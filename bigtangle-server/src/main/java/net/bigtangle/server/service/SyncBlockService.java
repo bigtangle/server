@@ -146,6 +146,7 @@ public class SyncBlockService {
                 syncNonChained(store);
                 cleanUpClosedOrder(store);
                 cleanUpHistoryUTXO(store);
+                cleanUpHistoryPrice(store);
                 store.deleteLockobject(LOCKID);
                 // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
                 log.info("sync time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -428,6 +429,13 @@ public class SyncBlockService {
         
     }
 
+    /*
+     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
+     */
+    public void cleanUpHistoryPrice(FullBlockStore store) throws BlockStoreException {
+        store.cleanUpPriceTicker(60*24*60*60L);
+        
+    }
     
     /*
      * check difference to remote servers and does sync. ask the remote
@@ -469,6 +477,7 @@ public class SyncBlockService {
                     blockgraph.updateChain();
                     cleanUpClosedOrder(store);
                     cleanUpHistoryUTXO(store);
+                    cleanUpHistoryPrice(store);
                 }
                 log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
             }

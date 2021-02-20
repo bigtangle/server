@@ -220,6 +220,9 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void  cleanUpHistoryUTXO( Long beforetime)
             throws BlockStoreException;
     
+    public void  cleanUpPriceTicker( Long beforetime)
+            throws BlockStoreException;
+    
     public void cleanUpClosedOrders( )
             throws BlockStoreException;
     
