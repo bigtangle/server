@@ -467,6 +467,8 @@ public class SyncBlockService {
                 if (initsync) {
                     // log.debug(" updateChain " );
                     blockgraph.updateChain();
+                    cleanUpClosedOrder(store);
+                    cleanUpHistoryUTXO(store);
                 }
                 log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
             }
