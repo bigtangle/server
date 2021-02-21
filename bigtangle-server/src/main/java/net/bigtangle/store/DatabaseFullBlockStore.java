@@ -4987,7 +4987,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             deleteStatement = getConnection()
                     .prepareStatement(" delete FROM orders WHERE  spent=1 AND validToTime < ? limit 1000 ");
-            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 100 * NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
