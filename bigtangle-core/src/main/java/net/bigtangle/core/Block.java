@@ -587,7 +587,7 @@ public class Block extends Message {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
-        s.append("   block hash: ").append(getHashAsString()).append('\n');
+        s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
         s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         s.append("   height: ").append(height).append("\n");
