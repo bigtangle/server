@@ -587,15 +587,14 @@ public class Block extends Message {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
-        s.append("block hash: ").append(getHashAsString()).append('\n');
+        s.append("   block hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
-        s.append('\n');
+        s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
         s.append("   height: ").append(height).append("\n");
+        s.append("   chain length: ").append(getLastMiningRewardBlock()).append("\n");
         s.append("   previous: ").append(getPrevBlockHash()).append("\n");
         s.append("   branch: ").append(getPrevBranchBlockHash()).append("\n");
-        s.append("   merkle: ").append(getMerkleRoot()).append("\n");
-        s.append("   chain length: ").append(getLastMiningRewardBlock()).append("\n");
-        s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
+        s.append("   merkle: ").append(getMerkleRoot()).append("\n");  
         s.append("   difficulty target (nBits):    ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (minerAddress != null)
