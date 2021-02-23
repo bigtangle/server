@@ -56,7 +56,7 @@ import net.bigtangle.server.data.Rating;
  * <p>
  * In addition to keeping track of a chain using {@link StoredBlock}s, it should
  * also keep track of a second copy of the chain which holds
- * {@link StoredUndoableBlock}s. In this way, an application can perform a
+ * {@link StoredBlock}s. In this way, an application can perform a
  * headers-only initial sync and then use that information to more efficiently
  * download a locally verified full copy of the block chain.
  * </p>
@@ -67,13 +67,13 @@ import net.bigtangle.server.data.Rating;
  * </p>
  * 
  * <p>
- * It should store the {@link StoredUndoableBlock}s of a number of recent blocks
+ * It should store the  Blocks of a number of recent blocks
  * before verifiedHead.height and all those after verifiedHead.height. It is
  * advisable to store any {@link StoredUndoableBlock} which has a height >
  * verifiedHead.height - N. Because N determines the memory usage, it is
  * recommended that N be customizable. N should be chosen such that re-orgs
  * beyond that point are vanishingly unlikely, for example, a few thousand
- * blocks is a reasonable choice.
+ * chain blocks is a reasonable choice.
  * </p>
  * 
  * <p>
@@ -217,13 +217,13 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
-    public void  cleanUpHistoryUTXO( Long beforetime)
+    public void  cleanUpHistoryUTXO( Long timeInSeconds)
             throws BlockStoreException;
     
-    public void  cleanUpPriceTicker( Long beforetime)
+    public void  cleanUpPriceTicker( Long timeInSeconds)
             throws BlockStoreException;
     
-    public void cleanUpClosedOrders( )
+    public void cleanUpClosedOrders( Long timeInSeconds )
             throws BlockStoreException;
     
     public TXReward getMaxConfirmedReward() throws BlockStoreException;
@@ -411,7 +411,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
 
-    void insertMatchingEvent(MatchResult matchresults) throws BlockStoreException;
+    void insertMatchingEvent(List<MatchResult> matchresults) throws BlockStoreException;
 
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 

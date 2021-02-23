@@ -392,7 +392,10 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
     private static final String CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractevent_contracttokenid_idx ON contractevent (contracttokenid) USING btree";
     private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
-
+    private static final String CREATE_ORDERS_SPENT_TABLE_INDEX = "CREATE INDEX orders_spent_idx ON orders (confirmed, spent) ";
+    private static final String CREATE_MATCHING_TOKEN_TABLE_INDEX = "CREATE INDEX matching_token_idx ON matching (tokenid, inserttime) ";
+    private static final String CREATE_TOKEN_TOKENID_TABLE_INDEX = "CREATE INDEX tokens_tokenid_idx ON tokens (tokenid) ";
+    
   
     public MySQLFullBlockStore(NetworkParameters params, Connection conn)  {
         super(  params,   conn);
@@ -446,7 +449,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
-        sqlStatements.add(CREATE_LOCKOBJECT_TABLE);
+        sqlStatements.add(CREATE_LOCKOBJECT_TABLE); 
         return sqlStatements;
     }
 
@@ -490,7 +493,10 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         List<String> sqlStatements = new ArrayList<String>(); 
         sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX); 
         sqlStatements.add(CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX); 
-        sqlStatements.add(CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX); 
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX);
+        sqlStatements.add(CREATE_ORDERS_SPENT_TABLE_INDEX);
+        sqlStatements.add(CREATE_MATCHING_TOKEN_TABLE_INDEX);
+        sqlStatements.add(CREATE_TOKEN_TOKENID_TABLE_INDEX);
         return sqlStatements;
     }
     @Override

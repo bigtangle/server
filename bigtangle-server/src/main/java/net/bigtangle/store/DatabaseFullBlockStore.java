@@ -4979,7 +4979,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * all spent order and older than a month will be deleted from order table.
      */
     @Override
-    public void cleanUpClosedOrders() throws BlockStoreException {
+    public void cleanUpClosedOrders( Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
@@ -4987,8 +4987,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             deleteStatement = getConnection()
                     .prepareStatement(" delete FROM orders WHERE  spent=1 AND validToTime < ? limit 1000 ");
-            deleteStatement.setLong(1, System.currentTimeMillis() / 1000 - 100 * NetworkParameters.ORDER_TIMEOUT_MAX);
-            deleteStatement.executeBatch();
+            deleteStatement.setLong(1, beforetime - 100 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5020,7 +5020,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                     .prepareStatement(" delete FROM outputs WHERE  spent=1 AND time < ?  limit 1000 ");
             deleteStatement.setLong(1,minTime);
                     //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
-            deleteStatement.executeBatch();
+            deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5053,7 +5053,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                     .prepareStatement(" delete FROM matching WHERE inserttime < ?  limit 1000 ");
             deleteStatement.setLong(1,minTime);
                     //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
-            deleteStatement.executeBatch();
+            deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5342,20 +5342,24 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public void insertMatchingEvent(MatchResult match) throws BlockStoreException {
+    public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        log.debug("insertMatchingEvent: " + match.toString());
+        log.debug("insertMatchingEvent: " + matchs.size());
         try {
+            
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
-            preparedStatement.setString(1, match.getTxhash());
-            preparedStatement.setString(2, match.getTokenid());
-            preparedStatement.setString(3, match.getBasetokenid());
-            preparedStatement.setLong(4, match.getPrice());
-            preparedStatement.setLong(5, match.getExecutedQuantity());
-            preparedStatement.setLong(6, match.getInserttime());
-            preparedStatement.executeUpdate();
-            insertMatchingEventLast(match);
+            for (MatchResult match : matchs) {
+                preparedStatement.setString(1, match.getTxhash());
+                preparedStatement.setString(2, match.getTokenid());
+                preparedStatement.setString(3, match.getBasetokenid());
+                preparedStatement.setLong(4, match.getPrice());
+                preparedStatement.setLong(5, match.getExecutedQuantity());
+                preparedStatement.setLong(6, match.getInserttime());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();  
+            insertMatchingEventLast(matchs);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5369,16 +5373,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    public void insertMatchingEventLast(MatchResult match) throws BlockStoreException {
+    public void insertMatchingEventLast(List<MatchResult> matchs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         PreparedStatement deleteStatement = null; 
         try {
-
+            for (MatchResult match : matchs) {
             deleteStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_LAST_BY_KEY); 
             deleteStatement.setString(1, match.getTokenid());
             deleteStatement.setString(2, match.getBasetokenid());
-            deleteStatement.executeUpdate();
+            deleteStatement.addBatch();
 
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
             preparedStatement.setString(1, match.getTxhash());
@@ -5387,7 +5391,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setLong(4, match.getPrice());
             preparedStatement.setLong(5, match.getExecutedQuantity());
             preparedStatement.setLong(6, match.getInserttime());
-            preparedStatement.executeUpdate();
+            preparedStatement.addBatch();
+            }
+            deleteStatement.executeBatch();
+            preparedStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

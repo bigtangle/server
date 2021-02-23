@@ -176,7 +176,6 @@ public class FullBlockGraph {
         return a;
     }
 
-
     public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
             throws BlockStoreException {
 
@@ -215,7 +214,7 @@ public class FullBlockGraph {
                     store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                     canrun = true;
                 } else {
-                    if (lock.getLocktime() < System.currentTimeMillis() - 2000)
+                    if (lock.getLocktime() < System.currentTimeMillis() - 10000)
                         log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
                 }
             }
@@ -1651,8 +1650,9 @@ public class FullBlockGraph {
         BigInteger remainder = rearray[1];
         if (remainder.compareTo(BigInteger.ZERO) > 0) {
             // This remainder will cut
-            log.debug("Price and quantity value with remainder " + remainder + "/"
-                    + BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
+            // log.debug("Price and quantity value with remainder " + remainder
+            // + "/"
+            // + BigInteger.valueOf(LongMath.checkedPow(10, tokenDecimal)));
         }
 
         if (re.compareTo(BigInteger.ZERO) < 0 || re.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
@@ -1878,53 +1878,50 @@ public class FullBlockGraph {
         return totalRewardCount;
     }
 
-    public void updateConfirmedDo() throws BlockStoreException {
-        FullBlockStore blockStore = storeService.getStore();
-        try {
-            // First remove any blocks that should no longer be in the milestone
-            HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
-            HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-            for (BlockEvaluation block : blocksToRemove) {
+    public void updateConfirmedDo(TXReward maxConfirmedReward, FullBlockStore blockStore) throws BlockStoreException {
 
-                try {
-                    blockStore.beginDatabaseBatchWrite();
-                    unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
-                    blockStore.commitDatabaseBatchWrite();
-                } catch (Exception e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
-                } finally {
-                    blockStore.defaultDatabaseBatchWrite();
-                }
+        // First remove any blocks that should no longer be in the milestone
+        HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
+        HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
+        for (BlockEvaluation block : blocksToRemove) {
+
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
             }
-            TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
-            long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
-            long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, blockStore);
-
-            // Now try to find blocks that can be added to the milestone.
-            // DISALLOWS UNSOLID
-            TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
-
-            // VALIDITY CHECKS
-            validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
-
-            // Finally add the resolved new blocks to the confirmed set
-            HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-            for (BlockWrap block : blocksToAdd) {
-                try {
-                    blockStore.beginDatabaseBatchWrite();
-                    confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
-                    blockStore.commitDatabaseBatchWrite();
-                } catch (Exception e) {
-                    blockStore.abortDatabaseBatchWrite();
-                    throw e;
-                } finally {
-                    blockStore.defaultDatabaseBatchWrite();
-                }
-            }
-        } finally {
-            blockStore.close();
         }
+        // TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
+        long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
+        long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, blockStore);
+
+        // Now try to find blocks that can be added to the milestone.
+        // DISALLOWS UNSOLID
+        TreeSet<BlockWrap> blocksToAdd = blockStore.getBlocksToConfirm(cutoffHeight, maxHeight);
+
+        // VALIDITY CHECKS
+        validatorService.resolveAllConflicts(blocksToAdd, cutoffHeight, blockStore);
+
+        // Finally add the resolved new blocks to the confirmed set
+        HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
+        for (BlockWrap block : blocksToAdd) {
+            try {
+                blockStore.beginDatabaseBatchWrite();
+                confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+                blockStore.commitDatabaseBatchWrite();
+            } catch (Exception e) {
+                blockStore.abortDatabaseBatchWrite();
+                throw e;
+            } finally {
+                blockStore.defaultDatabaseBatchWrite();
+            }
+        }
+
     }
 
     private void solidifyReward(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -1936,6 +1933,7 @@ public class FullBlockGraph {
 
         blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
     }
+
     public void updateConfirmed() throws BlockStoreException {
         String LOCKID = "chain";
         int LockTime = 1000000;
@@ -1963,11 +1961,17 @@ public class FullBlockGraph {
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
-                updateConfirmedDo();
-                cleanUp(store);
+                TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+                updateConfirmedDo(maxConfirmedReward, store);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                    log.info("updateConfirmedDo time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                }
+                if (serverConfiguration.isPrunedServermode()) {
+                    cleanUp(maxConfirmedReward, store);
+                }
                 store.deleteLockobject(LOCKID);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
-                    log.info("updateConfirmed time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                    log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 }
                 watch.stop();
             }
@@ -1980,38 +1984,43 @@ public class FullBlockGraph {
         }
     }
 
-    
-    public void cleanUp(FullBlockStore store) throws BlockStoreException {
-        cleanUpClosedOrder(store);
-        cleanUpHistoryUTXO(store);
-        cleanUpHistoryPrice(store);
-        
-    }
-    /*
-     *  for performance of order table, we do remove the all spent and order older than month
-     */
-    public void cleanUpClosedOrder(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpClosedOrders();
-        
-    }
+    public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
-    
-    /*
-     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
-     */
-    public void cleanUpHistoryUTXO(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpHistoryUTXO(60*24*60*60L);
-        
+        Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
+        log.info("cleanUp uptil block " + rewardblock.toString());
+        cleanUpClosedOrder(rewardblock, store);
+        cleanUpHistoryUTXO(rewardblock, store);
+        cleanUpHistoryPrice(rewardblock, store);
+
     }
 
     /*
-     *  for performance of UTXO table, we do remove the all spent and  older than 60 days
+     * for performance of order table, we do remove the all spent and order
+     * older than month
      */
-    public void cleanUpHistoryPrice(FullBlockStore store) throws BlockStoreException {
-        store.cleanUpPriceTicker(60*24*60*60L);
-        
+    public void cleanUpClosedOrder(Block rewardblock, FullBlockStore store) throws BlockStoreException {
+        store.cleanUpClosedOrders(rewardblock.getTimeSeconds());
+
     }
-    
+
+    /*
+     * for performance of UTXO table, we do remove the all spent and older than
+     * 60 days
+     */
+    public void cleanUpHistoryUTXO(Block rewardblock, FullBlockStore store) throws BlockStoreException {
+        store.cleanUpHistoryUTXO(rewardblock.getTimeSeconds() - 60 * 24 * 60 * 60L);
+
+    }
+
+    /*
+     * for performance of UTXO table, we do remove the all spent and older than
+     * 60 days
+     */
+    public void cleanUpHistoryPrice(Block rewardblock, FullBlockStore store) throws BlockStoreException {
+        store.cleanUpPriceTicker(rewardblock.getTimeSeconds() - 60 * 24 * 60 * 60L);
+
+    }
+
     /*
      * run timeboxed updateConfirmed, there is no transaction here.
      * Timeout will cancel the rest of update confirm and can be update from

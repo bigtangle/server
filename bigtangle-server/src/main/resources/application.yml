@@ -16,6 +16,7 @@ server:
   runKafkaStream: ${RUNKAFKASTREAM:true}
   createtable: ${CREATETABLE:true}
   checkpoint: ${CHECKPOINT:-1}
+  servermode: ${SERVERMODE:Fullnode}
    
 db:
   dbtype: ${DBTYPE:mysql}

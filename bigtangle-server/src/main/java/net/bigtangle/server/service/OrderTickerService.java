@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,8 +36,7 @@ public class OrderTickerService {
             ,FullBlockStore store)
             throws BlockStoreException {
         // collect the spend order volumes and ticker to write to database
-        // Map<String, MatchResult> matchResultList = new HashMap<String,
-        // MatchResult>();
+          List< MatchResult> matchResultList = new ArrayList< MatchResult>();
         try {
             for (Entry<TradePair, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
                 for (Event event : entry.getValue()) {
@@ -44,10 +44,13 @@ public class OrderTickerService {
                         MatchResult f = new MatchResult(transactionHash, entry.getKey().getOrderToken(),entry.getKey().getOrderBaseToken(),
                                 ((OrderBookEvents.Match) event).price, ((OrderBookEvents.Match) event).executedQuantity,
                                 matchBlockTime);
-                        store.insertMatchingEvent(f);
+                        matchResultList.add(f);
+                    
                     }
                 }
             }
+            if(!matchResultList.isEmpty())
+            store.insertMatchingEvent(matchResultList);
           
         } catch (Exception e) {
             // this is analysis data and is not consensus relevant

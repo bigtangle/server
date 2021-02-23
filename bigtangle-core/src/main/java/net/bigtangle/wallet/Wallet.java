@@ -142,7 +142,7 @@ import net.jcip.annotations.GuardedBy;
 
 public class Wallet extends BaseTaggableObject implements KeyBag {
 
-    private static final int SPENTPENDINGTIMEOUT = 300000;
+    private static final int SPENTPENDINGTIMEOUT = 120000;//2 minutues
 
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
 

@@ -44,6 +44,8 @@ public class ServerConfiguration {
     //save in the userdata with pubkey
     private String[] exchangelist= new String[] {"02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975"};
     private  long timeoutMinute = OkHttp3Util.timeoutMinute;
+    //can be FullPruned server node with cleanup old data or fullnode node with all data
+    private String servermode="fullnode";
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -56,6 +58,7 @@ public class ServerConfiguration {
         return serviceReady;
     }
 
+ 
     public synchronized void setServiceOK() {
 
         serviceReady = true;
@@ -66,6 +69,9 @@ public class ServerConfiguration {
         serviceReady = false;
     }
 
+    public boolean isPrunedServermode() {
+       return "fullpruned".equals(servermode);
+    }
     public String getRequester() {
         return requester;
     }
@@ -238,6 +244,14 @@ public class ServerConfiguration {
 
     public void setTimeoutMinute(long timeoutMinute) {
         this.timeoutMinute = timeoutMinute;
+    }
+
+    public String getServermode() {
+        return servermode;
+    }
+
+    public void setServermode(String servermode) {
+        this.servermode = servermode;
     }
 
 }
