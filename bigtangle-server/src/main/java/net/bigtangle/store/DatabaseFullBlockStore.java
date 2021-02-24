@@ -5417,28 +5417,18 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, Set<String> basetokens)
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds,  String  basetoken)
             throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_MATCHING_EVENT_LAST;
-            String tokenid = "";
+            String sql = SELECT_MATCHING_EVENT_LAST + " where basetokenid= ? " ;
+     
             if (tokenIds != null && !tokenIds.isEmpty()) {
-                tokenid = "  tokenid IN ( " + buildINList(tokenIds) + " )";
-            }
-            String basetokenid = "";
-            if (basetokens != null && !basetokens.isEmpty()) {
-                if (!"".equals(tokenid))
-                    basetokenid += " and ";
-                basetokenid += "  basetokenid IN ( " + buildINList(basetokens) + " )";
-            }
-            if ("".equals(tokenid) && "".equals(basetokenid)) {
-            } else {
-                sql += " where " + tokenid + basetokenid;
-            }
+                sql += "  and tokenid IN ( " + buildINList(tokenIds) + " )";
+            } 
             preparedStatement = getConnection().prepareStatement(sql);
-
+            preparedStatement.setString(1, basetoken);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {

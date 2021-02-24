@@ -1968,11 +1968,11 @@ public class FullBlockGraph {
                 }
                 if (serverConfiguration.isPrunedServermode()) {
                     cleanUp(maxConfirmedReward, store);
+                    if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                        log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+                    }
                 }
-                store.deleteLockobject(LOCKID);
-                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
-                    log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-                }
+                store.deleteLockobject(LOCKID); 
                 watch.stop();
             }
         } catch (Exception e) {
@@ -1987,7 +1987,7 @@ public class FullBlockGraph {
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-        log.info("cleanUp uptil block " + rewardblock.toString());
+        log.info("cleanUp until block " + rewardblock.toString());
         cleanUpClosedOrder(rewardblock, store);
         cleanUpHistoryUTXO(rewardblock, store);
         cleanUpHistoryPrice(rewardblock, store);
