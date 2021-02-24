@@ -4979,7 +4979,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * all spent order and older than a month will be deleted from order table.
      */
     @Override
-    public void cleanUpClosedOrders( Long beforetime) throws BlockStoreException {
+    public void cleanUpClosedOrders(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
@@ -5004,22 +5004,22 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
-    
     /*
      * all spent UTXO History and older than the before time, minimum 60 days
      */
     @Override
-    public void cleanUpHistoryUTXO( Long beforetime) throws BlockStoreException {
+    public void cleanUpHistoryUTXO(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
 
-            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 -  60*24*60*60 );
+            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 - 60 * 24 * 60 * 60);
             deleteStatement = getConnection()
                     .prepareStatement(" delete FROM outputs WHERE  spent=1 AND time < ?  limit 1000 ");
-            deleteStatement.setLong(1,minTime);
-                    //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.setLong(1, minTime);
+            // System.currentTimeMillis() / 1000 - 10 *
+            // NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5036,23 +5036,22 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
-    
-    
     /*
      * all spent UTXO History and older than the before time, minimum 60 days
      */
     @Override
-    public void cleanUpPriceTicker( Long beforetime) throws BlockStoreException {
+    public void cleanUpPriceTicker(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
 
-            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 -  60*24*60*60 );
+            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 - 60 * 24 * 60 * 60);
             deleteStatement = getConnection()
                     .prepareStatement(" delete FROM matching WHERE inserttime < ?  limit 1000 ");
-            deleteStatement.setLong(1,minTime);
-                    //System.currentTimeMillis() / 1000 - 10 * NetworkParameters.ORDER_TIMEOUT_MAX);
+            deleteStatement.setLong(1, minTime);
+            // System.currentTimeMillis() / 1000 - 10 *
+            // NetworkParameters.ORDER_TIMEOUT_MAX);
             deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5347,7 +5346,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         PreparedStatement preparedStatement = null;
         log.debug("insertMatchingEvent: " + matchs.size());
         try {
-            
+
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
             for (MatchResult match : matchs) {
                 preparedStatement.setString(1, match.getTxhash());
@@ -5358,7 +5357,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.setLong(6, match.getInserttime());
                 preparedStatement.addBatch();
             }
-            preparedStatement.executeBatch();  
+            preparedStatement.executeBatch();
             insertMatchingEventLast(matchs);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5376,22 +5375,22 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void insertMatchingEventLast(List<MatchResult> matchs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        PreparedStatement deleteStatement = null; 
+        PreparedStatement deleteStatement = null;
         try {
             for (MatchResult match : matchs) {
-            deleteStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_LAST_BY_KEY); 
-            deleteStatement.setString(1, match.getTokenid());
-            deleteStatement.setString(2, match.getBasetokenid());
-            deleteStatement.addBatch();
+                deleteStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_LAST_BY_KEY);
+                deleteStatement.setString(1, match.getTokenid());
+                deleteStatement.setString(2, match.getBasetokenid());
+                deleteStatement.addBatch();
 
-            preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
-            preparedStatement.setString(1, match.getTxhash());
-            preparedStatement.setString(2, match.getTokenid());
-            preparedStatement.setString(3, match.getBasetokenid());
-            preparedStatement.setLong(4, match.getPrice());
-            preparedStatement.setLong(5, match.getExecutedQuantity());
-            preparedStatement.setLong(6, match.getInserttime());
-            preparedStatement.addBatch();
+                preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
+                preparedStatement.setString(1, match.getTxhash());
+                preparedStatement.setString(2, match.getTokenid());
+                preparedStatement.setString(3, match.getBasetokenid());
+                preparedStatement.setLong(4, match.getPrice());
+                preparedStatement.setLong(5, match.getExecutedQuantity());
+                preparedStatement.setLong(6, match.getInserttime());
+                preparedStatement.addBatch();
             }
             deleteStatement.executeBatch();
             preparedStatement.executeBatch();
@@ -5417,16 +5416,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds,  String  basetoken)
-            throws BlockStoreException {
+    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_MATCHING_EVENT_LAST + " where basetokenid= ? " ;
-     
+            String sql = SELECT_MATCHING_EVENT_LAST + " where basetokenid= ? ";
+
             if (tokenIds != null && !tokenIds.isEmpty()) {
                 sql += "  and tokenid IN ( " + buildINList(tokenIds) + " )";
-            } 
+            }
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -5798,37 +5796,22 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getTimeBetweenMatchingEvents(Set<String> tokenIds, Set<String> basetoken, Long startDate,
+    public List<MatchResult> getTimeBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_MATCHING_EVENT;
+            String sql = SELECT_MATCHING_EVENT + " where  basetokenid = ? and  tokenid = ? ";
 
-            String basetokenid = "";
-            if (basetoken != null && !basetoken.isEmpty()) {
-                basetokenid = " where  basetokenid IN ( " + buildINList(basetoken) + " ) ";
-            }
+            if (startDate != null)
+                sql += " AND inserttime >= " + startDate;
+            if (endDate != null)
+                sql += " AND inserttime   <= " + endDate;
+            sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
 
-            if (tokenIds == null || tokenIds.isEmpty()) {
-                sql += " ORDER BY inserttime DESC " + "LIMIT  " + count;
-
-            } else {
-                if ("".equals(basetokenid))
-                    sql += " where ";
-                else {
-                    sql += basetokenid + " and ";
-                }
-                sql += "  tokenid IN ( " + buildINList(tokenIds) + " ) ";
-
-                if (startDate != null)
-                    sql += " AND inserttime >= " + startDate;
-                if (endDate != null)
-                    sql += " AND inserttime   <= " + endDate;
-                sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
-            }
             preparedStatement = getConnection().prepareStatement(sql);
-
+            preparedStatement.setString(1, basetoken);
+            preparedStatement.setString(2, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {

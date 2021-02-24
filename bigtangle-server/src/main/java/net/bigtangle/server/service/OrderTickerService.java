@@ -3,6 +3,7 @@ package net.bigtangle.server.service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -76,7 +77,7 @@ public class OrderTickerService {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetoken);
-        return OrderTickerResponse.createOrderRecordResponse(re, null);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re, store));
 
     } 
 
@@ -94,12 +95,12 @@ public class OrderTickerService {
         return re;
     }
 
-    @Cacheable("priceticker")
+    //@Cacheable("priceticker")
     public OrderTickerResponse getTimeBetweenMatchingEvents(Set<String> tokenids,String basetoken, Long startDate, Long endDate,FullBlockStore store)
             throws BlockStoreException {
-        Set<String> basetokens = new HashSet<String>();
-        basetokens.add(basetoken);
-        List<MatchResult> re = store.getTimeBetweenMatchingEvents(tokenids, basetokens,startDate, endDate, MAXCOUNT);
+        Iterator<String> iter = tokenids.iterator(); 
+        String first =  iter.next();
+        List<MatchResult> re = store.getTimeBetweenMatchingEvents(first, basetoken,startDate, endDate, MAXCOUNT);
         return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
     }
 
