@@ -76,7 +76,7 @@ public class OrderTickerService {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
         List<MatchResult> re = store.getLastMatchingEvents(tokenIds,basetoken);
-        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re,store));
+        return OrderTickerResponse.createOrderRecordResponse(re, null);
 
     } 
 
