@@ -145,6 +145,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         List<String> tokenids = new ArrayList<String>(); 
         requestParam.put("tokenids", tokenids);
+        requestParam.put("count", 1);
         requestParam.put("basetoken",  NetworkParameters.BIGTANGLE_TOKENID_STRING);
         String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
