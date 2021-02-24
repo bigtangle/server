@@ -388,7 +388,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String INSERT_MATCHING_EVENT_SQL = getInsert()
             + " INTO matching (txhash, tokenid, basetokenid, price, executedQuantity, inserttime) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
-            + "FROM matchinglast ";
+            + "FROM matching ";
     protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = ?";
     // lastest MATCHING EVENTS
     protected final String INSERT_MATCHING_EVENT_LAST_SQL = getInsert()
@@ -5806,7 +5806,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             if (startDate != null)
                 sql += " AND inserttime >= " + startDate;
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
-            log.debug(sql + " tokenid = " +tokenid + " basetoken =" + basetoken );
+          //  log.debug(sql + " tokenid = " +tokenid + " basetoken =" + basetoken );
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
