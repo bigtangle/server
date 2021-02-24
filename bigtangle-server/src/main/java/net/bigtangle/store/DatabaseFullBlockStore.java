@@ -5805,10 +5805,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             if (startDate != null)
                 sql += " AND inserttime >= " + startDate;
-            if (endDate != null)
-                sql += " AND inserttime   <= " + endDate;
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
-
+            log.debug(sql);
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
