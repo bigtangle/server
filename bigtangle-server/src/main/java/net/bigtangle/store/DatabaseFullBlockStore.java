@@ -5382,7 +5382,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 deleteStatement.setString(1, match.getTokenid());
                 deleteStatement.setString(2, match.getBasetokenid());
                 deleteStatement.addBatch();
-
+            }
+            deleteStatement.executeBatch();
+           
+            for (MatchResult match : matchs) {
                 preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
                 preparedStatement.setString(1, match.getTxhash());
                 preparedStatement.setString(2, match.getTokenid());
@@ -5390,9 +5393,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.setLong(4, match.getPrice());
                 preparedStatement.setLong(5, match.getExecutedQuantity());
                 preparedStatement.setLong(6, match.getInserttime());
+                log.debug(match.toString());
+                log.debug(preparedStatement.toString());
                 preparedStatement.addBatch();
             }
-            deleteStatement.executeBatch();
             preparedStatement.executeBatch();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5806,7 +5810,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             if (startDate != null)
                 sql += " AND inserttime >= " + startDate;
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
-          //  log.debug(sql + " tokenid = " +tokenid + " basetoken =" + basetoken );
+            // log.debug(sql + " tokenid = " +tokenid + " basetoken =" +
+            // basetoken );
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
