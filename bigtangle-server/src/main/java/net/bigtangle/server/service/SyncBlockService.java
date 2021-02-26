@@ -368,7 +368,7 @@ public class SyncBlockService {
             if (my1 != null)
                 my = my1;
         }
-        log.debug(" my chain length " + my.getChainLength() + " remote " + re.toString());
+        log.debug(" my chain length " + my.getChainLength() + " remote " + re[0]);
         for (String s : re) {
             try {
                 if (s != null && !"".equals(s)) {
