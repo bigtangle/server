@@ -1989,7 +1989,7 @@ public class FullBlockGraph {
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-        log.info(" pruned until block " + rewardblock.toString());
+      //  log.info(" pruned until block " + rewardblock.toString());
         store.prunedClosedOrders(rewardblock.getTimeSeconds());
         store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10*DaySeconds);
         store.prunedPriceTicker(rewardblock.getTimeSeconds() -  30*DaySeconds);
