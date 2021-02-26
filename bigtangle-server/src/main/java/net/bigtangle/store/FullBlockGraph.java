@@ -116,6 +116,8 @@ import net.bigtangle.utils.OrderUtil;
 @Service
 public class FullBlockGraph {
 
+   
+    private static final long DaySeconds = 24 * 60 * 60L;
     private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
 
     @Autowired
@@ -1987,39 +1989,15 @@ public class FullBlockGraph {
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-        log.info("cleanUp until block " + rewardblock.toString());
-        cleanUpClosedOrder(rewardblock, store);
-        cleanUpHistoryUTXO(rewardblock, store);
-        cleanUpHistoryPrice(rewardblock, store);
-
+        log.info(" pruned until block " + rewardblock.toString());
+        store.prunedClosedOrders(rewardblock.getTimeSeconds());
+        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10*DaySeconds);
+        store.prunedPriceTicker(rewardblock.getTimeSeconds() -  30*DaySeconds);
+        store.prunedBlocks(rewardblock.getTimeSeconds() - 10*DaySeconds);
     }
 
-    /*
-     * for performance of order table, we do remove the all spent and order
-     * older than month
-     */
-    public void cleanUpClosedOrder(Block rewardblock, FullBlockStore store) throws BlockStoreException {
-        store.cleanUpClosedOrders(rewardblock.getTimeSeconds());
-
-    }
-
-    /*
-     * for performance of UTXO table, we do remove the all spent and older than
-     * 60 days
-     */
-    public void cleanUpHistoryUTXO(Block rewardblock, FullBlockStore store) throws BlockStoreException {
-        store.cleanUpHistoryUTXO(rewardblock.getTimeSeconds() - 60 * 24 * 60 * 60L);
-
-    }
-
-    /*
-     * for performance of UTXO table, we do remove the all spent and older than
-     * 60 days
-     */
-    public void cleanUpHistoryPrice(Block rewardblock, FullBlockStore store) throws BlockStoreException {
-        store.cleanUpPriceTicker(rewardblock.getTimeSeconds() - 60 * 24 * 60 * 60L);
-
-    }
+ 
+    
 
     /*
      * run timeboxed updateConfirmed, there is no transaction here.

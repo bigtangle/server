@@ -217,13 +217,16 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
-    public void  cleanUpHistoryUTXO( Long timeInSeconds)
+    public void  prunedHistoryUTXO( Long timeInSeconds)
             throws BlockStoreException;
     
-    public void  cleanUpPriceTicker( Long timeInSeconds)
+    public void  prunedPriceTicker( Long timeInSeconds)
             throws BlockStoreException;
     
-    public void cleanUpClosedOrders( Long timeInSeconds )
+    public void prunedClosedOrders( Long timeInSeconds )
+            throws BlockStoreException;
+    
+    public void prunedBlocks( Long timeInSeconds )
             throws BlockStoreException;
     
     public TXReward getMaxConfirmedReward() throws BlockStoreException;

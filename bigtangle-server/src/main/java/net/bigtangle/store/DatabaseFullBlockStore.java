@@ -4979,7 +4979,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * all spent order and older than a month will be deleted from order table.
      */
     @Override
-    public void cleanUpClosedOrders(Long beforetime) throws BlockStoreException {
+    public void prunedClosedOrders(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
@@ -5004,11 +5004,40 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
+    
+    /*
+     * all spent order and older than a month will be deleted from order table.
+     */
+    @Override
+    public void prunedBlocks(Long beforetime) throws BlockStoreException {
+
+        maybeConnect();
+        PreparedStatement deleteStatement = null;
+        try {
+
+            deleteStatement = getConnection()
+                    .prepareStatement(" delete FROM blocks WHERE inserttime < ? limit 1000 ");
+            deleteStatement.setLong(1, beforetime );
+            deleteStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+
+            if (deleteStatement != null) {
+                try {
+                    deleteStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+
+    }
     /*
      * all spent UTXO History and older than the before time, minimum 60 days
      */
     @Override
-    public void cleanUpHistoryUTXO(Long beforetime) throws BlockStoreException {
+    public void prunedHistoryUTXO(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
@@ -5040,7 +5069,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * all spent UTXO History and older than the before time, minimum 60 days
      */
     @Override
-    public void cleanUpPriceTicker(Long beforetime) throws BlockStoreException {
+    public void prunedPriceTicker(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
@@ -5344,7 +5373,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-        log.debug("insertMatchingEvent: " + matchs.size());
+     //   log.debug("insertMatchingEvent: " + matchs.size());
         try {
 
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
@@ -5393,8 +5422,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.setLong(4, match.getPrice());
                 preparedStatement.setLong(5, match.getExecutedQuantity());
                 preparedStatement.setLong(6, match.getInserttime());
-                log.debug(match.toString());
-                log.debug(preparedStatement.toString());
+            //    log.debug(match.toString());
+           //     log.debug(preparedStatement.toString());
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
