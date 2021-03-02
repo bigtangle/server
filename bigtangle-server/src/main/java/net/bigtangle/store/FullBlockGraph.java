@@ -1979,6 +1979,7 @@ public class FullBlockGraph {
             }
         } catch (Exception e) {
             store.deleteLockobject(LOCKID);
+            log.info(" ", e);
             throw e;
         } finally {
             if (store != null)
@@ -1989,11 +1990,15 @@ public class FullBlockGraph {
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-      //  log.info(" pruned until block " + rewardblock.toString());
+        log.info(" pruned until block " + rewardblock.toString());
         store.prunedClosedOrders(rewardblock.getTimeSeconds());
         store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10*DaySeconds);
         store.prunedPriceTicker(rewardblock.getTimeSeconds() -  30*DaySeconds);
-        store.prunedBlocks(rewardblock.getTimeSeconds() - 10*DaySeconds);
+        RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
+      
+        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store); 
+        
+        store.prunedBlocks(cutoffHeight-1000, rewardblock.getLastMiningRewardBlock()- NetworkParameters.MILESTONE_CUTOFF);
     }
 
  

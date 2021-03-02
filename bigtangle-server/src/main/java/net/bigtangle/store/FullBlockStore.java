@@ -226,7 +226,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void prunedClosedOrders( Long timeInSeconds )
             throws BlockStoreException;
     
-    public void prunedBlocks( Long timeInSeconds )
+    public void prunedBlocks( Long heigth, Long chain )
             throws BlockStoreException;
     
     public TXReward getMaxConfirmedReward() throws BlockStoreException;

@@ -178,7 +178,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time "
             + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
-            + " WHERE  confirmed=true and spent= false and (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
+            + " WHERE  confirmed=true and spent= false and (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
+            + " AND tokenid = ?";
     protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time "
@@ -590,8 +591,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected String getTablesExistSQL() {
         return SELECT_CHECK_TABLES_EXIST_SQL;
     }
-
- 
 
     /**
      * Get the SQL to drop all the tables (DDL).
@@ -1464,7 +1463,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL)  ;
+            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -1496,7 +1495,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = getConnection().prepareStatement( SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL );
+            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -5002,20 +5001,23 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
-    
     /*
-     * all spent order and older than a month will be deleted from order table.
+     * reomove the blocks:
+     *  1) there is no unspent transaction in this block
+     *  2) this block with spent transaction is outside the cutoff height, reorg is possible
      */
     @Override
-    public void prunedBlocks(Long beforetime) throws BlockStoreException {
+    public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
-
-            deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM blocks WHERE inserttime < ? limit 1000 ");
-            deleteStatement.setLong(1, beforetime );
+ 
+            deleteStatement = getConnection().prepareStatement(" delete FROM blocks WHERE height < ? and milestone < ? and milestone !=0 "
+                    + " and hash in (select spenderBlockhash from outputs where spent=1 )  limit 1000 ");
+            deleteStatement.setLong(1, height);
+            deleteStatement.setLong(2, chain);
+            log.debug(deleteStatement.toString());
             deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5031,19 +5033,20 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
 
     }
+
     /*
-     * all spent UTXO History and older than the before time and the spentblock can be pruned. 
+     * all spent UTXO History and older than the before time and the spentblock
+     * can be pruned.
      */
     @Override
     public void prunedHistoryUTXO(Long beforetime) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
-        try { 
-            deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
-                            + "spenderBlockhash in (select hash from blocks where inserttime < ? ) limit 1000 ");
-            deleteStatement.setLong(1, beforetime); 
+        try {
+            deleteStatement = getConnection().prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
+                    + "spenderBlockhash in (select hash from blocks where inserttime < ? ) limit 1000 ");
+            deleteStatement.setLong(1, beforetime);
             deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5368,7 +5371,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
-     //   log.debug("insertMatchingEvent: " + matchs.size());
+        // log.debug("insertMatchingEvent: " + matchs.size());
         try {
 
             preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
@@ -5382,7 +5385,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
-            insertMatchingEventLast(matchs);
+            insertMatchingEventLast(filterMatch(matchs));
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5408,8 +5411,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 deleteStatement.addBatch();
             }
             deleteStatement.executeBatch();
-           
-            for (MatchResult match : matchs) {
+
+            for (MatchResult match :  matchs ) {
                 preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
                 preparedStatement.setString(1, match.getTxhash());
                 preparedStatement.setString(2, match.getTokenid());
@@ -5417,8 +5420,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 preparedStatement.setLong(4, match.getPrice());
                 preparedStatement.setLong(5, match.getExecutedQuantity());
                 preparedStatement.setLong(6, match.getInserttime());
-            //    log.debug(match.toString());
-           //     log.debug(preparedStatement.toString());
+                // log.debug(match.toString());
+                // log.debug(preparedStatement.toString());
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
@@ -5441,6 +5444,18 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 }
             }
         }
+    }
+
+    public List<MatchResult> filterMatch(List<MatchResult> matchs) throws BlockStoreException {
+        List<MatchResult> re = new ArrayList<MatchResult>();
+        for (MatchResult match : matchs) {
+            if (!re.stream().anyMatch(element -> element.getBasetokenid().equals(match.getBasetokenid())
+                    && element.getTokenid().equals(match.getTokenid()))) {
+                re.add(match);
+            }
+        }
+
+        return re;
     }
 
     @Override
