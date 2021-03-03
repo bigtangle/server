@@ -697,7 +697,7 @@ public class ValidatorService {
 
     private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions, FullBlockStore store)
             throws BlockStoreException {
-        final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block);
+        final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block,false);
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq);
             if (pred == null)

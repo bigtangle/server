@@ -295,9 +295,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<Token> getTokensList(String name) throws BlockStoreException;
 
     public Map<String, BigInteger> getTokenAmountMap() throws BlockStoreException;
-
-    public List<BlockEvaluation> getSearchBlockEvaluations(List<String> address) throws BlockStoreException;
-
+ 
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
             long height, long maxblocks) throws BlockStoreException;
 
@@ -437,10 +435,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
     List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
-
-    void updateUnsetMilestone(long milestoneNumber) throws BlockStoreException;
-
-    void updateAllConfirmedToMilestone(long milestoneNumber) throws BlockStoreException;
+  
    
     long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
 

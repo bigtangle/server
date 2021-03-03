@@ -1183,7 +1183,7 @@ public class FullBlockGraph {
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-                        block.getTimeSeconds());
+                        block.getTimeSeconds(),null);
 
                 if (!newOut.isZero()) {
                     utxos.add(newOut);

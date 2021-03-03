@@ -148,7 +148,7 @@ public class UTXO extends SpentBlock {
      */
     public UTXO(Sha256Hash hash, long index, Coin value, boolean coinbase, Script script, String address,
             Sha256Hash blockhash, String fromaddress, String memo, String tokenid, boolean spent, boolean confirmed,
-            boolean spendPending, long minimumsign, long spendPendingTime, long time) {
+            boolean spendPending, long minimumsign, long spendPendingTime, long time,  Sha256Hash spenderBlockHash) {
         this.hash = hash;
         this.index = index;
         this.value = value;
@@ -166,6 +166,7 @@ public class UTXO extends SpentBlock {
 
         this.address = address;
         this.setSpent(spent);
+        this.  setSpenderBlockHash(spenderBlockHash);
         this.tokenId = tokenid;
         this.setConfirmed(confirmed);
         this.spendPending = spendPending;
@@ -238,8 +239,10 @@ public class UTXO extends SpentBlock {
         return "UTXO [value=" + value + ", \n script=" + script + ", \n hash=" + hash + ", \n index=" + index
                 + ", coinbase=" + coinbase + ", \n address=" + address + ", \n fromaddress=" + fromaddress
                 + ", \n time=" + Utils.dateTimeFormat(getTime()*1000)
-                + ", \n memo=" + memo + ", \n spendPending=" + spendPending + ", \n spendPendingTime="
-                + spendPendingTime + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + " \n ]";
+                + ", \n memo=" + memo + ", \n spendPending=" + spendPending 
+                + ", \n spendPendingTime="          + spendPendingTime 
+                + ", \n spenderBlockHash="          + getSpenderBlockHash()  
+                + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + " \n ]";
     }
 
     @Override

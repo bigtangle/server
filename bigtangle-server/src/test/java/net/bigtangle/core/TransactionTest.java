@@ -213,7 +213,7 @@ public class TransactionTest {
             UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                      "", null, fromAddress, tx.getMemo(),
                     Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-                    System.currentTimeMillis() / 1000);
+                    System.currentTimeMillis() / 1000, null);
       
             assertEquals(newOut.getMemo().contains("Test"), true);
         }

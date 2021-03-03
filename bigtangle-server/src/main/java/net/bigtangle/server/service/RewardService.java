@@ -593,7 +593,7 @@ public class RewardService {
             if (block.getBlock().getHeight() <= cutoffHeight)
                 throw new VerificationException("Referenced blocks are below cutoff height.");
 
-            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(),false);
             for (Sha256Hash reqHash : requiredBlocks) {
                 BlockWrap req = store.getBlockWrap(reqHash);
                 if (req == null)
@@ -715,9 +715,9 @@ public class RewardService {
     /*
      * check only if the blocks in database
      */
-    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block, FullBlockStore store)
+    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block,  FullBlockStore store)
             throws BlockStoreException {
-        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock());
+        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(),false);
         for (Sha256Hash reqHash : requiredBlocks) {
             BlockWrap req = store.getBlockWrap(reqHash);
             // the required block must be in this referenced blocks or in

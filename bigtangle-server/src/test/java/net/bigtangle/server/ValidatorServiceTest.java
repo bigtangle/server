@@ -539,8 +539,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         assertFalse(utxo2.isSpent());
 
         // Further manipulations on prev UTXOs
-        UTXO origUTXO = blockService.getUTXO(networkParameters.getGenesisBlock().getTransactions().get(0).getOutput(0)
-                .getOutPointFor(networkParameters.getGenesisBlock().getHash()), store);
+        UTXO origUTXO = store.getTransactionOutput(networkParameters.getGenesisBlock().getHash(),
+                networkParameters.getGenesisBlock().getTransactions().get(0)
+                .getHash(), 0L);
         assertTrue(origUTXO.isConfirmed());
         assertTrue(origUTXO.isSpent());
         assertEquals(

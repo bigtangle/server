@@ -263,7 +263,7 @@ public class BlockService {
             blocks.add(block.getBlockHash());
 
             // Queue all of its required blocks if not already queued.
-            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock())) {
+            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(),false)) {
                 if (!blockQueueSet.contains(req)) {
                     BlockWrap pred = store.getBlockWrap(req);
                     if (pred == null) {
@@ -319,7 +319,7 @@ public class BlockService {
             blocks.add(block);
 
             // Queue all of its required blocks if not already queued.
-            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock())) {
+            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(),false)) {
                 if (!blockQueueSet.contains(req)) {
                     BlockWrap pred = store.getBlockWrap(req);
                     if (pred == null) {
@@ -547,7 +547,7 @@ public class BlockService {
     }
 
     public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-        Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block);
+        Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block,false);
         List<BlockWrap> result = new ArrayList<>();
         for (Sha256Hash pred : allPredecessorBlockHashes)
             result.add(store.getBlockWrap(pred));
@@ -605,13 +605,14 @@ public class BlockService {
      * @param block
      * @return
      */
-    public Set<Sha256Hash> getAllRequiredBlockHashes(Block block) {
+    public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean includeTransaction) {
         Set<Sha256Hash> predecessors = new HashSet<>();
         predecessors.add(block.getPrevBlockHash());
         predecessors.add(block.getPrevBranchBlockHash());
 
         // All used transaction outputs
         final List<Transaction> transactions = block.getTransactions();
+        if( includeTransaction) {
         for (final Transaction tx : transactions) {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
@@ -621,7 +622,7 @@ public class BlockService {
                 }
             }
         }
-
+        }
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
             break;
