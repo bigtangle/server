@@ -170,15 +170,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " FROM outputs LEFT JOIN outputsmulti " + " ON outputs.hash = outputsmulti.hash"
             + " AND outputs.outputindex = outputsmulti.outputindex ";
 
-    protected final String SELECT_TRANSACTION_OUTPUTS_SQL = SELECT_TRANSACTION_OUTPUTS_SQL_BASE
-            + " WHERE outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
+    protected final String SELECT_OPEN_TRANSACTION_OUTPUTS_SQL = SELECT_TRANSACTION_OUTPUTS_SQL_BASE
+            + " WHERE  confirmed=true and spent= false and outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?";
 
     protected final String SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress as toaddress , addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time "
             + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
-            + " WHERE  confirmed=true and spent= false and (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
+            + " WHERE   (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
             + " AND tokenid = ?";
     protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
@@ -1463,7 +1463,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = getConnection().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL);
+            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
