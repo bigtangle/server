@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -2039,7 +2040,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setBytes(3, prevTxHash.getBytes());
             preparedStatement.setLong(4, index);
             preparedStatement.setBytes(5, prevBlockHash.getBytes());
-            log.debug(preparedStatement.toString());
+           // log.debug(preparedStatement.toString());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -4882,6 +4883,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
+        
         try {
 
             deleteStatement = getConnection()
@@ -4904,25 +4906,43 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     /*
-     * reomove the blocks:
-     * 1) there is no unspent transaction in this block
-     * 2) this block with spent transaction is outside the cutoff height, reorg
-     * is possible
+     * remove the blocks, only if :
+     * 1) there is no unspent transaction related to the block 
+     * 2) this block  is outside the cutoff height, reorg is possible
+     * 3) the spenderblock is outside the cutoff height, reorg is possible
      */
     @Override
     public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
+        PreparedStatement preparedStatement = null;
         try {
 
             deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM blocks WHERE height < ? and milestone < ? and milestone !=0 "
-                            + " and hash in (select spenderblockhash from outputs where spent=1 )  limit 1000 ");
-            deleteStatement.setLong(1, height);
-            deleteStatement.setLong(2, chain);
-            log.debug(deleteStatement.toString());
-            deleteStatement.executeUpdate();
+                    .prepareStatement(" delete FROM blocks WHERE"
+                            + "   hash  = ? ");
+            
+            preparedStatement= getConnection()
+                    .prepareStatement("  select distinct( blocks.hash) from  blocks  , outputs "
+                            + " where spenderblockhash = blocks.hash    "
+                            + "  and blocks.milestone < ? and blocks.milestone !=0  "
+                            + " and ( blocks.blocktype = "+ Block.Type.BLOCKTYPE_TRANSFER.ordinal()
+                            + " or blocks.blocktype = "+ Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal()
+                            + " or blocks.blocktype = "+ Block.Type.BLOCKTYPE_REWARD.ordinal()
+                            + "  ) limit 1000 ");
+        //    preparedStatement.setLong(1, height);
+            preparedStatement.setLong(1, chain);
+            
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                deleteStatement.setBytes(1, resultSet.getBytes(1));
+                deleteStatement.addBatch(); ;
+            }
+            
+           // log.debug(deleteStatement.toString());
+            int[] r = deleteStatement.executeBatch()   ;
+            log.debug( " deleteStatement.executeBatch() count = " +r.length);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

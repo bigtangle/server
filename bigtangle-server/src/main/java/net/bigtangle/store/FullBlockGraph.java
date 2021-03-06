@@ -290,9 +290,9 @@ public class FullBlockGraph {
             if (solidityState.isDirectlyMissing()) {
                 log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
                         + block.toString());
-                deleteChainQueue(chainBlockQueue, store);
+        //       deleteChainQueue(chainBlockQueue, store);
                 // sync the lastest chain from remote start from the -2 rewards
-                syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
+             //   syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
                 return;
             }
 
@@ -308,7 +308,7 @@ public class FullBlockGraph {
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
                 log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
-                deleteChainQueue(chainBlockQueue, store);
+      //          deleteChainQueue(chainBlockQueue, store);
                 return;
             }
             connectRewardBlock(block, solidityState, store);
@@ -1997,8 +1997,8 @@ public class FullBlockGraph {
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
       
         long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store); 
-        
-        store.prunedBlocks(cutoffHeight-1000, rewardblock.getLastMiningRewardBlock()- NetworkParameters.MILESTONE_CUTOFF);
+        //NetworkParameters.INTERVAL is used for difficulty calculation
+        store.prunedBlocks(cutoffHeight-1000, rewardblock.getLastMiningRewardBlock()-1 - NetworkParameters.INTERVAL);
     }
 
  

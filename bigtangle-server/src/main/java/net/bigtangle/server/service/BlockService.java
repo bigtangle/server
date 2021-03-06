@@ -605,14 +605,16 @@ public class BlockService {
      * @param block
      * @return
      */
+   
     public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean includeTransaction) {
         Set<Sha256Hash> predecessors = new HashSet<>();
         predecessors.add(block.getPrevBlockHash());
         predecessors.add(block.getPrevBranchBlockHash());
 
         // All used transaction outputs
+        
         final List<Transaction> transactions = block.getTransactions();
-        if( includeTransaction) {
+       
         for (final Transaction tx : transactions) {
             if (!tx.isCoinBase()) {
                 for (int index = 0; index < tx.getInputs().size(); index++) {
@@ -621,7 +623,7 @@ public class BlockService {
                     predecessors.add(in.getOutpoint().getBlockHash());
                 }
             }
-        }
+   
         }
         switch (block.getBlockType()) {
         case BLOCKTYPE_CROSSTANGLE:
@@ -633,8 +635,7 @@ public class BlockService {
         case BLOCKTYPE_INITIAL:
             break;
         case BLOCKTYPE_REWARD:
-            RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
-
+            RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData()); 
             predecessors.add(rewardInfo.getPrevRewardHash());
             break;
         case BLOCKTYPE_TOKEN_CREATION:
@@ -654,8 +655,8 @@ public class BlockService {
         case BLOCKTYPE_ORDER_OPEN:
             break;
         case BLOCKTYPE_ORDER_CANCEL:
-            OrderCancelInfo opInfo = new OrderCancelInfo().parseChecked(transactions.get(0).getData());
-            predecessors.add(opInfo.getBlockHash());
+         //   OrderCancelInfo opInfo = new OrderCancelInfo().parseChecked(transactions.get(0).getData());
+         //   predecessors.add(opInfo.getBlockHash());
             break;
         default:
             throw new RuntimeException("No Implementation");

@@ -89,6 +89,16 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().divide(BigInteger.valueOf(4)), highDifficultyBlock.getRewardInfo().getDifficultyTargetAsInteger());
     }
 
+    @Test
+    public void testDifficultyTransitionPruned() throws Exception {
+        serverConfiguration.setServermode("fullpruned");
+        testDifficultyTransition2();
+    }
+    @Test
+    public void testDifficultyTransitionPruned3() throws Exception {
+        serverConfiguration.setServermode("fullpruned");
+        testDifficultyTransition3();
+    }
     // Test difficulty transition 
     //@Test
     public void testDifficultyTransition3() throws Exception {
@@ -115,7 +125,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
 	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime,store);
 	        blockGraph.updateChain();
 		}
-
+ 
 		currentTime += NetworkParameters.TARGET_SPACING * 2;
         rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime,store);
         blockGraph.updateChain();

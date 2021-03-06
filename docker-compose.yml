@@ -4,10 +4,8 @@ networks:
     driver: bridge
 services:
   mysql-bigtangle:
-    image: registry.dasimi.com/mysql
+    image: j0904cui/mysql
     container_name: mysql-bigtangle
-    volumes:
-        /data/mysql-bigtangle/var/lib/mysql:/var/lib/mysql
     networks:
     - bigtangle-bridged-network
     environment: 
@@ -15,7 +13,7 @@ services:
       MYSQL_DATABASE: info
     
   bigtangle-server:
-    image: registry.dasimi.com/bigtangle-server
+    image: j0904cui/bigtangle
     container_name: bigtangle-server
     ports:
     - 8086:8086
