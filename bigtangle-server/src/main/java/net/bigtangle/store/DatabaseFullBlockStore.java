@@ -181,7 +181,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time , spenderblockhash"
             + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
-            + " WHERE  confirmed=true and spent= false and (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
+            + " WHERE   (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
             + " AND tokenid = ?";
     protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"

@@ -311,7 +311,11 @@ public class FullBlockGraph {
       //          deleteChainQueue(chainBlockQueue, store);
                 return;
             }
+            try {
             connectRewardBlock(block, solidityState, store);
+            }catch (Exception e) { 
+                log.debug("Exception connectRewardBlock . remove it from ChainBlockQueue." ,e );
+            }
             deleteChainQueue(chainBlockQueue, store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {

@@ -32,7 +32,7 @@ public class BlockWrap {
     public BlockWrap(Block block, BlockEvaluation blockEvaluation, BlockMCMC mcmc, NetworkParameters params) {
         super();
         this.block = block;
-        this.blockEvaluation = blockEvaluation; 
+        this.blockEvaluation = blockEvaluation;
         if (mcmc == null)
             this.mcmc = BlockMCMC.defaultBlockMCMC(blockEvaluation.getBlockHash());
         else {
@@ -72,9 +72,7 @@ public class BlockWrap {
 
     @Override
     public String toString() {
-        return block.toString()+" \n"
-                +blockEvaluation.toString() +" \n"
-                +mcmc.toString()+" \n";
+        return block.toString() + " \n" + blockEvaluation.toString() + " \n" + mcmc.toString() + " \n";
     }
 
     @Override
@@ -119,7 +117,9 @@ public class BlockWrap {
             try {
                 TokenInfo tokenInfo = new TokenInfo().parse(this.getBlock().getTransactions().get(0).getData());
                 blockConflicts.add(ConflictCandidate.fromToken(this, tokenInfo.getToken()));
-                blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
+                if (tokenInfo.getToken().isTokenDomainname()) {
+                    blockConflicts.add(ConflictCandidate.fromDomainToken(this, tokenInfo.getToken()));
+                }
             } catch (IOException e) {
                 // Cannot happen since any blocks added already were checked.
                 throw new RuntimeException(e);
