@@ -136,7 +136,7 @@ WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND orders.spent = 0;
             '0x0000000000000000000000000000000000000000000000000000000000000000'           
             
 select * from vm_deposit ;
-
+select * from tokens where tokenid = '0201ad11827c4ed13a079ecca5e0506757065278bfda325533379fdc29ddb905f0';
 select * from wechatinvite ;
 delete from vm_deposit where amount <= 0
 select userid ,useraccount, amount,  d.status, pubkey from vm_deposit d

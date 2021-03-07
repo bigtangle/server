@@ -254,7 +254,9 @@ public class Token extends SpentBlock implements java.io.Serializable {
     public String getTokennameDisplay() {
         return getTokenFullname();
     }
-
+    public Boolean isTokenDomainname() {
+        return tokentype == TokenType.domainname.ordinal();  
+    }
     public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
             String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
             TokenKeyValues tokenKeyValues, Boolean revoked, String language, String classification, int tokentype,

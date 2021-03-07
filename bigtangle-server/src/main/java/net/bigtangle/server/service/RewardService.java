@@ -392,7 +392,7 @@ public class RewardService {
         // findFirstSpentInput(allApprovedNewBlocks);
 
         if (anySpentInputs) {
-            solidityState = SolidityState.getFailState();
+        //    solidityState = SolidityState.getFailState();
             throw new VerificationException("there are hasSpentInputs in allApprovedNewBlocks ");
         }
         // If any conflicts exist between the current set of
@@ -572,7 +572,7 @@ public class RewardService {
             try {
                 return validatorService.hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
-                e.printStackTrace();
+            //    e.printStackTrace();
                 return true;
             }
         });

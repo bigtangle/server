@@ -259,7 +259,11 @@ public class ValidatorService {
         case REWARDISSUANCE:
             return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
         case DOMAINISSUANCE:
+            // exception for the block
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+         //   if ("0201ad11827c4ed13a079ecca5e0506757065278bfda325533379fdc29ddb905f0"
+         //           .equals(connectedDomainToken.getTokenid()))
+         //       return false;
             return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
                     connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
         default:
