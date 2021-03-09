@@ -218,11 +218,12 @@ public class OutputService {
 
         }
         Map<String, Token> re = new HashMap<String, Token>();
-        List<Token> tokens = store.getTokensList(tokenids);
-        for (Token t : tokens) {
-            re.put(t.getTokenid(), t);
+        if ( !tokenids.isEmpty()) { 
+            List<Token> tokens = store.getTokensList(tokenids);
+            for (Token t : tokens) {
+                re.put(t.getTokenid(), t);
+            } 
         }
-
         return re;
     }
 
