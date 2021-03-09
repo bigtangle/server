@@ -116,7 +116,6 @@ import net.bigtangle.utils.OrderUtil;
 @Service
 public class FullBlockGraph {
 
-   
     private static final long DaySeconds = 24 * 60 * 60L;
     private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
 
@@ -311,14 +310,12 @@ public class FullBlockGraph {
                 deleteChainQueue(chainBlockQueue, store);
                 return;
             }
-            try {
+
             connectRewardBlock(block, solidityState, store);
-            }catch (Exception e) { 
-                log.debug("Exception connectRewardBlock . remove it from ChainBlockQueue." ,e );
-            }
             deleteChainQueue(chainBlockQueue, store);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
+            deleteChainQueue(chainBlockQueue, store);
             store.abortDatabaseBatchWrite();
             throw e;
         } finally {
@@ -1978,7 +1975,7 @@ public class FullBlockGraph {
                         log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                     }
                 }
-                store.deleteLockobject(LOCKID); 
+                store.deleteLockobject(LOCKID);
                 watch.stop();
             }
         } catch (Exception e) {
@@ -1996,17 +1993,15 @@ public class FullBlockGraph {
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
         log.info(" pruned until block " + rewardblock.toString());
         store.prunedClosedOrders(rewardblock.getTimeSeconds());
-        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10*DaySeconds);
-        store.prunedPriceTicker(rewardblock.getTimeSeconds() -  30*DaySeconds);
+        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10 * DaySeconds);
+        store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 * DaySeconds);
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
-      
-        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store); 
-        
-        store.prunedBlocks(cutoffHeight-1000, rewardblock.getLastMiningRewardBlock()- NetworkParameters.MILESTONE_CUTOFF);
-    }
 
- 
-    
+        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
+
+        store.prunedBlocks(cutoffHeight - 1000,
+                rewardblock.getLastMiningRewardBlock() - NetworkParameters.MILESTONE_CUTOFF);
+    }
 
     /*
      * run timeboxed updateConfirmed, there is no transaction here.
