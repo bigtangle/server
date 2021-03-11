@@ -7,43 +7,20 @@ import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.IOUtils;
+
 public class Gzip {
 
-    public static byte[] decompress(byte[] contentBytes) {
-        return decompressOut(contentBytes).toByteArray();
+    public static String decompressString(byte[] contentBytes) throws IOException { 
+        return new String(decompressOut(contentBytes), "UTF-8");
     }
 
-    public static String decompressString(byte[] contentBytes) throws UnsupportedEncodingException {
-        return decompressOut(contentBytes).toString("UTF-8");
-    }
-
-    public static ByteArrayOutputStream decompressOut(byte[] contentBytes) {
+    public static byte[] decompressOut(byte[] contentBytes) throws IOException {
         if (contentBytes.length == 0)
             return null;
-        ByteArrayOutputStream out = null;
-        GZIPInputStream gzis = null;
-        try {
-            out = new ByteArrayOutputStream();
-            gzis = new GZIPInputStream(new ByteArrayInputStream(contentBytes));
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = gzis.read(buffer)) > 0) {
-                out.write(buffer, 0, length);
-            }
-            return out;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                out.close();
-            } catch (Exception e) {
-            }
-            try {
-                gzis.close();
-            } catch (Exception e) {
-            }
-
-        }
+        ByteArrayInputStream bis = new ByteArrayInputStream(contentBytes);
+        GZIPInputStream gis = new GZIPInputStream(bis);
+        return IOUtils.toByteArray(gis);
     }
 
     public static byte[] compress(byte[] data) {

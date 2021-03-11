@@ -158,7 +158,7 @@ public class DispatcherController {
             logger.trace("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
                     contentBytes.length);
 
-            bodyByte = Gzip.decompress(contentBytes);
+            bodyByte = Gzip.decompressOut(contentBytes);
             ReqCmd reqCmd0000 = ReqCmd.valueOf(reqCmd);
             if (!checkPermission(httpServletResponse, httprequest, watch, store)) {
                 return;

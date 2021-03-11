@@ -110,7 +110,7 @@ public class UtilsTest {
     @Test
     public void gzip() throws IOException {
        byte[] b = "Hallo".getBytes("UTF-8");
-        assertTrue( Arrays.equals( Gzip.decompress(Gzip.compress(b)) ,b) );
+        assertTrue( Arrays.equals( Gzip.decompressOut(Gzip.compress(b)) ,b) );
 
     }
 

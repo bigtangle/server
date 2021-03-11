@@ -65,9 +65,10 @@ public abstract class MessageSerializer {
     /**
      * Make a block from the zipped payload, using an offset of zero and the payload
      * length as block length.
+     * @throws IOException 
      */
-    public final Block makeZippedBlock(byte[] payloadBytes) throws ProtocolException {
-          byte[] unzipped = Gzip.decompress(payloadBytes);
+    public final Block makeZippedBlock(byte[] payloadBytes) throws ProtocolException, IOException {
+          byte[] unzipped = Gzip.decompressOut(payloadBytes);
         return makeBlock(unzipped, 0, unzipped.length);
     }
 

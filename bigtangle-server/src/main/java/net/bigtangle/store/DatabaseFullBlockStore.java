@@ -909,13 +909,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
+        } catch ( Exception e) { 
             throw new BlockStoreException(e);
         } finally {
             if (s != null) {
@@ -942,7 +936,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             s.setLong(4, end);
             ResultSet results = s.executeQuery();
             while (results.next()) {
-                re.add(Gzip.decompress(results.getBytes("block")));
+                re.add(Gzip.decompressOut(results.getBytes("block")));
             }
             return re;
         } catch (Exception ex) {
@@ -970,7 +964,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             s.setLong(1, heigth);
             ResultSet results = s.executeQuery();
             while (results.next()) {
-                re.add(Gzip.decompress(results.getBytes("block")));
+                re.add(Gzip.decompressOut(results.getBytes("block")));
             }
             return re;
         } catch (Exception ex) {
@@ -1049,14 +1043,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
+        } catch ( Exception e) {
             // Corrupted database.
             throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
+        }  finally {
             if (s != null) {
                 try {
                     s.close();
@@ -1086,14 +1076,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
+        } catch (Exception e) {
             // Corrupted database.
             throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
+        }   finally {
             if (s != null) {
                 try {
                     s.close();
@@ -1526,7 +1512,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
             return new BlockWrap(block, blockEvaluation, getMCMC(hash), params);
-        } catch (SQLException ex) {
+        } catch ( Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1615,7 +1601,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return storedBlockHashes;
-        } catch (SQLException ex) {
+        } catch ( Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1676,7 +1662,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return blocksByDescendingHeight;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1709,7 +1695,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return storedBlockHashes;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1743,7 +1729,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return resultQueue;
-        } catch (SQLException ex) {
+        } catch ( Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -4350,12 +4336,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             while (resultSet.next()) {
                 BatchBlock batchBlock = new BatchBlock();
                 batchBlock.setHash(Sha256Hash.wrap(resultSet.getBytes("hash")));
-                batchBlock.setBlock(Gzip.decompress(resultSet.getBytes("block")));
+                batchBlock.setBlock(Gzip.decompressOut(resultSet.getBytes("block")));
                 batchBlock.setInsertTime(resultSet.getDate("inserttime"));
                 list.add(batchBlock);
             }
             return list;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -5941,7 +5927,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 result.add(block);
             }
             return result;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -6043,7 +6029,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 list.add(setChainBlockQueue(resultSet));
             }
             return list;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (s != null)
@@ -6055,8 +6041,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    private ChainBlockQueue setChainBlockQueue(ResultSet resultSet) throws SQLException {
-        return new ChainBlockQueue(resultSet.getBytes("hash"), Gzip.decompress(resultSet.getBytes("block")),
+    private ChainBlockQueue setChainBlockQueue(ResultSet resultSet) throws SQLException, IOException {
+        return new ChainBlockQueue(resultSet.getBytes("hash"), Gzip.decompressOut(resultSet.getBytes("block")),
                 resultSet.getLong("chainlength"), resultSet.getBoolean("orphan"), resultSet.getLong("inserttime"));
     }
 
