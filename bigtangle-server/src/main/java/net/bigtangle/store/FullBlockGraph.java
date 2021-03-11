@@ -92,7 +92,6 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
-import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
@@ -135,8 +134,7 @@ public class FullBlockGraph {
     private BlockService blockService;
     @Autowired
     private StoreService storeService;
-    @Autowired
-    private SyncBlockService syncBlockService;
+ 
 
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean added;
@@ -289,39 +287,31 @@ public class FullBlockGraph {
 
             if (solidityState.isDirectlyMissing()) {
                 log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
-                        + block.toString());
-        //       deleteChainQueue(chainBlockQueue, store);
+                        + block.toString()); 
                 // sync the lastest chain from remote start from the -2 rewards
              //   syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
                 return;
             }
 
             if (solidityState.isFailState()) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
-                deleteChainQueue(chainBlockQueue, store);
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString()); 
                 return;
-            }
-
+            } 
             // Inherit solidity from predecessors if they are not solid
             solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
-      //          deleteChainQueue(chainBlockQueue, store);
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString()); 
                 return;
-            }
-            try {
-            connectRewardBlock(block, solidityState, store);
-            }catch (Exception e) { 
-                log.debug("Exception connectRewardBlock . remove it from ChainBlockQueue." ,e );
-            }
-            deleteChainQueue(chainBlockQueue, store);
+            } 
+            connectRewardBlock(block, solidityState, store);  
             store.commitDatabaseBatchWrite();
-        } catch (Exception e) {
+        } catch (Exception e) { 
             store.abortDatabaseBatchWrite();
             throw e;
         } finally {
+            deleteChainQueue(chainBlockQueue, store);
             store.defaultDatabaseBatchWrite();
         }
     }
