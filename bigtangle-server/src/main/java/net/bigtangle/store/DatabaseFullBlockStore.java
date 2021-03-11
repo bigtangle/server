@@ -85,7 +85,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    private static final String LIMIT_5000 = " limit 5000 ";
+    private static final String LIMIT_50= " limit 50 ";
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
 
@@ -2132,7 +2132,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             if (tokenids != null && !tokenids.isEmpty()) {
                 sql += "  and tokenid in ( " + buildINList(tokenids) + " )";
             }
-            sql += LIMIT_5000;
+            sql += LIMIT_50;
             preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -2226,7 +2226,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             if (domainname != null && !"".equals(domainname.trim())) {
                 sql += " AND (domainname = '" + domainname + "' )";
             }
-            sql += LIMIT_5000;
+            sql += LIMIT_50;
             preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -2261,7 +2261,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 sql += " AND (tokenname LIKE '%" + name + "%' OR description LIKE '%" + name
                         + "%' OR domainname LIKE '%" + name + "%')";
             }
-            sql += LIMIT_5000;
+            sql += LIMIT_50;
             preparedStatement = getConnection().prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
