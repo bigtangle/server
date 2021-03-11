@@ -126,8 +126,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
 
-    protected final String SELECT_BLOCKS_TEMPLATE = "  blocks.hash,   block, "
-            + "  height, milestone, milestonelastupdate,  inserttime,  block, solid, confirmed";
+    protected final String SELECT_BLOCKS_TEMPLATE = "  blocks.hash, block,  "
+            + "  height, milestone, milestonelastupdate,  inserttime,   solid, confirmed";
 
     protected final String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM blocks WHERE hash = ?"
             + afterSelect();
@@ -1745,7 +1745,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private BlockEvaluation setBlockEvaluationNumber(ResultSet resultSet) throws SQLException {
 
         BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(resultSet.getBytes(1)),
-                resultSet.getLong(2), resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5),
+                resultSet.getLong(3), resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6),
                 resultSet.getLong(7), resultSet.getBoolean(8));
         return blockEvaluation;
     }

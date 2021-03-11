@@ -143,7 +143,7 @@ public class OkHttp3Util {
     public static void checkResponse(byte[] resp, String url)
             throws JsonParseException, JsonMappingException, IOException {
 
-        if ("".equals(resp))
+        if ( resp ==null)
             return;
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
