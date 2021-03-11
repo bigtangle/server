@@ -89,7 +89,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
@@ -127,7 +127,7 @@ public class SyncServiceTest extends AbstractIntegrationTest {
     public void buy(List<Block> blocksAddedAll) throws Exception {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);

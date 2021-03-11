@@ -185,7 +185,7 @@ public abstract class AbstractIntegrationTest {
     public void checkTokenAssertTrue(String tokenid, String domainname) throws Exception {
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -691,7 +691,7 @@ public abstract class AbstractIntegrationTest {
 
     public Block adjustSolve(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
-        String resp = OkHttp3Util.post(contextRoot + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+       byte[] resp = OkHttp3Util.post(contextRoot + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
         String dataHex = (String) result.get("dataHex");
@@ -790,12 +790,12 @@ public abstract class AbstractIntegrationTest {
             // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
             keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-        // String response = mvcResult.getResponse().getContentAsString();
+        //byte[] response = mvcResult.getResponse().getContentAsString();
         for (UTXO utxo : getBalancesResponse.getOutputs()) {
             if (withZero) {
                 listUTXO.add(utxo);
@@ -813,7 +813,7 @@ public abstract class AbstractIntegrationTest {
         List<String> keyStrHex000 = new ArrayList<String>();
 
         keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
@@ -917,11 +917,11 @@ public abstract class AbstractIntegrationTest {
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
     }
 
-    protected void checkResponse(String resp) throws JsonParseException, JsonMappingException, IOException {
+    protected void checkResponse(byte[]  resp) throws JsonParseException, JsonMappingException, IOException {
         checkResponse(resp, 0);
     }
 
-    protected void checkResponse(String resp, int code) throws JsonParseException, JsonMappingException, IOException {
+    protected void checkResponse(byte[]  resp, int code) throws JsonParseException, JsonMappingException, IOException {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result2 = Json.jsonmapper().readValue(resp, HashMap.class);
         int error = (Integer) result2.get("errorcode");
@@ -984,7 +984,7 @@ public abstract class AbstractIntegrationTest {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
+       byte[] resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
@@ -1042,7 +1042,7 @@ public abstract class AbstractIntegrationTest {
         for (ECKey ecKey : ecKeys) {
             HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
             requestParam0.put("address", ecKey.toAddress(networkParameters).toBase58());
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
+           byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
                     Json.jsonmapper().writeValueAsString(requestParam0));
             System.out.println(resp);
 
@@ -1095,7 +1095,7 @@ public abstract class AbstractIntegrationTest {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
+       byte[] resp2 = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
 
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
@@ -1289,7 +1289,7 @@ public abstract class AbstractIntegrationTest {
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
@@ -1332,7 +1332,7 @@ public abstract class AbstractIntegrationTest {
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
 
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -1373,7 +1373,7 @@ public abstract class AbstractIntegrationTest {
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainNameBlockHash", token.getDomainNameBlockHash());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenPermissionedAddresses.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
@@ -1447,7 +1447,7 @@ public abstract class AbstractIntegrationTest {
         Map<String, Object> requestParam = new HashMap<String, Object>();
 
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(contextRoot + "/" + ReqCmd.findBlockEvaluation.name(),
+       byte[] response = OkHttp3Util.postString(contextRoot + "/" + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);

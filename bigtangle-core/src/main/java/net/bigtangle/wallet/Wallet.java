@@ -1541,7 +1541,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         for (ECKey ecKey : walletKeys(aesKey)) {
             pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-        String response = OkHttp3Util.post(getServerURL() + ReqCmd.getOutputs.name(),
+          byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
@@ -1849,7 +1849,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block adjustSolveAndSign(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
         try {
-            String resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+              byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
             @SuppressWarnings("unchecked")
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
@@ -2144,7 +2144,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenById.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -2368,7 +2368,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             if (allowClientMining && clientMiningAddress != null) {
                 block.setMinerAddress(clientMiningAddress);
             }
-            String resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+              byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
             @SuppressWarnings("unchecked")
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
@@ -2402,7 +2402,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputByKey.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -2613,7 +2613,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
@@ -2622,7 +2622,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainNameBlockHash", token.getDomainNameBlockHash());
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenPermissionedAddresses.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
@@ -2637,7 +2637,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
         requestParam.put("token", token);
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getDomainNameBlockHash.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getDomainNameBlockHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetDomainTokenResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
                 GetDomainTokenResponse.class);
@@ -2650,7 +2650,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String address = outKey.toAddress(params).toBase58();
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenSignByAddress.name(),
+          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -2728,7 +2728,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
-        String resp2 = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
+          byte[] resp2 = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
 
@@ -2801,7 +2801,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         requestParam.put("tokenids", tokenids);
         requestParam.put("count", 1);
         requestParam.put("basetoken", basetoken);
-        String response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrdersTicker.name(),
+          byte[] response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
         if (orderTickerResponse != null && !orderTickerResponse.getTickers().isEmpty()) {

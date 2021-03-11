@@ -27,7 +27,7 @@ public class AccessPermissionedTest extends AbstractIntegrationTest {
         ECKey ecKey = addAccessGrant();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
-        String resp = OkHttp3Util.post(contextRoot + ReqCmd.getSessionRandomNum.name(),
+       byte[] resp = OkHttp3Util.post(contextRoot + ReqCmd.getSessionRandomNum.name(),
                 Json.jsonmapper().writeValueAsBytes(requestParam));
         SessionRandomNumResponse sessionRandomNumResponse = Json.jsonmapper().readValue(resp,
                 SessionRandomNumResponse.class);
@@ -60,7 +60,7 @@ public class AccessPermissionedTest extends AbstractIntegrationTest {
         ECKey ecKey = new ECKey();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("pubKey", ecKey.getPublicKeyAsHex());
-        String resp = OkHttp3Util.post(contextRoot + ReqCmd.getSessionRandomNum.name(),
+       byte[] resp = OkHttp3Util.post(contextRoot + ReqCmd.getSessionRandomNum.name(),
                 Json.jsonmapper().writeValueAsBytes(requestParam));
         SessionRandomNumResponse sessionRandomNumResponse = Json.jsonmapper().readValue(resp,
                 SessionRandomNumResponse.class);
@@ -121,7 +121,7 @@ public class AccessPermissionedTest extends AbstractIntegrationTest {
         final String header = ecKey.getPublicKeyAsHex();
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("name", null);
-        String resp = OkHttp3Util.post(contextRoot + ReqCmd.searchTokens.name(),
+       byte[] resp = OkHttp3Util.post(contextRoot + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00).getBytes(), header);
         System.out.println(resp);
     }

@@ -96,10 +96,9 @@ public class TokenSignsController extends TokenSearchController {
                 .collect(Collectors.toList());
         requestParam.put("addresses", addresses);
         requestParam.put("isSign", isSignCheckBox.isSelected());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        log.debug(response);
-
+        
         final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response,
                 SearchMultiSignResponse.class);
         if (searchMultiSignResponse.getMultiSignList() != null) {
@@ -158,7 +157,7 @@ public class TokenSignsController extends TokenSearchController {
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", rowdata.get("address").toString());
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
+       byte[] resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
         // log.debug(resp);
 

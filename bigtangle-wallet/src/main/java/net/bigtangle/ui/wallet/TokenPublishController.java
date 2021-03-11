@@ -239,7 +239,7 @@ public class TokenPublishController extends TokenIdentityController {
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -283,7 +283,7 @@ public class TokenPublishController extends TokenIdentityController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
+       byte[] resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -352,7 +352,7 @@ public class TokenPublishController extends TokenIdentityController {
         address = rowdata.get("address").toString();
         tokenUUID = rowdata.get("id").toString();
         tokenidString = rowdata.get("tokenid").toString();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
+       byte[] resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -408,7 +408,7 @@ public class TokenPublishController extends TokenIdentityController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenidCB.getValue());
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         final SearchMultiSignResponse searchMultiSignResponse = Json.jsonmapper().readValue(response,

@@ -298,7 +298,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.findBlockEvaluation.name(),
+       byte[] response = OkHttp3Util.postString(CONTEXT_ROOT + "/" + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
                 GetBlockEvaluationsResponse.class);
@@ -365,7 +365,7 @@ public class BlockEvaluationController {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("address", addresses);
         requestParam.put("lastestAmount", lastestAmount);
-        String response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.findBlockEvaluation.name(),
+       byte[] response = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,

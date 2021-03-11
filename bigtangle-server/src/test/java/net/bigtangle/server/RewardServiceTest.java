@@ -334,7 +334,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("start", "0");
         request.put("end", "0");
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.blocksFromChainLength.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.blocksFromChainLength.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         GetBlockListResponse blockListResponse = Json.jsonmapper().readValue(response, GetBlockListResponse.class);

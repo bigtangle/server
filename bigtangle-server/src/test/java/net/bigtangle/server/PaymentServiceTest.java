@@ -52,7 +52,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         // get new Block to be used from server
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getAllConfirmedReward.name(),
+       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.getAllConfirmedReward.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetTXRewardListResponse getBalancesResponse = Json.jsonmapper().readValue(response,
@@ -219,7 +219,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
        
         param.put("toaddress", addressString);
         
-        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
+       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
         
        

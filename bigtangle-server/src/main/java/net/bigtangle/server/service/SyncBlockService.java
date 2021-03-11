@@ -274,7 +274,7 @@ public class SyncBlockService {
         requestParam.put("start", chainlengthstart + "");
         requestParam.put("end", chainlengthend + "");
 
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
+          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " remote chain start: " + chainlengthstart
@@ -298,7 +298,7 @@ public class SyncBlockService {
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
+          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " at server: " + s);
@@ -320,7 +320,7 @@ public class SyncBlockService {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
+          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 
@@ -332,7 +332,7 @@ public class SyncBlockService {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getAllConfirmedReward,
+          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getAllConfirmedReward,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardListResponse aTXRewardResponse = Json.jsonmapper().readValue(response,
                 GetTXRewardListResponse.class);

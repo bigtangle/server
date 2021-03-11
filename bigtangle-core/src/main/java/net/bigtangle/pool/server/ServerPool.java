@@ -5,7 +5,6 @@
 
 package net.bigtangle.pool.server;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
@@ -17,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,7 +165,7 @@ public class ServerPool {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        String response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
+          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 

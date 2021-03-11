@@ -197,7 +197,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         List<String> keyStrHex000 = new ArrayList<String>();
 
         keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);

@@ -39,7 +39,7 @@ public class CheckpointRemote {
             throws IOException, JsonProcessingException, JsonMappingException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
+       byte[] resp = OkHttp3Util.postString(server + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         return getOutputsResponse.getOutputs();
@@ -58,7 +58,7 @@ public class CheckpointRemote {
 
     private List<OrderRecord> orders(String server) throws IOException, JsonProcessingException, JsonMappingException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        String response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
+       byte[] response0 = OkHttp3Util.post(server + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
 
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
@@ -68,7 +68,7 @@ public class CheckpointRemote {
     public Map<String, BigInteger> tokensumInitial(String server) throws IOException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(server + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes(StandardCharsets.UTF_8));
         GetTokensResponse orderdataResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         return orderdataResponse.getAmountMap();

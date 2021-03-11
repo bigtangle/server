@@ -89,9 +89,9 @@ public class TokenSearchController extends TokenBaseController {
 
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", Main.getString(name));
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        log.debug(response);
+         
         final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
 
         List<Map<String, Object>> listTokens = (List<Map<String, Object>>) data.get("tokens");

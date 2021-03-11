@@ -165,7 +165,7 @@ public class SubtangleService {
         }
 
         String contextRoot = subtangleConfiguration.getParentContextRoot();
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
                 Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
         GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);

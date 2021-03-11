@@ -161,7 +161,7 @@ public class LotteryExecution {
 		List<ContractEventInfo> listUTXO = new ArrayList<ContractEventInfo>();
 		List<String> keyStrHex000 = new ArrayList<String>();
 
-		String response = OkHttp3Util.post(contextRoot + ReqCmd.getContractEvents.name(),
+		  byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getContractEvents.name(),
 				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
 		GetContractEventInfoResponse getBalancesResponse = Json.jsonmapper().readValue(response,

@@ -447,7 +447,7 @@ public class SendMoneyController {
             pubKeys.add(ecKey.toAddress(Main.params).toString());
         }
         String ContextRoot = Main.getContextRoot();
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignList.name(),
+       byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignList.name(),
                 Json.jsonmapper().writeValueAsString(pubKeys));
 
         PayMultiSignListResponse payMultiSignListResponse = Json.jsonmapper().readValue(resp,
@@ -500,9 +500,9 @@ public class SendMoneyController {
             param.put("endtime", date.getTime());
         }
         String ContextRoot = Main.getContextRoot();
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getOutputsHistory.name(),
+       byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
-        log.debug(resp);
+      
         GetOutputsResponse response = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         List<UTXO> utxos = response.getOutputs();
 
@@ -617,7 +617,7 @@ public class SendMoneyController {
         String outputStr = this.subtangleHashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getOutputByKey.name(),
+       byte[] resp = OkHttp3Util.postString(Main.getContextRoot() + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         Address address = ECKey
                 .fromPublicOnly(Utils.HEX
@@ -873,7 +873,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -925,7 +925,7 @@ public class SendMoneyController {
         String outputStr = this.hashHexList.get(index);
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -992,7 +992,7 @@ public class SendMoneyController {
         String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
+       byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
@@ -1027,7 +1027,7 @@ public class SendMoneyController {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.clear();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         PayMultiSignDetailsResponse payMultiSignDetailsResponse = Json.jsonmapper().readValue(resp,
@@ -1038,8 +1038,7 @@ public class SendMoneyController {
         requestParam.put("hexStr", payMultiSign_.getOutputHashHex() + ":" + payMultiSign_.getOutputindex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        log.debug(resp);
-
+        
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
         UTXO u = outputsDetailsResponse.getOutputs();
 
@@ -1064,8 +1063,7 @@ public class SendMoneyController {
         requestParam.put("signInputData", Utils.HEX.encode(transactionSignature.encodeToBitcoin()));
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSign.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
-        log.debug(resp);
-
+       
         PayMultiSignResponse payMultiSignResponse = Json.jsonmapper().readValue(resp, PayMultiSignResponse.class);
         boolean success = payMultiSignResponse.isSuccess();
         initSignTable();
@@ -1074,8 +1072,7 @@ public class SendMoneyController {
             requestParam.put("orderid", (String) payMultiSign_.getOrderid());
             resp = OkHttp3Util.postString(contextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
-            log.debug(resp);
-
+           
             PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
                     PayMultiSignAddressListResponse.class);
             List<PayMultiSignAddress> payMultiSignAddresses = payMultiSignAddressListResponse

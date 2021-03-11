@@ -48,11 +48,11 @@ public class OkHttp3Util {
      * same method, but it will call next server, if last server failed to
      * return result
      */
-    public static String post(String[] url, byte[] b) throws IOException {
+    public static byte[] post(String[] url, byte[] b) throws IOException {
         return post(url, b, 0);
     }
 
-    public static String post(String[] url, byte[] b, int number) throws IOException {
+    public static byte[] post(String[] url, byte[] b, int number) throws IOException {
 
         if (number < url.length) {
             try {
@@ -84,8 +84,8 @@ public class OkHttp3Util {
         }
     }
 
-    public static String post(String url, byte[] b) throws IOException {
-        logger.debug("start:  "+url);
+    public static byte[] post(String url, byte[] b) throws IOException {
+        logger.debug("start:  " + url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).build();
@@ -95,7 +95,7 @@ public class OkHttp3Util {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
 
-            String resp = Gzip.decompressString(response.body().bytes());
+            byte[] resp = Gzip.decompressOut(response.body().bytes());
             // logger.debug(resp);
             checkResponse(resp, url);
             return resp;
@@ -110,12 +110,7 @@ public class OkHttp3Util {
     @SuppressWarnings("unchecked")
     public static byte[] postAndGetBlock(String url, String s) throws IOException {
 
-        // return response.body().bytes();
-        String resp = postString(url, s);
-        if ("".equals(resp))
-            return null;
-
-        HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
+        HashMap<String, Object> result = Json.jsonmapper().readValue(postString(url, s), HashMap.class);
         String dataHex = (String) result.get("dataHex");
         if (dataHex != null) {
             return Utils.HEX.decode(dataHex);
@@ -125,8 +120,8 @@ public class OkHttp3Util {
 
     }
 
-    public static String postString(String url, String s) throws IOException {
-        logger.debug("start:  "+url + " " + s);
+    public static byte[] postString(String url, String s) throws IOException {
+        logger.debug("start:  " + url + " " + s);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), s);
         Request request = new Request.Builder().url(url).post(body).build();
@@ -136,7 +131,7 @@ public class OkHttp3Util {
             if (!response.isSuccessful()) {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
-            String resp = Gzip.decompressString(response.body().bytes());
+            byte[] resp = Gzip.decompressOut(response.body().bytes());
             checkResponse(resp, url);
             return resp;
         } finally {
@@ -145,7 +140,7 @@ public class OkHttp3Util {
         }
     }
 
-    public static void checkResponse(String resp, String url)
+    public static void checkResponse(byte[] resp, String url)
             throws JsonParseException, JsonMappingException, IOException {
 
         if ("".equals(resp))
@@ -253,19 +248,19 @@ public class OkHttp3Util {
         }
     }
 
-    public static String post(String url, byte[] b, String header) throws IOException {
-        logger.debug("start:  "+url);
+    public static byte[] post(String url, byte[] b, String header) throws IOException {
+        logger.debug("start:  " + url);
         OkHttpClient client = getOkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream; charset=utf-8"), b);
         Request request = new Request.Builder().url(url).post(body).addHeader("accessToken", header).build();
-        
+
         Response response = client.newCall(request).execute();
         try {
             if (!response.isSuccessful()) {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
 
-            String resp = Gzip.decompressString(response.body().bytes());
+            byte[] resp = Gzip.decompressOut(response.body().bytes());
             // logger.debug(resp);
             checkResponse(resp, url);
             return resp;
@@ -276,8 +271,8 @@ public class OkHttp3Util {
             response.body().close();
         }
     }
-    
-    public static String postString(String url, String s, String header) throws IOException {
+
+    public static byte[] postString(String url, String s, String header) throws IOException {
         logger.debug(url);
         logger.debug(header);
         OkHttpClient client = getOkHttpClient();
@@ -289,7 +284,7 @@ public class OkHttp3Util {
             if (!response.isSuccessful()) {
                 throw new RuntimeException("Server:" + url + "  HTTP  Error: " + response);
             }
-            String resp = Gzip.decompressString(response.body().bytes());
+            byte[] resp = Gzip.decompressOut(response.body().bytes());
             checkResponse(resp, url);
             return resp;
         } finally {
@@ -300,8 +295,8 @@ public class OkHttp3Util {
 
     public static byte[] postAndGetBlock(String url, String s, String header) throws IOException {
         // return response.body().bytes();
-        String resp = postString(url, s, header);
-        if ("".equals(resp))
+        byte[] resp = postString(url, s, header);
+        if (resp == null)
             return null;
 
         @SuppressWarnings("unchecked")

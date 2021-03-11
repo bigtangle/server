@@ -3,18 +3,13 @@ package net.bigtangle.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 
 public class Gzip {
-
-    public static String decompressString(byte[] contentBytes) throws IOException { 
-        return new String(decompressOut(contentBytes), "UTF-8");
-    }
-
+ 
     public static byte[] decompressOut(byte[] contentBytes) throws IOException {
         if (contentBytes.length == 0)
             return null;

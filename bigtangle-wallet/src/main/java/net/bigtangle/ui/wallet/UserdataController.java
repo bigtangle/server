@@ -555,7 +555,7 @@ public class UserdataController {
             requestParam.put("pubKeyList", pubKeyList);
 
             String CONTEXT_ROOT = Main.getContextRoot();
-            String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
+           byte[] resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
 
             UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);
@@ -625,7 +625,7 @@ public class UserdataController {
         requestParam.put("pubKeyList", pubKeyList);
 
         String CONTEXT_ROOT = Main.getContextRoot();
-        String resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
+       byte[] resp = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.userDataList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         UserDataResponse userDataResponse = Json.jsonmapper().readValue(resp, UserDataResponse.class);

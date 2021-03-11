@@ -222,7 +222,7 @@ public class TokenTest extends AbstractIntegrationTest {
             
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", currentToken.getToken().getTokenid());
-            String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+           byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -254,7 +254,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -295,7 +295,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -341,7 +341,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -393,7 +393,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Map<String, String> param = new HashMap<String, String>();
         param.put("toaddress", ecKey.toAddress(networkParameters).toString());
 
-        String response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
+       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
 
         GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
@@ -437,7 +437,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -534,7 +534,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -580,7 +580,7 @@ public class TokenTest extends AbstractIntegrationTest {
         requestParam.put("tokenid", NetworkParameters.BIGTANGLE_TOKENID_STRING);
         makeRewardBlock();
         
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);
@@ -634,7 +634,7 @@ public class TokenTest extends AbstractIntegrationTest {
         
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);
@@ -654,7 +654,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -726,7 +726,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletAppKit.wallet().walletKeys().get(0).getPublicKeyAsHex());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -755,7 +755,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 

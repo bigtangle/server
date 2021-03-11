@@ -546,7 +546,7 @@ public class Main extends Application {
     public static GetTokensResponse getAllTokens() throws Exception {
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(getContextRoot() + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(getContextRoot() + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         return Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -558,7 +558,7 @@ public class Main extends Application {
         String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         return Json.jsonmapper().readValue(resp, GetTokensResponse.class).getTokens().get(0);
@@ -800,37 +800,8 @@ public class Main extends Application {
     public void setUtxoData(ObservableList<UTXOModel> utxoData) {
         this.utxoData = utxoData;
     }
-
-    public void sentEmpstyBlock(int number) {
-
-        for (int i = 0; i < number; i++) {
-            try {
-                sentEmpstyBlock();
-                log.debug("empty block " + i);
-            } catch (Exception e) {
-                // Ignore
-                log.debug("", e);
-            }
-
-        }
-        ;
-
-        // Threading.USER_THREAD.execute(r);
-
-    }
-
-    public String sentEmpstyBlock() throws JsonProcessingException, Exception {
-        String CONTEXT_ROOT = Main.IpAddress + "/"; // http://" + Main.IpAddress
-                                                    // + ":" + Main.port + "/";
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(CONTEXT_ROOT + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
-        rollingBlock.solve();
-
-        return OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-
-    }
+ 
+ 
 
     public static List<UTXO> getUTXOWithECKeyList(List<ECKey> ecKeys, String tokenid) throws Exception {
         List<String> pubKeyHashs = new ArrayList<String>();
@@ -852,7 +823,7 @@ public class Main extends Application {
         String ContextRoot = Main.IpAddress + "/"; // http://" + Main.IpAddress
                                                    // + ":" + Main.port + "/";
 
-        String response = OkHttp3Util.post(ContextRoot + ReqCmd.getOutputs.name(),
+       byte[] response = OkHttp3Util.post(ContextRoot + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes());
         log.debug("tokenid:" + tokenid);
         log.debug("response:" + response);
@@ -1000,7 +971,7 @@ public class Main extends Application {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         String CONTEXT_ROOT = Main.getContextRoot();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
         for (Token tokens : getTokensResponse.getTokens()) {

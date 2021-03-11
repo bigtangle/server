@@ -147,7 +147,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         requestParam.put("tokenids", tokenids);
         requestParam.put("count", 1);
         requestParam.put("basetoken",  NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
@@ -247,7 +247,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         requestParam.put("count", 1);
         requestParam.put("tokenids", tokenids);
         requestParam.put("basetoken",  yuan.getPublicKeyAsHex());
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
@@ -429,7 +429,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
@@ -1236,7 +1236,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
-        String response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();

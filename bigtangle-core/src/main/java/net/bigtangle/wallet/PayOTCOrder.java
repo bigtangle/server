@@ -344,7 +344,7 @@ public class PayOTCOrder {
     public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(this.serverURL + ReqCmd.getTokenById.name(),
+          byte[] resp = OkHttp3Util.postString(this.serverURL + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -358,7 +358,7 @@ public class PayOTCOrder {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> pubKeyHashList = new ArrayList<String>();
         pubKeyHashList.add(Utils.HEX.encode(pubKeyHash));
-        String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
+          byte[] response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
         for (UTXO utxo : getOutputsResponse.getOutputs()) {
@@ -378,7 +378,7 @@ public class PayOTCOrder {
         for (ECKey ecKey : ecKeys) {
             pubKeyHashList.add(Utils.HEX.encode(ecKey.toAddress(this.wallet().getNetworkParameters()).getHash160()));
         }
-        String response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
+          byte[] response = OkHttp3Util.postString(this.serverURL + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashList));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
         for (UTXO utxo : getOutputsResponse.getOutputs()) {
@@ -455,7 +455,7 @@ public class PayOTCOrder {
     private Exchange getExchangeInfoResult(String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(this.marketURL + ReqCmd.getExchangeByOrderid.name(),
+          byte[] respone = OkHttp3Util.postString(this.marketURL + ReqCmd.getExchangeByOrderid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         ExchangeInfoResponse exchangeInfoResponse = Json.jsonmapper().readValue(respone, ExchangeInfoResponse.class);
         return exchangeInfoResponse.getExchange();
@@ -465,7 +465,7 @@ public class PayOTCOrder {
         String ContextRoot = serverURL;
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
+          byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getPayMultiSignAddressList.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         PayMultiSignAddressListResponse payMultiSignAddressListResponse = Json.jsonmapper().readValue(resp,
@@ -499,7 +499,7 @@ public class PayOTCOrder {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.clear();
         requestParam.put("orderid", orderid);
-        String resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
+          byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.payMultiSignDetails.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         PayMultiSignDetailsResponse payMultiSignDetailsResponse = Json.jsonmapper().readValue(resp,

@@ -208,7 +208,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         blockhashs.add(b.getHashAsString());
         requestParam.put("blockhashs", blockhashs);
 
-        String response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
+       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
@@ -308,7 +308,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         HashMap<String, Object> request = new HashMap<String, Object>();
         request.put("address", address);
 
-        String response = OkHttp3Util.post(contextRoot + ReqCmd.findBlockEvaluation.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.findBlockEvaluation.name(),
                 Json.jsonmapper().writeValueAsString(request).getBytes());
 
         log.info("searchBlock resp : " + response);
@@ -380,29 +380,29 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         List<String> addressList = new ArrayList<String>();
         addressList.add(toAddress);
 
-        String response = OkHttp3Util.post(contextRoot + "/" + ReqCmd.getBatchExchange.name(),
+       byte[] response = OkHttp3Util.post(contextRoot + "/" + ReqCmd.getBatchExchange.name(),
                 Json.jsonmapper().writeValueAsString(addressList).getBytes());
         log.info("===============");
-        log.info(response);
+        log.info(response.toString());
 
         PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit1.wallet(), orderid, contextRoot, contextRoot);
         payOrder1.sign();
 
         response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
                 Json.jsonmapper().writeValueAsString(addressList).getBytes());
-        log.info(response);
+        log.info(response.toString());
 
         addressList = new ArrayList<String>();
         addressList.add(fromAddress);
         response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
                 Json.jsonmapper().writeValueAsString(addressList).getBytes());
 
-        log.info(response);
+        log.info(response.toString());
         PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit2.wallet(), orderid, contextRoot, contextRoot);
         payOrder2.sign();
         response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
                 Json.jsonmapper().writeValueAsString(addressList).getBytes());
-        log.info(response);
+        log.info(response.toString());
         
         makeRewardBlock();
         checkBalance(new Coin(3, walletKeys.get(1).getPubKey()), walletAppKit1.wallet().walletKeys(null));
@@ -546,8 +546,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         rollingBlock.addTransaction(tx);
         rollingBlock.solve();
 
-        String res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        log.debug(res);
+          byte[] res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        log.debug(res.toString());
     }
 
     // Pay BIG

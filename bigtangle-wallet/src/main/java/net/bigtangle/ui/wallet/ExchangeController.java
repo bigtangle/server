@@ -127,7 +127,7 @@ public class ExchangeController {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void initTable() throws Exception {
         String CONTEXT_ROOT = Main.getContextRoot();
-        String response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(), "{}");
+       byte[] response0 = OkHttp3Util.postString(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(), "{}");
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
 
@@ -158,7 +158,7 @@ public class ExchangeController {
                 }
             }
             try {
-                String response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getBatchExchange.name(),
+               byte[] response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getBatchExchange.name(),
                         Json.jsonmapper().writeValueAsString(addressList).getBytes());
                 final Map<String, Object> data = Json.jsonmapper().readValue(response, Map.class);
                 List<Map<String, Object>> list = (List<Map<String, Object>>) data.get("exchanges");
@@ -215,7 +215,7 @@ public class ExchangeController {
         ObservableList<String> tokenData = FXCollections.observableArrayList();
         Map<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("name", null);
-        String response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
+       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.searchTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -489,7 +489,7 @@ public class ExchangeController {
     public HashMap<String, Object> getExchangeInfoResult(String url, String orderid) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("orderid", orderid);
-        String respone = OkHttp3Util.postString(url + "/" + OrdermatchReqCmd.exchangeInfo.name(),
+       byte[] respone = OkHttp3Util.postString(url + "/" + OrdermatchReqCmd.exchangeInfo.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         HashMap<String, Object> result = Json.jsonmapper().readValue(respone, HashMap.class);
         HashMap<String, Object> exchange = (HashMap<String, Object>) result.get("exchange");
@@ -517,7 +517,7 @@ public class ExchangeController {
         String ContextRoot = Main.getContextRoot();
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("tokenid", tokenid);
-        String resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
+       byte[] resp = OkHttp3Util.postString(ContextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam0));
 
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
