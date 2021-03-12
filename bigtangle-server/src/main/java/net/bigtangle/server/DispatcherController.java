@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Stopwatch;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
@@ -158,11 +160,11 @@ public class DispatcherController {
     private boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
             HttpServletRequest httprequest) {
         String remoteAddr = remoteAddr(httprequest );
-        logger.debug("reqCmd : {} from {}, size : {} ", reqCmd, remoteAddr,
-                contentBytes.length);
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
             return false;
         }
+        logger.debug("reqCmd : {} from {}, size : {} ", reqCmd, remoteAddr,
+                contentBytes.length);
         return true;
     }
 
@@ -691,7 +693,14 @@ public class DispatcherController {
     private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,
             FullBlockStore store) throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-
+        //only block with my miner address
+        if(! Arrays.equals(block.getMinerAddress(),
+                Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160())) {
+            AbstractResponse resp = ErrorResponse.create(101);
+            resp.setErrorcode(403);
+            resp.setMessage("server Mineraddress "+ serverConfiguration.getMineraddress());
+            this.outPrintJSONString(httpServletResponse, resp, watch); 
+        }
         if (serverConfiguration.getMyserverblockOnly()) {
             if (!blockService.existMyserverblocks(block.getPrevBlockHash(), store)) {
                 AbstractResponse resp = ErrorResponse.create(101);
