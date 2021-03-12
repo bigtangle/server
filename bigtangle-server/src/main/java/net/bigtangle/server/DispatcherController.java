@@ -123,6 +123,14 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
+        if (!ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest))
+            {
+            AbstractResponse resp = ErrorResponse.create(101);
+            resp.setErrorcode(403);
+            resp.setMessage("server accept only his tip selection for validation");
+            gzipBinary(httpServletResponse, resp);
+            }
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
         final Future<String> handler = executor.submit(new Callable() {
@@ -145,6 +153,16 @@ public class DispatcherController {
             executor.shutdownNow();
         }
 
+    }
+
+    private boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
+            HttpServletRequest httprequest) {
+        logger.debug("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+                contentBytes.length);
+        if (serverConfiguration.getDeniedIPlist().contains(httprequest.getRemoteAddr())) {
+            return false;
+        } 
+        return true;
     }
 
     @SuppressWarnings("unchecked")
@@ -471,10 +489,10 @@ public class DispatcherController {
                 Integer count = (Integer) request.get("count");
                 String basetoken = (String) request.get("basetoken");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
-                //logger.debug(request.toString() );
+                // logger.debug(request.toString() );
 
-                if (count != null ) {
-                  //  logger.debug("count"+count);
+                if (count != null) {
+                    // logger.debug("count"+count);
                     AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else {

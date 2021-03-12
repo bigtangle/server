@@ -4,6 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +49,9 @@ public class ServerConfiguration {
     private  long timeoutMinute = OkHttp3Util.timeoutMinute;
     //can be FullPruned server node with cleanup old data or fullnode node with all data
     private String servermode="fullnode";
+    
+    
+    private List<String> deniedIPlist = new ArrayList<String>();
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -252,6 +258,16 @@ public class ServerConfiguration {
 
     public void setServermode(String servermode) {
         this.servermode = servermode;
+    }
+
+
+    public List<String> getDeniedIPlist() {
+        return deniedIPlist;
+    }
+
+
+    public void setDeniedIPlist(List<String> deniedIPlist) {
+        this.deniedIPlist = deniedIPlist;
     }
 
 }
