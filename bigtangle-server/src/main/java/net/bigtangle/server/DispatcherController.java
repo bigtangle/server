@@ -633,7 +633,7 @@ public class DispatcherController {
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp, watch);
         } catch (Throwable exception) {
-            logger.error("reqCmd : {}, reqHex : {}, error.", reqCmd, bodyByte.length, exception);
+            logger.error("reqCmd : {}, reqHex : {}, {},error.", reqCmd, bodyByte.length, remoteAddr(httprequest) ,exception);
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
             exception.printStackTrace(new PrintWriter(sw));
