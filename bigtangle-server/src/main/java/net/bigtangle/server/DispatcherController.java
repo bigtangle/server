@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -123,13 +124,12 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
-        if (!ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest))
-            {
+        if (!ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(403);
             resp.setMessage("server accept only his tip selection for validation");
             gzipBinary(httpServletResponse, resp);
-            }
+        }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
@@ -157,11 +157,12 @@ public class DispatcherController {
 
     private boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
             HttpServletRequest httprequest) {
-        logger.debug("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
+        String remoteAddr = remoteAddr(httprequest );
+        logger.debug("reqCmd : {} from {}, size : {} ", reqCmd, remoteAddr,
                 contentBytes.length);
-        if (serverConfiguration.getDeniedIPlist().contains(httprequest.getRemoteAddr())) {
+        if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
             return false;
-        } 
+        }
         return true;
     }
 
@@ -837,4 +838,18 @@ public class DispatcherController {
         }
     }
 
+    public String remoteAddr(HttpServletRequest request) {
+        String remoteAddr = "";
+        remoteAddr = request.getHeader("X-FORWARDED-FOR");
+        if (remoteAddr == null || "".equals(remoteAddr)) {
+            remoteAddr = request.getRemoteAddr();
+        } else {
+            StringTokenizer tokenizer = new StringTokenizer(remoteAddr, ",");
+            while (tokenizer.hasMoreTokens()) {
+                remoteAddr = tokenizer.nextToken();
+                break;
+            }
+        }
+        return remoteAddr;
+    }
 }

@@ -17,7 +17,7 @@ server:
   createtable: ${CREATETABLE:true}
   checkpoint: ${CHECKPOINT:-1}
   servermode: ${SERVERMODE:Fullnode}
-   
+  deniedIPlist: ${DENIEDIPLIST:} 
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}
