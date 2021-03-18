@@ -7,6 +7,8 @@ package net.bigtangle.server.service;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +90,13 @@ public class TokensService {
                     tokenids.add(contact.getAddress());
                 }
                 list.addAll(store.getTokenID(tokenids));
+                //make sure that BIG is default first
+                Collections.sort(list, new Comparator<Token>() {
+                    public int compare(Token s1, Token s2) { 
+                        return s2.getTokenid().length() - s1.getTokenid().length();
+                    }
+                });
+                
             } catch (IOException e) {
                 logger.info("addExchangeTokensInUserdata", e);
             }

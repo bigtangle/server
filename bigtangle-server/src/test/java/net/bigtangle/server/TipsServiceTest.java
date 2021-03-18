@@ -481,4 +481,69 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    public void testTipConflict() throws Exception {
+        
+
+        // Generate two conflicting blocks
+ 
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = getBalance(false, testKey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction doublespendTX = new Transaction(networkParameters);
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  new ECKey()));
+        TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
+        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+
+        // Create blocks with conflict
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
+        Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
+
+        blockGraph.add(b1, true,store);
+        blockGraph.add(b2, true,store);
+
+        for (int i = 0; i < 5; i++) {
+            createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+        }
+        mcmcServiceUpdate();
+        
+        boolean hit1 = false;
+        boolean hit2 = false;
+        for (int i = 0; i < 150; i++) {
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
+            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
+            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
+                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            if (hit1 && hit2)
+                break;
+        }
+        assertTrue(hit1);
+        assertTrue(hit2);
+
+        // After confirming one of them into the milestone, only that one block
+        // is now available
+        makeRewardBlock(b1);
+
+        for (int i = 0; i < 20; i++) {
+            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+        }
+
+        try {
+            tipsService.getValidatedBlockPairCompatibleWithExisting(b2,store);
+            fail();
+        } catch (VerificationException e) {
+            // Expected
+        }
+    }
+
 }
