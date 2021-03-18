@@ -93,7 +93,7 @@ public class TokensService {
                 //make sure that BIG is default first
                 Collections.sort(list, new Comparator<Token>() {
                     public int compare(Token s1, Token s2) { 
-                        return s2.getTokenid().length() - s1.getTokenid().length();
+                        return s1.getTokenid().length() - s2.getTokenid().length();
                     }
                 });
                 
