@@ -644,7 +644,7 @@ public class DispatcherController {
         } finally {
             store.close();
             if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
-                logger.info(reqCmd + " takes {} ", watch.elapsed(TimeUnit.MILLISECONDS));
+                logger.info(reqCmd + " takes {} from {}", watch.elapsed(TimeUnit.MILLISECONDS), remoteAddr(httprequest));
             watch.stop();
         }
     }
