@@ -126,10 +126,11 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
-        if (!ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+        if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(403);
             resp.setMessage("server accept only his tip selection for validation");
+            Thread.sleep(1000000);
             gzipBinary(httpServletResponse, resp);
         }
 
@@ -157,16 +158,7 @@ public class DispatcherController {
 
     }
 
-    private boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
-            HttpServletRequest httprequest) {
-        String remoteAddr = remoteAddr(httprequest );
-        if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
-            return false;
-        }
-        logger.debug("reqCmd : {} from {}, size : {} ", reqCmd, remoteAddr,
-                contentBytes.length);
-        return true;
-    }
+  
 
     @SuppressWarnings("unchecked")
     public void processDo(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
