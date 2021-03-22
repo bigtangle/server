@@ -61,7 +61,7 @@ public class UserDataService {
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
                 || "61.181.128.230".equals(remoteAddr)) {
             return true;
-        } 
+        }
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
             logger.debug(serverConfiguration.getDeniedIPlist().toString());
             return false;
@@ -79,7 +79,8 @@ public class UserDataService {
         if (l == null) {
             l = new ArrayList<ApiCall>();
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
-;            staticsticCalls.put(remoteAddr, l);
+            ;
+            staticsticCalls.put(remoteAddr, l);
         } else {
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
         }
@@ -93,10 +94,10 @@ public class UserDataService {
     public void calcDenied() {
         for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
             ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
-            int size = a.getValue().stream().filter(c -> c.getTime() < max.getTime() - 15000).collect(Collectors.toList())
-                    .size();
-            logger.debug("a.getKey() 15s calls =  ", a.getKey() + " -> " +size);
-            if (size > 8) {
+            List<ApiCall> s = a.getValue().stream().filter(c -> c.getTime() > max.getTime() - 15000)
+                    .collect(Collectors.toList());
+            logger.debug("a.getKey() 15s calls =  ", a.getKey() + " -> " + s.size());
+            if (s.size() > 8) {
                 logger.debug("add to denied", a.getKey());
                 denieds.add(a.getKey());
             }
