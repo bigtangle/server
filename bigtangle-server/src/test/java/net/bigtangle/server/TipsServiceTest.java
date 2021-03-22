@@ -4,10 +4,12 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -30,6 +32,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
@@ -544,6 +547,69 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         } catch (VerificationException e) {
             // Expected
         }
+    }
+
+    
+
+    @Test
+    public void testDifficulty() throws Exception {
+        
+
+        // Generate two conflicting blocks
+      
+        ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        List<UTXO> outputs = getBalance(false, testKey);
+        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
+        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+        Transaction doublespendTX = new Transaction(networkParameters);
+        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  new ECKey()));
+        TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
+        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
+                Transaction.SigHash.ALL, false);
+
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        Script inputScript = ScriptBuilder.createInputScript(sig);
+        input.setScriptSig(inputScript);
+
+        // Create blocks with conflict
+        Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
+                networkParameters.getGenesisBlock(), doublespendTX);
+    
+        blockGraph.add(b1, true,store);
+     
+        // After confirming one of them into the milestone, only that one block
+        // is now available
+       //  blockGraph.confirm(b1.getHash(), new HashSet<>(), (long) -1,store);
+        for (int i = 0; i < 5; i++) {
+          b1=  createAndAddNextBlock(b1, b1);
+        }
+        
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        makeRewardBlock(new ArrayList<Block>());
+        
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = difficultychange(b1);
+        b1 = b1.createNextBlock(b1);
+        makeRewardBlock(new ArrayList<Block>());
+        b1 = b1.createNextBlock(b1);
+        assertEquals(b1.getDifficultyTarget(),Utils.encodeCompactBits( networkParameters.getMaxTarget()));
+        
+    }
+
+    private Block difficultychange(Block b1) throws BlockStoreException {
+        b1 = b1.createNextBlock(b1);
+        b1.setDifficultyTarget(Utils.encodeCompactBits( networkParameters. getMaxTargetReward()));
+        
+       // log.debug(  (Utils.encodeCompactBits( networkParameters. getMaxTargetReward()) - b1.getDifficultyTarget() )+ ""  ); 
+        b1.solve();
+        this.blockGraph.add(b1, true, store);
+        return b1;
     }
 
 }

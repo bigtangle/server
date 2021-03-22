@@ -126,14 +126,14 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
-        if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+   /*     if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(403);
             resp.setMessage("server accept only his tip selection for validation");
             Thread.sleep(1000000);
             gzipBinary(httpServletResponse, resp);
         }
-
+*/
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
         final Future<String> handler = executor.submit(new Callable() {
@@ -182,6 +182,10 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
+               if( !userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                   //return bomb
+                   rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+               }
                 // register(rollingBlock, store);
                 logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
@@ -189,6 +193,9 @@ public class DispatcherController {
             }
                 break;
             case saveBlock: {
+                if( !userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                    return;
+                }
                 saveBlock(bodyByte, httpServletResponse, watch, store);
             }
                 break;

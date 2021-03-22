@@ -26,7 +26,7 @@ public class ServerPoolTest extends AbstractIntegrationTest {
 
     }
 
-     @Test
+   //  @Test
     public void testServerpool() throws Exception {
 
        ServerPool s = new ServerPool(MainNetParams.get());
