@@ -126,14 +126,7 @@ public class DispatcherController {
     @RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
-   /*     if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-            AbstractResponse resp = ErrorResponse.create(101);
-            resp.setErrorcode(403);
-            resp.setMessage("server accept only his tip selection for validation");
-            Thread.sleep(1000000);
-            gzipBinary(httpServletResponse, resp);
-        }
-*/
+        userDataService.addStatistcs(reqCmd, remoteAddr(httprequest));
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
         final Future<String> handler = executor.submit(new Callable() {
@@ -158,8 +151,6 @@ public class DispatcherController {
 
     }
 
-  
-
     @SuppressWarnings("unchecked")
     public void processDo(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
@@ -182,10 +173,11 @@ public class DispatcherController {
             switch (reqCmd0000) {
             case getTip: {
                 Block rollingBlock = blockService.getBlockPrototype(store);
-               if( !userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-                   //return bomb
-                   rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
-               }
+                if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                    // return bomb
+                    logger.debug("bomb getDifficultyTarget " +remoteAddr(httprequest) + " " + reqCmd );
+                    rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+                }
                 // register(rollingBlock, store);
                 logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
@@ -193,7 +185,8 @@ public class DispatcherController {
             }
                 break;
             case saveBlock: {
-                if( !userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                    logger.debug("saveBlock denied " +remoteAddr(httprequest) + " " + reqCmd );
                     return;
                 }
                 saveBlock(bodyByte, httpServletResponse, watch, store);
@@ -634,7 +627,8 @@ public class DispatcherController {
             resp.setMessage(e.getLocalizedMessage());
             this.outPrintJSONString(httpServletResponse, resp, watch);
         } catch (Throwable exception) {
-            logger.error("reqCmd : {}, reqHex : {}, {},error.", reqCmd, bodyByte.length, remoteAddr(httprequest) ,exception);
+            logger.error("reqCmd : {}, reqHex : {}, {},error.", reqCmd, bodyByte.length, remoteAddr(httprequest),
+                    exception);
             AbstractResponse resp = ErrorResponse.create(100);
             StringWriter sw = new StringWriter();
             exception.printStackTrace(new PrintWriter(sw));
@@ -643,7 +637,8 @@ public class DispatcherController {
         } finally {
             store.close();
             if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
-                logger.info(reqCmd + " takes {} from {}", watch.elapsed(TimeUnit.MILLISECONDS), remoteAddr(httprequest));
+                logger.info(reqCmd + " takes {} from {}", watch.elapsed(TimeUnit.MILLISECONDS),
+                        remoteAddr(httprequest));
             watch.stop();
         }
     }
@@ -692,13 +687,13 @@ public class DispatcherController {
     private void saveBlock(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,
             FullBlockStore store) throws BlockStoreException, Exception {
         Block block = (Block) networkParameters.getDefaultSerializer().makeBlock(bodyByte);
-        //only block with my miner address
-        if(! Arrays.equals(block.getMinerAddress(),
+        // only block with my miner address
+        if (!Arrays.equals(block.getMinerAddress(),
                 Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160())) {
             AbstractResponse resp = ErrorResponse.create(101);
             resp.setErrorcode(403);
-            resp.setMessage("server Mineraddress "+ serverConfiguration.getMineraddress());
-            this.outPrintJSONString(httpServletResponse, resp, watch); 
+            resp.setMessage("server Mineraddress " + serverConfiguration.getMineraddress());
+            this.outPrintJSONString(httpServletResponse, resp, watch);
         }
         if (serverConfiguration.getMyserverblockOnly()) {
             if (!blockService.existMyserverblocks(block.getPrevBlockHash(), store)) {

@@ -1,9 +1,14 @@
 package net.bigtangle.server.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,24 +61,47 @@ public class UserDataService {
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
                 || "61.181.128.230".equals(remoteAddr)) {
             return true;
+        } 
+        if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
+            logger.debug(serverConfiguration.getDeniedIPlist().toString());
+            return false;
+        }
+        if (denieds.contains(remoteAddr)) {
+            logger.debug(denieds.toString());
+            return false;
         }
 
-        if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
-            return false;
-        } 
-       
         return true;
     }
 
-    Long lastUpdate = 0l;
-    List<ApiCall> staticsticCalls = new ArrayList<ApiCall>();
-    List<String> denieds = new ArrayList<String>();
-    
-    public  void calcDenied() {
-        if (staticsticCalls == null || lastUpdate < System.currentTimeMillis() - 20000) {
-            lastUpdate = System.currentTimeMillis();
+    public void addStatistcs(String reqCmd, String remoteAddr) {
+        List<ApiCall> l = staticsticCalls.get(remoteAddr);
+        if (l == null) {
+            l = new ArrayList<ApiCall>();
+            l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
+;            staticsticCalls.put(remoteAddr, l);
+        } else {
+            l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
         }
-      
+    }
+
+    Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
+    List<String> denieds = new ArrayList<String>();
+
+    // last 15 seconds schedule interval
+    // call getbalance 5 times , as attack
+    public void calcDenied() {
+        for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
+            ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
+            int size = a.getValue().stream().filter(c -> c.getTime() < max.getTime() - 15000).collect(Collectors.toList())
+                    .size();
+            logger.debug("a.getKey() 15s calls =  ", a.getKey() + " -> " +size);
+            if (size > 8) {
+                logger.debug("add to denied", a.getKey());
+                denieds.add(a.getKey());
+            }
+        }
+        staticsticCalls = new HashMap<String, List<ApiCall>>();
     }
 
     public String remoteAddr(HttpServletRequest request) {
