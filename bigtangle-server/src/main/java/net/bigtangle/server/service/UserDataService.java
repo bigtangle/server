@@ -92,7 +92,7 @@ public class UserDataService {
 
     // last 15 seconds schedule interval
     // call getbalance 5 times , as attack
-    public void calcDenied() {
+    public synchronized void calcDenied() {
         for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
             ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
             List<ApiCall> s = a.getValue().stream().filter(c -> c.getTime() > (max.getTime() - 15000))
