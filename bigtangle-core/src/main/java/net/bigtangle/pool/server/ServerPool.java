@@ -102,7 +102,7 @@ public class ServerPool {
         serverState.setResponseTime(System.currentTimeMillis() - time);
      //   serverState.setChainlength(chain.getChainLength());
         servers.add(serverState);
-        Collections.sort(servers, new SortbyChain());
+      //  Collections.sort(servers, new SortbyChain());
     }
 
     /*
