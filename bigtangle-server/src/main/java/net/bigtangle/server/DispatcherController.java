@@ -197,6 +197,10 @@ public class DispatcherController {
             }
                 break;
             case getOutputs: {
+                if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                    logger.debug("getOutputs denied " +remoteAddr(httprequest) + " " + reqCmd );
+                    return;
+                }
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
@@ -247,6 +251,10 @@ public class DispatcherController {
             }
                 break;
             case getBalances: {
+                if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+                    logger.debug("getOutputs getBalances " +remoteAddr(httprequest) + " " + reqCmd );
+                    return;
+                }
                 String reqStr = new String(bodyByte, "UTF-8");
                 List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
                 Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
