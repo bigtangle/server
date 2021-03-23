@@ -3,10 +3,11 @@ package net.bigtangle.server.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
@@ -87,7 +88,7 @@ public class UserDataService {
     }
 
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
-    List<String> denieds = new ArrayList<String>();
+    Set<String> denieds = new HashSet<String>();
 
     // last 15 seconds schedule interval
     // call getbalance 5 times , as attack
@@ -96,9 +97,9 @@ public class UserDataService {
             ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
             List<ApiCall> s = a.getValue().stream().filter(c -> c.getTime() > (max.getTime() - 15000))
                     .collect(Collectors.toList());
-            logger.debug("a.getKey() 15s calls =  ", a.getKey() + " -> " + s.size());
+            logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
             if (s.size() > 8) {
-                logger.debug("add to denied", a.getKey());
+                logger.debug("add to denied = "+ a.getKey());
                 denieds.add(a.getKey());
             }
         }
