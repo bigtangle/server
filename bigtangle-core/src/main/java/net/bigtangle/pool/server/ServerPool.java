@@ -96,11 +96,11 @@ public class ServerPool {
     public synchronized void addServer(String s) throws JsonProcessingException, IOException {
         Long time = System.currentTimeMillis();
         TXReward chain;
-        chain = getChainNumber(s);
+    //    chain = getChainNumber(s);
         ServerState serverState = new ServerState();
         serverState.setServerurl(s);
         serverState.setResponseTime(System.currentTimeMillis() - time);
-        serverState.setChainlength(chain.getChainLength());
+     //   serverState.setChainlength(chain.getChainLength());
         servers.add(serverState);
         Collections.sort(servers, new SortbyChain());
     }
