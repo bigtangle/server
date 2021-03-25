@@ -79,7 +79,7 @@ public class UserDataService {
         List<ApiCall> l = staticsticCalls.get(remoteAddr);
         if (l == null) {
             l = new ArrayList<ApiCall>();
-            l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis())); 
+            l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
             staticsticCalls.put(remoteAddr, l);
         } else {
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
@@ -88,25 +88,32 @@ public class UserDataService {
 
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
     Set<String> denieds = new HashSet<String>();
+    Long updatetime = 0l;
 
     // last 15 seconds schedule interval
     // call getbalance 5 times , as attack
     public synchronized void calcDenied() {
         try {
-        for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
-            ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
-            List<ApiCall> s = a.getValue().stream().filter(c -> max !=null && c !=null && c.getTime() > (max.getTime() - 15000))
-                    .collect(Collectors.toList());
-            logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
-            if (s.size() > 8) {
-                logger.debug("add to denied = "+ a.getKey());
-                denieds.add(a.getKey());
+            for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
+                ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
+                List<ApiCall> s = a.getValue().stream()
+                        .filter(c -> max != null && c != null && c.getTime() > (max.getTime() - 15000))
+                        .collect(Collectors.toList());
+                logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
+                if (s.size() > 15) {
+                    logger.debug("add to denied = " + a.getKey());
+                    denieds.add(a.getKey());
+                }
             }
-        }
-        }catch (Exception e) {
+        } catch (Exception e) {
             logger.debug("", e);
         }
         staticsticCalls = new HashMap<String, List<ApiCall>>();
+        if (updatetime < System.currentTimeMillis() - 4 * 60 * 60 * 1000) {
+            logger.debug("reset denied  ");
+            denieds = new HashSet<String>();
+            updatetime = System.currentTimeMillis();
+        }
     }
 
     public String remoteAddr(HttpServletRequest request) {
