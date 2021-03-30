@@ -8,6 +8,6 @@ package net.bigtangle.core;
 public enum DataClassName {
 
     TOKEN, PAYMULTISIGN, CONTACTINFO, MYHOMEADDRESS, UPLOADFILE, VOS,
-    SERVERURL, LANG,  BlockSolveType, WATCHED, OrderOpenInfo, IdentityData, KeyValueList,
+    SERVERURL, LANG,  BlockSolveType, UserSettingDataInfo, OrderOpenInfo, IdentityData, KeyValueList,
     Prescription, Certificate,
 }

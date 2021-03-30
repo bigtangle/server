@@ -73,7 +73,7 @@ import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.WatchedInfo;
+import net.bigtangle.core.UserSettingDataInfo;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
@@ -248,11 +248,11 @@ public class SendMoneyController {
 
     public void initSubtangle() throws Exception {
         ObservableList<String> allData = FXCollections.observableArrayList();
-        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name(), true);
-        if (watchedInfo == null) {
+        UserSettingDataInfo userSettingDataInfo = (UserSettingDataInfo) Main.getUserdata(DataClassName.UserSettingDataInfo.name(), true);
+        if (userSettingDataInfo == null) {
             return;
         }
-        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+        List<UserSettingData> list = userSettingDataInfo.getUserSettingDatas();
         if (list != null && !list.isEmpty()) {
             for (UserSettingData userSettingData : list) {
                 if (userSettingData.getDomain().equals(DataClassName.TOKEN.name())

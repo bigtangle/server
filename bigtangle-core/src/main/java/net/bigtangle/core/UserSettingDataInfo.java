@@ -15,14 +15,13 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.utils.Json;
 
-public class WatchedInfo extends DataClass implements java.io.Serializable {
+public class UserSettingDataInfo extends DataClass implements java.io.Serializable {
 
     /**
      * 
      */
     private static final long serialVersionUID = -8908923887095777610L;
     private List<UserSettingData> userSettingDatas = new ArrayList<UserSettingData>();
-    private List<Token> tokenList = new ArrayList<Token>();
 
     public byte[] toByteArray() {
         try {
@@ -31,17 +30,17 @@ public class WatchedInfo extends DataClass implements java.io.Serializable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-   
+
     }
 
-    public WatchedInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
+    public UserSettingDataInfo parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
         String jsonStr = new String(buf);
 
-        WatchedInfo watchedInfo = Json.jsonmapper().readValue(jsonStr, WatchedInfo.class);
-        if (watchedInfo == null)
+        UserSettingDataInfo userSettingDataInfo = Json.jsonmapper().readValue(jsonStr, UserSettingDataInfo.class);
+        if (userSettingDataInfo == null)
             return this;
-        this.userSettingDatas = watchedInfo.getUserSettingDatas();
-        this.tokenList = watchedInfo.getTokenList();
+        this.userSettingDatas = userSettingDataInfo.getUserSettingDatas();
+
         return this;
     }
 
@@ -51,14 +50,6 @@ public class WatchedInfo extends DataClass implements java.io.Serializable {
 
     public void setUserSettingDatas(List<UserSettingData> userSettingDatas) {
         this.userSettingDatas = userSettingDatas;
-    }
-
-    public List<Token> getTokenList() {
-        return tokenList;
-    }
-
-    public void setTokenList(List<Token> tokenList) {
-        this.tokenList = tokenList;
     }
 
 }

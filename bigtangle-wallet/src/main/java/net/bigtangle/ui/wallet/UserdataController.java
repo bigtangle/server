@@ -40,7 +40,7 @@ import net.bigtangle.core.Uploadfile;
 import net.bigtangle.core.UploadfileInfo;
 import net.bigtangle.core.UserSettingData;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.WatchedInfo;
+import net.bigtangle.core.UserSettingDataInfo;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.ui.wallet.utils.FileUtil;
 import net.bigtangle.ui.wallet.utils.GuiUtils;
@@ -256,7 +256,7 @@ public class UserdataController {
 
             Transaction coinbase = new Transaction(Main.params);
 
-            WatchedInfo tokenInfo = (WatchedInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
+            UserSettingDataInfo tokenInfo = (UserSettingDataInfo) Main.getUserdata(DataClassName.TOKEN.name(), true);
             List<UserSettingData> list = tokenInfo.getUserSettingDatas();
             List<Token> tempList = new ArrayList<Token>();
             for (UserSettingData tokens : list) {
@@ -265,7 +265,7 @@ public class UserdataController {
                 }
                 tempList.add(new Token(tokens.getKey(), tokens.getValue()));
             }
-            tokenInfo.setTokenList(tempList);
+       //     tokenInfo.setTokenList(tempList);
 
             coinbase.setDataClassName(DataClassName.TOKEN.name());
             byte[] buf1 = tokenInfo.toByteArray();
@@ -486,8 +486,8 @@ public class UserdataController {
         ObservableList<String> userdata = FXCollections.observableArrayList(DataClassName.SERVERURL.name());
         domianComboBox.setItems(userdata);
 
-        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name(), true);
-        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+        UserSettingDataInfo userSettingDataInfo = (UserSettingDataInfo) Main.getUserdata(DataClassName.UserSettingDataInfo.name(), true);
+        List<UserSettingData> list = userSettingDataInfo.getUserSettingDatas();
         if (list != null && !list.isEmpty()) {
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
 
@@ -590,8 +590,8 @@ public class UserdataController {
 
     public void initWatchedTokenTable4file() throws Exception {
 
-        WatchedInfo watchedInfo = (WatchedInfo) Main.getUserdata(DataClassName.WATCHED.name(), true);
-        List<UserSettingData> list = watchedInfo.getUserSettingDatas();
+        UserSettingDataInfo userSettingDataInfo = (UserSettingDataInfo) Main.getUserdata(DataClassName.UserSettingDataInfo.name(), true);
+        List<UserSettingData> list = userSettingDataInfo.getUserSettingDatas();
         if (list != null && !list.isEmpty()) {
             ObservableList<Map<String, Object>> allData = FXCollections.observableArrayList();
 

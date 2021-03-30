@@ -20,6 +20,8 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
+import net.bigtangle.core.UserSettingData;
+import net.bigtangle.core.UserSettingDataInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.params.ReqCmd;
@@ -34,24 +36,28 @@ public class UserdataTest extends AbstractIntegrationTest {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         ECKey outKey = new ECKey();
         Transaction transaction = new Transaction(networkParameters);
-        Contact contact = new Contact();
-        contact.setName("testname");
-        contact.setAddress(outKey.toAddress(networkParameters).toBase58());
-        ContactInfo contactInfo0 = new ContactInfo();
-        List<Contact> list = new ArrayList<Contact>();
+        UserSettingData contact = new UserSettingData();
+        contact.setDomain("contact");
+        contact.setKey("testname");
+        contact.setValue(outKey.toAddress(networkParameters).toBase58());
+        UserSettingDataInfo contactInfo0 = new UserSettingDataInfo();
+        List<UserSettingData> list = new ArrayList<UserSettingData>();
         list.add(contact);
-        contactInfo0.setContactList(list);
+        // Token list displayname + tokenid
 
-        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
+        transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo0.toByteArray());
-
-        // TODO encrypt and decrypt the contactInfo0
+       
+        
+        // TODO encrypt and decrypt the  UserSettingData
+        
+        
         walletAppKit.wallet().saveUserdata(outKey, transaction);
 
         makeRewardBlock();
 
         requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
+        requestParam.put("dataclassname", DataClassName.UserSettingDataInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));

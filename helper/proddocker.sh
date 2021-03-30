@@ -47,4 +47,7 @@ sleep 60s
 docker exec  $SERVERHOST /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
  
  
+docker cp bigtangle-mysql.sql bigtangle-mysql:/root
+docker exec -it bigtangle-mysql bash
+mysql -u root -ptest1234 < /root/bigtangle-mysql.sql
  
