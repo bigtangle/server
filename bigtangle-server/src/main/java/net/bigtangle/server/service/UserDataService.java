@@ -91,7 +91,7 @@ public class UserDataService {
     Long updatetime = 0l;
 
     // last 15 seconds schedule interval
-    // call getbalance 5 times , as attack
+    // call api 15 times per seconds, as attack
     public synchronized void calcDenied() {
         try {
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
@@ -102,6 +102,9 @@ public class UserDataService {
                 logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
                 if (s.size() > 15) {
                     logger.debug("add to denied = " + a.getKey());
+                    for (ApiCall l : s) {
+                        logger.debug("  " + l.toString());
+                    }
                     denieds.add(a.getKey());
                 }
             }
@@ -109,7 +112,7 @@ public class UserDataService {
             logger.debug("", e);
         }
         staticsticCalls = new HashMap<String, List<ApiCall>>();
-        if (updatetime < System.currentTimeMillis() - 4 * 60 * 60 * 1000) {
+        if (updatetime < System.currentTimeMillis() - 1 * 60 * 60 * 1000) {
             logger.debug("reset denied  ");
             denieds = new HashSet<String>();
             updatetime = System.currentTimeMillis();
