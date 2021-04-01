@@ -62,28 +62,28 @@ public class UserdataTest extends AbstractIntegrationTest {
         byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        ContactInfo contactInfo1 = new ContactInfo().parse(buf);
-        assertTrue(contactInfo1.getContactList().size() == 1);
+        UserSettingDataInfo contactInfo1 = new UserSettingDataInfo().parse(buf);
+        assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
-        Contact contact0 = contactInfo1.getContactList().get(0);
-        assertTrue("testname".equals(contact0.getName()));
+        UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
+        assertTrue("testname".equals(contact0.getKey()));
 
         transaction = new Transaction(networkParameters);
-        contactInfo1.setContactList(new ArrayList<Contact>());
-        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
+        contactInfo1.setUserSettingDatas(new ArrayList<UserSettingData>());
+        transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo1.toByteArray());
 
         walletAppKit.wallet().saveUserdata(outKey, transaction);
         makeRewardBlock();
 
         requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.CONTACTINFO.name());
+        requestParam.put("dataclassname", DataClassName.UserSettingDataInfo.name());
         requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
         buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        contactInfo1 = new ContactInfo().parse(buf);
-        assertTrue(contactInfo1.getContactList().size() == 0);
+        contactInfo1 = new UserSettingDataInfo().parse(buf);
+        assertTrue(contactInfo1.getUserSettingDatas().size() == 0);
     }
 
     @Test
