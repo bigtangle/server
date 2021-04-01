@@ -176,7 +176,9 @@ public class DispatcherController {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
                     // return bomb
                     logger.debug("bomb getDifficultyTarget " +remoteAddr(httprequest) + " " + reqCmd );
-                    rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+                    errorLimit(httpServletResponse, watch);
+                    return;
+                   // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
                 }
                 // register(rollingBlock, store);
                 logger.debug(" getTip " + rollingBlock.toString());
@@ -187,6 +189,7 @@ public class DispatcherController {
             case saveBlock: {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
                     logger.debug("saveBlock denied " +remoteAddr(httprequest) + " " + reqCmd );
+                    errorLimit(httpServletResponse, watch); 
                     return;
                 }
                 saveBlock(bodyByte, httpServletResponse, watch, store);
@@ -199,6 +202,7 @@ public class DispatcherController {
             case getOutputs: {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
                     logger.debug("getOutputs denied " +remoteAddr(httprequest) + " " + reqCmd );
+                    errorLimit(httpServletResponse, watch);
                     return;
                 }
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -724,6 +728,12 @@ public class DispatcherController {
         }
     }
 
+    private void errorLimit(HttpServletResponse httpServletResponse, Stopwatch watch) throws Exception {
+        AbstractResponse resp = ErrorResponse.create(101);
+        resp.setErrorcode(403);
+        resp.setMessage(" limit reached. ");
+        this.outPrintJSONString(httpServletResponse, resp, watch);
+    }
     private boolean checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest,
             Stopwatch watch, FullBlockStore store) throws BlockStoreException, Exception {
         if (!serverConfiguration.getPermissioned()) {
