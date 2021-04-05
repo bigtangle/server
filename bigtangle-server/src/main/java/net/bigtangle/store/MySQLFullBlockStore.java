@@ -168,6 +168,19 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    PRIMARY KEY (id) \n" 
             + ") ENGINE=InnoDB\n";
 
+    private static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
+            + "    id bigint NOT NULL AUTO_INCREMENT,\n" 
+            + "    matchday varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" 
+            + "    basetokenid varchar(255) NOT NULL,\n" 
+            + "    avgprice bigint NOT NULL,\n"
+            + "    totalQuantity bigint NOT NULL,\n" 
+            + "    highprice bigint NOT NULL,\n"
+            + "    lowprice bigint NOT NULL,\n"
+            + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n" 
+            + ") ENGINE=InnoDB\n";
+    
     private static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n" 
             + "    txhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL,\n" 
