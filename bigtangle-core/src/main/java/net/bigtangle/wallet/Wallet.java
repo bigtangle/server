@@ -48,6 +48,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.InvalidCipherTextException;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -66,6 +67,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ContractExecutionResult;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
@@ -83,6 +85,7 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.UserSettingDataInfo;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -112,6 +115,7 @@ import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.crypto.TransactionSignature;
+import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.pool.server.ServerPool;
 import net.bigtangle.script.Script;
@@ -142,7 +146,7 @@ import net.jcip.annotations.GuardedBy;
 
 public class Wallet extends BaseTaggableObject implements KeyBag {
 
-    private static final int SPENTPENDINGTIMEOUT = 120000;//2 minutues
+    private static final int SPENTPENDINGTIMEOUT = 120000;// 2 minutues
 
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
 
@@ -1541,7 +1545,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         for (ECKey ecKey : walletKeys(aesKey)) {
             pubKeyHashs.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
         }
-          byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getOutputs.name(),
+        byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getOutputs.name(),
                 Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
 
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
@@ -1849,7 +1853,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block adjustSolveAndSign(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
         try {
-              byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+            byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
             @SuppressWarnings("unchecked")
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
@@ -2144,7 +2148,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public Token checkTokenId(String tokenid) throws JsonProcessingException, IOException, NoTokenException {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", tokenid);
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         GetTokensResponse token = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -2175,9 +2179,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * Buy order is defined as
-     * offervalue = targetValue * price / 10**targetDecimal
-     * offerToken=orderBaseToken
+     * Buy order is defined as offervalue = targetValue * price /
+     * 10**targetDecimal offerToken=orderBaseToken
      * 
      */
     public Block buyOrder(KeyParameter aesKey, String targetTokenId, long buyPrice, long targetValue, Long validToTime,
@@ -2237,9 +2240,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * Sell Order is defined as
-     * targetvalue = offervalue * price / 10**offerDecimal
-     * targetToken=orderBaseToken
+     * Sell Order is defined as targetvalue = offervalue * price /
+     * 10**offerDecimal targetToken=orderBaseToken
      */
     public Block sellOrder(KeyParameter aesKey, String offerTokenId, long sellPrice, long offervalue, Long validToTime,
             Long validFromTime, String orderBaseToken, boolean allowRemainder) throws JsonProcessingException,
@@ -2368,7 +2370,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             if (allowClientMining && clientMiningAddress != null) {
                 block.setMinerAddress(clientMiningAddress);
             }
-              byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
+            byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
             @SuppressWarnings("unchecked")
             HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
             String dataHex = (String) result.get("dataHex");
@@ -2402,7 +2404,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("hexStr", outputStr);
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputByKey.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputByKey.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         OutputsDetailsResponse outputsDetailsResponse = Json.jsonmapper().readValue(resp, OutputsDetailsResponse.class);
@@ -2540,7 +2542,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block saveUserdata(ECKey userKey, Transaction transaction)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
+            throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip.name(),
@@ -2559,9 +2561,27 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
+        byte[] cipher = ECIESCoder.encrypt(userKey.getPubKeyPoint(), transaction.getData());
+        transaction.setData(cipher);
         block.addTransaction(transaction);
         block.setBlockType(Type.BLOCKTYPE_USERDATA);
         return solveAndPost(block);
+    }
+
+    public UserSettingDataInfo getWatchedUserdataInfo(ECKey userKey)
+            throws JsonProcessingException, IOException, InvalidCipherTextException {
+        HashMap<String, String> requestParam0 = new HashMap<String, String>();
+        requestParam0.put("dataclassname", DataClassName.UserSettingDataInfo.name());
+        requestParam0.put("pubKey", Utils.HEX.encode(userKey.getPubKey()));
+        byte[] buf = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getUserData.name(),
+                Json.jsonmapper().writeValueAsString(requestParam0));
+        UserSettingDataInfo userSettingDataInfo = null;
+        if (buf != null && buf.length > 0) {
+            byte[] decryptedPayload = ECIESCoder.decrypt(userKey.getPrivKey(), buf);
+            userSettingDataInfo = new UserSettingDataInfo().parse(decryptedPayload);
+        }
+        return userSettingDataInfo;
+
     }
 
     public void publishDomainName(ECKey ownerKey, String tokenid, String tokenname, KeyParameter aesKey,
@@ -2613,7 +2633,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public TokenIndexResponse getServerCalTokenIndex(String tokenid) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("tokenid", tokenid);
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp, TokenIndexResponse.class);
         return tokenIndexResponse;
@@ -2622,7 +2642,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public PermissionedAddressesResponse getPrevTokenMultiSignAddressList(Token token) throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainNameBlockHash", token.getDomainNameBlockHash());
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenPermissionedAddresses.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenPermissionedAddresses.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         PermissionedAddressesResponse permissionedAddressesResponse = Json.jsonmapper().readValue(resp,
                 PermissionedAddressesResponse.class);
@@ -2637,7 +2657,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         HashMap<String, String> requestParam = new HashMap<String, String>();
         requestParam.put("domainname", domainname);
         requestParam.put("token", token);
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getDomainNameBlockHash.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getDomainNameBlockHash.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetDomainTokenResponse getDomainBlockHashResponse = Json.jsonmapper().readValue(resp,
                 GetDomainTokenResponse.class);
@@ -2650,7 +2670,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         String address = outKey.toAddress(params).toBase58();
         requestParam.put("address", address);
         requestParam.put("tokenid", tokenid);
-          byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenSignByAddress.name(),
+        byte[] resp = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenSignByAddress.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
@@ -2728,7 +2748,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
         requestParam00.put("tokenid", tokenid);
-          byte[] resp2 = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
+        byte[] resp2 = OkHttp3Util.postString(getServerURL() + ReqCmd.getTokenIndex.name(),
                 Json.jsonmapper().writeValueAsString(requestParam00));
         TokenIndexResponse tokenIndexResponse = Json.jsonmapper().readValue(resp2, TokenIndexResponse.class);
 
@@ -2801,7 +2821,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         requestParam.put("tokenids", tokenids);
         requestParam.put("count", 1);
         requestParam.put("basetoken", basetoken);
-          byte[] response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrdersTicker.name(),
+        byte[] response0 = OkHttp3Util.post(getServerURL() + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
         if (orderTickerResponse != null && !orderTickerResponse.getTickers().isEmpty()) {

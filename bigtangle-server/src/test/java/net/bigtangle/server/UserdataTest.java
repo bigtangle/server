@@ -86,7 +86,37 @@ public class UserdataTest extends AbstractIntegrationTest {
         contactInfo1 = new UserSettingDataInfo().parse(buf);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 0);
     }
+    @Test
+    public void testSaveUserDataWithECKey() throws Exception {
 
+        ECKey outKey = new ECKey();
+        Transaction transaction = new Transaction(networkParameters);
+        UserSettingData contact = new UserSettingData();
+        contact.setDomain("contact");
+        contact.setKey("testname");
+        contact.setValue(outKey.toAddress(networkParameters).toBase58());
+        UserSettingDataInfo contactInfo0 = new UserSettingDataInfo();
+        List<UserSettingData> list = new ArrayList<UserSettingData>();
+        list.add(contact);
+        contactInfo0.setUserSettingDatas(list);
+        // Token list displayname + tokenid
+
+        transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
+        transaction.setData(contactInfo0.toByteArray());      
+        
+        walletAppKit.wallet().saveUserdata(outKey, transaction);
+
+        makeRewardBlock();
+
+
+        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getWatchedUserdataInfo(outKey);
+        assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
+
+        UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
+        assertTrue("testname".equals(contact0.getKey()));
+
+
+    }
     @Test
     public void testServerURL() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();
