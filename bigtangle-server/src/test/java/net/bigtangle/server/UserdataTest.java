@@ -43,6 +43,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         UserSettingDataInfo contactInfo0 = new UserSettingDataInfo();
         List<UserSettingData> list = new ArrayList<UserSettingData>();
         list.add(contact);
+        contactInfo0.setUserSettingDatas(list);
         // Token list displayname + tokenid
 
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
