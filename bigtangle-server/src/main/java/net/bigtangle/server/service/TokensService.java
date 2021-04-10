@@ -74,8 +74,8 @@ public class TokensService {
         } else {
             addExchangeTokensInUserdata(list, store);
         }
-        Map<String, BigInteger> map = store.getTokenAmountMap();
-        return GetTokensResponse.create(list, map);
+        //Map<String, BigInteger> map = store.getTokenAmountMap();
+        return GetTokensResponse.create(list, null);
     }
 
     public void addExchangeTokensInUserdata(List<Token> list, FullBlockStore store) throws BlockStoreException {

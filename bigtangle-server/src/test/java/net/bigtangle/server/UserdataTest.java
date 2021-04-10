@@ -33,7 +33,7 @@ import net.bigtangle.utils.OkHttp3Util;
 public class UserdataTest extends AbstractIntegrationTest {
     @Test
     public void testSaveUserData() throws Exception {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
+      
         ECKey outKey = new ECKey();
         Transaction transaction = new Transaction(networkParameters);
         UserSettingData contact = new UserSettingData();
@@ -53,17 +53,12 @@ public class UserdataTest extends AbstractIntegrationTest {
         // TODO encrypt and decrypt the  UserSettingData
         
         
-        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
 
         makeRewardBlock();
 
-        requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.UserSettingDataInfo.name());
-        requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        UserSettingDataInfo contactInfo1 = new UserSettingDataInfo().parse(buf);
+    
+        UserSettingDataInfo contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
@@ -74,16 +69,11 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo1.toByteArray());
 
-        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
         makeRewardBlock();
+ 
 
-        requestParam.clear();
-        requestParam.put("dataclassname", DataClassName.UserSettingDataInfo.name());
-        requestParam.put("pubKey", Utils.HEX.encode(outKey.getPubKey()));
-        buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getUserData.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-
-        contactInfo1 = new UserSettingDataInfo().parse(buf);
+        contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 0);
     }
     @Test
@@ -104,12 +94,12 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo0.toByteArray());      
         
-        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
 
         makeRewardBlock();
 
 
-        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getWatchedUserdataInfo(outKey);
+        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getUserSettingDataInfo(outKey);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
@@ -138,7 +128,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.SERVERURL.name());
         transaction.setData(contactInfo0.toByteArray());
         // TODO encrypt and decrypt the contactInfo0
-        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        walletAppKit.wallet().saveUserdata(outKey, transaction,false);
 
     }
 
@@ -165,7 +155,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo0.toByteArray());
 
-        walletAppKit.wallet().saveUserdata(outKey, transaction);
+        walletAppKit.wallet().saveUserdata(outKey, transaction,false);
         makeRewardBlock();
        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());

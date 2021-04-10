@@ -2541,9 +2541,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    public Block saveUserdata(ECKey userKey, Transaction transaction)
+    public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt)
             throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
-
+        // transaction.getData() is not encrypted
+        if (encrypt) {
+            byte[] cipher = ECIESCoder.encrypt(userKey.getPubKeyPoint(), transaction.getData());
+            transaction.setData(cipher);
+        }
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -2561,14 +2565,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
-        byte[] cipher = ECIESCoder.encrypt(userKey.getPubKeyPoint(), transaction.getData());
-        transaction.setData(cipher);
         block.addTransaction(transaction);
         block.setBlockType(Type.BLOCKTYPE_USERDATA);
         return solveAndPost(block);
     }
 
-    public UserSettingDataInfo getWatchedUserdataInfo(ECKey userKey)
+    public UserSettingDataInfo getUserSettingDataInfo(ECKey userKey)
             throws JsonProcessingException, IOException, InvalidCipherTextException {
         HashMap<String, String> requestParam0 = new HashMap<String, String>();
         requestParam0.put("dataclassname", DataClassName.UserSettingDataInfo.name());

@@ -181,7 +181,7 @@ public class DispatcherController {
                    // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
                 }
                 // register(rollingBlock, store);
-                logger.debug(" getTip " + rollingBlock.toString());
+     //           logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
