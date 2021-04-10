@@ -60,7 +60,8 @@ public class UserDataService {
             HttpServletRequest httprequest) {
         String remoteAddr = remoteAddr(httprequest);
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
-                || "61.181.128.230".equals(remoteAddr)) {
+                || "61.181.128.230".equals(remoteAddr)
+                || "127.0.0.1".equals(remoteAddr)) {
             return true;
         }
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {

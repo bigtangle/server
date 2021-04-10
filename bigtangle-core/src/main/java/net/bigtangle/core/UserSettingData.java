@@ -5,13 +5,11 @@
 
 package net.bigtangle.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-
-import net.bigtangle.utils.Json;
 
 public class UserSettingData implements java.io.Serializable {
     /**
@@ -22,24 +20,42 @@ public class UserSettingData implements java.io.Serializable {
     private String value;
     private String domain;
 
+
     public byte[] toByteArray() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            String jsonStr = Json.jsonmapper().writeValueAsString(this);
-            return jsonStr.getBytes(StandardCharsets.UTF_8);
-        } catch (Exception e) {
+            DataOutputStream dos = new DataOutputStream(baos);
+
+            Utils.writeNBytesString(dos, key);
+            Utils.writeNBytesString(dos, value); 
+            Utils.writeNBytesString(dos, domain); 
+            dos.close();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return baos.toByteArray();
     }
-
-    public UserSettingData parse(byte[] buf) throws JsonParseException, JsonMappingException, IOException {
-        String jsonStr = new String(buf);
-
-        UserSettingData userSettingData = Json.jsonmapper().readValue(jsonStr, UserSettingData.class);
-        if (userSettingData == null)
-            return this;
+    
+    public UserSettingData parseDIS(DataInputStream dis) throws IOException {
+        key = Utils.readNBytesString(dis); 
+        value = Utils.readNBytesString(dis); 
+        domain = Utils.readNBytesString(dis); 
         return this;
     }
 
+    public UserSettingData parse(byte[] buf) throws IOException {
+        ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+        DataInputStream dis = new DataInputStream(bain);
+
+        parseDIS(dis);
+        
+        dis.close();
+        bain.close();
+        return this;
+    }
+    
+ 
+    
     public String getKey() {
         return key;
     }
