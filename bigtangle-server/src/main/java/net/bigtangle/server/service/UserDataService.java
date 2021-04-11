@@ -101,7 +101,7 @@ public class UserDataService {
                         .filter(c -> max != null && c != null && c.getTime() > (max.getTime() - 15000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
-                if (s.size() > 15) {
+                if (s.size() > 7) {
                     logger.debug("add to denied = " + a.getKey());
                     for (ApiCall l : s) {
                         logger.debug("  " + l.toString());
