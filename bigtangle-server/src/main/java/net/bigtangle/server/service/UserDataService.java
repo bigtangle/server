@@ -64,11 +64,11 @@ public class UserDataService {
             return true;
         }
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
-           // logger.debug(serverConfiguration.getDeniedIPlist().toString());
+            // logger.debug(serverConfiguration.getDeniedIPlist().toString());
             return false;
         }
         if (denieds.contains(remoteAddr)) {
-            logger.debug("denied " + remoteAddr  + " " +denieds.toString());
+            logger.debug("denied " + remoteAddr + " " + denieds.toString());
             return false;
         }
         return true;
@@ -90,17 +90,18 @@ public class UserDataService {
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
     Set<String> denieds = new HashSet<String>();
     Long updatetime = 0l;
+    Long updatetimeStat = 0l;
 
     // last 15 seconds schedule interval
     // call api 15 times per seconds, as attack
     public synchronized void calcDenied() {
         try {
-            logger.debug("calcDenied staticsticCalls size =  " +staticsticCalls.size()); 
+            logger.debug("calcDenied staticsticCalls size =  " + staticsticCalls.size());
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
-               // ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
-                List<ApiCall> s = a
-                        .getValue().stream().filter(c ->  c != null && c.getTime() != null
-                                && c.getTime() > (System.currentTimeMillis() - 15000))
+                // ApiCall max =
+                // a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
+                List<ApiCall> s = a.getValue().stream().filter(
+                        c -> c != null && c.getTime() != null && c.getTime() > (System.currentTimeMillis() - 15000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
                 if (s.size() > 5) {
@@ -116,8 +117,10 @@ public class UserDataService {
         } catch (Exception e) {
             logger.debug("", e);
         }
-        if (updatetime < System.currentTimeMillis() - 60 * 1000) {
-        staticsticCalls = new HashMap<String, List<ApiCall>>();
+        if (updatetimeStat < System.currentTimeMillis() - 60 * 1000) {
+            logger.debug("staticsticCalls reset  ");
+            staticsticCalls = new HashMap<String, List<ApiCall>>();
+            updatetimeStat = System.currentTimeMillis();
         }
         if (updatetime < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
             logger.debug("reset denied  ");

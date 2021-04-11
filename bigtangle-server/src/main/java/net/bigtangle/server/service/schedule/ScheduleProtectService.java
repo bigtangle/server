@@ -30,7 +30,7 @@ public class ScheduleProtectService {
  
     
     @Async
-    @Scheduled(fixedDelayString = "${service.schedule.protect:5000}")
+    @Scheduled(fixedDelayString = "${service.schedule.protect:2000}")
     public void protect() {
         if ( serverConfiguration.checkService()) {
             try {
