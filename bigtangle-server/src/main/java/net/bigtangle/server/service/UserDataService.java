@@ -64,7 +64,7 @@ public class UserDataService {
             return true;
         }
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
-            logger.debug(serverConfiguration.getDeniedIPlist().toString());
+           // logger.debug(serverConfiguration.getDeniedIPlist().toString());
             return false;
         }
         if (denieds.contains(remoteAddr)) {
@@ -95,14 +95,15 @@ public class UserDataService {
     // call api 15 times per seconds, as attack
     public synchronized void calcDenied() {
         try {
+            logger.debug("calcDenied staticsticCalls size =  " +staticsticCalls.size()); 
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
                // ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
                 List<ApiCall> s = a
                         .getValue().stream().filter(c ->  c != null && c.getTime() != null
-                                && c.getTime() > (System.currentTimeMillis() - 5000))
+                                && c.getTime() > (System.currentTimeMillis() - 15000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
-                if (s.size() > 4) {
+                if (s.size() > 5) {
                     logger.debug("add to denied = " + a.getKey());
                     /*
                      * for (ApiCall l : s) {
@@ -115,7 +116,9 @@ public class UserDataService {
         } catch (Exception e) {
             logger.debug("", e);
         }
+        if (updatetime < System.currentTimeMillis() - 60 * 1000) {
         staticsticCalls = new HashMap<String, List<ApiCall>>();
+        }
         if (updatetime < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
             logger.debug("reset denied  ");
             denieds = new HashSet<String>();
