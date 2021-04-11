@@ -127,6 +127,13 @@ public class DispatcherController {
     public void process(@PathVariable("reqCmd") String reqCmd, @RequestBody byte[] contentBytes,
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         userDataService.addStatistcs(reqCmd, remoteAddr(httprequest));
+        if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
+            
+            logger.debug(" denied " +remoteAddr(httprequest) + " " + reqCmd );
+            //errorLimit(httpServletResponse, watch);
+            return;
+           // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+        }
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
         final Future<String> handler = executor.submit(new Callable() {
