@@ -128,9 +128,9 @@ public class DispatcherController {
             HttpServletResponse httpServletResponse, HttpServletRequest httprequest) throws Exception {
         userDataService.addStatistcs(reqCmd, remoteAddr(httprequest));
         if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-            
+            Stopwatch watch = Stopwatch.createStarted();
            // logger.debug(" denied " +remoteAddr(httprequest) + " " + reqCmd );
-            //errorLimit(httpServletResponse, watch);
+            errorLimit(httpServletResponse, watch);
             return;
            // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
         }
