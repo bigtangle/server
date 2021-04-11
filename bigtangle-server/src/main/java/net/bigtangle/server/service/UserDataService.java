@@ -89,7 +89,7 @@ public class UserDataService {
         } else {
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
         }
-        calcDenied();
+      
     }
 
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
@@ -118,7 +118,7 @@ public class UserDataService {
             logger.debug("", e);
         }
         staticsticCalls = new HashMap<String, List<ApiCall>>();
-        if (updatetime < System.currentTimeMillis() - 1 * 60 * 60 * 1000) {
+        if (updatetime < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
             logger.debug("reset denied  ");
             denieds = new HashSet<String>();
             updatetime = System.currentTimeMillis();
