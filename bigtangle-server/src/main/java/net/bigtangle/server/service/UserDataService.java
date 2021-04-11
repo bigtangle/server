@@ -63,7 +63,10 @@ public class UserDataService {
                 || "61.181.128.230".equals(remoteAddr)
                 || "127.0.0.1".equals(remoteAddr)) {
             return true;
+        }else {
+            return false;
         }
+        /*
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
             logger.debug(serverConfiguration.getDeniedIPlist().toString());
             return false;
@@ -74,6 +77,7 @@ public class UserDataService {
         }
 
         return true;
+        */
     }
 
     public void addStatistcs(String reqCmd, String remoteAddr) {
