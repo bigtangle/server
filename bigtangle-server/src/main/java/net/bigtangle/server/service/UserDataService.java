@@ -60,13 +60,9 @@ public class UserDataService {
             HttpServletRequest httprequest) {
         String remoteAddr = remoteAddr(httprequest);
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
-                || "61.181.128.230".equals(remoteAddr)
-                || "127.0.0.1".equals(remoteAddr)) {
+                || "61.181.128.230".equals(remoteAddr) || "127.0.0.1".equals(remoteAddr)) {
             return true;
-        }else {
-            return false;
         }
-        /*
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
             logger.debug(serverConfiguration.getDeniedIPlist().toString());
             return false;
@@ -75,9 +71,8 @@ public class UserDataService {
             logger.debug(denieds.toString());
             return false;
         }
-
         return true;
-        */
+
     }
 
     public void addStatistcs(String reqCmd, String remoteAddr) {
@@ -89,7 +84,7 @@ public class UserDataService {
         } else {
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
         }
-      
+
     }
 
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
@@ -102,15 +97,18 @@ public class UserDataService {
         try {
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
                 ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
-                List<ApiCall> s = a.getValue().stream()
-                        .filter(c -> max != null && c != null && c.getTime() > (max.getTime() - 5000))
+                List<ApiCall> s = a
+                        .getValue().stream().filter(c -> max != null && c != null && c.getTime() != null
+                                && max.getTime() != null && c.getTime() > (max.getTime() - 5000))
                         .collect(Collectors.toList());
-                logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
+                logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
                 if (s.size() > 4) {
                     logger.debug("add to denied = " + a.getKey());
-                    for (ApiCall l : s) {
-                        logger.debug("  " + l.toString());
-                    }
+                    /*
+                     * for (ApiCall l : s) {
+                     * logger.debug("  " + l.toString());
+                     * }
+                     */
                     denieds.add(a.getKey());
                 }
             }
