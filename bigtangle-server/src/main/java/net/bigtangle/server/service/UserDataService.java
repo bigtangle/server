@@ -96,10 +96,10 @@ public class UserDataService {
     public synchronized void calcDenied() {
         try {
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
-                ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
+               // ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
                 List<ApiCall> s = a
-                        .getValue().stream().filter(c -> max != null && c != null && c.getTime() != null
-                                && max.getTime() != null && c.getTime() > (max.getTime() - 5000))
+                        .getValue().stream().filter(c ->  c != null && c.getTime() != null
+                                && c.getTime() > (System.currentTimeMillis() - 5000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
                 if (s.size() > 4) {
