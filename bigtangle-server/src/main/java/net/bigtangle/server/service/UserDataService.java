@@ -85,6 +85,7 @@ public class UserDataService {
         } else {
             l.add(new ApiCall(remoteAddr, reqCmd, System.currentTimeMillis()));
         }
+        calcDenied();
     }
 
     Map<String, List<ApiCall>> staticsticCalls = new HashMap<String, List<ApiCall>>();
@@ -98,10 +99,10 @@ public class UserDataService {
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
                 ApiCall max = a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
                 List<ApiCall> s = a.getValue().stream()
-                        .filter(c -> max != null && c != null && c.getTime() > (max.getTime() - 15000))
+                        .filter(c -> max != null && c != null && c.getTime() > (max.getTime() - 5000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() 15s calls =  " + a.getKey() + " -> " + s.size());
-                if (s.size() > 7) {
+                if (s.size() > 4) {
                     logger.debug("add to denied = " + a.getKey());
                     for (ApiCall l : s) {
                         logger.debug("  " + l.toString());
