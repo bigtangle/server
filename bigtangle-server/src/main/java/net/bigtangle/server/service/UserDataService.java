@@ -68,7 +68,7 @@ public class UserDataService {
             return false;
         }
         if (denieds.contains(remoteAddr)) {
-            logger.debug(denieds.toString());
+            logger.debug("denied " + remoteAddr  + " " +denieds.toString());
             return false;
         }
         return true;
