@@ -104,7 +104,7 @@ public class UserDataService {
                         c -> c != null && c.getTime() != null && c.getTime() > (System.currentTimeMillis() - 15000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
-                if (s.size() > 5) {
+                if (s.size() > 9) {
                     logger.debug("add to denied = " + a.getKey());
                     /*
                      * for (ApiCall l : s) {
