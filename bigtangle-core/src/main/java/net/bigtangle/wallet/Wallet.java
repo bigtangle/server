@@ -2570,7 +2570,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
-    public UserSettingDataInfo getUserSettingDataInfo(ECKey userKey)
+    public UserSettingDataInfo getUserSettingDataInfo(ECKey userKey, boolean encrypt)
             throws JsonProcessingException, IOException, InvalidCipherTextException {
         HashMap<String, String> requestParam0 = new HashMap<String, String>();
         requestParam0.put("dataclassname", DataClassName.UserSettingDataInfo.name());
@@ -2579,8 +2579,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam0));
         UserSettingDataInfo userSettingDataInfo = null;
         if (buf != null && buf.length > 0) {
-            byte[] decryptedPayload = ECIESCoder.decrypt(userKey.getPrivKey(), buf);
-            userSettingDataInfo = new UserSettingDataInfo().parse(decryptedPayload);
+            if (encrypt) {
+                byte[] decryptedPayload = ECIESCoder.decrypt(userKey.getPrivKey(), buf);
+                userSettingDataInfo = new UserSettingDataInfo().parse(decryptedPayload);
+            } else {
+                userSettingDataInfo = new UserSettingDataInfo().parse(buf);
+            }
+
         }
         return userSettingDataInfo;
 
