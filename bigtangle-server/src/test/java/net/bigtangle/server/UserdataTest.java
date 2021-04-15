@@ -58,7 +58,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         makeRewardBlock();
 
     
-        UserSettingDataInfo contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey);
+        UserSettingDataInfo contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
@@ -73,7 +73,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         makeRewardBlock();
  
 
-        contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey);
+        contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 0);
     }
     @Test
@@ -99,7 +99,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         makeRewardBlock();
 
 
-        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getUserSettingDataInfo(outKey);
+        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
