@@ -24,6 +24,7 @@
 
 		<module>./bigtangle-core</module>
 		<module>./bigtangle-servercore</module>
+		<module>./bigtangle-docker</module>
 		<module>./bigtangle-server</module>
  
 	</modules>

@@ -23,6 +23,7 @@ public class GracefulShutdownHealthIndicator implements HealthIndicator {
         this.props = props;
     }
 
+
     @Override
     public Health health() {
         return health;
