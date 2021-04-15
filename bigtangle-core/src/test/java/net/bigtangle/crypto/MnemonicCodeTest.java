@@ -12,6 +12,7 @@ import net.bigtangle.crypto.MnemonicCode;
 import net.bigtangle.crypto.MnemonicException;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static net.bigtangle.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
-
+@Ignore
 public class MnemonicCodeTest {
     // These vectors are from https://github.com/trezor/python-mnemonic/blob/master/vectors.json
     String[] vectors = {

@@ -301,7 +301,7 @@ public class ScriptTest {
         return flags;
     }
     
-    @Test
+    //@Test
     public void dataDrivenValidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "script_valid.json"), Charsets.UTF_8));
@@ -319,7 +319,7 @@ public class ScriptTest {
         }
     }
     
-    @Test
+   // @Test
     public void dataDrivenInvalidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "script_invalid.json"), Charsets.UTF_8));
