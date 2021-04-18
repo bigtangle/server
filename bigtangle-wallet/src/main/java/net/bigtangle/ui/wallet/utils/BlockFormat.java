@@ -148,7 +148,7 @@ public class BlockFormat {
                 String scriptPubKeyStr = out.getScriptPubKey().toString();
                 s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "");
                 s.append("\n ");
-                s.append(" address: ").append(out.getScriptPubKey().getToAddress(params)).append("\n");
+                s.append(" address: ").append(out.getScriptPubKey().getToAddress(params, true)).append("\n");
                 s.append("\n ");
                 s.append(out.getValue().toString());
                 if (!out.isAvailableForSpending()) {

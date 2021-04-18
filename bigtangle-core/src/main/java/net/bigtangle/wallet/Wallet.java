@@ -2799,7 +2799,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * if a block is failed due to rating without conflict, it can be saved by
+     * if a block is failed due to rating without conflict, it can be retried by
      * setting new BlockPrototype.
      */
     public Block retryBlocks(Block oldBlock) throws BlockStoreException, JsonProcessingException, IOException {
@@ -2818,6 +2818,36 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             return null;
         }
         return solveAndPost(block);
+    }
+
+    public Block rePayBlock(KeyParameter aesKey, String hashHex)
+            throws BlockStoreException, JsonProcessingException, IOException {
+        return retryBlocks(getBlock(hashHex));
+    }
+
+    /*
+     * if a block is failed due to rating with conflict, the wallet pay it
+     * again.
+     * user must care about potential double pay
+     */
+    public Block rePayBlock(KeyParameter aesKey, Block oldBlock)
+            throws BlockStoreException, JsonProcessingException, IOException, InsufficientMoneyException {
+        for (TransactionOutput a : oldBlock.getTransactions().get(0).getOutputs()) {
+            Script s = new Script(a.getScriptBytes());
+            Address destination = s.getToAddress(params);
+            if (!isMyAddress(aesKey, destination)) {
+                return pay(aesKey, destination, a.getValue(), oldBlock.getTransactions().get(0).getMemo());
+            }
+        }
+        return null;
+    }
+
+    private boolean isMyAddress(KeyParameter aesKey, Address destination) {
+        for (ECKey key : this.walletKeys(aesKey)) {
+            if (destination.equals(key.toAddress(this.getNetworkParameters()))) 
+            return true;
+        }
+        return false;
     }
 
     public BigDecimal getLastPrice(String tokenid, String basetoken)
@@ -2864,21 +2894,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         return solveAndPost(block);
 
-    }
-
-    public String fromAddress(Block block) throws BlockStoreException {
-        for (final Transaction tx : block.getTransactions()) {
-            for (TransactionInput t : tx.getInputs()) {
-                if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
-                    return t.getFromAddress().toBase58();
-                } else {
-                    return new Address(params,
-                            Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
-                }
-            }
-
-        }
-        return "";
     }
 
     public void changePassword(String password, String oldPassword) {

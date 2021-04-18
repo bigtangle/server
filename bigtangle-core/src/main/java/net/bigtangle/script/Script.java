@@ -354,7 +354,7 @@ public class Script {
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
      */
     public Address getToAddress(NetworkParameters params) throws ScriptException {
-        return getToAddress(params, false);
+        return getToAddress(params, true);
     }
 
     /**
