@@ -6,15 +6,19 @@
 package net.bigtangle.store;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,6 +66,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.ordermatch.AVGMatchResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
@@ -84,7 +89,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    private static final String LIMIT_50= " limit 50 ";
+    private static final String LIMIT_50 = " limit 50 ";
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
 
@@ -168,7 +173,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_TRANSACTION_OUTPUTS_SQL_BASE = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
             + " outputs.outputindex, coinbase, " + "  outputs.toaddress  as  toaddress,"
             + " outputsmulti.toaddress  as multitoaddress, " + "  addresstargetable, blockhash, tokenid, "
-            + " fromaddress, memo, spent, confirmed, " + "spendpending,spendpendingtime,  minimumsign, time , spenderblockhash "
+            + " fromaddress, memo, spent, confirmed, "
+            + "spendpending,spendpendingtime,  minimumsign, time , spenderblockhash "
             + " FROM outputs LEFT JOIN outputsmulti " + " ON outputs.hash = outputsmulti.hash"
             + " AND outputs.outputindex = outputsmulti.outputindex ";
 
@@ -180,8 +186,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time , spenderblockhash"
             + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
             + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
-            + " WHERE   (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) "
-            + " AND tokenid = ?";
+            + " WHERE   (outputs.toaddress = ? " + " OR outputsmulti.toaddress = ?) " + " AND tokenid = ?";
     protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time , spenderblockhash"
@@ -908,7 +913,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch ( Exception e) { 
+        } catch (Exception e) {
             throw new BlockStoreException(e);
         } finally {
             if (s != null) {
@@ -1042,10 +1047,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             return storedBlocks;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
-        } catch ( Exception e) {
+        } catch (Exception e) {
             // Corrupted database.
             throw new BlockStoreException(e);
-        }  finally {
+        } finally {
             if (s != null) {
                 try {
                     s.close();
@@ -1078,7 +1083,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         } catch (Exception e) {
             // Corrupted database.
             throw new BlockStoreException(e);
-        }   finally {
+        } finally {
             if (s != null) {
                 try {
                     s.close();
@@ -1511,7 +1516,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
             return new BlockWrap(block, blockEvaluation, getMCMC(hash), params);
-        } catch ( Exception ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1600,7 +1605,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return storedBlockHashes;
-        } catch ( Exception ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -1728,7 +1733,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                             new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
             }
             return resultQueue;
-        } catch ( Exception ex) {
+        } catch (Exception ex) {
             throw new BlockStoreException(ex);
         } finally {
             if (preparedStatement != null) {
@@ -2025,7 +2030,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setBytes(3, prevTxHash.getBytes());
             preparedStatement.setLong(4, index);
             preparedStatement.setBytes(5, prevBlockHash.getBytes());
-           // log.debug(preparedStatement.toString());
+            // log.debug(preparedStatement.toString());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -4868,7 +4873,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
-        
+
         try {
 
             deleteStatement = getConnection()
@@ -4891,10 +4896,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     /*
-     * remove the blocks, only if :
-     * 1) there is no unspent transaction related to the block 
-     * 2) this block  is outside the cutoff height, reorg is possible
-     * 3) the spenderblock is outside the cutoff height, reorg is possible
+     * remove the blocks, only if : 1) there is no unspent transaction related
+     * to the block 2) this block is outside the cutoff height, reorg is
+     * possible 3) the spenderblock is outside the cutoff height, reorg is
+     * possible
      */
     @Override
     public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
@@ -4904,30 +4909,28 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         PreparedStatement preparedStatement = null;
         try {
 
-            deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM blocks WHERE"
-                            + "   hash  = ? ");
-            
-            preparedStatement= getConnection()
+            deleteStatement = getConnection().prepareStatement(" delete FROM blocks WHERE" + "   hash  = ? ");
+
+            preparedStatement = getConnection()
                     .prepareStatement("  select distinct( blocks.hash) from  blocks  , outputs "
                             + " where spenderblockhash = blocks.hash    "
-                            + "  and blocks.milestone < ? and blocks.milestone !=0  "
-                            + " and ( blocks.blocktype = "+ Block.Type.BLOCKTYPE_TRANSFER.ordinal()
-                            + " or blocks.blocktype = "+ Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal()
-                            + " or blocks.blocktype = "+ Block.Type.BLOCKTYPE_REWARD.ordinal()
-                            + "  ) limit 1000 ");
-        //    preparedStatement.setLong(1, height);
+                            + "  and blocks.milestone < ? and blocks.milestone !=0  " + " and ( blocks.blocktype = "
+                            + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
+                            + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
+                            + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ");
+            // preparedStatement.setLong(1, height);
             preparedStatement.setLong(1, chain);
-            
+
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 deleteStatement.setBytes(1, resultSet.getBytes(1));
-                deleteStatement.addBatch(); ;
+                deleteStatement.addBatch();
+                ;
             }
-            
-           // log.debug(deleteStatement.toString());
-            int[] r = deleteStatement.executeBatch()   ;
-            log.debug( " deleteStatement.executeBatch() count = " +r.length);
+
+            // log.debug(deleteStatement.toString());
+            int[] r = deleteStatement.executeBatch();
+            log.debug(" deleteStatement.executeBatch() count = " + r.length);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -6093,6 +6096,182 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         try {
             preparedStatement = getConnection().prepareStatement(" delete from lockobject ");
             preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void saveAvgPrice(AVGMatchResult matchResult) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(
+                    " insert into matchingdaily(matchday,tokenid,basetokenid,avgprice,totalQuantity,highprice,lowprice,inserttime) values(?,?,?,?,?,?,?,?) ");
+            preparedStatement.setString(1, matchResult.getMatchday());
+            preparedStatement.setString(2, matchResult.getTokenid());
+            preparedStatement.setString(3, matchResult.getBasetokenid());
+            preparedStatement.setBigDecimal(4, matchResult.getAvgprice());
+            preparedStatement.setLong(5, matchResult.getExecutedQuantity());
+            preparedStatement.setLong(6, matchResult.getHignprice());
+            preparedStatement.setLong(7, matchResult.getLowprice());
+            preparedStatement.setLong(8, new Date().getTime());
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void batchAddAvgPrice() throws Exception {
+        List<Long> times = selectTimesUntilNow();
+        for (Long time : times) {
+            Date date = new Date(time * 1000);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String day = dateFormat.format(date);
+            if (getCountMatching(day) == 0) {
+                DateFormat dateFormat0 = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS");
+                Date startDate = dateFormat0.parse(day + "-00:00:00:000");
+                Date endDate = dateFormat0.parse(day + "-23:59:59:999");
+                List<AVGMatchResult> list = queryTickerByTime(startDate.getTime(), endDate.getTime());
+                if (list != null && !list.isEmpty()) {
+                    for (AVGMatchResult matchResult : list) {
+                        saveAvgPrice(matchResult);
+                    }
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public List<Long> selectTimesUntilNow() throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String yesterday = dateFormat.format(yesterdayDate);
+        DateFormat dateFormat0 = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS");
+
+        try {
+            long time = dateFormat0.parse(yesterday + "-23:59:59:999").getTime();
+            preparedStatement = getConnection()
+                    .prepareStatement(" select inserttime from matching where inserttime<=? order by  inserttime asc");
+            preparedStatement.setLong(1, time / 1000);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<Long> times = new ArrayList<Long>();
+            while (resultSet.next()) {
+                times.add(resultSet.getLong(1));
+
+            }
+            return times;
+        } catch (Exception e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountYesterdayMatching() throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String yesterday = dateFormat.format(yesterdayDate);
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement(" select count(1) from matchingdaily where matchday=?  ");
+            preparedStatement.setString(1, yesterday);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            int count = resultSet.getInt(1);
+            return count;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCountMatching(String matchday) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement(" select count(1) from matchingdaily where matchday=?  ");
+            preparedStatement.setString(1, matchday);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            int count = resultSet.getInt(1);
+            return count;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<AVGMatchResult> queryTickerByTime(long starttime, long endtime) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        String matchday = dateFormat.format(starttime);
+        try {
+            preparedStatement = getConnection().prepareStatement(
+                    " select tokenid,basetokenid,sum(price),count(price),max(price),min(price),sum(executedQuantity) from matching where inserttime>=? and inserttime<=? group by tokenid,basetokenid  ");
+            preparedStatement.setLong(1, starttime / 1000);
+            preparedStatement.setLong(2, endtime / 1000);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<AVGMatchResult> orderTickers = new ArrayList<AVGMatchResult>();
+            while (resultSet.next()) {
+                AVGMatchResult matchResult = new AVGMatchResult();
+                matchResult.setBasetokenid(resultSet.getString(1));
+                matchResult.setBasetokenid(resultSet.getString(2));
+                BigDecimal avgprice = BigDecimal.ZERO;
+                avgprice.setScale(3);
+                avgprice = new BigDecimal(resultSet.getLong(3)).divide(new BigDecimal(resultSet.getLong(4)));
+                matchResult.setAvgprice(avgprice);
+                matchResult.setMatchday(matchday);
+                matchResult.setHignprice(resultSet.getLong(5));
+                matchResult.setLowprice(resultSet.getLong(6));
+                matchResult.setExecutedQuantity(resultSet.getLong(7));
+                orderTickers.add(matchResult);
+
+            }
+            return orderTickers;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

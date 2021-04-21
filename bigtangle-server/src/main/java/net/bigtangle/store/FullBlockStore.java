@@ -38,6 +38,7 @@ import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.core.ordermatch.AVGMatchResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.BatchBlock;
@@ -56,9 +57,9 @@ import net.bigtangle.server.data.Rating;
  * <p>
  * In addition to keeping track of a chain using {@link StoredBlock}s, it should
  * also keep track of a second copy of the chain which holds
- * {@link StoredBlock}s. In this way, an application can perform a
- * headers-only initial sync and then use that information to more efficiently
- * download a locally verified full copy of the block chain.
+ * {@link StoredBlock}s. In this way, an application can perform a headers-only
+ * initial sync and then use that information to more efficiently download a
+ * locally verified full copy of the block chain.
  * </p>
  * 
  * <p>
@@ -67,13 +68,13 @@ import net.bigtangle.server.data.Rating;
  * </p>
  * 
  * <p>
- * It should store the  Blocks of a number of recent blocks
- * before verifiedHead.height and all those after verifiedHead.height. It is
- * advisable to store any {@link StoredUndoableBlock} which has a height >
+ * It should store the Blocks of a number of recent blocks before
+ * verifiedHead.height and all those after verifiedHead.height. It is advisable
+ * to store any {@link StoredUndoableBlock} which has a height >
  * verifiedHead.height - N. Because N determines the memory usage, it is
  * recommended that N be customizable. N should be chosen such that re-orgs
- * beyond that point are vanishingly unlikely, for example, a few thousand
- * chain blocks is a reasonable choice.
+ * beyond that point are vanishingly unlikely, for example, a few thousand chain
+ * blocks is a reasonable choice.
  * </p>
  * 
  * <p>
@@ -147,25 +148,23 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
 
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
- 
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
-  
+
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash txHash, long index)
             throws BlockStoreException;
 
     public PriorityQueue<BlockWrap> getSolidBlocksInIntervalDescending(long cutoffHeight, long maxHeight)
             throws BlockStoreException;
- 
 
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException;
 
     public TreeSet<BlockWrap> getBlocksToConfirm(long cutoffHeight, long maxHeight) throws BlockStoreException;
 
     public BlockMCMC getMCMC(Sha256Hash hash) throws BlockStoreException;
-   
+
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException;
 
     public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException;
@@ -176,8 +175,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException;
 
-    public void deleteMCMC(  long chainlenght) throws BlockStoreException;
-    
+    public void deleteMCMC(long chainlenght) throws BlockStoreException;
+
     /* TXOs */
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
             Sha256Hash spenderBlock) throws BlockStoreException;
@@ -217,18 +216,14 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
-    public void  prunedHistoryUTXO( Long timeInSeconds)
-            throws BlockStoreException;
-    
-    public void  prunedPriceTicker( Long timeInSeconds)
-            throws BlockStoreException;
-    
-    public void prunedClosedOrders( Long timeInSeconds )
-            throws BlockStoreException;
-    
-    public void prunedBlocks( Long heigth, Long chain )
-            throws BlockStoreException;
-    
+    public void prunedHistoryUTXO(Long timeInSeconds) throws BlockStoreException;
+
+    public void prunedPriceTicker(Long timeInSeconds) throws BlockStoreException;
+
+    public void prunedClosedOrders(Long timeInSeconds) throws BlockStoreException;
+
+    public void prunedBlocks(Long heigth, Long chain) throws BlockStoreException;
+
     public TXReward getMaxConfirmedReward() throws BlockStoreException;
 
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException;
@@ -286,7 +281,6 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException;
 
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException;
- 
 
     public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 
@@ -295,18 +289,19 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public List<Token> getTokensList(String name) throws BlockStoreException;
 
     public Map<String, BigInteger> getTokenAmountMap() throws BlockStoreException;
- 
+
     public List<BlockEvaluationDisplay> getSearchBlockEvaluations(List<String> address, String lastestAmount,
             long height, long maxblocks) throws BlockStoreException;
 
     public List<Block> findRetryBlocks(long minheight) throws BlockStoreException;
 
     public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
-            throws BlockStoreException; 
+            throws BlockStoreException;
 
     public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException;
+
     public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException;
-    
+
     void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes) throws BlockStoreException;
 
     public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid,
@@ -382,7 +377,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
             throws BlockStoreException;
 
     byte[] getSettingValue(String name) throws BlockStoreException;
- 
+
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 
     void insertBatchBlock(Block block) throws BlockStoreException;
@@ -405,7 +400,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException;
 
     List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys) throws BlockStoreException;
-   
+
     void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException;
 
     void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException;
@@ -416,7 +411,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
-    List<MatchResult> getLastMatchingEvents(Set<String> tokenId,  String  basetoken) throws BlockStoreException;
+    List<MatchResult> getLastMatchingEvents(Set<String> tokenId, String basetoken) throws BlockStoreException;
 
     Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException;
 
@@ -435,8 +430,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
     List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
-  
-   
+
     long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
 
     TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
@@ -451,8 +445,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
-    List<MatchResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate, int count)
-            throws BlockStoreException;
+    List<MatchResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
+            int count) throws BlockStoreException;
 
     void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException;
 
@@ -471,18 +465,36 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
     ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
- 
+
     void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
- 
+
     List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
 
     List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException;
+
     void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
+
     void deleteAllChainBlockQueue() throws BlockStoreException;
+
     LockObject selectLockobject(String lockobjectid) throws BlockStoreException;
+
     void deleteLockobject(String lockobjectid) throws BlockStoreException;
+
     void deleteAllLockobject() throws BlockStoreException;
-    void insertLockobject( LockObject lockobject ) throws BlockStoreException;
+
+    void insertLockobject(LockObject lockobject) throws BlockStoreException;
+
+    void batchAddAvgPrice() throws Exception;
+
+    void saveAvgPrice(AVGMatchResult matchResult) throws BlockStoreException;
+
+    int getCountYesterdayMatching() throws BlockStoreException;
+
+    int getCountMatching(String matchday) throws BlockStoreException;
+
+    List<AVGMatchResult> queryTickerByTime(long starttime, long endtime) throws BlockStoreException;
+
+    List<Long> selectTimesUntilNow() throws BlockStoreException;
 
     List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException;
 }
