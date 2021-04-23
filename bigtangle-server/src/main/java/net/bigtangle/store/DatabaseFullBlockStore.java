@@ -6260,6 +6260,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 AVGMatchResult matchResult = new AVGMatchResult();
                 matchResult.setBasetokenid(resultSet.getString(1));
                 matchResult.setBasetokenid(resultSet.getString(2));
+                matchResult.setPrice(resultSet.getLong(3)/resultSet.getLong(4));
                 BigDecimal avgprice = BigDecimal.ZERO;
                 avgprice.setScale(3);
                 avgprice = new BigDecimal(resultSet.getLong(3)).divide(new BigDecimal(resultSet.getLong(4)));
