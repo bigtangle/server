@@ -6118,7 +6118,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setString(1, matchResult.getMatchday());
             preparedStatement.setString(2, matchResult.getTokenid());
             preparedStatement.setString(3, matchResult.getBasetokenid());
-            preparedStatement.setBigDecimal(4, matchResult.getAvgprice());
+            preparedStatement.setLong(4, matchResult.getPrice());
             preparedStatement.setLong(5, matchResult.getExecutedQuantity());
             preparedStatement.setLong(6, matchResult.getHignprice());
             preparedStatement.setLong(7, matchResult.getLowprice());
