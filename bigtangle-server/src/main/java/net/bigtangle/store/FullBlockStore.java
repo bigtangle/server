@@ -448,6 +448,9 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<MatchResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
             int count) throws BlockStoreException;
 
+    List<MatchResult> getTimeAVGBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
+            int count) throws BlockStoreException;
+
     void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException;
 
     int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException;

@@ -129,10 +129,12 @@ public class DispatcherController {
         userDataService.addStatistcs(reqCmd, remoteAddr(httprequest));
         if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
             Stopwatch watch = Stopwatch.createStarted();
-           // logger.debug(" denied " +remoteAddr(httprequest) + " " + reqCmd );
+            // logger.debug(" denied " +remoteAddr(httprequest) + " " + reqCmd
+            // );
             errorLimit(httpServletResponse, watch);
             return;
-           // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+            // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget()
+            // / 100000);
         }
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings("rawtypes")
@@ -182,21 +184,22 @@ public class DispatcherController {
                 Block rollingBlock = blockService.getBlockPrototype(store);
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
                     // return bomb
-                    logger.debug("bomb getDifficultyTarget " +remoteAddr(httprequest) + " " + reqCmd );
+                    logger.debug("bomb getDifficultyTarget " + remoteAddr(httprequest) + " " + reqCmd);
                     errorLimit(httpServletResponse, watch);
                     return;
-                   // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() / 100000);
+                    // rollingBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget()
+                    // / 100000);
                 }
                 // register(rollingBlock, store);
-     //           logger.debug(" getTip " + rollingBlock.toString());
+                // logger.debug(" getTip " + rollingBlock.toString());
                 byte[] data = rollingBlock.bitcoinSerialize();
                 this.outPointBinaryArray(httpServletResponse, data);
             }
                 break;
             case saveBlock: {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-                    logger.debug("saveBlock denied " +remoteAddr(httprequest) + " " + reqCmd );
-                    errorLimit(httpServletResponse, watch); 
+                    logger.debug("saveBlock denied " + remoteAddr(httprequest) + " " + reqCmd);
+                    errorLimit(httpServletResponse, watch);
                     return;
                 }
                 saveBlock(bodyByte, httpServletResponse, watch, store);
@@ -208,7 +211,7 @@ public class DispatcherController {
                 break;
             case getOutputs: {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-                    logger.debug("getOutputs denied " +remoteAddr(httprequest) + " " + reqCmd );
+                    logger.debug("getOutputs denied " + remoteAddr(httprequest) + " " + reqCmd);
                     errorLimit(httpServletResponse, watch);
                     return;
                 }
@@ -263,7 +266,7 @@ public class DispatcherController {
                 break;
             case getBalances: {
                 if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-                    logger.debug("getOutputs getBalances " +remoteAddr(httprequest) + " " + reqCmd );
+                    logger.debug("getOutputs getBalances " + remoteAddr(httprequest) + " " + reqCmd);
                     return;
                 }
                 String reqStr = new String(bodyByte, "UTF-8");
@@ -502,6 +505,7 @@ public class DispatcherController {
                 Long endDate = (Long) request.get("endDate");
                 Integer count = (Integer) request.get("count");
                 String basetoken = (String) request.get("basetoken");
+                String interval = (String) request.get("interval");
                 Set<String> tokenids = new HashSet<String>((List<String>) request.get("tokenids"));
                 // logger.debug(request.toString() );
 
@@ -510,8 +514,15 @@ public class DispatcherController {
                     AbstractResponse response = orderTickerService.getLastMatchingEvents(tokenids, basetoken, store);
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 } else {
-                    AbstractResponse response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, basetoken,
-                            startDate / 1000, endDate / 1000, store);
+                    AbstractResponse response = null;
+                    if ("43200".equals(interval)) {
+                        response = orderTickerService.getTimeAVBGBetweenMatchingEvents(tokenids, basetoken,
+                                startDate / 1000, endDate / 1000, store);
+                    } else {
+                        response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, basetoken,
+                                startDate / 1000, endDate / 1000, store);
+                    }
+
                     this.outPrintJSONString(httpServletResponse, response, watch);
                 }
             }
@@ -741,6 +752,7 @@ public class DispatcherController {
         resp.setMessage(" limit reached. ");
         this.outPrintJSONString(httpServletResponse, resp, watch);
     }
+
     private boolean checkPermission(HttpServletResponse httpServletResponse, HttpServletRequest httprequest,
             Stopwatch watch, FullBlockStore store) throws BlockStoreException, Exception {
         if (!serverConfiguration.getPermissioned()) {

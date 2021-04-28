@@ -5788,6 +5788,42 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
+    public List<MatchResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
+            Long endDate, int count) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement preparedStatement = null;
+        try {
+            String SELECT_AVG = "select tokenid,basetokenid,  price, executedQuantity,matchday from matchingdaily where datediff(curdate(),str_to_date(matchday,'%Y-%m-%d'))<=30";
+            String sql = SELECT_AVG + " AND  basetokenid = ? AND  tokenid = ? ";
+
+            sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
+            // log.debug(sql + " tokenid = " +tokenid + " basetoken =" +
+            // basetoken );
+            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement.setString(1, basetoken);
+            preparedStatement.setString(2, tokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<MatchResult> list = new ArrayList<>();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            while (resultSet.next()) {
+                list.add(new MatchResult("", resultSet.getString(1), resultSet.getString(2), resultSet.getLong(3),
+                        resultSet.getLong(4), dateFormat.parse(resultSet.getString(5)).getTime() / 1000));
+            }
+            return list;
+        } catch (Exception ex) {
+            throw new BlockStoreException(ex);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Failed to close PreparedStatement");
+                }
+            }
+        }
+    }
+
+    @Override
 
     public void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException {
         String sql = "insert into access_permission (pubKey, accessToken, refreshTime) value (?,?,?)";
@@ -6260,7 +6296,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 AVGMatchResult matchResult = new AVGMatchResult();
                 matchResult.setBasetokenid(resultSet.getString(1));
                 matchResult.setBasetokenid(resultSet.getString(2));
-                matchResult.setPrice(resultSet.getLong(3)/resultSet.getLong(4));
+                matchResult.setPrice(resultSet.getLong(3) / resultSet.getLong(4));
                 BigDecimal avgprice = BigDecimal.ZERO;
                 avgprice.setScale(3);
                 avgprice = new BigDecimal(resultSet.getLong(3)).divide(new BigDecimal(resultSet.getLong(4)));
