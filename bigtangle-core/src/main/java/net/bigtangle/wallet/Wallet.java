@@ -2820,9 +2820,34 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
+    public Block rePayBlock(KeyParameter aesKey, String hashHex, String toaddress)
+            throws BlockStoreException, JsonProcessingException, IOException, InsufficientMoneyException {
+        Block oldBlock = getBlock(hashHex);
+        for (TransactionOutput a : oldBlock.getTransactions().get(0).getOutputs()) {
+            Script s = new Script(a.getScriptBytes());
+            Address destination = s.getToAddress(params);
+            if (destination.toBase58().equals(toaddress)) {
+                return pay(aesKey, destination, a.getValue(), oldBlock.getTransactions().get(0).getMemo());
+            }
+        }
+        return null;
+    }
+
     public Block rePayBlock(KeyParameter aesKey, String hashHex)
             throws BlockStoreException, JsonProcessingException, IOException {
         return retryBlocks(getBlock(hashHex));
+    }
+
+    public Block rePayBlock(KeyParameter aesKey, Block oldBlock, String to)
+            throws BlockStoreException, JsonProcessingException, IOException, InsufficientMoneyException {
+        for (TransactionOutput a : oldBlock.getTransactions().get(0).getOutputs()) {
+            Script s = new Script(a.getScriptBytes());
+            Address destination = s.getToAddress(params);
+            if (!isMyAddress(aesKey, destination)) {
+                return pay(aesKey, destination, a.getValue(), oldBlock.getTransactions().get(0).getMemo());
+            }
+        }
+        return null;
     }
 
     /*
@@ -2844,8 +2869,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     private boolean isMyAddress(KeyParameter aesKey, Address destination) {
         for (ECKey key : this.walletKeys(aesKey)) {
-            if (destination.equals(key.toAddress(this.getNetworkParameters()))) 
-            return true;
+            if (destination.equals(key.toAddress(this.getNetworkParameters())))
+                return true;
         }
         return false;
     }
