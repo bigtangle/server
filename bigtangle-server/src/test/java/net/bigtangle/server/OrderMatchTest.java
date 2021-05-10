@@ -84,27 +84,29 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-        
+
         // Verify the order ticker has the correct price
         HashSet<String> a = new HashSet<String>();
         a.add(testTokenId);
         assertEquals(1000l, tickerService.getLastMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING, store)
                 .getTickers().get(0).getPrice());
 
-        
-        assertEquals(1000l, tickerService.getTimeBetweenMatchingEvents(   
-                a, NetworkParameters.BIGTANGLE_TOKENID_STRING,null,null, store)
-                .getTickers().get(0).getPrice());
+        assertEquals(1000l,
+                tickerService
+                        .getTimeBetweenMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING, null, null, store)
+                        .getTickers().get(0).getPrice());
 
-        assertEquals(1000l, tickerService.getTimeBetweenMatchingEvents(   
-                a, NetworkParameters.BIGTANGLE_TOKENID_STRING,(System.currentTimeMillis()- 10000000)  / 1000 ,null, store)
-                .getTickers().get(0).getPrice());
- 
-        assertEquals(1000l, tickerService.getTimeBetweenMatchingEvents(   
-                a, NetworkParameters.BIGTANGLE_TOKENID_STRING,(System.currentTimeMillis()- 10000000)  / 1000 ,(System.currentTimeMillis() )  / 1000, store)
-                .getTickers().get(0).getPrice());
- 
-        
+        assertEquals(1000l,
+                tickerService
+                        .getTimeBetweenMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                                (System.currentTimeMillis() - 10000000) / 1000, null, store)
+                        .getTickers().get(0).getPrice());
+
+        assertEquals(1000l,
+                tickerService.getTimeBetweenMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                        (System.currentTimeMillis() - 10000000) / 1000, (System.currentTimeMillis()) / 1000, store)
+                        .getTickers().get(0).getPrice());
+
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
 
@@ -143,33 +145,88 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        List<String> tokenids = new ArrayList<String>(); 
+        List<String> tokenids = new ArrayList<String>();
         requestParam.put("tokenids", tokenids);
         requestParam.put("count", 1);
-        requestParam.put("basetoken",  NetworkParameters.BIGTANGLE_TOKENID_STRING);
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+        requestParam.put("basetoken", NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
         for (MatchResult m : orderTickerResponse.getTickers()) {
-            if(m.getTokenid().equals(testTokenId)) {
-            // assertTrue(m.getExecutedQuantity() == 78||
-            // m.getExecutedQuantity() == 22);
-            // TODO check the execute ordering. price is 1000 or 1001
-            assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
+            if (m.getTokenid().equals(testTokenId)) {
+                // assertTrue(m.getExecutedQuantity() == 78||
+                // m.getExecutedQuantity() == 22);
+                // TODO check the execute ordering. price is 1000 or 1001
+                assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
             }
         }
-        
-        //check wallet 
-        
-       BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-       assertTrue(a.compareTo( new BigDecimal("0.001")) ==0);
-       
-       
-       
+
+        // check wallet
+
+        BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        assertTrue(a.compareTo(new BigDecimal("0.001")) == 0);
+
     }
- 
+
+    @Test
+    public void orderTickerSearchAVGAPI() throws Exception {
+
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+        generateSpareChange(genesisKey, addedBlocks);
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1002, 100, addedBlocks);
+
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+
+        // get the data
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        List<String> tokenids = new ArrayList<String>();
+        requestParam.put("tokenids", tokenids);
+        requestParam.put("interval", "43200");
+        requestParam.put("basetoken", NetworkParameters.BIGTANGLE_TOKENID_STRING);
+
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
+
+        assertTrue(orderTickerResponse.getTickers().size() > 0);
+        for (MatchResult m : orderTickerResponse.getTickers()) {
+            if (m.getTokenid().equals(testTokenId)) {
+                // assertTrue(m.getExecutedQuantity() == 78||
+                // m.getExecutedQuantity() == 22);
+                // TODO check the execute ordering. price is 1000 or 1001
+                assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
+            }
+        }
+
+        // check wallet
+
+        BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        assertTrue(a.compareTo(new BigDecimal("0.001")) == 0);
+
+    }
+
     @Test
     public void buy() throws Exception {
 
@@ -222,11 +279,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Get current existing token amount
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
         int priceshift = 1000000;
-        
+
         // Open sell order for test tokens
         makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
         checkOrders(1);
-        
+
         // Open buy order for test tokens
         makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
         checkOrders(0);
@@ -240,25 +297,23 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify deterministic overall execution
         readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-        
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         List<String> tokenids = new ArrayList<String>();
         requestParam.put("count", 1);
         requestParam.put("tokenids", tokenids);
-        requestParam.put("basetoken",  yuan.getPublicKeyAsHex());
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+        requestParam.put("basetoken", yuan.getPublicKeyAsHex());
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
         for (MatchResult m : orderTickerResponse.getTickers()) {
-            if(m.getTokenid().equals(testTokenId)) {
-                assertTrue(  m.getPrice() == priceshift);
+            if (m.getTokenid().equals(testTokenId)) {
+                assertTrue(m.getPrice() == priceshift);
             }
         }
 
-        
     }
 
     @Test
@@ -401,11 +456,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
         int priceshift = 1000000;
-        
+
         // base token
         ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
         resetAndMakeTestToken(yuan, addedBlocks);
-        
+
         // Make test token
         resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -429,12 +484,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
         OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters);
-      //  assertTrue(orderData.size() == 4);
+        // assertTrue(orderData.size() == 4);
         for (Map<String, Object> map : orderData) {
             assertTrue(map.get("price").equals("0.001") || map.get("price").equals("1"));
         }
@@ -661,7 +716,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
-        
+
         // Make test token
         resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -737,7 +792,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
-        
+
         // Make test token
         resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
         String testTokenId = testKey.getPublicKeyAsHex();
@@ -1146,9 +1201,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<String> a = new ArrayList<String>();
         a.add(genesisKey.toAddress(networkParameters).toBase58());
         List<OrderRecord> closedOrders = store.getMyClosedOrders(a);
-           
+
         System.out.println(closedOrders.toString());
-         
+
     }
 
     @Test
@@ -1236,7 +1291,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
