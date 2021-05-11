@@ -1816,6 +1816,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 final String tokenid = token.getTokenid();
                 multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
+            tokenInfo.setMultiSignAddresses(multiSignAddresses);
         }
 
         // +1 for domain name or super domain
@@ -2852,8 +2853,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     /*
      * if a block is failed due to rating with conflict, the wallet pay it
-     * again.
-     * user must care about potential double pay
+     * again. user must care about potential double pay
      */
     public Block rePayBlock(KeyParameter aesKey, Block oldBlock)
             throws BlockStoreException, JsonProcessingException, IOException, InsufficientMoneyException {
