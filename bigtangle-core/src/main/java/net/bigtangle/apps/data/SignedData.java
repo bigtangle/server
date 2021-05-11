@@ -36,7 +36,6 @@ public class SignedData extends DataClass implements java.io.Serializable {
     // milliseconds, not encrypted, can be null
     private Long validtodate;
 
- 
     public void verify() throws SignatureException {
         ECKey.fromPublicOnly(signerpubkey).verifyMessage(serializedData, signature);
 
@@ -60,7 +59,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
             Utils.writeNBytes(dos, signerpubkey);
             Utils.writeNBytesString(dos, signature);
             Utils.writeLong(dos, validtodate);
-       
+
             dos.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -86,7 +85,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         signerpubkey = Utils.readNBytes(dis);
         signature = Utils.readNBytesString(dis);
         validtodate = Utils.readLong(dis);
- 
+
         dis.close();
 
         return this;
@@ -129,11 +128,14 @@ public class SignedData extends DataClass implements java.io.Serializable {
         kv.setKey(key.getPublicKeyAsHex());
         kv.setValue(Utils.HEX.encode(cipher));
         tokenKeyValues.addKeyvalue(kv);
-        byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
-        kv = new KeyValue();
-        kv.setKey(userkey.getPublicKeyAsHex());
-        kv.setValue(Utils.HEX.encode(cipher1));
-        tokenKeyValues.addKeyvalue(kv);
+        if (!key.getPublicKeyAsHex().equals(userkey.getPublicKeyAsHex())) {
+            byte[] cipher1 = ECIESCoder.encrypt(userkey.getPubKeyPoint(), data);
+            kv = new KeyValue();
+            kv.setKey(userkey.getPublicKeyAsHex());
+            kv.setValue(Utils.HEX.encode(cipher1));
+            tokenKeyValues.addKeyvalue(kv);
+        }
+
         return tokenKeyValues;
     }
 
@@ -183,5 +185,5 @@ public class SignedData extends DataClass implements java.io.Serializable {
     public void setValidtodate(Long validtodate) {
         this.validtodate = validtodate;
     }
- 
+
 }
