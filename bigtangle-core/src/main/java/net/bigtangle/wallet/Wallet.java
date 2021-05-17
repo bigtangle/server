@@ -1816,7 +1816,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 final String tokenid = token.getTokenid();
                 multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
-            tokenInfo.setMultiSignAddresses(multiSignAddresses);
+           // tokenInfo.setMultiSignAddresses(multiSignAddresses);
         }
 
         // +1 for domain name or super domain
