@@ -470,7 +470,8 @@ public class TokenTest extends AbstractIntegrationTest {
         // walletAppKit1.wallet().importKey(preKey) ;
         final String tokenid = key.getPublicKeyAsHex();
         walletAppKit1.wallet().publishDomainName(key, tokenid, "id.shop", aesKey, "");
-        walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
+        //check signs list?
+        walletAppKit.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
  
         makeRewardBlock();
         
