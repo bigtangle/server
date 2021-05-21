@@ -34,6 +34,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.KeyValueList;
 import net.bigtangle.core.MemoInfo;
+import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
@@ -45,6 +46,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
@@ -92,22 +94,27 @@ example
 public class TokenTest extends AbstractIntegrationTest {
 
     @Test
+    public void addblock() throws Exception {
+        makeRewardBlock();
+    }
+
+    @Test
     public void testCreateDomainToken() throws Exception {
 
         ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey, "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "com", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-            
+
             makeRewardBlock();
-            
+
         }
 
         {
@@ -120,9 +127,9 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
 
             }
-           
+
             makeRewardBlock();
-            
+
         }
         {
             final String tokenid = new ECKey().getPublicKeyAsHex();
@@ -134,9 +141,9 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
 
             }
-       
+
             makeRewardBlock();
-            
+
         }
 
         {
@@ -147,7 +154,7 @@ public class TokenTest extends AbstractIntegrationTest {
             walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
 
             makeRewardBlock();
-            
+
         }
 
     }
@@ -166,9 +173,9 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-          //  sendEmpty(10);
+            // sendEmpty(10);
             makeRewardBlock();
-            
+
         }
     }
 
@@ -185,12 +192,12 @@ public class TokenTest extends AbstractIntegrationTest {
             for (int i = 0; i < keys.size(); i++) {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
-           // sendEmpty(10);
+            // sendEmpty(10);
             makeRewardBlock();
-            
+
         }
     }
-    
+
     @Test
     public void testCreateTokenWithDomain() throws Exception {
 
@@ -204,9 +211,8 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
         walletAppKit1.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
 
-       // sendEmpty(10);
+        // sendEmpty(10);
         makeRewardBlock();
-        
 
         {
 
@@ -217,12 +223,12 @@ public class TokenTest extends AbstractIntegrationTest {
             TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 
-          //  sendEmpty(10);
+            // sendEmpty(10);
             makeRewardBlock();
-            
+
             HashMap<String, Object> requestParam = new HashMap<String, Object>();
             requestParam.put("tokenid", currentToken.getToken().getTokenid());
-           byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+            byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                     Json.jsonmapper().writeValueAsString(requestParam));
             GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -249,12 +255,12 @@ public class TokenTest extends AbstractIntegrationTest {
                 TokenType.identity.ordinal(), issuer.getPublicKeyAsHex(), walletAppKit1.wallet());
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-       // sendEmpty(10);
+        // sendEmpty(10);
         makeRewardBlock();
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -285,17 +291,24 @@ public class TokenTest extends AbstractIntegrationTest {
         SignedData signedata = signeddata(issuer);
         TokenKeyValues kvs = signedata.toTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
+        String tokenid = new ECKey().getPublicKeyAsHex();
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
-                TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), walletAppKit1.wallet(),
-                userkey.getPubKey(), signedata.encryptToMemo(userkey));
+                TokenType.identity.ordinal(), tokenid, walletAppKit1.wallet(), userkey.getPubKey(),
+                signedata.encryptToMemo(userkey));
+        String isserAddress = issuer.toAddress(networkParameters).toString();
+        log.info("domain sign before : " + tokenid + "," + isserAddress);
+        querySign(tokenid, isserAddress);
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-       // sendEmpty(10);
+        String domainAddress = key.toAddress(networkParameters).toString();
+        log.info("domain sign end : " + tokenid + "," + domainAddress);
+        querySign(tokenid, domainAddress);
+        // sendEmpty(10);
         makeRewardBlock();
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -336,12 +349,12 @@ public class TokenTest extends AbstractIntegrationTest {
                 userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-       // sendEmpty(10);
+        // sendEmpty(10);
         makeRewardBlock();
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -360,9 +373,9 @@ public class TokenTest extends AbstractIntegrationTest {
         MemoInfo memoInfo = p.encryptToMemo(pharmacy);
         userWallet.setServerURL(contextRoot);
         Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
-      //  sendEmpty(10);
+        // sendEmpty(10);
         makeRewardBlock();
-        
+
         List<UTXO> pharmalist = getBalance(false, pharmacy);
         String jsonString = pharmalist.get(0).getMemo();
         MemoInfo m = MemoInfo.parse(jsonString);
@@ -372,6 +385,23 @@ public class TokenTest extends AbstractIntegrationTest {
             assertTrue(pre.getFilename() != null);
 
         }
+    }
+
+    public void querySign(String tokenid, String address) throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+
+        requestParam.put("address", address);
+        // requestParam.put("tokenid", tokenid);
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        List<MultiSign> multiSigns = multiSignResponse.getMultiSigns();
+        assertTrue(multiSigns == null);
+        for (MultiSign multiSign : multiSigns) {
+            assertTrue(multiSign.getSign() == 0);
+        }
+
     }
 
     private SignedData prescription(ECKey userkey, Token token)
@@ -393,7 +423,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Map<String, String> param = new HashMap<String, String>();
         param.put("toaddress", ecKey.toAddress(networkParameters).toString());
 
-       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
+        byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.getOutputsHistory.name(),
                 Json.jsonmapper().writeValueAsString(param));
 
         GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
@@ -434,10 +464,10 @@ public class TokenTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
         sendEmpty(10);
         makeRewardBlock();
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -470,11 +500,11 @@ public class TokenTest extends AbstractIntegrationTest {
         // walletAppKit1.wallet().importKey(preKey) ;
         final String tokenid = key.getPublicKeyAsHex();
         walletAppKit1.wallet().publishDomainName(key, tokenid, "id.shop", aesKey, "");
-        //check signs list?
+        // check signs list?
         walletAppKit.wallet().multiSign(tokenid, walletKeys.get(0), aesKey);
- 
+
         makeRewardBlock();
-        
+
         return key;
     }
 
@@ -535,7 +565,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -543,7 +573,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         makeRewardBlock();
-        
+
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -567,7 +597,7 @@ public class TokenTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
                 "pay to user", 3, 20000);
         makeRewardBlock();
-        
+
         log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         return userkeys;
@@ -580,8 +610,8 @@ public class TokenTest extends AbstractIntegrationTest {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", NetworkParameters.BIGTANGLE_TOKENID_STRING);
         makeRewardBlock();
-        
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);
@@ -594,9 +624,8 @@ public class TokenTest extends AbstractIntegrationTest {
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
                 "pay to user", 3, 20000);
         log.debug("block " + (b == null ? "block is null" : b.toString()));
-         
+
         makeRewardBlock();
-        
 
     }
 
@@ -632,10 +661,10 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         makeRewardBlock();
-        
+
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
         log.info("getOutputsResponse : " + getOutputsResponse);
@@ -655,7 +684,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
@@ -663,7 +692,7 @@ public class TokenTest extends AbstractIntegrationTest {
         assertTrue(getTokensResponse.getTokens().size() > 0);
 
         makeRewardBlock();
-        
+
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
@@ -712,28 +741,28 @@ public class TokenTest extends AbstractIntegrationTest {
 
         testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test");
         makeRewardBlock();
-        
+
         testCreateToken(new ECKey(), "test");
         makeRewardBlock();
-        
+
         testCreateToken(new ECKey(), "test");
         makeRewardBlock();
-        
+
         testCreateToken(new ECKey(), "test");
         makeRewardBlock();
-        
-       
+
         // only one is ok.
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletAppKit.wallet().walletKeys().get(0).getPublicKeyAsHex());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         log.info("getTokenById resp : " + resp);
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         log.info("getTokensResponse : " + getTokensResponse);
         assertTrue(getTokensResponse.getTokens().size() == 1);
-        assertTrue(blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(),store).isConfirmed());
+        assertTrue(blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(), store)
+                .isConfirmed());
 
         requestParam.put("tokenid", walletAppKit.wallet().walletKeys().get(1).getPublicKeyAsHex());
         resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
@@ -742,7 +771,8 @@ public class TokenTest extends AbstractIntegrationTest {
         getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
         log.info("getTokensResponse : " + getTokensResponse);
         assertTrue(getTokensResponse.getTokens().size() == 1);
-        assertTrue(!blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(),store).isConfirmed());
+        assertTrue(!blockService.getBlockEvaluation(getTokensResponse.getTokens().get(0).getBlockHash(), store)
+                .isConfirmed());
 
     }
 
@@ -756,7 +786,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", currentToken.getToken().getTokenid());
-       byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
 
@@ -791,9 +821,9 @@ public class TokenTest extends AbstractIntegrationTest {
             walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);
 
         }
- 
+
         makeRewardBlock();
-        
+
     }
 
     private TokenInfo createProductToken(ECKey key)
@@ -808,9 +838,9 @@ public class TokenTest extends AbstractIntegrationTest {
         for (int i = 0; i < keys.size(); i++) {
             walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), keys.get(i), aesKey);
         }
-        //sendEmpty(10);
+        // sendEmpty(10);
         makeRewardBlock();
-        
+
         return currentToken;
     }
 
