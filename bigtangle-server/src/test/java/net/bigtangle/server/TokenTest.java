@@ -284,8 +284,9 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testCreateCertificate() throws Exception {
 
-        ECKey key = prepareIdentity();
-
+        ECKey domainkey = prepareIdentity();
+        String domainAddress = domainkey.toAddress(networkParameters).toString();
+        //issuer create the token for user public key and domain key must sign the token
         ECKey issuer = new ECKey();
         ECKey userkey = new ECKey();
         SignedData signedata = signeddata(issuer);
@@ -297,12 +298,14 @@ public class TokenTest extends AbstractIntegrationTest {
                 signedata.encryptToMemo(userkey));
         String isserAddress = issuer.toAddress(networkParameters).toString();
         log.info("domain sign before : " + tokenid + "," + isserAddress);
-        querySign(tokenid, isserAddress);
+        querySign(tokenid, isserAddress,true);
+        querySign(tokenid, domainAddress,false);
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
-        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-        String domainAddress = key.toAddress(networkParameters).toString();
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), domainkey, aesKey);
+    
         log.info("domain sign end : " + tokenid + "," + domainAddress);
-        querySign(tokenid, domainAddress);
+        querySign(tokenid, isserAddress,true);
+        querySign(tokenid, domainAddress,true);
         // sendEmpty(10);
         makeRewardBlock();
 
@@ -387,7 +390,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
     }
 
-    public void querySign(String tokenid, String address) throws Exception {
+    public void querySign(String tokenid, String address, boolean sign) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
         requestParam.put("address", address);
@@ -397,9 +400,13 @@ public class TokenTest extends AbstractIntegrationTest {
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
         List<MultiSign> multiSigns = multiSignResponse.getMultiSigns();
-        assertTrue(multiSigns == null);
+        assertTrue(multiSigns != null);
         for (MultiSign multiSign : multiSigns) {
-            assertTrue(multiSign.getSign() == 0);
+            if(sign)
+            assertTrue(multiSign.getSign() ==1);
+            else {
+                assertTrue(multiSign.getSign() ==0);
+            }
         }
 
     }

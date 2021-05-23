@@ -407,8 +407,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
     private static final String CREATE_ORDERS_SPENT_TABLE_INDEX = "CREATE INDEX orders_spent_idx ON orders (confirmed, spent) ";
     private static final String CREATE_MATCHING_TOKEN_TABLE_INDEX = "CREATE INDEX matching_inserttime_idx ON matching (inserttime) ";
-    private static final String CREATE_MATCHING_BASETOKEN_TABLE_INDEX = "CREATE INDEX matching_basetoken_idx ON matching (basetokenid) ";
-    
+      
     private static final String CREATE_TOKEN_TOKENID_TABLE_INDEX = "CREATE INDEX tokens_tokenid_idx ON tokens (tokenid) ";
     
   
@@ -465,6 +464,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(CREATE_LOCKOBJECT_TABLE); 
+        sqlStatements.add(CREATE_MATCHINGDAILY_TABLE); 
         return sqlStatements;
     }
 

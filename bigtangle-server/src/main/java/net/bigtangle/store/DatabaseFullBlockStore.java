@@ -126,6 +126,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private static String DROP_MCMC_TABLE = "DROP TABLE mcmc";
     private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
     private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE matchinglast";
+    private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE matchingdaily";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -342,9 +343,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     protected final String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (?, ?, ?, ?, ?, ?)";
     protected final String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = ?, sign = ? WHERE tokenid = ? AND tokenindex = ? AND address = ?";
-    protected final String UPDATE_MULTISIGN0_SQL = "UPDATE multisign SET blockhash = ?, sign = 0 WHERE tokenid = ? AND tokenindex = ? AND address = ?";
     protected final String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
-    protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ?";
+    protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ? ";
+    protected final String SELECT_COUNT_ALL_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ?  AND sign=?";
+    
     protected final String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
 
     protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
@@ -617,6 +619,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_MCMC_TABLE);
         sqlStatements.add(DROP_LOCKOBJECT_TABLE);
         sqlStatements.add(DROP_MATCHING_LAST_TABLE);
+        sqlStatements.add(DROP_MATCHINGDAILY_TABLE);
         return sqlStatements;
     }
 
@@ -3209,11 +3212,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    public int getCountMultiSignNoSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
+    public int countMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
+            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_ALL_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setInt(3, sign);
@@ -3292,31 +3295,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
-    public void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] blockhash)
-            throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN0_SQL);
-            preparedStatement.setBytes(1, blockhash);
-            preparedStatement.setString(2, tokenid);
-            preparedStatement.setLong(3, tokenindex);
-            preparedStatement.setString(4, address);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
+ 
     @Override
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
@@ -5793,7 +5772,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String SELECT_AVG = "select tokenid,basetokenid,  price, executedQuantity,matchday from matchingdaily where datediff(curdate(),str_to_date(matchday,'%Y-%m-%d'))<=30";
+            String SELECT_AVG = "select tokenid,basetokenid,  avgprice, totalQuantity,matchday "
+                    + "from matchingdaily where datediff(curdate(),str_to_date(matchday,'%Y-%m-%d'))<=30";
             String sql = SELECT_AVG + " AND  basetokenid = ? AND  tokenid = ? ";
 
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
@@ -6287,7 +6267,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         String matchday = dateFormat.format(starttime);
         try {
             preparedStatement = getConnection().prepareStatement(
-                    " select tokenid,basetokenid,sum(price),count(price),max(price),min(price),sum(executedQuantity) from matching where inserttime>=? and inserttime<=? group by tokenid,basetokenid  ");
+                    " select tokenid,basetokenid,sum(price),count(price),"
+                    + "max(price),min(price),sum(executedQuantity)"
+                    + " from matching where inserttime>=? and inserttime<=? group by tokenid,basetokenid  ");
             preparedStatement.setLong(1, starttime / 1000);
             preparedStatement.setLong(2, endtime / 1000);
             ResultSet resultSet = preparedStatement.executeQuery();

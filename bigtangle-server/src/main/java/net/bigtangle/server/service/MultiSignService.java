@@ -65,7 +65,7 @@ public class MultiSignService {
     }
 
     public AbstractResponse getCountMultiSign(String tokenid, long tokenindex, int sign, FullBlockStore store) throws BlockStoreException {
-        int count =store.getCountMultiSignNoSign(tokenid, tokenindex, sign);
+        int count =store.countMultiSign(tokenid, tokenindex, sign);
         return MultiSignResponse.createMultiSignResponse(count);
     }
 
@@ -127,7 +127,7 @@ public class MultiSignService {
             Transaction transaction = block.getTransactions().get(0);
             byte[] buf = transaction.getData();
             TokenInfo tokenInfo = new TokenInfo().parse(buf);
-            final Token tokens = tokenInfo.getToken();
+            final Token token = tokenInfo.getToken();
 
             // Enter the required multisign addresses
             List<MultiSignAddress> multiSignAddresses = tokenInfo.getMultiSignAddresses();
@@ -135,15 +135,15 @@ public class MultiSignService {
             // Always needs domain owner signature
 
             multiSignAddresses.addAll(tokenDomainnameService
-                    .queryDomainnameTokenMultiSignAddresses(Sha256Hash.wrap(tokens.getDomainNameBlockHash()),store));
+                    .queryDomainnameTokenMultiSignAddresses(Sha256Hash.wrap(token.getDomainNameBlockHash()),store));
 
             // Add the entries to DB
             for (MultiSignAddress multiSignAddress : multiSignAddresses) {
                 byte[] pubKey = Utils.HEX.decode(multiSignAddress.getPubKeyHex());
                 multiSignAddress.setAddress(ECKey.fromPublicOnly(pubKey).toAddress(networkParameters).toBase58());
 
-                String tokenid = multiSignAddress.getTokenid();
-                long tokenindex = tokens.getTokenindex();
+                String tokenid = token.getTokenid();
+                long tokenindex = token.getTokenindex();
                 String address = multiSignAddress.getAddress();
                 int count = store.getCountMultiSignAlready(tokenid, tokenindex, address);
                 if (count == 0) {
@@ -153,7 +153,7 @@ public class MultiSignService {
                     multiSign.setAddress(address);
                     multiSign.setBlockbytes(block.bitcoinSerialize());
                     multiSign.setId(UUIDUtil.randomUUID());
-                    multiSign.setSign(1);
+                    multiSign.setSign(0);
                     store.saveMultiSign(multiSign);
                 }
             }
@@ -167,7 +167,7 @@ public class MultiSignService {
                     store.updateMultiSign(tokenid, tokenindex, address, block.bitcoinSerialize(), 1);
                 }
             }
-            store.updateMultiSignBlockBitcoinSerialize(tokens.getTokenid(), tokens.getTokenindex(),
+            store.updateMultiSignBlockBitcoinSerialize(token.getTokenid(), token.getTokenindex(),
                     block.bitcoinSerialize());
              store.commitDatabaseBatchWrite();
         } catch (Exception e) {

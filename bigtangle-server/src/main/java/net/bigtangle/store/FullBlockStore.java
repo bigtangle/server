@@ -332,16 +332,13 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException;
 
-    int getCountMultiSignNoSign(String tokenid, long tokenindex, int sign) throws BlockStoreException;
+    int countMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException;
 
     void saveMultiSign(MultiSign multiSign) throws BlockStoreException;
 
     void updateMultiSign(String tokenid, long tokenindex, String address, byte[] bytes, int sign)
-            throws BlockStoreException;
-
-    void updateMultiSignBlockHash(String tokenid, long tokenindex, String address, byte[] bytes)
-            throws BlockStoreException;
-
+            throws BlockStoreException; 
+    
     void deleteMultiSign(String tokenid) throws BlockStoreException;
 
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException;

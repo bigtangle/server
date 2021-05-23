@@ -517,7 +517,7 @@ public class DispatcherController {
                     AbstractResponse response = null;
                     if ("43200".equals(interval)) {
                         response = orderTickerService.getTimeAVBGBetweenMatchingEvents(tokenids, basetoken,
-                                startDate / 1000, endDate / 1000, store);
+                                null, null, store);
                     } else {
                         response = orderTickerService.getTimeBetweenMatchingEvents(tokenids, basetoken,
                                 startDate / 1000, endDate / 1000, store);

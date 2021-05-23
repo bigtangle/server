@@ -198,10 +198,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
-
+ 
+        store.batchAddAvgPrice();
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         List<String> tokenids = new ArrayList<String>();
+        tokenids.add(testTokenId);
         requestParam.put("tokenids", tokenids);
         requestParam.put("interval", "43200");
         requestParam.put("basetoken", NetworkParameters.BIGTANGLE_TOKENID_STRING);
@@ -222,8 +224,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // check wallet
 
-        BigDecimal a = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-        assertTrue(a.compareTo(new BigDecimal("0.001")) == 0);
+        BigDecimal b = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        assertTrue(b.compareTo(new BigDecimal("0.001")) == 0);
 
     }
 
