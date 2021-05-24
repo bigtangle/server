@@ -45,6 +45,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.utils.Json;
+import net.bigtangle.utils.MarketOrderItem;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
@@ -490,11 +491,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters);
+        List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
+        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         // assertTrue(orderData.size() == 4);
-        for (Map<String, Object> map : orderData) {
-            assertTrue(map.get("price").equals("0.001") || map.get("price").equals("1"));
+        for (MarketOrderItem map : orderData) {
+            assertTrue(map.getPrice().equals("0.001") || map.getPrice().equals("1"));
         }
 
         // Execute order matching
@@ -1297,11 +1298,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        List<Map<String, Object>> orderData = new ArrayList<Map<String, Object>>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters);
-        for (Map<String, Object> map : orderData) {
-            assertTrue(map.get("price").equals("7"));
-            assertTrue(map.get("total").equals("1400"));
+        List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
+        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        for (MarketOrderItem map : orderData) {
+            assertTrue(map.getPrice().equals("7"));
+            assertTrue(map.getPrice().equals("1400"));
 
         }
 
@@ -1317,12 +1318,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        orderData = new ArrayList<Map<String, Object>>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters);
+        orderData = new ArrayList<MarketOrderItem>();
+        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         assertTrue(orderData.size() == 1);
-        for (Map<String, Object> map : orderData) {
-            assertTrue(map.get("price").equals("7"));
-            assertTrue(map.get("total").equals("1400"));
+        for (MarketOrderItem map : orderData) {
+            assertTrue(map.getPrice().equals("7"));
+            assertTrue(map.getPrice().equals("1400"));
         }
 
         // Execute order matching
