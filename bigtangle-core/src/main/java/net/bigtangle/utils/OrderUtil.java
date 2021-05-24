@@ -2,9 +2,6 @@ package net.bigtangle.utils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,57 +12,18 @@ import java.util.Map;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Token;
 import net.bigtangle.core.response.OrderdataResponse;
 
 public class OrderUtil {
-    public static void orderMap(OrderdataResponse orderdataResponse, List<OrderItem> orderData, Locale local,
-            NetworkParameters params) {
-        MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
-
+    public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData, Locale local,
+            NetworkParameters params, String buy, String sell) {
+        List<MarketOrderItem> itemList = new ArrayList<MarketOrderItem>();
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            HashMap<String, Object> map = new HashMap<String, Object>();
-            Token base = orderdataResponse.getTokennames().get(orderRecord.getOrderBaseToken());
-            if (orderRecord.getOrderBaseToken().equals(orderRecord.getOfferTokenid())) {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid());
-                Integer priceshift = params.getOrderPriceShift(orderRecord.getOrderBaseToken());
-                map.put("type", "buy");
-                map.put("amount", mf.format(orderRecord.getTargetValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getTargetTokenid());
 
-                map.put("price", mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift));
-                if (orderdataResponse.getTokennames() != null
-                        && orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()) != null) {
-                    map.put("tokenname", orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid())
-                            .getTokennameDisplay());
-                }
-                map.put("total", mf.format(orderRecord.getOfferValue(), base.getDecimals()));
-            } else {
-                Token t = orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid());
-                map.put("type", "sell");
-                map.put("amount", mf.format(orderRecord.getOfferValue(), t.getDecimals()));
-                map.put("tokenId", orderRecord.getOfferTokenid());
-                Integer priceshift = params.getOrderPriceShift(orderRecord.getOrderBaseToken());
-                map.put("price", mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift));
+            MarketOrderItem marketOrderItem = MarketOrderItem.build(orderRecord, orderdataResponse.getTokennames(),
+                    params, buy, sell);
 
-                map.put("total", mf.format(orderRecord.getTargetValue(), base.getDecimals()));
-
-                if (orderdataResponse.getTokennames() != null
-                        && orderdataResponse.getTokennames().get(orderRecord.getTargetTokenid()) != null)
-                    map.put("tokenname",
-                            orderdataResponse.getTokennames().get(orderRecord.getOfferTokenid()).getTokennameDisplay());
-            }
-            map.put("orderId", orderRecord.getBlockHashHex());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", local);
-            map.put("validateTo", dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
-            map.put("validatefrom", dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
-            map.put("address", orderRecord.getBeneficiaryAddress());
-            map.put("initialBlockHashHex", orderRecord.getBlockHashHex());
-            map.put("orderBaseToken", base.getTokennameDisplay());
-            map.put("cancelPending", orderRecord.isCancelPending());
-            // map.put("state", Main.getText( (String)
-            // requestParam.get("state")));
-         //   orderData.add(map);
+            itemList.add(marketOrderItem);
 
         }
     }
@@ -74,45 +32,45 @@ public class OrderUtil {
         return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
     }
 
-    public static List<Map<String, Object>> resetOrderList(List<Map<String, Object>> orderList) {
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+    public static List<MarketOrderItem> resetOrderList(List<MarketOrderItem> orderList) {
+        List<MarketOrderItem> list = new ArrayList<MarketOrderItem>();
 
-        Map<String, Map<String, List<Map<String, Object>>>> orderMap = new HashMap<String, Map<String, List<Map<String, Object>>>>();
+        Map<String, Map<String, List<MarketOrderItem>>> orderMap = new HashMap<String, Map<String, List<MarketOrderItem>>>();
 
-        for (Map<String, Object> map : orderList) {
-            String tokenname = map.get("tokenname").toString();
-            String type = map.get("type").toString();
+        for (MarketOrderItem map : orderList) {
+            String tokenname = map.getTokenName();
+            String type = map.getType();
             if (!orderMap.containsKey(tokenname)) {
-                orderMap.put(tokenname, new HashMap<String, List<Map<String, Object>>>());
+                orderMap.put(tokenname, new HashMap<String, List<MarketOrderItem>>());
             }
             if (!orderMap.get(tokenname).containsKey(type)) {
-                orderMap.get(tokenname).put(type, new ArrayList<Map<String, Object>>());
+                orderMap.get(tokenname).put(type, new ArrayList<MarketOrderItem>());
             }
 
             orderMap.get(tokenname).get(type).add(map);
         }
         for (String tokenname : orderMap.keySet()) {
-            Map<String, List<Map<String, Object>>> subMap = orderMap.get(tokenname);
-            List<Map<String, Object>> buys = subMap.get("buy");
+            Map<String, List<MarketOrderItem>> subMap = orderMap.get(tokenname);
+            List<MarketOrderItem> buys = subMap.get("buy");
             if (buys != null) {
-                Collections.sort(buys, new Comparator<Map<String, Object>>() {
+                Collections.sort(buys, new Comparator<MarketOrderItem>() {
                     @Override
-                    public int compare(Map<String, Object> order1, Map<String, Object> order2) {
-                        BigDecimal price1 = new BigDecimal(order1.get("price").toString());
-                        BigDecimal price2 = new BigDecimal(order2.get("price").toString());
-                        return price1.compareTo(price2);
+                    public int compare(MarketOrderItem order1, MarketOrderItem order2) {
+                        BigDecimal price1 = new BigDecimal(order1.getPrice());
+                        BigDecimal price2 = new BigDecimal(order2.getPrice());
+                        return price2.compareTo(price1);
                     }
                 });
             }
 
-            List<Map<String, Object>> sells = subMap.get("sell");
+            List<MarketOrderItem> sells = subMap.get("sell");
             if (sells != null) {
-                Collections.sort(sells, new Comparator<Map<String, Object>>() {
+                Collections.sort(sells, new Comparator<MarketOrderItem>() {
                     @Override
-                    public int compare(Map<String, Object> order1, Map<String, Object> order2) {
-                        BigDecimal price1 = new BigDecimal(order1.get("price").toString());
-                        BigDecimal price2 = new BigDecimal(order2.get("price").toString());
-                        return price2.compareTo(price1);
+                    public int compare(MarketOrderItem order1, MarketOrderItem order2) {
+                        BigDecimal price1 = new BigDecimal(order1.getPrice());
+                        BigDecimal price2 = new BigDecimal(order2.getPrice());
+                        return price1.compareTo(price2);
                     }
                 });
             }
