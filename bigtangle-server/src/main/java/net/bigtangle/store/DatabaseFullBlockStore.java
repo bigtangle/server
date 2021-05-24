@@ -346,7 +346,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = ? WHERE tokenid = ? AND tokenindex = ?";
     protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND address = ? ";
     protected final String SELECT_COUNT_ALL_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ?  AND sign=?";
-    
+
     protected final String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = ?";
 
     protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = ? AND tokenindex = ? AND sign = ?";
@@ -3295,7 +3295,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
- 
     @Override
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
@@ -6175,7 +6174,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     }
 
-    @Override
     public List<Long> selectTimesUntilNow() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
@@ -6208,7 +6206,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
     public int getCountYesterdayMatching() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
@@ -6234,7 +6231,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
     public int getCountMatching(String matchday) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
 
@@ -6266,8 +6262,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         String matchday = dateFormat.format(starttime);
         try {
-            preparedStatement = getConnection().prepareStatement(
-                    " select tokenid,basetokenid,sum(price),count(price),"
+            preparedStatement = getConnection().prepareStatement(" select tokenid,basetokenid,sum(price),count(price),"
                     + "max(price),min(price),sum(executedQuantity)"
                     + " from matching where inserttime>=? and inserttime<=? group by tokenid,basetokenid  ");
             preparedStatement.setLong(1, starttime / 1000);

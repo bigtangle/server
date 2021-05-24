@@ -61,6 +61,7 @@ import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 
+import net.bigtangle.apps.data.SignedData;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -81,6 +82,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -100,6 +102,7 @@ import net.bigtangle.core.exception.VerificationException.InvalidTransactionData
 import net.bigtangle.core.exception.VerificationException.OrderImpossibleException;
 import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
 import net.bigtangle.core.ordermatch.MatchResult;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -1816,7 +1819,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 final String tokenid = token.getTokenid();
                 multiSignAddresses.add(new MultiSignAddress(tokenid, "", pubKeyHex, 0));
             }
-           // tokenInfo.setMultiSignAddresses(multiSignAddresses);
+            // tokenInfo.setMultiSignAddresses(multiSignAddresses);
         }
 
         // +1 for domain name or super domain
@@ -2797,6 +2800,45 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block retryBlock(String hashHex) throws BlockStoreException, JsonProcessingException, IOException {
         return retryBlocks(getBlock(hashHex));
+    }
+
+    public void tokenTypeList(ECKey signerKey, ECKey userKey, TokenType tokenType) throws Exception {
+        Map<String, String> param = new HashMap<String, String>();
+        param.put("toaddress", userKey.toAddress(params).toString());
+
+        byte[] response = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputsHistory.name(),
+                Json.jsonmapper().writeValueAsString(param));
+
+        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+        for (UTXO utxo : balancesResponse.getOutputs()) {
+            if (checkTokenType(utxo, tokenType)) {
+               // tokenTypeListAdd(utxo, signerKey);
+            }
+        }
+    }
+
+    private void tokenTypeListAdd(UTXO utxo, ECKey signerKey, Token token) throws Exception {
+
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            if (kvtemp.getKey().equals(signerKey.getPublicKeyAsHex())) {
+                try {
+                    byte[] decryptedPayload = ECIESCoder.decrypt(signerKey.getPrivKey(),
+                            Utils.HEX.decode(kvtemp.getValue()));
+                    SignedData sdata = new SignedData().parse(decryptedPayload);
+       
+                    // sdata.verify();
+                    break;
+                } catch (Exception e) {
+
+                }
+            }
+        }
+    }
+
+    private boolean checkTokenType(UTXO utxo, TokenType tokenType) {
+        return TokenType.certificate.ordinal() == tokenType.ordinal();
+
     }
 
     /*

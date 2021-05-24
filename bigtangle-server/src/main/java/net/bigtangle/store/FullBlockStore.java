@@ -487,14 +487,10 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void batchAddAvgPrice() throws Exception;
 
     void saveAvgPrice(AVGMatchResult matchResult) throws BlockStoreException;
-
-    int getCountYesterdayMatching() throws BlockStoreException;
-
-    int getCountMatching(String matchday) throws BlockStoreException;
+ 
 
     List<AVGMatchResult> queryTickerByTime(long starttime, long endtime) throws BlockStoreException;
-
-    List<Long> selectTimesUntilNow() throws BlockStoreException;
+ 
 
     List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException;
 }

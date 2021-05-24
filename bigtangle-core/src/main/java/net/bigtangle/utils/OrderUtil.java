@@ -19,7 +19,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.response.OrderdataResponse;
 
 public class OrderUtil {
-    public static void orderMap(OrderdataResponse orderdataResponse, List<Map<String, Object>> orderData, Locale local,
+    public static void orderMap(OrderdataResponse orderdataResponse, List<OrderItem> orderData, Locale local,
             NetworkParameters params) {
         MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
 
@@ -65,7 +65,7 @@ public class OrderUtil {
             map.put("cancelPending", orderRecord.isCancelPending());
             // map.put("state", Main.getText( (String)
             // requestParam.get("state")));
-            orderData.add(map);
+         //   orderData.add(map);
 
         }
     }

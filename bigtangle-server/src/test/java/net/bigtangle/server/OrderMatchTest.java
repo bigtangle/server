@@ -199,6 +199,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
  
+        // 200, 300  avg daily 200+300/2
         store.batchAddAvgPrice();
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
