@@ -130,6 +130,7 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.SignedDataWithToken;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.jcip.annotations.GuardedBy;
@@ -2802,43 +2803,57 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return retryBlocks(getBlock(hashHex));
     }
 
-    public void tokenTypeList(ECKey signerKey, ECKey userKey, TokenType tokenType) throws Exception {
-        Map<String, String> param = new HashMap<String, String>();
-        param.put("toaddress", userKey.toAddress(params).toString());
-
-        byte[] response = OkHttp3Util.postString(getServerURL() + ReqCmd.getOutputsHistory.name(),
-                Json.jsonmapper().writeValueAsString(param));
+    /*
+     * return all decrypted SignedData list of the given keys and token type
+     */
+    public List<SignedDataWithToken> signedTokenList(List<ECKey> userKeys, TokenType tokenType) throws Exception {
+        List<SignedDataWithToken> signedTokenList = new ArrayList<SignedDataWithToken>();
+        List<String> keys = new ArrayList<String>();
+        for (ECKey k : userKeys) {
+            keys.add(Utils.HEX.encode(k.getPubKeyHash()));
+        }
+        byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keys).getBytes());
 
         GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
         for (UTXO utxo : balancesResponse.getOutputs()) {
-            if (checkTokenType(utxo, tokenType)) {
-               // tokenTypeListAdd(utxo, signerKey);
+            Token token = balancesResponse.getTokennames().get(utxo.getTokenId());
+            if (TokenType.certificate.ordinal() == token.getTokentype()) {
+                signedTokenListAdd(utxo, userKeys, token, signedTokenList);
             }
         }
+        return signedTokenList;
     }
 
-    private void tokenTypeListAdd(UTXO utxo, ECKey signerKey, Token token) throws Exception {
-
+    private void signedTokenListAdd(UTXO utxo, List<ECKey> userkeys, Token token,
+            List<SignedDataWithToken> signedTokenList) throws Exception {
+        if (token == null || token.getTokenKeyValues() == null) {
+            log.warn(" token is null " + utxo.toString());
+            return;
+        }
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
-            if (kvtemp.getKey().equals(signerKey.getPublicKeyAsHex())) {
+            ECKey signerKey = getSignedKey(userkeys, kvtemp.getKey());
+            if (signerKey != null) {
                 try {
                     byte[] decryptedPayload = ECIESCoder.decrypt(signerKey.getPrivKey(),
                             Utils.HEX.decode(kvtemp.getValue()));
-                    SignedData sdata = new SignedData().parse(decryptedPayload);
-       
+                    signedTokenList.add(new SignedDataWithToken(new SignedData().parse(decryptedPayload), token));
                     // sdata.verify();
-                    break;
                 } catch (Exception e) {
-
+                    log.warn("", e);
                 }
             }
         }
     }
 
-    private boolean checkTokenType(UTXO utxo, TokenType tokenType) {
-        return TokenType.certificate.ordinal() == tokenType.ordinal();
-
+    private ECKey getSignedKey(List<ECKey> userkeys, String pubKey) {
+        for (ECKey userkey : userkeys) {
+            if (userkey.getPublicKeyAsHex().equals(pubKey)) {
+                return userkey;
+            }
+        }
+        return null;
     }
 
     /*

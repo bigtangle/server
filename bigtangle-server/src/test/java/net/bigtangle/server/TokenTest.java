@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import net.bigtangle.apps.data.Certificate;
 import net.bigtangle.apps.data.IdentityCore;
 import net.bigtangle.apps.data.IdentityData;
 import net.bigtangle.apps.data.Prescription;
@@ -51,6 +52,7 @@ import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.utils.SignedDataWithToken;
 import net.bigtangle.wallet.Wallet;
 
 /*
@@ -286,7 +288,8 @@ public class TokenTest extends AbstractIntegrationTest {
 
         ECKey domainkey = prepareIdentity();
         String domainAddress = domainkey.toAddress(networkParameters).toString();
-        //issuer create the token for user public key and domain key must sign the token
+        // issuer create the token for user public key and domain key must sign
+        // the token
         ECKey issuer = new ECKey();
         ECKey userkey = new ECKey();
         SignedData signedata = signeddata(issuer);
@@ -298,14 +301,14 @@ public class TokenTest extends AbstractIntegrationTest {
                 signedata.encryptToMemo(userkey));
         String isserAddress = issuer.toAddress(networkParameters).toString();
         log.info("domain sign before : " + tokenid + "," + isserAddress);
-        querySign(tokenid, isserAddress,true);
-        querySign(tokenid, domainAddress,false);
+        querySign(tokenid, isserAddress, true);
+        querySign(tokenid, domainAddress, false);
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), domainkey, aesKey);
-    
+
         log.info("domain sign end : " + tokenid + "," + domainAddress);
-        querySign(tokenid, isserAddress,true);
-        querySign(tokenid, domainAddress,true);
+        querySign(tokenid, isserAddress, true);
+        querySign(tokenid, domainAddress, true);
         // sendEmpty(10);
         makeRewardBlock();
 
@@ -334,6 +337,41 @@ public class TokenTest extends AbstractIntegrationTest {
         List<UTXO> ulist = getBalance(false, userkey);
         assertTrue(ulist.size() == 1);
         // assertTrue(ulist.size()==1);
+
+    }
+
+    @Test
+    public void testSigneddata() throws Exception {
+
+        ECKey domainkey = prepareIdentity();
+        String domainAddress = domainkey.toAddress(networkParameters).toString();
+        // issuer create the token for user public key and domain key must sign
+        // the token
+        ECKey issuer = new ECKey();
+        ECKey userkey = new ECKey();
+        SignedData signedata = signeddata(issuer);
+        TokenKeyValues kvs = signedata.toTokenKeyValues(issuer, userkey);
+        walletAppKit1.wallet().importKey(issuer);
+        String tokenid = new ECKey().getPublicKeyAsHex();
+        Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
+                TokenType.certificate.ordinal(), tokenid, walletAppKit1.wallet(), userkey.getPubKey(),
+                signedata.encryptToMemo(userkey));
+
+        TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+        walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), domainkey, aesKey);
+
+        // sendEmpty(10);
+        makeRewardBlock();
+
+        List<ECKey> keys = new ArrayList<ECKey>();
+        keys.add(userkey);
+        List<SignedDataWithToken> data = walletAppKit1.wallet().signedTokenList(keys, TokenType.certificate);
+        assertTrue(data.size() > 0);
+        for (SignedDataWithToken sdata : data) {
+            Certificate certificate = new Certificate()
+                    .parse(Utils.HEX.decode(sdata.getSignedData().getSerializedData()));
+            assertTrue(certificate != null);
+        }
 
     }
 
@@ -402,10 +440,10 @@ public class TokenTest extends AbstractIntegrationTest {
         List<MultiSign> multiSigns = multiSignResponse.getMultiSigns();
         assertTrue(multiSigns != null);
         for (MultiSign multiSign : multiSigns) {
-            if(sign)
-            assertTrue(multiSign.getSign() ==1);
+            if (sign)
+                assertTrue(multiSign.getSign() == 1);
             else {
-                assertTrue(multiSign.getSign() ==0);
+                assertTrue(multiSign.getSign() == 0);
             }
         }
 

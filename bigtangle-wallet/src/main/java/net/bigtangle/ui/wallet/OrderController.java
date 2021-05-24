@@ -363,7 +363,7 @@ public class OrderController extends ExchangeController {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
-        OrderUtil.orderMap(orderdataResponse,  orderData  , Locale.getDefault(), Main.params);
+       //TODO OrderUtil.orderMap(orderdataResponse,  orderData  , Locale.getDefault(), Main.params);
         
         
         
