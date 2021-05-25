@@ -6274,7 +6274,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             List<AVGMatchResult> orderTickers = new ArrayList<AVGMatchResult>();
             while (resultSet.next()) {
                 AVGMatchResult matchResult = new AVGMatchResult();
-                matchResult.setBasetokenid(resultSet.getString(1));
+                matchResult.setTokenid(resultSet.getString(1));
                 matchResult.setBasetokenid(resultSet.getString(2));
                 matchResult.setPrice(resultSet.getLong(3) / resultSet.getLong(4));
                 BigDecimal avgprice = BigDecimal.ZERO;
