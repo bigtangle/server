@@ -2819,9 +2819,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         for (UTXO utxo : balancesResponse.getOutputs()) {
             Token token = balancesResponse.getTokennames().get(utxo.getTokenId());
-            if (TokenType.certificate.ordinal() == token.getTokentype()
-                    || TokenType.identity.ordinal() == token.getTokentype()
-                    || TokenType.prescription.ordinal() == token.getTokentype()) {
+            if (tokenType.ordinal() == token.getTokentype()) {
                 signedTokenListAdd(utxo, userKeys, token, signedTokenList);
             }
         }
