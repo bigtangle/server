@@ -6176,7 +6176,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     public List<Long> selectTimesUntilNow() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
+        Date yesterdayDate = new Date(System.currentTimeMillis() + 86400000L);
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String yesterday = dateFormat.format(yesterdayDate);
         DateFormat dateFormat0 = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS");
@@ -6239,7 +6239,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                     .prepareStatement(" select count(1) from matchingdaily where matchday=?  ");
             preparedStatement.setString(1, matchday);
             ResultSet resultSet = preparedStatement.executeQuery();
-            int count = resultSet.getInt(1);
+            int count = 0;
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
             return count;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
