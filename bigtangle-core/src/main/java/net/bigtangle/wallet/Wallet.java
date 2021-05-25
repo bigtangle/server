@@ -2840,6 +2840,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                             Utils.HEX.decode(kvtemp.getValue()));
                     signedTokenList.add(new SignedDataWithToken(new SignedData().parse(decryptedPayload), token));
                     // sdata.verify();
+                    break;
                 } catch (Exception e) {
                     log.warn("", e);
                 }
