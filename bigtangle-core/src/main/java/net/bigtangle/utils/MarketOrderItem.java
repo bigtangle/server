@@ -51,7 +51,7 @@ public class MarketOrderItem implements java.io.Serializable {
                 ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(networkParameters).toString());
         marketOrderItem.setInitialBlockHashHex(orderRecord.getBlockHashHex());
         marketOrderItem.setCancelPending(orderRecord.isCancelPending());
-
+        marketOrderItem.setOrderBaseToken(base.getTokennameDisplay());
         return marketOrderItem;
     }
 
@@ -79,6 +79,8 @@ public class MarketOrderItem implements java.io.Serializable {
 
     private String total;
 
+    private String  orderBaseToken;
+    
     public String getTotal() {
         return total;
     }
@@ -174,4 +176,14 @@ public class MarketOrderItem implements java.io.Serializable {
     public void setCancelPending(boolean cancelPending) {
         this.cancelPending = cancelPending;
     }
+
+    public String getOrderBaseToken() {
+        return orderBaseToken;
+    }
+
+    public void setOrderBaseToken(String orderBaseToken) {
+        this.orderBaseToken = orderBaseToken;
+    }
+    
+    
 }

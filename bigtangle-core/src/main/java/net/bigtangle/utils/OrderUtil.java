@@ -17,13 +17,10 @@ import net.bigtangle.core.response.OrderdataResponse;
 public class OrderUtil {
     public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData, Locale local,
             NetworkParameters params, String buy, String sell) {
-        List<MarketOrderItem> itemList = new ArrayList<MarketOrderItem>();
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-
             MarketOrderItem marketOrderItem = MarketOrderItem.build(orderRecord, orderdataResponse.getTokennames(),
                     params, buy, sell);
-
-            itemList.add(marketOrderItem);
+            orderData.add(marketOrderItem);
 
         }
     }
