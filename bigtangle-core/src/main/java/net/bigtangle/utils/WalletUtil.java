@@ -10,11 +10,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.bigtangle.apps.data.SignedData;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenType;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
+import net.bigtangle.encrypt.ECIESCoder;
+import net.bigtangle.params.ReqCmd;
 
-public class OrderUtil {
+public class WalletUtil {
     public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData, Locale local,
             NetworkParameters params, String buy, String sell) {
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
@@ -98,6 +108,59 @@ public class OrderUtil {
             }
         }
         return list;
+    }
+
+    /*
+     * return all decrypted SignedData list of the given keys and token type
+     */
+    public static List<SignedDataWithToken> signedTokenList(List<ECKey> userKeys, TokenType tokenType, String serverurl)
+            throws Exception {
+        List<SignedDataWithToken> signedTokenList = new ArrayList<SignedDataWithToken>();
+        List<String> keys = new ArrayList<String>();
+        for (ECKey k : userKeys) {
+            keys.add(Utils.HEX.encode(k.getPubKeyHash()));
+        }
+        byte[] response = OkHttp3Util.post(serverurl + ReqCmd.getBalances.name(),
+                Json.jsonmapper().writeValueAsString(keys).getBytes());
+
+        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+        for (UTXO utxo : balancesResponse.getOutputs()) {
+            Token token = balancesResponse.getTokennames().get(utxo.getTokenId());
+            if (tokenType.ordinal() == token.getTokentype()) {
+                signedTokenListAdd(utxo, userKeys, token, signedTokenList);
+            }
+        }
+        return signedTokenList;
+    }
+
+    private static void signedTokenListAdd(UTXO utxo, List<ECKey> userkeys, Token token,
+            List<SignedDataWithToken> signedTokenList) throws Exception {
+        if (token == null || token.getTokenKeyValues() == null) {
+            return;
+        }
+        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
+            ECKey signerKey = getSignedKey(userkeys, kvtemp.getKey());
+            if (signerKey != null) {
+                try {
+                    byte[] decryptedPayload = ECIESCoder.decrypt(signerKey.getPrivKey(),
+                            Utils.HEX.decode(kvtemp.getValue()));
+                    signedTokenList.add(new SignedDataWithToken(new SignedData().parse(decryptedPayload), token));
+                    // sdata.verify();
+                    break;
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
+    private static ECKey getSignedKey(List<ECKey> userkeys, String pubKey) {
+        for (ECKey userkey : userkeys) {
+            if (userkey.getPublicKeyAsHex().equals(pubKey)) {
+                return userkey;
+            }
+        }
+        return null;
     }
 
 }
