@@ -53,6 +53,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.SignedDataWithToken;
+import net.bigtangle.utils.WalletUtil;
 import net.bigtangle.wallet.Wallet;
 
 /*
@@ -365,7 +366,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(userkey);
-        List<SignedDataWithToken> data = walletAppKit1.wallet().signedTokenList(keys, TokenType.certificate);
+        List<SignedDataWithToken> data = WalletUtil.signedTokenList(keys, TokenType.certificate,contextRoot);
         assertTrue(data.size() > 0);
         for (SignedDataWithToken sdata : data) {
             Certificate certificate = new Certificate()
