@@ -2804,60 +2804,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     /*
-     * return all decrypted SignedData list of the given keys and token type
-     */
-    public List<SignedDataWithToken> signedTokenList(List<ECKey> userKeys, TokenType tokenType) throws Exception {
-        List<SignedDataWithToken> signedTokenList = new ArrayList<SignedDataWithToken>();
-        List<String> keys = new ArrayList<String>();
-        for (ECKey k : userKeys) {
-            keys.add(Utils.HEX.encode(k.getPubKeyHash()));
-        }
-        byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getBalances.name(),
-                Json.jsonmapper().writeValueAsString(keys).getBytes());
-
-        GetBalancesResponse balancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
-
-        for (UTXO utxo : balancesResponse.getOutputs()) {
-            Token token = balancesResponse.getTokennames().get(utxo.getTokenId());
-            if (tokenType.ordinal() == token.getTokentype()) {
-                signedTokenListAdd(utxo, userKeys, token, signedTokenList);
-            }
-        }
-        return signedTokenList;
-    }
-
-    private void signedTokenListAdd(UTXO utxo, List<ECKey> userkeys, Token token,
-            List<SignedDataWithToken> signedTokenList) throws Exception {
-        if (token == null || token.getTokenKeyValues() == null) {
-            log.warn(" token is null " + utxo.toString());
-            return;
-        }
-        for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
-            ECKey signerKey = getSignedKey(userkeys, kvtemp.getKey());
-            if (signerKey != null) {
-                try {
-                    byte[] decryptedPayload = ECIESCoder.decrypt(signerKey.getPrivKey(),
-                            Utils.HEX.decode(kvtemp.getValue()));
-                    signedTokenList.add(new SignedDataWithToken(new SignedData().parse(decryptedPayload), token));
-                    // sdata.verify();
-                    break;
-                } catch (Exception e) {
-                    log.warn("", e);
-                }
-            }
-        }
-    }
-
-    private ECKey getSignedKey(List<ECKey> userkeys, String pubKey) {
-        for (ECKey userkey : userkeys) {
-            if (userkey.getPublicKeyAsHex().equals(pubKey)) {
-                return userkey;
-            }
-        }
-        return null;
-    }
-
-    /*
      * if a block is failed due to rating without conflict, it can be retried by
      * setting new BlockPrototype.
      */
