@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -47,7 +46,7 @@ import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MarketOrderItem;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.OrderUtil;
+import net.bigtangle.utils.WalletUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -492,7 +491,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         // assertTrue(orderData.size() == 4);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("0.001") || map.getPrice().equals("1"));
@@ -1299,7 +1298,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));
             assertTrue(map.getPrice().equals("1400"));
@@ -1319,7 +1318,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         orderData = new ArrayList<MarketOrderItem>();
-        OrderUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         assertTrue(orderData.size() == 1);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));

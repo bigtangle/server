@@ -35,9 +35,7 @@ public class WalletUtil {
         }
     }
 
-    public static Long calc(long m, long factor, long d) {
-        return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
-    }
+ 
 
     public static List<MarketOrderItem> resetOrderList(List<MarketOrderItem> orderList) {
         List<MarketOrderItem> list = new ArrayList<MarketOrderItem>();

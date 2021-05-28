@@ -6,7 +6,6 @@ package net.bigtangle.ui.wallet;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import javafx.scene.control.Button;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +32,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -65,7 +64,6 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.OrderState;
-import net.bigtangle.utils.OrderUtil;
 
 public class OrderController extends ExchangeController {
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);

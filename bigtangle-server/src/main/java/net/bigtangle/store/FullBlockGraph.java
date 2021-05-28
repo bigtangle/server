@@ -96,7 +96,6 @@ import net.bigtangle.server.service.ValidatorService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
-import net.bigtangle.utils.OrderUtil;
 
 /**
  * <p>
@@ -1321,13 +1320,16 @@ public class FullBlockGraph {
         if (reqInfo.getVersion() == 1) {
             boolean buy = record.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING);
             if (buy) {
-                record.setPrice(OrderUtil.calc(record.getOfferValue(),
+                record.setPrice( calc(record.getOfferValue(),
                         LongMath.checkedPow(10, record.getTokenDecimals()), record.getTargetValue()));
             } else {
-                record.setPrice(OrderUtil.calc(record.getTargetValue(),
+                record.setPrice( calc(record.getTargetValue(),
                         LongMath.checkedPow(10, record.getTokenDecimals()), record.getOfferValue()));
             }
         }
+    }
+    public   Long calc(long m, long factor, long d) {
+        return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
     }
 
     private void connectContractEvent(Block block, FullBlockStore blockStore) throws BlockStoreException {
