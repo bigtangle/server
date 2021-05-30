@@ -1858,14 +1858,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block adjustSolveAndSign(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
         try {
-            byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            String dataHex = (String) result.get("dataHex");
-            Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
-            adjust.solve();
-            OkHttp3Util.post(getServerURL() + ReqCmd.signToken.name(), adjust.bitcoinSerialize());
-            return adjust;
+ 
+            block.solve();
+            OkHttp3Util.post(getServerURL() + ReqCmd.signToken.name(), block.bitcoinSerialize());
+            return block;
         } catch (ConnectException e) {
             serverConnectException();
             throw e;
@@ -2375,17 +2371,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             if (allowClientMining && clientMiningAddress != null) {
                 block.setMinerAddress(clientMiningAddress);
             }
-            byte[] resp = OkHttp3Util.post(getServerURL() + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> result = Json.jsonmapper().readValue(resp, HashMap.class);
-            String dataHex = (String) result.get("dataHex");
-
-            Block adjust = params.getDefaultSerializer().makeBlock(Utils.HEX.decode(dataHex));
-            adjust.solve();
+           block.solve();
             // check the valid to time must be at least the block creation time
 
-            OkHttp3Util.post(getServerURL() + ReqCmd.saveBlock.name(), adjust.bitcoinSerialize());
-            return adjust;
+            OkHttp3Util.post(getServerURL() + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+            return block;
         } catch (ConnectException e) {
             this.serverPool.removeServer(getServerURL());
             throw e;

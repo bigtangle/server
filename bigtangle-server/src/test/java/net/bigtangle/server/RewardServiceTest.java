@@ -76,7 +76,7 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().multiply(BigInteger.valueOf(4)), networkParameters.getGenesisBlock().getRewardInfo().getDifficultyTargetAsInteger());
     	Block highDifficultyBlock = rollingBlock;
 		
-    	// Rewards way too fast -> maximum difficulty change to higher difficulty    	
+    	// Rewards way slower -> maximum difficulty change to lower difficulty    	
 		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
 			currentTime += NetworkParameters.TARGET_SPACING * 8;
 	        rollingBlock = rewardService.createReward(rollingBlock.getHash(), rollingBlock.getHash(), rollingBlock.getHash(), currentTime,store);
@@ -89,12 +89,12 @@ public class RewardServiceTest extends AbstractIntegrationTest  {
         assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().divide(BigInteger.valueOf(4)), highDifficultyBlock.getRewardInfo().getDifficultyTargetAsInteger());
     }
 
-    @Test
+   // @Test
     public void testDifficultyTransitionPruned() throws Exception {
         serverConfiguration.setServermode("fullpruned");
         testDifficultyTransition2();
     }
-    @Test
+   // @Test
     public void testDifficultyTransitionPruned3() throws Exception {
         serverConfiguration.setServermode("fullpruned");
         testDifficultyTransition3();

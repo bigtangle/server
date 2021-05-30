@@ -32,26 +32,16 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ConflicTest extends AbstractIntegrationTest {
 
-    
-    @Before
-    public void setUp() throws Exception {
-        Utils.unsetMockClock();
-
-        this.walletKeys();
-        this.initWalletKeysMapper();
-
-    }
-    
-/*
- * resolve mass conflict quickly
- */
+    /*
+     * resolve mass conflict quickly
+     */
     @Test
     public void testPayConflict() throws Exception {
 
         // Create blocks with conflict
         Transaction doublespendTX = create();
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
 
             Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), doublespendTX);
