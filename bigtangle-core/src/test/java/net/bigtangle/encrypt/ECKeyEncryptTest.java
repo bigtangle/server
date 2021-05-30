@@ -6,7 +6,6 @@ import java.math.BigInteger;
 import java.util.Random;
 
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 
 import net.bigtangle.core.ECKey;
 

@@ -1,46 +1,18 @@
 package net.bigtangle.json;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.response.GetOrderResponse;
 import net.bigtangle.utils.Json;
 
 public class JsonMapperTest {
 
-    @Test
-    public void testJsonMapperListObject() throws Exception {
-        GetOrderResponse getOrderResponse = new GetOrderResponse();
-        getOrderResponse.setErrorcode(0);
-
-        OTCOrder orderPublish = new OTCOrder("address", "tokenid", 0, null, null, 2000, 2000,
-                "http://localhost");
-        List<OTCOrder> orders = new ArrayList<>();
-        orders.add(orderPublish);
-
-        getOrderResponse.setOrders(orders);
-        String jsonStr = Json.jsonmapper().writeValueAsString(getOrderResponse);
-        System.out.println(jsonStr);
-
-        GetOrderResponse getOrderResponse2 = Json.jsonmapper().readValue(jsonStr, GetOrderResponse.class);
-
-        OTCOrder orderPublish2 = getOrderResponse2.getOrders().get(0);
-
-        Class<?> clazz = orderPublish2.getClass();
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            System.out.println("field : " + field.getName() + ", value : " + field.get(orderPublish2));
-        }
-    }
+ 
 
     @Test
     public void testJsonMapperByteList() throws Exception {

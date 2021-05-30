@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +47,9 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.OTCOrder;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.response.GetOrderResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
@@ -407,55 +403,7 @@ public class OrderController extends ExchangeController {
             OrderState orderState = OrderState.valueOf(stateStr);
             requestParam.put("state", orderState.ordinal());
         }
-
-       byte[] response = OkHttp3Util.post(CONTEXT_ROOT + ReqCmd.getOTCMarkets.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
-
-        for (Token tokens : getTokensResponse.getTokens()) {
-            if (tokens.getTokentype() != TokenType.market.ordinal()) {
-                continue;
-            }
-            String url = "https://" + tokens.getDomainName();
-            try {
-                response = OkHttp3Util.post(url + "/" + OrdermatchReqCmd.getOrders.name(),
-                        Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-            } catch (Exception e) {
-                continue;
-            }
-            GetOrderResponse getOrderResponse = Json.jsonmapper().readValue(response, GetOrderResponse.class);
-            for (OTCOrder orderPublish : getOrderResponse.getOrders()) {
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                if (orderPublish.getType() == 1) {
-                    map.put("type", Main.getText("SELL"));
-                } else {
-                    map.put("type", Main.getText("BUY"));
-                }
-                int stateIndex = orderPublish.getState();
-                OrderState orderState = OrderState.values()[stateIndex];
-                map.put("state", Main.getText(orderState.name()));
-
-                byte[] tokenid = null;
-
-                if (StringUtils.isNotBlank(orderPublish.getTokenId())) {
-                    tokenid = Utils.HEX.decode(orderPublish.getTokenId());
-                }
-                Coin fromAmount = Coin.valueOf(orderPublish.getPrice(), tokenid);
-                Coin toAmount = Coin.valueOf(orderPublish.getAmount(), tokenid);
-                map.put("price", fromAmount);
-                map.put("amount", toAmount);
-                map.put("orderId", orderPublish.getOrderId());
-                map.put("address", orderPublish.getAddress());
-                map.put("tokenId", orderPublish.getTokenId());
-                // map.put("tokenId", getOrderResponse.getTokennames().get(
-                // orderPublish.getTokenId()).getTokennameDisplay());
-                map.put("validateTo", orderPublish.getValidateTo());
-                map.put("validateFrom", orderPublish.getValidateFrom());
-                map.put("market", orderPublish.getMarket());
-                orderData.add(map);
-            }
-        }
+ 
     }
 
     public void initMarketComboBox() throws Exception {
