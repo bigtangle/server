@@ -114,7 +114,6 @@ import net.bigtangle.utils.Json;
 @Service
 public class FullBlockGraph {
 
-   
     private static final long DaySeconds = 24 * 60 * 60L;
     private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
 
@@ -133,7 +132,6 @@ public class FullBlockGraph {
     private BlockService blockService;
     @Autowired
     private StoreService storeService;
- 
 
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean added;
@@ -262,11 +260,20 @@ public class FullBlockGraph {
         if (cbs != null && !cbs.isEmpty()) {
             Stopwatch watch = Stopwatch.createStarted();
             log.info("selectChainblockqueue with size  " + cbs.size());
+            // check only do add if there is longer chain as saved in database
+            if (!checkChainLength(cbs.get(cbs.size() - 1), store)) {
+                log.info("not longest chain in  selectChainblockqueue {}", cbs.get(cbs.size() - 1).toString());
+                return;
+            }
             for (ChainBlockQueue chainBlockQueue : cbs) {
                 saveChainConnected(chainBlockQueue, store);
             }
             log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         }
+    }
+
+    private boolean checkChainLength(ChainBlockQueue chainBlockQueue, FullBlockStore store) throws BlockStoreException {
+        return store.getMaxConfirmedReward().getChainLength() < chainBlockQueue.getChainlength();
     }
 
     private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
@@ -286,27 +293,28 @@ public class FullBlockGraph {
 
             if (solidityState.isDirectlyMissing()) {
                 log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
-                        + block.toString()); 
+                        + block.toString());
                 // sync the lastest chain from remote start from the -2 rewards
-             //   syncBlockService.startSingleProcess(block.getLastMiningRewardBlock() - 2, false);
+                // syncBlockService.startSingleProcess(block.getLastMiningRewardBlock()
+                // - 2, false);
                 return;
             }
 
             if (solidityState.isFailState()) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString()); 
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
                 return;
-            } 
+            }
             // Inherit solidity from predecessors if they are not solid
             solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
-                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString()); 
+                log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
                 return;
-            } 
-            connectRewardBlock(block, solidityState, store);  
+            }
+            connectRewardBlock(block, solidityState, store);
             store.commitDatabaseBatchWrite();
-        } catch (Exception e) { 
+        } catch (Exception e) {
             store.abortDatabaseBatchWrite();
             throw e;
         } finally {
@@ -1176,7 +1184,7 @@ public class FullBlockGraph {
                 UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
                         getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
                         Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-                        block.getTimeSeconds(),null);
+                        block.getTimeSeconds(), null);
 
                 if (!newOut.isZero()) {
                     utxos.add(newOut);
@@ -1320,15 +1328,16 @@ public class FullBlockGraph {
         if (reqInfo.getVersion() == 1) {
             boolean buy = record.getOfferTokenid().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING);
             if (buy) {
-                record.setPrice( calc(record.getOfferValue(),
-                        LongMath.checkedPow(10, record.getTokenDecimals()), record.getTargetValue()));
+                record.setPrice(calc(record.getOfferValue(), LongMath.checkedPow(10, record.getTokenDecimals()),
+                        record.getTargetValue()));
             } else {
-                record.setPrice( calc(record.getTargetValue(),
-                        LongMath.checkedPow(10, record.getTokenDecimals()), record.getOfferValue()));
+                record.setPrice(calc(record.getTargetValue(), LongMath.checkedPow(10, record.getTokenDecimals()),
+                        record.getOfferValue()));
             }
         }
     }
-    public   Long calc(long m, long factor, long d) {
+
+    public Long calc(long m, long factor, long d) {
         return BigInteger.valueOf(m).multiply(BigInteger.valueOf(factor)).divide(BigInteger.valueOf(d)).longValue();
     }
 
@@ -1970,7 +1979,7 @@ public class FullBlockGraph {
                         log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                     }
                 }
-                store.deleteLockobject(LOCKID); 
+                store.deleteLockobject(LOCKID);
                 watch.stop();
             }
         } catch (Exception e) {
@@ -1988,17 +1997,15 @@ public class FullBlockGraph {
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
         log.info(" pruned until block " + rewardblock.toString());
         store.prunedClosedOrders(rewardblock.getTimeSeconds());
-        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10*DaySeconds);
-        store.prunedPriceTicker(rewardblock.getTimeSeconds() -  30*DaySeconds);
+        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10 * DaySeconds);
+        store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 * DaySeconds);
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
-      
-        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store); 
-        //NetworkParameters.INTERVAL is used for difficulty calculation
-        store.prunedBlocks(cutoffHeight-1000, rewardblock.getLastMiningRewardBlock()-1 - NetworkParameters.INTERVAL);
-    }
 
- 
-    
+        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
+        // NetworkParameters.INTERVAL is used for difficulty calculation
+        store.prunedBlocks(cutoffHeight - 1000,
+                rewardblock.getLastMiningRewardBlock() - 1 - NetworkParameters.INTERVAL);
+    }
 
     /*
      * run timeboxed updateConfirmed, there is no transaction here.

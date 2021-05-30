@@ -1300,8 +1300,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
         WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
         for (MarketOrderItem map : orderData) {
-            assertTrue(map.getPrice().equals("7"));
-            assertTrue(map.getPrice().equals("1400"));
+            assertTrue(map.getPrice().equals("7")); 
 
         }
 
@@ -1322,7 +1321,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertTrue(orderData.size() == 1);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));
-            assertTrue(map.getPrice().equals("1400"));
+     
         }
 
         // Execute order matching
