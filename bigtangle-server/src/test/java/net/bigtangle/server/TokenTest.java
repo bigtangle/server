@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -296,6 +297,9 @@ public class TokenTest extends AbstractIntegrationTest {
         SignedData signedata = signeddata(issuer);
         TokenKeyValues kvs = signedata.toTokenKeyValues(issuer, userkey);
         walletAppKit1.wallet().importKey(issuer);
+        List<ECKey> keys = walletAppKit1.wallet().walletKeys();
+        List<String> addresses = keys.stream().map(key -> key.toAddress(networkParameters).toBase58())
+                .collect(Collectors.toList());
         String tokenid = new ECKey().getPublicKeyAsHex();
         Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
                 TokenType.identity.ordinal(), tokenid, walletAppKit1.wallet(), userkey.getPubKey(),
@@ -303,13 +307,18 @@ public class TokenTest extends AbstractIntegrationTest {
         String isserAddress = issuer.toAddress(networkParameters).toString();
         log.info("domain sign before : " + tokenid + "," + isserAddress);
         querySign(tokenid, isserAddress, true);
+        querySignByTokenid(tokenid, addresses, true);
+        List<String> tempList=new ArrayList<String>();
+        tempList.add(domainAddress);
         querySign(tokenid, domainAddress, false);
+        querySignByTokenid(tokenid, tempList, false);
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), domainkey, aesKey);
 
         log.info("domain sign end : " + tokenid + "," + domainAddress);
         querySign(tokenid, isserAddress, true);
         querySign(tokenid, domainAddress, true);
+        querySignByTokenid(tokenid, tempList, true);
         // sendEmpty(10);
         makeRewardBlock();
 
@@ -366,7 +375,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(userkey);
-        List<SignedDataWithToken> data = WalletUtil.signedTokenList(keys, TokenType.certificate,contextRoot);
+        List<SignedDataWithToken> data = WalletUtil.signedTokenList(keys, TokenType.certificate, contextRoot);
         assertTrue(data.size() > 0);
         for (SignedDataWithToken sdata : data) {
             Certificate certificate = new Certificate()
@@ -435,6 +444,27 @@ public class TokenTest extends AbstractIntegrationTest {
         requestParam.put("address", address);
         // requestParam.put("tokenid", tokenid);
         byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByAddress.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+
+        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+        List<MultiSign> multiSigns = multiSignResponse.getMultiSigns();
+        assertTrue(multiSigns != null);
+        for (MultiSign multiSign : multiSigns) {
+            if (sign)
+                assertTrue(multiSign.getSign() == 1);
+            else {
+                assertTrue(multiSign.getSign() == 0);
+            }
+        }
+
+    }
+
+    public void querySignByTokenid(String tokenid, List<String> addresses, boolean sign) throws Exception {
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("addresses", addresses);
+        requestParam.put("isSign", sign);
+        requestParam.put("tokenid", tokenid);
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
         MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
