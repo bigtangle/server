@@ -24,7 +24,6 @@ import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
@@ -310,8 +309,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException;
 
     public void deleteMultiSignAddress(String tokenid, String address) throws BlockStoreException;
-
-    public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException;
+ 
 
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException;
 

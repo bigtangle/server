@@ -47,7 +47,6 @@ import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
@@ -2857,29 +2856,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
-    @Override
-    public void insertMultisignby(MultiSignBy multisignby) throws BlockStoreException {
-        maybeConnect();
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGNBY_SQL);
-            preparedStatement.setString(1, multisignby.getTokenid());
-            preparedStatement.setLong(2, multisignby.getTokenindex());
-            preparedStatement.setString(3, multisignby.getAddress());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
-        }
-    }
-
+ 
     @Override
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException {
         maybeConnect();

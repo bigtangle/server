@@ -224,11 +224,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
             + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ENGINE=InnoDB";
 
-    private static final String CREATE_MULTISIGNBY_TABLE = "CREATE TABLE multisignby (\n"
-            + "    tokenid varchar(255) NOT NULL  ,\n" 
-            + "    tokenindex bigint NOT NULL   ,\n"
-            + "    address varchar(255),\n" 
-            + "    PRIMARY KEY (tokenid,tokenindex, address) \n) ENGINE=InnoDB";
+ 
 
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" 
@@ -435,8 +431,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
         sqlStatements.add(CREATE_TOKENS_TABLE);
         sqlStatements.add(CREATE_MATCHING_TABLE);
-        sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
-        sqlStatements.add(CREATE_MULTISIGNBY_TABLE);
+        sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE); 
         sqlStatements.add(CREATE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_TX_REWARD_TABLE);
         sqlStatements.add(CREATE_USERDATA_TABLE);
