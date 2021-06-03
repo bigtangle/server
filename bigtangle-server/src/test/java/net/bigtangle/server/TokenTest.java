@@ -49,6 +49,7 @@ import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignResponse;
+import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
@@ -461,22 +462,14 @@ public class TokenTest extends AbstractIntegrationTest {
 
     public void querySignByTokenid(String tokenid, List<String> addresses, boolean sign) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("addresses", addresses);
+      //  requestParam.put("addresses", addresses);
         requestParam.put("isSign", sign);
         requestParam.put("tokenid", tokenid);
         byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenSignByTokenid.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
 
-        MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-        List<MultiSign> multiSigns = multiSignResponse.getMultiSigns();
-        assertTrue(multiSigns != null);
-        for (MultiSign multiSign : multiSigns) {
-            if (sign)
-                assertTrue(multiSign.getSign() == 1);
-            else {
-                assertTrue(multiSign.getSign() == 0);
-            }
-        }
+        SearchMultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, SearchMultiSignResponse.class);
+      
 
     }
 
