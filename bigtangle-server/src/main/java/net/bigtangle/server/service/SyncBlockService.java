@@ -446,7 +446,7 @@ public class SyncBlockService {
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
                 if (initsync) {
                     // log.debug(" updateChain " );
-                    blockgraph.updateChain();
+                    blockgraph.saveChainConnected(store,true);
                 
                 }
                 log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));

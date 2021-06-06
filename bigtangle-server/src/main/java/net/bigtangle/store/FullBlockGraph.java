@@ -217,7 +217,7 @@ public class FullBlockGraph {
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
-                saveChainConnected(store);
+                saveChainConnected(store,false);
                 store.deleteLockobject(LOCKID);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -255,7 +255,7 @@ public class FullBlockGraph {
     /*
      *  
      */
-    public void saveChainConnected(FullBlockStore store) throws VerificationException, BlockStoreException {
+    public void saveChainConnected(FullBlockStore store, boolean updatelowchain ) throws VerificationException, BlockStoreException {
         List<ChainBlockQueue> cbs = store.selectChainblockqueue(false);
         if (cbs != null && !cbs.isEmpty()) {
             Stopwatch watch = Stopwatch.createStarted();
@@ -263,7 +263,7 @@ public class FullBlockGraph {
             // check only do add if there is longer chain as saved in database
               TXReward maxConfirmedReward = store.getMaxConfirmedReward() ;
               ChainBlockQueue maxFromQuery = cbs.get(cbs.size() - 1);
-            if ( maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()  ) {
+            if (!updatelowchain && maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()  ) {
                 log.info("not longest chain in  selectChainblockqueue {}  < {}", maxFromQuery.toString()
                         ,  maxConfirmedReward.toString());
                 return;
