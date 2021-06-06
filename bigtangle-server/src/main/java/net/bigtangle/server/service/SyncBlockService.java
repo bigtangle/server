@@ -316,11 +316,11 @@ public class SyncBlockService {
 
     }
 
-    public TXReward getMaxConfirmedReward(String s) throws JsonProcessingException, IOException {
+    public TXReward getMaxConfirmedReward(String server) throws JsonProcessingException, IOException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
+          byte[] response = OkHttp3Util.postString(server.trim() + "/" + ReqCmd.getChainNumber,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 
