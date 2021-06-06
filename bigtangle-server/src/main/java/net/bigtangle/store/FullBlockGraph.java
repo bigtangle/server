@@ -261,8 +261,11 @@ public class FullBlockGraph {
             Stopwatch watch = Stopwatch.createStarted();
             log.info("selectChainblockqueue with size  " + cbs.size());
             // check only do add if there is longer chain as saved in database
-            if (!checkChainLength(cbs.get(cbs.size() - 1), store)) {
-                log.info("not longest chain in  selectChainblockqueue {}", cbs.get(cbs.size() - 1).toString());
+              TXReward maxConfirmedReward = store.getMaxConfirmedReward() ;
+              ChainBlockQueue maxFromQuery = cbs.get(cbs.size() - 1);
+            if ( maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()  ) {
+                log.info("not longest chain in  selectChainblockqueue {}  < {}", maxFromQuery.toString()
+                        ,  maxConfirmedReward.toString());
                 return;
             }
             for (ChainBlockQueue chainBlockQueue : cbs) {
@@ -272,9 +275,7 @@ public class FullBlockGraph {
         }
     }
 
-    private boolean checkChainLength(ChainBlockQueue chainBlockQueue, FullBlockStore store) throws BlockStoreException {
-        return store.getMaxConfirmedReward().getChainLength() < chainBlockQueue.getChainlength();
-    }
+    
 
     private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
             throws VerificationException, BlockStoreException {
