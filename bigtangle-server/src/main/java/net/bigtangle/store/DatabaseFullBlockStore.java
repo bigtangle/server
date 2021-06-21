@@ -2856,7 +2856,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         }
     }
 
- 
     @Override
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException {
         maybeConnect();
@@ -6142,18 +6141,91 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 Date endDate = dateFormat0.parse(day + "-23:59:59:999");
                 List<AVGMatchResult> list = queryTickerByTime(startDate.getTime(), endDate.getTime());
                 if (list != null && !list.isEmpty()) {
+                    List<String> tokenids = new ArrayList<String>();
                     for (AVGMatchResult matchResult : list) {
+                        tokenids.add(matchResult.getTokenid() + "-" + matchResult.getBasetokenid());
                         saveAvgPrice(matchResult);
+
                     }
+                    addLastdayPrice(tokenids);
                 }
             }
         }
 
     }
 
+    public void addLastdayPrice(List<String> tokenids) throws Exception {
+        if (tokenids != null && !tokenids.isEmpty()) {
+            Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String yesterday = dateFormat.format(yesterdayDate);
+            DateFormat dateFormat0 = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS");
+            long starttime = dateFormat0.parse(yesterday + "-00:00:00:000").getTime();
+            long endtime = dateFormat0.parse(yesterday + "-23:59:59:999").getTime();
+            for (String tokenid : tokenids) {
+                MatchResult tempMatchResult = queryTickerLast(starttime, endtime, tokenid.split("-")[0],
+                        tokenid.split("-")[1]);
+                if (tempMatchResult != null) {
+                    deleteLastdayPrice(tempMatchResult);
+                    saveLastdayPrice(tempMatchResult);
+                }
+
+            }
+        }
+
+    }
+
+    public void saveLastdayPrice(MatchResult matchResult) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection().prepareStatement(
+                    " insert into matchinglastday(tokenid,basetokenid,price,executedQuantity ,inserttime) values(?,?,?,?,? ) ");
+
+            preparedStatement.setString(1, matchResult.getTokenid());
+            preparedStatement.setString(2, matchResult.getBasetokenid());
+            preparedStatement.setLong(3, matchResult.getPrice());
+            preparedStatement.setLong(4, matchResult.getExecutedQuantity());
+
+            preparedStatement.setLong(5, new Date().getTime());
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public void deleteLastdayPrice(MatchResult matchResult) throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement("delete from  matchinglastday where tokenid=? and basetokenid=? ");
+
+            preparedStatement.setString(1, matchResult.getTokenid());
+            preparedStatement.setString(2, matchResult.getBasetokenid());
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
     public List<Long> selectTimesUntilNow() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        Date yesterdayDate = new Date(System.currentTimeMillis() + 86400000L);
+        Date yesterdayDate = new Date(System.currentTimeMillis() - 86400000L);
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String yesterday = dateFormat.format(yesterdayDate);
         DateFormat dateFormat0 = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss:SSS");
@@ -6266,6 +6338,41 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
             }
             return orderTickers;
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException("Could not close statement");
+                }
+            }
+        }
+    }
+
+    public MatchResult queryTickerLast(long starttime, long endtime, String tokenid, String basetokenid)
+            throws BlockStoreException {
+        PreparedStatement preparedStatement = null;
+
+        try {
+            preparedStatement = getConnection()
+                    .prepareStatement(" select tokenid,basetokenid,  price,  executedQuantity "
+                            + " from matching where inserttime>=? and inserttime<=?   and  tokenid=? and basetokenid=?  ");
+            preparedStatement.setLong(1, starttime / 1000);
+            preparedStatement.setLong(2, endtime / 1000);
+            preparedStatement.setString(3, tokenid);
+            preparedStatement.setString(4, basetokenid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            MatchResult matchResult = null;
+            if (resultSet.next()) {
+                matchResult = new MatchResult();
+                matchResult.setTokenid(resultSet.getString(1));
+                matchResult.setBasetokenid(resultSet.getString(2));
+                matchResult.setPrice(resultSet.getLong(3));
+                matchResult.setExecutedQuantity(resultSet.getLong(4));
+            }
+            return matchResult;
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {

@@ -190,6 +190,15 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    inserttime bigint NOT NULL,\n"
             + "    PRIMARY KEY ( tokenid,basetokenid) \n" 
             + ") ENGINE=InnoDB\n";
+    private static final String CREATE_MATCHING_LAST_DAY_TABLE = "CREATE TABLE matchinglastday (\n" 
+            + "    txhash varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" 
+            + "    basetokenid varchar(255) NOT NULL,\n" 
+            + "    price bigint NOT NULL,\n"
+            + "    executedQuantity bigint NOT NULL,\n" 
+            + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" 
+            + ") ENGINE=InnoDB\n";
     
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n"
             + "    blockhash binary(32) NOT NULL,\n" 
