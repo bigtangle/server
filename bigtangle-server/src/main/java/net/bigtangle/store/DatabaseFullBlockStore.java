@@ -5330,10 +5330,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = SELECT_MATCHING_EVENT_LAST + " where basetokenid= ? ";
-
+            String sql = "SELECT  ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity, "
+                    + "mld.price lastdayprice,mld.executedQuantity lastdayQuantity "
+                    + "FROM matchinglast ml LEFT JOIN matchinglastday mld ON ml.tokenid=mld.tokenid AND  ml.basetokenid=mld.basetokenid";
+            sql += " where ml.basetokenid=?";
             if (tokenIds != null && !tokenIds.isEmpty()) {
-                sql += "  and tokenid IN ( " + buildINList(tokenIds) + " )";
+                sql += "  and ml.tokenid IN ( " + buildINList(tokenIds) + " )";
             }
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
@@ -5341,7 +5343,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             List<MatchResult> list = new ArrayList<>();
             while (resultSet.next()) {
                 list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
-                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
+                        resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
+                        resultSet.getLong(8)));
             }
             return list;
         } catch (SQLException ex) {

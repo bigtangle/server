@@ -2,31 +2,48 @@ package net.bigtangle.core.ordermatch;
 
 import java.io.Serializable;
 
-public class MatchResult implements Serializable{
+public class MatchResult implements Serializable {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
     private long price;
-    private long executedQuantity; 
+    private long executedQuantity;
     private String txhash;
     private String tokenid;
     private String basetokenid;
     private long inserttime;
 
+    private long lastdayprice;
+    private long lastdayQuantity;
+
     public MatchResult() {
         super();
-     
+
     }
 
-    public MatchResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity, long inserttime) {
+    public MatchResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity,
+            long inserttime, long lastdayprice, long lastdayQuantity) {
+        super();
+        this.price = price;
+        this.executedQuantity = executedQuantity;
+        this.txhash = txhash;
+        this.tokenid = tokenid;
+        this.basetokenid = basetokenid;
+        this.inserttime = inserttime;
+        this.lastdayprice = lastdayprice;
+        this.lastdayQuantity = lastdayQuantity;
+    }
+
+    public MatchResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity,
+            long inserttime) {
 
         this.price = price;
         this.executedQuantity = executedQuantity;
         this.inserttime = inserttime;
         this.tokenid = tokenid;
-        this.basetokenid = basetokenid; 
+        this.basetokenid = basetokenid;
         this.txhash = txhash;
     }
 
@@ -44,7 +61,7 @@ public class MatchResult implements Serializable{
 
     public void setExecutedQuantity(long executedQuantity) {
         this.executedQuantity = executedQuantity;
-    } 
+    }
 
     public String getTokenid() {
         return tokenid;
@@ -84,6 +101,20 @@ public class MatchResult implements Serializable{
                 + ", tokenid=" + tokenid + ", basetokenid=" + basetokenid + ", inserttime=" + inserttime + "]";
     }
 
-   
+    public long getLastdayprice() {
+        return lastdayprice;
+    }
+
+    public void setLastdayprice(long lastdayprice) {
+        this.lastdayprice = lastdayprice;
+    }
+
+    public long getLastdayQuantity() {
+        return lastdayQuantity;
+    }
+
+    public void setLastdayQuantity(long lastdayQuantity) {
+        this.lastdayQuantity = lastdayQuantity;
+    }
 
 }
