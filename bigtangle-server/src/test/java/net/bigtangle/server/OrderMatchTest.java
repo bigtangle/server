@@ -199,8 +199,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
- 
-        // 200, 300  avg daily 200+300/2
+
+        // 200, 300 avg daily 200+300/2
         store.batchAddAvgPrice();
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -230,6 +230,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertTrue(b.compareTo(new BigDecimal("0.001")) == 0);
 
     }
+
     @Test
     public void orderTickerSearchWithLastdayPriceAPI() throws Exception {
 
@@ -258,8 +259,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Verify token amount invariance
         assertCurrentTokenAmountEquals(origTokenAmounts);
- 
-        // 200, 300  avg daily 200+300/2
+
+        // 200, 300 avg daily 200+300/2
         store.batchAddAvgPrice();
         // get the data
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -279,8 +280,10 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 // assertTrue(m.getExecutedQuantity() == 78||
                 // m.getExecutedQuantity() == 22);
                 // TODO check the execute ordering. price is 1000 or 1001
+                log.info("price:" + m.getPrice() + ";ExecutedQuantity:" + m.getExecutedQuantity() + ";getLastdayprice:"
+                        + m.getLastdayprice());
                 assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
-                assertTrue(m.getLastdayprice()==1001);
+                assertTrue(m.getLastdayprice() == 1001);
             }
         }
 
@@ -290,6 +293,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertTrue(b.compareTo(new BigDecimal("0.001")) == 0);
 
     }
+
     @Test
     public void buy() throws Exception {
 
@@ -551,7 +555,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
         // assertTrue(orderData.size() == 4);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("0.001") || map.getPrice().equals("1"));
@@ -1358,9 +1362,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
         for (MarketOrderItem map : orderData) {
-            assertTrue(map.getPrice().equals("7")); 
+            assertTrue(map.getPrice().equals("7"));
 
         }
 
@@ -1377,11 +1381,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters,"buy","sell");
+        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
         assertTrue(orderData.size() == 1);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));
-     
+
         }
 
         // Execute order matching
