@@ -5331,7 +5331,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            String sql = "SELECT  ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity, "
+            String sql = "SELECT  ml.txhash txhash,ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity, "
                     + "mld.price lastdayprice,mld.executedQuantity lastdayQuantity "
                     + "FROM matchinglast ml LEFT JOIN matchinglastday mld ON ml.tokenid=mld.tokenid AND  ml.basetokenid=mld.basetokenid";
             sql += " where ml.basetokenid=?";

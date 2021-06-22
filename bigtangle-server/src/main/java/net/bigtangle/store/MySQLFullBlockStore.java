@@ -456,6 +456,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
         sqlStatements.add(CREATE_MCMC_TABLE); 
         sqlStatements.add(CREATE_MATCHING_LAST_TABLE);
+        sqlStatements.add(CREATE_MATCHING_LAST_DAY_TABLE);
         return sqlStatements;
     }
 
