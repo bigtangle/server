@@ -38,6 +38,7 @@ import net.bigtangle.core.UserData;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.ordermatch.AVGMatchResult;
+import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.BatchBlock;
@@ -406,7 +407,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void deleteMatchingEvents(String hashString) throws BlockStoreException;
 
-    List<MatchResult> getLastMatchingEvents(Set<String> tokenId, String basetoken) throws BlockStoreException;
+    List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenId, String basetoken) throws BlockStoreException;
 
     Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException;
 

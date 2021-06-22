@@ -66,6 +66,7 @@ import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.ordermatch.AVGMatchResult;
+import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
@@ -5326,7 +5327,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken) throws BlockStoreException {
+    public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -5340,9 +5341,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement = getConnection().prepareStatement(sql);
             preparedStatement.setString(1, basetoken);
             ResultSet resultSet = preparedStatement.executeQuery();
-            List<MatchResult> list = new ArrayList<>();
+            List<MatchLastdayResult> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
+                list.add(new MatchLastdayResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6), resultSet.getLong(7),
                         resultSet.getLong(8)));
             }

@@ -9,12 +9,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Token;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
@@ -72,8 +72,8 @@ public class OrderTickerService {
             throws BlockStoreException {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
-        List<MatchResult> re = store.getLastMatchingEvents(tokenIds, basetoken);
-        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re, store));
+        List<MatchLastdayResult> re = store.getLastMatchingEvents(tokenIds, basetoken);
+        return OrderTickerResponse.createOrderRecordResponseA(re, getTokenameA(re, store));
 
     }
 
@@ -90,6 +90,20 @@ public class OrderTickerService {
         }
         return re;
     }
+    public Map<String, Token> getTokenameA(List<MatchLastdayResult> res, FullBlockStore store) throws BlockStoreException {
+        Set<String> tokenids = new HashSet<String>();
+        for (MatchResult d : res) {
+            tokenids.add(d.getTokenid());
+            tokenids.add(d.getBasetokenid());
+        }
+        Map<String, Token> re = new HashMap<String, Token>();
+        List<Token> tokens = store.getTokensList(tokenids);
+        for (Token t : tokens) {
+            re.put(t.getTokenid(), t);
+        }
+        return re;
+    }
+
 
     // @Cacheable("priceticker")
     public OrderTickerResponse getTimeBetweenMatchingEvents(Set<String> tokenids, String basetoken, Long startDate,

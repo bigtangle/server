@@ -2,7 +2,7 @@ package net.bigtangle.core.ordermatch;
 
 import java.io.Serializable;
 
-public class MatchResult implements Serializable {
+public class MatchLastdayResult implements Serializable {
 
     /**
      * 
@@ -15,15 +15,28 @@ public class MatchResult implements Serializable {
     private String basetokenid;
     private long inserttime;
 
+    private long lastdayprice;
+    private long lastdayQuantity;
 
-    public MatchResult() {
+    public MatchLastdayResult() {
         super();
 
     }
 
+    public MatchLastdayResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity,
+            long inserttime, long lastdayprice, long lastdayQuantity) {
+        super();
+        this.price = price;
+        this.executedQuantity = executedQuantity;
+        this.txhash = txhash;
+        this.tokenid = tokenid;
+        this.basetokenid = basetokenid;
+        this.inserttime = inserttime;
+        this.lastdayprice = lastdayprice;
+        this.lastdayQuantity = lastdayQuantity;
+    }
 
-
-    public MatchResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity,
+    public MatchLastdayResult(String txhash, String tokenid, String basetokenid, long price, long executedQuantity,
             long inserttime) {
 
         this.price = price;
@@ -88,6 +101,20 @@ public class MatchResult implements Serializable {
                 + ", tokenid=" + tokenid + ", basetokenid=" + basetokenid + ", inserttime=" + inserttime + "]";
     }
 
+    public long getLastdayprice() {
+        return lastdayprice;
+    }
 
+    public void setLastdayprice(long lastdayprice) {
+        this.lastdayprice = lastdayprice;
+    }
+
+    public long getLastdayQuantity() {
+        return lastdayQuantity;
+    }
+
+    public void setLastdayQuantity(long lastdayQuantity) {
+        this.lastdayQuantity = lastdayQuantity;
+    }
 
 }
