@@ -92,7 +92,7 @@ public class OrderTickerService {
     }
     public Map<String, Token> getTokenameA(List<MatchLastdayResult> res, FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
-        for (MatchResult d : res) {
+        for (MatchLastdayResult d : res) {
             tokenids.add(d.getTokenid());
             tokenids.add(d.getBasetokenid());
         }
