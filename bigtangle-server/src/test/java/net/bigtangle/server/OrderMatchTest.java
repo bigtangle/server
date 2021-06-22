@@ -34,6 +34,7 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.core.response.OrderdataResponse;
@@ -229,7 +230,66 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         assertTrue(b.compareTo(new BigDecimal("0.001")) == 0);
 
     }
+    @Test
+    public void orderTickerSearchWithLastdayPriceAPI() throws Exception {
 
+        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                Utils.HEX.decode(testPub));
+        ECKey testKey = walletKeys.get(0);
+        List<Block> addedBlocks = new ArrayList<>();
+
+        // Make test token
+        resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+        String testTokenId = testKey.getPublicKeyAsHex();
+        generateSpareChange(genesisKey, addedBlocks);
+
+        // Get current existing token amount
+        HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+        // Open sell order for test tokens
+        makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
+
+        // Open buy order for test tokens
+        makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
+        makeAndConfirmSellOrder(testKey, testTokenId, 1002, 100, addedBlocks);
+
+        // Verify token amount invariance
+        assertCurrentTokenAmountEquals(origTokenAmounts);
+ 
+        // 200, 300  avg daily 200+300/2
+        store.batchAddAvgPrice();
+        // get the data
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        List<String> tokenids = new ArrayList<String>();
+        tokenids.add(testTokenId);
+        requestParam.put("tokenids", tokenids);
+        requestParam.put("count", 1);
+        requestParam.put("basetoken", NetworkParameters.BIGTANGLE_TOKENID_STRING);
+
+        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrdersTicker.name(),
+                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+        OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
+
+        assertTrue(orderTickerResponse.getLastdayTickers().size() > 0);
+        for (MatchLastdayResult m : orderTickerResponse.getLastdayTickers()) {
+            if (m.getTokenid().equals(testTokenId)) {
+                // assertTrue(m.getExecutedQuantity() == 78||
+                // m.getExecutedQuantity() == 22);
+                // TODO check the execute ordering. price is 1000 or 1001
+                assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
+                assertTrue(m.getLastdayprice()==1001);
+            }
+        }
+
+        // check wallet
+
+        BigDecimal b = walletAppKit.wallet().getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+        assertTrue(b.compareTo(new BigDecimal("0.001")) == 0);
+
+    }
     @Test
     public void buy() throws Exception {
 
