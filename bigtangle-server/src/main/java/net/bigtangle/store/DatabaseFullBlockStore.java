@@ -5710,7 +5710,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getTimeBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
+    public List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -5726,9 +5726,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
-            List<MatchResult> list = new ArrayList<>();
+            List<MatchLastdayResult> list = new ArrayList<>();
             while (resultSet.next()) {
-                list.add(new MatchResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
+                list.add(new MatchLastdayResult(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3),
                         resultSet.getLong(4), resultSet.getLong(5), resultSet.getLong(6)));
             }
             return list;
@@ -5746,7 +5746,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
+    public List<MatchLastdayResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
@@ -5762,10 +5762,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
-            List<MatchResult> list = new ArrayList<>();
+            List<MatchLastdayResult> list = new ArrayList<>();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             while (resultSet.next()) {
-                list.add(new MatchResult("", resultSet.getString(1), resultSet.getString(2), resultSet.getLong(3),
+                list.add(new MatchLastdayResult("", resultSet.getString(1), resultSet.getString(2), resultSet.getLong(3),
                         resultSet.getLong(4), dateFormat.parse(resultSet.getString(5)).getTime() / 1000));
             }
             return list;

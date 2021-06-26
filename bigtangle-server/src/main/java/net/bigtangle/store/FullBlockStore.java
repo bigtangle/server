@@ -441,10 +441,10 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
-    List<MatchResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
+    List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
             int count) throws BlockStoreException;
 
-    List<MatchResult> getTimeAVGBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
+    List<MatchLastdayResult> getTimeAVGBetweenMatchingEvents(String tokenids, String basetoken, Long startDate, Long endDate,
             int count) throws BlockStoreException;
 
     void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException;

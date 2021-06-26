@@ -61,7 +61,6 @@ import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 
-import net.bigtangle.apps.data.SignedData;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -82,7 +81,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -101,8 +99,7 @@ import net.bigtangle.core.exception.VerificationException.ConflictPossibleExcept
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.OrderImpossibleException;
 import net.bigtangle.core.exception.VerificationException.OrderWithRemainderException;
-import net.bigtangle.core.ordermatch.MatchResult;
-import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.response.GetDomainTokenResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -130,7 +127,6 @@ import net.bigtangle.utils.BaseTaggableObject;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.utils.SignedDataWithToken;
 import net.bigtangle.utils.Threading;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.jcip.annotations.GuardedBy;
@@ -2881,7 +2877,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
         if (orderTickerResponse != null && !orderTickerResponse.getTickers().isEmpty()) {
-            MatchResult matchResult = orderTickerResponse.getTickers().get(0);
+            MatchLastdayResult matchResult = orderTickerResponse.getTickers().get(0);
             Token base = orderTickerResponse.getTokennames().get(matchResult.getBasetokenid());
             Integer priceshift = params.getOrderPriceShift(matchResult.getBasetokenid());
             // price is in orderbasetoken

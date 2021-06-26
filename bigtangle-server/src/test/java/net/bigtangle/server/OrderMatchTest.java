@@ -155,7 +155,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
-        for (MatchResult m : orderTickerResponse.getTickers()) {
+        for (MatchLastdayResult m : orderTickerResponse.getTickers()) {
             if (m.getTokenid().equals(testTokenId)) {
                 // assertTrue(m.getExecutedQuantity() == 78||
                 // m.getExecutedQuantity() == 22);
@@ -215,7 +215,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
-        for (MatchResult m : orderTickerResponse.getTickers()) {
+        for (MatchLastdayResult m : orderTickerResponse.getTickers()) {
             if (m.getTokenid().equals(testTokenId)) {
                 // assertTrue(m.getExecutedQuantity() == 78||
                 // m.getExecutedQuantity() == 22);
@@ -274,8 +274,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
-        assertTrue(orderTickerResponse.getLastdayTickers().size() > 0);
-        for (MatchLastdayResult m : orderTickerResponse.getLastdayTickers()) {
+        assertTrue(orderTickerResponse.getTickers().size() > 0);
+        for (MatchLastdayResult m : orderTickerResponse.getTickers()) {
             if (m.getTokenid().equals(testTokenId)) {
                 // assertTrue(m.getExecutedQuantity() == 78||
                 // m.getExecutedQuantity() == 22);
@@ -375,7 +375,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         OrderTickerResponse orderTickerResponse = Json.jsonmapper().readValue(response0, OrderTickerResponse.class);
 
         assertTrue(orderTickerResponse.getTickers().size() > 0);
-        for (MatchResult m : orderTickerResponse.getTickers()) {
+        for (MatchLastdayResult m : orderTickerResponse.getTickers()) {
             if (m.getTokenid().equals(testTokenId)) {
                 assertTrue(m.getPrice() == priceshift);
             }
@@ -567,7 +567,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         // Verify the order ticker has the correct price
         HashSet<String> a = new HashSet<String>();
         a.add(testTokenId);
-        List<MatchResult> tickers = tickerService
+        List<MatchLastdayResult> tickers = tickerService
                 .getLastMatchingEvents(a, NetworkParameters.BIGTANGLE_TOKENID_STRING, store).getTickers();
         assertEquals(tickers.size(), 1);
         assertTrue(1000l == tickers.get(0).getPrice() || priceshift == tickers.get(0).getPrice());

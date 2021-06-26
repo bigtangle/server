@@ -73,23 +73,11 @@ public class OrderTickerService {
         Set<String> basetokens = new HashSet<String>();
         basetokens.add(basetoken);
         List<MatchLastdayResult> re = store.getLastMatchingEvents(tokenIds, basetoken);
-        return OrderTickerResponse.createOrderRecordResponseA(re, getTokenameA(re, store));
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokenameA(re, store));
 
     }
 
-    public Map<String, Token> getTokename(List<MatchResult> res, FullBlockStore store) throws BlockStoreException {
-        Set<String> tokenids = new HashSet<String>();
-        for (MatchResult d : res) {
-            tokenids.add(d.getTokenid());
-            tokenids.add(d.getBasetokenid());
-        }
-        Map<String, Token> re = new HashMap<String, Token>();
-        List<Token> tokens = store.getTokensList(tokenids);
-        for (Token t : tokens) {
-            re.put(t.getTokenid(), t);
-        }
-        return re;
-    }
+ 
     public Map<String, Token> getTokenameA(List<MatchLastdayResult> res, FullBlockStore store) throws BlockStoreException {
         Set<String> tokenids = new HashSet<String>();
         for (MatchLastdayResult d : res) {
@@ -110,16 +98,16 @@ public class OrderTickerService {
             Long endDate, FullBlockStore store) throws BlockStoreException {
         Iterator<String> iter = tokenids.iterator();
         String first = iter.next();
-        List<MatchResult> re = store.getTimeBetweenMatchingEvents(first, basetoken, startDate, endDate, MAXCOUNT);
-        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re, store));
+        List<MatchLastdayResult> re = store.getTimeBetweenMatchingEvents(first, basetoken, startDate, endDate, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokenameA(re, store));
     }
 
     public OrderTickerResponse getTimeAVBGBetweenMatchingEvents(Set<String> tokenids, String basetoken, Long startDate,
             Long endDate, FullBlockStore store) throws BlockStoreException {
         Iterator<String> iter = tokenids.iterator();
         String first = iter.next();
-        List<MatchResult> re = store.getTimeAVGBetweenMatchingEvents(first, basetoken, startDate, endDate, MAXCOUNT);
-        return OrderTickerResponse.createOrderRecordResponse(re, getTokename(re, store));
+        List<MatchLastdayResult> re = store.getTimeAVGBetweenMatchingEvents(first, basetoken, startDate, endDate, MAXCOUNT);
+        return OrderTickerResponse.createOrderRecordResponse(re, getTokenameA(re, store));
     }
 
 }
