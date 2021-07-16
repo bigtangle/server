@@ -52,6 +52,7 @@ public class ServerConfiguration {
     
     
     private List<String> deniedIPlist = new ArrayList<String>();
+    private Boolean ipcheck = true;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -268,6 +269,16 @@ public class ServerConfiguration {
 
     public void setDeniedIPlist(List<String> deniedIPlist) {
         this.deniedIPlist = deniedIPlist;
+    }
+
+
+    public Boolean getIpcheck() {
+        return ipcheck;
+    }
+
+
+    public void setIpcheck(Boolean ipcheck) {
+        this.ipcheck = ipcheck;
     }
 
 }

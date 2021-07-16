@@ -18,6 +18,7 @@ server:
   checkpoint: ${CHECKPOINT:-1}
   servermode: ${SERVERMODE:Fullnode}
   deniedIPlist: ${DENIEDIPLIST:} 
+  ipcheck: ${IPCHECK:true} 
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

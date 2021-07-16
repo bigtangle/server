@@ -58,6 +58,8 @@ public class UserDataService {
 
     public boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
             HttpServletRequest httprequest) {
+       if(! serverConfiguration.getIpcheck()) return true;
+        
         String remoteAddr = remoteAddr(httprequest);
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
                 || "61.181.128.230".equals(remoteAddr) || "127.0.0.1".equals(remoteAddr)
