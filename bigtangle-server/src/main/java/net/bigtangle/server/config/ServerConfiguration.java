@@ -52,7 +52,7 @@ public class ServerConfiguration {
     
     
     private List<String> deniedIPlist = new ArrayList<String>();
-    private Boolean ipcheck = true;
+    private Boolean ipcheck = false;
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
