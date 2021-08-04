@@ -4,7 +4,7 @@ networks:
     driver: bridge
 services:
   mysql-bigtangle:
-    image: j0904cui/mysql
+    image: docker-dev.art.intern/mysql:8.0.23
     container_name: mysql-bigtangle
     networks:
     - bigtangle-bridged-network
@@ -13,7 +13,9 @@ services:
       MYSQL_DATABASE: info
     
   bigtangle-server:
-    image: j0904cui/bigtangle
+    build:
+      context: bigtangle
+    image: docker-dev.art.intern/j0904cui/bigtangle
     container_name: bigtangle-server
     ports:
     - 8086:8086
@@ -27,8 +29,8 @@ services:
       DB_PASSWORD: testpassword
       SERVER_PORT: 8086
       DB_NAME: info
-      SERVICE_MCMC: true
-      SERVICE_MINING: false
+      SERVICE_MCMC: "true"
+      SERVICE_MINING: "false"
       SERVER_MINERADDRESS: 1MxiDdUWQ5Aek872tJHpnGe7j75pwaGdZE 
       TOPIC_OUT_NAME: bigtangle
       CONSUMERIDSUFFIX:  
