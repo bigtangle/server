@@ -127,6 +127,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
     private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE matchinglast";
     private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE matchingdaily";
+    private static String DROP_MATCHINGLASTDAY_TABLE = "DROP TABLE matchinglastday";
     // Queries SQL.
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -620,6 +621,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         sqlStatements.add(DROP_LOCKOBJECT_TABLE);
         sqlStatements.add(DROP_MATCHING_LAST_TABLE);
         sqlStatements.add(DROP_MATCHINGDAILY_TABLE);
+        sqlStatements.add(DROP_MATCHINGLASTDAY_TABLE);
         return sqlStatements;
     }
 
