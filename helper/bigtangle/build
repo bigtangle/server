@@ -1,0 +1,9 @@
+export version=latest
+
+#cd /data/git/bignetcoin/ && ./gradlew -x test clean build publishToMavenLocal  \
+
+cd /root/git/dockerinstall/bigtangle
+cp /data/vm/jenkins-hs/data1/workspace/bignetcoin/bigtangle-server/build/distributions/bigtangle-server-0.3.5.tar .
+
+sudo docker build -t j0904cui/bigtangle:$version   .
+sudo docker  push  j0904cui/bigtangle:$version
