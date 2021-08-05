@@ -480,24 +480,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * instead of a hostname and password, and optionally allowing a schema to
      * be specified.
      * </p>
-     *
-     * @param params
-     *            A copy of the NetworkParameters used.
-     * @param connectionURL
-     *            The jdbc url to connect to the database.
-     * @param fullStoreDepth
-     *            The number of blocks of history stored in full (something like
-     *            1000 is pretty safe).
-     * @param username
-     *            The database username.
-     * @param password
-     *            The password to the database.
-     * @param schemaName
-     *            The name of the schema to put the tables in. May be null if no
-     *            schema is being used.
-     * @throws BlockStoreException
-     *             If there is a failure to connect and/or initialise the
-     *             database.
      */
     public DatabaseFullBlockStore(NetworkParameters params, Connection conn) {
         this.params = params;

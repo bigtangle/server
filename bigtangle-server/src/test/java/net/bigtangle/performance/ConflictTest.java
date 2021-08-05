@@ -1,4 +1,4 @@
-package net.bigtangle.server.performance;
+package net.bigtangle.performance;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +30,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ConflicTest extends AbstractIntegrationTest {
+public class ConflictTest extends AbstractIntegrationTest {
 
     /*
      * resolve mass conflict quickly

@@ -183,11 +183,9 @@ public class SyncBlockService {
             }
 
             Block storedBlock0 = null;
-            try {
+
                 storedBlock0 = blockService.getBlock(block.getPrevBlockHash(), store);
-            } catch (NoBlockException e) {
-                // Ok, no prev
-            }
+
 
             if (storedBlock0 == null) {
                 byte[] re = requestBlock(block.getPrevBlockHash());
@@ -197,12 +195,9 @@ public class SyncBlockService {
                 }
             }
             Block storedBlock1 = null;
-
-            try {
+ 
                 storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash(), store);
-            } catch (NoBlockException e) {
-                // Ok, no prev
-            }
+
 
             if (storedBlock1 == null) {
                 byte[] re = requestBlock(block.getPrevBranchBlockHash());

@@ -53,29 +53,13 @@ import net.bigtangle.server.data.Rating;
  * An implementor of FullBlockStore saves StoredBlock objects to some storage
  * mechanism.
  * </p>
- * 
- * <p>
- * In addition to keeping track of a chain using {@link StoredBlock}s, it should
- * also keep track of a second copy of the chain which holds
- * {@link StoredBlock}s. In this way, an application can perform a headers-only
- * initial sync and then use that information to more efficiently download a
- * locally verified full copy of the block chain.
- * </p>
+ *
  * 
  * <p>
  * A FullBlockStore should function well as a standard {@link BlockStore} and
  * then be able to trivially switch to being used as a FullBlockStore.
  * </p>
- * 
- * <p>
- * It should store the Blocks of a number of recent blocks before
- * verifiedHead.height and all those after verifiedHead.height. It is advisable
- * to store any {@link StoredUndoableBlock} which has a height >
- * verifiedHead.height - N. Because N determines the memory usage, it is
- * recommended that N be customizable. N should be chosen such that re-orgs
- * beyond that point are vanishingly unlikely, for example, a few thousand chain
- * blocks is a reasonable choice.
- * </p>
+ *
  * 
  * <p>
  * It must store the {@link Block} of all blocks.
