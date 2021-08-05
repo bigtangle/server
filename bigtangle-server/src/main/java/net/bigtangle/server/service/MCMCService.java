@@ -44,7 +44,7 @@ import net.bigtangle.store.FullBlockStore;
  */
 @Service
 public class MCMCService {
-    private static final String LOCKID = "mcmc";
+    private  final   String  LOCKID = this.getClass().getName();
 
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
 

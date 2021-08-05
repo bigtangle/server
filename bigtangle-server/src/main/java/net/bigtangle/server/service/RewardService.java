@@ -89,7 +89,7 @@ public class RewardService {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private static final String  LOCKID = "reward";
+    private  final   String  LOCKID = this.getClass().getName();
  
     /**
      * Scheduled update function that updates the Tangle
@@ -109,7 +109,10 @@ public class RewardService {
             if (lock == null) {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMiningrate()) {
+            } else if (lock.getLocktime() < System.currentTimeMillis() - 100*scheduleConfiguration.getMiningrate()) {
+                log.info(" reward locked is delete   " +lock.getLocktime()+ " < " +
+                        ( System.currentTimeMillis() - 100*scheduleConfiguration.getMiningrate())
+                );
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;

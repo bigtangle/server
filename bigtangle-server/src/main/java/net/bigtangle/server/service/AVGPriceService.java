@@ -84,7 +84,7 @@ public class AVGPriceService {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private static final String LOCKID = "reward";
+    private  final   String  LOCKID = this.getClass().getName();
 
     /**
      * Scheduled update function that updates the Tangle
@@ -109,7 +109,7 @@ public class AVGPriceService {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
             } else {
-                log.info("reward running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+                log.info("AVGPriceService running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
             }
             if (canrun) {
                 store.batchAddAvgPrice();

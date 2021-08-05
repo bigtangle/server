@@ -32,7 +32,7 @@ public class ScheduleProtectService {
     @Async
     @Scheduled(fixedDelayString = "${service.schedule.protect:2000}")
     public void protect() {
-        if ( serverConfiguration.checkService()) {
+        if ( serverConfiguration.getIpcheck()) {
             try {
                 logger.debug(" Start schedule userDataService.calcDenied(): ");
                 userDataService.calcDenied();
