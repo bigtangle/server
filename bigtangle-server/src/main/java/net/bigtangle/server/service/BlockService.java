@@ -137,9 +137,7 @@ public class BlockService {
     /**
      * Recursively removes the specified block and its approvers from the
      * collection if this block is contained in the collection.
-     * 
-     * @param evaluations
-     * @param block
+     *
      * @throws BlockStoreException
      */
     public void removeBlockAndApproversFrom(Collection<BlockWrap> blocks, BlockWrap startingBlock, FullBlockStore store)
@@ -176,9 +174,7 @@ public class BlockService {
     /**
      * Recursively adds the specified block and its approvers to the collection
      * if the blocks are in the current milestone and not in the collection.
-     * 
-     * @param evaluations
-     * @param evaluation
+     *
      * @throws BlockStoreException
      */
     public void addConfirmedApproversTo(Collection<BlockWrap> blocks, BlockWrap startingBlock, FullBlockStore store)
@@ -217,11 +213,7 @@ public class BlockService {
      * collection if the blocks are not in the collection. if a block is missing
      * somewhere, returns false. throwException will be true, if it required the
      * validation for consensus. Otherwise, it does ignore the cutoff blocks.
-     * 
-     * @param blocks
-     * @param prevMilestoneNumber
-     * @param milestoneEvaluation
-     * @param throwException
+     *
      * @throws BlockStoreException
      */
     public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
@@ -285,9 +277,6 @@ public class BlockService {
      * collection if the blocks are not in the current milestone and not in the
      * collection. if a block is missing somewhere, returns false.
      * 
-     * @param blocks
-     * @param cutoffHeight
-     * @param milestoneEvaluation
      * @throws BlockStoreException
      */
     public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,
