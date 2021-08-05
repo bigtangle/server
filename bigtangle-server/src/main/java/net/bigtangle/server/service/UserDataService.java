@@ -98,6 +98,7 @@ public class UserDataService {
     // last 15 seconds schedule interval
     // call api 15 times per seconds, as attack
     public synchronized void calcDenied() {
+        if(! serverConfiguration.getIpcheck()) return ;
         try {
             logger.debug("calcDenied staticsticCalls size =  " + staticsticCalls.size());
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
