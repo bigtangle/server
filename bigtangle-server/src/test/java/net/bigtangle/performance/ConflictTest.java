@@ -41,7 +41,7 @@ public class ConflictTest extends AbstractIntegrationTest {
         // Create blocks with conflict
         Transaction doublespendTX = create();
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10; i++) {
 
             Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), doublespendTX);
