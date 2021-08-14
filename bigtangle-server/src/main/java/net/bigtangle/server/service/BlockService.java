@@ -354,12 +354,14 @@ public class BlockService {
         return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
     }
 
-    public GetBlockListResponse blocksFromNonChainHeigth(FullBlockStore store) throws BlockStoreException {
+    public GetBlockListResponse blocksFromNonChainHeigth(long cutoffHeight , FullBlockStore store) throws BlockStoreException {
+ 
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        long my = getCurrentCutoffHeight(maxConfirmedReward, store); 
         return GetBlockListResponse
-                .create(store.blocksFromNonChainHeigth(getCurrentCutoffHeight(maxConfirmedReward, store)));
-    }
-
+                .create(store.blocksFromNonChainHeigth( Math.max(cutoffHeight, my)));
+    } 
+  
     public Block getBlockPrototype(FullBlockStore store) throws BlockStoreException, NoBlockException {
 
         return getNewBlockPrototype(store);

@@ -3,13 +3,13 @@ package net.bigtangle.utils;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Token;
-import net.bigtangle.utils.MonetaryFormat;
 
 public class MarketOrderItem implements java.io.Serializable {
 
@@ -19,7 +19,7 @@ public class MarketOrderItem implements java.io.Serializable {
     private static final long serialVersionUID = -4622211003160381995L;
 
     public static MarketOrderItem build(OrderRecord orderRecord, Map<String, Token> tokennames,
-            NetworkParameters networkParameters, String buy, String sell) {
+            NetworkParameters networkParameters, String buy, String sell, Locale local) {
         MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
         MarketOrderItem marketOrderItem = new MarketOrderItem();
         Token base = tokennames.get(orderRecord.getOrderBaseToken());
@@ -44,7 +44,7 @@ public class MarketOrderItem implements java.io.Serializable {
                     + base.getTokennameDisplay() + ")");
         }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", local);
         marketOrderItem.setValidateTo(dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
         marketOrderItem.setValidateFrom(dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
         marketOrderItem.setAddress(

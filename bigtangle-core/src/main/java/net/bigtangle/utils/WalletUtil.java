@@ -29,7 +29,7 @@ public class WalletUtil {
             NetworkParameters params, String buy, String sell) {
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             MarketOrderItem marketOrderItem = MarketOrderItem.build(orderRecord, orderdataResponse.getTokennames(),
-                    params, buy, sell);
+                    params, buy, sell,local);
             orderData.add(marketOrderItem);
 
         }
