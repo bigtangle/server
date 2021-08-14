@@ -39,7 +39,6 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.data.SubtangleStatus;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
