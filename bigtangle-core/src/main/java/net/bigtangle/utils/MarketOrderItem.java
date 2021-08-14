@@ -44,7 +44,7 @@ public class MarketOrderItem implements java.io.Serializable {
                     + base.getTokennameDisplay() + ")");
         }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", local);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm Z", local);
         marketOrderItem.setValidateTo(dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
         marketOrderItem.setValidateFrom(dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
         marketOrderItem.setAddress(
