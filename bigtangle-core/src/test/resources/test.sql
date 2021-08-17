@@ -146,3 +146,9 @@ select userid ,useraccount, amount,  d.status, pubkey from vm_deposit d
 select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc";
 select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc" group by toaddress;
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba";
+
+
+ SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
+ txreward.difficulty, txreward.chainlength FROM txreward where chainlength=446310;
+ 
+ 

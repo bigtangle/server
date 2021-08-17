@@ -726,7 +726,7 @@ public class ValidatorService {
             if (predecessor.getBlockEvaluation().getSolid() == 2) {
                 continue;
             } else if (predecessor.getBlockEvaluation().getSolid() == 1) {
-                missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
+             //FIXME block chain 4046309  missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
                 missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {

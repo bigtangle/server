@@ -375,7 +375,8 @@ public class RewardService {
         // Check: At this point, predecessors must be solid
         solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store);
         if (!solidityState.isSuccessState())
-            throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString());
+            throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString()
+            + "\n with block = " + newMilestoneBlock.toString());
 
         // Unconfirm anything not confirmed by milestone
         List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
@@ -604,7 +605,7 @@ public class RewardService {
 
                 if (req != null && req.getBlockEvaluation().getMilestone() < 0
                         && !currRewardInfo.getBlocks().contains(reqHash)) {
-                    throw new VerificationException("Predecessors are not in milestone.");
+                 //FIXME blocks problem with 4046309   throw new VerificationException("Predecessors are not in milestone." + req.toString());
                 }
             }
         }
