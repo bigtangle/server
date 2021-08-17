@@ -1,13 +1,11 @@
 package net.bigtangle.utils;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import net.bigtangle.apps.data.SignedData;
@@ -25,11 +23,11 @@ import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 
 public class WalletUtil {
-    public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData, Locale local,
+    public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData,  
             NetworkParameters params, String buy, String sell) {
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             MarketOrderItem marketOrderItem = MarketOrderItem.build(orderRecord, orderdataResponse.getTokennames(),
-                    params, buy, sell,local);
+                    params, buy, sell );
             orderData.add(marketOrderItem);
 
         }

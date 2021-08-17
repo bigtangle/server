@@ -1,9 +1,6 @@
 package net.bigtangle.utils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 
 import net.bigtangle.core.ECKey;
@@ -19,7 +16,7 @@ public class MarketOrderItem implements java.io.Serializable {
     private static final long serialVersionUID = -4622211003160381995L;
 
     public static MarketOrderItem build(OrderRecord orderRecord, Map<String, Token> tokennames,
-            NetworkParameters networkParameters, String buy, String sell, Locale local) {
+            NetworkParameters networkParameters, String buy, String sell ) {
         MonetaryFormat mf = MonetaryFormat.FIAT.noCode();
         MarketOrderItem marketOrderItem = new MarketOrderItem();
         Token base = tokennames.get(orderRecord.getOrderBaseToken());
@@ -42,11 +39,10 @@ public class MarketOrderItem implements java.io.Serializable {
             marketOrderItem.setPrice(mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift));
             marketOrderItem.setTotal(mf.format(orderRecord.getTargetValue(), base.getDecimals()) + " ("
                     + base.getTokennameDisplay() + ")");
-        }
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm Z", local);
-        marketOrderItem.setValidateTo(dateFormat.format(new Date(orderRecord.getValidToTime() * 1000)));
-        marketOrderItem.setValidateFrom(dateFormat.format(new Date(orderRecord.getValidFromTime() * 1000)));
+        } 
+      
+        marketOrderItem.setValidateTo( new Date(orderRecord.getValidToTime() * 1000) );
+        marketOrderItem.setValidateFrom( new Date(orderRecord.getValidFromTime() * 1000)) ;
         marketOrderItem.setAddress(
                 ECKey.fromPublicOnly(orderRecord.getBeneficiaryPubKey()).toAddress(networkParameters).toString());
         marketOrderItem.setInitialBlockHashHex(orderRecord.getBlockHashHex());
@@ -65,9 +61,9 @@ public class MarketOrderItem implements java.io.Serializable {
 
     private String orderId;
 
-    private String validateTo;
+    private Date validateTo;
 
-    private String validateFrom;
+    private Date validateFrom;
 
     private String address;
 
@@ -129,19 +125,20 @@ public class MarketOrderItem implements java.io.Serializable {
         this.orderId = orderId;
     }
 
-    public String getValidateTo() {
+    
+    public Date getValidateTo() {
         return validateTo;
     }
 
-    public void setValidateTo(String validateTo) {
+    public void setValidateTo(Date validateTo) {
         this.validateTo = validateTo;
     }
 
-    public String getValidateFrom() {
+    public Date getValidateFrom() {
         return validateFrom;
     }
 
-    public void setValidateFrom(String validateFrom) {
+    public void setValidateFrom(Date validateFrom) {
         this.validateFrom = validateFrom;
     }
 

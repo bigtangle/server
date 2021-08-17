@@ -555,7 +555,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
+        WalletUtil.orderMap(orderdataResponse, orderData,   networkParameters, "buy", "sell");
         // assertTrue(orderData.size() == 4);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("0.001") || map.getPrice().equals("1"));
@@ -1362,7 +1362,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         List<MarketOrderItem> orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
+        WalletUtil.orderMap(orderdataResponse, orderData , networkParameters, "buy", "sell");
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));
 
@@ -1381,7 +1381,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
         orderData = new ArrayList<MarketOrderItem>();
-        WalletUtil.orderMap(orderdataResponse, orderData, Locale.getDefault(), networkParameters, "buy", "sell");
+        WalletUtil.orderMap(orderdataResponse, orderData,  networkParameters, "buy", "sell");
         assertTrue(orderData.size() == 1);
         for (MarketOrderItem map : orderData) {
             assertTrue(map.getPrice().equals("7"));
