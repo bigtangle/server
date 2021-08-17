@@ -494,7 +494,7 @@ public class SyncBlockService {
     }
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
-        List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true);
+        List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true, serverConfiguration.getSyncblocks());
         TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
         long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
         if (orphanBlocks.size() > 0) {

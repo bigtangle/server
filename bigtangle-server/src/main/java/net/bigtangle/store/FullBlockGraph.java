@@ -256,7 +256,7 @@ public class FullBlockGraph {
      *  
      */
     public void saveChainConnected(FullBlockStore store, boolean updatelowchain ) throws VerificationException, BlockStoreException {
-        List<ChainBlockQueue> cbs = store.selectChainblockqueue(false);
+        List<ChainBlockQueue> cbs = store.selectChainblockqueue(false,serverConfiguration.getSyncblocks());
         if (cbs != null && !cbs.isEmpty()) {
             Stopwatch watch = Stopwatch.createStarted();
             log.info("selectChainblockqueue with size  " + cbs.size());

@@ -19,6 +19,7 @@ server:
   servermode: ${SERVERMODE:Fullnode}
   deniedIPlist: ${DENIEDIPLIST:} 
   ipcheck: ${IPCHECK:false}
+  syncblocks: ${SYNCBLOCKS:1000}
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

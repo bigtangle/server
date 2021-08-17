@@ -5995,13 +5995,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException {
+    public List<ChainBlockQueue> selectChainblockqueue(boolean orphan, int limit) throws BlockStoreException {
 
         PreparedStatement s = null;
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
             s = getConnection().prepareStatement(
-                    SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit 550");
+                    SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit " +limit);
             s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {

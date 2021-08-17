@@ -453,7 +453,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
 
-    List<ChainBlockQueue> selectChainblockqueue(boolean orphan) throws BlockStoreException;
+    List<ChainBlockQueue> selectChainblockqueue(boolean orphan, int limit) throws BlockStoreException;
 
     void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException;
 
