@@ -4,7 +4,7 @@
 
 docker network create --driver bridge   bigtangle-bridged-network
  
-export BIGTANGLEVERSION=0.3.5 
+export BIGTANGLEVERSION=17082021
 export DBHOST=bigtangle-mysql-backup
 export SERVERHOST=bigtangle-backup
 export KAFKA=61.181.128.230:9092
@@ -14,17 +14,17 @@ export TOPIC_OUT_NAME=bigtangle
 export SERVER_NET=Mainnet
 export SSL=true
 export KEYSTORE=/app/bigtangle-server/ca.pkcs12
-export SERVICE_MINING=true
+export SERVICE_MINING=false
 export DB_PASSWORD=test1234
 export SERVICE_MINING_RATE=15000
-export SERVERPORT=8088
+export SERVERPORT=18088
  
 # rm -fr /data/vm/$DBHOST/*
  
 docker rm -f $DBHOST 
 
 docker run -d  -t --net=bigtangle-bridged-network     \
--v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  -p 3306:3306 \
+-v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
 
@@ -41,7 +41,7 @@ docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
 -e REQUESTER=$REQUESTER -e CHECKPOINT=$CHECKPOINT \
 -e SERVICE_MINING=$SERVICE_MINING -e SERVICE_MCMC=true \
 -e SERVER_NET=$SERVER_NET -e SSL=$SSL -e KEYSTORE=$KEYSTORE \
--h $SERVERHOST  j0904cui/bigtangle
+-h $SERVERHOST  j0904cui/bigtangle:$BIGTANGLEVERSION
 
  
 sleep 60s

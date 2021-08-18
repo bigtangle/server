@@ -295,6 +295,10 @@ public class SyncBlockService {
         HashMap<String, String> requestParam = new HashMap<String, String>();
           byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
                 Json.jsonmapper().writeValueAsString(requestParam));
+          TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+          long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
+          TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);        
+          requestParam.put("cutoffHeight", store.get(confirmedAtHeightReward.getBlockHash()).getHeight() + "");
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " at server: " + s);
         List<Block> sortedBlocks = new ArrayList<Block>();

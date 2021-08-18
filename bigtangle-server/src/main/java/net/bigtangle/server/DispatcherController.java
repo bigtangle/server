@@ -334,7 +334,7 @@ public class DispatcherController {
             case blocksFromNonChainHeight: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                Long cutoffHeight = Long.parseLong( (String) request.get("cutoffHeight"));
+                Long cutoffHeight = Long.parseLong( (String) request.get("cutoffHeight") ==null ? "1": (String) request.get("cutoffHeight"));
                 GetBlockListResponse response = this.blockService.blocksFromNonChainHeigth(cutoffHeight,store);
                 this.outPrintJSONString(httpServletResponse, response, watch);
             }
