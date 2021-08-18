@@ -731,7 +731,7 @@ public class ValidatorService {
                 missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
                 if (throwExceptions)
-                    throw new VerificationException("The used blocks are invalid.");
+                    throw new VerificationException("The used blocks are invalid." + predecessor.toString());
                 return SolidityState.getFailState();
             } else {
                 throw new RuntimeException("not implemented");

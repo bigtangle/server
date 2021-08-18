@@ -95,9 +95,9 @@ public class BlockService {
     }
 
     public void saveBlock(Block block, FullBlockStore store) throws Exception {
-
-        broadcastBlock(block);
         blockgraph.add(block, false, store);
+        //no broadcastBlock, if there is error  of blockgraph.add
+        broadcastBlock(block); 
         // removeBlockPrototype(block, store);
 
     }
