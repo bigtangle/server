@@ -14,6 +14,14 @@ public class LongResponse extends AbstractResponse {
         res.value =  value;
         return res;
     }
+
+    public Long getValue() {
+        return value;
+    }
+
+    public void setValue(Long value) {
+        this.value = value;
+    }
  
     
      

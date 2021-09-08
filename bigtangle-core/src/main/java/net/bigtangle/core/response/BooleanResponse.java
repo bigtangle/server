@@ -14,6 +14,14 @@ public class BooleanResponse extends AbstractResponse {
         res.value =  value;
         return res;
     }
+
+    public Boolean getValue() {
+        return value;
+    }
+
+    public void setValue(Boolean value) {
+        this.value = value;
+    }
  
     
      
