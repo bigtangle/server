@@ -6,7 +6,7 @@ package net.bigtangle.core.response;
 
 import java.util.List;
 
-import net.bigtangle.core.orderdata.AskBid;
+import net.bigtangle.core.ordermatch.AskBid;
 
 public class GetAskBidListResponse extends AbstractResponse {
     private List<AskBid> askbidlist;
