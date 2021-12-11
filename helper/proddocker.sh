@@ -2,12 +2,13 @@
 
 ## docker service
 
-docker network create --driver bridge   bigtangle-bridged-network
+sudo docker network create --driver bridge   bigtangle-bridged-network
  
 export BIGTANGLEVERSION=0.3.5 
 export DBHOST=bigtangle-mysql
 export SERVERHOST=bigtangle
-export KAFKA=61.181.128.230:9092
+export REQUESTER=https://bigtangle.de:8088
+export KAFKA=bigtangle.de:9092
 export SERVER_MINERADDRESS=1CWxNAAAmTVRqodSSXTatxSopKEAD9EJw8
 export TOPIC_OUT_NAME=bigtangle
 export SERVER_NET=Mainnet
@@ -22,7 +23,7 @@ export SERVERPORT=8088
  
 docker rm -f $DBHOST 
 
-docker run -d  -t --net=bigtangle-bridged-network     \
+sudo docker run -d  -t --net=bigtangle-bridged-network     \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
@@ -30,7 +31,7 @@ docker run -d  -t --net=bigtangle-bridged-network     \
 
 docker rm -f $SERVERHOST 
 
-docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
+docker  run -d -t --net=bigtangle-bridged-network     \
 -p $SERVERPORT:8088 --name  $SERVERHOST \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST  -e SERVICE_MCMC_RATE=1000 \
@@ -56,13 +57,13 @@ mkdir /var/lib/mysql/backup
 mysqldump -u root -ptest1234 --databases info | gzip -c > /var/lib/mysql/backup/$(date +"%Y-%b-%d")_info-backup.sql.gz
 
 
- rsync -avz -e "ssh -i /root/git/sshkeys/cui/id_rsa -p 20000"  \
-  root@61.181.128.230:/data/vm/bigtangle-mysql/var/lib/mysql/backup/2021-May-11_info-backup.sql.gz \
+ rsync -avz -e "ssh -i /home/cui/git/sshkeys/cui/id_rsa  "  \
+  root@bigtangle.de:/data/vm/bigtangle-mysql/var/lib/mysql/backup/2021-Dec-05_info-backup.sql.gz \
   .
   
   gzip -d  $(date +"%Y-%b-%d")_info-backup.sql.gz
   docker cp $(date +"%Y-%b-%d")_info-backup.sql bigtangle-mysql:/root
   docker exec -it bigtangle-mysql bash
-   mysql -u root -ptest1234 < /var/lib/mysql/2021-May-11_info-backup.sql
+   mysql -u root -ptest1234 < /var/lib/mysql/2021-Dec-05_info-backup.sql.gz
 
  

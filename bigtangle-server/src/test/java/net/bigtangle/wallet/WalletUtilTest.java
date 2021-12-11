@@ -9,10 +9,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,6 +120,19 @@ public class WalletUtilTest {
         assertEquals(wallet.walletKeys().size(), 1);
     }
 
- 
+    @Test
+    public void walletCreateLoadSize() throws Exception {
+
+        int size = 1000000;
+        byte[] a = WalletUtil.createWallet(TestParams.get(), size);
+      
+        Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
+
+        List<ECKey> issuedKeys = wallet.walletKeys(null);
+        log.debug(issuedKeys.size()+""); 
+        assertTrue(issuedKeys.size() == size); 
+        
+        FileUtils.writeByteArrayToFile(new File("logs/testsize.wallet"), a);
+    }
 
 }
