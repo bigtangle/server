@@ -89,8 +89,8 @@ public class RewardService {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private  final   String  LOCKID = this.getClass().getName();
- 
+    private final String LOCKID = this.getClass().getName();
+
     /**
      * Scheduled update function that updates the Tangle
      * 
@@ -109,15 +109,14 @@ public class RewardService {
             if (lock == null) {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - 100*scheduleConfiguration.getMiningrate()) {
-                log.info(" reward locked is delete   " +lock.getLocktime()+ " < " +
-                        ( System.currentTimeMillis() - 100*scheduleConfiguration.getMiningrate())
-                );
+            } else if (lock.getLocktime() < System.currentTimeMillis() - 100 * scheduleConfiguration.getMiningrate()) {
+                log.info(" reward locked is delete   " + lock.getLocktime() + " < "
+                        + (System.currentTimeMillis() - 100 * scheduleConfiguration.getMiningrate()));
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
             } else {
-                log.info("reward running return:  " + Utils.dateTimeFormat (lock.getLocktime()));
+                log.info("reward running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
             }
             if (canrun) {
                 createReward(store);
@@ -127,7 +126,7 @@ public class RewardService {
         } catch (Exception e) {
             log.error("create Reward end  ", e);
             store.deleteLockobject(LOCKID);
-        } finally { 
+        } finally {
             store.close();
         }
 
@@ -241,7 +240,7 @@ public class RewardService {
     }
 
     private Block rewardSolve(Block block, final BigInteger chainTargetFinal)
-            throws InterruptedException, ExecutionException { 
+            throws InterruptedException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final Future<String> handler = executor.submit(new Callable() {
@@ -312,21 +311,11 @@ public class RewardService {
         // Count how many blocks from miners in the reward interval are approved
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-        try {
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
-                    true, store);
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
-                    true, store);
-        } catch (CutoffException e) {
 
-            // Robustness
-            e.printStackTrace();
-            blocks = new HashSet<Sha256Hash>();
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength,
-                    false, store);
-            blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength,
-                    false, store);
-        }
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true,
+                store);
+        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true,
+                store);
 
         long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
@@ -376,7 +365,7 @@ public class RewardService {
         solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store);
         if (!solidityState.isSuccessState())
             throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString()
-            + "\n with block = " + newMilestoneBlock.toString());
+                    + "\n with block = " + newMilestoneBlock.toString());
 
         // Unconfirm anything not confirmed by milestone
         List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
@@ -396,7 +385,7 @@ public class RewardService {
         // findFirstSpentInput(allApprovedNewBlocks);
 
         if (anySpentInputs) {
-        //    solidityState = SolidityState.getFailState();
+            // solidityState = SolidityState.getFailState();
             throw new VerificationException("there are hasSpentInputs in allApprovedNewBlocks ");
         }
         // If any conflicts exist between the current set of
@@ -576,7 +565,7 @@ public class RewardService {
             try {
                 return validatorService.hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
-            //    e.printStackTrace();
+                // e.printStackTrace();
                 return true;
             }
         });
@@ -597,7 +586,7 @@ public class RewardService {
             if (block.getBlock().getHeight() <= cutoffHeight)
                 throw new VerificationException("Referenced blocks are below cutoff height.");
 
-            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(),false);
+            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(), false);
             for (Sha256Hash reqHash : requiredBlocks) {
                 BlockWrap req = store.getBlockWrap(reqHash);
                 if (req == null)
@@ -605,7 +594,9 @@ public class RewardService {
 
                 if (req != null && req.getBlockEvaluation().getMilestone() < 0
                         && !currRewardInfo.getBlocks().contains(reqHash)) {
-                 //FIXME blocks problem with 4046309   throw new VerificationException("Predecessors are not in milestone." + req.toString());
+                    // FIXME blocks problem with 4046309 throw new
+                    // VerificationException("Predecessors are not in
+                    // milestone." + req.toString());
                 }
             }
         }
@@ -719,9 +710,9 @@ public class RewardService {
     /*
      * check only if the blocks in database
      */
-    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block,  FullBlockStore store)
+    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block, FullBlockStore store)
             throws BlockStoreException {
-        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(),false);
+        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(), false);
         for (Sha256Hash reqHash : requiredBlocks) {
             BlockWrap req = store.getBlockWrap(reqHash);
             // the required block must be in this referenced blocks or in

@@ -217,7 +217,7 @@ public class FullBlockGraph {
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
-                saveChainConnected(store,false);
+                saveChainConnected(store, false);
                 store.deleteLockobject(LOCKID);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -255,17 +255,18 @@ public class FullBlockGraph {
     /*
      *  
      */
-    public void saveChainConnected(FullBlockStore store, boolean updatelowchain ) throws VerificationException, BlockStoreException {
-        List<ChainBlockQueue> cbs = store.selectChainblockqueue(false,serverConfiguration.getSyncblocks());
+    public void saveChainConnected(FullBlockStore store, boolean updatelowchain)
+            throws VerificationException, BlockStoreException {
+        List<ChainBlockQueue> cbs = store.selectChainblockqueue(false, serverConfiguration.getSyncblocks());
         if (cbs != null && !cbs.isEmpty()) {
             Stopwatch watch = Stopwatch.createStarted();
             log.info("selectChainblockqueue with size  " + cbs.size());
             // check only do add if there is longer chain as saved in database
-              TXReward maxConfirmedReward = store.getMaxConfirmedReward() ;
-              ChainBlockQueue maxFromQuery = cbs.get(cbs.size() - 1);
-            if (!updatelowchain && maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()  ) {
-                log.info("not longest chain in  selectChainblockqueue {}  < {}", maxFromQuery.toString()
-                        ,  maxConfirmedReward.toString());
+            TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+            ChainBlockQueue maxFromQuery = cbs.get(cbs.size() - 1);
+            if (!updatelowchain && maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()) {
+                log.info("not longest chain in  selectChainblockqueue {}  < {}", maxFromQuery.toString(),
+                        maxConfirmedReward.toString());
                 return;
             }
             for (ChainBlockQueue chainBlockQueue : cbs) {
@@ -274,8 +275,6 @@ public class FullBlockGraph {
             log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
         }
     }
-
-    
 
     private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
             throws VerificationException, BlockStoreException {
@@ -1974,12 +1973,12 @@ public class FullBlockGraph {
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("updateConfirmedDo time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 }
-                if (serverConfiguration.isPrunedServermode()) {
-                    cleanUp(maxConfirmedReward, store);
-                    if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
-                        log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-                    }
+
+             cleanUp(maxConfirmedReward, store);
+                if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
+                    log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 }
+
                 store.deleteLockobject(LOCKID);
                 watch.stop();
             }
@@ -1997,9 +1996,15 @@ public class FullBlockGraph {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
         log.info(" pruned until block " + rewardblock.toString());
-        store.prunedClosedOrders(rewardblock.getTimeSeconds());
-        store.prunedHistoryUTXO(rewardblock.getTimeSeconds() - 10 * DaySeconds);
-        store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 * DaySeconds);
+        // store.prunedClosedOrders(rewardblock.getTimeSeconds());
+        //max keep 500 blockchain as spendblock number
+        store.prunedHistoryUTXO(rewardblock.getLastMiningRewardBlock()- 500);
+        // store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 *
+        // DaySeconds);
+
+    }
+
+    private void cleanupBlocks(FullBlockStore store, Block rewardblock) throws BlockStoreException {
         RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
 
         long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);

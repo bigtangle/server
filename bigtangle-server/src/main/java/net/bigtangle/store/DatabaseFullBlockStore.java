@@ -4884,18 +4884,18 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     /*
-     * all spent UTXO History and older than the before time and the spentblock
+     * all spent UTXO History and older than the maxRewardblock 
      * can be pruned.
      */
     @Override
-    public void prunedHistoryUTXO(Long beforetime) throws BlockStoreException {
+    public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException {
 
         maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
             deleteStatement = getConnection().prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
-                    + "spenderblockhash in (select hash from blocks where inserttime < ? ) limit 1000 ");
-            deleteStatement.setLong(1, beforetime);
+                    + "spenderblockhash in (select hash from blocks where milestone < ? ) limit 1000 ");
+            deleteStatement.setLong(1, maxRewardblock);
             deleteStatement.executeUpdate();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
