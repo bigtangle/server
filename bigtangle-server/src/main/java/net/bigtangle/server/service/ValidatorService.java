@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
@@ -85,6 +86,8 @@ import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.config.LockAddress;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.SolidityState;
@@ -109,7 +112,7 @@ public class ValidatorService {
     @Autowired
     protected RewardService rewardService;
     @Autowired
-    private NetworkParameters params;
+    private ServerConfiguration serverConfiguration;
 
     private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 
@@ -261,9 +264,10 @@ public class ValidatorService {
         case DOMAINISSUANCE:
             // exception for the block
             final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-         //   if ("0201ad11827c4ed13a079ecca5e0506757065278bfda325533379fdc29ddb905f0"
-         //           .equals(connectedDomainToken.getTokenid()))
-         //       return false;
+            // if
+            // ("0201ad11827c4ed13a079ecca5e0506757065278bfda325533379fdc29ddb905f0"
+            // .equals(connectedDomainToken.getTokenid()))
+            // return false;
             return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
                     connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
         default:
@@ -701,13 +705,18 @@ public class ValidatorService {
 
     private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions, FullBlockStore store)
             throws BlockStoreException {
-        final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block,false);
+        final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block, false);
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq);
-            if (pred == null)
+            if (pred == null) {
+                logger.debug("pred = null " + predecessorReq);
                 return SolidityState.from(predecessorReq, true);
-            if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
+            }
+            if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2) {
+                logger.debug("pred = fromMissingCalculation " +  pred.getBlockEvaluation().getSolid());
+            
                 return SolidityState.fromMissingCalculation(predecessorReq);
+            }
             if (pred.getBlock().getHeight() >= block.getHeight()) {
                 if (throwExceptions)
                     throw new VerificationException("Height of used blocks must be lower than height of this block.");
@@ -726,13 +735,16 @@ public class ValidatorService {
             if (predecessor.getBlockEvaluation().getSolid() == 2) {
                 continue;
             } else if (predecessor.getBlockEvaluation().getSolid() == 1) {
-             //FIXME block chain 4046309  missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
+                // FIXME block chain 4046309 missingCalculation =
+                // SolidityState.fromMissingCalculation(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
                 missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
+           /*   logger.debug(  "predecessor.getBlockEvaluation() " + predecessor.getBlockEvaluation().getSolid());
                 if (throwExceptions)
                     throw new VerificationException("The used blocks are invalid." + predecessor.toString());
                 return SolidityState.getFailState();
+                */
             } else {
                 throw new RuntimeException("not implemented");
             }
@@ -799,6 +811,51 @@ public class ValidatorService {
         }
     }
 
+    private SolidityState checkLockFromAddress(Block block, long height, boolean throwExceptions, FullBlockStore store)
+            throws BlockStoreException {
+        List<Transaction> transactions = block.getTransactions();
+
+        // All used transaction outputs must exist
+        for (final Transaction tx : transactions) {
+            if (!tx.isCoinBase()) {
+                String fromAddress = fromAddress(tx);
+                for (LockAddress a : serverConfiguration.getLockAddress()) {
+                    if (height > a.getHeight() && fromAddress.equals(a.getLockaddress())) {
+                        if (throwExceptions)
+                            throw new VerificationException("checkLockFromAddress:" + fromAddress);
+                        return SolidityState.getFailState();
+
+                    }
+                } 
+            }
+        }
+
+        return SolidityState.getSuccessState();
+    }
+
+    private String fromAddress(final Transaction tx) {
+        String fromAddress = "";
+
+        for (TransactionInput t : tx.getInputs()) {
+            try {
+                if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
+                    fromAddress = t.getFromAddress().toBase58();
+                } else {
+                    fromAddress = new Address(networkParameters,
+                            Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
+
+                }
+
+                if (!fromAddress.equals(""))
+                    return fromAddress;
+            } catch (Exception e) {
+                // No address found.
+            }
+        }
+        return fromAddress;
+
+    }
+
     private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
             throws BlockStoreException {
         try {
@@ -822,7 +879,7 @@ public class ValidatorService {
                     throw new InvalidTransactionException("Transaction output value negative");
                 }
 
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
+                final Set<VerifyFlag> verifyFlags = networkParameters.getTransactionVerificationFlags(block, tx);
                 if (verifyFlags.contains(VerifyFlag.P2SH)) {
                     if (sigOps > NetworkParameters.MAX_BLOCK_SIGOPS)
                         throw new SigOpsException();
@@ -951,7 +1008,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
+        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(networkParameters).toBase58()
                 .equals(orderInfo.getBeneficiaryAddress())) {
             if (throwExceptions)
                 throw new InvalidOrderException("The address does not match with the given pubkey.");
@@ -1021,7 +1078,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (!ECKey.fromPublicOnly(contractEventInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
+        if (!ECKey.fromPublicOnly(contractEventInfo.getBeneficiaryPubKey()).toAddress(networkParameters).toBase58()
                 .equals(contractEventInfo.getBeneficiaryAddress())) {
             if (throwExceptions)
                 throw new InvalidOrderException("The address does not match with the given pubkey.");
@@ -1274,6 +1331,12 @@ public class ValidatorService {
             }
 
             // Check transactions are solid
+            SolidityState lockAddress = checkLockFromAddress(block, block.getHeight(), throwExceptions, store) ;
+            if (!(lockAddress.getState() == State.Success)) {
+                return lockAddress;
+            } 
+            
+            // Check transactions are solid
             SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
                     throwExceptions, store);
             if (!(transactionalSolidityState.getState() == State.Success)) {
@@ -1338,7 +1401,7 @@ public class ValidatorService {
                 Map<String, Coin> valueOut = new HashMap<String, Coin>();
 
                 final List<Script> prevOutScripts = new LinkedList<Script>();
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx);
+                final Set<VerifyFlag> verifyFlags = networkParameters.getTransactionVerificationFlags(block, tx);
                 if (!isCoinBase) {
                     for (int index = 0; index < tx.getInputs().size(); index++) {
                         TransactionInput in = tx.getInputs().get(index);
@@ -1615,7 +1678,7 @@ public class ValidatorService {
             return SolidityState.getFailState();
         }
 
-        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(params).toBase58()
+        if (!ECKey.fromPublicOnly(orderInfo.getBeneficiaryPubKey()).toAddress(networkParameters).toBase58()
                 .equals(orderInfo.getBeneficiaryAddress())) {
             if (throwExceptions)
                 throw new InvalidOrderException("The address does not match with the given pubkey.");

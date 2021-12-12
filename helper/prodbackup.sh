@@ -4,12 +4,12 @@
 
 docker network create --driver bridge   bigtangle-bridged-network
  
-export BIGTANGLEVERSION=17082021
+export BIGTANGLEVERSION=11122021
 export DBHOST=bigtangle-mysql-backup
 export SERVERHOST=bigtangle-backup
-export KAFKA=61.181.128.230:9092
+export KAFKA=bigtangle.de:9092
 export SERVER_MINERADDRESS=1CWxNAAAmTVRqodSSXTatxSopKEAD9EJw8
-export REQUESTER=https://61.181.128.230:8088
+export REQUESTER=https://bigtangle.de:8088
 export TOPIC_OUT_NAME=bigtangle
 export SERVER_NET=Mainnet
 export SSL=true
@@ -24,7 +24,7 @@ export SERVERPORT=18088
 docker rm -f $DBHOST 
 
 docker run -d  -t --net=bigtangle-bridged-network     \
--v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
+-p 3306:3306  -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
 
@@ -46,4 +46,13 @@ docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
  
 sleep 60s
 docker exec  $SERVERHOST /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
+
+
+
+ rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
+  root@bigtangle.de:/data/vm/bigtangle-mysql-backup/var/lib/mysql  \
+  /data/vm/bigtangle-mysql-backup/var/lib/
+  
+  
+  
    

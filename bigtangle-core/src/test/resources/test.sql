@@ -36,10 +36,12 @@ blocks.hash = mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false
 
 select  * FROM blocks WHERE milestone = -1   AND solid = 2
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
- txreward.difficulty, txreward.chainlength FROM txreward 
+ txreward.difficulty, txreward.chainlength FROM txreward order by  txreward.chainlength desc
 JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339
 
-select * from blocks where hash = 0x00003ea668739eb196b27ddb5903180e6a84305e5b13f5dcd5ab78f9dc6b3f6b;
+delete from txreward where chainlength=197088
+
+select * from blocks where hash = 0x00000051482483264203836bdefe89344929cbf3f03d8c7b12a9e202e8b9c887;
 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
@@ -56,7 +58,7 @@ select * from blocks where confirmed=1 ;
 select * from blocks where  milestone=36
 select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.blocktype=12 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 
-select * from outputs  where spent=1 and confirmed=1 ;
+select count(*) from outputs  where spent=1 and confirmed=1 ;
 select * from outputs  where spent=0 and confirmed=1 ;
 select * from orders  where spent=0 and confirmed=1 ;
 select * from ordercancel

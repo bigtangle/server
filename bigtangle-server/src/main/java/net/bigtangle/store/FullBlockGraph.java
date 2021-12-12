@@ -335,7 +335,7 @@ public class FullBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
-        block.verifyTransactions();
+          block.verifyTransactions();
 
         SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
         if (solidityState.isFailState()) {

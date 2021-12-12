@@ -50,6 +50,9 @@ public class ServerConfiguration {
     //can be FullPruned server node with cleanup old data or fullnode node with all data
     private String servermode="fullnode";
     
+    private List<LockAddress>  lockAddress=   LockAddress.init();
+
+    
     
     private List<String> deniedIPlist = new ArrayList<String>();
     private Boolean ipcheck = false;
@@ -279,6 +282,16 @@ public class ServerConfiguration {
 
     public void setIpcheck(Boolean ipcheck) {
         this.ipcheck = ipcheck;
+    }
+
+
+    public List<LockAddress> getLockAddress() {
+        return lockAddress;
+    }
+
+
+    public void setLockAddress(List<LockAddress> lockAddress) {
+        this.lockAddress = lockAddress;
     }
 
 }
