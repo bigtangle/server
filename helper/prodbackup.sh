@@ -49,6 +49,8 @@ docker exec  $SERVERHOST /bin/sh -c " tail -f /var/log/supervisor/serverstart-st
 
 
 
+ rm -fr /data/vm/bigtangle-mysql-backup/var/lib/mysql/binlog.*
+ 
  rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
   root@bigtangle.de:/data/vm/bigtangle-mysql-backup/var/lib/mysql  \
   /data/vm/bigtangle-mysql-backup/var/lib/

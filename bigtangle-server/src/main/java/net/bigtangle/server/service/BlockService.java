@@ -210,8 +210,8 @@ public class BlockService {
             // Check if the block is in cutoff and not in chain
             if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
                 if (throwException) {
-                    throw new CutoffException(
-                            "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+        //TODO            throw new CutoffException(
+                   logger.debug("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
                 } else {
                     notMissingAnything = false;
                     continue;
