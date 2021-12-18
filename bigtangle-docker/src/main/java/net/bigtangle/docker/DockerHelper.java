@@ -42,27 +42,27 @@ public class DockerHelper {
         }
     }
 
-    public static List<ResultExecution> shellExecute(List<String> commands, IVmDeploy remoteVmDeploy) throws Exception {
+    public static List<ResultExecution> shellExecute(List<String> commands) throws IOException, InterruptedException    {
         List<ResultExecution> re = new ArrayList<ResultExecution>();
         for (String command : commands) {
-            re.add(shellExecute(command, remoteVmDeploy));
+            re.add(shellExecute(command ));
         }
         return re;
     }
 
-    public static ResultExecution shellExecute(String command, IVmDeploy remoteVmDeploy) throws Exception {
+    public static ResultExecution shellExecute(String command ) throws IOException, InterruptedException   {
         ResultExecution aResultExcecution = new ResultExecution();
         aResultExcecution.setCommandtext(command);
-        aResultExcecution.setResult(remoteVmDeploy.shellExecute(command));
+        aResultExcecution.setResult(shellExecuteLocal(command));
 
         aResultExcecution.checkError();
         return aResultExcecution;
     }
 
-    public static ResultExecution shellExecute(ShellExecute aShellExecute, IVmDeploy remoteVmDeploy) throws Exception {
+    public static ResultExecution shellExecute(ShellExecute aShellExecute ) throws Exception  {
         ResultExecution aResultExcecution = new ResultExecution();
         aResultExcecution.setCommandtext(aShellExecute.getCmd());
-        aResultExcecution.setResult(remoteVmDeploy.shellExecute(aShellExecute));
+        aResultExcecution.setResult(shellExecuteLocal(aShellExecute));
         // LOG.debug(aResultExcecution.toString());
         aResultExcecution.checkError();
         return aResultExcecution;
@@ -77,7 +77,7 @@ public class DockerHelper {
 
     }
 
-    public static String shellExecuteLocal(List<String> remoteCommandList) throws Exception {
+    public static String shellExecuteLocal(List<String> remoteCommandList) throws IOException, InterruptedException   {
         StringWriter re = new StringWriter();
         for (String s : remoteCommandList) {
             re.append(shellExecuteLocal(s));
@@ -85,7 +85,9 @@ public class DockerHelper {
         return re.toString();
     }
 
-    public static String shellExecuteLocal(String remoteCommand) throws Exception {
+ 
+    
+    public static String shellExecuteLocal(String remoteCommand) throws IOException, InterruptedException   {
 
         StringBuffer output = new StringBuffer();
         Process p;

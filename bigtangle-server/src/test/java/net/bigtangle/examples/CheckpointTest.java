@@ -21,8 +21,8 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.docker.DockerHelper;
 import net.bigtangle.docker.ShellExecute;
-import net.bigtangle.docker.VmDeployImpl;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.checkpoint.DockerService;
@@ -41,7 +41,7 @@ public class CheckpointTest extends AbstractIntegrationTest {
 
     @Test
     public void testCreateDumpSQL() throws Exception {
-        VmDeployImpl vmDeployImpl = new VmDeployImpl();
+ 
 
         ShellExecute shell = new ShellExecute();
         shell.setFile(dockerService.mysqldumpCheck().getBytes());
@@ -53,7 +53,7 @@ public class CheckpointTest extends AbstractIntegrationTest {
                 + " &&  "
                 + dockerService.docker("chmod +x " + shell.getFilelocation() + " && " + shell.getFilelocation())
                 );
-       String re = vmDeployImpl.shellExecute(shell) ;
+       String re = DockerHelper.shellExecuteLocal(shell) ;
        log.debug(re);
        String hash = re.split(" ")[0];
        assertTrue(hash.equals("034b92c696a4b33871e08ea238e6f3ad730eda8517e30de44823bcc8ce979f2f"));

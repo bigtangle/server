@@ -738,7 +738,7 @@ public class ValidatorService {
                 // FIXME block chain 4046309 missingCalculation =
                 // SolidityState.fromMissingCalculation(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
-                missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
+             //   missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
             } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
            /*   logger.debug(  "predecessor.getBlockEvaluation() " + predecessor.getBlockEvaluation().getSolid());
                 if (throwExceptions)

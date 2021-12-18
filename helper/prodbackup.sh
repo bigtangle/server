@@ -45,7 +45,7 @@ docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
 
  
 sleep 60s
-docker exec  $SERVERHOST /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
+docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
 
 
 

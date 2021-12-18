@@ -4,23 +4,41 @@
  *******************************************************************************/
 package net.bigtangle.server.config;
 
+import java.io.IOException;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.docker.DockerHelper;
+import net.bigtangle.server.DispatcherController;
 import net.bigtangle.store.MySQLFullBlockStore;
 
 @Configuration
 public class DBStoreConfiguration {
 
+    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    
     @Value("${db.dbtype:mysql}")
     private String dbtype;
 
@@ -38,15 +56,19 @@ public class DBStoreConfiguration {
 
     @Value("${db.port:3306}")
     private String port;
- 
+
     @Autowired
     NetworkParameters networkParameters;
     @Autowired
     ServerConfiguration serverConfiguration;
 
- 
+    @Autowired
+    private DBStoreConfiguration dbStoreConfiguration;
+
     @Bean
-    public DataSource dataSource() throws BlockStoreException {
+    public DataSource dataSource() throws BlockStoreException, IOException, InterruptedException, ExecutionException {
+        createDatabase();
+
         HikariConfig config = new HikariConfig();
 
         config.setJdbcUrl(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
@@ -59,11 +81,67 @@ public class DBStoreConfiguration {
         config.addDataSourceProperty("useServerPrepStmts", "true");
         config.addDataSourceProperty("cacheResultSetMetadata", "true");
         config.addDataSourceProperty("cacheServerConfiguration", "true");
-        config.setMaximumPoolSize(100); 
+        config.setMaximumPoolSize(100);
         config.setLeakDetectionThreshold(300000);
         return new HikariDataSource(config);
 
     }
+
+    private void createDatabase() throws IOException, InterruptedException, ExecutionException {
+        if (serverConfiguration.getDockerCreateDBHost()) {
+            try {
+                String data = " /data/vm/" + serverConfiguration.getDockerDBHost() + "/var/lib/mysql"; 
+                
+                DockerHelper.shellExecute(" mkdir -p  " + data  );
+                
+                DockerHelper.shellExecute("   docker run -d  -t " + "-p 3306:3306  " + "-v " + data
+                        + ":/var/lib/mysql " + " -e MYSQL_ROOT_PASSWORD=" + dbStoreConfiguration.getPassword()
+                        + " -e MYSQL_DATABASE=" + dbStoreConfiguration.getDbName() + " --name="
+                        + serverConfiguration.getDockerDBHost() + "     mysql:8.0.23 ");
+                // check database available
+                checkConnectionWait(120);
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.warn("",e);
+            }
+        }
+    }
+
+    private boolean checkConnectionWait() throws InterruptedException, SQLException {
+        boolean rating = false;
+        while (!rating) {
+            try {
+                Properties connectionProps = new Properties();
+                connectionProps.put("user", dbStoreConfiguration.getUsername());
+                connectionProps.put("password", dbStoreConfiguration.getPassword());
+
+                DriverManager.getConnection(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
+                        + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC", connectionProps);
+                rating = true;
+            } catch (CommunicationsException   e) {
+                Thread.sleep(1000);
+            }
+        }
+        return rating;
+    }
+
+    // check with maximum timeout
+    public boolean checkConnectionWait(Integer seconds) throws InterruptedException, ExecutionException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Future<Boolean> handler = executor.submit(() -> {
+            return checkConnectionWait();
+        });
+        try {
+            return handler.get(seconds, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
+            return false;
+        } finally {
+            executor.shutdownNow();
+        }
+
+    }
+
     public String getDbtype() {
         return dbtype;
     }

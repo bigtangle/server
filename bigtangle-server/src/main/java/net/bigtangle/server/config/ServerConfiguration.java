@@ -43,7 +43,10 @@ public class ServerConfiguration {
     private Long checkpoint=-1l ;
     private int syncblocks=500;
   
+
+    private Boolean dockerCreateDBHost = true;
     private String dockerDBHost="mysql-test";
+    private String dockerDBHostData="/data/vm/"+dockerDBHost;
     //save in the userdata with pubkey
     private String[] exchangelist= new String[] {"02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975"};
     private  long timeoutMinute = OkHttp3Util.timeoutMinute;
@@ -292,6 +295,26 @@ public class ServerConfiguration {
 
     public void setLockAddress(List<LockAddress> lockAddress) {
         this.lockAddress = lockAddress;
+    }
+
+
+    public Boolean getDockerCreateDBHost() {
+        return dockerCreateDBHost;
+    }
+
+
+    public void setDockerCreateDBHost(Boolean dockerCreateDBHost) {
+        this.dockerCreateDBHost = dockerCreateDBHost;
+    }
+
+
+    public String getDockerDBHostData() {
+        return dockerDBHostData;
+    }
+
+
+    public void setDockerDBHostData(String dockerDBHostData) {
+        this.dockerDBHostData = dockerDBHostData;
     }
 
 }
