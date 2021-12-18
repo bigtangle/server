@@ -20,6 +20,8 @@ server:
   deniedIPlist: ${DENIEDIPLIST:} 
   ipcheck: ${IPCHECK:false}
   syncblocks: ${SYNCBLOCKS:1000}
+  dockerDBHost: ${DOCKERDBHOST:bigtangle-mysql}
+  
 db:
   dbtype: ${DBTYPE:mysql}
   hostname: ${DB_HOSTNAME:localhost}

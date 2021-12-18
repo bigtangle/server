@@ -90,6 +90,8 @@ public class DBStoreConfiguration {
     private void createDatabase() throws IOException, InterruptedException, ExecutionException {
         if (serverConfiguration.getDockerCreateDBHost()) {
             try {
+                
+                DockerHelper.shellExecute(" service docker start  "   );
                 String data = " /data/vm/" + serverConfiguration.getDockerDBHost() + "/var/lib/mysql"; 
                 
                 DockerHelper.shellExecute(" mkdir -p  " + data  );
