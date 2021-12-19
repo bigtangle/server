@@ -20,7 +20,7 @@ export SERVICE_MINING_RATE=15000
 export SERVERPORT=8088
  
  rm -fr /data/vm/$DBHOST/*
- 
+ mkdir -p /data/vm/$DBHOST/var/lib/mysql
 docker rm -f $DBHOST 
 
 sudo docker run -d  -t --net=bigtangle-bridged-network     \

@@ -22,9 +22,7 @@ import net.bigtangle.server.config.ServerConfiguration;
 public class DockerService {
 
     private final Log LOG = LogFactory.getLog(getClass().getName());
-    // default used registry for docker images
-    public static final String Registry = "registry.dasimi.com";
-
+   
     @Autowired
     private ServerConfiguration serverConfiguration;
 
@@ -37,8 +35,8 @@ public class DockerService {
     public String mysqldumpCheck() {
         String re = " mysqldump --complete-insert --skip-dump-date -u " + dbStoreConfiguration.getUsername() + " -p"
                 + dbStoreConfiguration.getPassword() + " --databases " + dbStoreConfiguration.getDbName()
-                + " >  /tmp/bigtangle-database.sql   \n";
-        re += " sha256sum /tmp/bigtangle-database.sql ";
+                + " >  /tmp/bigtangle-database.sql    ";
+        re += " && sha256sum /tmp/bigtangle-database.sql ";
         return re;
     }
 
@@ -54,35 +52,12 @@ public class DockerService {
                 + command.replace("\"", "\\\"") + " \"";
     }
 
-    public String rbackup2(String path) throws Exception {
-        return DockerHelper.readFile(path, Charset.forName("UTF-8"));
-
-    }
-
-    public String registry() {
-        String r = Registry;
-        if (r != null && !"".equals(r.trim())) {
-            return r + "/";
-        } else {
-            return "";
-        }
-    }
-
+ 
     public ResultExecution dockerExec(String vmname, String command) throws Exception {
-        return DockerHelper
+        return new DockerHelper()
                 .shellExecute(" docker  exec   " + vmname + " /bin/sh -c \" " + command.replace("\"", "\\\"") + "\"");
     }
-
-    public ResultExecution doShellExecute(String cmd) throws Exception {
-        LOG.info("cmd:" + cmd);
-      return  DockerHelper.shellExecute(cmd);
-    }
-
-    public List<ResultExecution> doShellExecute(List<String> cmds) throws Exception {
-        LOG.info("cmd:" + cmds);
-       return DockerHelper.shellExecute(cmds);
-    }
-
+ 
     /*
      * remove None images
      */
@@ -91,7 +66,7 @@ public class DockerService {
         // cs.add(" docker pause " + getContainername(v));
         cs.add("docker rmi $(docker images | grep \"^<none>\" | awk '{print $3}')");
         // cs.add(" docker unpause " + getContainername(v));
-        DockerHelper.shellExecute(cs);
+        new DockerHelper().shellExecute(cs);
     }
 
 }

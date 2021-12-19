@@ -5,44 +5,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.ServletException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DockerHelper {
 
-    public static void fillStackTrace(Throwable ex, PrintWriter pw) {
-        if (null == ex) {
-            return;
-        }
+    private final Log LOG = LogFactory.getLog(getClass().getName());
 
-        ex.printStackTrace(pw);
-
-        if (ex instanceof ServletException) {
-            Throwable cause = ((ServletException) ex).getRootCause();
-
-            if (null != cause) {
-                pw.println("Root Cause:");
-                fillStackTrace(cause, pw);
-            }
-        } else {
-            Throwable cause = ex.getCause();
-
-            if (null != cause) {
-                pw.println("Cause:");
-                fillStackTrace(cause, pw);
-            }
-        }
-    }
-
-    public static List<ResultExecution> shellExecute(List<String> commands) throws IOException, InterruptedException    {
+    public   List<ResultExecution> shellExecute(List<String> commands) throws IOException, InterruptedException    {
         List<ResultExecution> re = new ArrayList<ResultExecution>();
         for (String command : commands) {
             re.add(shellExecute(command ));
@@ -50,7 +24,7 @@ public class DockerHelper {
         return re;
     }
 
-    public static ResultExecution shellExecute(String command ) throws IOException, InterruptedException   {
+    public   ResultExecution shellExecute(String command ) throws IOException, InterruptedException   {
         ResultExecution aResultExcecution = new ResultExecution();
         aResultExcecution.setCommandtext(command);
         aResultExcecution.setResult(shellExecuteLocal(command));
@@ -59,7 +33,7 @@ public class DockerHelper {
         return aResultExcecution;
     }
 
-    public static ResultExecution shellExecute(ShellExecute aShellExecute ) throws Exception  {
+    public   ResultExecution shellExecute(ShellExecute aShellExecute ) throws Exception  {
         ResultExecution aResultExcecution = new ResultExecution();
         aResultExcecution.setCommandtext(aShellExecute.getCmd());
         aResultExcecution.setResult(shellExecuteLocal(aShellExecute));
@@ -69,15 +43,7 @@ public class DockerHelper {
 
     }
 
-    /*
-     * remote copy of lv, check the result with md5 and rise a exception for
-     * difference
-     */
-    public static void checkMd5sum(String m1, String m2) throws Exception {
-
-    }
-
-    public static String shellExecuteLocal(List<String> remoteCommandList) throws IOException, InterruptedException   {
+    public   String shellExecuteLocal(List<String> remoteCommandList) throws IOException, InterruptedException   {
         StringWriter re = new StringWriter();
         for (String s : remoteCommandList) {
             re.append(shellExecuteLocal(s));
@@ -87,8 +53,9 @@ public class DockerHelper {
 
  
     
-    public static String shellExecuteLocal(String remoteCommand) throws IOException, InterruptedException   {
+    public   String shellExecuteLocal(String remoteCommand) throws IOException, InterruptedException   {
 
+        LOG.debug(remoteCommand);
         StringBuffer output = new StringBuffer();
         Process p;
 
@@ -112,7 +79,7 @@ public class DockerHelper {
         }
     }
 
-    public static String shellExecuteLocal(ShellExecute aShellExecute) throws Exception {
+    public   String shellExecuteLocal(ShellExecute aShellExecute) throws Exception {
         // LOG.debug(" create file at filelocation"
         // + aShellExecute.getFilelocation());
 
@@ -128,18 +95,6 @@ public class DockerHelper {
         return shellExecuteLocal(aShellExecute.getCmd());
     }
 
-    public static String readFile(String path, Charset encoding) throws IOException {
-        byte[] encoded = Files.readAllBytes(Paths.get(path));
-        return encoding.decode(ByteBuffer.wrap(encoded)).toString();
-    }
-
-    public static String getStackTrace(Throwable ex) {
-
-        StringWriter writer = new StringWriter();
-        PrintWriter pw = new PrintWriter(writer);
-        DockerHelper.fillStackTrace(ex, pw);
-
-        return writer.toString();
-    }
+   
 
 }

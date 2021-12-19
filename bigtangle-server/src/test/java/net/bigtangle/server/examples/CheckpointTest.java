@@ -1,4 +1,4 @@
-package net.bigtangle.examples;
+package net.bigtangle.server.examples;
 
 import static org.junit.Assert.assertTrue;
 
@@ -53,7 +53,7 @@ public class CheckpointTest extends AbstractIntegrationTest {
                 + " &&  "
                 + dockerService.docker("chmod +x " + shell.getFilelocation() + " && " + shell.getFilelocation())
                 );
-       String re = DockerHelper.shellExecuteLocal(shell) ;
+       String re = new DockerHelper().shellExecuteLocal(shell) ;
        log.debug(re);
        String hash = re.split(" ")[0];
        assertTrue(hash.equals("034b92c696a4b33871e08ea238e6f3ad730eda8517e30de44823bcc8ce979f2f"));

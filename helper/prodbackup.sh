@@ -23,8 +23,9 @@ export SERVERPORT=18088
  
 docker rm -f $SERVERHOST 
 
-docker  run -d -t --net=bigtangle-bridged-network   -v /data/vm/$SERVERHOST:/data/vm   \
--p $SERVERPORT:8088 --name  $SERVERHOST \
+docker  run -d -t --net=bigtangle-bridged-network \
+  -v /data/vm/$SERVERHOST:/data/vm  -v /var/run/docker.sock:/var/run/docker.sock   \
+-p $SERVERPORT:8088 --name  $SERVERHOST  --privileged=true \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
 -e DB_HOSTNAME=localhost -e DOCKERDBHOST=$DBHOST -e SERVICE_MCMC_RATE=1000 \
 -e SERVER_MINERADDRESS=$SERVER_MINERADDRESS -e SERVERMODE= \
@@ -40,6 +41,7 @@ sleep 10s
 docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
 
 
+# http://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
 
  rm -fr /data/vm/bigtangle-mysql-backup/var/lib/mysql/binlog.*
  

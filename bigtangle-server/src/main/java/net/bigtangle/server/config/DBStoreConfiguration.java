@@ -38,7 +38,7 @@ import net.bigtangle.store.MySQLFullBlockStore;
 public class DBStoreConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
-    
+
     @Value("${db.dbtype:mysql}")
     private String dbtype;
 
@@ -89,21 +89,24 @@ public class DBStoreConfiguration {
 
     private void createDatabase() throws IOException, InterruptedException, ExecutionException {
         if (serverConfiguration.getDockerCreateDBHost()) {
+            DockerHelper  dockerHelper= new DockerHelper();
             try {
-                
-                DockerHelper.shellExecute(" service docker start  "   );
+           
+           //     dockerHelper.shellExecute(" service docker start  "   );
                 String data = " /data/vm/" + serverConfiguration.getDockerDBHost() + "/var/lib/mysql"; 
                 
-                DockerHelper.shellExecute(" mkdir -p  " + data  );
-                
-                DockerHelper.shellExecute("   docker run -d  -t " + "-p 3306:3306  " + "-v " + data
+                dockerHelper.shellExecute(" mkdir -p  " + data  );
+                dockerHelper.shellExecute("   docker run -d  -t " + "-p 3306:3306  " + "-v " + data
                         + ":/var/lib/mysql " + " -e MYSQL_ROOT_PASSWORD=" + dbStoreConfiguration.getPassword()
                         + " -e MYSQL_DATABASE=" + dbStoreConfiguration.getDbName() + " --name="
                         + serverConfiguration.getDockerDBHost() + "     mysql:8.0.23 ");
                 // check database available
                 checkConnectionWait(120);
             } catch (Exception e) {
-                // TODO: handle exception
+                if(e.getMessage().contains("Conflict")){
+                    dockerHelper.shellExecute("docker start " + serverConfiguration.getDockerDBHost());
+                    checkConnectionWait(120);
+                }
                 logger.warn("",e);
             }
         }
@@ -120,7 +123,7 @@ public class DBStoreConfiguration {
                 DriverManager.getConnection(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
                         + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC", connectionProps);
                 rating = true;
-            } catch (CommunicationsException   e) {
+            } catch (CommunicationsException e) {
                 Thread.sleep(1000);
             }
         }
