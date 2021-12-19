@@ -106,8 +106,9 @@ public class DBStoreConfiguration {
                 if(e.getMessage().contains("Conflict")){
                     dockerHelper.shellExecute("docker start " + serverConfiguration.getDockerDBHost());
                     checkConnectionWait(120);
-                }
+                }else {
                 logger.warn("",e);
+                }
             }
         }
     }

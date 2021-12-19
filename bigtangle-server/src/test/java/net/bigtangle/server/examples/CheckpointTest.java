@@ -21,12 +21,10 @@ import net.bigtangle.core.MultiSignBy;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
-import net.bigtangle.docker.DockerHelper;
-import net.bigtangle.docker.ShellExecute;
+import net.bigtangle.docker.ResultExecution;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.checkpoint.DockerService;
-import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -36,26 +34,15 @@ public class CheckpointTest extends AbstractIntegrationTest {
 
     @Autowired
     private DockerService dockerService;
-    @Autowired
-    private ServerConfiguration serverConfiguration;
+  
 
     @Test
-    public void testCreateDumpSQL() throws Exception {
+    public void testCreateDumpSQL() throws Exception { 
  
-
-        ShellExecute shell = new ShellExecute();
-        shell.setFile(dockerService.mysqldumpCheck().getBytes());
-        shell.setFilelocation("/tmp/mysqldumpCheck.sh");
- 
-        shell.setCmd(
-                " sudo docker cp  " + shell.getFilelocation() 
-                + " " + serverConfiguration.getDockerDBHost() + ":" +  shell.getFilelocation() 
-                + " &&  "
-                + dockerService.docker("chmod +x " + shell.getFilelocation() + " && " + shell.getFilelocation())
-                );
-       String re = new DockerHelper().shellExecuteLocal(shell) ;
-       log.debug(re);
-       String hash = re.split(" ")[0];
+         ResultExecution re = dockerService.dockerExec(dockerService.mysqldumpCheck(0l)
+                 ) ;
+       log.debug(re.toString());
+       String hash = re.getResult().split(" ")[0];
        assertTrue(hash.equals("034b92c696a4b33871e08ea238e6f3ad730eda8517e30de44823bcc8ce979f2f"));
     
     }

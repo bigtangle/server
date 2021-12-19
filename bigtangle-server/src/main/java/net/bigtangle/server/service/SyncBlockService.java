@@ -38,7 +38,9 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
+import net.bigtangle.docker.ResultExecution;
 import net.bigtangle.params.ReqCmd;
+import net.bigtangle.server.checkpoint.DockerService;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ChainBlockQueue;
@@ -81,6 +83,8 @@ public class SyncBlockService {
 
     @Autowired
     private StoreService storeService;
+    @Autowired
+    private DockerService dockerService;
 
     // default start sync of chain and non chain data
     public void startSingleProcess() throws BlockStoreException {
@@ -143,7 +147,7 @@ public class SyncBlockService {
                 Stopwatch watch = Stopwatch.createStarted();
                 connectingOrphans(store);
                 syncChain(-1l, false, store);
-                syncNonChained(store); 
+                syncNonChained(store);
                 store.deleteLockobject(LOCKID);
                 // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
                 log.info("sync time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -184,8 +188,7 @@ public class SyncBlockService {
 
             Block storedBlock0 = null;
 
-                storedBlock0 = blockService.getBlock(block.getPrevBlockHash(), store);
-
+            storedBlock0 = blockService.getBlock(block.getPrevBlockHash(), store);
 
             if (storedBlock0 == null) {
                 byte[] re = requestBlock(block.getPrevBlockHash());
@@ -195,9 +198,8 @@ public class SyncBlockService {
                 }
             }
             Block storedBlock1 = null;
- 
-                storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash(), store);
 
+            storedBlock1 = blockService.getBlock(block.getPrevBranchBlockHash(), store);
 
             if (storedBlock1 == null) {
                 byte[] re = requestBlock(block.getPrevBranchBlockHash());
@@ -269,7 +271,7 @@ public class SyncBlockService {
         requestParam.put("start", chainlengthstart + "");
         requestParam.put("end", chainlengthend + "");
 
-          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
+        byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromChainLength,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " remote chain start: " + chainlengthstart
@@ -293,12 +295,12 @@ public class SyncBlockService {
             throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
-          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
+        byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
                 Json.jsonmapper().writeValueAsString(requestParam));
-          TXReward maxConfirmedReward = store.getMaxConfirmedReward();
-          long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
-          TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);        
-          requestParam.put("cutoffHeight", store.get(confirmedAtHeightReward.getBlockHash()).getHeight() + "");
+        TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
+        TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
+        requestParam.put("cutoffHeight", store.get(confirmedAtHeightReward.getBlockHash()).getHeight() + "");
         GetBlockListResponse blockbytelist = Json.jsonmapper().readValue(response, GetBlockListResponse.class);
         log.debug("block size: " + blockbytelist.getBlockbytelist().size() + " at server: " + s);
         List<Block> sortedBlocks = new ArrayList<Block>();
@@ -319,7 +321,7 @@ public class SyncBlockService {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-          byte[] response = OkHttp3Util.postString(server.trim() + "/" + ReqCmd.getChainNumber,
+        byte[] response = OkHttp3Util.postString(server.trim() + "/" + ReqCmd.getChainNumber,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 
@@ -331,7 +333,7 @@ public class SyncBlockService {
 
         HashMap<String, String> requestParam = new HashMap<String, String>();
 
-          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getAllConfirmedReward,
+        byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getAllConfirmedReward,
                 Json.jsonmapper().writeValueAsString(requestParam));
         GetTXRewardListResponse aTXRewardResponse = Json.jsonmapper().readValue(response,
                 GetTXRewardListResponse.class);
@@ -396,9 +398,9 @@ public class SyncBlockService {
     public void syncNonChained(FullBlockStore store) throws BlockStoreException {
         // mcmcService.cleanupNonSolidMissingBlocks();
         String[] re = serverConfiguration.getRequester().split(",");
-        for (String s : re) { 
+        for (String s : re) {
             if (s != null && !"".equals(s)) {
-                try { 
+                try {
                     requestNoncĆhainBlocks(s, store);
                 } catch (Exception e) {
                     log.debug("", e);
@@ -407,7 +409,6 @@ public class SyncBlockService {
         }
     }
 
-   
     /*
      * check difference to remote servers and does sync. ask the remote
      * getMaxConfirmedReward to compare the my getMaxConfirmedReward if the
@@ -445,14 +446,26 @@ public class SyncBlockService {
                 requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
                 if (initsync) {
                     // log.debug(" updateChain " );
-                    blockgraph.saveChainConnected(store,true);
-                
+                    blockgraph.saveChainConnected(store, true);
+
                 }
                 log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
+                checkPointDatabase(i);
             }
 
         }
         // log.debug(" finish sync " + aMaxConfirmedReward.server + " ");
+    }
+
+    /*
+     * sql dump the
+     */
+    public void checkPointDatabase(long chain) throws IOException, InterruptedException {
+        int factor = 2;
+        if ( chain >= (serverConfiguration.getSyncblocks() *factor) && 
+                chain % (serverConfiguration.getSyncblocks() *factor)  ==0) {
+            dockerService.dockerExec(dockerService.mysqldumpCheck(chain));
+        }
     }
 
     public class SortbyBlock implements Comparator<Block> {
@@ -498,7 +511,8 @@ public class SyncBlockService {
     }
 
     public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
-        List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true, serverConfiguration.getSyncblocks());
+        List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true,
+                serverConfiguration.getSyncblocks());
         TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
         long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
         if (orphanBlocks.size() > 0) {

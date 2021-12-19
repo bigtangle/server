@@ -2,6 +2,7 @@ package net.bigtangle.docker;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -79,7 +80,7 @@ public class DockerHelper {
         }
     }
 
-    public   String shellExecuteLocal(ShellExecute aShellExecute) throws Exception {
+    public String shellExecuteLocal(ShellExecute aShellExecute) throws IOException, InterruptedException  {
         // LOG.debug(" create file at filelocation"
         // + aShellExecute.getFilelocation());
 
