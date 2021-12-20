@@ -39,8 +39,8 @@ public class ServerConfiguration {
 
     private double alphaMCMC = -0.05;
     private Boolean runKafkaStream = false;
-    //start sync from this checkpoint
-    private Long checkpoint=-1l ;
+    // At Chain length = int * checkpoint set a checkpoint
+    private Long checkpoint=50000l ;
     private int syncblocks=500;
   
 
@@ -59,6 +59,7 @@ public class ServerConfiguration {
     
     private List<String> deniedIPlist = new ArrayList<String>();
     private Boolean ipcheck = false;
+  
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {

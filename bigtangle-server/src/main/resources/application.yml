@@ -20,6 +20,7 @@ server:
   deniedIPlist: ${DENIEDIPLIST:} 
   ipcheck: ${IPCHECK:false}
   syncblocks: ${SYNCBLOCKS:1000}
+  dockerCreateDBHost: ${DOCKERCREATEDBHOST:false}
   dockerDBHost: ${DOCKERDBHOST:bigtangle-mysql}
   
 db:

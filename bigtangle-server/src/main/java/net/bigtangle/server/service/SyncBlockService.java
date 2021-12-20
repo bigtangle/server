@@ -458,12 +458,12 @@ public class SyncBlockService {
     }
 
     /*
-     * sql dump the
+     * sql dump  and check skeleton of database
      */
     public void checkPointDatabase(long chain) throws IOException, InterruptedException {
-        int factor = 2;
-        if ( chain >= (serverConfiguration.getSyncblocks() *factor) && 
-                chain % (serverConfiguration.getSyncblocks() *factor)  ==0) {
+        
+        if ( chain >= (serverConfiguration.getCheckpoint()) && 
+                chain % (serverConfiguration.getCheckpoint()  )  ==0) {
             dockerService.dockerExec(dockerService.mysqldumpCheck(chain));
         }
     }

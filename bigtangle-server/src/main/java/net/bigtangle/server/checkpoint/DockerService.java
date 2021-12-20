@@ -63,7 +63,7 @@ public class DockerService {
                 + shell.getFilelocation());
         new DockerHelper().shellExecuteLocal(shell);
         ResultExecution re = new DockerHelper().shellExecute("  docker exec " + serverConfiguration.getDockerDBHost()
-                + " /bin/sh -c  sh " + shell.getFilelocation() );
+                + " bash " + shell.getFilelocation() );
         new DockerHelper().shellExecuteLocal(" rm -f " + shell.getFilelocation());
     //    new DockerHelper().shellExecuteLocal("  docker exec " + serverConfiguration.getDockerDBHost()
     //    + " /bin/sh -c \" rm -f  " + shell.getFilelocation() + "\"");
